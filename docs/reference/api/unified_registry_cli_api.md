@@ -19,7 +19,7 @@ Assign agent to a project.
 ## discover
 
 ```python
-discover(description: str, capabilities: List[AgentCapability], project: Optional[str])
+discover(description: str, capabilities: list[AgentCapability], project: Any)
 ```
 
 Discover best agent for a task.
@@ -39,7 +39,7 @@ Show details for a specific agent.
 ## list_agents
 
 ```python
-list_agents(status: Optional[AgentStatus], project: Optional[str], capability: Optional[AgentCapability])
+list_agents(status: Any, project: Any, capability: Any)
 ```
 
 List all agents in the registry.
@@ -49,9 +49,10 @@ List all agents in the registry.
 ## register_agent
 
 ```python
-register_agent(agent_id: str, name: str, capabilities: List[AgentCapability])
+register_agent(agent_id: str, name: str, capabilities: list[AgentCapability])
 ```
 
 Register a new agent.
 
 ---
+

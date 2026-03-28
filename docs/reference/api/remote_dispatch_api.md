@@ -1,0 +1,143 @@
+# remote_dispatch API Reference
+
+> **Source**: `src/thegent/orchestration/remote_dispatch.py`
+
+WL-089: RemoteDispatchBackend — ComputePoolManager integration for SubAgentDispatcher.
+
+Wires ComputePoolManager.submit() into SubAgentDispatcher as an optional remote
+dispatch backend. When agent_hint resolves to a compute node task, this backend
+delegates to the Tailscale pool with optional workspace sync.
+
+# @trace FR-ORC-089
+# @trace WL-089
+
+---
+
+## RemoteDispatchBackend
+
+Adapts ComputePoolManager.submit() for use by SubAgentDispatcher.
+
+Translates SubAgentRequest → AgentTask → ComputePoolManager.submit() →
+AgentResult → SubAgentResult, running the async submit() in a new event loop.
+
+### Methods
+
+#### RemoteDispatchBackend.__init__
+
+```python
+__init__(self: Any, pool_manager: Any, config: Any)
+```
+
+---
+
+#### RemoteDispatchBackend.dispatch
+
+```python
+dispatch(self: Any, request: SubAgentRequest)
+```
+
+Dispatch a SubAgentRequest to the remote compute pool.
+
+Converts the request to an AgentTask, submits it via
+ComputePoolManager.submit(), and converts the result back to
+SubAgentResult.
+
+**Parameters**:
+
+- `request`: The request to dispatch remotely.
+
+**Returns**: SubAgentResult from the remote execution.
+
+---
+
+#### RemoteDispatchBackend.is_available
+
+```python
+is_available(self: Any)
+```
+
+Return True iff a ComputePoolManager is configured.
+
+# @trace FR-ORC-089
+
+---
+
+---
+
+## RemoteDispatchConfig
+
+Configuration for remote dispatch via ComputePoolManager.
+
+---
+
+## adapt_request_to_agent_task
+
+```python
+adapt_request_to_agent_task(request: SubAgentRequest)
+```
+
+Convert a SubAgentRequest to an AgentTask for ComputePoolManager.submit().
+
+**Parameters**:
+
+- `request`: The sub-agent request to convert.
+
+**Returns**: AgentTask suitable for submission to ComputePoolManager.
+
+---
+
+## adapt_result_to_sub_agent_result
+
+```python
+adapt_result_to_sub_agent_result(request: SubAgentRequest, agent_result: AgentResult)
+```
+
+Convert an AgentResult from ComputePoolManager into a SubAgentResult.
+
+A task is considered successful iff exit_code == 0 and not timed_out.
+
+**Parameters**:
+
+- `request`: The original SubAgentRequest (for correlation fields).
+- `agent_result`: The AgentResult returned by ComputePoolManager.submit().
+
+**Returns**: SubAgentResult with status COMPLETED on success, FAILED otherwise.
+
+---
+
+## dispatch
+
+```python
+dispatch(self: Any, request: SubAgentRequest)
+```
+
+Dispatch a SubAgentRequest to the remote compute pool.
+
+Converts the request to an AgentTask, submits it via
+ComputePoolManager.submit(), and converts the result back to
+SubAgentResult.
+
+**Parameters**:
+
+- `request`: The request to dispatch remotely.
+
+**Returns**: SubAgentResult from the remote execution.
+
+**Raises**:
+
+- `RuntimeError`: When no ComputePoolManager is configured.
+
+---
+
+## is_available
+
+```python
+is_available(self: Any)
+```
+
+Return True iff a ComputePoolManager is configured.
+
+# @trace FR-ORC-089
+
+---
+

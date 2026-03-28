@@ -1,89 +1,114 @@
 # memory API Reference
 
-> **Source**: `src/thegent/orchestration/memory.py`
+> **Source**: `src/thegent/cli/apps/memory.py`
 
-## FrictionScope
+Memory management CLI commands.
 
-**Inherits from**: `StrEnum`
-
----
-
-## MemoryCategory
-
-**Inherits from**: `StrEnum`
+# @trace WL-060
 
 ---
 
-## MemoryFragment
-
----
-
-## MemorySystem
-
-MTSP-17: Dual Issue & Memory Collection System.
-
-Append-only audit log for agent observations, synthesized into formal docs.
-
-### Methods
-
-#### MemorySystem.__init__
+## memory_dump_categories
 
 ```python
-__init__(self: Any, project_root: Path)
+memory_dump_categories(project: Any, format: Any) -> None
 ```
 
 ---
 
-#### MemorySystem.get_recent
+## memory_dump_index
 
 ```python
-get_recent(self: Any, limit: int, category: Any)
+memory_dump_index(project: Any, format: Any) -> None
 ```
 
 ---
 
-#### MemorySystem.record
+## memory_dump_latest
 
 ```python
-record(self: Any, content: str, category: MemoryCategory, agent_id: str, scope: Any, metadata: Any)
+memory_dump_latest(project: Any, category: Any, json_only: bool, format: Any) -> None
 ```
 
 ---
 
-#### MemorySystem.synthesize_to_markdown
+## memory_garden
 
 ```python
-synthesize_to_markdown(self: Any)
+memory_garden(dry_run: bool, max_age_days: int, project_root: str)
 ```
 
-Helper to generate a summary for an agent to incorporate.
+Run a full Gardener Agent cycle.
+
+Reads memory logs, conversation dumps, and governance events;
+detects stale documentation; synthesises rule-based updates; and
+writes patches back to the relevant docs (unless --dry-run).
+
+# @trace WL-060
 
 ---
 
----
-
-## get_recent
+## memory_snapshot_daily_export
 
 ```python
-get_recent(self: Any, limit: int, category: Any) -> list[MemoryFragment]
-```
-
----
-
-## record
-
-```python
-record(self: Any, content: str, category: MemoryCategory, agent_id: str, scope: Any, metadata: Any) -> MemoryFragment
+memory_snapshot_daily_export(project: Any, out_dir: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any) -> None
 ```
 
 ---
 
-## synthesize_to_markdown
+## memory_snapshot_daily_index
 
 ```python
-synthesize_to_markdown(self: Any)
+memory_snapshot_daily_index(project: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any) -> None
 ```
 
-Helper to generate a summary for an agent to incorporate.
+---
+
+## memory_snapshot_daily_totals
+
+```python
+memory_snapshot_daily_totals(project: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any) -> None
+```
 
 ---
+
+## memory_snapshot_export
+
+```python
+memory_snapshot_export(snapshot_path: Path, project: Any, out_path: Any, format: Any) -> None
+```
+
+---
+
+## memory_snapshot_index
+
+```python
+memory_snapshot_index(project: Any, limit: int, format: Any) -> None
+```
+
+---
+
+## memory_snapshot_list
+
+```python
+memory_snapshot_list(project: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any) -> None
+```
+
+---
+
+## memory_snapshot_meta
+
+```python
+memory_snapshot_meta(project: Any, limit: int, format: Any) -> None
+```
+
+---
+
+## memory_snapshot_prune
+
+```python
+memory_snapshot_prune(project: Any, max_keep: int, format: Any) -> None
+```
+
+---
+

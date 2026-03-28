@@ -1,0 +1,18 @@
+# model_config API Reference
+
+> **Source**: `src/thegent/config/model_config.py`
+
+Model-related configuration settings for thegent.
+
+Settings related to which models/agents to use for different tasks.
+
+---
+
+## ModelConfig
+
+Model selection and routing configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+

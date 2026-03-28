@@ -1,0 +1,125 @@
+# confidential_report API Reference
+
+> **Source**: `src/thegent/integrations/confidential_report.py`
+
+Confidential Report Mode for minimized metadata exposure.
+
+WL-313: Confidential Report Mode
+Provides report sensitivity levels and field redaction for confidential data.
+
+---
+
+## ConfidentialReportFilter
+
+Filter and redact sensitive fields in reports.
+
+### Methods
+
+#### ConfidentialReportFilter.redact
+
+```python
+redact(cls: Any, data: dict[(str, Any)], sensitivity: ReportSensitivity)
+```
+
+Redact sensitive fields from data if confidential.
+
+For CONFIDENTIAL reports, recursively replaces values for keys
+matching any REDACT_FIELDS substring (case-insensitive) with "[REDACTED]".
+For PUBLIC reports, returns data unchanged.
+
+**Parameters**:
+
+- `data`: Dictionary to potentially redact.
+- `sensitivity`: Report sensitivity level.
+
+**Returns**: Original data if PUBLIC, redacted copy if CONFIDENTIAL.
+
+---
+
+#### ConfidentialReportFilter.redact_artifact_payload
+
+```python
+redact_artifact_payload(cls: Any, payload: Any)
+```
+
+Apply deterministic redaction to arbitrary artifact payloads.
+
+---
+
+#### ConfidentialReportFilter.wrap_report
+
+```python
+wrap_report(cls: Any, report: dict[(str, Any)], sensitivity: ReportSensitivity, report_id: str)
+```
+
+Wrap a report with metadata and redaction.
+
+**Parameters**:
+
+- `report`: Report data dictionary.
+- `sensitivity`: Report sensitivity level.
+- `report_id`: Unique report identifier.
+
+**Returns**: Wrapped report with id, sensitivity, redacted data, and timestamp.
+
+---
+
+---
+
+## ReportSensitivity
+
+Report sensitivity classification.
+
+**Inherits from**: `str, Enum`
+
+---
+
+## redact
+
+```python
+redact(cls: Any, data: dict[(str, Any)], sensitivity: ReportSensitivity)
+```
+
+Redact sensitive fields from data if confidential.
+
+For CONFIDENTIAL reports, recursively replaces values for keys
+matching any REDACT_FIELDS substring (case-insensitive) with "[REDACTED]".
+For PUBLIC reports, returns data unchanged.
+
+**Parameters**:
+
+- `data`: Dictionary to potentially redact.
+- `sensitivity`: Report sensitivity level.
+
+**Returns**: Original data if PUBLIC, redacted copy if CONFIDENTIAL.
+
+---
+
+## redact_artifact_payload
+
+```python
+redact_artifact_payload(cls: Any, payload: Any)
+```
+
+Apply deterministic redaction to arbitrary artifact payloads.
+
+---
+
+## wrap_report
+
+```python
+wrap_report(cls: Any, report: dict[(str, Any)], sensitivity: ReportSensitivity, report_id: str)
+```
+
+Wrap a report with metadata and redaction.
+
+**Parameters**:
+
+- `report`: Report data dictionary.
+- `sensitivity`: Report sensitivity level.
+- `report_id`: Unique report identifier.
+
+**Returns**: Wrapped report with id, sensitivity, redacted data, and timestamp.
+
+---
+

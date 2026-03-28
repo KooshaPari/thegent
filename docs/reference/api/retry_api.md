@@ -1,0 +1,22 @@
+# retry API Reference
+
+> **Source**: `src/thegent/sync/retry.py`
+
+Retry policy helpers with pull-only-on-failure mode.
+
+# @trace WL-212
+
+---
+
+## RetryPolicy
+
+---
+
+## operation_mode
+
+---
+
+## should_retry
+
+---
+

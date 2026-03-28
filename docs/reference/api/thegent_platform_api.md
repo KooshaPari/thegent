@@ -14,6 +14,12 @@ Supported platforms.
 
 ---
 
+## PlatformDiagnostics
+
+**Inherits from**: `TypedDict`
+
+---
+
 ## detect_platform
 
 Detect current platform.
@@ -21,3 +27,16 @@ Detect current platform.
 **Returns**: Platform enum value (MACOS, LINUX, WINDOWS, WSL2, or UNKNOWN)
 
 ---
+
+## get_platform_detection_diagnostics
+
+Return diagnostics for platform detection edge cases.
+
+---
+
+## reset_platform_detection_diagnostics
+
+Reset platform detection diagnostics (test helper).
+
+---
+

@@ -89,3 +89,4 @@ Normalize path for current shell.
 **Returns**: Normalized path
 
 ---
+

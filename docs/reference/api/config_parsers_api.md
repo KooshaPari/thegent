@@ -1,0 +1,68 @@
+# config_parsers API Reference
+
+> **Source**: `src/thegent/config_parsers.py`
+
+Shared parsing helpers used by :mod:`thegent.config`.
+
+---
+
+## parse_bool_or_env_flag
+
+```python
+parse_bool_or_env_flag(value: object, env_var: str)
+```
+
+Parse bool-like values, then fall back to `ENV_VAR=="1"` semantics.
+
+---
+
+## parse_csv_or_list
+
+```python
+parse_csv_or_list(value: object, default: list[str])
+```
+
+Parse comma-separated string or list-like into a list of strings.
+
+---
+
+## parse_first_nonempty_env
+
+```python
+parse_first_nonempty_env(value: object, env_vars: list[str])
+```
+
+Return explicit value first, else first non-empty env var in order.
+
+---
+
+## parse_optional_path
+
+```python
+parse_optional_path(value: object, env_var: str)
+```
+
+Parse optional path-like value, or auto-detect from environment.
+
+---
+
+## parse_retention_by_domain
+
+```python
+parse_retention_by_domain(value: object)
+```
+
+Parse retention-by-domain from JSON string or dict input.
+
+---
+
+## parse_shell_path
+
+```python
+parse_shell_path(value: object, env_var: str, default: str)
+```
+
+Parse shell path while preserving explicit non-default values.
+
+---
+

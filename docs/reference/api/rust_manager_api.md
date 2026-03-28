@@ -81,3 +81,4 @@ verify_artifact(self: Any, artifact_path: Path)
 Verify a MAIF artifact using the Rust binary.
 
 ---
+

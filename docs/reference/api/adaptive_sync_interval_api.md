@@ -1,0 +1,20 @@
+# adaptive_sync_interval API Reference
+
+> **Source**: `src/thegent/integrations/adaptive_sync_interval.py`
+
+Stub module for thegent.integrations.adaptive_sync_interval.
+
+---
+
+## AdaptiveSyncIntervalController
+
+Stub class.
+
+---
+
+## SyncIntervalConfig
+
+Stub class.
+
+---
+

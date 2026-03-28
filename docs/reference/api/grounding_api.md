@@ -1,0 +1,38 @@
+# grounding API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/grounding.py`
+
+Helpers for WL-119 grounding source extraction.
+
+---
+
+## extract_grounding_sources
+
+```python
+extract_grounding_sources(text: str)
+```
+
+Extract unique URL-like sources from model output.
+
+---
+
+## extract_grounding_sources_from_payload
+
+```python
+extract_grounding_sources_from_payload(payload: Any)
+```
+
+Extract grounding URLs from provider metadata payloads.
+
+---
+
+## normalize_grounding_source_url
+
+```python
+normalize_grounding_source_url(url: str)
+```
+
+Normalize URL formatting so equivalent grounding sources dedupe reliably.
+
+---
+

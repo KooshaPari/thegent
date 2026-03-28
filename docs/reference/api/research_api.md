@@ -1,6 +1,6 @@
 # research API Reference
 
-> **Source**: `src/thegent/tools/research.py`
+> **Source**: `src/thegent/skills/research.py`
 
 ## ddg_search
 
@@ -40,3 +40,4 @@ Perform a search on Reddit.
 Uses PRAW if credentials are provided, otherwise falls back to DDG site:reddit.com.
 
 ---
+

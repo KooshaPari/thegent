@@ -114,3 +114,4 @@ suggest_mode(risk: str, urgency: str, confidence: float)
 Suggest mode based on risk, urgency, and confidence (mode selection policy).
 
 ---
+

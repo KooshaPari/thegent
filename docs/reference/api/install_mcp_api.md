@@ -1,0 +1,37 @@
+# install_mcp API Reference
+
+> **Source**: `src/thegent/install_mcp.py`
+
+MCP configuration functions for thegent.
+
+MCP server configuration and management.
+Extracted from install.py for maintainability.
+
+---
+
+## configure_mcp_for_client
+
+```python
+configure_mcp_for_client(client: str, url: str, config_dir: Any)
+```
+
+Configure MCP for a specific client.
+
+**Parameters**:
+
+- `client`: Client name (claude, cursor, codex, windsurf)
+- `url`: MCP server URL
+- `config_dir`: Optional config directory override
+
+**Returns**: True if successful
+
+---
+
+## list_mcp_clients
+
+List supported MCP clients.
+
+**Returns**: List of client names
+
+---
+

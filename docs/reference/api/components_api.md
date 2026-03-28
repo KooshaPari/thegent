@@ -9,6 +9,70 @@ Provides reusable Textual widgets for displaying agent output, status, and navig
 
 ---
 
+## DiffViewerPanel
+
+Display unified diff with ANSI color highlighting.
+
+Features:
+- Renders unified diff with color coding (green for additions, red for deletions)
+- Line number display
+- Scrollable view for large diffs
+- Syntax highlighting for diff meta (headers, hunks)
+
+**Inherits from**: `ScrollableContainer`
+
+### Methods
+
+#### DiffViewerPanel.__init__
+
+```python
+__init__(self: Any, title: str)
+```
+
+Initialize the diff viewer panel.
+
+**Parameters**:
+
+- `title`: Panel title
+
+---
+
+#### DiffViewerPanel.clear
+
+```python
+clear(self: Any)
+```
+
+Clear the diff viewer.
+
+---
+
+#### DiffViewerPanel.compose
+
+```python
+compose(self: Any)
+```
+
+Compose the diff viewer panel.
+
+---
+
+#### DiffViewerPanel.set_diff
+
+```python
+set_diff(self: Any, unified_diff: str)
+```
+
+Set and render a unified diff string.
+
+**Parameters**:
+
+- `unified_diff`: Unified diff string to display
+
+---
+
+---
+
 ## FooterStatusBar
 
 Footer status bar with quick info and bindings.
@@ -489,7 +553,7 @@ Add an agent to the sidebar.
 clear(self: Any)
 ```
 
-Clear all output.
+Clear the diff viewer.
 
 ---
 
@@ -499,7 +563,7 @@ Clear all output.
 compose(self: Any)
 ```
 
-Compose the metrics panel.
+Compose the diff viewer panel.
 
 ---
 
@@ -520,6 +584,20 @@ render(self: Any)
 ```
 
 Render the progress indicator.
+
+---
+
+## set_diff
+
+```python
+set_diff(self: Any, unified_diff: str)
+```
+
+Set and render a unified diff string.
+
+**Parameters**:
+
+- `unified_diff`: Unified diff string to display
 
 ---
 
@@ -705,3 +783,4 @@ Write text to the output widget.
 - `timestamp`: Whether to prepend timestamp
 
 ---
+

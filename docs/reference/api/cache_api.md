@@ -1,292 +1,370 @@
 # cache API Reference
 
-> **Source**: `src/thegent/memory/cache.py`
+> **Source**: `src/thegent/utils/routing_impl/cache.py`
 
-L1 and L2 cache infrastructure for multi-layer memory architecture.
+GW-22/GW-26: Exact-match cache with DualCache L1+L2 for LLM gateway.
 
-L1: In-process LRU cache with TTL expiration
-L2: File-based persistent cache with fallback
+GW-22: Exact-match cache using hash(model+messages) -> cached response.
+GW-26: DualCache with in-memory L1 + optional disk/Redis L2.
+
+# @trace WP-2001 FR-CACHE-022 FR-CACHE-026
 
 ---
 
-## L1Cache
+## CacheEntry
 
-In-process LRU cache with TTL expiration.
+A single cached response entry.
 
 ### Methods
 
-#### L1Cache.__init__
+#### CacheEntry.is_expired
 
 ```python
-__init__(self: Any, max_size: int, ttl_seconds: int)
+is_expired(self: Any)
 ```
 
-Initialize L1 cache.
-
-**Parameters**:
-
-- `max_size`: Maximum cache size (default 1000)
-- `ttl_seconds`: Time-to-live per entry (default 3600s)
-
----
-
-#### L1Cache.clear
-
-```python
-clear(self: Any)
-```
-
-Clear all entries.
-
----
-
-#### L1Cache.get
-
-```python
-get(self: Any, key: str)
-```
-
-Get value from cache.
-
-**Parameters**:
-
-- `key`: Cache key
-
-**Returns**: Cached value or None if not found or expired
-
----
-
-#### L1Cache.set
-
-```python
-set(self: Any, key: str, value: Any)
-```
-
-Set value in cache.
-
-**Parameters**:
-
-- `key`: Cache key
-- `value`: Value to cache
-
----
-
-#### L1Cache.stats
-
-```python
-stats(self: Any)
-```
-
-Get cache statistics.
-
-**Returns**: Dict with hit_count, miss_count, hit_rate, size
+Return True if the entry has exceeded its TTL.
 
 ---
 
 ---
 
-## L2Cache
+## DiskCache
 
-File-based persistent cache.
+Persistent disk-backed cache using JSON files.
 
-Stores cache entries to disk for persistence across process restarts.
+File layout: ``{cache_dir}/{namespace}/{key[:2]}/{key}.json``
+
+Writes are atomic (write to temp file, then os.replace).
 
 ### Methods
 
-#### L2Cache.__init__
+#### DiskCache.__init__
 
 ```python
-__init__(self: Any, cache_dir: str, ttl_seconds: int)
+__init__(self: Any, cache_dir: Any, default_ttl: float)
 ```
-
-Initialize L2 cache.
-
-**Parameters**:
-
-- `cache_dir`: Directory for cache files (default .cache/l2)
-- `ttl_seconds`: Time-to-live per entry (default 86400s = 1 day)
 
 ---
 
-#### L2Cache.clear
+#### DiskCache.clear
 
 ```python
-clear(self: Any)
+clear(self: Any, namespace: Any)
 ```
 
-Clear all cache files.
+Delete cache files for a namespace, or all namespaces if None.
+
+Returns the count of deleted files.
 
 ---
 
-#### L2Cache.get
+#### DiskCache.delete
 
 ```python
-get(self: Any, key: str)
+delete(self: Any, key: str, namespace: str)
 ```
 
-Get value from L2 cache.
-
-**Parameters**:
-
-- `key`: Cache key
-
-**Returns**: Cached value or None if not found or expired
+Remove the cache file. Returns True if it existed.
 
 ---
 
-#### L2Cache.set
+#### DiskCache.get
 
 ```python
-set(self: Any, key: str, value: Any)
+get(self: Any, key: str, namespace: str)
 ```
 
-Set value in L2 cache.
+Return cached entry from disk, or None on miss / expiry.
 
-**Parameters**:
-
-- `key`: Cache key
-- `value`: Value to cache
+Expired files are deleted on access.
 
 ---
 
-#### L2Cache.stats
+#### DiskCache.set
 
 ```python
-stats(self: Any)
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
 ```
 
-Get cache statistics.
+Store a response to disk atomically and return the CacheEntry.
 
 ---
 
 ---
 
-## LayeredCache
+## DualCache
 
-Layered cache with L1 → L2 fallback.
+Two-level cache: in-memory L1 with optional persistent disk L2.
 
-Implements fallback logic:
-1. Check L1 (fast, in-process)
-2. Check L2 (slower, file-based)
-3. Return None if not found in either layer
+Read strategy: L1 -> L2 (backfill L1 on L2 hit) -> miss.
+Write strategy: write to both L1 and L2 (if L2 present).
 
 ### Methods
 
-#### LayeredCache.__init__
+#### DualCache.__init__
 
 ```python
-__init__(self: Any, l1_size: int, l2_dir: str)
+__init__(self: Any, l1: Any, l2: Any)
 ```
 
-Initialize layered cache.
+---
+
+#### DualCache.clear
+
+```python
+clear(self: Any, namespace: Any)
+```
+
+Clear both levels. Returns the total count of entries deleted.
+
+---
+
+#### DualCache.delete
+
+```python
+delete(self: Any, key: str, namespace: str)
+```
+
+Delete from both L1 and L2. Returns True if either had the entry.
+
+---
+
+#### DualCache.get
+
+```python
+get(self: Any, key: str, namespace: str)
+```
+
+Return the first valid cache hit (L1 then L2), or None on double miss.
+
+On an L2 hit, the entry is backfilled into L1 for future fast access.
+
+---
+
+#### DualCache.set
+
+```python
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
+```
+
+Write to both L1 and L2 (if present). Returns the L1 entry.
+
+---
+
+---
+
+## InMemoryCache
+
+Thread-safe in-memory LRU-ish cache with TTL support.
+
+Eviction policy: when size exceeds max_size, the oldest entry (by
+insertion order) is removed first.
+
+Internal key format: ``"{namespace}:{key}"``
+
+### Methods
+
+#### InMemoryCache.__init__
+
+```python
+__init__(self: Any, max_size: int, default_ttl: float)
+```
+
+---
+
+#### InMemoryCache.clear
+
+```python
+clear(self: Any, namespace: Any)
+```
+
+Clear all entries in the given namespace, or all entries if None.
+
+Returns the count of deleted entries.
+
+---
+
+#### InMemoryCache.delete
+
+```python
+delete(self: Any, key: str, namespace: str)
+```
+
+Remove an entry. Returns True if it existed, False otherwise.
+
+---
+
+#### InMemoryCache.get
+
+```python
+get(self: Any, key: str, namespace: str)
+```
+
+Return the cached entry or None on miss / expiry.
+
+Expired entries are removed on access (lazy eviction).
+
+---
+
+#### InMemoryCache.set
+
+```python
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
+```
+
+Store a response and return the created CacheEntry.
+
+---
+
+#### InMemoryCache.size
+
+```python
+size(self: Any)
+```
+
+Return the total number of entries currently stored.
+
+---
+
+---
+
+## cache_get
+
+```python
+cache_get(model: str, messages: list[dict], namespace: str)
+```
+
+Look up a cached response for this request. Returns None on miss.
 
 **Parameters**:
 
-- `l1_size`: Max size for L1 cache
-- `l2_dir`: Directory for L2 cache
+- `model`: Model identifier used for key computation.
+- `messages`: Chat messages list used for key computation.
+- `namespace`: Cache namespace to query.
+- `**kwargs`: Additional parameters (temperature, max_tokens, etc.) that
+affect the cache key.
+
+**Returns**: The cached response dict, or None if not found.
 
 ---
 
-#### LayeredCache.clear
+## cache_set
 
 ```python
-clear(self: Any)
+cache_set(model: str, messages: list[dict], response: dict[(str, Any)], ttl: float, namespace: str)
 ```
 
-Clear both layers.
-
----
-
-#### LayeredCache.get
-
-```python
-get(self: Any, key: str)
-```
-
-Get from L1, fallback to L2.
+Store a response in the cache.
 
 **Parameters**:
 
-- `key`: Cache key
-
-**Returns**: Value from L1 or L2, or None
-
----
-
-#### LayeredCache.set
-
-```python
-set(self: Any, key: str, value: Any)
-```
-
-Store in both L1 and L2.
-
-**Parameters**:
-
-- `key`: Cache key
-- `value`: Value to cache
-
----
-
-#### LayeredCache.stats
-
-```python
-stats(self: Any)
-```
-
-Get stats from both layers.
-
----
+- `model`: Model identifier used for key computation.
+- `messages`: Chat messages list used for key computation.
+- `response`: The response dict to cache.
+- `ttl`: Time-to-live in seconds.
+- `namespace`: Cache namespace for storage.
+- `**kwargs`: Additional parameters (temperature, max_tokens, etc.) that
+affect the cache key.
 
 ---
 
 ## clear
 
 ```python
-clear(self: Any)
+clear(self: Any, namespace: Any)
 ```
 
-Clear both layers.
+Clear both levels. Returns the total count of entries deleted.
+
+---
+
+## compute_cache_key
+
+```python
+compute_cache_key(model: str, messages: list[dict])
+```
+
+Compute a deterministic SHA-256 cache key for a request.
+
+Hash input: JSON of {"model": model, "messages": messages, "extras": sorted_extras}
+where extras contains temperature, max_tokens, tools, and response_format from kwargs.
+
+**Returns**: First 32 hex characters of the SHA-256 digest.
+
+---
+
+## delete
+
+```python
+delete(self: Any, key: str, namespace: str)
+```
+
+Delete from both L1 and L2. Returns True if either had the entry.
 
 ---
 
 ## get
 
 ```python
-get(self: Any, key: str)
+get(self: Any, key: str, namespace: str)
 ```
 
-Get from L1, fallback to L2.
+Return the first valid cache hit (L1 then L2), or None on double miss.
+
+On an L2 hit, the entry is backfilled into L1 for future fast access.
+
+---
+
+## get_cache
+
+```python
+get_cache(l2_enabled: bool)
+```
+
+Return the process-global DualCache singleton.
 
 **Parameters**:
 
-- `key`: Cache key
+- `l2_enabled`: When True and the instance has not yet been created,
+attach a DiskCache as the L2 layer.  Ignored if the singleton
+already exists.
 
-**Returns**: Value from L1 or L2, or None
+---
+
+## is_expired
+
+```python
+is_expired(self: Any)
+```
+
+Return True if the entry has exceeded its TTL.
+
+---
+
+## reset_cache
+
+Reset the process-global DualCache singleton (for testing).
 
 ---
 
 ## set
 
 ```python
-set(self: Any, key: str, value: Any)
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
 ```
 
-Store in both L1 and L2.
-
-**Parameters**:
-
-- `key`: Cache key
-- `value`: Value to cache
+Write to both L1 and L2 (if present). Returns the L1 entry.
 
 ---
 
-## stats
+## size
 
 ```python
-stats(self: Any)
+size(self: Any)
 ```
 
-Get stats from both layers.
+Return the total number of entries currently stored.
 
 ---
+

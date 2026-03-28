@@ -118,3 +118,4 @@ Record a reward signal for optimization.
 - `metadata`: Optional metadata about the reward
 
 ---
+

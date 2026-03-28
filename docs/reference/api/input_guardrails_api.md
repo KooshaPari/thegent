@@ -43,6 +43,12 @@ Validate inputs. Returns passed=True if all rails pass.
 
 ---
 
+## guardrails_from_env
+
+Deprecated: Use guardrails_from_settings() instead. Kept for backwards compatibility.
+
+---
+
 ## guardrails_from_settings
 
 ```python
@@ -52,3 +58,4 @@ guardrails_from_settings(settings: Any)
 Build InputGuardrails from ThegentSettings.
 
 ---
+

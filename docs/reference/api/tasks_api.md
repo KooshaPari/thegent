@@ -1,6 +1,6 @@
 # tasks API Reference
 
-> **Source**: `src/thegent/orchestration/tasks.py`
+> **Source**: `src/thegent/orchestration/state/tasks.py`
 
 System prompts and task-based role definitions for thegent.
 
@@ -25,3 +25,4 @@ get_role_prompt(role: TaskRole)
 Get the system prompt for a given role.
 
 ---
+

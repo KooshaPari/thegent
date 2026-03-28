@@ -2,6 +2,15 @@
 
 > **Source**: `src/thegent/infra/__init__.py`
 
-Infrastructure modules for runtime resource management.
+Infrastructure modules for thegent.
+
+This package contains infrastructure utilities including:
+- Runtime dispatcher for multi-runtime support
+- Performance optimizations
+- Error handling
+- Progress indicators
+- Configuration management
+- Multi-runtime diagnostics
 
 ---
+

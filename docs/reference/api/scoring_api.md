@@ -1,6 +1,6 @@
 # scoring API Reference
 
-> **Source**: `src/thegent/routing/scoring.py`
+> **Source**: `src/thegent/utils/routing_impl/scoring.py`
 
 WP-Y8-rel: Provider scoring with learning.
 
@@ -61,3 +61,4 @@ update_score(self: Any, provider_id: str, latency_s: float, success: bool)
 Update provider score based on a new result.
 
 ---
+

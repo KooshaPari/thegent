@@ -154,7 +154,7 @@ Each strategy's *predict_fn* is called to obtain keys; then
 *load_fn* is called for each key.  Errors in individual keys are
 caught and recorded without aborting remaining keys.
 
-**Returns**: Mapping of ``key -&gt; bool`` indicating whether each key was
+**Returns**: Mapping of ``key -> bool`` indicating whether each key was
 successfully warmed.  The dict preserves insertion order
 (strategies run in registration order).
 
@@ -336,7 +336,7 @@ Each strategy's *predict_fn* is called to obtain keys; then
 *load_fn* is called for each key.  Errors in individual keys are
 caught and recorded without aborting remaining keys.
 
-**Returns**: Mapping of ``key -&gt; bool`` indicating whether each key was
+**Returns**: Mapping of ``key -> bool`` indicating whether each key was
 successfully warmed.  The dict preserves insertion order
 (strategies run in registration order).
 
@@ -360,3 +360,4 @@ Must not raise; exceptions are caught and logged.
 False if *load_fn* raised or returned None.
 
 ---
+

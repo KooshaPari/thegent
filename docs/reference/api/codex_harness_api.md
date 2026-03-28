@@ -1,236 +1,170 @@
 # codex_harness API Reference
 
-> **Source**: `src/thegent/agent/codex_harness.py`
+> **Source**: `src/thegent/adapters/codex_harness.py`
 
-Wire codex/cc/droid harness as agent_executor for Crew.
-
----
-
-## CCHarness
-
-CC (Claude Code) harness for agent execution.
-
-### Methods
-
-#### CCHarness.__init__
-
-```python
-__init__(self: Any)
-```
-
-Initialize CC harness.
-
----
-
-#### CCHarness.execute
-
-```python
-execute(self: Any, task: dict[(str, Any)])
-```
-
-Execute a task.
-
-**Parameters**:
-
-- `task`: Task dictionary
-
-**Returns**: Execution result
-
----
+Codex-specific harness implementation (inherits from HarnessBase).
 
 ---
 
 ## CodexHarness
 
-Codex harness for agent execution.
+Codex harness with model-first routing (no provider filter).
+
+**Inherits from**: `HarnessBase`
 
 ### Methods
 
-#### CodexHarness.__init__
+#### CodexHarness.ensure_proxy_running
 
 ```python
-__init__(self: Any)
+ensure_proxy_running(self: Any)
 ```
 
-Initialize codex harness.
+Ensure cliproxy running, with error handling.
 
 ---
 
-#### CodexHarness.execute
+#### CodexHarness.find_binary
 
 ```python
-execute(self: Any, agent_id: str, task: dict[(str, Any)])
+find_binary(self: Any, require_native: bool)
 ```
 
-Execute a task with an agent.
-
-**Parameters**:
-
-- `agent_id`: Agent identifier
-- `task`: Task dictionary
-
-**Returns**: Execution result
+Find codex binary, filtering out thegent-shims.
 
 ---
 
-#### CodexHarness.register_agent
+#### CodexHarness.get_binary_name
 
 ```python
-register_agent(self: Any, agent_id: str, agent_executor: Any)
+get_binary_name(self: Any)
 ```
 
-Register an agent executor.
-
-**Parameters**:
-
-- `agent_id`: Agent identifier
-- `agent_executor`: Agent executor instance
-
 ---
 
----
-
-## DroidHarness
-
-Droid harness for agent execution.
-
-### Methods
-
-#### DroidHarness.__init__
+#### CodexHarness.get_binary_search_paths
 
 ```python
-__init__(self: Any)
+get_binary_search_paths(self: Any)
 ```
 
-Initialize droid harness.
+Return search paths for codex binary.
 
 ---
 
-#### DroidHarness.execute
+#### CodexHarness.get_bypass_flag
 
 ```python
-execute(self: Any, task: dict[(str, Any)])
+get_bypass_flag(self: Any)
 ```
 
-Execute a task.
-
-**Parameters**:
-
-- `task`: Task dictionary
-
-**Returns**: Execution result
-
 ---
 
----
-
-## HarnessAdapter
-
-Adapter to wire harnesses as agent_executor for Crew.
-
-### Methods
-
-#### HarnessAdapter.__init__
+#### CodexHarness.get_env
 
 ```python
-__init__(self: Any)
+get_env(self: Any, provider: str, model_override: Optional[str])
 ```
 
-Initialize harness adapter.
+Get environment for Codex pointing to thegent proxy.
 
 ---
 
-#### HarnessAdapter.get_executor
+#### CodexHarness.get_model_alias_map
 
 ```python
-get_executor(self: Any, harness_type: str)
+get_model_alias_map(self: Any)
 ```
 
-Get executor for a harness type.
-
-**Parameters**:
-
-- `harness_type`: Type of harness (codex, cc, droid)
-
-**Returns**: Executor instance
+Return Codex model alias mapping.
 
 ---
 
-#### HarnessAdapter.wire_to_crew
+#### CodexHarness.resolve_provider_for_model
 
 ```python
-wire_to_crew(self: Any, crew: Any, harness_type: str)
+resolve_provider_for_model(self: Any, model_alias: str)
 ```
 
-Wire harness to crew as agent_executor.
-
-**Parameters**:
-
-- `crew`: Crew instance
-- `harness_type`: Type of harness to use
+Resolve provider for model-first routing (Codex always returns 'auto').
 
 ---
 
 ---
 
-## execute
+## ensure_proxy_running
 
 ```python
-execute(self: Any, task: dict[(str, Any)])
+ensure_proxy_running(self: Any)
 ```
 
-Execute a task.
-
-**Parameters**:
-
-- `task`: Task dictionary
-
-**Returns**: Execution result
+Ensure cliproxy running, with error handling.
 
 ---
 
-## get_executor
+## find_binary
 
 ```python
-get_executor(self: Any, harness_type: str)
+find_binary(self: Any, require_native: bool)
 ```
 
-Get executor for a harness type.
-
-**Parameters**:
-
-- `harness_type`: Type of harness (codex, cc, droid)
-
-**Returns**: Executor instance
+Find codex binary, filtering out thegent-shims.
 
 ---
 
-## register_agent
+## get_binary_name
 
 ```python
-register_agent(self: Any, agent_id: str, agent_executor: Any)
+get_binary_name(self: Any) -> str
 ```
-
-Register an agent executor.
-
-**Parameters**:
-
-- `agent_id`: Agent identifier
-- `agent_executor`: Agent executor instance
 
 ---
 
-## wire_to_crew
+## get_binary_search_paths
 
 ```python
-wire_to_crew(self: Any, crew: Any, harness_type: str)
+get_binary_search_paths(self: Any)
 ```
 
-Wire harness to crew as agent_executor.
-
-**Parameters**:
-
-- `crew`: Crew instance
-- `harness_type`: Type of harness to use
+Return search paths for codex binary.
 
 ---
+
+## get_bypass_flag
+
+```python
+get_bypass_flag(self: Any) -> str
+```
+
+---
+
+## get_env
+
+```python
+get_env(self: Any, provider: str, model_override: Optional[str])
+```
+
+Get environment for Codex pointing to thegent proxy.
+
+---
+
+## get_model_alias_map
+
+```python
+get_model_alias_map(self: Any)
+```
+
+Return Codex model alias mapping.
+
+---
+
+## resolve_provider_for_model
+
+```python
+resolve_provider_for_model(self: Any, model_alias: str)
+```
+
+Resolve provider for model-first routing (Codex always returns 'auto').
+
+---
+

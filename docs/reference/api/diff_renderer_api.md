@@ -1,0 +1,116 @@
+# diff_renderer API Reference
+
+> **Source**: `src/thegent/governance/diff_renderer.py`
+
+Diff payload models and ANSI renderer for HITL approval workflows (WL-100).
+
+Traces to: FR-HITL-100
+
+---
+
+## DiffPayload
+
+Immutable container for a unified diff between two strings.
+
+**Inherits from**: `BaseModel`
+
+### Methods
+
+#### DiffPayload.from_strings
+
+```python
+from_strings(cls: Any, before: str, after: str, path: str)
+```
+
+Create a DiffPayload with pre-computed unified diff.
+
+---
+
+---
+
+## DiffRenderer
+
+Renders a DiffPayload as ANSI-colored, plain, or summary text.
+
+### Methods
+
+#### DiffRenderer.render_ansi
+
+```python
+render_ansi(diff_payload: DiffPayload)
+```
+
+Return ANSI-colored unified diff string.
+
+---
+
+#### DiffRenderer.render_plain
+
+```python
+render_plain(diff_payload: DiffPayload)
+```
+
+Return plain unified diff string (no ANSI codes).
+
+---
+
+#### DiffRenderer.render_summary
+
+```python
+render_summary(diff_payload: DiffPayload)
+```
+
+Return a one-line summary like '+5 -3 lines in path/to/file.py'.
+
+---
+
+---
+
+## HITLDiffPayload
+
+Immutable payload bundling an approval ID with a diff for HITL review.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## from_strings
+
+```python
+from_strings(cls: Any, before: str, after: str, path: str)
+```
+
+Create a DiffPayload with pre-computed unified diff.
+
+---
+
+## render_ansi
+
+```python
+render_ansi(diff_payload: DiffPayload)
+```
+
+Return ANSI-colored unified diff string.
+
+---
+
+## render_plain
+
+```python
+render_plain(diff_payload: DiffPayload)
+```
+
+Return plain unified diff string (no ANSI codes).
+
+---
+
+## render_summary
+
+```python
+render_summary(diff_payload: DiffPayload)
+```
+
+Return a one-line summary like '+5 -3 lines in path/to/file.py'.
+
+---
+

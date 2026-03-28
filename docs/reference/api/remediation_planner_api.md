@@ -67,3 +67,4 @@ plan(self: Any, findings: list[Finding], budget_remaining_calls: int)
 Build a remediation plan from *findings* within *budget*.
 
 ---
+

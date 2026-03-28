@@ -107,3 +107,4 @@ list_active_worktrees(self: Any)
 List current git worktrees.
 
 ---
+

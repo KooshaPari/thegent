@@ -1,0 +1,28 @@
+# review_output API Reference
+
+> **Source**: `src/thegent/agents/review_output.py`
+
+WL-107: strict parser/validator for structured review command output.
+
+---
+
+## parse_review_output
+
+```python
+parse_review_output(raw_output: str)
+```
+
+Parse and validate review output from raw JSON text.
+
+---
+
+## validate_review_output
+
+```python
+validate_review_output(payload: dict[(str, Any)])
+```
+
+Validate and normalize a structured review payload.
+
+---
+

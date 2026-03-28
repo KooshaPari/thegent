@@ -4,10 +4,289 @@
 
 CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.adapters.driven.cliproxy_http — HTTP client adapter
+- thegent.use_cases.manage_cliproxy — Business logic
+- thegent.ports.driven.cliproxy — Port interfaces
+
 cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
 - Proxies all /v1/* to the backend
 - For POST /v1/responses: tries backend first; on 404, translates to /v1/chat/completions
 - For WebSocket /v1/responses: bridges WS to HTTP streaming (SSE)
+
+---
+
+## CacheControl
+
+Per-request cache control extracted from tg-* headers.
+
+---
+
+## CliproxyAdapter
+
+HTTP proxy adapter for cliproxy
+
+### Methods
+
+#### CliproxyAdapter.__init__
+
+```python
+__init__(self: Any, backend_url: str)
+```
+
+---
+
+#### CliproxyAdapter.app
+
+```python
+app(self: Any)
+```
+
+---
+
+#### CliproxyAdapter.call
+
+```python
+call(self: Any, request: Any)
+```
+
+Proxy request through adapter
+
+---
+
+---
+
+## TTFTTracker
+
+Time-to-First-Token tracker for streaming LLM responses (GW-38).
+
+Usage:
+    tracker = TTFTTracker()
+    tracker.start()
+    # ... receive first SSE chunk ...
+    tracker.record_first_token()
+    ttft = tracker.ttft_seconds  # float
+
+# @trace FR-OBS-038
+
+### Methods
+
+#### TTFTTracker.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+#### TTFTTracker.build_ttft_header
+
+```python
+build_ttft_header(self: Any)
+```
+
+Build tg-ttft-ms header with TTFT in milliseconds.
+
+Returns {} if TTFT not yet measured.
+
+---
+
+#### TTFTTracker.record_first_token
+
+```python
+record_first_token(self: Any)
+```
+
+Record when the first token arrived (idempotent — only first call counts).
+
+---
+
+#### TTFTTracker.start
+
+```python
+start(self: Any)
+```
+
+Record the request start time.
+
+---
+
+#### TTFTTracker.ttft_seconds
+
+```python
+ttft_seconds(self: Any)
+```
+
+Return TTFT in seconds, or None if not yet measured.
+
+---
+
+---
+
+## TgHeaders
+
+Parsed tg-* per-request control headers (GW-20).
+
+# @trace FR-ROUTE-020
+
+---
+
+## _LegacyModelsTransformResult
+
+Legacy test compatibility object that supports both old and new unpack protocols.
+
+**Inherits from**: `bytes`
+
+### Methods
+
+---
+
+## _StreamingResponseWithModel
+
+StreamingResponse that refreshes the openai-model header from upstream SSE.
+
+**Inherits from**: `StreamingResponse`
+
+---
+
+## anthropic_messages_to_chat_completions
+
+```python
+anthropic_messages_to_chat_completions(body: dict)
+```
+
+Convert Anthropic /v1/messages request body to OpenAI chat completions format.
+
+Maps:
+- body["model"] -> body["model"] (unchanged)
+- body["messages"] -> body["messages"] (format is compatible)
+- body["max_tokens"] -> body["max_tokens"]
+- body["system"] string -> prepend {"role": "system", "content": system} to messages
+- body["stream"] -> body["stream"] (if present)
+- body["temperature"] -> body["temperature"] (if present)
+
+Returns a new dict in chat completions format.
+
+# @trace FR-REQEXT-043
+
+---
+
+## anthropic_response_to_messages_format
+
+```python
+anthropic_response_to_messages_format(response: dict)
+```
+
+Convert OpenAI chat completions response to Anthropic /v1/messages format.
+
+Maps:
+- response["choices"][0]["message"]["content"] -> content[0]["text"]
+- response["model"] -> model
+- response["usage"]["prompt_tokens"] -> usage.input_tokens
+- response["usage"]["completion_tokens"] -> usage.output_tokens
+
+Returns dict in Anthropic messages format.
+
+# @trace FR-REQEXT-043
+
+---
+
+## app
+
+```python
+app(self: Any)
+```
+
+---
+
+## build_cache_response_headers
+
+```python
+build_cache_response_headers(hit: bool, ttl: float, namespace: str)
+```
+
+Build x-cache-* response headers for a cache HIT or MISS.
+
+**Parameters**:
+
+- `hit`: True if response came from cache.
+- `ttl`: Remaining TTL in seconds (for HIT) or configured TTL (for MISS).
+- `namespace`: Cache namespace used.
+
+**Returns**: Dict of header name -> value to merge into response headers.
+
+---
+
+## build_cost_response_header
+
+```python
+build_cost_response_header(response_body: dict)
+```
+
+Build tg-response-cost header from response JSON body.
+
+Returns {'tg-response-cost': '<cost>'} or empty dict if cost unavailable.
+
+On the hot response path — exceptions are swallowed to prevent crashing the gateway.
+
+# @trace FR-COST-032
+
+---
+
+## build_event_id_header
+
+Build tg-event-id response header (GW-35).
+
+Returns {'tg-event-id': 'tg-<8hex>'}.
+
+---
+
+## build_fallback_step_header
+
+```python
+build_fallback_step_header(step: int)
+```
+
+Build tg-fallback-step response header (GW-36).
+
+step=0 means primary model succeeded.
+step=1+ means Nth fallback was used.
+
+Returns {'tg-fallback-step': '<step>'}.
+# @trace FR-OBS-036
+
+---
+
+## build_openrouter_passthrough_body
+
+```python
+build_openrouter_passthrough_body(body: dict)
+```
+
+Compatibility export for old cliproxy tests and callers.
+
+---
+
+## build_ttft_header
+
+```python
+build_ttft_header(self: Any)
+```
+
+Build tg-ttft-ms header with TTFT in milliseconds.
+
+Returns {} if TTFT not yet measured.
+
+---
+
+## call
+
+```python
+call(self: Any, request: Any)
+```
+
+Proxy request through adapter
 
 ---
 
@@ -21,10 +300,183 @@ Create the adapter Starlette app.
 
 ---
 
-## get_model_metadata
+## enrich_model_entry
 
 ```python
-get_model_metadata(_: Any)
+enrich_model_entry(entry: dict)
 ```
 
+Enrich a /v1/models entry with context_length and supported_parameters (GW-46).
+
+Adds:
+- context_length: int (max input tokens)
+- supported_parameters: list of supported params
+
+Uses thegent.routing.model_metadata if available; returns entry unchanged if not.
+
+# @trace FR-REQEXT-046
+
 ---
+
+## extract_cache_control
+
+```python
+extract_cache_control(request: Request)
+```
+
+Extract cache control directives from tg-* request headers.
+
+Headers:
+    tg-cache-namespace: <string>   (default: "default")
+    tg-cache-force-refresh: true   (default: false)
+    tg-skip-cache: true            (default: false)
+
+---
+
+## extract_provider_gateway_options
+
+```python
+extract_provider_gateway_options(body: dict)
+```
+
+Extract Vercel AI SDK providerOptions.gateway object (GW-44).
+
+Reads body.get("providerOptions", {}).get("gateway", {}).
+These control gateway behavior: cache, retry, timeout, etc.
+Returns empty dict if not present.
+
+# @trace FR-REQEXT-044
+
+---
+
+## extract_special_headers
+
+```python
+extract_special_headers(request_headers: dict)
+```
+
+Extract special headers to forward to the backend (GW-45).
+
+Returns a dict of header_name -> value for headers in _SPECIAL_FORWARD_HEADERS
+that are present in request_headers.
+
+# @trace FR-REQEXT-045
+
+---
+
+## extract_tg_headers
+
+```python
+extract_tg_headers(request_headers: dict)
+```
+
+Extract and parse all tg-* control headers from the request (GW-20).
+
+# @trace FR-ROUTE-020
+
+---
+
+## generate_event_id
+
+Generate a unique event ID for request tracing (GW-35).
+
+Format: tg-<8-char-hex> for brevity and readability.
+# @trace FR-OBS-035
+
+---
+
+## inject_native_finish_reason
+
+```python
+inject_native_finish_reason(response_body: dict)
+```
+
+Inject native_finish_reason alongside normalized finish_reason in choices (GW-49).
+
+For each choice in response_body["choices"]:
+- Reads the existing finish_reason
+- Sets native_finish_reason = finish_reason (the original from provider)
+- Sets finish_reason = normalize_finish_reason(native_finish_reason)
+
+Returns modified copy of response_body (does not mutate).
+
+# @trace FR-REQEXT-049
+
+---
+
+## inject_proxy_models
+
+```python
+inject_proxy_models(models_list: list[dict])
+```
+
+Inject proxy model entries for models that may be missing from the backend (GW-47).
+
+Adds entries for thegent-known canonical model aliases if not already present.
+This fixes "Model metadata not found" errors for models served through the proxy.
+
+# @trace FR-REQEXT-047
+
+---
+
+## inject_usage_cost
+
+```python
+inject_usage_cost(response_body: dict)
+```
+
+Inject cost into response body's usage object (GW-48).
+
+Adds usage.cost = <usd_float> computed from token counts and model pricing.
+If usage or pricing unavailable, returns body unchanged.
+
+Returns modified copy of response_body (does not mutate).
+
+# @trace FR-REQEXT-048
+
+---
+
+## normalize_finish_reason
+
+```python
+normalize_finish_reason(native_reason: Any)
+```
+
+Normalize a provider-native finish reason to OpenAI-compatible value (GW-49).
+
+Returns the normalized reason, or "stop" as default for unknown values.
+
+# @trace FR-REQEXT-049
+
+---
+
+## record_first_token
+
+```python
+record_first_token(self: Any)
+```
+
+Record when the first token arrived (idempotent — only first call counts).
+
+---
+
+## start
+
+```python
+start(self: Any)
+```
+
+Record the request start time.
+
+---
+
+## ttft_seconds
+
+```python
+ttft_seconds(self: Any)
+```
+
+Return TTFT in seconds, or None if not yet measured.
+
+---
+

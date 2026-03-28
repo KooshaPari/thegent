@@ -1,83 +1,14 @@
 # server API Reference
 
-> **Source**: `src/thegent/acp/server.py`
+> **Source**: `src/thegent/mcp/server/__init__.py`
 
-ACP server adapter for exposing thegent agents via ACP protocol.
+Compatibility exports for the historical ``thegent.mcp.server`` contract.
 
----
-
-## ACPServerAdapter
-
-Exposes thegent agents via ACP protocol (JSON-RPC over stdio).
-
-### Methods
-
-#### ACPServerAdapter.__init__
-
-```python
-__init__(self: Any)
-```
-
-Initialize ACP server adapter.
+The server implementation was extracted into package modules under
+``thegent.mcp.server`` while a legacy monolith still lives at
+``thegent/mcp/server.py``. Tests and internal callers import symbols directly
+from ``thegent.mcp.server``. Re-export those symbols from the legacy module so
+collection/import contracts remain stable.
 
 ---
 
----
-
-## AgentSession
-
-Represents an active agent session.
-
-### Methods
-
-#### AgentSession.__init__
-
-```python
-__init__(self: Any, agent_id: str, runner: AgentRunner, cwd: Any)
-```
-
-Initialize agent session.
-
----
-
-#### AgentSession.add_message
-
-```python
-add_message(self: Any, role: str, content: str)
-```
-
-Add a message to conversation history.
-
----
-
-#### AgentSession.stop
-
-```python
-stop(self: Any)
-```
-
-Stop the session.
-
----
-
----
-
-## add_message
-
-```python
-add_message(self: Any, role: str, content: str)
-```
-
-Add a message to conversation history.
-
----
-
-## stop
-
-```python
-stop(self: Any)
-```
-
-Stop the session.
-
----

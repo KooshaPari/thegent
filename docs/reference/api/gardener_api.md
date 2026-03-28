@@ -1,6 +1,6 @@
 # gardener API Reference
 
-> **Source**: `src/thegent/orchestration/gardener.py`
+> **Source**: `src/thegent/orchestration/execution/gardener.py`
 
 MEM-AUD-02: Memory-to-Doc Synthesis Agent.
 
@@ -23,3 +23,4 @@ __init__(self: Any, project_root: Path)
 ---
 
 ---
+

@@ -1,6 +1,6 @@
 # cli_crew API Reference
 
-> **Source**: `src/thegent/cli_crew.py`
+> **Source**: `src/thegent/cli/commands/team/cli_crew.py`
 
 CLI commands for crew management.
 
@@ -71,3 +71,4 @@ crew_status_cmd(crew_id: str)
 Show crew execution status.
 
 ---
+

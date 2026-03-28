@@ -31,7 +31,7 @@ Distributed Redlock-style acquire/release for a single named key.
 
 When multiple Redis nodes are configured (``THGENT_REDLOCK_NODES``), uses
 quorum consensus: a lock is acquired when SET NX PX succeeds on a majority
-(&gt; N/2) of nodes and the total time taken is less than the requested TTL.
+(> N/2) of nodes and the total time taken is less than the requested TTL.
 
 When only one node is configured (the common case), degrades gracefully to
 a simple ``SET key lock_id NX PX ttl`` on that single node.
@@ -294,3 +294,4 @@ held by another process/thread.
 already expired.
 
 ---
+

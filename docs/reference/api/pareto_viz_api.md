@@ -41,3 +41,4 @@ show_frontier(self: Any, model_id: str, routes: list[Any], speed_map: dict[(str,
 Display a table of routes showing their Pareto status.
 
 ---
+

@@ -92,3 +92,4 @@ search(self: Any, query: Any, task_id: Any, cwd: Any, limit: int)
 Search history with filters.
 
 ---
+

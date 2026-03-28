@@ -1,13 +1,67 @@
 # compositor API Reference
 
-> **Source**: `src/thegent/ui/compositor/__init__.py`
+> **Source**: `src/thegent/ux/compositor.py`
 
-TUI Compositor - Terminal-based multiplexer with pane management.
+Minimal TUI compositor for terminal panes.
 
-Main exports:
-- CompositApp: Main Textual application
-- TerminalPane: PTY-based terminal widget
-- PaneManager: Pane tree management
-- SessionState: Session persistence
+Implements the research "Path B" MVP by hosting pane state in a Rich layout
+and linking to external tmux sessions.
 
 ---
+
+## TUICompositor
+
+Collect tmux panes and compose a simple two-pane terminal dashboard.
+
+### Methods
+
+#### TUICompositor.__init__
+
+```python
+__init__(self: Any, include_non_claude: bool, config_path: Any)
+```
+
+---
+
+#### TUICompositor.collect_panes
+
+```python
+collect_panes(self: Any)
+```
+
+---
+
+#### TUICompositor.render
+
+```python
+render(self: Any, layout_name: str)
+```
+
+---
+
+---
+
+## collect_panes
+
+```python
+collect_panes(self: Any) -> list[Any]
+```
+
+---
+
+## render
+
+```python
+render(self: Any, layout_name: str) -> Layout
+```
+
+---
+
+## run_compositor_tui
+
+```python
+run_compositor_tui(layout_name: str, include_non_claude: bool, once: bool, refresh_interval: float) -> None
+```
+
+---
+

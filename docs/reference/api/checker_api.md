@@ -23,7 +23,7 @@ __init__(self: Any, settings: ThegentSettings, agent_name: str)
 #### CheckerAgent.decide
 
 ```python
-decide(self: Any, governance_report: dict[(str, Any, str)], todo_spec: str, wbs_status: dict[(str, Any, str)], agent_response: str)
+decide(self: Any, governance_report: dict[(str, Any)], todo_spec: str, wbs_status: dict[(str, Any)], agent_response: str)
 ```
 
 Invoke the Checker Agent to make a decision.
@@ -51,9 +51,10 @@ Result of a Checker Agent decision.
 ## decide
 
 ```python
-decide(self: Any, governance_report: dict[(str, Any, str)], todo_spec: str, wbs_status: dict[(str, Any, str)], agent_response: str)
+decide(self: Any, governance_report: dict[(str, Any)], todo_spec: str, wbs_status: dict[(str, Any)], agent_response: str)
 ```
 
 Invoke the Checker Agent to make a decision.
 
 ---
+

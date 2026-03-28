@@ -1,0 +1,26 @@
+# dry_run_diff API Reference
+
+> **Source**: `src/thegent/integrations/dry_run_diff.py`
+
+Stub module for thegent.integrations.dry_run_diff.
+
+---
+
+## DryRunDiff
+
+Stub class.
+
+---
+
+## DryRunRenderer
+
+Stub class.
+
+---
+
+## FieldDiff
+
+Stub class.
+
+---
+

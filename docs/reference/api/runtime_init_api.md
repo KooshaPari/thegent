@@ -32,3 +32,4 @@ Safe to call multiple times (idempotent).
 Check if runtime infrastructure is initialized.
 
 ---
+

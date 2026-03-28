@@ -1,0 +1,107 @@
+# result_aggregator API Reference
+
+> **Source**: `src/thegent/orchestration/result_aggregator.py`
+
+ResultAggregator: Merge sub-agent outputs with cost and token tracking.
+
+Aggregates SubAgentResult objects produced by sub-agents and produces an
+AggregatedResult summary with total cost, token usage, success/failure
+counts, and collected error messages.
+
+# @trace FR-ORC-083
+
+---
+
+## AggregatedResult
+
+Merged summary of multiple SubAgentResult objects.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## ResultAggregator
+
+Collect SubAgentResult objects and produce a merged AggregatedResult.
+
+Usage::
+
+    agg = ResultAggregator()
+    for result in sub_agent_results:
+        agg.add(result)
+    summary = agg.aggregate()
+
+# @trace FR-ORC-083
+
+### Methods
+
+#### ResultAggregator.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+#### ResultAggregator.add
+
+```python
+add(self: Any, result: SubAgentResult)
+```
+
+Append a SubAgentResult for later aggregation.
+
+**Parameters**:
+
+- `result`: A SubAgentResult instance from a completed sub-agent.
+
+---
+
+#### ResultAggregator.aggregate
+
+```python
+aggregate(self: Any)
+```
+
+Produce an AggregatedResult from all stored SubAgentResult objects.
+
+Computes totals for cost and tokens from the ``metrics`` dict of each
+result (keys: ``cost_usd``, ``tokens_used``). Missing metric keys
+default to zero without error.
+
+**Returns**: AggregatedResult summarising all stored results.
+
+---
+
+---
+
+## add
+
+```python
+add(self: Any, result: SubAgentResult)
+```
+
+Append a SubAgentResult for later aggregation.
+
+**Parameters**:
+
+- `result`: A SubAgentResult instance from a completed sub-agent.
+
+---
+
+## aggregate
+
+```python
+aggregate(self: Any)
+```
+
+Produce an AggregatedResult from all stored SubAgentResult objects.
+
+Computes totals for cost and tokens from the ``metrics`` dict of each
+result (keys: ``cost_usd``, ``tokens_used``). Missing metric keys
+default to zero without error.
+
+**Returns**: AggregatedResult summarising all stored results.
+
+---
+

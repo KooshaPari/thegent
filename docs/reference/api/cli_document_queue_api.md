@@ -1,6 +1,6 @@
 # cli_document_queue API Reference
 
-> **Source**: `src/thegent/cli_document_queue.py`
+> **Source**: `src/thegent/cli/commands/cli_document_queue.py`
 
 Document Queue CLI Commands for thegent
 
@@ -78,3 +78,4 @@ summary_cmd(queue_file: Any)
 Get queue summary statistics.
 
 ---
+

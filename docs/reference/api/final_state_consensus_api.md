@@ -155,3 +155,4 @@ Vote on a proposal.
 - `vote`: Vote (True/False)
 
 ---
+

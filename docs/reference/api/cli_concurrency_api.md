@@ -1,6 +1,6 @@
 # cli_concurrency API Reference
 
-> **Source**: `src/thegent/cli_concurrency.py`
+> **Source**: `src/thegent/cli/commands/cli_concurrency.py`
 
 CLI commands for concurrency management.
 
@@ -45,3 +45,4 @@ show_concurrency(session_dir: Any)
 Show current concurrency settings and status.
 
 ---
+

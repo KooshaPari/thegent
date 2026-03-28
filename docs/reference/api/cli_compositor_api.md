@@ -434,3 +434,4 @@ Update a named progress panel.
 - `KeyError`: If no progress panel with ``name`` exists.
 
 ---
+

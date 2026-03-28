@@ -67,6 +67,12 @@ Check if Mojo is installed and available.
 
 ---
 
+## MojoKernelContract
+
+Contract for deterministic Mojo kernel invocations (WL-133 slice).
+
+---
+
 ## MojoModule
 
 Represents a compiled Mojo module.
@@ -84,6 +90,32 @@ Raised when Mojo is not installed or not accessible.
 ## MojoTask
 
 Task to be executed in Mojo.
+
+---
+
+## build_dispatch_script
+
+```python
+build_dispatch_script(task: MojoTask)
+```
+
+Build a dispatch script for the requested task target.
+
+---
+
+## build_provider_score_kernel_script
+
+Build deterministic provider score kernel script text.
+
+---
+
+## build_python_dispatch_kernel_script
+
+```python
+build_python_dispatch_kernel_script(module: str, function: str)
+```
+
+Build a Mojo script that dispatches to a Python module/function target.
 
 ---
 
@@ -114,3 +146,14 @@ is_available(self: Any)
 Check if Mojo is installed and available.
 
 ---
+
+## validate_kernel_contract
+
+```python
+validate_kernel_contract(module: str, function: str, args: dict[(str, Any)])
+```
+
+Validate required arguments for a known kernel contract.
+
+---
+

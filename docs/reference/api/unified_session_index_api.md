@@ -1,0 +1,425 @@
+# unified_session_index API Reference
+
+> **Source**: `src/thegent/agents/unified_session_index.py`
+
+Unified Agent Session Index.
+
+Aggregates sessions from multiple agent harnesses with dual-redundancy:
+1. SQLite DB snapshot for persistent query
+2. Live file watching for real-time updates
+
+Harnesses: Cursor, Codex, Claude, Ante, Droid
+
+---
+
+## AgentSession
+
+Unified agent session representation.
+
+**Inherits from**: `SerializableMixin`
+
+---
+
+## HarnessActionError
+
+Raised when a harness action fails.
+
+**Inherits from**: `Exception`
+
+---
+
+## HarnessTUIMapper
+
+Maps abstract actions to harness-specific TUI/CLI commands.
+
+Provides a unified interface to interact with different agent harnesses
+(Cursor, Codex, Claude, Ante, Droid) using abstract action names.
+
+Usage:
+    mapper = HarnessTUIMapper()
+    result = mapper.execute(HarnessType.CODEX, "send_message", prompt="Fix the bug")
+    result = mapper.execute(HarnessType.CURSOR, "attach_terminal", session_id="abc123")
+
+### Methods
+
+#### HarnessTUIMapper.__init__
+
+```python
+__init__(self: Any, custom_actions: Any)
+```
+
+Initialize mapper with optional custom action overrides.
+
+**Parameters**:
+
+- `custom_actions`: Override or add harness-specific commands.
+Format: {action: {harness: command_template}}
+
+---
+
+#### HarnessTUIMapper.execute
+
+```python
+execute(self: Any, harness: HarnessType, action: str, host_id: Any)
+```
+
+Execute an abstract action on a specific harness.
+
+**Parameters**:
+
+- `harness`: The target harness type
+- `action`: The abstract action to perform
+- `host_id`: Optional host identifier for remote execution
+- `**kwargs`: Template variables for the command (e.g., prompt, session_id)
+
+**Returns**: Dict with success status, output, and any errors
+
+---
+
+#### HarnessTUIMapper.get_command
+
+```python
+get_command(self: Any, harness: HarnessType, action: str)
+```
+
+Get the command template for a harness-action pair.
+
+---
+
+#### HarnessTUIMapper.list_actions
+
+```python
+list_actions(self: Any)
+```
+
+List all available abstract actions.
+
+---
+
+#### HarnessTUIMapper.list_harnesses
+
+```python
+list_harnesses(self: Any, action: str)
+```
+
+List harnesses that support a given action.
+
+---
+
+#### HarnessTUIMapper.register_host
+
+```python
+register_host(self: Any, host_id: str, harness: HarnessType, command_prefix: str, custom_actions: Any)
+```
+
+Register a new host device with custom command mappings.
+
+**Parameters**:
+
+- `host_id`: Unique identifier for the host
+- `harness`: The harness type this host uses
+- `command_prefix`: Prefix to add to all commands (e.g., "ssh user@host")
+- `custom_actions`: Override commands for this specific host
+
+---
+
+---
+
+## HarnessType
+
+**Inherits from**: `Enum`
+
+---
+
+## UnifiedSessionIndex
+
+Unified session index with DB + live watching dual-redundancy.
+
+### Methods
+
+#### UnifiedSessionIndex.__init__
+
+```python
+__init__(self: Any, db_path: Any)
+```
+
+---
+
+#### UnifiedSessionIndex.attach_session
+
+```python
+attach_session(self: Any, session_id: str)
+```
+
+Dynamically attach to an active session (using zmx backend).
+
+---
+
+#### UnifiedSessionIndex.export_for_rag
+
+```python
+export_for_rag(self: Any, output_path: Path)
+```
+
+Export indexed data for RAG (vector DB ingestion).
+
+---
+
+#### UnifiedSessionIndex.index_all
+
+```python
+index_all(self: Any)
+```
+
+Full index of all harnesses. Returns count.
+
+---
+
+#### UnifiedSessionIndex.on_session_change
+
+```python
+on_session_change(self: Any, callback: Callable[(Ellipsis, Any)])
+```
+
+Register callback for session changes.
+
+---
+
+#### UnifiedSessionIndex.search
+
+```python
+search(self: Any, query: Any, harness: Any, project: Any, limit: int)
+```
+
+Search sessions with filters.
+
+---
+
+#### UnifiedSessionIndex.send_signal
+
+```python
+send_signal(self: Any, session_id: str, sig: int)
+```
+
+Send a signal (default SIGINT/Ctrl+C) to an active session.
+
+---
+
+#### UnifiedSessionIndex.traverse_by_date
+
+```python
+traverse_by_date(self: Any, start: datetime, end: datetime)
+```
+
+Get sessions in date range.
+
+---
+
+#### UnifiedSessionIndex.traverse_by_project
+
+```python
+traverse_by_project(self: Any, project_path: str)
+```
+
+Get all sessions for a project across harnesses.
+
+---
+
+#### UnifiedSessionIndex.watch_start
+
+```python
+watch_start(self: Any)
+```
+
+Start live file watching for real-time updates.
+
+---
+
+#### UnifiedSessionIndex.watch_stop
+
+```python
+watch_stop(self: Any)
+```
+
+Stop all watchers.
+
+---
+
+---
+
+## attach_session
+
+```python
+attach_session(self: Any, session_id: str)
+```
+
+Dynamically attach to an active session (using zmx backend).
+
+---
+
+## execute
+
+```python
+execute(self: Any, harness: HarnessType, action: str, host_id: Any)
+```
+
+Execute an abstract action on a specific harness.
+
+**Parameters**:
+
+- `harness`: The target harness type
+- `action`: The abstract action to perform
+- `host_id`: Optional host identifier for remote execution
+- `**kwargs`: Template variables for the command (e.g., prompt, session_id)
+
+**Returns**: Dict with success status, output, and any errors
+
+**Raises**:
+
+- `HarnessActionError`: If the action or harness is not supported
+
+---
+
+## export_for_rag
+
+```python
+export_for_rag(self: Any, output_path: Path)
+```
+
+Export indexed data for RAG (vector DB ingestion).
+
+---
+
+## get_command
+
+```python
+get_command(self: Any, harness: HarnessType, action: str)
+```
+
+Get the command template for a harness-action pair.
+
+---
+
+## index_all
+
+```python
+index_all(self: Any)
+```
+
+Full index of all harnesses. Returns count.
+
+---
+
+## list_actions
+
+```python
+list_actions(self: Any)
+```
+
+List all available abstract actions.
+
+---
+
+## list_harnesses
+
+```python
+list_harnesses(self: Any, action: str)
+```
+
+List harnesses that support a given action.
+
+---
+
+## main
+
+CLI for unified session index.
+
+---
+
+## on_session_change
+
+```python
+on_session_change(self: Any, callback: Callable[(Ellipsis, Any)])
+```
+
+Register callback for session changes.
+
+---
+
+## register_host
+
+```python
+register_host(self: Any, host_id: str, harness: HarnessType, command_prefix: str, custom_actions: Any)
+```
+
+Register a new host device with custom command mappings.
+
+**Parameters**:
+
+- `host_id`: Unique identifier for the host
+- `harness`: The harness type this host uses
+- `command_prefix`: Prefix to add to all commands (e.g., "ssh user@host")
+- `custom_actions`: Override commands for this specific host
+
+---
+
+## search
+
+```python
+search(self: Any, query: Any, harness: Any, project: Any, limit: int)
+```
+
+Search sessions with filters.
+
+---
+
+## send_signal
+
+```python
+send_signal(self: Any, session_id: str, sig: int)
+```
+
+Send a signal (default SIGINT/Ctrl+C) to an active session.
+
+---
+
+## traverse_by_date
+
+```python
+traverse_by_date(self: Any, start: datetime, end: datetime)
+```
+
+Get sessions in date range.
+
+---
+
+## traverse_by_project
+
+```python
+traverse_by_project(self: Any, project_path: str)
+```
+
+Get all sessions for a project across harnesses.
+
+---
+
+## watch_start
+
+```python
+watch_start(self: Any)
+```
+
+Start live file watching for real-time updates.
+
+---
+
+## watch_stop
+
+```python
+watch_stop(self: Any)
+```
+
+Stop all watchers.
+
+---
+

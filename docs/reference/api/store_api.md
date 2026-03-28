@@ -81,3 +81,4 @@ store(self: Any, artifact: MAIFArtifact)
 Store artifact in local cache.
 
 ---
+

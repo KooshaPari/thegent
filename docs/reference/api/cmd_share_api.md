@@ -46,3 +46,4 @@ execute_shared(self: Any, command: list[str], cwd: Path, env: Any)
 Execute a command or attach to an existing one if already running.
 
 ---
+

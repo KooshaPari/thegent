@@ -1,6 +1,6 @@
 # xml_repair API Reference
 
-> **Source**: `src/thegent/tools/xml_repair.py`
+> **Source**: `src/thegent/utils/xml_repair.py`
 
 ## SloppyXMLRepair
 
@@ -74,3 +74,4 @@ ROB-001: Enhanced with tag balancing heuristics to handle:
 - Nested unclosed tags (tag stack balancing)
 
 ---
+

@@ -7,7 +7,7 @@ JetBrains IDE integration utilities for thegent.
 Provides detection of installed JetBrains IDEs and configuration of the MCP
 server endpoint so the JetBrains AI plugin can connect to thegent.
 
-MCP config path per IDE:  ~/.config/JetBrains/&lt;IDE&gt;/mcp.json
+MCP config path per IDE:  ~/.config/JetBrains/<IDE>/mcp.json
 MCP config format:
     {"mcpServers": {"thegent": {"url": "http://localhost:3847/mcp"}}}
 
@@ -245,3 +245,4 @@ are left untouched.
 - `OSError`: If the config directory cannot be created or written.
 
 ---
+

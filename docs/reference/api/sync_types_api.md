@@ -1,0 +1,165 @@
+# sync_types API Reference
+
+> **Source**: `src/thegent/commands/sync_types.py`
+
+Data types for sync operations.
+
+Provides OperationResult, SyncResult, and SyncOperationStatus
+for tracking sync operation outcomes.
+
+---
+
+## OperationResult
+
+Result of a single sync operation.
+
+### Methods
+
+#### OperationResult.ok
+
+```python
+ok(self: Any)
+```
+
+Check if operation succeeded or was dry run.
+
+---
+
+#### OperationResult.to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Convert to dictionary for serialization.
+
+---
+
+---
+
+## SyncOperationStatus
+
+Status of a single sync operation.
+
+**Inherits from**: `str, Enum`
+
+---
+
+## SyncResult
+
+Aggregate result of a sync run (one or more operations).
+
+### Methods
+
+#### SyncResult.errors
+
+```python
+errors(self: Any)
+```
+
+Flat list of all error strings from failed operations.
+
+---
+
+#### SyncResult.failed_operations
+
+```python
+failed_operations(self: Any)
+```
+
+List of failed operations.
+
+---
+
+#### SyncResult.files_synced
+
+```python
+files_synced(self: Any)
+```
+
+Total number of changes/files synced across all operations.
+
+---
+
+#### SyncResult.success
+
+```python
+success(self: Any)
+```
+
+Check if all operations succeeded.
+
+---
+
+#### SyncResult.to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Convert to dictionary for serialization.
+
+---
+
+---
+
+## errors
+
+```python
+errors(self: Any)
+```
+
+Flat list of all error strings from failed operations.
+
+---
+
+## failed_operations
+
+```python
+failed_operations(self: Any)
+```
+
+List of failed operations.
+
+---
+
+## files_synced
+
+```python
+files_synced(self: Any)
+```
+
+Total number of changes/files synced across all operations.
+
+---
+
+## ok
+
+```python
+ok(self: Any)
+```
+
+Check if operation succeeded or was dry run.
+
+---
+
+## success
+
+```python
+success(self: Any)
+```
+
+Check if all operations succeeded.
+
+---
+
+## to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Convert to dictionary for serialization.
+
+---
+

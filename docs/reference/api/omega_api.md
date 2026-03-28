@@ -73,3 +73,4 @@ minimize_entropy(self: Any, cycle_id: str, proposed_plan: list[dict[(str, Any)]]
 Optimize a plan by pruning redundant or high-entropy actions.
 
 ---
+

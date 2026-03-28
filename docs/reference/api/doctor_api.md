@@ -1,31 +1,120 @@
 # doctor API Reference
 
-> **Source**: `src/thegent/doctor.py`
+> **Source**: `src/thegent/commands/doctor.py`
 
-Doctor module for comprehensive health and preflight checks of thegent environment.
+Proactive doctor --fix command for thegent environment self-healing.
+
+Provides DoctorCheck dataclass and DoctorRunner class that perform 7 lightweight
+environment checks and apply automatic fixes where possible.
+
+# @trace FR-CLI-002
 
 ---
 
-## CheckResult
+## DoctorCheck
+
+Result of a single environment check.
 
 ### Methods
 
-#### CheckResult.__init__
+#### DoctorCheck.apply_fix
 
 ```python
-__init__(self: Any, name: str, category: str)
+apply_fix(self: Any)
 ```
 
----
+Execute the fix action. Returns a description string on success, None if not fixable.
 
 ---
 
-## run_doctor
+---
+
+## DoctorRunner
+
+Runs environment checks and applies automatic fixes.
+
+Checks performed:
+  1.  Python version >= 3.11
+  2.  ANTHROPIC_API_KEY env var set
+  3.  ~/.thegent/ directory exists
+  4.  ~/.thegent/ directory is writable (fix: chmod 700)
+  5.  ~/.thegent/sessions/ directory exists
+  6.  pyproject.toml present in cwd
+  7.  .thegent/config.yaml is valid YAML (fix: thegent config wizard)
+  8.  ruff available on PATH
+  9.  cargo available on PATH
+  10. ~/.config/thegent/ MCP config dir exists
+  11. .shadow-* stale directory cleanup
+  12. .shadow-* directory count > 50 warning
+  13. autosync GA readiness baseline checks
+
+### Methods
+
+#### DoctorRunner.apply_fixes
 
 ```python
-run_doctor(fix: bool)
+apply_fixes(self: Any, checks: list[DoctorCheck])
 ```
 
-Run all health checks and report results.
+Apply fixes for all fixable failing checks.
+
+**Parameters**:
+
+- `checks`: List of DoctorCheck results from run_checks().
+
+**Returns**: List of human-readable strings describing each fix that was applied.
 
 ---
+
+#### DoctorRunner.run_checks
+
+```python
+run_checks(self: Any)
+```
+
+Run all environment checks and return results.
+
+# @trace WL-040 WP-4006
+
+---
+
+---
+
+## apply_fix
+
+```python
+apply_fix(self: Any)
+```
+
+Execute the fix action. Returns a description string on success, None if not fixable.
+
+---
+
+## apply_fixes
+
+```python
+apply_fixes(self: Any, checks: list[DoctorCheck])
+```
+
+Apply fixes for all fixable failing checks.
+
+**Parameters**:
+
+- `checks`: List of DoctorCheck results from run_checks().
+
+**Returns**: List of human-readable strings describing each fix that was applied.
+
+---
+
+## run_checks
+
+```python
+run_checks(self: Any)
+```
+
+Run all environment checks and return results.
+
+# @trace WL-040 WP-4006
+
+---
+

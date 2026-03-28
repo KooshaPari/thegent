@@ -2,6 +2,7 @@
 
 > **Source**: `src/thegent/agents/__init__.py`
 
-Agent runners for thegent.
+Agent runners for thegent - re-exports from thegent-agents package.
 
 ---
+

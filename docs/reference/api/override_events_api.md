@@ -13,17 +13,7 @@ enabling audit trails and downstream reactions.
 
 Structured event emitted when a governance override is activated.
 
-### Methods
-
-#### OverrideActivatedEvent.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to a plain dictionary.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -94,17 +84,7 @@ Read the last *n* events from the JSONL log.
 
 Structured event emitted when a governance override expires.
 
-### Methods
-
-#### OverrideExpiredEvent.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to a plain dictionary.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -283,16 +263,6 @@ Read the last *n* events from the JSONL log.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to a plain dictionary.
-
----
-
 ## unregister
 
 ```python
@@ -306,3 +276,4 @@ Remove an override from monitoring (e.g. if manually revoked).
 - `override_id`: The override to remove.
 
 ---
+

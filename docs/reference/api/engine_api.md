@@ -11,9 +11,11 @@ ExecutionEngine for coordinating agent runs with MAIF, policies, and resource ma
 Orchestrates agent execution with integrated MAIF artifact generation.
 
 This engine coordinates:
-1. Pre-execution signing (MAIF run_start)
-2. Agent execution (via AgentRunner)
-3. Post-execution artifact generation (MAIF run_complete)
+1. Routing decision (Pareto router with hysteresis)
+2. Pre-execution signing (MAIF run_start)
+3. Agent execution (via AgentRunner)
+4. Post-execution artifact generation (MAIF run_complete)
+5. Routing audit logging (Phase 3.3)
 
 ### Methods
 
@@ -28,10 +30,10 @@ __init__(self: Any, settings: Any)
 #### ExecutionEngine.execute
 
 ```python
-execute(self: Any, runner: AgentRunner, run_meta: RunMeta, cwd: Any, mode: str, timeout: int)
+execute(self: Any, runner: AgentRunner, run_meta: RunMeta, cwd: Any, mode: str, timeout: int, skip_routing: bool)
 ```
 
-Execute an agent task and generate MAIF artifacts.
+Execute an agent task with routing and generate MAIF artifacts.
 
 **Parameters**:
 
@@ -40,9 +42,10 @@ Execute an agent task and generate MAIF artifacts.
 - `cwd`: Working directory for the agent.
 - `mode`: Execution mode (e.g. "read-only", "write").
 - `timeout`: Time budget in seconds.
+- `skip_routing`: If True, skip routing decision (for internal use).
 - `**kwargs`: Additional options for the runner.
 
-**Returns**: RunResult from the agent execution.
+**Returns**: Tuple of (RunResult, RoutingDecision).
 
 ---
 
@@ -51,10 +54,10 @@ Execute an agent task and generate MAIF artifacts.
 ## execute
 
 ```python
-execute(self: Any, runner: AgentRunner, run_meta: RunMeta, cwd: Any, mode: str, timeout: int)
+execute(self: Any, runner: AgentRunner, run_meta: RunMeta, cwd: Any, mode: str, timeout: int, skip_routing: bool)
 ```
 
-Execute an agent task and generate MAIF artifacts.
+Execute an agent task with routing and generate MAIF artifacts.
 
 **Parameters**:
 
@@ -63,8 +66,16 @@ Execute an agent task and generate MAIF artifacts.
 - `cwd`: Working directory for the agent.
 - `mode`: Execution mode (e.g. "read-only", "write").
 - `timeout`: Time budget in seconds.
+- `skip_routing`: If True, skip routing decision (for internal use).
 - `**kwargs`: Additional options for the runner.
 
-**Returns**: RunResult from the agent execution.
+**Returns**: Tuple of (RunResult, RoutingDecision).
 
 ---
+
+## get_orchestrator
+
+Get or create the global routing orchestrator.
+
+---
+

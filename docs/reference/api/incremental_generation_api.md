@@ -29,7 +29,7 @@ Initialize incremental generator.
 #### IncrementalGenerator.generate_incremental
 
 ```python
-generate_incremental(self: Any, files: list[Path], generator_func: callable)
+generate_incremental(self: Any, files: list[Path], generator_func: Callable[(Ellipsis, Any)])
 ```
 
 Generate documentation incrementally.
@@ -64,7 +64,7 @@ Get list of changed files.
 ## generate_incremental
 
 ```python
-generate_incremental(self: Any, files: list[Path], generator_func: callable)
+generate_incremental(self: Any, files: list[Path], generator_func: Callable[(Ellipsis, Any)])
 ```
 
 Generate documentation incrementally.
@@ -93,3 +93,4 @@ Get list of changed files.
 **Returns**: List of changed files
 
 ---
+

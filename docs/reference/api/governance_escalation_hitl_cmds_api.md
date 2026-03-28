@@ -1,0 +1,97 @@
+# governance_escalation_hitl_cmds API Reference
+
+> **Source**: `src/thegent/cli/governance/governance_escalation_hitl_cmds.py`
+
+Governance escalation and HITL approval handling commands (WL-124).
+
+This module handles escalation queue management and human-in-the-loop (HITL)
+approval workflows for policy enforcement.
+
+---
+
+## escalate_add_cmd
+
+```python
+escalate_add_cmd(run_id: str, reason: str, sla_minutes: int, owner: Any, lane: str, priority: int)
+```
+
+Add a blocked run to the escalation queue (WP-3008).
+
+---
+
+## escalate_approve_cmd
+
+```python
+escalate_approve_cmd(run_id: Any)
+```
+
+Approve an escalation, recording an override for the owner (G-GP-05).
+
+---
+
+## escalate_list_cmd
+
+```python
+escalate_list_cmd(past_sla_only: bool, limit: int, format: Any)
+```
+
+List governance escalation queue (WP-3008).
+
+---
+
+## escalate_resolve_cmd
+
+```python
+escalate_resolve_cmd(run_id: Any, resolution: str)
+```
+
+Mark an escalation item as resolved (WP-3008).
+
+---
+
+## govern_approve_cmd
+
+```python
+govern_approve_cmd(run_id: str, reason: Any)
+```
+
+WL-019-B: Approve a HITL-blocked run (G-GP-05).
+
+Reads pending approvals from governance_events.jsonl, updates status to
+'approved', and triggers continuation of the blocked run.
+
+---
+
+## govern_list_pending_cmd
+
+```python
+govern_list_pending_cmd(format: Any)
+```
+
+WL-019-B: List all pending HITL approval requests (G-GP-05).
+
+---
+
+## govern_reject_cmd
+
+```python
+govern_reject_cmd(run_id: str, reason: Any)
+```
+
+WL-019-B: Reject a HITL-blocked run (G-GP-05).
+
+Reads pending approvals from governance_events.jsonl, updates status to
+'rejected', and cancels the blocked run.
+
+---
+
+## sweep_cmd
+
+```python
+sweep_cmd(drift_window: int, include_audit: bool, format: Any)
+```
+
+WP-3005: Policy drift sweep - runs drift detection, budget check, past-SLA escalations.
+
+---
+

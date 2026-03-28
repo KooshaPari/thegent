@@ -256,3 +256,4 @@ Each row has keys: id, title, source, priority, depends.
 **Returns**: List of dicts ready to be serialised as WORK_STREAM table rows.
 
 ---
+

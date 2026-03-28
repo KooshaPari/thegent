@@ -33,3 +33,4 @@ Default: system-wide. Scope down only if project requires isolation.
 **Returns**: (scope_type, lockfile_path)
 
 ---
+

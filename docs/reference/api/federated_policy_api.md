@@ -70,7 +70,7 @@ Add *rule* to the registry, replacing any existing rule with the same id.
 resolve_policies(self: Any, namespace: str)
 ```
 
-Resolve all rules for a namespace, following hierarchy (specific -&gt; parent -&gt; global).
+Resolve all rules for a namespace, following hierarchy (specific -> parent -> global).
 
 ---
 
@@ -158,6 +158,7 @@ Add *rule* to the registry, replacing any existing rule with the same id.
 resolve_policies(self: Any, namespace: str)
 ```
 
-Resolve all rules for a namespace, following hierarchy (specific -&gt; parent -&gt; global).
+Resolve all rules for a namespace, following hierarchy (specific -> parent -> global).
 
 ---
+

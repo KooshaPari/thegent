@@ -28,6 +28,30 @@ Ensure a directory exists.
 
 ---
 
+#### ReusableHelpers.error_handler
+
+```python
+error_handler(func: Callable)
+```
+
+Decorator that logs exceptions and returns a safe default.
+
+For methods returning ``list`` the default is ``[]``.
+For methods returning ``bool`` the default is ``False``.
+For all other return types the default is ``None``.
+
+This decorator wraps the function so that unhandled exceptions are
+logged at ERROR level and a sensible empty/falsy value is returned
+instead of propagating the exception.
+
+**Parameters**:
+
+- `func`: The method to wrap.
+
+**Returns**: Wrapped callable.
+
+---
+
 #### ReusableHelpers.find_files
 
 ```python
@@ -43,6 +67,16 @@ Find files matching a pattern.
 - `recursive`: Search recursively
 
 **Returns**: List of matching file paths
+
+---
+
+#### ReusableHelpers.load_config
+
+```python
+load_config(path: Path)
+```
+
+Load config from JSON or YAML file.
 
 ---
 
@@ -153,6 +187,30 @@ Ensure a directory exists.
 
 ---
 
+## error_handler
+
+```python
+error_handler(func: Callable)
+```
+
+Decorator that logs exceptions and returns a safe default.
+
+For methods returning ``list`` the default is ``[]``.
+For methods returning ``bool`` the default is ``False``.
+For all other return types the default is ``None``.
+
+This decorator wraps the function so that unhandled exceptions are
+logged at ERROR level and a sensible empty/falsy value is returned
+instead of propagating the exception.
+
+**Parameters**:
+
+- `func`: The method to wrap.
+
+**Returns**: Wrapped callable.
+
+---
+
 ## find_files
 
 ```python
@@ -168,6 +226,16 @@ Find files matching a pattern.
 - `recursive`: Search recursively
 
 **Returns**: List of matching file paths
+
+---
+
+## load_config
+
+```python
+load_config(path: Path)
+```
+
+Load config from JSON or YAML file.
 
 ---
 
@@ -259,3 +327,4 @@ Safely write a JSON file.
 **Returns**: True if successful
 
 ---
+

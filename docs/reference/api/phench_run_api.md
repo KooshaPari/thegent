@@ -1,0 +1,26 @@
+# phench_run API Reference
+
+> **Source**: `src/thegent/cli/apps/phench_run.py`
+
+Phench direct run command.
+
+---
+
+## register_run_commands
+
+```python
+register_run_commands(app: typer.Typer, run_target_fn: Any)
+```
+
+Register direct run command on the phench app.
+
+---
+
+## run_cmd
+
+```python
+run_cmd(name: str, family: Any, snapshot_id: Any, repo_id: Any, runner: Any, command: Any, ref: Any, branch: Any, all_repos: bool, execution_mode: str, env_profile: Any, no_interactive: bool) -> None
+```
+
+---
+

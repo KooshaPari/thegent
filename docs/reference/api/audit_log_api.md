@@ -28,7 +28,7 @@ __init__(self: Any, audit_path: Path)
 #### ShadowAuditGit.commit_transaction
 
 ```python
-commit_transaction(self: Any, episode_id: str, changed_files: list[Path], message: str)
+commit_transaction(self: Any, episode_id: str, changed_files: list[Path], message: str, remote_host: Any)
 ```
 
 Stage file snapshots (scrubbed) and commit to the audit repo.
@@ -38,6 +38,7 @@ Stage file snapshots (scrubbed) and commit to the audit repo.
 - `episode_id`: Episode identifier to include in commit message.
 - `changed_files`: List of file paths to snapshot into the audit repo.
 - `message`: Commit message (episode_id will be prepended).
+- `remote_host`: If provided, indicates the worker host where change occurred.
 
 ---
 
@@ -99,7 +100,7 @@ path(self: Any)
 ## commit_transaction
 
 ```python
-commit_transaction(self: Any, episode_id: str, changed_files: list[Path], message: str)
+commit_transaction(self: Any, episode_id: str, changed_files: list[Path], message: str, remote_host: Any)
 ```
 
 Stage file snapshots (scrubbed) and commit to the audit repo.
@@ -109,10 +110,7 @@ Stage file snapshots (scrubbed) and commit to the audit repo.
 - `episode_id`: Episode identifier to include in commit message.
 - `changed_files`: List of file paths to snapshot into the audit repo.
 - `message`: Commit message (episode_id will be prepended).
-
-**Raises**:
-
-- `FileNotFoundError`: If any file in changed_files does not exist.
+- `remote_host`: If provided, indicates the worker host where change occurred.
 
 ---
 
@@ -168,3 +166,4 @@ path(self: Any) -> Path
 ```
 
 ---
+

@@ -25,6 +25,16 @@ __init__(self: Any, loop: Any, threshold: float, check_interval: int)
 
 ---
 
+#### HealthThresholdTrigger.run
+
+```python
+run(self: Any, force: bool)
+```
+
+Run a single governance cycle (for health threshold, triggers immediately).
+
+---
+
 #### HealthThresholdTrigger.start
 
 ```python
@@ -73,6 +83,26 @@ Run a single governance cycle.
 
 ---
 
+#### ManualTrigger.start
+
+```python
+start(self: Any)
+```
+
+Start the trigger (no-op for manual mode).
+
+---
+
+#### ManualTrigger.stop
+
+```python
+stop(self: Any)
+```
+
+Stop the trigger (no-op for manual mode).
+
+---
+
 ---
 
 ## TimerTrigger
@@ -88,6 +118,16 @@ Triggers governance cycles at fixed intervals.
 ```python
 __init__(self: Any, loop: Any, config: TriggerConfig)
 ```
+
+---
+
+#### TimerTrigger.run
+
+```python
+run(self: Any, force: bool)
+```
+
+Run a single governance cycle (for timer, triggers immediately).
 
 ---
 
@@ -129,6 +169,14 @@ Protocol for trigger implementations.
 
 ### Methods
 
+#### TriggerProtocol.run
+
+```python
+run(self: Any, force: bool)
+```
+
+---
+
 #### TriggerProtocol.start
 
 ```python
@@ -161,6 +209,16 @@ for changes and triggers cycles after a debounce period without new changes.
 ```python
 __init__(self: Any, loop: Any, config: TriggerConfig)
 ```
+
+---
+
+#### WatchdogTrigger.run
+
+```python
+run(self: Any, force: bool)
+```
+
+Run a single governance cycle (for watchdog, triggers immediately).
 
 ---
 
@@ -237,6 +295,16 @@ Called when a file is modified.
 
 ---
 
+## cli
+
+```python
+cli(mode: str, interval: int, debounce: int, max_cycles: Any, force: bool, watch: Any, project_dir: Path, health_targets: Any, threshold: float, lifecycle_mode: str, watch_health: float, watch_health_interval: int)
+```
+
+Run AgilePlus trigger modes.
+
+---
+
 ## create_trigger
 
 ```python
@@ -293,7 +361,7 @@ Called when a file is modified.
 run(self: Any, force: bool)
 ```
 
-Run a single governance cycle.
+Run a single governance cycle (for health threshold, triggers immediately).
 
 ---
 
@@ -334,3 +402,4 @@ watch_filter(change: Change, path_str: str)
 Filter changes to only process relevant files.
 
 ---
+

@@ -1,0 +1,18 @@
+# execution_hash_helpers API Reference
+
+> **Source**: `src/thegent/execution_hash_helpers.py`
+
+Shared hashing helpers for execution records.
+
+---
+
+## calculate_stable_record_hash
+
+```python
+calculate_stable_record_hash(data: dict[(str, Any)])
+```
+
+Calculate a stable hash for a record, excluding the hash field.
+
+---
+

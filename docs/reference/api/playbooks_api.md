@@ -1,6 +1,6 @@
 # playbooks API Reference
 
-> **Source**: `src/thegent/orchestration/playbooks.py`
+> **Source**: `src/thegent/orchestration/strategies/playbooks.py`
 
 Recovery playbook automation (WP-2004, FR-008).
 
@@ -25,3 +25,4 @@ get_playbook_for_failure(error_message: str)
 Return ordered recovery steps for a failure (playbook).
 
 ---
+

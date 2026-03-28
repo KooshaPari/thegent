@@ -1,0 +1,163 @@
+# inter_agent_protocol API Reference
+
+> **Source**: `src/thegent/orchestration/inter_agent_protocol.py`
+
+WL-080: InterAgentProtocol — Typed Message Schema.
+
+Provides `InterAgentMessage` (Pydantic v2) and `MessageBus` for structured
+in-memory inter-agent communication with asyncio.Queue per subscriber.
+
+# @trace WL-080
+
+---
+
+## InterAgentMessage
+
+Typed message exchanged between agents on the message bus.
+
+# @trace WL-080
+
+**Inherits from**: `BaseModel`
+
+---
+
+## MessageBus
+
+In-memory message bus using asyncio.Queue per subscribed agent.
+
+API:
+    subscribe(agent_id)          -> asyncio.Queue[InterAgentMessage]
+    unsubscribe(agent_id)        -> None  (raises KeyError if not subscribed)
+    publish(msg)                 -> None  (raises KeyError if recipient not subscribed)
+    drain(agent_id, timeout_s)   -> list[InterAgentMessage]
+
+# @trace WL-080
+
+### Methods
+
+#### MessageBus.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+#### MessageBus.drain
+
+```python
+drain(self: Any, agent_id: str, timeout_s: float)
+```
+
+Return all messages currently in *agent_id*'s queue (non-blocking).
+
+Raises KeyError if *agent_id* is not subscribed.
+The *timeout_s* parameter is accepted for API compatibility with
+async callers but is not used in this synchronous drain.
+
+# @trace WL-080
+
+---
+
+#### MessageBus.publish
+
+```python
+publish(self: Any, msg: InterAgentMessage)
+```
+
+Put *msg* into the queue of its recipient.
+
+Raises KeyError if *msg.recipient_id* is not subscribed.
+
+# @trace WL-080
+
+---
+
+#### MessageBus.subscribe
+
+```python
+subscribe(self: Any, agent_id: str)
+```
+
+Register *agent_id* and return its dedicated queue.
+
+If *agent_id* is already subscribed the existing queue is returned.
+
+# @trace WL-080
+
+---
+
+#### MessageBus.unsubscribe
+
+```python
+unsubscribe(self: Any, agent_id: str)
+```
+
+Remove *agent_id*'s queue from the bus.
+
+Raises KeyError if *agent_id* is not subscribed.
+
+# @trace WL-080
+
+---
+
+---
+
+## drain
+
+```python
+drain(self: Any, agent_id: str, timeout_s: float)
+```
+
+Return all messages currently in *agent_id*'s queue (non-blocking).
+
+Raises KeyError if *agent_id* is not subscribed.
+The *timeout_s* parameter is accepted for API compatibility with
+async callers but is not used in this synchronous drain.
+
+# @trace WL-080
+
+---
+
+## publish
+
+```python
+publish(self: Any, msg: InterAgentMessage)
+```
+
+Put *msg* into the queue of its recipient.
+
+Raises KeyError if *msg.recipient_id* is not subscribed.
+
+# @trace WL-080
+
+---
+
+## subscribe
+
+```python
+subscribe(self: Any, agent_id: str)
+```
+
+Register *agent_id* and return its dedicated queue.
+
+If *agent_id* is already subscribed the existing queue is returned.
+
+# @trace WL-080
+
+---
+
+## unsubscribe
+
+```python
+unsubscribe(self: Any, agent_id: str)
+```
+
+Remove *agent_id*'s queue from the bus.
+
+Raises KeyError if *agent_id* is not subscribed.
+
+# @trace WL-080
+
+---
+

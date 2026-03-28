@@ -53,9 +53,10 @@ sync_configs(self: Any)
 
 Synchronize configurations across systems.
 
-Ensures consistency between different configuration sources.
-This is a simplified version - full implementation would
-handle conflicts and merge strategies.
+Applies deterministic precedence rules:
+``thegent > manage > workstream > plan``.
+When conflicts are detected, the higher-priority value wins and
+reconciled values are persisted back to source files.
 
 ---
 
@@ -86,8 +87,10 @@ sync_configs(self: Any)
 
 Synchronize configurations across systems.
 
-Ensures consistency between different configuration sources.
-This is a simplified version - full implementation would
-handle conflicts and merge strategies.
+Applies deterministic precedence rules:
+``thegent > manage > workstream > plan``.
+When conflicts are detected, the higher-priority value wins and
+reconciled values are persisted back to source files.
 
 ---
+

@@ -1,0 +1,22 @@
+# session_health_trend_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/session_health_trend_impl.py`
+
+Session contract health trend logic.
+
+Extracted from session_health_report_impl.py as part of LOC reduction.
+Contains:
+- session_contract_health_trend_impl: recent health snapshots and deltas
+
+---
+
+## session_contract_health_trend_impl
+
+```python
+session_contract_health_trend_impl(payload_type: str, owner: Any, all: bool, strict: bool, policy_profile: Any, min_healthy_ratio: float, top_blocked: int, limit: int)
+```
+
+Return recent health snapshots and deltas for a given policy/query scope.
+
+---
+

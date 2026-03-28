@@ -1,0 +1,20 @@
+# write_receipts API Reference
+
+> **Source**: `src/thegent/integrations/write_receipts.py`
+
+Stub module for thegent.integrations.write_receipts.
+
+---
+
+## WriteReceipt
+
+Stub class.
+
+---
+
+## WriteReceiptLog
+
+Stub class.
+
+---
+

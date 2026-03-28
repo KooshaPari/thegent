@@ -68,7 +68,7 @@ Generate SHA-256 hash of a dictionary artifact.
 ## sign_artifact
 
 ```python
-sign_artifact(data: dict[(str, Any)], secret_key: str)
+sign_artifact(data: dict[(str, Any)], signing_key: Any)
 ```
 
 Produce a provenance signature for an artifact using HMAC-SHA256.
@@ -88,9 +88,10 @@ Verify the signature of an artifact envelope.
 ## verify_signature
 
 ```python
-verify_signature(data: dict[(str, Any)], signature: str, secret_key: str)
+verify_signature(data: dict[(str, Any)], signature: str, signing_key: Any)
 ```
 
 Verify the provenance signature of an artifact.
 
 ---
+

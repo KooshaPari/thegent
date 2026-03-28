@@ -59,7 +59,7 @@ Execute a plan, delegating nodes to sub-agents.
 **Parameters**:
 
 - `plan`: The Plan to execute.
-- `runner`: Callable (PlanNode) -&gt; str invoked for each node.
+- `runner`: Callable (PlanNode) -> str invoked for each node.
 
 **Returns**: The mutated plan with updated statuses.
 
@@ -166,7 +166,7 @@ Execute a plan, delegating nodes to sub-agents.
 **Parameters**:
 
 - `plan`: The Plan to execute.
-- `runner`: Callable (PlanNode) -&gt; str invoked for each node.
+- `runner`: Callable (PlanNode) -> str invoked for each node.
 
 **Returns**: The mutated plan with updated statuses.
 
@@ -244,3 +244,4 @@ Set a context value to be passed down the hierarchy.
 - `value`: Context value.
 
 ---
+

@@ -2,24 +2,26 @@
 
 > **Source**: `src/thegent/observability/egress.py`
 
-WP-15001: External SOC/SIEM event egress for enterprise observability.
+Structured SIEM egress helpers.
 
 ---
 
 ## EgressEvent
 
+Structured event payload for external egress sinks.
+
 ---
 
 ## SIEMEgress
 
-Pushes normalized events to external enterprise security systems (WP-15001).
+Push governance events to an HTTP SIEM endpoint.
 
 ### Methods
 
 #### SIEMEgress.__init__
 
 ```python
-__init__(self: Any, endpoint_url: Any)
+__init__(self: Any, endpoint_url: str)
 ```
 
 ---
@@ -30,7 +32,7 @@ __init__(self: Any, endpoint_url: Any)
 format_for_syslog(self: Any, event: EgressEvent)
 ```
 
-Format the event for traditional RFC 5424 syslog.
+Render a compact syslog-style line for an event.
 
 ---
 
@@ -40,7 +42,7 @@ Format the event for traditional RFC 5424 syslog.
 push_event(self: Any, event: EgressEvent)
 ```
 
-Push an event to the external SIEM endpoint via HTTP POST.
+Send an event to the configured SIEM endpoint.
 
 ---
 
@@ -52,7 +54,7 @@ Push an event to the external SIEM endpoint via HTTP POST.
 format_for_syslog(self: Any, event: EgressEvent)
 ```
 
-Format the event for traditional RFC 5424 syslog.
+Render a compact syslog-style line for an event.
 
 ---
 
@@ -62,6 +64,7 @@ Format the event for traditional RFC 5424 syslog.
 push_event(self: Any, event: EgressEvent)
 ```
 
-Push an event to the external SIEM endpoint via HTTP POST.
+Send an event to the configured SIEM endpoint.
 
 ---
+

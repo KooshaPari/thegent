@@ -210,3 +210,4 @@ Execute a JavaScript for Automation (JXA) snippet via *osascript*.
 **Returns**: AutomationResult with success flag, stdout, and optional error.
 
 ---
+

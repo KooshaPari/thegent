@@ -1,6 +1,6 @@
 # models API Reference
 
-> **Source**: `src/thegent/routing/models.py`
+> **Source**: `src/thegent/utils/routing_impl/models.py`
 
 ## RoutingConstraint
 
@@ -21,3 +21,4 @@ Task complexity classification.
 Routing and classification metadata for a task.
 
 ---
+

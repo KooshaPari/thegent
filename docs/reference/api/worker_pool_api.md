@@ -1,6 +1,6 @@
 # worker_pool API Reference
 
-> **Source**: `src/thegent/orchestration/worker_pool.py`
+> **Source**: `src/thegent/orchestration/execution/worker_pool.py`
 
 MTSP-06: Persistent Python Worker Pool.
 
@@ -85,3 +85,4 @@ stop(self: Any)
 Shut down the pool.
 
 ---
+

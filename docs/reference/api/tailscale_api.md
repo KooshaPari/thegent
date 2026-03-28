@@ -178,3 +178,4 @@ Ping *hostname* via ``tailscale ping``.
 - `TailscaleError`: If the binary is not available.
 
 ---
+

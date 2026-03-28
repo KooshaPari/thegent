@@ -1,6 +1,6 @@
 # swarm_memory API Reference
 
-> **Source**: `src/thegent/orchestration/swarm_memory.py`
+> **Source**: `src/thegent/orchestration/consensus/swarm_memory.py`
 
 WP-24003: Swarm Memory Consolidation.
 
@@ -18,7 +18,7 @@ Synthesizes memory artifacts from multiple agents into a unified view.
 #### SwarmMemoryConsolidator.__init__
 
 ```python
-__init__(self: Any, swarm_id: str, local_memory: DualMemory)
+__init__(self: Any, swarm_id: str, local_memory: MemorySystem)
 ```
 
 ---
@@ -44,3 +44,4 @@ consolidate(self: Any, peer_memories: list[dict[(str, Any)]])
 Consolidate peer memories with local memory.
 
 ---
+

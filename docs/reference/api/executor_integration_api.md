@@ -33,7 +33,7 @@ Initialize executor with optional isolation.
 #### IsolatedExecutor.execute_for_tenant
 
 ```python
-execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list, timeout_sec: int)
+execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list[str], timeout_sec: int)
 ```
 
 Execute a command for a tenant with optional isolation.
@@ -81,7 +81,7 @@ Output: hello
 ## execute_for_tenant
 
 ```python
-execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list, timeout_sec: int)
+execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list[str], timeout_sec: int)
 ```
 
 Execute a command for a tenant with optional isolation.
@@ -100,3 +100,4 @@ tenant contexts.
 **Returns**: Execution result dict with returncode, stdout, stderr
 
 ---
+

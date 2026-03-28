@@ -16,7 +16,7 @@ Detect known agents from running processes using regex patterns.
 
 **Parameters**:
 
-- `patterns`: Dict of agent name -&gt; regex pattern
+- `patterns`: Dict of agent name -> regex pattern
 
 ---
 
@@ -27,3 +27,4 @@ Get list of running processes with PIDs and command lines.
 Uses /proc on Linux and ps on macOS.
 
 ---
+

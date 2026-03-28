@@ -115,3 +115,4 @@ Optimize images (WebP/AVIF, lazy loading).
 **Returns**: Optimization configuration
 
 ---
+

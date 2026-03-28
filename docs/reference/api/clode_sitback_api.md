@@ -1,0 +1,38 @@
+# clode_sitback API Reference
+
+> **Source**: `src/thegent/clode_sitback.py`
+
+Sitback commands for clode CLI.
+
+Provides human-interactive AI sessions with optional tmux support.
+Extracted from clode_main.py for maintainability.
+
+---
+
+## resolve_sitback_model
+
+```python
+resolve_sitback_model(model_alias: str)
+```
+
+Resolve a model alias to its full model name.
+
+---
+
+## wrap_with_caffeinate
+
+```python
+wrap_with_caffeinate(cmd: list[str], label: str)
+```
+
+Wrap command with caffeinate on macOS to prevent sleep.
+
+**Parameters**:
+
+- `cmd`: Command to wrap
+- `label`: Label for debugging
+
+**Returns**: Wrapped command or original if not macOS
+
+---
+

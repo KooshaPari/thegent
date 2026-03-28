@@ -1,6 +1,6 @@
 # release_packager API Reference
 
-> **Source**: `src/thegent/tools/release_packager.py`
+> **Source**: `src/thegent/utils/release_packager.py`
 
 WP-12009: Automation of release docs packaging.
 
@@ -43,3 +43,4 @@ compile_package(self: Any, version: str)
 Compile all required documents and generate checksums.
 
 ---
+

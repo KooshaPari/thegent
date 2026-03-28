@@ -1,6 +1,6 @@
 # fork_guard API Reference
 
-> **Source**: `src/thegent/orchestration/fork_guard.py`
+> **Source**: `src/thegent/orchestration/resilience/fork_guard.py`
 
 WP-21001: Fork Explosion Guard.
 
@@ -69,3 +69,4 @@ register_run(self: Any, run_id: str, parent_id: Any)
 Register a new run, inheriting depth from parent.
 
 ---
+

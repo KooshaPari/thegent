@@ -1,6 +1,6 @@
 # shm API Reference
 
-> **Source**: `src/thegent/orchestration/shm.py`
+> **Source**: `src/thegent/orchestration/state/shm.py`
 
 ## SHMSystem
 
@@ -77,7 +77,7 @@ get_shm_system(session_dir: Path) -> SHMSystem
 ## get_xp_state
 
 ```python
-get_xp_state(self: Any) -> dict[(str, Any)]
+get_xp_state(self: Any) -> Any
 ```
 
 ---
@@ -113,3 +113,4 @@ set_level(self: Any, level: int)
 ```
 
 ---
+

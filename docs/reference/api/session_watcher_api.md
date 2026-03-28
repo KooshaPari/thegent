@@ -1,6 +1,6 @@
 # session_watcher API Reference
 
-> **Source**: `src/thegent/orchestration/session_watcher.py`
+> **Source**: `src/thegent/orchestration/state/session_watcher.py`
 
 Session event watcher for auto-launch system.
 
@@ -136,3 +136,4 @@ Stop watching for events.
 ## watch_loop
 
 ---
+

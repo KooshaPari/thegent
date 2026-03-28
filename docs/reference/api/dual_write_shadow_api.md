@@ -1,0 +1,139 @@
+# dual_write_shadow API Reference
+
+> **Source**: `src/thegent/integrations/dual_write_shadow.py`
+
+Dual-write shadow mode for observing external system mutations.
+
+Implements an observe-only shadow mode before enabling full external mutation.
+Enables comparison between primary and shadow write results to identify divergences.
+
+# @trace WL-243
+
+---
+
+## DualWriteShadowMode
+
+Manages dual-write shadow mode for observing system mutations.
+
+### Methods
+
+#### DualWriteShadowMode.__init__
+
+```python
+__init__(self: Any, enabled: bool)
+```
+
+Initialize the dual-write shadow mode.
+
+**Parameters**:
+
+- `enabled`: Whether shadow mode is enabled.
+
+---
+
+#### DualWriteShadowMode.divergences
+
+```python
+divergences(self: Any, results: list[ShadowWriteResult])
+```
+
+Filter results where primary and shadow outcomes diverged.
+
+**Parameters**:
+
+- `results`: List of ShadowWriteResult objects to filter.
+
+**Returns**: List of results where primary_ok != shadow_ok.
+
+---
+
+#### DualWriteShadowMode.is_enabled
+
+```python
+is_enabled(self: Any)
+```
+
+Check if shadow mode is enabled.
+
+**Returns**: True if shadow mode is enabled, False otherwise.
+
+---
+
+#### DualWriteShadowMode.write
+
+```python
+write(self: Any, record_id: str, primary_fn: Callable[(Any, bool)], shadow_fn: Callable[(Any, bool)])
+```
+
+Execute a dual-write operation with shadow mode.
+
+Always executes primary_fn. If enabled, also executes shadow_fn
+and records the results for later analysis.
+
+**Parameters**:
+
+- `record_id`: Identifier for the record being written.
+- `primary_fn`: Function that performs the primary write. Should return True on success.
+- `shadow_fn`: Function that performs the shadow write. Should return True on success.
+
+**Returns**: ShadowWriteResult containing the outcome of both writes.
+
+---
+
+---
+
+## ShadowWriteResult
+
+Result of a dual-write operation comparing primary and shadow writes.
+
+---
+
+## divergences
+
+```python
+divergences(self: Any, results: list[ShadowWriteResult])
+```
+
+Filter results where primary and shadow outcomes diverged.
+
+**Parameters**:
+
+- `results`: List of ShadowWriteResult objects to filter.
+
+**Returns**: List of results where primary_ok != shadow_ok.
+
+---
+
+## is_enabled
+
+```python
+is_enabled(self: Any)
+```
+
+Check if shadow mode is enabled.
+
+**Returns**: True if shadow mode is enabled, False otherwise.
+
+---
+
+## write
+
+```python
+write(self: Any, record_id: str, primary_fn: Callable[(Any, bool)], shadow_fn: Callable[(Any, bool)])
+```
+
+Execute a dual-write operation with shadow mode.
+
+Always executes primary_fn. If enabled, also executes shadow_fn
+and records the results for later analysis.
+
+**Parameters**:
+
+- `record_id`: Identifier for the record being written.
+- `primary_fn`: Function that performs the primary write. Should return True on success.
+- `shadow_fn`: Function that performs the shadow write. Should return True on success.
+
+**Returns**: ShadowWriteResult containing the outcome of both writes.
+
+---
+

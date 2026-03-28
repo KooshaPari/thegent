@@ -1,6 +1,6 @@
 # prompts API Reference
 
-> **Source**: `src/thegent/orchestration/prompts.py`
+> **Source**: `src/thegent/orchestration/execution/prompts.py`
 
 WP-Y5: Hierarchical prompt orchestration.
 
@@ -67,3 +67,4 @@ route_subtasks(self: Any, sub_tasks: list[dict[(str, Any)]])
 Assign appropriate agents to sub-tasks based on content.
 
 ---
+

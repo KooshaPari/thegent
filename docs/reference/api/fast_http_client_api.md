@@ -8,7 +8,6 @@ This module provides a high-performance abstraction layer for HTTP requests
 that automatically selects the fastest available backend:
 - curl_cffi: 2-3x faster, libcurl-based, browser fingerprinting
 - httpx: Modern, well-maintained, good async/sync support
-- requests: Legacy fallback
 
 Performance improvements:
 - curl_cffi uses libcurl (2-3x faster than httpx)
@@ -27,11 +26,9 @@ OPT-004: Connection pooling for provider HTTP clients (40% connection overhead r
 Backend priority (fastest first):
 1. curl_cffi (if installed) - 2-3x faster, libcurl-based
 2. httpx (modern, well-maintained) - good balance, supports connection pooling
-3. requests (legacy fallback) - baseline, supports Session pooling
 
 Connection pooling:
 - httpx: Uses persistent Client with connection pool
-- requests: Uses Session with connection pool
 - curl_cffi: Uses persistent session (implicit pooling)
 
 ### Methods
@@ -76,16 +73,7 @@ Close connection pool.
 get(self: Any, url: str)
 ```
 
-Perform GET request using connection pool.
-
-OPT-004: Uses persistent client for connection reuse.
-
-**Parameters**:
-
-- `url`: URL to request
-- `**kwargs`: Additional request options
-
-**Returns**: Response object
+Perform GET request using connection pool (FR-LIB-001).
 
 ---
 
@@ -95,16 +83,7 @@ OPT-004: Uses persistent client for connection reuse.
 post(self: Any, url: str)
 ```
 
-Perform POST request using connection pool.
-
-OPT-004: Uses persistent client for connection reuse.
-
-**Parameters**:
-
-- `url`: URL to request
-- `**kwargs`: Additional request options
-
-**Returns**: Response object
+Perform POST request using connection pool (FR-LIB-001).
 
 ---
 
@@ -114,17 +93,7 @@ OPT-004: Uses persistent client for connection reuse.
 request(self: Any, method: str, url: str)
 ```
 
-Perform HTTP request using connection pool.
-
-OPT-004: Uses persistent client for connection reuse.
-
-**Parameters**:
-
-- `method`: HTTP method (GET, POST, etc.)
-- `url`: URL to request
-- `**kwargs`: Additional request options
-
-**Returns**: Response object
+Perform HTTP request using connection pool and tenacity retries (FR-LIB-001).
 
 ---
 
@@ -156,16 +125,7 @@ Close connection pool.
 get(self: Any, url: str)
 ```
 
-Perform GET request using connection pool.
-
-OPT-004: Uses persistent client for connection reuse.
-
-**Parameters**:
-
-- `url`: URL to request
-- `**kwargs`: Additional request options
-
-**Returns**: Response object
+Perform GET request using connection pool (FR-LIB-001).
 
 ---
 
@@ -221,16 +181,7 @@ Perform HTTP request using fastest available backend.
 post(self: Any, url: str)
 ```
 
-Perform POST request using connection pool.
-
-OPT-004: Uses persistent client for connection reuse.
-
-**Parameters**:
-
-- `url`: URL to request
-- `**kwargs`: Additional request options
-
-**Returns**: Response object
+Perform POST request using connection pool (FR-LIB-001).
 
 ---
 
@@ -240,16 +191,7 @@ OPT-004: Uses persistent client for connection reuse.
 request(self: Any, method: str, url: str)
 ```
 
-Perform HTTP request using connection pool.
-
-OPT-004: Uses persistent client for connection reuse.
-
-**Parameters**:
-
-- `method`: HTTP method (GET, POST, etc.)
-- `url`: URL to request
-- `**kwargs`: Additional request options
-
-**Returns**: Response object
+Perform HTTP request using connection pool and tenacity retries (FR-LIB-001).
 
 ---
+

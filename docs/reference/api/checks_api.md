@@ -1,0 +1,201 @@
+# checks API Reference
+
+> **Source**: `src/thegent/govern/vetter/checks.py`
+
+Concrete VetterCheck implementations for the Vetter governance layer.
+
+Six checks:
+  1. SchemaCheck      -- jsonschema validation against a JSON Schema dict
+  2. DiffSizeCheck    -- reject outputs where diff exceeds max_lines
+  3. SafetyCheck      -- delegates to SemanticFirewall.inspect_output()
+  4. LLMJudgeCheck    -- G-Eval-style LLM judge via CLIProxy (bifrost)
+  5. TestPassCheck    -- runs pytest via asyncio.create_subprocess_exec
+  6. RuffCheck        -- runs ruff check via asyncio.create_subprocess_exec
+
+All implement VetterCheck (Protocol). Fail fast, fail loudly.
+No silent fallbacks, no legacy shims.
+
+# @trace WL-090
+
+---
+
+## DiffSizeCheck
+
+Reject outputs where unified-diff line count exceeds max_lines.
+
+Parses the output as a unified diff -- no subprocess.
+# @trace WL-090
+
+---
+
+## DiffSizeVetterCheck
+
+Reject outputs where unified-diff line count exceeds max_lines_changed.
+
+Counts lines starting with '+' or '-', excluding '+++' / '---' headers.
+Fails fast when count > max_lines_changed (strict greater-than).
+No external dependencies.
+# @trace WL-091
+
+---
+
+## LLMJudgeCheck
+
+G-Eval-style LLM-as-judge scoring via LiteLLM router.
+
+judge_model: any LiteLLM-compatible model string.
+criteria: list of criterion names to score (1-5 Likert).
+pass_threshold: weighted mean score / 5 must exceed this (0.0-1.0).
+# @trace WL-090
+
+---
+
+## QualityScoreVetterCheck
+
+LLM-as-judge quality scoring check using a structured rubric and 1-5 Likert scores.
+
+Judge response JSON contract:
+  {
+    "scores": {"criterion": <int 1-5>, ...},
+    "pass_verdict": true|false,
+    "critique": "..."
+  }
+
+pass_threshold applies to mean(scores) / 5.0 (normalised to 0.0-1.0).
+min_criterion_score is an integer in [1, 5] — each criterion must meet this floor.
+When judge_model="auto", CapabilityIndex.recommend("quality scoring") selects the model.
+
+# @trace WL-095
+
+### Methods
+
+---
+
+## RuffCheck
+
+Run ruff check on Python files touched in the diff.
+
+Uses asyncio.create_subprocess_exec -- not shim_run.
+Fails fast: non-zero ruff exit code = passed=False.
+# @trace WL-090
+
+---
+
+## RuffVetterCheck
+
+Run ruff check on Python files touched in the diff.
+
+Extracts changed .py files from the unified diff in ``output`` (the agent's
+RunResult.stdout).  If no Python files are found in the diff, returns
+passed=True (nothing to lint).
+
+Uses shim_run (not asyncio.create_subprocess_exec) so that tests can
+mock shim_run without an asyncio harness.
+
+fix_mode=True passes --fix to ruff (auto-fix enabled).
+select_rules limits which rules are evaluated via --select.
+
+Fail fast: non-zero ruff exit code -> passed=False, revision_hint contains
+the full ruff output.  No silent error handling.
+
+# @trace WL-097
+
+---
+
+## SafetyCheck
+
+Delegate content safety evaluation to SemanticFirewall.
+
+If firewall is None, raises VetterConfigError on construction.
+block action -> passed=False (hard reject).
+warn / redact action -> passed=False (revision candidate).
+# @trace WL-090
+
+### Methods
+
+---
+
+## SafetyVetterCheck
+
+Check output for secrets and PII using pure-regex patterns.
+
+Secret patterns (checked first):
+  - Bearer tokens (Authorization: Bearer ...)
+  - AWS access keys (AKIA...)
+  - GitHub PATs (ghp_...)
+  - OpenAI-style API keys (sk-...)
+
+PII patterns (checked if no secrets found):
+  - Email addresses
+  - US SSN pattern (NNN-NN-NNNN)
+
+If secrets found: passed=False, reason="Secret pattern detected"
+If PII found:     passed=False, reason="PII pattern detected"
+No external dependencies. Fail fast, fail loudly.
+# @trace WL-091
+
+---
+
+## SchemaCheck
+
+Validate agent output (parsed as JSON) against a JSON Schema dict.
+
+Raises VetterConfigError if schema is not provided.
+Fails (passed=False) if JSON parsing or schema validation fails.
+# @trace WL-090
+
+---
+
+## SchemaVetterCheck
+
+Validate JSON agent output against a Pydantic BaseModel schema.
+
+target selects which stream to parse:
+  - "stdout"   (default): uses context["stdout"]
+  - "stderr":             uses context["stderr"]
+  - "combined":           concatenates context["stdout"] + context["stderr"]
+
+Fails fast:
+  - passed=False, reason="JSON parse failed: {e}" on JSONDecodeError
+  - passed=False, reason="Schema validation failed: {e}" on ValidationError
+
+No silent fallbacks. No external dependencies beyond Pydantic.
+# @trace WL-091
+
+### Methods
+
+---
+
+## TestPassCheck
+
+Run pytest (or configured test command); fail if exit code is non-zero.
+
+Uses asyncio.create_subprocess_exec -- not shim_run.
+# @trace WL-090
+
+---
+
+## TestPassVetterCheck
+
+Run pytest (or configured test runner) on changed Python files from the diff.
+
+Extracts changed .py files from the unified diff in ``output`` (the agent's
+RunResult.stdout).  If no Python files are found in the diff, runs pytest
+with no file arguments (i.e., the full suite).
+
+Uses shim_run (not asyncio.create_subprocess_exec) so that tests can
+mock shim_run without an asyncio harness.
+
+Fail fast: non-zero exit code -> passed=False, revision_hint contains the
+truncated test output.  No silent error handling.
+
+# @trace WL-097
+
+---
+
+## _QualityJudgePayload
+
+**Inherits from**: `BaseModel`
+
+---
+

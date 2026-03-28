@@ -1,0 +1,33 @@
+# install_constants API Reference
+
+> **Source**: `src/thegent/install_constants.py`
+
+Constants and static mappings used by install workflows.
+
+---
+
+## detect_installed_harnesses
+
+Auto-detect which harnesses are installed on the system.
+
+Returns list of detected harness names (e.g., ["claude-code", "codex", "droid"])
+
+---
+
+## get_targets_for_install
+
+```python
+get_targets_for_install(target: str, auto_detect: bool)
+```
+
+Get list of targets to install based on target parameter.
+
+**Parameters**:
+
+- `target`: Target string ("all", "auto", specific target, or comma-separated list)
+- `auto_detect`: If True and target="auto", detect installed harnesses
+
+**Returns**: List of target names to install
+
+---
+

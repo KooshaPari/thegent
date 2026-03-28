@@ -48,7 +48,7 @@ If a slot with the same ID already exists it is replaced.
 
 - `compositor`: The :class:`Compositor` to manage.
 - `slot_id`: Unique identifier for the slot.
-- `weight`: Relative size weight (must be &gt; 0).
+- `weight`: Relative size weight (must be > 0).
 
 ---
 
@@ -203,7 +203,7 @@ If a slot with the same ID already exists it is replaced.
 
 - `compositor`: The :class:`Compositor` to manage.
 - `slot_id`: Unique identifier for the slot.
-- `weight`: Relative size weight (must be &gt; 0).
+- `weight`: Relative size weight (must be > 0).
 
 ---
 
@@ -329,3 +329,4 @@ Change the current layout.
 - `layout`: New :class:`Layout` value.
 
 ---
+

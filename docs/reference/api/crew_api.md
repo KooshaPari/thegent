@@ -1,89 +1,60 @@
 # crew API Reference
 
-> **Source**: `src/thegent/agent/crew.py`
+> **Source**: `src/thegent/cli/apps/crew.py`
 
-Agent Crew stack implementation.
+Logical stream: top-level crew management commands.
 
 ---
 
-## Crew
-
-Agent crew for coordinating multiple agents.
-
-### Methods
-
-#### Crew.__init__
+## add_agent_cmd
 
 ```python
-__init__(self: Any, agents: list[Any])
+add_agent_cmd(crew_id: str, role: str, name: str, description: str, capabilities: str, model: str) -> None
 ```
-
-Initialize crew.
-
-**Parameters**:
-
-- `agents`: List of agents in the crew
 
 ---
 
-#### Crew.add_agent
+## add_task_cmd
 
 ```python
-add_agent(self: Any, agent: Any)
+add_task_cmd(crew_id: str, description: str, dependencies: str, agent_id: str) -> None
 ```
-
-Add an agent to the crew.
-
-**Parameters**:
-
-- `agent`: Agent to add
 
 ---
 
-#### Crew.execute
+## create_cmd
 
 ```python
-execute(self: Any, task: dict[(str, Any)])
+create_cmd(name: str, description: str, mode: str, output: str) -> None
 ```
 
-Execute a task with the crew.
-
-**Parameters**:
-
-- `task`: Task dictionary
-
-**Returns**: Execution result
-
 ---
 
----
-
-## add_agent
+## execute_cmd
 
 ```python
-add_agent(self: Any, agent: Any)
+execute_cmd(crew_file: str, cwd: str, mode: str, timeout: int, model: str) -> None
 ```
-
-Add an agent to the crew.
-
-**Parameters**:
-
-- `agent`: Agent to add
 
 ---
 
-## execute
+## list_cmd
+
+---
+
+## show_cmd
 
 ```python
-execute(self: Any, task: dict[(str, Any)])
+show_cmd(crew_id: str) -> None
 ```
 
-Execute a task with the crew.
+---
 
-**Parameters**:
+## status_cmd
 
-- `task`: Task dictionary
-
-**Returns**: Execution result
+```python
+status_cmd(crew_id: str) -> None
+```
 
 ---
+

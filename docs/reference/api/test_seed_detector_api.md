@@ -705,3 +705,4 @@ test_uppercase_consider(self: Any)
 Test uppercase 'CONSIDER' detection.
 
 ---
+

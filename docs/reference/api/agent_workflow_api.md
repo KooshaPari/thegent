@@ -53,7 +53,7 @@ Execute the workflow.
 #### AgentWorkflow.register_step
 
 ```python
-register_step(self: Any, name: str, func: callable, dependencies: Any)
+register_step(self: Any, name: str, func: Callable[(Ellipsis, Any)], dependencies: Any)
 ```
 
 Register a workflow step.
@@ -99,7 +99,7 @@ Execute the workflow.
 ## register_step
 
 ```python
-register_step(self: Any, name: str, func: callable, dependencies: Any)
+register_step(self: Any, name: str, func: Callable[(Ellipsis, Any)], dependencies: Any)
 ```
 
 Register a workflow step.
@@ -111,3 +111,4 @@ Register a workflow step.
 - `dependencies`: List of step names this depends on
 
 ---
+

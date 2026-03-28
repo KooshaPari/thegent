@@ -8,7 +8,11 @@ Sub-user isolation provider implementation.
 
 ## SubUserIsolationProvider
 
-Isolation provider using sub-user UIDs and temporary home directories.
+Optimized isolation provider using persistent UID pools,
+
+VFS-backed home directories, and resource guardrails.
+
+Supports L1/L2 nesting via OSUserManager.
 
 **Inherits from**: `IsolationProvider`
 
@@ -17,7 +21,7 @@ Isolation provider using sub-user UIDs and temporary home directories.
 #### SubUserIsolationProvider.__init__
 
 ```python
-__init__(self: Any, base_home_dir: str, base_uid: int, uid_pool_size: int)
+__init__(self: Any, base_home_dir: str, base_uid: int, uid_pool_size: int, state_dir: Any, skel_dir: Any, enable_l1_nesting: bool)
 ```
 
 Initialize SubUserIsolationProvider.
@@ -27,18 +31,21 @@ Initialize SubUserIsolationProvider.
 - `base_home_dir`: Base directory for tenant home directories
 - `base_uid`: Starting UID for tenant allocation
 - `uid_pool_size`: Maximum number of tenants (pool size)
+- `state_dir`: Directory for persistence (defaults to base_home_dir/.state)
+- `skel_dir`: Skeleton directory for home dir templates
+- `enable_l1_nesting`: Whether to use real OS users for L1 identity
 
 ---
 
 #### SubUserIsolationProvider.allocate_tenant
 
 ```python
-allocate_tenant(self: Any, tenant_id: str, agent_id: Any)
+allocate_tenant(self: Any, tenant_id: str, agent_id: Any, role: Any)
 ```
 
-Allocate resources for a tenant.
+Allocate resources for a tenant using persistent UID pool and VFS.
 
-Uses hash-based UID allocation to ensure idempotency.
+Supports optional L1 OS User creation.
 
 ---
 
@@ -50,19 +57,17 @@ cleanup_tenant(self: Any, context: TenantContext)
 
 Clean up resources allocated for a tenant.
 
-Removes the tenant's home directory and evicts from cache.
-
 ---
 
 #### SubUserIsolationProvider.execute_in_context
 
 ```python
-execute_in_context(self: Any, context: TenantContext, command: list, timeout_sec: int)
+execute_in_context(self: Any, context: TenantContext, command: list, timeout_sec: int, limits: Any, share: bool)
 ```
 
-Execute a command in the tenant's isolated context.
+Execute a command in the tenant's isolated context with resource guardrails.
 
-Environment variables and working directory are set from context.
+If 'share' is True, uses CommandSharer to debounce and attach to existing runs.
 
 ---
 
@@ -71,12 +76,12 @@ Environment variables and working directory are set from context.
 ## allocate_tenant
 
 ```python
-allocate_tenant(self: Any, tenant_id: str, agent_id: Any)
+allocate_tenant(self: Any, tenant_id: str, agent_id: Any, role: Any)
 ```
 
-Allocate resources for a tenant.
+Allocate resources for a tenant using persistent UID pool and VFS.
 
-Uses hash-based UID allocation to ensure idempotency.
+Supports optional L1 OS User creation.
 
 ---
 
@@ -88,18 +93,23 @@ cleanup_tenant(self: Any, context: TenantContext)
 
 Clean up resources allocated for a tenant.
 
-Removes the tenant's home directory and evicts from cache.
-
 ---
 
 ## execute_in_context
 
 ```python
-execute_in_context(self: Any, context: TenantContext, command: list, timeout_sec: int)
+execute_in_context(self: Any, context: TenantContext, command: list, timeout_sec: int, limits: Any, share: bool)
 ```
 
-Execute a command in the tenant's isolated context.
+Execute a command in the tenant's isolated context with resource guardrails.
 
-Environment variables and working directory are set from context.
+If 'share' is True, uses CommandSharer to debounce and attach to existing runs.
 
 ---
+
+## preexec_fn
+
+Apply POSIX resource limits before execution.
+
+---
+

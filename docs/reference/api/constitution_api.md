@@ -75,3 +75,4 @@ generate_poa(self: Any, action_id: str, aligned: bool)
 Generate a Proof of Alignment for a MAIF artifact.
 
 ---
+

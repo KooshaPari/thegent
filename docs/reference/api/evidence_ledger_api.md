@@ -65,12 +65,19 @@ Query evidence events, optionally filtering by cycle_id and/or event_type.
 #### EvidenceLedger.record
 
 ```python
-record(self: Any, event_type: str, cycle_id: str, payload: dict[(str, Any)])
+record(self: Any, event_type: str, cycle_id: str, payload: Any)
 ```
 
 Record an evidence event with hash chaining.
 
 Returns the hash of the newly recorded event.
+
+**Parameters**:
+
+- `event_type`: Type of event being recorded
+- `cycle_id`: ID of the cycle
+- `payload`: Optional dict payload (if not provided, kwargs are used)
+- `**kwargs`: Additional fields to include in payload
 
 ---
 
@@ -120,12 +127,19 @@ Query evidence events, optionally filtering by cycle_id and/or event_type.
 ## record
 
 ```python
-record(self: Any, event_type: str, cycle_id: str, payload: dict[(str, Any)])
+record(self: Any, event_type: str, cycle_id: str, payload: Any)
 ```
 
 Record an evidence event with hash chaining.
 
 Returns the hash of the newly recorded event.
+
+**Parameters**:
+
+- `event_type`: Type of event being recorded
+- `cycle_id`: ID of the cycle
+- `payload`: Optional dict payload (if not provided, kwargs are used)
+- `**kwargs`: Additional fields to include in payload
 
 ---
 
@@ -141,3 +155,4 @@ Returns True if every record's hash is correct and prev_hash links
 form an unbroken chain. Returns False on any inconsistency.
 
 ---
+

@@ -89,3 +89,4 @@ run_conformance(self: Any, plugin_id: str)
 WP-10008: Run conformance tests on a plugin.
 
 ---
+

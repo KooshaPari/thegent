@@ -56,17 +56,9 @@ Get an active override for a policy.
 
 An active override for a governance policy.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
-
-#### PolicyOverride.from_dict
-
-```python
-from_dict(cls: Any, data: dict[(str, Any)])
-```
-
-Create from dictionary.
-
----
 
 #### PolicyOverride.is_active
 
@@ -75,16 +67,6 @@ is_active(self: Any)
 ```
 
 Check if the override is still valid.
-
----
-
-#### PolicyOverride.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary.
 
 ---
 
@@ -110,16 +92,6 @@ Remove all expired overrides from disk.
 
 ---
 
-## from_dict
-
-```python
-from_dict(cls: Any, data: dict[(str, Any)])
-```
-
-Create from dictionary.
-
----
-
 ## get_override
 
 ```python
@@ -140,12 +112,3 @@ Check if the override is still valid.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary.
-
----

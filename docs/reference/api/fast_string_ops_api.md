@@ -167,3 +167,4 @@ Search using regex library (faster for complex patterns).
 **Returns**: Match object or None
 
 ---
+

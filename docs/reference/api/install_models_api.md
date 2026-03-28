@@ -1,0 +1,52 @@
+# install_models API Reference
+
+> **Source**: `src/thegent/install_models.py`
+
+Install-time model and enum definitions.
+
+---
+
+## BundleItem
+
+**Inherits from**: `BaseModel`
+
+---
+
+## BundleManifest
+
+Optional external manifest describing installable third-party bundles.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## ConfigManifest
+
+**Inherits from**: `BaseModel`
+
+---
+
+## FileAction
+
+**Inherits from**: `StrEnum`
+
+---
+
+## FileManifest
+
+**Inherits from**: `BaseModel`
+
+---
+
+## InstallManifest
+
+**Inherits from**: `BaseModel`
+
+---
+
+## InstallMode
+
+**Inherits from**: `StrEnum`
+
+---
+

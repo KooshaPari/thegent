@@ -1,0 +1,155 @@
+# poison_pill API Reference
+
+> **Source**: `src/thegent/governance/poison_pill.py`
+
+WP-2005: Poison pill detection for runaway agent output.
+
+PoisonPillDetector scans agent output chunks for patterns that indicate:
+- Infinite loops (same chunk repeated > 5 times in 10s)
+- Output overflow (single chunk > 100 KB)
+- Runaway tool use (> 200 tool_use occurrences in a single session)
+
+When a poison pill is detected:
+1. A 'poison_pill_detected' event is emitted to the governance log.
+2. PoisonPillError is raised immediately — fail fast, fail loudly.
+
+# @trace WL-039 WP-2005
+
+---
+
+## PoisonPillDetector
+
+Stateful detector for poison pill patterns in a single agent session.
+
+Create one instance per agent session. Feed output chunks via scan_chunk().
+Feed tool-use events via record_tool_use().
+
+The detector is NOT thread-safe within a single session (sessions are
+single-threaded streams). Use a separate instance per session.
+
+### Methods
+
+#### PoisonPillDetector.governance_log
+
+```python
+governance_log(self: Any)
+```
+
+Return a copy of all emitted governance events.
+
+---
+
+#### PoisonPillDetector.record_tool_use
+
+```python
+record_tool_use(self: Any)
+```
+
+Increment the tool-use counter and check against TOOL_USE_LIMIT.
+
+---
+
+#### PoisonPillDetector.scan_chunk
+
+```python
+scan_chunk(self: Any, chunk: str)
+```
+
+Check a single output chunk for poison pill patterns.
+
+**Parameters**:
+
+- `chunk`: A string output chunk from the agent.
+
+---
+
+#### PoisonPillDetector.tool_use_count
+
+```python
+tool_use_count(self: Any)
+```
+
+Return the current tool-use count for this session.
+
+---
+
+---
+
+## PoisonPillError
+
+Raised when a poison pill pattern is detected in agent output.
+
+Callers MUST NOT swallow this. The agent session should be aborted.
+
+**Inherits from**: `Exception`
+
+### Methods
+
+#### PoisonPillError.__init__
+
+```python
+__init__(self: Any, reason: str, kind: str)
+```
+
+---
+
+---
+
+## _ChunkRecord
+
+Internal record of a seen chunk for repeat detection.
+
+---
+
+## governance_log
+
+```python
+governance_log(self: Any)
+```
+
+Return a copy of all emitted governance events.
+
+---
+
+## record_tool_use
+
+```python
+record_tool_use(self: Any)
+```
+
+Increment the tool-use counter and check against TOOL_USE_LIMIT.
+
+**Raises**:
+
+- `PoisonPillError`: when tool_use count exceeds TOOL_USE_LIMIT.
+
+---
+
+## scan_chunk
+
+```python
+scan_chunk(self: Any, chunk: str)
+```
+
+Check a single output chunk for poison pill patterns.
+
+**Parameters**:
+
+- `chunk`: A string output chunk from the agent.
+
+**Raises**:
+
+- `PoisonPillError`: immediately if any pattern is triggered.
+
+---
+
+## tool_use_count
+
+```python
+tool_use_count(self: Any)
+```
+
+Return the current tool-use count for this session.
+
+---
+

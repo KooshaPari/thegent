@@ -26,6 +26,24 @@ on_button_pressed(self: Any, event: Button.Pressed)
 
 ---
 
+## ModelRouteItem
+
+ListItem subclass carrying model_id and route_index metadata.
+
+**Inherits from**: `ListItem`
+
+### Methods
+
+#### ModelRouteItem.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+---
+
 ## ModelsTUI
 
 TUI for managing custom models.
@@ -183,3 +201,4 @@ save_data(self: Any) -> None
 ```
 
 ---
+

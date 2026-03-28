@@ -29,6 +29,16 @@ Initialize the artifact generator.
 
 ---
 
+#### MAIFArtifactGenerator.build_html_diff_artifact
+
+```python
+build_html_diff_artifact(local_snapshot: dict, remote_snapshot: dict)
+```
+
+Create a deterministic side-by-side HTML diff artifact.
+
+---
+
 #### MAIFArtifactGenerator.create_artifact
 
 ```python
@@ -79,6 +89,16 @@ Reset hash chain for a session.
 - `session_id`: Session identifier.
 
 ---
+
+---
+
+## build_html_diff_artifact
+
+```python
+build_html_diff_artifact(local_snapshot: dict, remote_snapshot: dict)
+```
+
+Create a deterministic side-by-side HTML diff artifact.
 
 ---
 
@@ -136,3 +156,4 @@ Reset hash chain for a session.
 - `session_id`: Session identifier.
 
 ---
+

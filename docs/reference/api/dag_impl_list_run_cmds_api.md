@@ -1,0 +1,8 @@
+# dag_impl_list_run_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/run/dag_impl_list_run_cmds.py`
+
+Compatibility facade for DAG list/run/status helpers.
+
+---
+

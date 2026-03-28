@@ -6,6 +6,40 @@ Summary and audit log implementation for thegent.
 
 ---
 
+## GitCommitsResult
+
+---
+
+## LogParseStats
+
+### Methods
+
+#### LogParseStats.as_dict
+
+```python
+as_dict(self: Any)
+```
+
+---
+
+#### LogParseStats.sample
+
+```python
+sample(self: Any, kind: str, detail: str, line: str)
+```
+
+---
+
+---
+
+## as_dict
+
+```python
+as_dict(self: Any) -> dict[(str, Any)]
+```
+
+---
+
 ## get_chat_logs
 
 ```python
@@ -46,6 +80,14 @@ Resolve period string into start and end datetimes.
 
 ---
 
+## sample
+
+```python
+sample(self: Any, kind: str, detail: str, line: str) -> None
+```
+
+---
+
 ## summary_impl
 
 ```python
@@ -55,3 +97,4 @@ summary_impl(period: str, project_path: Any, summarize: bool, agent: str)
 FR-X09: Unified summary and audit log across runs, chats, and commits.
 
 ---
+

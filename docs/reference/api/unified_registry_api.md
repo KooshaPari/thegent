@@ -21,7 +21,7 @@ Unified agent model.
 
 Agent capabilities.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -34,7 +34,7 @@ Service for managing the unified agent registry.
 #### AgentRegistryService.__init__
 
 ```python
-__init__(self: Any, storage_path: Optional[str])
+__init__(self: Any, storage_path: Any)
 ```
 
 ---
@@ -62,7 +62,7 @@ Delete agent.
 #### AgentRegistryService.discover_best_agent
 
 ```python
-discover_best_agent(self: Any, task_description: str, required_capabilities: List[AgentCapability], project_id: Optional[str])
+discover_best_agent(self: Any, task_description: str, required_capabilities: list[AgentCapability], project_id: Any)
 ```
 
 Discovery logic to find best agent for task.
@@ -82,7 +82,7 @@ Get agent by ID.
 #### AgentRegistryService.list_agents
 
 ```python
-list_agents(self: Any, status: Optional[AgentStatus], project_id: Optional[str], capability: Optional[AgentCapability])
+list_agents(self: Any, status: Any, project_id: Any, capability: Any)
 ```
 
 List agents with optional filtering.
@@ -102,7 +102,7 @@ Register a new agent.
 #### AgentRegistryService.update_agent
 
 ```python
-update_agent(self: Any, agent_id: str, updates: Dict[(str, Any)])
+update_agent(self: Any, agent_id: str, updates: dict[(str, Any)])
 ```
 
 Update agent metadata.
@@ -122,7 +122,7 @@ Update collaboration rules for an agent.
 #### AgentRegistryService.update_metrics
 
 ```python
-update_metrics(self: Any, agent_id: str, metrics_update: Dict[(str, Any)])
+update_metrics(self: Any, agent_id: str, metrics_update: dict[(str, Any)])
 ```
 
 Update performance metrics for an agent.
@@ -135,7 +135,7 @@ Update performance metrics for an agent.
 
 Agent status.
 
-**Inherits from**: `str, Enum`
+**Inherits from**: `StrEnum`
 
 ---
 
@@ -194,7 +194,7 @@ Delete agent.
 ## discover_best_agent
 
 ```python
-discover_best_agent(self: Any, task_description: str, required_capabilities: List[AgentCapability], project_id: Optional[str])
+discover_best_agent(self: Any, task_description: str, required_capabilities: list[AgentCapability], project_id: Any)
 ```
 
 Discovery logic to find best agent for task.
@@ -214,7 +214,7 @@ Get agent by ID.
 ## list_agents
 
 ```python
-list_agents(self: Any, status: Optional[AgentStatus], project_id: Optional[str], capability: Optional[AgentCapability])
+list_agents(self: Any, status: Any, project_id: Any, capability: Any)
 ```
 
 List agents with optional filtering.
@@ -234,7 +234,7 @@ Register a new agent.
 ## update_agent
 
 ```python
-update_agent(self: Any, agent_id: str, updates: Dict[(str, Any)])
+update_agent(self: Any, agent_id: str, updates: dict[(str, Any)])
 ```
 
 Update agent metadata.
@@ -254,9 +254,10 @@ Update collaboration rules for an agent.
 ## update_metrics
 
 ```python
-update_metrics(self: Any, agent_id: str, metrics_update: Dict[(str, Any)])
+update_metrics(self: Any, agent_id: str, metrics_update: dict[(str, Any)])
 ```
 
 Update performance metrics for an agent.
 
 ---
+

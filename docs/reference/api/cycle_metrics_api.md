@@ -1,0 +1,137 @@
+# cycle_metrics API Reference
+
+> **Source**: `src/thegent/integrations/cycle_metrics.py`
+
+Cycle Metrics Emission for observability.
+
+WL-173: Cycle Metrics Emission
+Provides metrics emission and aggregation for cycle tracking.
+
+---
+
+## CycleMetric
+
+A single metric data point for a cycle.
+
+---
+
+## CycleMetricsEmitter
+
+Emitter for cycle metrics.
+
+### Methods
+
+#### CycleMetricsEmitter.__init__
+
+```python
+__init__(self: Any)
+```
+
+Initialize the cycle metrics emitter.
+
+---
+
+#### CycleMetricsEmitter.aggregate
+
+```python
+aggregate(self: Any, cycle_id: str, metric_name: str)
+```
+
+Aggregate (sum) all values for a metric in a cycle.
+
+**Parameters**:
+
+- `cycle_id`: Unique identifier for the cycle.
+- `metric_name`: Name of the metric.
+
+**Returns**: Sum of all values for that metric in that cycle.
+
+---
+
+#### CycleMetricsEmitter.emit
+
+```python
+emit(self: Any, cycle_id: str, metric_name: str, value: float)
+```
+
+Emit a metric for a cycle.
+
+**Parameters**:
+
+- `cycle_id`: Unique identifier for the cycle.
+- `metric_name`: Name of the metric.
+- `value`: Numeric value of the metric.
+
+**Returns**: The created CycleMetric.
+
+---
+
+#### CycleMetricsEmitter.get_metrics
+
+```python
+get_metrics(self: Any, cycle_id: str)
+```
+
+Get all metrics for a specific cycle.
+
+**Parameters**:
+
+- `cycle_id`: Unique identifier for the cycle.
+
+**Returns**: List of metrics for the cycle.
+
+---
+
+---
+
+## aggregate
+
+```python
+aggregate(self: Any, cycle_id: str, metric_name: str)
+```
+
+Aggregate (sum) all values for a metric in a cycle.
+
+**Parameters**:
+
+- `cycle_id`: Unique identifier for the cycle.
+- `metric_name`: Name of the metric.
+
+**Returns**: Sum of all values for that metric in that cycle.
+
+---
+
+## emit
+
+```python
+emit(self: Any, cycle_id: str, metric_name: str, value: float)
+```
+
+Emit a metric for a cycle.
+
+**Parameters**:
+
+- `cycle_id`: Unique identifier for the cycle.
+- `metric_name`: Name of the metric.
+- `value`: Numeric value of the metric.
+
+**Returns**: The created CycleMetric.
+
+---
+
+## get_metrics
+
+```python
+get_metrics(self: Any, cycle_id: str)
+```
+
+Get all metrics for a specific cycle.
+
+**Parameters**:
+
+- `cycle_id`: Unique identifier for the cycle.
+
+**Returns**: List of metrics for the cycle.
+
+---
+

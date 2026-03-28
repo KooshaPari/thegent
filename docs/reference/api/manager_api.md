@@ -1,261 +1,156 @@
 # manager API Reference
 
-> **Source**: `src/thegent/tui/layouts/manager.py`
+> **Source**: `src/thegent/session/manager.py`
 
-Layout manager for TUI compositor.
-
-Provides multi-pane layout management with save/restore functionality.
+In-memory SessionManager scaffolding for fork/rollback APIs (WL-106).
 
 ---
 
-## LayoutManager
+## InvalidTurnIndexError
 
-Manages layout persistence and switching.
+Raised when a fork index is outside valid bounds.
+
+**Inherits from**: `SessionManagerError`
+
+**Method Resolution Order**: `InvalidTurnIndexError -> SessionManagerError`
+
+---
+
+## RollbackOutOfRangeError
+
+Raised when rollback exceeds available history.
+
+**Inherits from**: `SessionManagerError`
+
+**Method Resolution Order**: `RollbackOutOfRangeError -> SessionManagerError`
+
+---
+
+## SessionAlreadyExistsError
+
+Raised when creating/forking into an existing session ID.
+
+**Inherits from**: `SessionManagerError`
+
+**Method Resolution Order**: `SessionAlreadyExistsError -> SessionManagerError`
+
+---
+
+## SessionManager
+
+Minimal in-memory session registry with fork/rollback APIs.
 
 ### Methods
 
-#### LayoutManager.__init__
+#### SessionManager.__init__
 
 ```python
-__init__(self: Any, storage_dir: Any)
+__init__(self: Any)
 ```
 
 ---
 
-#### LayoutManager.create_layout
+#### SessionManager.append_turn
 
 ```python
-create_layout(self: Any, name: str, root: Any)
+append_turn(self: Any, session_id: str, turn: dict[(str, Any)])
 ```
-
-Create a new layout.
 
 ---
 
-#### LayoutManager.delete_layout
+#### SessionManager.create_session
 
 ```python
-delete_layout(self: Any, name: str)
+create_session(self: Any)
 ```
-
-Delete a layout.
 
 ---
 
-#### LayoutManager.duplicate_layout
+#### SessionManager.fork_session
 
 ```python
-duplicate_layout(self: Any, source_name: str, new_name: str)
+fork_session(self: Any, session_id: str)
 ```
-
-Duplicate an existing layout.
 
 ---
 
-#### LayoutManager.get_current
+#### SessionManager.get_session
 
 ```python
-get_current(self: Any)
+get_session(self: Any, session_id: str)
 ```
-
-Get the current active layout.
 
 ---
 
-#### LayoutManager.get_layout
+#### SessionManager.rollback_session
 
 ```python
-get_layout(self: Any, name: str)
+rollback_session(self: Any, session_id: str)
 ```
-
-Get a layout by name.
 
 ---
 
-#### LayoutManager.list_layouts
+---
+
+## SessionManagerError
+
+Base exception for session manager failures.
+
+**Inherits from**: `RuntimeError`
+
+---
+
+## SessionNotFoundError
+
+Raised when a session ID does not exist.
+
+**Inherits from**: `SessionManagerError`
+
+**Method Resolution Order**: `SessionNotFoundError -> SessionManagerError`
+
+---
+
+## SessionState
+
+---
+
+## append_turn
 
 ```python
-list_layouts(self: Any)
+append_turn(self: Any, session_id: str, turn: dict[(str, Any)]) -> int
 ```
-
-List all saved layouts.
 
 ---
 
-#### LayoutManager.rename_layout
+## create_session
 
 ```python
-rename_layout(self: Any, old_name: str, new_name: str)
+create_session(self: Any) -> str
 ```
-
-Rename a layout.
 
 ---
 
-#### LayoutManager.switch_layout
+## fork_session
 
 ```python
-switch_layout(self: Any, name: str)
+fork_session(self: Any, session_id: str) -> str
 ```
 
-Switch to a layout (returns the state for application).
-
 ---
 
----
-
-## LayoutState
-
-Complete layout state.
-
----
-
-## PaneConfig
-
-Configuration for a single pane.
-
----
-
-## SplitConfig
-
-Configuration for a split pane.
-
----
-
-## create_default_layout
-
-Create the default layout.
-
----
-
-## create_full_output_layout
-
-Create a full-screen output layout.
-
----
-
-## create_horizontal_split
+## get_session
 
 ```python
-create_horizontal_split(left_pane: PaneConfig, right_pane: PaneConfig, left_weight: int, right_weight: int)
+get_session(self: Any, session_id: str) -> SessionState
 ```
-
-Create a horizontal split layout.
 
 ---
 
-## create_layout
+## rollback_session
 
 ```python
-create_layout(self: Any, name: str, root: Any)
+rollback_session(self: Any, session_id: str) -> int
 ```
 
-Create a new layout.
-
 ---
 
-## create_main_sidebar
-
-```python
-create_main_sidebar(main_pane: PaneConfig, sidebar_pane: PaneConfig, sidebar_width: int)
-```
-
-Create a main content + sidebar layout.
-
----
-
-## create_terminal_layout
-
-Create a layout optimized for terminal use.
-
----
-
-## create_three_column
-
-```python
-create_three_column(left: PaneConfig, center: PaneConfig, right: PaneConfig, weights: Any)
-```
-
-Create a three-column layout.
-
----
-
-## create_vertical_split
-
-```python
-create_vertical_split(top_pane: PaneConfig, bottom_pane: PaneConfig, top_weight: int, bottom_weight: int)
-```
-
-Create a vertical split layout.
-
----
-
-## delete_layout
-
-```python
-delete_layout(self: Any, name: str)
-```
-
-Delete a layout.
-
----
-
-## duplicate_layout
-
-```python
-duplicate_layout(self: Any, source_name: str, new_name: str)
-```
-
-Duplicate an existing layout.
-
----
-
-## get_current
-
-```python
-get_current(self: Any)
-```
-
-Get the current active layout.
-
----
-
-## get_layout
-
-```python
-get_layout(self: Any, name: str)
-```
-
-Get a layout by name.
-
----
-
-## list_layouts
-
-```python
-list_layouts(self: Any)
-```
-
-List all saved layouts.
-
----
-
-## rename_layout
-
-```python
-rename_layout(self: Any, old_name: str, new_name: str)
-```
-
-Rename a layout.
-
----
-
-## switch_layout
-
-```python
-switch_layout(self: Any, name: str)
-```
-
-Switch to a layout (returns the state for application).
-
----

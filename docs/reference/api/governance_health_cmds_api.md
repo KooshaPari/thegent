@@ -1,0 +1,13 @@
+# governance_health_cmds API Reference
+
+> **Source**: `src/thegent/cli/governance/governance_health_cmds.py`
+
+Governance health and status commands facade (WL-124).
+
+Re-exports split modules:
+- governance_health_core_cmds: health/status/cycle/watch
+- governance_policy_cmds: policy, contracts, migration, drift
+- governance_audit_compliance_cmds: audit, compliance, guardrails
+
+---
+

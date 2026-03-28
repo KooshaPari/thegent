@@ -1,0 +1,17 @@
+# provider_forms API Reference
+
+> **Source**: `src/thegent/provider_forms.py`
+
+Interactive forms for provider management using Rich.
+
+This module provides interactive CLI forms for managing providers.
+It uses lazy imports to avoid circular dependencies with provider_model_manager.
+
+---
+
+## run_provider_form
+
+Interactive form for provider management.
+
+---
+

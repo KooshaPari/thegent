@@ -52,3 +52,4 @@ Uses proxy metrics when reachable; falls back to Route.latency_ms.
 Clear speed index cache (e.g. after proxy restart).
 
 ---
+

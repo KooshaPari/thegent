@@ -134,7 +134,7 @@ attach(self: Any, session_name: str)
 
 Attach (interactively) to a running zmx session.
 
-Calls: ``zmx attach &lt;session_name&gt;``
+Calls: ``zmx attach <session_name>``
 
 This call blocks until the user detaches. Returns False when zmx is
 unavailable or the session does not exist.
@@ -163,7 +163,7 @@ capture(self: Any, session_name: str, last_lines: int)
 
 Capture the last *last_lines* lines of a session's scrollback.
 
-Calls: ``zmx capture &lt;session_name&gt; --lines &lt;last_lines&gt;``
+Calls: ``zmx capture <session_name> --lines <last_lines>``
 
 Returns an empty string when zmx is unavailable or capture fails.
 # @trace FR-SES-001
@@ -178,7 +178,7 @@ create(self: Any, session_name: str, cmd: list[str])
 
 Start a new zmx session running *cmd*.
 
-Calls: ``zmx new &lt;session_name&gt; -- &lt;cmd...&gt;``
+Calls: ``zmx new <session_name> -- <cmd...>``
 
 Returns True on success, False on failure (including zmx not installed).
 # @trace FR-SES-001
@@ -193,7 +193,7 @@ kill(self: Any, session_name: str)
 
 Terminate a zmx session.
 
-Calls: ``zmx kill &lt;session_name&gt;``
+Calls: ``zmx kill <session_name>``
 
 Returns True on success, False on failure.
 # @trace FR-SES-001
@@ -240,7 +240,7 @@ attach(self: Any, session_name: str)
 
 Attach (interactively) to a running zmx session.
 
-Calls: ``zmx attach &lt;session_name&gt;``
+Calls: ``zmx attach <session_name>``
 
 This call blocks until the user detaches. Returns False when zmx is
 unavailable or the session does not exist.
@@ -269,7 +269,7 @@ capture(self: Any, session_name: str, last_lines: int)
 
 Capture the last *last_lines* lines of a session's scrollback.
 
-Calls: ``zmx capture &lt;session_name&gt; --lines &lt;last_lines&gt;``
+Calls: ``zmx capture <session_name> --lines <last_lines>``
 
 Returns an empty string when zmx is unavailable or capture fails.
 # @trace FR-SES-001
@@ -284,7 +284,7 @@ create(self: Any, session_name: str, cmd: list[str])
 
 Start a new zmx session running *cmd*.
 
-Calls: ``zmx new &lt;session_name&gt; -- &lt;cmd...&gt;``
+Calls: ``zmx new <session_name> -- <cmd...>``
 
 Returns True on success, False on failure (including zmx not installed).
 # @trace FR-SES-001
@@ -299,7 +299,7 @@ kill(self: Any, session_name: str)
 
 Terminate a zmx session.
 
-Calls: ``zmx kill &lt;session_name&gt;``
+Calls: ``zmx kill <session_name>``
 
 Returns True on success, False on failure.
 # @trace FR-SES-001
@@ -353,3 +353,4 @@ the backend is ``tmux`` or ``none`` (caller uses legacy path).
 # @trace FR-SES-001
 
 ---
+

@@ -1,0 +1,22 @@
+# doctor_shell_nix API Reference
+
+> **Source**: `src/thegent/doctor_shell_nix.py`
+
+Shell and Nix checks extracted from doctor.
+
+---
+
+## check_nix
+
+---
+
+## check_nix_daemon_status
+
+Check if Nix daemon is running. Returns (is_running, status_message).
+
+---
+
+## check_shell
+
+---
+

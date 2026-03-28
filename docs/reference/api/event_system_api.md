@@ -83,3 +83,4 @@ Subscribe to event type.
 - `handler`: Handler function
 
 ---
+

@@ -1,0 +1,325 @@
+# connector_mapping_cache API Reference
+
+> **Source**: `src/thegent/integrations/connector_mapping_cache.py`
+
+Connector field mapping cache with TTL support.
+
+# @trace WL-191
+
+---
+
+## ConnectorMappingCache
+
+Cache for connector field name → field_id mappings with TTL support.
+
+### Methods
+
+#### ConnectorMappingCache.__init__
+
+```python
+__init__(self: Any, cache_file: Any)
+```
+
+Initialize the mapping cache.
+
+**Parameters**:
+
+- `cache_file`: Path to cache JSON file. Defaults to
+docs/reference/connector_mapping_cache.json.
+
+---
+
+#### ConnectorMappingCache.bootstrap
+
+```python
+bootstrap(self: Any, connector: str, mappings: dict[(str, str)], ttl_seconds: int)
+```
+
+Persist an initial mapping set for a connector.
+
+---
+
+#### ConnectorMappingCache.bootstrap_required
+
+```python
+bootstrap_required(self: Any, connector: str, required_fields: list[str])
+```
+
+Return whether bootstrap mappings are missing for required fields.
+
+A bootstrap is required when at least one required field has no
+non-stale mapping in the cache for the given connector.
+
+---
+
+#### ConnectorMappingCache.clear_stale
+
+```python
+clear_stale(self: Any)
+```
+
+Remove all expired entries.
+
+**Returns**: Number of entries removed.
+
+---
+
+#### ConnectorMappingCache.get
+
+```python
+get(self: Any, connector: str, field_name: str)
+```
+
+Get cached field_id for a connector+field_name pair.
+
+Returns None if not cached, expired, or not found.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `field_name`: Field name to look up.
+
+**Returns**: Cached field_id or None.
+
+---
+
+#### ConnectorMappingCache.get_with_status
+
+```python
+get_with_status(self: Any, connector: str, field_name: str)
+```
+
+Get mapping state with explicit freshness marker.
+
+**Returns**: Dict containing:
+- field_id: str | None
+- status: "missing" | "stale" | "fresh"
+
+---
+
+#### ConnectorMappingCache.invalidate
+
+```python
+invalidate(self: Any, connector: str, field_name: str)
+```
+
+Remove a cached entry.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `field_name`: Field name to invalidate.
+
+---
+
+#### ConnectorMappingCache.is_stale
+
+```python
+is_stale(self: Any, entry: MappingEntry)
+```
+
+Check if an entry has expired based on TTL.
+
+**Parameters**:
+
+- `entry`: MappingEntry to check.
+
+**Returns**: True if the entry has expired, False otherwise.
+
+---
+
+#### ConnectorMappingCache.list_cached_wl_ids
+
+```python
+list_cached_wl_ids(self: Any, connector: str)
+```
+
+Return WL IDs cached as field names for a connector.
+
+---
+
+#### ConnectorMappingCache.list_entries
+
+```python
+list_entries(self: Any, connector: str)
+```
+
+List entries for one connector.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `include_stale`: Whether stale records should be included.
+
+---
+
+#### ConnectorMappingCache.put
+
+```python
+put(self: Any, connector: str, field_name: str, field_id: str, ttl_seconds: int)
+```
+
+Cache a connector field mapping.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `field_name`: Local field name.
+- `field_id`: Remote field identifier.
+- `ttl_seconds`: Time-to-live in seconds (default: 3600 = 1 hour).
+
+---
+
+---
+
+## MappingEntry
+
+Cached mapping entry for a connector field.
+
+---
+
+## bootstrap
+
+```python
+bootstrap(self: Any, connector: str, mappings: dict[(str, str)], ttl_seconds: int)
+```
+
+Persist an initial mapping set for a connector.
+
+**Raises**:
+
+- `ValueError`: If any field name or field id is empty.
+
+---
+
+## bootstrap_required
+
+```python
+bootstrap_required(self: Any, connector: str, required_fields: list[str])
+```
+
+Return whether bootstrap mappings are missing for required fields.
+
+A bootstrap is required when at least one required field has no
+non-stale mapping in the cache for the given connector.
+
+---
+
+## clear_stale
+
+```python
+clear_stale(self: Any)
+```
+
+Remove all expired entries.
+
+**Returns**: Number of entries removed.
+
+---
+
+## get
+
+```python
+get(self: Any, connector: str, field_name: str)
+```
+
+Get cached field_id for a connector+field_name pair.
+
+Returns None if not cached, expired, or not found.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `field_name`: Field name to look up.
+
+**Returns**: Cached field_id or None.
+
+---
+
+## get_with_status
+
+```python
+get_with_status(self: Any, connector: str, field_name: str)
+```
+
+Get mapping state with explicit freshness marker.
+
+**Returns**: Dict containing:
+- field_id: str | None
+- status: "missing" | "stale" | "fresh"
+
+---
+
+## invalidate
+
+```python
+invalidate(self: Any, connector: str, field_name: str)
+```
+
+Remove a cached entry.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `field_name`: Field name to invalidate.
+
+---
+
+## is_stale
+
+```python
+is_stale(self: Any, entry: MappingEntry)
+```
+
+Check if an entry has expired based on TTL.
+
+**Parameters**:
+
+- `entry`: MappingEntry to check.
+
+**Returns**: True if the entry has expired, False otherwise.
+
+---
+
+## list_cached_wl_ids
+
+```python
+list_cached_wl_ids(self: Any, connector: str)
+```
+
+Return WL IDs cached as field names for a connector.
+
+---
+
+## list_entries
+
+```python
+list_entries(self: Any, connector: str)
+```
+
+List entries for one connector.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `include_stale`: Whether stale records should be included.
+
+---
+
+## put
+
+```python
+put(self: Any, connector: str, field_name: str, field_id: str, ttl_seconds: int)
+```
+
+Cache a connector field mapping.
+
+**Parameters**:
+
+- `connector`: Connector name.
+- `field_name`: Local field name.
+- `field_id`: Remote field identifier.
+- `ttl_seconds`: Time-to-live in seconds (default: 3600 = 1 hour).
+
+---
+

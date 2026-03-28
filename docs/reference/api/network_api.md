@@ -59,10 +59,13 @@ Returns (0.0, 0.0) when psutil is unavailable or no interfaces found.
 list_interfaces(self: Any)
 ```
 
-Return the names of all available network interfaces.
+Return interface names, with optional diagnostics payload.
 
-**Returns**: List of interface name strings.
-Returns an empty list when psutil is unavailable.
+**Returns**: If include_diagnostics=False (default): list[str].
+If include_diagnostics=True: dict with keys:
+  - interfaces: list[str]
+  - status: "ok" | "empty" | "unavailable" | "error"
+  - error: None or {"type": str, "message": str}
 
 ---
 
@@ -77,7 +80,7 @@ Measure bandwidth by taking two samples separated by *interval_s* seconds.
 **Parameters**:
 
 - `interval_s`: Seconds between the two counter snapshots.
-Must be positive; values &lt;= 0 are clamped to 0.01 s.
+Must be positive; values <= 0 are clamped to 0.01 s.
 
 **Returns**: List of BandwidthSample (send_bps / recv_bps) per interface.
 Returns an empty list when psutil is unavailable.
@@ -131,10 +134,13 @@ Returns (0.0, 0.0) when psutil is unavailable or no interfaces found.
 list_interfaces(self: Any)
 ```
 
-Return the names of all available network interfaces.
+Return interface names, with optional diagnostics payload.
 
-**Returns**: List of interface name strings.
-Returns an empty list when psutil is unavailable.
+**Returns**: If include_diagnostics=False (default): list[str].
+If include_diagnostics=True: dict with keys:
+  - interfaces: list[str]
+  - status: "ok" | "empty" | "unavailable" | "error"
+  - error: None or {"type": str, "message": str}
 
 ---
 
@@ -149,9 +155,10 @@ Measure bandwidth by taking two samples separated by *interval_s* seconds.
 **Parameters**:
 
 - `interval_s`: Seconds between the two counter snapshots.
-Must be positive; values &lt;= 0 are clamped to 0.01 s.
+Must be positive; values <= 0 are clamped to 0.01 s.
 
 **Returns**: List of BandwidthSample (send_bps / recv_bps) per interface.
 Returns an empty list when psutil is unavailable.
 
 ---
+

@@ -70,3 +70,4 @@ reconcile_twin(self: Any, twin_a_id: str, twin_b_id: str)
 Merge traits from two snapshots (e.g. from different project instances).
 
 ---
+

@@ -1,0 +1,217 @@
+# context_compactor API Reference
+
+> **Source**: `src/thegent/agents/context_compactor.py`
+
+WL-103 context compaction primitive.
+
+# @trace WL-103
+
+---
+
+## ContextCompactionResult
+
+---
+
+## ContextCompactor
+
+Deterministic context usage estimator + compaction helper.
+
+Supports two token-counting modes:
+- tiktoken mode: when *model* is provided, uses tiktoken for accurate token counts.
+- char-based mode: when *model* is None, estimates tokens as ceil(chars / chars_per_token).
+
+Compaction triggers when usage_ratio > threshold_ratio and len(turns) >= 4.
+Old turns are summarized; the two most-recent turns are kept verbatim.
+
+# @trace WL-103
+
+### Methods
+
+#### ContextCompactor.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+#### ContextCompactor.compact
+
+```python
+compact(self: Any, turns: list[dict[(str, str)]], context_window_max: int)
+```
+
+Compact turns if usage_ratio > threshold_ratio and len(turns) >= 4.
+
+Old turns (all except the final two) are replaced with a deterministic
+summary message. The two most-recent turns are kept verbatim.
+
+# @trace WL-103
+
+---
+
+#### ContextCompactor.count_tokens
+
+```python
+count_tokens(self: Any, text: str)
+```
+
+Count tokens in *text* using tiktoken when a model is configured.
+
+Falls back to char-based estimation when no model was provided.
+
+# @trace WL-103
+
+---
+
+#### ContextCompactor.count_turns_tokens
+
+```python
+count_turns_tokens(self: Any, turns: list[dict[(str, Any)]])
+```
+
+Return total token count across all turns.
+
+# @trace WL-103
+
+---
+
+#### ContextCompactor.estimate_tokens
+
+```python
+estimate_tokens(self: Any, text: str)
+```
+
+Alias for count_tokens for backward compatibility.
+
+# @trace WL-103
+
+---
+
+#### ContextCompactor.estimate_turn_tokens
+
+```python
+estimate_turn_tokens(self: Any, turn: dict[(str, Any)])
+```
+
+Count tokens in a single conversation turn (role + content).
+
+# @trace WL-103
+
+---
+
+#### ContextCompactor.should_compact
+
+```python
+should_compact(self: Any, tokens_used: int, context_max: int)
+```
+
+Return True if tokens_used / context_max > threshold_ratio.
+
+# @trace WL-103
+
+---
+
+#### ContextCompactor.usage_ratio
+
+```python
+usage_ratio(self: Any, turns: list[dict[(str, Any)]], context_window_max: int)
+```
+
+Return tokens_used / context_window_max across all turns.
+
+# @trace WL-103
+
+---
+
+---
+
+## compact
+
+```python
+compact(self: Any, turns: list[dict[(str, str)]], context_window_max: int)
+```
+
+Compact turns if usage_ratio > threshold_ratio and len(turns) >= 4.
+
+Old turns (all except the final two) are replaced with a deterministic
+summary message. The two most-recent turns are kept verbatim.
+
+# @trace WL-103
+
+---
+
+## count_tokens
+
+```python
+count_tokens(self: Any, text: str)
+```
+
+Count tokens in *text* using tiktoken when a model is configured.
+
+Falls back to char-based estimation when no model was provided.
+
+# @trace WL-103
+
+---
+
+## count_turns_tokens
+
+```python
+count_turns_tokens(self: Any, turns: list[dict[(str, Any)]])
+```
+
+Return total token count across all turns.
+
+# @trace WL-103
+
+---
+
+## estimate_tokens
+
+```python
+estimate_tokens(self: Any, text: str)
+```
+
+Alias for count_tokens for backward compatibility.
+
+# @trace WL-103
+
+---
+
+## estimate_turn_tokens
+
+```python
+estimate_turn_tokens(self: Any, turn: dict[(str, Any)])
+```
+
+Count tokens in a single conversation turn (role + content).
+
+# @trace WL-103
+
+---
+
+## should_compact
+
+```python
+should_compact(self: Any, tokens_used: int, context_max: int)
+```
+
+Return True if tokens_used / context_max > threshold_ratio.
+
+# @trace WL-103
+
+---
+
+## usage_ratio
+
+```python
+usage_ratio(self: Any, turns: list[dict[(str, Any)]], context_window_max: int)
+```
+
+Return tokens_used / context_window_max across all turns.
+
+# @trace WL-103
+
+---
+

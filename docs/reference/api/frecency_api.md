@@ -203,7 +203,7 @@ Example usage::
     selector.record_use("gemini-3-flash")
 
     best = selector.preferred_model(["claude-sonnet-4-5", "gemini-3-flash"])
-    # -&gt; "claude-sonnet-4-5"  (higher frecency)
+    # -> "claude-sonnet-4-5"  (higher frecency)
 
 ### Methods
 
@@ -458,3 +458,4 @@ tracked entries, all entries are returned.
 **Returns**: List of :class:`FrecencyEntry` sorted by score descending.
 
 ---
+

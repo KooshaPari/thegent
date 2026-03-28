@@ -1,0 +1,58 @@
+# plan_workstream_flow_cmds API Reference
+
+> **Source**: `src/thegent/cli/plan/plan_workstream_flow_cmds.py`
+
+Thegent CLI plan/DAG commands domain - extracted from cli.py (WL-124).
+
+---
+
+## plan_do_next_cmd
+
+```python
+plan_do_next_cmd(cd: Any, limit: int, format: Any)
+```
+
+Find next actionable work items from WORK_STREAM, PLAN_STATUS, FR_TRACKER, docs/plans/, escalation queue.
+
+---
+
+## plan_get_next_cmd
+
+```python
+plan_get_next_cmd(cd: Any, format: Any)
+```
+
+Get first work item prompt for scripting. Use: PROMPT=$(thegent plan get-next)
+
+---
+
+## plan_loop_cmd
+
+```python
+plan_loop_cmd(cd: Any, max_iterations: int, sleep_seconds: float, agent: str, dry_run: bool)
+```
+
+Loop: get next item -> run bg -> repeat until no items or --max reached.
+
+---
+
+## plan_progress_cmd
+
+```python
+plan_progress_cmd(limit: int, format: Any)
+```
+
+Show recent runs (work-package progress). Alias for history --limit N.
+
+---
+
+## plan_wait_next_cmd
+
+```python
+plan_wait_next_cmd(cd: Any, poll: float, timeout: float, sources: Any, format: Any)
+```
+
+Block until next actionable work exists (DAG ready, do_next, escalation, inbox).
+
+---
+

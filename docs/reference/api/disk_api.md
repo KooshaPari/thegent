@@ -108,7 +108,7 @@ seconds and derives:
 
 **Parameters**:
 
-- `interval_s`: Sampling window in seconds (must be &gt; 0).
+- `interval_s`: Sampling window in seconds (must be > 0).
 
 **Returns**: List of :class:`DiskQueueSample`, one per device seen in both
 snapshots.  Returns ``[]`` when psutil is unavailable.
@@ -204,9 +204,10 @@ seconds and derives:
 
 **Parameters**:
 
-- `interval_s`: Sampling window in seconds (must be &gt; 0).
+- `interval_s`: Sampling window in seconds (must be > 0).
 
 **Returns**: List of :class:`DiskQueueSample`, one per device seen in both
 snapshots.  Returns ``[]`` when psutil is unavailable.
 
 ---
+

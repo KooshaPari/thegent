@@ -1,6 +1,6 @@
 # cli_swarm API Reference
 
-> **Source**: `src/thegent/cli/commands/cli_swarm.py`
+> **Source**: `src/thegent/cli/commands/team/cli_swarm.py`
 
 CLI commands for swarm management — per-owner usage tracking (swarm-usage-tracking).
 
@@ -18,3 +18,4 @@ Displays active slot counts, total runs, and average elapsed time for
 each owner (agent/user/project) tracked by the ConcurrencyController.
 
 ---
+

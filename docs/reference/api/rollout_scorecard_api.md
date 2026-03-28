@@ -1,0 +1,38 @@
+# rollout_scorecard API Reference
+
+> **Source**: `src/thegent/integrations/rollout_scorecard.py`
+
+Stub module for thegent.integrations.rollout_scorecard.
+
+---
+
+## RolloutProfile
+
+Stub class.
+
+---
+
+## RolloutScorecard
+
+Stub class.
+
+---
+
+## ScorecardCheck
+
+Stub class.
+
+---
+
+## load_rollout_profile
+
+Stub function.
+
+---
+
+## validate_rollout_profile
+
+Stub function.
+
+---
+

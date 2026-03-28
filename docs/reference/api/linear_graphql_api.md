@@ -1,0 +1,62 @@
+# linear_graphql API Reference
+
+> **Source**: `src/thegent/integrations/linear_graphql.py`
+
+Linear GraphQL adapter for WL-160 workstream autosync.
+
+---
+
+## LinearGraphQLAuthError
+
+Authentication/authorization error for Linear.
+
+**Inherits from**: `LinearGraphQLError`
+
+**Method Resolution Order**: `LinearGraphQLAuthError -> LinearGraphQLError`
+
+---
+
+## LinearGraphQLConfig
+
+Connection config for Linear GraphQL operations.
+
+---
+
+## LinearGraphQLError
+
+Base Linear GraphQL integration error.
+
+**Inherits from**: `Exception`
+
+---
+
+## build_linear_state_mapping
+
+```python
+build_linear_state_mapping(states_nodes: list[dict[(str, Any)]])
+```
+
+Build explicit Linear state ID mapping table with fail-fast validation.
+
+---
+
+## sync_from_linear
+
+```python
+sync_from_linear(config: LinearGraphQLConfig)
+```
+
+Read workstream-related issue status from Linear.
+
+---
+
+## sync_to_linear
+
+```python
+sync_to_linear(config: LinearGraphQLConfig, workstream_data: list[dict[(str, Any)]])
+```
+
+Upsert workstream items into Linear issues.
+
+---
+

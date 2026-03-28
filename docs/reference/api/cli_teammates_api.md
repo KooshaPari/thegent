@@ -1,6 +1,6 @@
 # cli_teammates API Reference
 
-> **Source**: `src/thegent/cli/commands/cli_teammates.py`
+> **Source**: `src/thegent/cli/commands/team/cli_teammates.py`
 
 CLI commands for Teammate delegation and swarm management (WP-16001/2).
 
@@ -41,3 +41,4 @@ swarm_status(run_id: str)
 Monitor the status of the teammate swarm (WP-16002).
 
 ---
+

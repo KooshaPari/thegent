@@ -1,6 +1,6 @@
 # graph API Reference
 
-> **Source**: `src/thegent/orchestration/graph.py`
+> **Source**: `src/thegent/orchestration/state/graph.py`
 
 WP-5001-SM-Graph: Supermemory Knowledge Graph integration.
 
@@ -61,3 +61,4 @@ query(self: Any, query_text: str)
 Query the knowledge graph for relevant entities and relations.
 
 ---
+

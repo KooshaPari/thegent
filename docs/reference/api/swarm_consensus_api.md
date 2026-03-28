@@ -1,6 +1,6 @@
 # swarm_consensus API Reference
 
-> **Source**: `src/thegent/orchestration/swarm_consensus.py`
+> **Source**: `src/thegent/orchestration/consensus/swarm_consensus.py`
 
 WP-24001: Swarm Consensus Protocol (Byzantine).
 
@@ -92,3 +92,4 @@ record_vote(self: Any, agent_id: str, vote: Any, signature: str)
 Record a vote from an agent in the swarm.
 
 ---
+

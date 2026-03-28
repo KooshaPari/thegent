@@ -12,7 +12,7 @@ FR Traceability: FR-VER-005 (audit log and diff CLI)
 
 Commands:
     thegent audit log  [--project NAME] [--limit N]
-    thegent audit diff &lt;sha1&gt; &lt;sha2&gt; [--project NAME]
+    thegent audit diff <sha1> <sha2> [--project NAME]
 
 ---
 
@@ -35,3 +35,4 @@ audit_log(project: Annotated[(str, Any)], limit: Annotated[(Any, Any)])
 Show audit log entries for a project.
 
 ---
+

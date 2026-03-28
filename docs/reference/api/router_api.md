@@ -1,115 +1,92 @@
 # router API Reference
 
-> **Source**: `src/thegent/orchestration/router.py`
+> **Source**: `src/thegent/agents/crew/router.py`
 
-WP-1001: Dependency-aware routing engine (FR-001).
+RouterManager with multi-runtime optimized backends.
 
 ---
 
-## DependencyRouter
+## RouterManager
 
-Dependency-aware routing engine for multi-task orchestration.
+Unified routing interface that selects the best backend (Rust vs Pure Python).
 
 ### Methods
 
-#### DependencyRouter.from_tasks
+#### RouterManager.__init__
 
 ```python
-from_tasks(cls: Any, tasks: list[dict[str, Any]])
+__init__(self: Any, strategy: RoutingStrategy)
 ```
-
-Factory: Create router from a list of tasks with 'id' and 'depends_on'.
 
 ---
 
-#### DependencyRouter.get_ready_tasks
+#### RouterManager.backend
 
 ```python
-get_ready_tasks(self: Any)
+backend(self: Any)
 ```
-
-Return task IDs that are ready to run (dependencies satisfied).
 
 ---
 
-#### DependencyRouter.is_finished
+#### RouterManager.refresh_from_mesh
 
 ```python
-is_finished(self: Any)
+refresh_from_mesh(self: Any, mesh_root: Any)
 ```
 
-Return True if all tasks in the DAG are completed.
+Sync local routing metrics with the global IPC mesh.
 
 ---
 
-#### DependencyRouter.mark_completed
+#### RouterManager.select_agent
 
 ```python
-mark_completed(self: Any, task_id: str)
+select_agent(self: Any, task_description: str, available_agents: list)
 ```
-
-Mark a task as completed and update the sorter.
 
 ---
 
-#### DependencyRouter.mark_started
+#### RouterManager.update_agent_metrics
 
 ```python
-mark_started(self: Any, task_id: str)
+update_agent_metrics(self: Any, agent_id: str, metrics: RouteMetrics)
 ```
 
-Mark a task as running.
-
 ---
 
 ---
 
-## from_tasks
+## backend
 
 ```python
-from_tasks(cls: Any, tasks: list[dict[str, Any]])
+backend(self: Any) -> str
 ```
-
-Factory: Create router from a list of tasks with 'id' and 'depends_on'.
 
 ---
 
-## get_ready_tasks
+## refresh_from_mesh
 
 ```python
-get_ready_tasks(self: Any)
+refresh_from_mesh(self: Any, mesh_root: Any)
 ```
 
-Return task IDs that are ready to run (dependencies satisfied).
+Sync local routing metrics with the global IPC mesh.
 
 ---
 
-## is_finished
+## select_agent
 
 ```python
-is_finished(self: Any)
+select_agent(self: Any, task_description: str, available_agents: list) -> Any
 ```
-
-Return True if all tasks in the DAG are completed.
 
 ---
 
-## mark_completed
+## update_agent_metrics
 
 ```python
-mark_completed(self: Any, task_id: str)
+update_agent_metrics(self: Any, agent_id: str, metrics: RouteMetrics) -> None
 ```
-
-Mark a task as completed and update the sorter.
 
 ---
 
-## mark_started
-
-```python
-mark_started(self: Any, task_id: str)
-```
-
-Mark a task as running.
-
----

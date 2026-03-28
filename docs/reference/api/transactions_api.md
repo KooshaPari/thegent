@@ -1,6 +1,6 @@
 # transactions API Reference
 
-> **Source**: `src/thegent/orchestration/transactions.py`
+> **Source**: `src/thegent/orchestration/state/transactions.py`
 
 WP-15003: Atomic Transactions and Commit-Log Orchestration (CLO).
 
@@ -53,7 +53,7 @@ Add an operation to the transaction.
 ## apply_multi_file_transaction
 
 ```python
-apply_multi_file_transaction(changes: list[(tuple[(Path, str)], str)], cwd: Any, git_commit: bool, commit_message: str)
+apply_multi_file_transaction(changes: list[tuple[(Path, str)]], cwd: Any, git_commit: bool, commit_message: str)
 ```
 
 MTSP-13: Prepare multi-file changes and apply as a single atomic transaction.
@@ -64,3 +64,4 @@ If git_commit=True and cwd is a git repo, stages and commits as a single transac
 **Returns**: (success, message)
 
 ---
+

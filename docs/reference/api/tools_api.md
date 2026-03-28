@@ -15,3 +15,4 @@ A single callable capability exposed to a SmolAgent.
 ### Methods
 
 ---
+

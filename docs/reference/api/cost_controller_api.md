@@ -2,6 +2,14 @@
 
 > **Source**: `src/thegent/governance/cost_controller.py`
 
+Call-count budget management for AgilePlus autonomous governance.
+
+Tracks daily agent trigger counts against a configurable budget (default 20/day)
+and enforces tiered throttling as utilization increases. Budget tiers and limits
+are loaded from contracts/health-targets.json.
+
+---
+
 ## BudgetTier
 
 Throttle tier based on daily budget utilization percentage.
@@ -153,3 +161,4 @@ usage_path(self: Any) -> Path
 ```
 
 ---
+

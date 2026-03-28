@@ -96,3 +96,4 @@ Transfer files to remote host using rsync.
 **Returns**: True if successful
 
 ---
+

@@ -77,3 +77,4 @@ Register a learning surface.
 - `capabilities`: List of capabilities
 
 ---
+

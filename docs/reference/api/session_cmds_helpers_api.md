@@ -1,0 +1,64 @@
+# session_cmds_helpers API Reference
+
+> **Source**: `src/thegent/cli/commands/session_cmds_helpers.py`
+
+Helper utilities for session command presentation and shared parsing.
+
+---
+
+## enrich_status_out
+
+Build status payload dict with optional contract details.
+
+---
+
+## follow_log_stream
+
+Stream log updates with timeout and process-state checks.
+
+---
+
+## latest_issue_types_count
+
+```python
+latest_issue_types_count(result: dict[(str, Any)], latest: Any)
+```
+
+Compute fallback count for latest issue types.
+
+---
+
+## parse_sources_csv
+
+```python
+parse_sources_csv(sources: Any)
+```
+
+Parse comma-separated source names into a normalized tuple.
+
+---
+
+## print_high_session_count_tip
+
+Print operator hint when many sessions are listed.
+
+---
+
+## render_ps_markdown
+
+Render session rows in markdown format.
+
+---
+
+## render_ps_rich_table
+
+Render session rows in rich table format.
+
+---
+
+## resolve_export_format_with_notice
+
+Infer export format and print extension compatibility note when needed.
+
+---
+

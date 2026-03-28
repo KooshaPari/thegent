@@ -34,7 +34,7 @@ Attempt an AST-aware merge using Mergiraf or standard git merge-file.
 
 ## heliosShieldBridge
 
-Bridges thegent to heliosShield's Phase 11 task coordination layer.
+Bridges thegent to the native mesh coordination layer (formerly heliosShield).
 
 ### Methods
 
@@ -62,7 +62,7 @@ WP-16003: Broadcast operation intent to the mesh.
 create_shared_task(self: Any, task_id: str, description: str, depends_on: Any)
 ```
 
-WP-16003: Create a task in heliosShield's global task list.
+WP-16003: Create a task in the mesh's global task list.
 
 ---
 
@@ -72,7 +72,7 @@ WP-16003: Create a task in heliosShield's global task list.
 get_session_state(self: Any, session_id: str)
 ```
 
-WP-16003: Deep inspection of session state from heliosShield var/ dirs.
+WP-16003: Deep inspection of session state from thegent.mesh var/ dirs.
 
 ---
 
@@ -82,7 +82,17 @@ WP-16003: Deep inspection of session state from heliosShield var/ dirs.
 is_available(self: Any)
 ```
 
-Check if heliosShield coordination layer is initialized.
+Check if mesh coordination layer is initialized.
+
+---
+
+#### heliosShieldBridge.manager
+
+```python
+manager(self: Any)
+```
+
+Lazy-loaded MeshManager.
 
 ---
 
@@ -104,7 +114,7 @@ WP-16003: Broadcast operation intent to the mesh.
 create_shared_task(self: Any, task_id: str, description: str, depends_on: Any)
 ```
 
-WP-16003: Create a task in heliosShield's global task list.
+WP-16003: Create a task in the mesh's global task list.
 
 ---
 
@@ -114,7 +124,7 @@ WP-16003: Create a task in heliosShield's global task list.
 get_session_state(self: Any, session_id: str)
 ```
 
-WP-16003: Deep inspection of session state from heliosShield var/ dirs.
+WP-16003: Deep inspection of session state from thegent.mesh var/ dirs.
 
 ---
 
@@ -124,7 +134,17 @@ WP-16003: Deep inspection of session state from heliosShield var/ dirs.
 is_available(self: Any)
 ```
 
-Check if heliosShield coordination layer is initialized.
+Check if mesh coordination layer is initialized.
+
+---
+
+## manager
+
+```python
+manager(self: Any)
+```
+
+Lazy-loaded MeshManager.
 
 ---
 
@@ -137,3 +157,4 @@ merge_files(self: Any, base: Path, ours: Path, theirs: Path, output: Path)
 Attempt an AST-aware merge using Mergiraf or standard git merge-file.
 
 ---
+

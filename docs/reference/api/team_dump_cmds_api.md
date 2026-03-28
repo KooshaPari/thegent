@@ -1,0 +1,38 @@
+# team_dump_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/team/team_dump_cmds.py`
+
+Thegent CLI conversation dump commands (extracted from team_cmds.py).
+
+---
+
+## dump_categories_cmd
+
+```python
+dump_categories_cmd(project: Any, format: Any)
+```
+
+List available dump categories.
+
+---
+
+## dump_index_cmd
+
+```python
+dump_index_cmd(project: Any, format: Any)
+```
+
+Generate and display dump category index.
+
+---
+
+## dump_latest_cmd
+
+```python
+dump_latest_cmd(project: Any, category: Any, json_only: bool, format: Any)
+```
+
+Show latest dump path for a category or globally.
+
+---
+

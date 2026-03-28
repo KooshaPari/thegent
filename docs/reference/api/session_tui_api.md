@@ -121,3 +121,4 @@ watch(self: Any, session_id: Any, interval: float)
 Watch sessions live with auto-refresh.
 
 ---
+

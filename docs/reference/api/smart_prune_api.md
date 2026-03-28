@@ -110,6 +110,16 @@ Get absolute path for TTY.
 
 ---
 
+## is_protected_process
+
+```python
+is_protected_process(name: str)
+```
+
+Return True if the process name/cmdline matches a protected process.
+
+---
+
 ## pause_process
 
 ```python
@@ -149,3 +159,4 @@ smart_prune_main(force: bool, reprompt: bool)
 Entry point for smart pruning.
 
 ---
+

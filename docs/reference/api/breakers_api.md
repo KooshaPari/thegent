@@ -81,3 +81,4 @@ trip(self: Any, reason: str, value: float)
 Trip the circuit breaker.
 
 ---
+

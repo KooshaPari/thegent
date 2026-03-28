@@ -52,3 +52,4 @@ inspect_output(self: Any, output: str)
 Inspect model output and apply firewall rules.
 
 ---
+

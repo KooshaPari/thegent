@@ -124,7 +124,7 @@ Get aggregated metrics for a provider.
 get_query_latency_ms(self: Any)
 ```
 
-Get metrics query latency (should be `<50ms` per SLO).
+Get metrics query latency (should be <50ms per SLO).
 
 **Returns**: Estimated query latency in milliseconds (always ~0 for in-memory)
 
@@ -252,7 +252,7 @@ Get or create the global metrics collector.
 get_query_latency_ms(self: Any)
 ```
 
-Get metrics query latency (should be `<50ms` per SLO).
+Get metrics query latency (should be <50ms per SLO).
 
 **Returns**: Estimated query latency in milliseconds (always ~0 for in-memory)
 
@@ -369,3 +369,4 @@ Save metrics for a provider to JSON file.
 **Returns**: Path to saved file or None if storage not configured
 
 ---
+

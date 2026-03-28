@@ -14,13 +14,13 @@ ACP response format:
     {"type": "result", "result": {...}, "agent_id": "..."}
 
 JSON-RPC methods supported (over HTTP POST /rpc and stdio):
-    - initialize       -&gt; server capabilities
-    - agent/spawn      -&gt; spawn an agent with a prompt, returns result
-    - agent/message    -&gt; send a follow-up message to an existing session
-    - agent/stop       -&gt; stop an active session
-    - session/attach   -&gt; attach to or create a named mux session
-    - session/inspect  -&gt; capture pane output from a mux session
-    - session/send     -&gt; send keystrokes to a mux session
+    - initialize       -> server capabilities
+    - agent/spawn      -> spawn an agent with a prompt, returns result
+    - agent/message    -> send a follow-up message to an existing session
+    - agent/stop       -> stop an active session
+    - session/attach   -> attach to or create a named mux session
+    - session/inspect  -> capture pane output from a mux session
+    - session/send     -> send keystrokes to a mux session
 
 Independently startable::
 
@@ -37,8 +37,8 @@ Handles both simple task/result messages (native ACP format) and the
 JSON-RPC method envelope used by the stdio transport.
 
 ACP message flow:
-    Client  -&gt;  {"type": "task", "payload": {...}, "agent_id": "..."}
-    Server  -&gt;  {"type": "result", "result": {...}, "agent_id": "..."}
+    Client  ->  {"type": "task", "payload": {...}, "agent_id": "..."}
+    Server  ->  {"type": "result", "result": {...}, "agent_id": "..."}
 
 ### Methods
 
@@ -324,3 +324,4 @@ stop(self: Any)
 Signal the session to stop.
 
 ---
+

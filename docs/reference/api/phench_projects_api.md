@@ -1,0 +1,48 @@
+# phench_projects API Reference
+
+> **Source**: `src/thegent/cli/apps/phench_projects.py`
+
+Project-oriented phench orchestration commands.
+
+---
+
+## projects_matrix_cmd
+
+```python
+projects_matrix_cmd(target: Any, family: Any, repo_id: Any, include_repos: Any, exclude_repos: Any, module: Any, repo_refs: Any, runner: Any, command: Any, ref: Any, branch: Any, all_repos: bool, env_profile: Any, no_interactive: bool, snapshot_id: Any, sort_repos: bool, timeline_limit: int) -> None
+```
+
+---
+
+## projects_modules_cmd
+
+```python
+projects_modules_cmd(module: Any, target: Any, family: Any) -> None
+```
+
+---
+
+## projects_run_cmd
+
+```python
+projects_run_cmd(target: Any, family: Any, repo_id: Any, include_repos: Any, exclude_repos: Any, module: Any, repo_refs: Any, runner: Any, command: Any, ref: Any, branch: Any, all_repos: bool, execution_mode: str, env_profile: Any, no_interactive: bool, no_prepare: bool, snapshot_id: Any, timeline_limit: int) -> None
+```
+
+---
+
+## projects_status_cmd
+
+```python
+projects_status_cmd(target: Any, family: Any) -> None
+```
+
+---
+
+## register_projects_run
+
+```python
+register_projects_run(projects_app: typer.Typer) -> None
+```
+
+---
+

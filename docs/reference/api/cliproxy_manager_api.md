@@ -4,9 +4,33 @@
 
 CLIProxyAPIPlus lifecycle: config generation and proxy process management.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.use_cases.manage_cliproxy — Business logic (provider config, credentials)
+- thegent.ports.driven.cliproxy — Port interfaces
+- thegent.adapters.driven.cliproxy_http — HTTP client adapter
+
 Unified login flow: open URL + prompt for API key for all providers. Preflight check for
 existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
+
+---
+
+## ProviderDefinitionsLoadError
+
+Typed validation error for provider definition JSON loading.
+
+**Inherits from**: `ValueError`
+
+### Methods
+
+#### ProviderDefinitionsLoadError.__init__
+
+```python
+__init__(self: Any, name: str, reason: str)
+```
+
+---
 
 ---
 
@@ -32,6 +56,12 @@ fetch_provider_metrics(settings: Any)
 ```
 
 Fetch per-provider metrics from CLIProxyAPIPlus GET /v1/metrics/providers.
+
+---
+
+## get_last_provider_metrics_status
+
+Return status metadata from the latest provider metrics fetch.
 
 ---
 
@@ -78,7 +108,7 @@ Remove proxy launchd service.
 ## run_login
 
 ```python
-run_login(settings: ThegentSettings, provider: str, prompt_func: Any, force: bool)
+run_login(settings: ThegentSettings, provider: str, prompt_func: Any, force: bool, login_timeout: Any)
 ```
 
 Run login for provider. Returns exit code.
@@ -114,3 +144,4 @@ Caller must terminate proc on shutdown. Skips if proxy already reachable (proc=N
 Uses adapter (Responses API + WebSocket /v1/responses) when THGENT_CLIPROXY_ADAPTER=1.
 
 ---
+

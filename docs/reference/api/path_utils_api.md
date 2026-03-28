@@ -319,6 +319,31 @@ ValueError: Path escapes base '/tmp/sandbox'
 
 ---
 
+## sanitize_path
+
+```python
+sanitize_path(name: str)
+```
+
+Replace characters illegal in file system paths with underscores.
+
+Replaces the characters ``:<>"/\|?*`` with ``_``.
+
+**Parameters**:
+
+- `name`: Filename or path component to sanitize.
+
+**Returns**: Sanitized string safe for use as a path component.
+
+**Examples**:
+
+```python
+>>> sanitize_path('file:with*illegal?chars.txt')
+'file_with_illegal_chars.txt'
+```
+
+---
+
 ## strip_common_prefix
 
 ```python
@@ -341,3 +366,4 @@ Strip the common directory prefix from a list of paths for display.
 ```
 
 ---
+

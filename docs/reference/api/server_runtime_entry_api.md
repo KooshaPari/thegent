@@ -1,0 +1,40 @@
+# server_runtime_entry API Reference
+
+> **Source**: `src/thegent/mcp/server_runtime_entry.py`
+
+Runtime entrypoint MCP registration and wiring helpers.
+
+---
+
+## http_app
+
+```python
+http_app(stateless_http: bool)
+```
+
+Return ASGI app with EventStore (mountable in FastAPI/Starlette).
+
+---
+
+## http_app_factory
+
+Factory for uvicorn --reload.
+
+---
+
+## register_runtime_entry
+
+Register runtime route/tool and return runtime entry helpers.
+
+---
+
+## run
+
+```python
+run(host: Any, port: Any, reload: bool)
+```
+
+Start the FastMCP server with EventStore and optional Docket.
+
+---
+

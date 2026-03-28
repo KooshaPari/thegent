@@ -1,6 +1,6 @@
 # deep_research API Reference
 
-> **Source**: `src/thegent/tools/deep_research.py`
+> **Source**: `src/thegent/skills/deep_research.py`
 
 ## arxiv_search
 
@@ -61,3 +61,4 @@ run_curl(url: str, user_agent: str)
 Run curl with a specific user agent and return the output.
 
 ---
+

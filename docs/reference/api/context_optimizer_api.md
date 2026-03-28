@@ -171,3 +171,4 @@ truncate_smart(self: Any, text: str, max_tokens: int)
 Smart truncation keeping important parts.
 
 ---
+

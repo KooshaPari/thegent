@@ -22,14 +22,14 @@ key(self: Any)
 
 ## RulesLoader
 
-Parses and caches rules from heliosShield/rules.conf.
+Parses and caches rules from centralized rules.conf.
 
 ### Methods
 
 #### RulesLoader.__init__
 
 ```python
-__init__(self: Any, rules_path: Path)
+__init__(self: Any, rules_path: Any)
 ```
 
 ---
@@ -83,3 +83,4 @@ load(self: Any, force: bool)
 Load rules from file if modified or forced.
 
 ---
+

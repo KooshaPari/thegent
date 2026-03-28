@@ -84,3 +84,4 @@ get_adaptive_polling_interval(self: Any, battery_level: float)
 Adjust sync frequency based on battery (0.0 - 1.0).
 
 ---
+

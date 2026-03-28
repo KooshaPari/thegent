@@ -7,7 +7,7 @@ Muxless zmx session persistence manager for thegent agent sessions.
 Provides a high-level manager for creating and managing zmx virtual terminal
 sessions, enabling agent sessions to persist without tmux/screen.
 
-Integration model: subprocess calls only via subprocess.run (never os.system).
+Integration model: subprocess calls only via shim_run (never os.system).
 zmx not being installed degrades gracefully -- all methods return safe defaults.
 
 FR-SES-001: Session backend must be pluggable and auto-detected.
@@ -52,7 +52,7 @@ High-level manager for zmx muxless virtual terminal sessions.
 All public methods are safe to call even when zmx is not installed --
 they log a warning and return a safe fallback value.
 
-Subprocess integration: all zmx calls go through subprocess.run().
+Subprocess integration: all zmx calls go through shim_run().
 
 # @trace FR-SES-001, FR-SES-002, FR-SES-003
 
@@ -80,7 +80,7 @@ attach_session(self: Any, session_name: str)
 
 Attach (interactively) to an existing zmx session.
 
-Calls: ``zmx attach &lt;session_name&gt;``
+Calls: ``zmx attach <session_name>``
 
 This call blocks until the user detaches from the session.
 
@@ -101,7 +101,7 @@ capture_output(self: Any, session_name: str, lines: int)
 
 Capture the last *lines* lines of output from a zmx session.
 
-Calls: ``zmx capture &lt;session_name&gt; --lines &lt;lines&gt;``
+Calls: ``zmx capture <session_name> --lines <lines>``
 
 **Parameters**:
 
@@ -120,7 +120,7 @@ create_session(self: Any, session_id: str, command: list[str])
 
 Create a new zmx session running *command*.
 
-Calls: ``zmx new &lt;session_id&gt; -- &lt;command...&gt;``
+Calls: ``zmx new <session_id> -- <command...>``
 
 **Parameters**:
 
@@ -140,7 +140,7 @@ destroy_session(self: Any, session_name: str)
 
 Terminate and clean up a zmx session.
 
-Calls: ``zmx kill &lt;session_name&gt;``
+Calls: ``zmx kill <session_name>``
 
 **Parameters**:
 
@@ -186,7 +186,7 @@ send_input(self: Any, session_name: str, text: str)
 
 Send keystrokes (text) to a zmx session.
 
-Calls: ``zmx send-keys &lt;session_name&gt; &lt;text&gt;``
+Calls: ``zmx send-keys <session_name> <text>``
 
 **Parameters**:
 
@@ -207,7 +207,7 @@ attach_session(self: Any, session_name: str)
 
 Attach (interactively) to an existing zmx session.
 
-Calls: ``zmx attach &lt;session_name&gt;``
+Calls: ``zmx attach <session_name>``
 
 This call blocks until the user detaches from the session.
 
@@ -228,7 +228,7 @@ capture_output(self: Any, session_name: str, lines: int)
 
 Capture the last *lines* lines of output from a zmx session.
 
-Calls: ``zmx capture &lt;session_name&gt; --lines &lt;lines&gt;``
+Calls: ``zmx capture <session_name> --lines <lines>``
 
 **Parameters**:
 
@@ -247,7 +247,7 @@ create_session(self: Any, session_id: str, command: list[str])
 
 Create a new zmx session running *command*.
 
-Calls: ``zmx new &lt;session_id&gt; -- &lt;command...&gt;``
+Calls: ``zmx new <session_id> -- <command...>``
 
 **Parameters**:
 
@@ -267,7 +267,7 @@ destroy_session(self: Any, session_name: str)
 
 Terminate and clean up a zmx session.
 
-Calls: ``zmx kill &lt;session_name&gt;``
+Calls: ``zmx kill <session_name>``
 
 **Parameters**:
 
@@ -352,7 +352,7 @@ send_input(self: Any, session_name: str, text: str)
 
 Send keystrokes (text) to a zmx session.
 
-Calls: ``zmx send-keys &lt;session_name&gt; &lt;text&gt;``
+Calls: ``zmx send-keys <session_name> <text>``
 
 **Parameters**:
 
@@ -362,3 +362,4 @@ Calls: ``zmx send-keys &lt;session_name&gt; &lt;text&gt;``
 **Returns**: True on success, False on failure (including zmx unavailable).
 
 ---
+

@@ -1,6 +1,6 @@
 # dlq API Reference
 
-> **Source**: `src/thegent/orchestration/dlq.py`
+> **Source**: `src/thegent/orchestration/resilience/dlq.py`
 
 Dead-letter queue service (WP-Y2, FR-034).
 
@@ -35,3 +35,4 @@ resolve(session_dir: Path, run_id: str, resolution: str)
 Mark DLQ item as resolved (replayed, fixed, discarded).
 
 ---
+

@@ -95,3 +95,4 @@ Generate GIF from a script file.
 **Returns**: True if successful
 
 ---
+

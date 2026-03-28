@@ -1,0 +1,89 @@
+# work_stream_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/work_stream_impl.py`
+
+Work stream management: parse, collect, claim, complete, incorporate, do-next, wait-next, spawn-next.
+
+Extracted from impl.py as part of WL-120 LOC Reduction Program (Phase 2).
+Contains:
+- WORK_STREAM.md parsing and dependency checking
+- Priority sorting and item collection
+- Queue collection (PromptQueue, EscalationQueue, DeferralManager, BacklogManager)
+- Pre-work governance hard gate
+- do_next_impl, wait_next_impl, spawn_next_impl
+- work_stream_claim_impl, work_stream_complete_impl, incorporate_impl
+- continuity_snapshot_impl
+- _validate_task_and_record_errors
+
+---
+
+## continuity_snapshot_impl
+
+```python
+continuity_snapshot_impl(owner: str, run_ids: list[str], state_summary: Any, next_steps: Any)
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+
+## do_next_impl
+
+```python
+do_next_impl(cd: Any, limit: int)
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+
+## incorporate_impl
+
+```python
+incorporate_impl(cd: Any, dry_run: bool)
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+
+## spawn_next_impl
+
+```python
+spawn_next_impl(cd: Any, limit: int, agent: str, timeout: Any, lane: str, override_reason: str, claim: bool)
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+
+## wait_next_impl
+
+```python
+wait_next_impl(cd: Any, poll_interval: float, timeout: float, sources: tuple[(str, Ellipsis)])
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+
+## work_stream_claim_impl
+
+```python
+work_stream_claim_impl(item_id: str, agent_id: str, cd: Any)
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+
+## work_stream_complete_impl
+
+```python
+work_stream_complete_impl(item_id: str, agent_id: str, cd: Any)
+```
+
+Backward-compatible wrapper for shared work-stream orchestration service.
+
+---
+

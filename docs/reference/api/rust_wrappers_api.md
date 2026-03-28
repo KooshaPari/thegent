@@ -1,0 +1,53 @@
+# rust_wrappers API Reference
+
+> **Source**: `src/thegent/rust_wrappers/__init__.py`
+
+Rust wrapper stubs for CLI entry points.
+
+These are standalone stubs that don't import the main thegent package
+to avoid version requirements. They delegate to shell commands.
+
+---
+
+## anen
+
+Anen agent runner.
+
+---
+
+## antigma
+
+Antigma agent runner.
+
+---
+
+## clode
+
+Codex agent runner.
+
+---
+
+## dex
+
+Dex agent runner.
+
+---
+
+## droid
+
+Droid agent runner.
+
+---
+
+## fanta
+
+Fanta agent runner.
+
+---
+
+## roid
+
+ROID agent runner.
+
+---
+

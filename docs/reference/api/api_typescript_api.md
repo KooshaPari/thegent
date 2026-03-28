@@ -87,3 +87,4 @@ Parse a TypeScript/JavaScript file.
 **Returns**: Parsed file information
 
 ---
+

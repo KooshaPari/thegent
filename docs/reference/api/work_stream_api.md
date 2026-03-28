@@ -40,6 +40,16 @@ Mark an item as complete across all files.
 
 ---
 
+#### WorkStreamManager.verify_work_stream_invariants
+
+```python
+verify_work_stream_invariants(self: Any)
+```
+
+Check WORK_STREAM invariants across CLAIMED and COMPLETED sections.
+
+---
+
 ---
 
 ## claim
@@ -61,3 +71,14 @@ complete(self: Any, item_id: str, agent_id: str)
 Mark an item as complete across all files.
 
 ---
+
+## verify_work_stream_invariants
+
+```python
+verify_work_stream_invariants(self: Any)
+```
+
+Check WORK_STREAM invariants across CLAIMED and COMPLETED sections.
+
+---
+

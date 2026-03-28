@@ -1,0 +1,266 @@
+# idempotency_cache API Reference
+
+> **Source**: `src/thegent/integrations/idempotency_cache.py`
+
+Idempotency Index Cache (WL-166): Track applied operations to prevent duplicates.
+
+Provides a persistent cache of applied operations, keyed by operation_id.
+Used to ensure that workstream updates, sync operations, and other potentially
+expensive actions are idempotent — if the same operation is reapplied with the
+same content_hash, it is skipped.
+
+The cache persists to docs/reference/idempotency_cache.json for durability
+across process restarts.
+
+---
+
+## IdempotencyCache
+
+Persistent cache of applied operations.
+
+Prevents duplicate application of the same operation by tracking
+operation_id + content_hash pairs. Records are stored in a JSON file
+at docs/reference/idempotency_cache.json.
+
+Thread-safe for read operations, but writes should be serialized
+externally (e.g., via SingleWriterLock).
+
+### Methods
+
+#### IdempotencyCache.__init__
+
+```python
+__init__(self: Any, cache_path: Any)
+```
+
+Initialize the cache.
+
+**Parameters**:
+
+- `cache_path`: Path to the JSON cache file. Defaults to
+docs/reference/idempotency_cache.json.
+
+---
+
+#### IdempotencyCache.check
+
+```python
+check(self: Any, operation_id: str)
+```
+
+Check if an operation has already been applied.
+
+**Parameters**:
+
+- `operation_id`: The operation identifier to check.
+
+**Returns**: True if the operation has been recorded, False otherwise.
+
+---
+
+#### IdempotencyCache.check_content
+
+```python
+check_content(self: Any, connector: str, wl_id: str, content_hash: str)
+```
+
+Check whether equivalent content was already recorded.
+
+**Parameters**:
+
+- `connector`: Connector name (for example: github, linear).
+- `wl_id`: Work item identifier.
+- `content_hash`: Deterministic content hash for the mutation payload.
+
+**Returns**: True when an equivalent record exists in the idempotency index.
+
+---
+
+#### IdempotencyCache.clear_older_than
+
+```python
+clear_older_than(self: Any, dt: datetime)
+```
+
+Remove records with timestamps older than the given datetime.
+
+**Parameters**:
+
+- `dt`: Cutoff datetime (ISO 8601 or datetime object).
+
+**Returns**: The number of records removed.
+
+---
+
+#### IdempotencyCache.get_all_records
+
+```python
+get_all_records(self: Any)
+```
+
+Return all cached records (for inspection/testing).
+
+**Returns**: List of all IdempotencyRecord objects.
+
+---
+
+#### IdempotencyCache.invalidate
+
+```python
+invalidate(self: Any, operation_id: str)
+```
+
+Remove a record from the cache.
+
+Used when an operation has been rolled back or needs to be re-applied.
+
+**Parameters**:
+
+- `operation_id`: The operation to remove.
+
+---
+
+#### IdempotencyCache.record
+
+```python
+record(self: Any, operation_id: str, wl_id: str, connector: str, content_hash: str)
+```
+
+Record an applied operation.
+
+**Parameters**:
+
+- `operation_id`: Unique operation identifier.
+- `wl_id`: Work item ID that triggered this operation.
+- `connector`: Source connector name.
+- `content_hash`: SHA256 hash of the operation's content.
+
+---
+
+---
+
+## IdempotencyRecord
+
+Record of an applied operation.
+
+**Inherits from**: `SerializableMixin`
+
+### Methods
+
+#### IdempotencyRecord.from_dict
+
+```python
+from_dict(cls: Any, data: dict)
+```
+
+Deserialize from a dictionary.
+
+---
+
+---
+
+## check
+
+```python
+check(self: Any, operation_id: str)
+```
+
+Check if an operation has already been applied.
+
+**Parameters**:
+
+- `operation_id`: The operation identifier to check.
+
+**Returns**: True if the operation has been recorded, False otherwise.
+
+---
+
+## check_content
+
+```python
+check_content(self: Any, connector: str, wl_id: str, content_hash: str)
+```
+
+Check whether equivalent content was already recorded.
+
+**Parameters**:
+
+- `connector`: Connector name (for example: github, linear).
+- `wl_id`: Work item identifier.
+- `content_hash`: Deterministic content hash for the mutation payload.
+
+**Returns**: True when an equivalent record exists in the idempotency index.
+
+---
+
+## clear_older_than
+
+```python
+clear_older_than(self: Any, dt: datetime)
+```
+
+Remove records with timestamps older than the given datetime.
+
+**Parameters**:
+
+- `dt`: Cutoff datetime (ISO 8601 or datetime object).
+
+**Returns**: The number of records removed.
+
+---
+
+## from_dict
+
+```python
+from_dict(cls: Any, data: dict)
+```
+
+Deserialize from a dictionary.
+
+---
+
+## get_all_records
+
+```python
+get_all_records(self: Any)
+```
+
+Return all cached records (for inspection/testing).
+
+**Returns**: List of all IdempotencyRecord objects.
+
+---
+
+## invalidate
+
+```python
+invalidate(self: Any, operation_id: str)
+```
+
+Remove a record from the cache.
+
+Used when an operation has been rolled back or needs to be re-applied.
+
+**Parameters**:
+
+- `operation_id`: The operation to remove.
+
+---
+
+## record
+
+```python
+record(self: Any, operation_id: str, wl_id: str, connector: str, content_hash: str)
+```
+
+Record an applied operation.
+
+**Parameters**:
+
+- `operation_id`: Unique operation identifier.
+- `wl_id`: Work item ID that triggered this operation.
+- `connector`: Source connector name.
+- `content_hash`: SHA256 hash of the operation's content.
+
+---
+

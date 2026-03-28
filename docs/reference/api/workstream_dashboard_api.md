@@ -220,16 +220,6 @@ __init__(self: Any)
 
 ---
 
-#### WorkstreamDashboard.action_quit
-
-```python
-action_quit(self: Any)
-```
-
-Quit the dashboard.
-
----
-
 #### WorkstreamDashboard.action_refresh
 
 ```python
@@ -315,16 +305,6 @@ update_xp(self: Any, xp_data: list[dict[(str, Any)]])
 Update XP table.
 
 ---
-
----
-
-## action_quit
-
-```python
-action_quit(self: Any)
-```
-
-Quit the dashboard.
 
 ---
 
@@ -453,3 +433,4 @@ update_xp(self: Any, xp_data: list[dict[(str, Any)]])
 Update XP table.
 
 ---
+

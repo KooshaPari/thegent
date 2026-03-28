@@ -210,15 +210,7 @@ Unload the plugin.
 
 Metadata about a plugin.
 
-### Methods
-
-#### PluginInfo.to_dict
-
-```python
-to_dict(self: Any)
-```
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -586,14 +578,6 @@ Reload all plugins.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any) -> dict[(str, Any)]
-```
-
----
-
 ## unload
 
 ```python
@@ -613,3 +597,4 @@ unload_plugin(self: Any, name: str)
 Unload a plugin.
 
 ---
+

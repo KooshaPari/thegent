@@ -57,3 +57,23 @@ __init__(self: Any, config: Any)
 ---
 
 ---
+
+## SyncthingWorkspaceSync
+
+High-level helper for workspace synchronisation via Syncthing (WP-5002).
+
+Wraps :class:`SyncthingManager` to provide push/pull operations tied to
+the compute offload lifecycle.
+
+### Methods
+
+#### SyncthingWorkspaceSync.__init__
+
+```python
+__init__(self: Any, manager: Any, poll_interval_s: float, completion_threshold: float)
+```
+
+---
+
+---
+

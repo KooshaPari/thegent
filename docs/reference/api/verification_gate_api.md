@@ -28,7 +28,7 @@ Protocol for HealthScoreComputer -- used to get dimension weights.
 #### HealthComputerProtocol.compute
 
 ```python
-compute(self: Any, scan_result: Any)
+compute(self: Any, dimension_values: dict[(str, float)])
 ```
 
 ---
@@ -168,7 +168,7 @@ Outcome of post-task verification.
 ## compute
 
 ```python
-compute(self: Any, scan_result: Any) -> Any
+compute(self: Any, dimension_values: dict[(str, float)]) -> Any
 ```
 
 ---
@@ -196,7 +196,7 @@ Returns None if already at the highest tier.
 ## scan
 
 ```python
-scan(self: Any) -> ScanResultProtocol
+scan(self: Any) -> Any
 ```
 
 ---
@@ -204,7 +204,7 @@ scan(self: Any) -> ScanResultProtocol
 ## scan_dimension
 
 ```python
-scan_dimension(self: Any, dimension: str) -> DimensionScanResult
+scan_dimension(self: Any, dimension: str) -> Any
 ```
 
 ---
@@ -231,3 +231,4 @@ Compares post-execution metrics against the pre-scan baseline to
 determine whether the task improved, regressed, or had no effect.
 
 ---
+

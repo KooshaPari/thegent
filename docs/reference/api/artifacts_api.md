@@ -2,27 +2,75 @@
 
 > **Source**: `src/thegent/maif/artifacts.py`
 
-MAIF Action Artifacts implementation for thegent.
+MAIF (Model-Aware Information Flow) action artifacts.
+
+Provides signed, immutable records of agent actions (WP-3002).
 
 ---
 
 ## MAIFArtifact
 
-MAIF (Model-Aware Information Flow) action artifact.
+Mutable artifact record used by MAIFManager and tests.
 
-Provides signed, immutable record of an agent action.
+---
 
-**Inherits from**: `BaseModel`
+## MAIFArtifactStore
+
+SQLite-backed storage for MAIF artifacts (FR-MAIF-001).
 
 ### Methods
 
-#### MAIFArtifact.get_canonical_data
+#### MAIFArtifactStore.__init__
 
 ```python
-get_canonical_data(self: Any)
+__init__(self: Any, db_path: Path)
 ```
 
-Return canonical JSON representation for signing.
+---
+
+#### MAIFArtifactStore.get
+
+```python
+get(self: Any, artifact_id: str)
+```
+
+Retrieve artifact by ID.
+
+---
+
+#### MAIFArtifactStore.store
+
+```python
+store(self: Any, artifact: dict[(str, Any)])
+```
+
+Store artifact in local cache.
+
+---
+
+---
+
+## MAIFHook
+
+Intercepts agent actions to record MAIF artifacts (WP-3002).
+
+### Methods
+
+#### MAIFHook.__init__
+
+```python
+__init__(self: Any, artifact_store: MAIFArtifactStore, private_key: rsa.RSAPrivateKey, agent_id: str, session_id: str)
+```
+
+---
+
+#### MAIFHook.record_action
+
+```python
+record_action(self: Any, action_type: str, payload: dict[(str, Any)], chain_of_thought: Any)
+```
+
+Record an action as a signed MAIF artifact.
 
 ---
 
@@ -30,17 +78,65 @@ Return canonical JSON representation for signing.
 
 ## generate_key_pair
 
-Generate a new RSA key pair for MAIF signing.
+Generate an RSA key pair for signing MAIF artifacts.
+
+**Returns**: Tuple of (private_key, public_key).
 
 ---
 
-## get_canonical_data
+## generate_signing_key
+
+Generate RSA key pair for signing (MAIF).
+
+---
+
+## get
 
 ```python
-get_canonical_data(self: Any)
+get(self: Any, artifact_id: str)
 ```
 
-Return canonical JSON representation for signing.
+Retrieve artifact by ID.
+
+---
+
+## load_private_key
+
+```python
+load_private_key(path: Path, password: Any)
+```
+
+Load private key from PEM file.
+
+---
+
+## record_action
+
+```python
+record_action(self: Any, action_type: str, payload: dict[(str, Any)], chain_of_thought: Any)
+```
+
+Record an action as a signed MAIF artifact.
+
+---
+
+## require_supported_schema_version
+
+```python
+require_supported_schema_version(payload: dict[(str, Any)])
+```
+
+Validate required schema_version field for MAIF artifacts.
+
+---
+
+## save_private_key
+
+```python
+save_private_key(private_key: rsa.RSAPrivateKey, path: Path, password: Any)
+```
+
+Save private key to PEM file.
 
 ---
 
@@ -50,7 +146,26 @@ Return canonical JSON representation for signing.
 sign_artifact(artifact: MAIFArtifact, private_key: rsa.RSAPrivateKey)
 ```
 
-Sign artifact with RSA private key.
+Sign a MAIFArtifact in-place and return the base64-encoded signature.
+
+Sets artifact.signature to the computed signature string.
+
+**Parameters**:
+
+- `artifact`: The artifact to sign (mutated in-place).
+- `private_key`: RSA private key used for signing.
+
+**Returns**: Base64-encoded signature string.
+
+---
+
+## store
+
+```python
+store(self: Any, artifact: dict[(str, Any)])
+```
+
+Store artifact in local cache.
 
 ---
 
@@ -60,6 +175,14 @@ Sign artifact with RSA private key.
 verify_artifact(artifact: MAIFArtifact, public_key: rsa.RSAPublicKey)
 ```
 
-Verify artifact signature.
+Verify a MAIFArtifact's signature.
+
+**Parameters**:
+
+- `artifact`: Artifact to verify.
+- `public_key`: RSA public key corresponding to the signing private key.
+
+**Returns**: True if the signature is valid, False otherwise.
 
 ---
+

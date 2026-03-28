@@ -2,7 +2,17 @@
 
 > **Source**: `src/thegent/provider_model_manager.py`
 
-Provider and Model Management - CLI, MCP, and programmatic CRUD for providers and models.
+Provider and Model Management - Backward compatibility shim.
+
+This module provides backward compatibility by re-exporting the decomposed
+functionality from use_cases and adapters. All business logic has been moved
+to hexagonal architecture modules.
+
+DEPRECATED: New code should import directly from:
+  - thegent.use_cases.manage_providers
+  - thegent.use_cases.manage_models
+  - thegent.adapters.driven.provider_io
+  - thegent.adapters.driven.cliproxy_provider
 
 ---
 
@@ -24,26 +34,7 @@ add_common_alias(alias: str)
 
 Add a common model alias that works across providers.
 
----
-
-## add_custom_benchmark
-
-```python
-add_custom_benchmark(provider: str, model: str, benchmark_name: str, score: float, category: str, description: str)
-```
-
-Add a custom benchmark entry for a model.
-
-**Parameters**:
-
-- `provider`: Provider name
-- `model`: Model name
-- `benchmark_name`: Name of the benchmark
-- `score`: Score (0-1)
-- `category`: Category (coding, reasoning, general, etc.)
-- `description`: Optional description
-
-**Returns**: (success, message)
+DEPRECATED: Use thegent.use_cases.manage_models.add_common_alias instead.
 
 ---
 
@@ -55,34 +46,7 @@ add_model_alias(provider: str, model: str, alias: str)
 
 Add a model alias for a provider.
 
----
-
-## add_model_index
-
-```python
-add_model_index(provider: str, model: str, context_limit: Any, output_limit: Any, cost_per_1m_input: Any, cost_per_1m_output: Any, tps: Any, latency_first_token: Any, reasoning: Any, vision: Any, swebench: Any, termbench: Any, notes: Any)
-```
-
-Add or update model index data.
-
----
-
-## add_model_modality
-
-```python
-add_model_modality(provider: str, model: str, modality: str, value: Any)
-```
-
-Add or update a modality/feature flag for a model.
-
-**Parameters**:
-
-- `provider`: Provider name
-- `model`: Model name
-- `modality`: Modality/feature name
-- `value`: Value (true/false or custom string)
-
-**Returns**: (success, message)
+DEPRECATED: Use thegent.use_cases.manage_models.add_model_alias instead.
 
 ---
 
@@ -94,25 +58,7 @@ add_provider(name: str, base_url: str, model: str, login_url: Any, login_instruc
 
 Add a new provider.
 
----
-
-## calculate_composite_score
-
-```python
-calculate_composite_score(benchmarks: dict[(str, float)], weights: Any)
-```
-
-Calculate composite performance score from benchmarks.
-
-Uses available benchmarks only - missing benchmarks don't penalize.
-Results are normalized to 0-100 scale.
-
-**Parameters**:
-
-- `benchmarks`: Dict of benchmark_name -> score (0-1)
-- `weights`: Optional custom weights for benchmarks
-
-**Returns**: Composite score 0-100, or None if no benchmarks available
+DEPRECATED: Use thegent.use_cases.manage_providers.add_provider instead.
 
 ---
 
@@ -124,6 +70,8 @@ delete_provider(name: str, remove_credentials: bool)
 
 Delete a provider.
 
+DEPRECATED: Use thegent.use_cases.manage_providers.delete_provider instead.
+
 ---
 
 ## discover_models
@@ -134,85 +82,26 @@ discover_models(provider: Any)
 
 Discover available models from provider APIs.
 
----
-
-## fuzzy_search_models
-
-```python
-fuzzy_search_models(query: str, fields: Any, provider: Any, limit: int)
-```
-
-Fuzzy search models by query string.
-
-Simple fuzzy matching - matches query as substring in any field.
-
-**Parameters**:
-
-- `query`: Search query
-- `fields`: Fields to search (default: provider, model, notes)
-- `provider`: Optional provider filter
-- `limit`: Maximum results
-
-**Returns**: List of matching models
-
----
-
-## get_model_indices
-
-```python
-get_model_indices(provider: Any, model: Any)
-```
-
-Get model indices (context limits, cost, speed, benchmarks).
-
----
-
-## get_model_modalities
-
-```python
-get_model_modalities(provider: Any, model: Any)
-```
-
-Get model modalities/feature flags.
-
-**Parameters**:
-
-- `provider`: Optional provider filter
-- `model`: Optional model filter
-
-**Returns**: Dict of models with their modalities
-
----
-
-## get_provider
-
-```python
-get_provider(name: str)
-```
-
-Get a specific provider.
-
----
-
-## list_available_modalities
-
-List all available modality definitions.
+When include_status=True, returns:
+{
+  "models": [...],
+  "discovery": {
+      "status": "ok"|"error",
+      "failure_class": "transport"|"protocol"|None,
+      "failure_type": str|None,
+      "error_message": str|None,
+      "url": str,
+      "malformed_count": int,
+      "catalog_state": "empty"|"available"|"unknown",
+      "provider": str|None,
+  }
+}
 
 ---
 
 ## list_credentials
 
 List all configured credentials (without showing actual keys).
-
----
-
-## list_model_indices
-
-```python
-list_model_indices(provider: Any, sort_by: str, include_all: bool)
-```
-
-List models with their indices, sorted by specified criteria.
 
 ---
 
@@ -224,24 +113,7 @@ list_models(provider: Any)
 
 List all models, optionally filtered by provider.
 
----
-
-## list_models_with_scores
-
-```python
-list_models_with_scores(provider: Any, min_score: Any, modality: Any, sort_by: str)
-```
-
-List models with composite performance scores.
-
-**Parameters**:
-
-- `provider`: Optional provider filter
-- `min_score`: Minimum composite score filter
-- `modality`: Only include models with this modality enabled
-- `sort_by`: Sort by 'composite_score', 'cost', 'context', 'tps'
-
-**Returns**: List of models with computed composite scores
+DEPRECATED: Use thegent.use_cases.manage_models.list_models instead.
 
 ---
 
@@ -252,6 +124,8 @@ list_providers(include_credentials: bool)
 ```
 
 List all configured providers.
+
+DEPRECATED: Use thegent.use_cases.manage_providers.list_providers instead.
 
 ---
 
@@ -273,6 +147,8 @@ remove_common_alias(alias: str)
 
 Remove a common model alias.
 
+DEPRECATED: Use thegent.use_cases.manage_models.remove_common_alias instead.
+
 ---
 
 ## remove_model_alias
@@ -283,50 +159,7 @@ remove_model_alias(provider: str, alias: str)
 
 Remove a model alias from a provider.
 
----
-
-## remove_model_index
-
-```python
-remove_model_index(provider: str, model: str)
-```
-
-Remove model index data.
-
----
-
-## run_provider_form
-
-Interactive form for provider management.
-
----
-
-## search_by_modalities
-
-```python
-search_by_modalities(required_modalities: list[str], excluded_modalities: Any, provider: Any, sort_by: str)
-```
-
-Search models by modality requirements.
-
-**Parameters**:
-
-- `required_modalities`: List of modalities that must be enabled
-- `excluded_modalities`: List of modalities that must NOT be enabled
-- `provider`: Optional provider filter
-- `sort_by`: Sort field
-
-**Returns**: Matching models
-
----
-
-## search_models_by_capability
-
-```python
-search_models_by_capability(capability: str, min_context: Any, max_cost_per_1m: Any, min_tps: Any)
-```
-
-Search models by capability (reasoning, vision, swebench, termbench).
+DEPRECATED: Use thegent.use_cases.manage_models.remove_model_alias instead.
 
 ---
 
@@ -337,6 +170,8 @@ update_provider(name: str, base_url: Any, model: Any, login_url: Any, login_inst
 ```
 
 Update an existing provider.
+
+DEPRECATED: Use thegent.use_cases.manage_providers.update_provider instead.
 
 ---
 
@@ -349,3 +184,4 @@ validate_provider(name: str)
 Validate a provider by testing connectivity.
 
 ---
+

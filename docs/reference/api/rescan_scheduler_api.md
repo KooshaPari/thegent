@@ -1,0 +1,20 @@
+# rescan_scheduler API Reference
+
+> **Source**: `src/thegent/integrations/rescan_scheduler.py`
+
+Stub module for thegent.integrations.rescan_scheduler.
+
+---
+
+## RescanConfig
+
+Stub class.
+
+---
+
+## RescanScheduler
+
+Stub class.
+
+---
+

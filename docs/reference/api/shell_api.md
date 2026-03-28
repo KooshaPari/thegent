@@ -73,8 +73,9 @@ Run shell command using fastest available shell.
 - `shell`: Shell executable path (defaults to fastest available)
 - `optimize_startup`: Skip heavy .zshrc loading for non-interactive
 - `capture_output`: Capture stdout/stderr (default: True)
-- `**kwargs`: Additional subprocess.run arguments
+- `**kwargs`: Additional shim_run arguments
 
 **Returns**: CompletedProcess result
 
 ---
+

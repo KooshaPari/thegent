@@ -1,0 +1,20 @@
+# header_normalizer API Reference
+
+> **Source**: `src/thegent/integrations/header_normalizer.py`
+
+Stub module for thegent.integrations.header_normalizer.
+
+---
+
+## NormalizationResult
+
+Stub class.
+
+---
+
+## WLHeaderNormalizer
+
+Stub class.
+
+---
+

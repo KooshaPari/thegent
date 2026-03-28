@@ -1,6 +1,6 @@
 # budget_alerts API Reference
 
-> **Source**: `src/thegent/orchestration/budget_alerts.py`
+> **Source**: `src/thegent/cost/budget_alerts.py`
 
 Budget alerts and cost-overage gates for the orchestration layer.
 
@@ -48,7 +48,7 @@ alert_level is one of "OK", "WARN", "BLOCK".
 #### BudgetAlertSystem.from_settings
 
 ```python
-from_settings(cls: Any, settings: ThegentSettings)
+from_settings(cls: Any, settings: Any)
 ```
 
 Create budget alert system from settings.
@@ -61,9 +61,7 @@ Create budget alert system from settings.
 get_daily_spend(self: Any)
 ```
 
-Get total spend in the current day.
-
-Calculated by scanning the aggregate.jsonl log.
+Get total spend in the current day (UTC).
 
 ---
 
@@ -108,7 +106,7 @@ alert_level is one of "OK", "WARN", "BLOCK".
 ## from_settings
 
 ```python
-from_settings(cls: Any, settings: ThegentSettings)
+from_settings(cls: Any, settings: Any)
 ```
 
 Create budget alert system from settings.
@@ -121,9 +119,7 @@ Create budget alert system from settings.
 get_daily_spend(self: Any)
 ```
 
-Get total spend in the current day.
-
-Calculated by scanning the aggregate.jsonl log.
+Get total spend in the current day (UTC).
 
 ---
 
@@ -138,3 +134,4 @@ Get total spend in the current hour.
 Calculated by scanning the aggregate.jsonl log.
 
 ---
+

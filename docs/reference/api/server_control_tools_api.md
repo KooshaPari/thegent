@@ -1,0 +1,126 @@
+# server_control_tools API Reference
+
+> **Source**: `src/thegent/mcp/server_control_tools.py`
+
+Control/status/inspection MCP tool registration helpers.
+
+---
+
+## register_control_tools
+
+Register control-oriented MCP tools and return stable handler bindings.
+
+---
+
+## thegent_continuity_snapshot
+
+```python
+thegent_continuity_snapshot(owner: str, run_ids: list[str], state_summary: Any, next_steps: Any)
+```
+
+Create a continuity snapshot for shift handoff.
+
+---
+
+## thegent_inbox_list
+
+```python
+thegent_inbox_list(owner: Any, agent: Any, event_type: Any, status: Any, sources: Any, limit: int)
+```
+
+List unified inbox events (run registry + escalation) with optional filters.
+
+---
+
+## thegent_inbox_wait
+
+```python
+thegent_inbox_wait(owner: Any, agent: Any, event_type: Any, status: Any, sources: Any, poll_interval: float, timeout: float)
+```
+
+Wait for next inbox event matching filters.
+
+---
+
+## thegent_inspect
+
+```python
+thegent_inspect(session_ids: Any, owner: Any, tail: int, stderr: bool, include_contract: bool)
+```
+
+Multi-session status + logs.
+
+---
+
+## thegent_logs
+
+```python
+thegent_logs(session_id: str, tail: Any, stderr: bool)
+```
+
+Read session log output with optional tail limit.
+
+---
+
+## thegent_pause
+
+```python
+thegent_pause(session_id: str, reason: str)
+```
+
+Pause a background session (register pause event in registry).
+
+---
+
+## thegent_ps
+
+```python
+thegent_ps(owner: Any, all: bool, include_contract: bool)
+```
+
+List active and historical background sessions for monitoring and discovery.
+
+Use this to find session_ids for thegent_logs, thegent_status, etc.
+
+---
+
+## thegent_resume
+
+```python
+thegent_resume(session_id: str)
+```
+
+Resume a paused session (register resume event in registry).
+
+---
+
+## thegent_status
+
+```python
+thegent_status(session_id: str, include_contract: bool)
+```
+
+Get session status for quick health check.
+
+---
+
+## thegent_stop
+
+```python
+thegent_stop(session_id: str, force: bool)
+```
+
+Stop a background session.
+
+---
+
+## thegent_wait
+
+```python
+thegent_wait(session_id: str, timeout: Any)
+```
+
+Block until session completes or timeout.
+
+---
+

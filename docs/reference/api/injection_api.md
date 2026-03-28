@@ -1,139 +1,65 @@
 # injection API Reference
 
-> **Source**: `src/thegent/mesh/injection.py`
+> **Source**: `src/thegent/utils/routing_impl/guardrails/injection.py`
 
-Shell and context injection for the agent mesh.
+GW-50: Prompt injection detection for LLM gateway.
+
+Detects common prompt injection patterns in user messages before forwarding
+to the LLM. Returns a verdict with confidence score.
+
+# @trace FR-GUARD-050
 
 ---
 
-## ContextInjection
+## InjectionCheckResult
 
-Dynamic context injection (SCLI-P9.4–P9.5).
+---
 
-### Methods
+## InjectionPattern
 
-#### ContextInjection.__init__
+---
+
+## check_injection
 
 ```python
-__init__(self: Any, project_root: Path, mesh_root: Path)
+check_injection(text: str, patterns: Any)
 ```
+
+Check text for prompt injection patterns.
+
+**Parameters**:
+
+- `text`: The text to scan.
+- `patterns`: Override the default INJECTION_PATTERNS list.  When None,
+the module-level compiled cache is used for efficiency.
+
+**Returns**: InjectionCheckResult with all matched pattern names, highest severity,
+and a confidence score in [0, 1].
 
 ---
 
-#### ContextInjection.create_tool_symlinks
+## check_messages_for_injection
 
 ```python
-create_tool_symlinks(self: Any, agent_id: str)
+check_messages_for_injection(messages: list[dict])
 ```
 
-Create tool-specific symlinks to AGENT.md (SCLI-P9.5).
+Check a list of OpenAI-style message dicts for prompt injection.
+
+Only user-role messages are scanned.  The content strings are concatenated
+with a newline separator and passed to check_injection.
+
+**Parameters**:
+
+- `messages`: List of dicts with at least a ``role`` and ``content`` key.
+
+**Returns**: InjectionCheckResult aggregated across all user messages.
 
 ---
 
-#### ContextInjection.update_agent_md
+## get_compiled_patterns
 
-```python
-update_agent_md(self: Any, mesh_state: dict)
-```
-
-Render AGENT.md from template with current mesh state (SCLI-P9.4).
+Return compiled (pattern, regex) pairs (cached at module level).
 
 ---
 
----
-
-## ShellInjection
-
-Tmux-based shell injection (SCLI-P9.1–P9.3).
-
-### Methods
-
-#### ShellInjection.__init__
-
-```python
-__init__(self: Any, agent_id: str)
-```
-
----
-
-#### ShellInjection.find_session
-
-```python
-find_session(self: Any)
-```
-
-Detect if agent tmux session exists (SCLI-P9.1).
-
----
-
-#### ShellInjection.is_ready
-
-```python
-is_ready(self: Any, prompt_pattern: str)
-```
-
-Detect if agent shell is ready for input (SCLI-P9.3).
-
----
-
-#### ShellInjection.send_command
-
-```python
-send_command(self: Any, command: str, wait: float)
-```
-
-Inject command into tmux session (SCLI-P9.2).
-
----
-
----
-
-## create_tool_symlinks
-
-```python
-create_tool_symlinks(self: Any, agent_id: str)
-```
-
-Create tool-specific symlinks to AGENT.md (SCLI-P9.5).
-
----
-
-## find_session
-
-```python
-find_session(self: Any)
-```
-
-Detect if agent tmux session exists (SCLI-P9.1).
-
----
-
-## is_ready
-
-```python
-is_ready(self: Any, prompt_pattern: str)
-```
-
-Detect if agent shell is ready for input (SCLI-P9.3).
-
----
-
-## send_command
-
-```python
-send_command(self: Any, command: str, wait: float)
-```
-
-Inject command into tmux session (SCLI-P9.2).
-
----
-
-## update_agent_md
-
-```python
-update_agent_md(self: Any, mesh_state: dict)
-```
-
-Render AGENT.md from template with current mesh state (SCLI-P9.4).
-
----

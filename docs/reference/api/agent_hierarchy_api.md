@@ -338,6 +338,8 @@ Validate before registering a new agent.
 
 Represents an agent in the hierarchy.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
 
 #### AgentNode.from_dict
@@ -347,16 +349,6 @@ from_dict(cls: Any, data: dict[(str, Any)])
 ```
 
 Create from dictionary.
-
----
-
-#### AgentNode.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary for serialization.
 
 ---
 
@@ -384,7 +376,7 @@ Create from dictionary.
 to_dict(self: Any)
 ```
 
-Convert to dictionary for serialization.
+Serialize to dictionary.
 
 ---
 
@@ -420,7 +412,7 @@ Create from dictionary.
 to_dict(self: Any)
 ```
 
-Convert to dictionary for serialization.
+Serialize to dictionary.
 
 ---
 
@@ -743,7 +735,7 @@ Remove member from team.
 to_dict(self: Any)
 ```
 
-Convert to dictionary for serialization.
+Serialize to dictionary.
 
 ---
 
@@ -801,3 +793,4 @@ Validate before registering a new agent.
 **Returns**: Tuple of (is_valid, error_message)
 
 ---
+

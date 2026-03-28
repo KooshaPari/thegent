@@ -1,0 +1,29 @@
+# help_examples API Reference
+
+> **Source**: `src/thegent/cli/help_examples.py`
+
+Inline CLI examples for `thegent help <command>`.
+
+Provides a curated dictionary of example invocations for each major command
+and a helper that renders them in a Rich panel.
+
+# @trace WL-040 WP-4004
+
+---
+
+## show_help_examples
+
+```python
+show_help_examples(command: str)
+```
+
+Print inline examples for *command* in a formatted Rich panel.
+
+# @trace WL-040 WP-4004
+
+**Parameters**:
+
+- `command`: The command name to look up (case-insensitive).
+
+---
+

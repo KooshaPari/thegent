@@ -1,6 +1,6 @@
 # oversight API Reference
 
-> **Source**: `src/thegent/orchestration/oversight.py`
+> **Source**: `src/thegent/orchestration/resilience/oversight.py`
 
 Controlled oversight for repeated failures (WP-2008, FR-009).
 
@@ -25,3 +25,4 @@ should_trigger_oversight(session_dir: Path, target: str, failure_count: int, thr
 True if repeated failures exceed threshold and oversight should trigger.
 
 ---
+

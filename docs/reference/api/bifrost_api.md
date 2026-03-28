@@ -1,0 +1,213 @@
+# bifrost API Reference
+
+> **Source**: `src/thegent/integrations/bifrost.py`
+
+Bifrost Integration - Gateway claims validation
+
+Provides gateway claims validation for LLM calls.
+Requires local validation of claims.
+
+Security:
+- Verify Apache-2.0 license compatibility
+- Local validation required
+
+License: Apache-2.0 (verified at https://github.com/maximhq/bifrost)
+
+---
+
+## BifrostAuthError
+
+Raised when auth fails
+
+**Inherits from**: `BifrostValidationError`
+
+**Method Resolution Order**: `BifrostAuthError -> BifrostValidationError`
+
+---
+
+## BifrostClient
+
+### Methods
+
+#### BifrostClient.__init__
+
+```python
+__init__(self: Any, config: Any)
+```
+
+---
+
+#### BifrostClient.check_rate_limit
+
+```python
+check_rate_limit(self: Any, identifier: str)
+```
+
+Check rate limit without full validation
+
+---
+
+#### BifrostClient.is_enabled
+
+```python
+is_enabled(self: Any)
+```
+
+---
+
+#### BifrostClient.status
+
+```python
+status(self: Any)
+```
+
+---
+
+#### BifrostClient.validate_claims
+
+```python
+validate_claims(self: Any, claims: dict[(str, Any)])
+```
+
+Validate claims - main entry point
+
+---
+
+---
+
+## BifrostConfig
+
+**Inherits from**: `DataclassConfig`
+
+---
+
+## BifrostRateLimitError
+
+Raised when rate limit exceeded
+
+**Inherits from**: `BifrostValidationError`
+
+**Method Resolution Order**: `BifrostRateLimitError -> BifrostValidationError`
+
+---
+
+## BifrostStatus
+
+**Inherits from**: `Enum`
+
+---
+
+## BifrostValidationError
+
+Raised when bifrost validation fails
+
+**Inherits from**: `Exception`
+
+---
+
+## ClaimsValidator
+
+Validates claims for gateway access
+
+### Methods
+
+#### ClaimsValidator.__init__
+
+```python
+__init__(self: Any, config: BifrostConfig)
+```
+
+---
+
+#### ClaimsValidator.validate_api_key
+
+```python
+validate_api_key(self: Any, api_key: str)
+```
+
+Validate API key format and presence
+
+---
+
+#### ClaimsValidator.validate_claims
+
+```python
+validate_claims(self: Any, claims: dict[(str, Any)])
+```
+
+Main claims validation entry point
+
+---
+
+#### ClaimsValidator.validate_rate_limit
+
+```python
+validate_rate_limit(self: Any, identifier: str)
+```
+
+Check rate limit, returns (allowed, current_count)
+
+---
+
+---
+
+## check_rate_limit
+
+```python
+check_rate_limit(self: Any, identifier: str)
+```
+
+Check rate limit without full validation
+
+---
+
+## get_bifrost
+
+---
+
+## is_enabled
+
+```python
+is_enabled(self: Any) -> bool
+```
+
+---
+
+## status
+
+```python
+status(self: Any) -> BifrostStatus
+```
+
+---
+
+## validate_api_key
+
+```python
+validate_api_key(self: Any, api_key: str)
+```
+
+Validate API key format and presence
+
+---
+
+## validate_claims
+
+```python
+validate_claims(self: Any, claims: dict[(str, Any)])
+```
+
+Validate claims - main entry point
+
+---
+
+## validate_rate_limit
+
+```python
+validate_rate_limit(self: Any, identifier: str)
+```
+
+Check rate limit, returns (allowed, current_count)
+
+---
+

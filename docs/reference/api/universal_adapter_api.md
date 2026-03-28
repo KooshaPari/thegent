@@ -1,6 +1,6 @@
 # universal_adapter API Reference
 
-> **Source**: `src/thegent/tools/universal_adapter.py`
+> **Source**: `src/thegent/utils/universal_adapter.py`
 
 WP-9005: Universal tool adapter layer.
 
@@ -19,6 +19,16 @@ Adapts disparate tools to the unified operation surface.
 ```python
 __init__(self: Any)
 ```
+
+---
+
+#### UniversalToolAdapter.call
+
+```python
+call(self: Any)
+```
+
+Protocol-compatible adapter entrypoint.
 
 ---
 
@@ -41,6 +51,16 @@ register_adapter(self: Any, command: str, adapter_fn: Callable[(Ellipsis, Any)])
 Register an adapter for a specific CLI command.
 
 ---
+
+---
+
+## call
+
+```python
+call(self: Any)
+```
+
+Protocol-compatible adapter entrypoint.
 
 ---
 
@@ -73,3 +93,4 @@ validate_tool_schema(operation: Operation, payload: dict[(str, Any)])
 WP-9005: Validate tool call payload against operation-specific schema.
 
 ---
+

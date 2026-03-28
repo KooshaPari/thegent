@@ -70,6 +70,22 @@ Index a file for FR references.
 
 ---
 
+#### FRIndexSubcommands.index_files_batch
+
+```python
+index_files_batch(self: Any, file_paths: list[Path])
+```
+
+Index multiple files for FR references using batch read.
+
+**Parameters**:
+
+- `file_paths`: Files to index
+
+**Returns**: Dictionary of index entries
+
+---
+
 ---
 
 ## extract_fr_ids
@@ -119,3 +135,20 @@ Index a file for FR references.
 **Returns**: Index entry
 
 ---
+
+## index_files_batch
+
+```python
+index_files_batch(self: Any, file_paths: list[Path])
+```
+
+Index multiple files for FR references using batch read.
+
+**Parameters**:
+
+- `file_paths`: Files to index
+
+**Returns**: Dictionary of index entries
+
+---
+

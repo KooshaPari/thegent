@@ -1,0 +1,18 @@
+# provider_model_manager_sorting API Reference
+
+> **Source**: `src/thegent/provider_model_manager_sorting.py`
+
+Sorting helpers for provider/model manager listings.
+
+---
+
+## sort_model_rows
+
+```python
+sort_model_rows(result: list[dict[(str, Any)]], sort_by: str)
+```
+
+Sort model rows in-place by a known sort key.
+
+---
+

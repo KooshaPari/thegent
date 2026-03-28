@@ -1,0 +1,33 @@
+# unified_worker API Reference
+
+> **Source**: `src/thegent/orchestration/unified_worker.py`
+
+Unified worker daemon (MTSP-05).
+
+Consolidates MCP host, LSP multiplexer, and task worker pool into a
+single persistent process to minimize process count and overhead.
+
+WL-085: Subscribes to the SubAgentEventQueue so that orchestration events
+emitted by SubAgentDispatcher are consumed and logged by the daemon.
+
+---
+
+## UnifiedWorkerDaemon
+
+Unified worker daemon consolidating multiple services (MTSP-05).
+
+WL-085: Subscribes to the SubAgentEventQueue and forwards events to the
+structured logger so that all orchestration activity is captured centrally.
+
+### Methods
+
+#### UnifiedWorkerDaemon.__init__
+
+```python
+__init__(self: Any, event_queue: Any)
+```
+
+---
+
+---
+

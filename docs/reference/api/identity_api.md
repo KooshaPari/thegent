@@ -88,6 +88,16 @@ Sign data with agent's private key (mocked).
 
 ---
 
+## sign_actor_payload
+
+```python
+sign_actor_payload(actor_id: str, payload: str, signing_key: str)
+```
+
+Produce deterministic actor signature for autosync write boundaries.
+
+---
+
 ## verify
 
 ```python
@@ -97,3 +107,10 @@ verify(self: Any, data: str, signature: str)
 Verify signature with agent's public key (mocked).
 
 ---
+
+## verify_actor_signature
+
+Verify actor signature using deterministic hash scheme.
+
+---
+

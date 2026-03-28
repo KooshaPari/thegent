@@ -1,6 +1,6 @@
 # load_based_limits API Reference
 
-> **Source**: `src/thegent/orchestration/load_based_limits.py`
+> **Source**: `src/thegent/orchestration/resource/load_based_limits.py`
 
 WP-5001: Load-based concurrency limits (FD, memory, CPU, load average).
 
@@ -11,18 +11,161 @@ gates are near capacity.
 BKM-04: When THGENT_USE_NATIVE_RESOURCES=1, uses thegent-resources Rust binary
 instead of psutil. Set THGENT_RESOURCES_BIN to override path.
 
+Hysteresis tuning environment variables (WP-Y6):
+  THGENT_HYSTERESIS_UPPER  - Utilization ratio above which scale-up is triggered
+                             (default: 0.8). Float in range (0, 1].
+  THGENT_HYSTERESIS_LOWER  - Utilization ratio below which scale-down is triggered
+                             (default: 0.4). Float in range [0, 1).
+  THGENT_HYSTERESIS_DWELL  - Minimum seconds between consecutive scaling events,
+                             prevents rapid thrashing (default: 30). Integer >= 0.
+
+Soft deadline support (swarm-soft-deadlines):
+  SoftDeadline tracks a preferred completion time for a run.
+  DeadlineMonitor is a daemon thread that checks all registered deadlines
+  at a configurable interval and emits structured log events:
+    - WARNING when elapsed > deadline_ts * warn_at_pct
+    - ERROR   when elapsed > deadline_ts (past soft deadline)
+  Soft deadlines NEVER cancel tasks — they only warn and record state.
+
+---
+
+## DeadlineMonitor
+
+Background daemon thread that checks active runs against soft deadlines.
+
+Emits structured log events via structlog (falls back to stdlib logging):
+- WARNING when a run's elapsed time exceeds ``deadline_ts * warn_at_pct``
+- ERROR   when a run's elapsed time exceeds ``deadline_ts``
+
+Soft deadlines **never cancel** tasks; they only emit log events.
+
+Usage::
+
+    monitor = DeadlineMonitor()
+    monitor.start()
+
+    dl = monitor.register("run-123", deadline_ts=300.0, warn_at_pct=0.8)
+    # ... run proceeds ...
+    monitor.unregister("run-123")
+
+    monitor.stop()
+
+The monitor thread is a daemon thread and will stop automatically when the
+main process exits.  Call :meth:`stop` for graceful shutdown.
+
+### Methods
+
+#### DeadlineMonitor.__init__
+
+```python
+__init__(self: Any, interval_s: float)
+```
+
+Create a DeadlineMonitor.
+
+**Parameters**:
+
+- `interval_s`: How often (in seconds) to scan all registered deadlines.
+Defaults to 5 s; lower values increase precision at the
+cost of CPU overhead.
+
+---
+
+#### DeadlineMonitor.active_deadlines
+
+```python
+active_deadlines(self: Any)
+```
+
+Return a shallow copy of the current deadline registry.
+
+---
+
+#### DeadlineMonitor.is_running
+
+```python
+is_running(self: Any)
+```
+
+Return ``True`` if the monitor thread is alive.
+
+---
+
+#### DeadlineMonitor.register
+
+```python
+register(self: Any, run_id: str, deadline_ts: float, warn_at_pct: float)
+```
+
+Register a soft deadline for *run_id*.
+
+If *run_id* is already registered the existing entry is replaced.
+
+**Parameters**:
+
+- `run_id`:       Unique run identifier.
+- `deadline_ts`:  Budget in seconds from now.
+- `warn_at_pct`:  Fraction of budget at which to warn (default 0.8).
+
+**Returns**: The newly created :class:`SoftDeadline` instance.
+
+---
+
+#### DeadlineMonitor.start
+
+```python
+start(self: Any)
+```
+
+Start the background monitor daemon thread.
+
+Idempotent — calling :meth:`start` while already running is a no-op.
+
+---
+
+#### DeadlineMonitor.stop
+
+```python
+stop(self: Any, timeout: float)
+```
+
+Request graceful shutdown of the monitor thread.
+
+Sets the stop event and waits up to *timeout* seconds for the thread
+to finish.  Safe to call even if the monitor was never started.
+
+**Parameters**:
+
+- `timeout`: Maximum seconds to wait for the thread to exit.
+
+---
+
+#### DeadlineMonitor.unregister
+
+```python
+unregister(self: Any, run_id: str)
+```
+
+Remove the soft deadline for *run_id* (e.g. when a run completes).
+
+No-op if *run_id* was never registered.
+
+---
+
 ---
 
 ## HysteresisController
 
 WP-Y6: Prevents thrashing by using upper/lower thresholds and dwell time.
 
+Uses settings from ThegentSettings (mapped to THGENT_HYSTERESIS_* env vars).
+
 ### Methods
 
 #### HysteresisController.__init__
 
 ```python
-__init__(self: Any, upper_threshold: float, lower_threshold: float, dwell_time_s: int)
+__init__(self: Any, upper_threshold: Any, lower_threshold: Any, dwell_time_s: Any)
 ```
 
 ---
@@ -64,16 +207,205 @@ Build config from dict (e.g. settings). Supports concurrency_ prefix.
 
 ---
 
+## OwnerStats
+
+Per-owner usage statistics for fairness tracking.
+
+### Methods
+
+#### OwnerStats.avg_elapsed_ms
+
+```python
+avg_elapsed_ms(self: Any)
+```
+
+Average elapsed time per completed run in milliseconds.
+
+---
+
+#### OwnerStats.to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Serialize to a plain dict for CLI/MCP display.
+
+---
+
+---
+
 ## ResourceSnapshot
 
 Current system resource usage for limit calculation.
 
 ---
 
+## SoftDeadline
+
+Preferred completion time for a single agent run.
+
+A soft deadline records *when* a run was registered and what its
+preferred budget is.  It does NOT cancel the run — violation only
+triggers structured log events via :class:`DeadlineMonitor`.
+
+### Methods
+
+#### SoftDeadline.elapsed
+
+```python
+elapsed(self: Any)
+```
+
+Return seconds elapsed since this deadline was registered.
+
+---
+
+#### SoftDeadline.is_overdue
+
+```python
+is_overdue(self: Any)
+```
+
+Return ``True`` when elapsed has passed the full soft deadline.
+
+---
+
+#### SoftDeadline.is_warn_zone
+
+```python
+is_warn_zone(self: Any)
+```
+
+Return ``True`` when elapsed has passed the warn threshold.
+
+---
+
+#### SoftDeadline.warn_threshold
+
+```python
+warn_threshold(self: Any)
+```
+
+Return the elapsed seconds at which a WARNING should be emitted.
+
+---
+
+---
+
+## UsageTracker
+
+Thread-safe per-owner resource usage tracker for fairness enforcement.
+
+Tracks active concurrency and historical run statistics per owner
+(agent id, user, project, etc.) so that ConcurrencyController can
+surface fairness data and optionally enforce per-owner quotas.
+
+All public methods are thread-safe via a single ``threading.Lock``
+(not asyncio.Lock — ConcurrencyController is synchronous).
+
+### Methods
+
+#### UsageTracker.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+#### UsageTracker.get_all_stats
+
+```python
+get_all_stats(self: Any)
+```
+
+Return a snapshot of all tracked owners as ``{owner: OwnerStats}``.
+
+---
+
+#### UsageTracker.get_stats
+
+```python
+get_stats(self: Any, owner: str)
+```
+
+Return a *snapshot* of the OwnerStats for *owner*.
+
+Returns a zero-initialized OwnerStats if *owner* has never been seen.
+The returned object is a copy — mutations do not affect internal state.
+
+---
+
+#### UsageTracker.record_end
+
+```python
+record_end(self: Any, owner: str, run_id: str, elapsed_ms: float)
+```
+
+Decrement active count and accumulate elapsed time for *owner*.
+
+**Parameters**:
+
+- `owner`:      Identifier for the owning agent/user/project.
+- `run_id`:     Unique identifier for this run.
+- `elapsed_ms`: Wall-clock duration of the run in milliseconds.
+
+---
+
+#### UsageTracker.record_start
+
+```python
+record_start(self: Any, owner: str, run_id: str)
+```
+
+Increment active count for *owner* at the start of a run.
+
+**Parameters**:
+
+- `owner`:  Identifier for the owning agent/user/project.
+- `run_id`: Unique identifier for this run (reserved; logged for tracing).
+
+---
+
+#### UsageTracker.reset
+
+```python
+reset(self: Any, owner: Any)
+```
+
+Reset statistics for a specific *owner* or for all owners (if None).
+
+Primarily useful for testing; production code should generally not call this.
+
+---
+
+---
+
+## active_deadlines
+
+```python
+active_deadlines(self: Any)
+```
+
+Return a shallow copy of the current deadline registry.
+
+---
+
+## avg_elapsed_ms
+
+```python
+avg_elapsed_ms(self: Any)
+```
+
+Average elapsed time per completed run in milliseconds.
+
+---
+
 ## compute_dynamic_limit
 
 ```python
-compute_dynamic_limit(snapshot: ResourceSnapshot, config: Any, running_count: int)
+compute_dynamic_limit(snapshot: ResourceSnapshot, config: Any)
 ```
 
 Compute max concurrent slots from resource gates. Resource-based scaling:
@@ -87,6 +419,16 @@ Returns (effective_limit, gate_details).
 
 ---
 
+## elapsed
+
+```python
+elapsed(self: Any)
+```
+
+Return seconds elapsed since this deadline was registered.
+
+---
+
 ## from_dict
 
 ```python
@@ -94,6 +436,26 @@ from_dict(cls: Any, d: Any)
 ```
 
 Build config from dict (e.g. settings). Supports concurrency_ prefix.
+
+---
+
+## get_all_stats
+
+```python
+get_all_stats(self: Any)
+```
+
+Return a snapshot of all tracked owners as ``{owner: OwnerStats}``.
+
+---
+
+## get_deadline_monitor
+
+Return the module-level :class:`DeadlineMonitor` singleton.
+
+The singleton is started automatically on first module import.
+Use :func:`get_deadline_monitor` to register and unregister deadlines
+from any part of the system.
 
 ---
 
@@ -109,6 +471,118 @@ Returns the new limit (either changed or held).
 
 ---
 
+## get_stats
+
+```python
+get_stats(self: Any, owner: str)
+```
+
+Return a *snapshot* of the OwnerStats for *owner*.
+
+Returns a zero-initialized OwnerStats if *owner* has never been seen.
+The returned object is a copy — mutations do not affect internal state.
+
+---
+
+## get_usage_tracker
+
+Return the module-level UsageTracker singleton.
+
+---
+
+## is_overdue
+
+```python
+is_overdue(self: Any)
+```
+
+Return ``True`` when elapsed has passed the full soft deadline.
+
+---
+
+## is_running
+
+```python
+is_running(self: Any)
+```
+
+Return ``True`` if the monitor thread is alive.
+
+---
+
+## is_warn_zone
+
+```python
+is_warn_zone(self: Any)
+```
+
+Return ``True`` when elapsed has passed the warn threshold.
+
+---
+
+## record_end
+
+```python
+record_end(self: Any, owner: str, run_id: str, elapsed_ms: float)
+```
+
+Decrement active count and accumulate elapsed time for *owner*.
+
+**Parameters**:
+
+- `owner`:      Identifier for the owning agent/user/project.
+- `run_id`:     Unique identifier for this run.
+- `elapsed_ms`: Wall-clock duration of the run in milliseconds.
+
+---
+
+## record_start
+
+```python
+record_start(self: Any, owner: str, run_id: str)
+```
+
+Increment active count for *owner* at the start of a run.
+
+**Parameters**:
+
+- `owner`:  Identifier for the owning agent/user/project.
+- `run_id`: Unique identifier for this run (reserved; logged for tracing).
+
+---
+
+## register
+
+```python
+register(self: Any, run_id: str, deadline_ts: float, warn_at_pct: float)
+```
+
+Register a soft deadline for *run_id*.
+
+If *run_id* is already registered the existing entry is replaced.
+
+**Parameters**:
+
+- `run_id`:       Unique run identifier.
+- `deadline_ts`:  Budget in seconds from now.
+- `warn_at_pct`:  Fraction of budget at which to warn (default 0.8).
+
+**Returns**: The newly created :class:`SoftDeadline` instance.
+
+---
+
+## reset
+
+```python
+reset(self: Any, owner: Any)
+```
+
+Reset statistics for a specific *owner* or for all owners (if None).
+
+Primarily useful for testing; production code should generally not call this.
+
+---
+
 ## sample_resources
 
 Sample current system resources. Cross-platform where possible.
@@ -117,3 +591,65 @@ Uses thegent-resources Rust binary when THGENT_USE_NATIVE_RESOURCES=1;
 otherwise falls back to Python (lsof/vm_stat on macOS, /proc on Linux).
 
 ---
+
+## start
+
+```python
+start(self: Any)
+```
+
+Start the background monitor daemon thread.
+
+Idempotent — calling :meth:`start` while already running is a no-op.
+
+---
+
+## stop
+
+```python
+stop(self: Any, timeout: float)
+```
+
+Request graceful shutdown of the monitor thread.
+
+Sets the stop event and waits up to *timeout* seconds for the thread
+to finish.  Safe to call even if the monitor was never started.
+
+**Parameters**:
+
+- `timeout`: Maximum seconds to wait for the thread to exit.
+
+---
+
+## to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Serialize to a plain dict for CLI/MCP display.
+
+---
+
+## unregister
+
+```python
+unregister(self: Any, run_id: str)
+```
+
+Remove the soft deadline for *run_id* (e.g. when a run completes).
+
+No-op if *run_id* was never registered.
+
+---
+
+## warn_threshold
+
+```python
+warn_threshold(self: Any)
+```
+
+Return the elapsed seconds at which a WARNING should be emitted.
+
+---
+

@@ -29,13 +29,14 @@ Initialize research integration.
 #### ResearchIntegration.extract_items
 
 ```python
-extract_items(self: Any, research_file: Path)
+extract_items(self: Any, content: str, research_file: Path)
 ```
 
-Extract work items from research document.
+Extract work items from research document content.
 
 **Parameters**:
 
+- `content`: File content
 - `research_file`: Research document path
 
 **Returns**: List of extracted items
@@ -71,13 +72,14 @@ Scan for research documents.
 ## extract_items
 
 ```python
-extract_items(self: Any, research_file: Path)
+extract_items(self: Any, content: str, research_file: Path)
 ```
 
-Extract work items from research document.
+Extract work items from research document content.
 
 **Parameters**:
 
+- `content`: File content
 - `research_file`: Research document path
 
 **Returns**: List of extracted items
@@ -107,3 +109,4 @@ Scan for research documents.
 **Returns**: List of research document paths
 
 ---
+

@@ -1,10 +1,11 @@
 # tui API Reference
 
-> **Source**: `src/thegent/tui/__init__.py`
+> **Source**: `src/thegent/cli/tui/__init__.py`
 
-TUI Compositor for thegent.
+TUI session helpers for thegent CLI — WL-031.
 
-A unified terminal user interface combining multiple output streams,
-agent status, and interactive controls using Textual.
+Exposes:
+- `ParetoTuiSession`: live data session for the Pareto Frontier TUI panel.
 
 ---
+

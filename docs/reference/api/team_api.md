@@ -1,83 +1,17 @@
 # team API Reference
 
-> **Source**: `src/thegent/cli/apps/team.py`
+> **Source**: `src/thegent/cli/commands/team/__init__.py`
 
-Logical stream: Swarm Coordination and Teammates.
+Thegent CLI team/collaboration domain (extracted from god package).
 
----
+This package encapsulates all team/collaboration-related commands and infrastructure:
+- Teammate persona and agent management (WP-16001)
+- Team and crew delegation, handoff, and workflow
+- Swarm concurrency and fairness control
+- Team snapshots, monitoring, and health checks
+- Analysis and summary commands for team performance
 
-## team_create
-
-```python
-team_create(name: str, agents: list[str], objective: str)
-```
-
----
-
-## team_crew
-
-```python
-team_crew(format: str)
-```
+@trace WL-125: CLI god package decomposition - TEAM domain
 
 ---
 
-## team_delegate
-
-```python
-team_delegate(prompt: str, teammate: str)
-```
-
----
-
-## team_hierarchy
-
-```python
-team_hierarchy(format: str)
-```
-
----
-
-## team_list
-
-```python
-team_list(format: str)
-```
-
----
-
-## team_status
-
-```python
-team_status(run_id: str)
-```
-
----
-
-## teammates_delegate
-
-```python
-teammates_delegate(teammate: str, task: str, parent_run_id: str)
-```
-
----
-
-## teammates_list
-
----
-
-## teammates_show
-
-```python
-teammates_show(req_id: str)
-```
-
----
-
-## teammates_status
-
-```python
-teammates_status(run_id: str)
-```
-
----

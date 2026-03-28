@@ -63,3 +63,4 @@ sandbox_evolution(self: Any, proposed_changes: list[str])
 Run a simulation to see if the evolved plan is faster or cheaper.
 
 ---
+

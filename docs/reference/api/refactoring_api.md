@@ -83,3 +83,4 @@ propose_refactor(self: Any, efficiency_report: dict[(str, float)])
 WP-37002: Generate a refactored 'cognitive template' (refined prompt instructions).
 
 ---
+

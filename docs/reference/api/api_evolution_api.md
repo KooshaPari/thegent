@@ -1,6 +1,6 @@
 # api_evolution API Reference
 
-> **Source**: `src/thegent/tools/api_evolution.py`
+> **Source**: `src/thegent/utils/api_evolution.py`
 
 WP-10009: Backward-compatible API evolution controls.
 
@@ -63,3 +63,4 @@ negotiate_version(self: Any, client_version: str)
 Negotiate the best API version for the client.
 
 ---
+

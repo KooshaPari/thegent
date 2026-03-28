@@ -9,10 +9,10 @@ Linting accelerator: run oxlint as fast pre-filter before ESLint.
 oxlint is a Rust-based JS/TS linter that is 50-100x faster than ESLint.
 This module integrates it as a drop-in accelerator:
 
-- ``fast=True``  -&gt; run oxlint first; fall back to ESLint only if oxlint
+- ``fast=True``  -> run oxlint first; fall back to ESLint only if oxlint
   is unavailable (or skip ESLint entirely for CI speed).
-- ``fast=False`` -&gt; always run ESLint (standard behaviour).
-- ``run_ruff``   -&gt; Python linting via ruff (similar philosophy).
+- ``fast=False`` -> always run ESLint (standard behaviour).
+- ``run_ruff``   -> Python linting via ruff (similar philosophy).
 
 All three runners return a uniform ``list[LintResult]`` so callers can
 process results without caring which backend was used.
@@ -302,3 +302,4 @@ Run ``ruff check --output-format json`` and return diagnostics.
 - `ValueError`: If the JSON output from ruff cannot be parsed.
 
 ---
+

@@ -17,7 +17,7 @@ Manages role-based constraints for operator personas.
 #### PersonaManager.__init__
 
 ```python
-__init__(self: Any)
+__init__(self: Any, agents_dir: Any)
 ```
 
 ---
@@ -32,6 +32,26 @@ Verify if a persona can perform a specific operation in a specific lane.
 
 ---
 
+#### PersonaManager.discover_teammates
+
+```python
+discover_teammates(self: Any)
+```
+
+WP-16001: Auto-discovery of teammates from the agents/ directory.
+
+---
+
+#### PersonaManager.list_teammates
+
+```python
+list_teammates(self: Any)
+```
+
+List all discovered teammates.
+
+---
+
 ---
 
 ## check_access
@@ -43,3 +63,24 @@ check_access(self: Any, persona: str, operation: str, lane: str)
 Verify if a persona can perform a specific operation in a specific lane.
 
 ---
+
+## discover_teammates
+
+```python
+discover_teammates(self: Any)
+```
+
+WP-16001: Auto-discovery of teammates from the agents/ directory.
+
+---
+
+## list_teammates
+
+```python
+list_teammates(self: Any)
+```
+
+List all discovered teammates.
+
+---
+

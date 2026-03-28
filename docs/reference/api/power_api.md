@@ -27,3 +27,4 @@ Wrap command with caffeinate on macOS to keep Mac awake during long-running task
 If None, it wraps regardless of agent name if mac_keep_awake is True.
 
 ---
+

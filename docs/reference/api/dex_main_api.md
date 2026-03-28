@@ -4,6 +4,13 @@
 
 Codex-backed interactive agent CLI (dex). Model-only routing (no provider filter).
 
+HEXAGONAL PHASE 2B: This file is now a thin shim delegating to:
+- src/thegent/adapters/harness_base.py — Common harness logic
+- src/thegent/adapters/codex_harness.py — Codex-specific implementation
+- src/thegent/use_cases/run_harness.py — Use case orchestration
+
+Legacy code and imports preserved for backward compatibility.
+
 ---
 
 ## LazyConsole
@@ -15,16 +22,17 @@ Codex-backed interactive agent CLI (dex). Model-only routing (no provider filter
 ## default_dex
 
 ```python
-default_dex(ctx: typer.Context)
+default_dex(ctx: typer.Context, force: bool, native: bool)
 ```
 
 Default: flash (gemini-3-flash) or model from first argument. Model-only, no provider filter.
 
 Usage:
     dex              # Uses flash model (default)
+    dex dex          # Uses codex 5.3 non-spark model (alias)
     dex flash        # Uses flash model (via subcommand)
     dex max          # Uses max model (via subcommand or positional)
-    dex [model]      # Uses specified model (max, glm, haiku, opus, sonnet, ultra, flash, mini, composer, step)
+    dex [model]      # Uses specified model (dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini, composer, step)
     dex [model] [prompt]  # Uses model with prompt
 
 ---
@@ -32,7 +40,7 @@ Usage:
 ## dex_bg
 
 ```python
-dex_bg(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any)
+dex_bg(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any, remote: Any)
 ```
 
 Start a background task. Model-first, no provider filter.
@@ -49,10 +57,20 @@ Start Codex with Composer 1.5 (Cursor). Use 'dex max' for minimax-m2.5.
 
 ---
 
+## dex_config
+
+```python
+dex_config(legacy: bool)
+```
+
+Open interactive config manager (translation layer for existing config backends).
+
+---
+
 ## dex_doctor
 
 ```python
-dex_doctor(fix: bool)
+dex_doctor(fix: bool, dry_run: bool)
 ```
 
 Run thegent doctor (harness-equiv).
@@ -66,6 +84,16 @@ dex_flash(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debu
 ```
 
 Gemini 3 Flash via cliproxy. Fast, cheap.
+
+---
+
+## dex_fork
+
+```python
+dex_fork(args: list[str])
+```
+
+Passthrough to native `codex fork` for human-facing session continuation.
 
 ---
 
@@ -96,6 +124,16 @@ dex_haiku(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debu
 ```
 
 Claude Haiku. Balanced across CC plan, antigravity, etc.
+
+---
+
+## dex_high
+
+```python
+dex_high(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
+```
+
+Codex 5.3 high.
 
 ---
 
@@ -169,10 +207,20 @@ List registered background sessions.
 
 ---
 
+## dex_resume
+
+```python
+dex_resume(args: list[str])
+```
+
+Passthrough to native `codex resume` for human-facing session continuation.
+
+---
+
 ## dex_run
 
 ```python
-dex_run(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int)
+dex_run(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, remote: Any)
 ```
 
 Run a task. Model-first, no provider filter.
@@ -229,12 +277,23 @@ Wait for session completion and return session exit code.
 
 ---
 
+## dex_xhigh
+
+```python
+dex_xhigh(dangerously_bypass: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], sandbox: Any, full_auto: bool, search: bool, no_alt_screen: bool, continue_session: bool, prompt: Any)
+```
+
+Codex 5.3 xhigh.
+
+---
+
 ## install_links
 
 ```python
 install_links(bin_dir: Path, force: bool)
 ```
 
-Install dex shims: dex, dexmax, dexglm, dexhaiku, dexopus, dexsonnet, dexstep (model-only).
+Install/update dex -> thegent-shims harness shim under ~/.local/bin.
 
 ---
+

@@ -1,0 +1,11 @@
+# entities API Reference
+
+> **Source**: `src/thegent/domain/entities/__init__.py`
+
+Pure domain entities for thegent.
+
+These are immutable or nearly-immutable data classes representing core domain concepts.
+No I/O, no side effects, no external dependencies.
+
+---
+

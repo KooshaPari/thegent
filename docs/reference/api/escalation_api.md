@@ -10,27 +10,7 @@ WP-3008: Escalation SLA and governance queue (FR-028).
 
 An item in the escalation queue.
 
-### Methods
-
-#### EscalationItem.from_dict
-
-```python
-from_dict(cls: Any, data: dict[(str, Any)])
-```
-
-Create from dictionary.
-
----
-
-#### EscalationItem.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary for serialization.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -136,16 +116,6 @@ Add a new item to the escalation queue.
 
 ---
 
-## from_dict
-
-```python
-from_dict(cls: Any, data: dict[(str, Any)])
-```
-
-Create from dictionary.
-
----
-
 ## get_item
 
 ```python
@@ -176,12 +146,3 @@ Mark an escalation item as resolved.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary for serialization.
-
----

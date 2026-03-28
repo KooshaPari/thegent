@@ -193,3 +193,4 @@ start_session(self: Any, session_id: str)
 Start tracking a new session.
 
 ---
+

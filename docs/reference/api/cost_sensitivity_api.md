@@ -103,3 +103,4 @@ Record variant cost.
 - `cost`: Cost value
 
 ---
+

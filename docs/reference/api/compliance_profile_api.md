@@ -83,3 +83,14 @@ Get requirements for this profile.
 **Returns**: List of requirement names
 
 ---
+
+## validate_profile_drift
+
+```python
+validate_profile_drift(profiles: dict[(str, dict[(str, str)])], required_keys: set[str], allowlist: Any)
+```
+
+Validate profile key presence and cross-environment drift.
+
+---
+

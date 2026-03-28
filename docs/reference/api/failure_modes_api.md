@@ -1,6 +1,6 @@
 # failure_modes API Reference
 
-> **Source**: `src/thegent/orchestration/failure_modes.py`
+> **Source**: `src/thegent/orchestration/resilience/failure_modes.py`
 
 MAST 14-mode failure taxonomy (WP-2005, FR-007).
 
@@ -23,3 +23,4 @@ classify_failure(error_message: str)
 Classify failure from error message to MAST mode.
 
 ---
+

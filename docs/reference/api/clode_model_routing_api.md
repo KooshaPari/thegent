@@ -1,0 +1,30 @@
+# clode_model_routing API Reference
+
+> **Source**: `src/thegent/clode_model_routing.py`
+
+Model-first routing tables and helpers for clode.
+
+---
+
+## model_for_provider
+
+```python
+model_for_provider(provider: str)
+```
+
+Default model for a provider derived from model->provider mapping.
+
+---
+
+## resolve_provider_for_model
+
+```python
+resolve_provider_for_model(model_alias: str)
+```
+
+Resolve provider for model-first routing.
+
+Use cliproxy auto-routing so model aliases are not pinned to fixed providers.
+
+---
+

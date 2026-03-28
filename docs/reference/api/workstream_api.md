@@ -1,121 +1,110 @@
 # workstream API Reference
 
-> **Source**: `src/thegent/utils/workstream.py`
+> **Source**: `src/thegent/commands/workstream.py`
 
-Automated work stream operations (read, parse, update).
+Work stream commands: parse, claim, complete items.
 
----
+Provides a pydantic-modeled interface to the canonical WORK_STREAM.md file.
 
-## WorkStreamOps
-
-Automated operations on work stream files.
-
-### Methods
-
-#### WorkStreamOps.__init__
-
-```python
-__init__(self: Any, base_dir: Any)
-```
-
-Initialize work stream operations.
-
-**Parameters**:
-
-- `base_dir`: Base directory for work stream files
+# @trace FR-DX-004
 
 ---
 
-#### WorkStreamOps.claim_item
+## WorkItem
 
-```python
-claim_item(self: Any, item_id: str, agent_id: str)
-```
+A single item from the WORK_STREAM.md backlog table.
 
-Claim an item by adding it to CLAIMED section.
-
-**Parameters**:
-
-- `item_id`: Work item ID
-- `agent_id`: Agent identifier
-
-**Returns**: True if successful
-
----
-
-#### WorkStreamOps.complete_item
-
-```python
-complete_item(self: Any, item_id: str, agent_id: str)
-```
-
-Mark an item as complete.
-
-**Parameters**:
-
-- `item_id`: Work item ID
-- `agent_id`: Agent identifier
-
-**Returns**: True if successful
-
----
-
-#### WorkStreamOps.read_backlog
-
-```python
-read_backlog(self: Any)
-```
-
-Read all items from BACKLOG section.
-
-**Returns**: List of backlog items with id, title, priority, depends
-
----
+**Inherits from**: `BaseModel`
 
 ---
 
 ## claim_item
 
 ```python
-claim_item(self: Any, item_id: str, agent_id: str)
+claim_item(path: Path, item_id: str, owner: str)
 ```
 
-Claim an item by adding it to CLAIMED section.
+Claim a work item by appending to the CLAIMED section.
 
 **Parameters**:
 
-- `item_id`: Work item ID
-- `agent_id`: Agent identifier
+- `path`: Path to WORK_STREAM.md.
+- `item_id`: ID of the item to claim.
+- `owner`: Agent or user identifier.
 
-**Returns**: True if successful
+**Raises**:
+
+- `FileNotFoundError`: If path does not exist.
+- `ValueError`: If CLAIMED section not found.
 
 ---
 
-## complete_item
+## lint_workstream_schema
 
 ```python
-complete_item(self: Any, item_id: str, agent_id: str)
+lint_workstream_schema(path: Path)
 ```
 
-Mark an item as complete.
+Validate canonical WORK_STREAM structural requirements.
+
+---
+
+## mark_completed
+
+```python
+mark_completed(path: Path, item_id: str)
+```
+
+Mark a work item as completed by striking through in BACKLOG.
 
 **Parameters**:
 
-- `item_id`: Work item ID
-- `agent_id`: Agent identifier
+- `path`: Path to WORK_STREAM.md.
+- `item_id`: ID of the item to mark completed.
 
-**Returns**: True if successful
+**Raises**:
+
+- `FileNotFoundError`: If path does not exist.
 
 ---
 
-## read_backlog
+## normalize_owner_identifier
 
 ```python
-read_backlog(self: Any)
+normalize_owner_identifier(owner: str)
 ```
 
-Read all items from BACKLOG section.
-
-**Returns**: List of backlog items with id, title, priority, depends
+Normalize owner identifiers across local and remote systems.
 
 ---
+
+## normalize_workstream_sections
+
+```python
+normalize_workstream_sections(path: Path)
+```
+
+Sort WL sections by numeric ID and normalize status line formatting.
+
+---
+
+## parse_workstream
+
+```python
+parse_workstream(path: Path)
+```
+
+Parse WORK_STREAM.md and return all backlog items.
+
+**Parameters**:
+
+- `path`: Path to the WORK_STREAM.md file.
+
+**Returns**: List of WorkItem models from the BACKLOG section.
+
+**Raises**:
+
+- `FileNotFoundError`: If path does not exist.
+
+---
+

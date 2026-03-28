@@ -1,109 +1,32 @@
 # observability API Reference
 
-> **Source**: `src/thegent/mesh/observability.py`
+> **Source**: `src/thegent/cli/services/observability.py`
 
-Observability and metrics for the agent mesh.
-
----
-
-## MeshLogger
-
-JSONL structured logging (SCLI-P13.1).
-
-### Methods
-
-#### MeshLogger.__init__
-
-```python
-__init__(self: Any, mesh_root: Path)
-```
+Observability service helpers split out of CLI impl.
 
 ---
 
-#### MeshLogger.log
+## build_observe_summary_escalation
 
-```python
-log(self: Any, agent_id: str, event: str, data: Any)
-```
-
-Append a structured log entry.
+Build sorted escalation rows with SLA deltas for observe-summary payloads.
 
 ---
 
----
+## build_observe_summary_trend
 
-## MetricsAggregator
-
-Mesh metrics aggregation (SCLI-P13.2).
-
-### Methods
-
-#### MetricsAggregator.__init__
-
-```python
-__init__(self: Any, mesh_root: Path)
-```
+Build trend summary and snapshot scope metadata for observe-summary payloads.
 
 ---
 
-#### MetricsAggregator.get_summary
+## get_server_meta_impl
 
-```python
-get_summary(self: Any)
-```
-
-Aggregate metrics for all agents (SCLI-P13.4).
+Build server metadata payload for thegent://meta.
 
 ---
 
-#### MetricsAggregator.record_metric
+## sweep_impl
 
-```python
-record_metric(self: Any, agent_id: str, name: str, value: float)
-```
-
-Record a single metric point.
+Policy drift sweep service.
 
 ---
 
----
-
-## get_summary
-
-```python
-get_summary(self: Any)
-```
-
-Aggregate metrics for all agents (SCLI-P13.4).
-
----
-
-## log
-
-```python
-log(self: Any, agent_id: str, event: str, data: Any)
-```
-
-Append a structured log entry.
-
----
-
-## mesh_status_cmd
-
-```python
-mesh_status_cmd(mesh_root: Path)
-```
-
-CLI 'mesh status' (SCLI-P13.3).
-
----
-
-## record_metric
-
-```python
-record_metric(self: Any, agent_id: str, name: str, value: float)
-```
-
-Record a single metric point.
-
----

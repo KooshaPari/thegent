@@ -79,3 +79,4 @@ Render tabs HTML.
 **Returns**: HTML string
 
 ---
+

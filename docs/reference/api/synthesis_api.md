@@ -9,6 +9,48 @@ Ensures synthesized programs are correct and safe by construction.
 
 ---
 
+## CodeGenerationProvider
+
+Provider contract used by ProgramSynthesizer.
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### CodeGenerationProvider.generate_code
+
+```python
+generate_code(self: Any, prompt: str, formal_spec: Any)
+```
+
+Generate source code for prompt + optional formal specification.
+
+---
+
+---
+
+## ConfiguredCodeGenerationProvider
+
+Default provider that must be replaced by an injected runtime provider.
+
+### Methods
+
+#### ConfiguredCodeGenerationProvider.generate_code
+
+```python
+generate_code(self: Any, prompt: str, formal_spec: Any)
+```
+
+---
+
+---
+
+## GenerationResponse
+
+Provider generation response with observability metadata.
+
+---
+
 ## ProgramSynthesizer
 
 Orchestrates neural-symbolic program generation.
@@ -18,7 +60,7 @@ Orchestrates neural-symbolic program generation.
 #### ProgramSynthesizer.__init__
 
 ```python
-__init__(self: Any, run_id: str)
+__init__(self: Any, run_id: str, provider: Any)
 ```
 
 ---
@@ -43,6 +85,14 @@ Result of a neural-symbolic synthesis operation.
 
 ---
 
+## generate_code
+
+```python
+generate_code(self: Any, prompt: str, formal_spec: Any) -> GenerationResponse
+```
+
+---
+
 ## synthesize
 
 ```python
@@ -52,3 +102,4 @@ synthesize(self: Any, prompt: str, formal_spec: Any)
 Synthesize a program from a prompt and optional formal spec.
 
 ---
+

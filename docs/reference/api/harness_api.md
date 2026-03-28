@@ -1,6 +1,6 @@
 # harness API Reference
 
-> **Source**: `src/thegent/crew/harness.py`
+> **Source**: `src/thegent/agents/crew/harness.py`
 
 Integration with thegent codex/cc/droid harness.
 
@@ -27,7 +27,7 @@ Execute agent via thegent harness.
 ## create_agent_executor
 
 ```python
-create_agent_executor(cwd: Any, mode: str, timeout: int, model: Any, agent_map: Any)
+create_agent_executor(cwd: Any, mode: str, timeout: int, model: Any)
 ```
 
 Create agent_executor callback that uses thegent's codex/cc/droid harness.
@@ -38,8 +38,8 @@ Create agent_executor callback that uses thegent's codex/cc/droid harness.
 - `mode`: Execution mode (read-only, write, full)
 - `timeout`: Timeout in seconds
 - `model`: Optional model override
-- `agent_map`: Optional map of agent_id -> agent_name/role
 
 **Returns**: Callable (agent_id, prompt, context) -> ExecutionResult
 
 ---
+

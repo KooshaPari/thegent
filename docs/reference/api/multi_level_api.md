@@ -2,15 +2,15 @@
 
 > **Source**: `src/thegent/cache/multi_level.py`
 
-Multi-level cache: L1 (in-process TTLCache) -&gt; L2 (diskcache on disk).
+Multi-level cache: L1 (in-process TTLCache) -> L2 (diskcache on disk).
 
 Architecture:
   - L1: cachetools.TTLCache -- fastest, in-process, bounded by maxsize + TTL
   - L2: diskcache.Cache -- persistent, SQLite-backed, optional (graceful L1-only fallback)
 
-Read path:  L1 hit -&gt; return immediately
-            L1 miss -&gt; L2 hit -&gt; promote to L1 -&gt; return
-            L2 miss -&gt; return None (caller computes and calls set())
+Read path:  L1 hit -> return immediately
+            L1 miss -> L2 hit -> promote to L1 -> return
+            L2 miss -> return None (caller computes and calls set())
 
 Write path: write-through to L1 and L2 simultaneously
 
@@ -25,7 +25,7 @@ Library-first compliance (LIBRARY_FIRST_POLICY.md):
 
 ## MultiLevelCache
 
-Two-level cache: L1 in-memory TTLCache -&gt; L2 diskcache on disk.
+Two-level cache: L1 in-memory TTLCache -> L2 diskcache on disk.
 
 ### Methods
 
@@ -75,7 +75,7 @@ get(self: Any, key: Any)
 
 Return cached value for *key*, or ``None`` on a full miss.
 
-Read-through order: L1 -&gt; L2.
+Read-through order: L1 -> L2.
 On an L2 hit the value is promoted into L1.
 
 ---
@@ -97,6 +97,16 @@ l2_dir(self: Any)
 ```
 
 Return the disk-cache directory path, or ``None`` if L2 is inactive.
+
+---
+
+#### MultiLevelCache.l2_init_status
+
+```python
+l2_init_status(self: Any)
+```
+
+Return initialization metadata for L2 activation/degradation.
 
 ---
 
@@ -130,6 +140,84 @@ Return a snapshot of current cache occupancy.
 
 ---
 
+## _DiskCacheModuleProtocol
+
+Runtime import surface for the diskcache module.
+
+---
+
+## _DiskCacheProtocol
+
+Minimal cache interface used by MultiLevelCache.
+
+### Methods
+
+#### _DiskCacheProtocol.__init__
+
+```python
+__init__(self: Any, directory: str)
+```
+
+---
+
+#### _DiskCacheProtocol.clear
+
+```python
+clear(self: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.close
+
+```python
+close(self: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.delete
+
+```python
+delete(self: Any, key: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.directory
+
+```python
+directory(self: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.get
+
+```python
+get(self: Any, key: Any, default: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.set
+
+```python
+set(self: Any, key: Any, value: Any, expire: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.volume
+
+```python
+volume(self: Any)
+```
+
+---
+
+---
+
 ## cached_multi
 
 ```python
@@ -147,7 +235,7 @@ Example::
     cache = MultiLevelCache(l1_maxsize=500, l1_ttl=30)
 
     @cached_multi(cache)
-    def expensive(x: int) -&gt; str:
+    def expensive(x: int) -> str:
         ...
 
 ---
@@ -190,6 +278,14 @@ Remove *key* from both L1 and L2.
 
 ---
 
+## directory
+
+```python
+directory(self: Any) -> str
+```
+
+---
+
 ## get
 
 ```python
@@ -198,7 +294,7 @@ get(self: Any, key: Any)
 
 Return cached value for *key*, or ``None`` on a full miss.
 
-Read-through order: L1 -&gt; L2.
+Read-through order: L1 -> L2.
 On an L2 hit the value is promoted into L1.
 
 ---
@@ -220,6 +316,16 @@ l2_dir(self: Any)
 ```
 
 Return the disk-cache directory path, or ``None`` if L2 is inactive.
+
+---
+
+## l2_init_status
+
+```python
+l2_init_status(self: Any)
+```
+
+Return initialization metadata for L2 activation/degradation.
 
 ---
 
@@ -251,6 +357,15 @@ Return a snapshot of current cache occupancy.
 
 ---
 
+## volume
+
+```python
+volume(self: Any) -> int
+```
+
+---
+
 ## wrapper
 
 ---
+

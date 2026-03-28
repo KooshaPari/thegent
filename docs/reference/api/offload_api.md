@@ -2,40 +2,85 @@
 
 > **Source**: `src/thegent/compute/offload.py`
 
-Compute Offloading Mac↔PC.
+Compute Offloading Mac<->PC (WP-4001) + Adaptive Scale Pool (WP-5001/5004).
+
+Implements:
+  - ComputeOffload: original SSH-based offload (WP-4001)
+  - RemoteNodeClient: thin httpx client for thegent worker-pool HTTP API (WP-5001)
+  - TailscaleComputePool: discovers and manages remote nodes via Tailscale (WP-5001)
+  - ComputePoolManager: orchestrates local + remote worker dispatch (WP-5001)
+  - FederatedLoadBalancer: EMA-weighted round-robin across compute nodes (WP-5004)
+
+---
+
+## ComputeNode
+
+Represents a remote compute node available for task dispatch.
+
+### Methods
+
+#### ComputeNode.update_latency
+
+```python
+update_latency(self: Any, latency_ms: float)
+```
+
+Update the EMA latency estimate with a new measurement.
+
+**Parameters**:
+
+- `latency_ms`: Observed latency in milliseconds.
+
+---
 
 ---
 
 ## ComputeOffload
 
-Compute offloading between Mac and PC.
+Compute offloading between Mac and PC using Tailscale nodes (WP-4001).
 
 ### Methods
 
 #### ComputeOffload.__init__
 
 ```python
-__init__(self: Any)
+__init__(self: Any, nodes: Any, ssh_user: Any)
 ```
 
-Initialize compute offload.
+Initialize compute offload with remote executor.
+
+**Parameters**:
+
+- `nodes`: Optional list of node hostnames or IPs.
+- `ssh_user`: Optional SSH login user.
+
+---
+
+#### ComputeOffload.available_targets
+
+```python
+available_targets(self: Any)
+```
+
+Return list of reachable targets.
 
 ---
 
 #### ComputeOffload.offload
 
 ```python
-offload(self: Any, target_id: str, command: str)
+offload(self: Any, target_id: str, command: str, timeout_s: float)
 ```
 
-Offload computation to target.
+Offload computation to target node.
 
 **Parameters**:
 
-- `target_id`: Target identifier
-- `command`: Command to execute
+- `target_id`: Target identifier (must be a registered host or in executor's node list)
+- `command`: Shell command to execute on the remote host
+- `timeout_s`: Execution timeout in seconds
 
-**Returns**: Execution result
+**Returns**: RemoteResult with exit code, stdout, and stderr.
 
 ---
 
@@ -57,20 +102,433 @@ Register an offload target.
 
 ---
 
-## offload
+## ComputePoolManager
+
+Orchestrates local worker pool + remote Tailscale compute nodes.
+
+When the local :class:`~thegent.core.worker_pool.PersistentWorkerPool`
+is saturated, overflow tasks are delegated to remote nodes discovered
+via :class:`TailscaleComputePool`.
+
+Workspace synchronisation (WP-5002) is handled by injecting an optional
+:class:`~thegent.compute.syncthing.SyncthingWorkspaceSync` instance.
+
+### Methods
+
+#### ComputePoolManager.__init__
 
 ```python
-offload(self: Any, target_id: str, command: str)
+__init__(self: Any, compute_pool: Any, workspace_sync: Any, local_worker_pool: Any)
 ```
 
-Offload computation to target.
+---
+
+#### ComputePoolManager.expand
+
+```python
+expand(self: Any, n_nodes: int)
+```
+
+Add up to *n_nodes* remote nodes to the active pool.
+
+Refreshes the Tailscale peer list and selects the first *n_nodes*
+currently-undiscovered available nodes.
 
 **Parameters**:
 
-- `target_id`: Target identifier
-- `command`: Command to execute
+- `n_nodes`: Number of remote nodes to add.
 
-**Returns**: Execution result
+**Returns**: List of newly-added :class:`ComputeNode` instances.
+
+---
+
+#### ComputePoolManager.get_load_balancer
+
+```python
+get_load_balancer(self: Any)
+```
+
+Return the underlying :class:`FederatedLoadBalancer`.
+
+---
+
+#### ComputePoolManager.get_remote_nodes
+
+```python
+get_remote_nodes(self: Any)
+```
+
+Return the currently active remote node list.
+
+---
+
+#### ComputePoolManager.mark_remote_busy
+
+```python
+mark_remote_busy(self: Any, node_id: str)
+```
+
+Clear idle tracking for a remote node that received a task.
+
+**Parameters**:
+
+- `node_id`: The node that is now busy.
+
+---
+
+#### ComputePoolManager.mark_remote_idle
+
+```python
+mark_remote_idle(self: Any, node_id: str)
+```
+
+Mark a remote node as idle (no active tasks).
+
+**Parameters**:
+
+- `node_id`: The node that became idle.
+
+---
+
+#### ComputePoolManager.shrink
+
+```python
+shrink(self: Any)
+```
+
+Release idle remote nodes.
+
+A remote node is eligible for release when it has been continuously
+idle for at least 5 minutes (300 s).
+
+**Returns**: List of node IDs that were released.
+
+---
+
+---
+
+## FederatedLoadBalancer
+
+Round-robin load balancer with EMA-latency weights.
+
+Selects among available :class:`ComputeNode` instances by round-robin,
+favouring nodes with lower EMA latency.  When all nodes have equal or
+zero latency, pure round-robin applies.
+
+### Methods
+
+#### FederatedLoadBalancer.__init__
+
+```python
+__init__(self: Any, nodes: Any)
+```
+
+---
+
+#### FederatedLoadBalancer.add_node
+
+```python
+add_node(self: Any, node: ComputeNode)
+```
+
+Add a compute node to the balancer.
+
+**Parameters**:
+
+- `node`: The :class:`ComputeNode` to add.
+
+---
+
+#### FederatedLoadBalancer.remove_node
+
+```python
+remove_node(self: Any, node_id: str)
+```
+
+Remove a node by ID.
+
+**Parameters**:
+
+- `node_id`: The node ID to remove.
+
+---
+
+#### FederatedLoadBalancer.select_node
+
+```python
+select_node(self: Any, task: Any)
+```
+
+Select the best available node for a task.
+
+Uses round-robin as the base strategy.  When EMA latency data is
+available, the node with the globally lowest EMA is preferred for
+the current slot unless it is unavailable.
+
+**Parameters**:
+
+- `task`: The task to dispatch (currently unused for selection logic
+but included for future extension).
+
+**Returns**: The selected :class:`ComputeNode`.
+
+---
+
+#### FederatedLoadBalancer.set_nodes
+
+```python
+set_nodes(self: Any, nodes: list[ComputeNode])
+```
+
+Replace the full node list.
+
+**Parameters**:
+
+- `nodes`: New list of compute nodes.
+
+---
+
+---
+
+## RemoteNodeClient
+
+Thin httpx client for dispatching tasks to a thegent worker-pool HTTP API.
+
+The remote worker-pool exposes ``POST /execute`` accepting a JSON body
+with the AgentTask fields and returning a JSON AgentResult.
+
+Authentication uses a shared secret passed as the ``X-Compute-Token``
+header (set via ``THGENT_COMPUTE_SHARED_SECRET`` environment variable).
+
+### Methods
+
+#### RemoteNodeClient.__init__
+
+```python
+__init__(self: Any, node: ComputeNode, timeout_s: float)
+```
+
+---
+
+---
+
+## RemoteNodeError
+
+Raised when an HTTP call to a remote compute node fails.
+
+**Inherits from**: `Exception`
+
+---
+
+## TailscaleComputePool
+
+Discovers and manages remote compute nodes via Tailscale.
+
+Reads ``tailscale status --json`` to get the peer list, then filters
+by TailnetLockKey presence (trusted peers) or by hostname pattern.
+
+### Methods
+
+#### TailscaleComputePool.__init__
+
+```python
+__init__(self: Any, tailscale_manager: Any, hostname_pattern: Any, worker_port: int, scheme: str)
+```
+
+---
+
+#### TailscaleComputePool.add_node
+
+```python
+add_node(self: Any, node: ComputeNode)
+```
+
+Manually register a compute node.
+
+**Parameters**:
+
+- `node`: The :class:`ComputeNode` to register.
+
+---
+
+#### TailscaleComputePool.get_nodes
+
+```python
+get_nodes(self: Any)
+```
+
+Return the current list of known compute nodes (no refresh).
+
+---
+
+#### TailscaleComputePool.refresh
+
+```python
+refresh(self: Any)
+```
+
+Re-discover remote nodes from Tailscale.
+
+When ``THGENT_TAILSCALE_ENABLED=1`` and the binary is unavailable,
+this raises :class:`~thegent.compute.tailscale.TailscaleError` loudly
+rather than silently returning an empty list.
+
+**Returns**: Current list of available :class:`ComputeNode` objects.
+
+---
+
+#### TailscaleComputePool.remove_node
+
+```python
+remove_node(self: Any, node_id: str)
+```
+
+Remove a compute node from the pool.
+
+**Parameters**:
+
+- `node_id`: The node identifier to remove.
+
+---
+
+---
+
+## add_node
+
+```python
+add_node(self: Any, node: ComputeNode)
+```
+
+Add a compute node to the balancer.
+
+**Parameters**:
+
+- `node`: The :class:`ComputeNode` to add.
+
+---
+
+## available_targets
+
+```python
+available_targets(self: Any)
+```
+
+Return list of reachable targets.
+
+---
+
+## expand
+
+```python
+expand(self: Any, n_nodes: int)
+```
+
+Add up to *n_nodes* remote nodes to the active pool.
+
+Refreshes the Tailscale peer list and selects the first *n_nodes*
+currently-undiscovered available nodes.
+
+**Parameters**:
+
+- `n_nodes`: Number of remote nodes to add.
+
+**Returns**: List of newly-added :class:`ComputeNode` instances.
+
+---
+
+## get_load_balancer
+
+```python
+get_load_balancer(self: Any)
+```
+
+Return the underlying :class:`FederatedLoadBalancer`.
+
+---
+
+## get_nodes
+
+```python
+get_nodes(self: Any)
+```
+
+Return the current list of known compute nodes (no refresh).
+
+---
+
+## get_remote_nodes
+
+```python
+get_remote_nodes(self: Any)
+```
+
+Return the currently active remote node list.
+
+---
+
+## mark_remote_busy
+
+```python
+mark_remote_busy(self: Any, node_id: str)
+```
+
+Clear idle tracking for a remote node that received a task.
+
+**Parameters**:
+
+- `node_id`: The node that is now busy.
+
+---
+
+## mark_remote_idle
+
+```python
+mark_remote_idle(self: Any, node_id: str)
+```
+
+Mark a remote node as idle (no active tasks).
+
+**Parameters**:
+
+- `node_id`: The node that became idle.
+
+---
+
+## offload
+
+```python
+offload(self: Any, target_id: str, command: str, timeout_s: float)
+```
+
+Offload computation to target node.
+
+**Parameters**:
+
+- `target_id`: Target identifier (must be a registered host or in executor's node list)
+- `command`: Shell command to execute on the remote host
+- `timeout_s`: Execution timeout in seconds
+
+**Returns**: RemoteResult with exit code, stdout, and stderr.
+
+---
+
+## refresh
+
+```python
+refresh(self: Any)
+```
+
+Re-discover remote nodes from Tailscale.
+
+When ``THGENT_TAILSCALE_ENABLED=1`` and the binary is unavailable,
+this raises :class:`~thegent.compute.tailscale.TailscaleError` loudly
+rather than silently returning an empty list.
+
+**Returns**: Current list of available :class:`ComputeNode` objects.
+
+**Raises**:
+
+- `TailscaleError`: When Tailscale is required but unavailable.
 
 ---
 
@@ -89,3 +547,86 @@ Register an offload target.
 - `port`: SSH port
 
 ---
+
+## remove_node
+
+```python
+remove_node(self: Any, node_id: str)
+```
+
+Remove a node by ID.
+
+**Parameters**:
+
+- `node_id`: The node ID to remove.
+
+---
+
+## select_node
+
+```python
+select_node(self: Any, task: Any)
+```
+
+Select the best available node for a task.
+
+Uses round-robin as the base strategy.  When EMA latency data is
+available, the node with the globally lowest EMA is preferred for
+the current slot unless it is unavailable.
+
+**Parameters**:
+
+- `task`: The task to dispatch (currently unused for selection logic
+but included for future extension).
+
+**Returns**: The selected :class:`ComputeNode`.
+
+**Raises**:
+
+- `RuntimeError`: When no nodes are available.
+
+---
+
+## set_nodes
+
+```python
+set_nodes(self: Any, nodes: list[ComputeNode])
+```
+
+Replace the full node list.
+
+**Parameters**:
+
+- `nodes`: New list of compute nodes.
+
+---
+
+## shrink
+
+```python
+shrink(self: Any)
+```
+
+Release idle remote nodes.
+
+A remote node is eligible for release when it has been continuously
+idle for at least 5 minutes (300 s).
+
+**Returns**: List of node IDs that were released.
+
+---
+
+## update_latency
+
+```python
+update_latency(self: Any, latency_ms: float)
+```
+
+Update the EMA latency estimate with a new measurement.
+
+**Parameters**:
+
+- `latency_ms`: Observed latency in milliseconds.
+
+---
+

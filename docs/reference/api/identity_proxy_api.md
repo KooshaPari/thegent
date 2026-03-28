@@ -35,6 +35,12 @@ Return the environment variable for L2 agents to use this proxy.
 
 ---
 
+#### SSHIdentityProxy.require_actor_identity
+
+Require and validate actor identity metadata for write operations.
+
+---
+
 #### SSHIdentityProxy.start
 
 ```python
@@ -67,6 +73,12 @@ Return the environment variable for L2 agents to use this proxy.
 
 ---
 
+## require_actor_identity
+
+Require and validate actor identity metadata for write operations.
+
+---
+
 ## start
 
 ```python
@@ -86,3 +98,4 @@ stop(self: Any)
 Stop the proxy server.
 
 ---
+

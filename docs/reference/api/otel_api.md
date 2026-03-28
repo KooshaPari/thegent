@@ -1,0 +1,155 @@
+# otel API Reference
+
+> **Source**: `src/thegent/observability/otel.py`
+
+## OtelConfig
+
+Configuration for the OTLP exporter.
+
+---
+
+## _NoOpSpan
+
+Dummy span that silently accepts all attribute calls and context methods.
+
+### Methods
+
+#### _NoOpSpan.end
+
+```python
+end(self: Any)
+```
+
+---
+
+#### _NoOpSpan.record_exception
+
+```python
+record_exception(self: Any, _exc: BaseException)
+```
+
+---
+
+#### _NoOpSpan.set_attribute
+
+```python
+set_attribute(self: Any, _key: str, _value: Any)
+```
+
+---
+
+#### _NoOpSpan.set_status
+
+```python
+set_status(self: Any)
+```
+
+---
+
+---
+
+## configure_otel
+
+```python
+configure_otel(config: OtelConfig)
+```
+
+Configure the global TracerProvider with OTLP exporter.
+
+OTEL bootstrap is fail-loud by default: if enabled and OTEL packages are
+unavailable, this raises RuntimeError. Explicit opt-out remains available
+via config.enabled=False.
+
+---
+
+## end
+
+```python
+end(self: Any) -> None
+```
+
+---
+
+## finish_llm_span
+
+```python
+finish_llm_span(span: Any)
+```
+
+Record completion attributes on *span* and end it.
+
+Always safe to call even when span is None or a _NoOpSpan.
+
+---
+
+## get_otel_config
+
+Return the current singleton OtelConfig, creating a default one if needed.
+
+---
+
+## get_tracer
+
+Return the module-level tracer.
+
+Returns a no-op tracer proxy when opentelemetry is unavailable or
+configure_otel has not been called yet.
+
+---
+
+## record_exception
+
+```python
+record_exception(self: Any, _exc: BaseException) -> None
+```
+
+---
+
+## record_llm_call
+
+```python
+record_llm_call(model: str, provider: str)
+```
+
+Convenience: create span, set all attributes, and end it immediately.
+
+This is the primary entry point for recording a complete LLM call.
+When opentelemetry is unavailable, this function is a silent no-op.
+
+---
+
+## reset_otel_config
+
+Reset the singleton config and tracer state. Intended for testing only.
+
+---
+
+## set_attribute
+
+```python
+set_attribute(self: Any, _key: str, _value: Any) -> None
+```
+
+---
+
+## set_status
+
+```python
+set_status(self: Any) -> None
+```
+
+---
+
+## start_llm_span
+
+```python
+start_llm_span(model: str, provider: str, event_id: str, max_tokens: Any)
+```
+
+Start a new LLM span.
+
+Returns an opentelemetry Span when otel is available and configured,
+otherwise returns a _NoOpSpan that is safe to pass to finish_llm_span.
+
+---
+

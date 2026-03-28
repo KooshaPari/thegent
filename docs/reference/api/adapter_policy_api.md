@@ -6,7 +6,7 @@ WP-10004: Adapter admission and trust policy.
 
 Enforces trust-based admission rules for provider adapters.
 
-OPT-008: LRU cache for policy evaluation results (with TTL) - `<50ms` repeated evaluations.
+OPT-008: LRU cache for policy evaluation results (with TTL) - <50ms repeated evaluations.
 
 ---
 
@@ -41,7 +41,7 @@ evaluate_admission(self: Any, adapter_id: str, lane: str)
 
 Evaluate if an adapter can be admitted to a specific lane.
 
-OPT-008: Caches results for repeated evaluations (`<50ms` for cached lookups).
+OPT-008: Caches results for repeated evaluations (<50ms for cached lookups).
 
 **Parameters**:
 
@@ -62,7 +62,7 @@ evaluate_admission(self: Any, adapter_id: str, lane: str)
 
 Evaluate if an adapter can be admitted to a specific lane.
 
-OPT-008: Caches results for repeated evaluations (`<50ms` for cached lookups).
+OPT-008: Caches results for repeated evaluations (<50ms for cached lookups).
 
 **Parameters**:
 
@@ -72,3 +72,4 @@ OPT-008: Caches results for repeated evaluations (`<50ms` for cached lookups).
 **Returns**: Evaluation result dict with "allowed" and optional "reason"/"trust_level"
 
 ---
+

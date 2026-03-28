@@ -9,7 +9,7 @@ Roid CLI: Factory Droid-backed interactive harness with dex/clode-style aliases.
 ## default_roid
 
 ```python
-default_roid(ctx: typer.Context)
+default_roid(ctx: typer.Context, native: bool)
 ```
 
 Default roid behavior: flash model (gemini-3-flash).
@@ -22,7 +22,7 @@ Default roid behavior: flash model (gemini-3-flash).
 install_links(bin_dir: Path, force: bool)
 ```
 
-Install roid shims under ~/.local/bin.
+Install/update roid -> thegent-shims harness shim under ~/.local/bin.
 
 ---
 
@@ -34,10 +34,20 @@ roid_composer(ctx: typer.Context) -> None
 
 ---
 
+## roid_config
+
+```python
+roid_config(legacy: bool)
+```
+
+Open interactive config manager (translation layer for existing config backends).
+
+---
+
 ## roid_doctor
 
 ```python
-roid_doctor(fix: bool)
+roid_doctor(fix: bool, dry_run: bool)
 ```
 
 Run thegent doctor (harness-equiv).
@@ -72,6 +82,14 @@ roid_glm(ctx: typer.Context) -> None
 
 ```python
 roid_haiku(ctx: typer.Context) -> None
+```
+
+---
+
+## roid_high
+
+```python
+roid_high(ctx: typer.Context) -> None
 ```
 
 ---
@@ -123,3 +141,12 @@ roid_ultra(ctx: typer.Context) -> None
 ```
 
 ---
+
+## roid_xhigh
+
+```python
+roid_xhigh(ctx: typer.Context) -> None
+```
+
+---
+

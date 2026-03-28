@@ -1,0 +1,88 @@
+# team_snapshot_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/team/team_snapshot_cmds.py`
+
+Thegent CLI session snapshot commands (extracted from team_cmds.py).
+
+---
+
+## snapshot_daily_export_cmd
+
+```python
+snapshot_daily_export_cmd(project: Any, out_dir: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any)
+```
+
+Export daily snapshot index (JSON + Markdown).
+
+---
+
+## snapshot_daily_index_cmd
+
+```python
+snapshot_daily_index_cmd(project: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any)
+```
+
+Show daily snapshot aggregation payload.
+
+---
+
+## snapshot_daily_totals_cmd
+
+```python
+snapshot_daily_totals_cmd(project: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any)
+```
+
+Show lightweight daily aggregate totals for snapshots.
+
+---
+
+## snapshot_export_cmd
+
+```python
+snapshot_export_cmd(snapshot_path: Path, project: Any, out_path: Any, format: Any)
+```
+
+Export one snapshot JSON to markdown.
+
+---
+
+## snapshot_index_cmd
+
+```python
+snapshot_index_cmd(project: Any, limit: int, format: Any)
+```
+
+Show snapshot index analytics payload.
+
+---
+
+## snapshot_list_cmd
+
+```python
+snapshot_list_cmd(project: Any, limit: int, trigger: Any, tag: Any, since: Any, format: Any)
+```
+
+List persisted session snapshots with optional filters.
+
+---
+
+## snapshot_meta_cmd
+
+```python
+snapshot_meta_cmd(project: Any, limit: int, format: Any)
+```
+
+Show available trigger and tag metadata from snapshots.
+
+---
+
+## snapshot_prune_cmd
+
+```python
+snapshot_prune_cmd(project: Any, max_keep: int, format: Any)
+```
+
+Prune old snapshots beyond the keep limit.
+
+---
+

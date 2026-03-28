@@ -8,7 +8,21 @@ Skills management CLI commands.
 
 ## skills_list
 
+```python
+skills_list(json_output: bool)
+```
+
 List all available skills with their metadata.
+
+---
+
+## skills_select
+
+```python
+skills_select(name: str)
+```
+
+Validate a skill name for run-time selection via --skill.
 
 ---
 
@@ -31,3 +45,4 @@ skills_validate(name: str)
 Validate a skill and show any errors or warnings.
 
 ---
+

@@ -53,7 +53,7 @@ Extract condensed/final output from agent stdout.
 
 Tries JSONL first (stream-json). Falls back to plain-text heuristics.
 Prefers worker status report block (Summary, Items Done, Issues, Next Steps) when present.
-Strips `think` blocks from final output.
+Strips <think> blocks from final output.
 
 ---
 
@@ -82,3 +82,4 @@ Returns ParseResult with success, text, error_class for downstream routing.
 Detects truncation (unclosed XML tags), JSON malformation, and empty output.
 
 ---
+

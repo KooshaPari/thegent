@@ -1,0 +1,60 @@
+# team_monitoring_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/team/team_monitoring_cmds.py`
+
+Thegent CLI team monitoring commands (extracted from team_cmds.py).
+
+---
+
+## dlq_list_cmd
+
+```python
+dlq_list_cmd(status: Any, format: Any)
+```
+
+List items in the Dead-Letter Queue (WP-Y2/WP-2008).
+
+---
+
+## drift_monitor_cmd
+
+```python
+drift_monitor_cmd(prompt: str, agents: list[str])
+```
+
+Monitor drift across multiple providers for the same prompt (WP-3001).
+
+---
+
+## roadmap_cmd
+
+Successor roadmap generation (WP-6004).
+
+---
+
+## self_heal_tests_cmd
+
+```python
+self_heal_tests_cmd(test_output: Any)
+```
+
+Self-healing test suite: automated fix recommendations (WP-6006).
+
+---
+
+## traffic_cmd
+
+TRAFFIC KPI Dashboard (WP-Y7).
+
+---
+
+## watchdog_cmd
+
+```python
+watchdog_cmd(max_idle_s: int)
+```
+
+Scan for stale sessions and recommend handoffs (WP-5005).
+
+---
+

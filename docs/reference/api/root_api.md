@@ -1,0 +1,18 @@
+# root API Reference
+
+> **Source**: `src/thegent/cli/apps/root.py`
+
+Root CLI registration helpers for thegent.
+
+---
+
+## register_root_apps
+
+```python
+register_root_apps(app: typer.Typer, git_app: typer.Typer)
+```
+
+Register the root command hierarchy.
+
+---
+

@@ -90,3 +90,4 @@ Validate configuration file.
 **Returns**: True if configuration is valid, False otherwise
 
 ---
+

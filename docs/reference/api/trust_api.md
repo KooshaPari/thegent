@@ -4,7 +4,7 @@
 
 WP-3007: Trust boundary checks.
 
-OPT-008: LRU cache for policy evaluation results (with TTL) - `<50ms` repeated evaluations.
+OPT-008: LRU cache for policy evaluation results (with TTL) - <50ms repeated evaluations.
 
 ---
 
@@ -51,7 +51,7 @@ Evaluate if routing a task to an agent violates trust boundaries.
 
 Checks for sensitive keywords in prompt vs agent trust level.
 
-OPT-008: Caches results for repeated evaluations (`<50ms` for cached lookups).
+OPT-008: Caches results for repeated evaluations (<50ms for cached lookups).
 
 **Parameters**:
 
@@ -102,7 +102,7 @@ Evaluate if routing a task to an agent violates trust boundaries.
 
 Checks for sensitive keywords in prompt vs agent trust level.
 
-OPT-008: Caches results for repeated evaluations (`<50ms` for cached lookups).
+OPT-008: Caches results for repeated evaluations (<50ms for cached lookups).
 
 **Parameters**:
 
@@ -122,3 +122,4 @@ get_agent_trust(self: Any, agent_name: str)
 Return trust level for an agent.
 
 ---
+

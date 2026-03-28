@@ -1,0 +1,142 @@
+# dead_letter_replay API Reference
+
+> **Source**: `src/thegent/integrations/dead_letter_replay.py`
+
+Dead-Letter Replay Engine — reprocess failed writes after connector fixes.
+
+Orchestrates deterministic replay of queued failures with result tracking.
+
+# @trace WL-214
+
+---
+
+## DeadLetterReplayEngine
+
+Engine for replaying dead-letter entries after connector fixes.
+
+### Methods
+
+#### DeadLetterReplayEngine.__init__
+
+```python
+__init__(self: Any, dlq: DeadLetterQueue)
+```
+
+Initialize replay engine.
+
+**Parameters**:
+
+- `dlq`: The DeadLetterQueue to replay from.
+
+---
+
+#### DeadLetterReplayEngine.replay_all
+
+```python
+replay_all(self: Any, handler: Callable[(Any, bool)])
+```
+
+Replay all pending entries.
+
+**Parameters**:
+
+- `handler`: Function that takes DeadLetterEntry and returns True on success.
+Raises or returns False on failure.
+
+**Returns**: List of ReplayResult for each entry.
+
+---
+
+#### DeadLetterReplayEngine.replay_one
+
+```python
+replay_one(self: Any, entry_id: str, handler: Callable[(Any, bool)])
+```
+
+Replay a single entry by calling handler.
+
+**Parameters**:
+
+- `entry_id`: The entry ID to replay.
+- `handler`: Function that takes DeadLetterEntry and returns True on success.
+Raises or returns False on failure.
+
+**Returns**: ReplayResult with success/error status.
+
+---
+
+#### DeadLetterReplayEngine.replay_summary
+
+```python
+replay_summary(self: Any, results: list[ReplayResult])
+```
+
+Generate summary of replay results.
+
+**Parameters**:
+
+- `results`: List of ReplayResult from replay_all() or multiple replay_one() calls.
+
+**Returns**: Dict with total, succeeded, failed counts.
+
+---
+
+---
+
+## ReplayResult
+
+Result of a single replay attempt.
+
+---
+
+## replay_all
+
+```python
+replay_all(self: Any, handler: Callable[(Any, bool)])
+```
+
+Replay all pending entries.
+
+**Parameters**:
+
+- `handler`: Function that takes DeadLetterEntry and returns True on success.
+Raises or returns False on failure.
+
+**Returns**: List of ReplayResult for each entry.
+
+---
+
+## replay_one
+
+```python
+replay_one(self: Any, entry_id: str, handler: Callable[(Any, bool)])
+```
+
+Replay a single entry by calling handler.
+
+**Parameters**:
+
+- `entry_id`: The entry ID to replay.
+- `handler`: Function that takes DeadLetterEntry and returns True on success.
+Raises or returns False on failure.
+
+**Returns**: ReplayResult with success/error status.
+
+---
+
+## replay_summary
+
+```python
+replay_summary(self: Any, results: list[ReplayResult])
+```
+
+Generate summary of replay results.
+
+**Parameters**:
+
+- `results`: List of ReplayResult from replay_all() or multiple replay_one() calls.
+
+**Returns**: Dict with total, succeeded, failed counts.
+
+---
+

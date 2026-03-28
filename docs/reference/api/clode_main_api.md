@@ -4,6 +4,13 @@
 
 Claude-backed interactive agent CLI (clode).
 
+HEXAGONAL PHASE 2B: This file is now a thin shim delegating to:
+- src/thegent/adapters/harness_base.py — Common harness logic
+- src/thegent/adapters/claude_harness.py — Claude-specific implementation
+- src/thegent/use_cases/run_harness.py — Use case orchestration
+
+Legacy imports preserved for backward compatibility.
+
 ---
 
 ## LazyConsole
@@ -25,7 +32,7 @@ Start a background task via Claude Code using the proxy.
 ## clode_bg_global
 
 ```python
-clode_bg_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any)
+clode_bg_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any, remote: Any)
 ```
 
 Start a background task via Claude Code. Model-first, no provider filter.
@@ -52,10 +59,20 @@ Composer 1.5 (via Cursor). Use -x cursor to lock.
 
 ---
 
+## clode_config
+
+```python
+clode_config(legacy: bool)
+```
+
+Open interactive config manager (translation layer for existing config backends).
+
+---
+
 ## clode_doctor
 
 ```python
-clode_doctor(fix: bool)
+clode_doctor(fix: bool, dry_run: bool)
 ```
 
 Run thegent doctor (harness-equiv).
@@ -85,7 +102,7 @@ Base free tier: Copilot gpt-5-mini via cliproxy. Alias for clode mini.
 ## clode_glm
 
 ```python
-clode_glm(policy: str, prefer: str, dangerously_skip_permissions: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, model: Any, prompt: Any)
+clode_glm(policy: str, prefer: str, force: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, model: Any, prompt: Any)
 ```
 
 Start an interactive GLM session with policy-based balancing.
@@ -99,6 +116,16 @@ clode_haiku(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, 
 ```
 
 Claude Haiku 4.5 balanced across claude, antigravity, codex (proxy API), kiro.
+
+---
+
+## clode_high
+
+```python
+clode_high(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, prompt: Any)
+```
+
+Codex 5.3 high.
 
 ---
 
@@ -135,7 +162,7 @@ Print session logs.
 ## clode_max
 
 ```python
-clode_max(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, prompt: Any)
+clode_max(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, force: bool, prompt: Any)
 ```
 
 MiniMax-M2.5 balanced across minimax and kilo.
@@ -195,7 +222,7 @@ Run a task via Claude Code using the proxy (synchronous).
 ## clode_run_global
 
 ```python
-clode_run_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int)
+clode_run_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, remote: Any)
 ```
 
 Run a task via Claude Code. Model-first, no provider filter.
@@ -252,11 +279,13 @@ Wait for session completion and return session exit code.
 
 ---
 
-## cost_key
+## clode_xhigh
 
 ```python
-cost_key(b: str) -> tuple[(float, float, str)]
+clode_xhigh(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, prompt: Any)
 ```
+
+Codex 5.3 xhigh.
 
 ---
 
@@ -273,7 +302,7 @@ Create a subcommand group for a provider.
 ## default_clode
 
 ```python
-default_clode(ctx: typer.Context)
+default_clode(ctx: typer.Context, native: bool)
 ```
 
 Start Claude Code with model-first routing. Default: flash (Gemini 3 Flash).
@@ -286,7 +315,7 @@ Start Claude Code with model-first routing. Default: flash (Gemini 3 Flash).
 install_links(bin_dir: Path, force: bool)
 ```
 
-Install/update clode + claudeglm + claudemax shims under ~/.local/bin.
+Install/update clode harness aliases -> thegent-shims under ~/.local/bin.
 
 ---
 
@@ -306,7 +335,7 @@ Default to interactive shell if no subcommand is given.
 sitback_cmd(agent: str, provider: Any, model: Any, dex: bool, cd: Any, skill: Any, profile: str, tmux: bool, no_dashboard: bool, tui: bool)
 ```
 
-Start a Sitback harness (claude/codex/droid) with Sitback Agent persona.
+Start a Sitback harness (claude/codex/droid/antigma) with Sitback Agent persona.
 
 **Examples**:
 
@@ -314,6 +343,7 @@ Start a Sitback harness (claude/codex/droid) with Sitback Agent persona.
 thegent sitback                    # claude harness, flash model
 thegent sitback -a codex -M glm    # codex harness with GLM-5
 thegent sitback -a droid -M free   # droid harness with gpt-5-mini
+thegent sitback -a fanta -M max    # antigma harness with MiniMax-M2.5
 thegent sitback -M haiku -P kiro   # claude harness with provider override
 thegent sitback --skill thegent-skills
 thegent sitback --profile full
@@ -323,3 +353,4 @@ thegent sitback --tui             # Launch TUI compositor
 ```
 
 ---
+

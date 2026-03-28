@@ -168,17 +168,7 @@ Performs a simple HTTP GET to the ``/health`` endpoint.
 
 Manifest entry for a single borrowable thegent MCP tool.
 
-### Methods
-
-#### ToolManifest.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON output.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -281,16 +271,6 @@ Return tools grouped by category.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON output.
-
----
-
 ## url
 
 ```python
@@ -312,3 +292,4 @@ Performs a simple HTTP GET to the ``/health`` endpoint.
 **Returns**: True if the server responds with status 200, False otherwise.
 
 ---
+

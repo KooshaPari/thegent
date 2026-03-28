@@ -1,0 +1,38 @@
+# plan_workstream_analysis_cmds API Reference
+
+> **Source**: `src/thegent/cli/plan/plan_workstream_analysis_cmds.py`
+
+Thegent CLI plan/DAG commands domain - extracted from cli.py (WL-124).
+
+---
+
+## closure_pack_cmd
+
+```python
+closure_pack_cmd(cd: Any)
+```
+
+Generate a formal closure pack for the current DAG session (WP-6002/6008/FR-024).
+
+---
+
+## plan_analyze_cmd
+
+```python
+plan_analyze_cmd(cd: Any, pert: bool, resources: bool, continuity: bool, format: Any)
+```
+
+Run planning simulation overlays (XD1–XD3): PERT, resource contention, continuity risk.
+
+---
+
+## workstream_query_cmd
+
+```python
+workstream_query_cmd(query: str)
+```
+
+Execute SQL query on workstream database.
+
+---
+

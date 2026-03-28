@@ -41,8 +41,9 @@ map_sid_to_uid(self: Any, sid: str)
 Map a Windows SID to a WSL2 UID.
 
 Implementation logic:
-1. deterministic hash-based mapping (similar to sub-user system).
-2. /etc/wsl.conf [user] default=&lt;uid&gt; if needed.
+1. deterministic SID fingerprinting with bounded UID search.
+2. collision-aware probing when a UID collision occurs.
+3. deterministic fallback namespace for reproducible outputs.
 
 ---
 
@@ -91,8 +92,9 @@ map_sid_to_uid(self: Any, sid: str)
 Map a Windows SID to a WSL2 UID.
 
 Implementation logic:
-1. deterministic hash-based mapping (similar to sub-user system).
-2. /etc/wsl.conf [user] default=&lt;uid&gt; if needed.
+1. deterministic SID fingerprinting with bounded UID search.
+2. collision-aware probing when a UID collision occurs.
+3. deterministic fallback namespace for reproducible outputs.
 
 ---
 
@@ -119,3 +121,4 @@ Convert a Windows path to a WSL path.
 Uses fast-path regex if possible, falls back to wslpath.
 
 ---
+

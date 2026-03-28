@@ -51,3 +51,4 @@ bridge_saml_response(self: Any, saml_response: str)
 WP-19003: Simple bridge for SAML assertions (mock).
 
 ---
+

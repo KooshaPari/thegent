@@ -1,0 +1,14 @@
+# wl_block_formatter API Reference
+
+> **Source**: `src/thegent/integrations/wl_block_formatter.py`
+
+Stub module for thegent.integrations.wl_block_formatter.
+
+---
+
+## normalize_wl_block
+
+Stub function.
+
+---
+

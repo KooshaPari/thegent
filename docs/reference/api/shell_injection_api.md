@@ -131,3 +131,4 @@ wait_for_ready(self: Any, session_id: str, timeout: float)
 Detect agent readiness by looking for prompt patterns.
 
 ---
+

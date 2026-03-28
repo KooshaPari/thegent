@@ -1,20 +1,114 @@
 # resources API Reference
 
-> **Source**: `src/thegent/resources.py`
+> **Source**: `src/thegent/scaling/resources.py`
 
-Resource access utilities for thegent.
+Resource Monitor
+
+Samples system resources for dynamic scaling decisions.
 
 ---
 
-## get_resource_path
+## ResourceMonitor
+
+Monitors system resources.
+
+### Methods
+
+#### ResourceMonitor.__init__
 
 ```python
-get_resource_path(relative_path: str)
+__init__(self: Any, sample_interval: float)
 ```
 
-Get absolute path to a resource file.
+---
 
-In dev mode (THGENT_DEV=1 or running from git), looks in the project root.
-When installed, uses importlib.resources.
+#### ResourceMonitor.average_pressure
+
+```python
+average_pressure(self: Any, window: int)
+```
+
+Get average pressure over window.
 
 ---
+
+#### ResourceMonitor.latest
+
+```python
+latest(self: Any)
+```
+
+Get latest sample.
+
+---
+
+#### ResourceMonitor.sample
+
+```python
+sample(self: Any)
+```
+
+Take a resource sample.
+
+---
+
+---
+
+## ResourceSample
+
+Resource sample at a point in time.
+
+### Methods
+
+#### ResourceSample.pressure_score
+
+```python
+pressure_score(self: Any)
+```
+
+Combined pressure score (0-1).
+
+---
+
+---
+
+## average_pressure
+
+```python
+average_pressure(self: Any, window: int)
+```
+
+Get average pressure over window.
+
+---
+
+## latest
+
+```python
+latest(self: Any)
+```
+
+Get latest sample.
+
+---
+
+## pressure_score
+
+```python
+pressure_score(self: Any)
+```
+
+Combined pressure score (0-1).
+
+---
+
+## sample
+
+```python
+sample(self: Any)
+```
+
+Take a resource sample.
+
+---
+

@@ -1,6 +1,6 @@
 # billing API Reference
 
-> **Source**: `src/thegent/orchestration/billing.py`
+> **Source**: `src/thegent/orchestration/resource/billing.py`
 
 WP-19004: Quota & Billing for Multi-Tenant Teams.
 
@@ -83,3 +83,4 @@ record_usage(self: Any, team_id: str, resource: str, amount: float)
 Record resource usage for a team.
 
 ---
+

@@ -1,0 +1,20 @@
+# recovery_commands API Reference
+
+> **Source**: `src/thegent/cli/commands/recovery_commands.py`
+
+Recovery command group extracted from cli.py (WL-124).
+
+---
+
+## forensics_snapshot_cmd
+
+Take a forensics snapshot of an agent run (WP-3002).
+
+---
+
+## recover_status_cmd
+
+Show current recovery status (WP-7001).
+
+---
+

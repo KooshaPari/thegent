@@ -1,0 +1,50 @@
+# governance_agileplus_cmds API Reference
+
+> **Source**: `src/thegent/cli/governance/governance_agileplus_cmds.py`
+
+Thegent CLI AgilePlus governance commands (health cycling, watching).
+
+Extracted from governance_policy_health_cmds.py as part of CLI refactoring (WL-124).
+
+---
+
+## govern_go_cycle_cmd
+
+```python
+govern_go_cycle_cmd(cd: Any, force: bool, format: Any)
+```
+
+Run a single governance cycle.
+
+---
+
+## govern_go_health_cmd
+
+```python
+govern_go_health_cmd(cd: Any, format: Any)
+```
+
+Show current health score (composite 0-100, band, per-dimension breakdown).
+
+---
+
+## govern_go_status_cmd
+
+```python
+govern_go_status_cmd(cd: Any)
+```
+
+Show current governance status (state, cycle_id, shutdown_requested).
+
+---
+
+## govern_go_watch_cmd
+
+```python
+govern_go_watch_cmd(cd: Any, interval: int, max_cycles: Any)
+```
+
+Run continuous governance mode.
+
+---
+

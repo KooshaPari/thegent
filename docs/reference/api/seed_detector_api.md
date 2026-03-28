@@ -18,17 +18,9 @@ Provides:
 
 Represents a detected idea seed.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
-
-#### Seed.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary for JSON serialization.
-
----
 
 ---
 
@@ -136,12 +128,3 @@ Extract special flags from text (e.g., $idea, $defer, $pending).
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert to dictionary for JSON serialization.
-
----

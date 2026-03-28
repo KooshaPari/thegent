@@ -1,0 +1,250 @@
+# rules_sync API Reference
+
+> **Source**: `src/thegent/core/rules_sync.py`
+
+WL-015: Cross-platform rules synchronization.
+
+Reads canonical rules from .thegent/rules/ and writes platform-specific
+formats for Cursor (.cursor/rules/*.mdc), Claude Code (CLAUDE.md), and
+Codex (.codex/skills/SKILL.md).
+
+FR Traceability: FR-HAX-002
+
+---
+
+## Rule
+
+A single canonical rule loaded from .thegent/rules/<id>.md.
+
+---
+
+## RulesSyncManager
+
+Synchronises canonical rules from .thegent/rules/ to platform targets.
+
+Usage::
+
+    manager = RulesSyncManager()
+    rules = manager.load_canonical_rules(project_path)
+    result = manager.sync_all(project_path, platforms=["cursor", "claude"], dry_run=False)
+
+### Methods
+
+#### RulesSyncManager.load_canonical_rules
+
+```python
+load_canonical_rules(self: Any, project_path: Path)
+```
+
+Read all *.md rule files from <project_path>/.thegent/rules/.
+
+Each file must contain YAML frontmatter with at minimum:
+  - id: <str>
+  - title: <str>
+  - platforms: [cursor, claude, codex]
+
+Raises FileNotFoundError if the rules directory does not exist.
+Raises ValueError for any malformed rule file.
+
+---
+
+#### RulesSyncManager.sync_all
+
+```python
+sync_all(self: Any, project_path: Path, platforms: Any, dry_run: bool)
+```
+
+Orchestrate rules sync across the requested platforms.
+
+**Parameters**:
+
+- `project_path`: Root of the project containing .thegent/rules/.
+- `platforms`:    List of platforms to sync. Defaults to all platforms.
+- `dry_run`:      Report what would be written without writing files.
+
+**Returns**: RulesSyncResult with per-file records and any errors.
+
+---
+
+#### RulesSyncManager.sync_to_claude
+
+```python
+sync_to_claude(self: Any, rules: list[Rule], project_path: Path, dry_run: bool)
+```
+
+Append or merge a thegent rules section into CLAUDE.md.
+
+The section is bounded by HTML comment markers so subsequent syncs
+replace only the managed block without touching surrounding content.
+Rules without 'claude' in their platforms list are excluded.
+
+---
+
+#### RulesSyncManager.sync_to_codex
+
+```python
+sync_to_codex(self: Any, rules: list[Rule], project_path: Path, dry_run: bool)
+```
+
+Write .codex/skills/SKILL.md with all codex-targeted rules.
+
+Only rules that include 'codex' in their platforms list are written.
+
+---
+
+#### RulesSyncManager.sync_to_cursor
+
+```python
+sync_to_cursor(self: Any, rules: list[Rule], project_path: Path, dry_run: bool)
+```
+
+Write a single consolidated .cursor/rules/thegent-rules.mdc file.
+
+Only rules that include 'cursor' in their platforms list are included.
+The .mdc file is formatted as a standard Cursor rules document.
+
+---
+
+---
+
+## RulesSyncResult
+
+Aggregate result of a rules sync operation.
+
+### Methods
+
+#### RulesSyncResult.files_dry_run
+
+```python
+files_dry_run(self: Any)
+```
+
+---
+
+#### RulesSyncResult.files_written
+
+```python
+files_written(self: Any)
+```
+
+---
+
+#### RulesSyncResult.success
+
+```python
+success(self: Any)
+```
+
+---
+
+---
+
+## SyncRecord
+
+Record of a single file written (or that would be written) during sync.
+
+---
+
+## files_dry_run
+
+```python
+files_dry_run(self: Any) -> list[Path]
+```
+
+---
+
+## files_written
+
+```python
+files_written(self: Any) -> list[Path]
+```
+
+---
+
+## load_canonical_rules
+
+```python
+load_canonical_rules(self: Any, project_path: Path)
+```
+
+Read all *.md rule files from <project_path>/.thegent/rules/.
+
+Each file must contain YAML frontmatter with at minimum:
+  - id: <str>
+  - title: <str>
+  - platforms: [cursor, claude, codex]
+
+Raises FileNotFoundError if the rules directory does not exist.
+Raises ValueError for any malformed rule file.
+
+---
+
+## success
+
+```python
+success(self: Any) -> bool
+```
+
+---
+
+## sync_all
+
+```python
+sync_all(self: Any, project_path: Path, platforms: Any, dry_run: bool)
+```
+
+Orchestrate rules sync across the requested platforms.
+
+**Parameters**:
+
+- `project_path`: Root of the project containing .thegent/rules/.
+- `platforms`:    List of platforms to sync. Defaults to all platforms.
+- `dry_run`:      Report what would be written without writing files.
+
+**Returns**: RulesSyncResult with per-file records and any errors.
+
+**Raises**:
+
+- `FileNotFoundError`: If .thegent/rules/ does not exist.
+
+---
+
+## sync_to_claude
+
+```python
+sync_to_claude(self: Any, rules: list[Rule], project_path: Path, dry_run: bool)
+```
+
+Append or merge a thegent rules section into CLAUDE.md.
+
+The section is bounded by HTML comment markers so subsequent syncs
+replace only the managed block without touching surrounding content.
+Rules without 'claude' in their platforms list are excluded.
+
+---
+
+## sync_to_codex
+
+```python
+sync_to_codex(self: Any, rules: list[Rule], project_path: Path, dry_run: bool)
+```
+
+Write .codex/skills/SKILL.md with all codex-targeted rules.
+
+Only rules that include 'codex' in their platforms list are written.
+
+---
+
+## sync_to_cursor
+
+```python
+sync_to_cursor(self: Any, rules: list[Rule], project_path: Path, dry_run: bool)
+```
+
+Write a single consolidated .cursor/rules/thegent-rules.mdc file.
+
+Only rules that include 'cursor' in their platforms list are included.
+The .mdc file is formatted as a standard Cursor rules document.
+
+---
+

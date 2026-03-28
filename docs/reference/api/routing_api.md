@@ -1,17 +1,36 @@
 # routing API Reference
 
-> **Source**: `src/thegent/routing/__init__.py`
+> **Source**: `src/thegent/cli/apps/routing.py`
 
-Task routing and categorization for thegent.
-
-Implements Pareto frontier routing based on Terminal Bench 2.0 benchmarks.
-Routes tasks to optimal models based on complexity, cost constraints, and quality requirements.
-
-Key components:
-- TaskRouter: Main routing engine with constraint validation
-- TaskClassifier: Categorizes tasks (FAST/NORMAL/COMPLEX/HIGH_COMPLEX)
-- ConstraintValidator: Validates hard constraints (quality, cost, speed)
-- Pareto router: Hard constraints → Pareto frontier → lexicographic selection
-- Auto router: Gemini Flash classifier + Pareto routing for agent/model="auto"
+Logical stream: Routing and LiteLLM control.
 
 ---
+
+## routing_harvest
+
+```python
+routing_harvest(session_id: str, output: Any)
+```
+
+---
+
+## routing_pareto_panel
+
+```python
+routing_pareto_panel(audit: Any, limit: int, strict: bool, format: str) -> None
+```
+
+---
+
+## routing_reset
+
+---
+
+## routing_status
+
+```python
+routing_status(format: str)
+```
+
+---
+

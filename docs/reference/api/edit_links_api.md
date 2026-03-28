@@ -1,131 +1,141 @@
 # edit_links API Reference
 
-> **Source**: `src/thegent/utils/edit_links.py`
+> **Source**: `src/thegent/docgen/edit_links.py`
 
-Generate edit-on-GitHub links for documentation.
+Generation of 'Edit on GitHub' links for documentation.
 
 ---
 
-## EditLinksGenerator
+## EditLinkGenerator
 
-Generate edit-on-GitHub links for markdown files.
+Generate 'Edit on GitHub' links for documentation files.
 
 ### Methods
 
-#### EditLinksGenerator.__init__
+#### EditLinkGenerator.__init__
 
 ```python
-__init__(self: Any, repo_url: str, branch: str, base_dir: Any)
+__init__(self: Any, repo_url: str, base_dir: Path, branch: str, docs_subdir: str)
 ```
 
-Initialize edit links generator.
+Initialize edit link generator.
 
 **Parameters**:
 
-- `repo_url`: GitHub repository URL
-- `branch`: Git branch name
-- `base_dir`: Base directory for documentation
+- `repo_url`: GitHub repository URL (e.g., https://github.com/user/repo)
+- `base_dir`: Root directory of the local repository
+- `branch`: Default branch name
+- `docs_subdir`: Subdirectory where docs are located
 
 ---
 
-#### EditLinksGenerator.add_edit_link_to_file
+#### EditLinkGenerator.get_edit_url
 
 ```python
-add_edit_link_to_file(self: Any, file_path: Path, position: str)
+get_edit_url(self: Any, file_path: Path, line_number: Any, branch: Any)
 ```
 
-Add edit link to a markdown file.
+Generate edit URL for a file.
 
 **Parameters**:
 
-- `file_path`: Path to markdown file
-- `position`: Where to add link ("top" or "bottom")
-
-**Returns**: True if successful
-
----
-
-#### EditLinksGenerator.add_edit_links_batch
-
-```python
-add_edit_links_batch(self: Any, files: list[Path], position: str)
-```
-
-Add edit links to multiple files.
-
-**Parameters**:
-
-- `files`: List of file paths
-- `position`: Where to add links
-
-**Returns**: Dictionary mapping file paths to success status
-
----
-
-#### EditLinksGenerator.generate_edit_link
-
-```python
-generate_edit_link(self: Any, file_path: Path)
-```
-
-Generate edit link for a file.
-
-**Parameters**:
-
-- `file_path`: Path to file
+- `file_path`: Local path to the file
+- `line_number`: Optional line number to link to
+- `branch`: Optional branch override
 
 **Returns**: GitHub edit URL
 
 ---
 
----
-
-## add_edit_link_to_file
+#### EditLinkGenerator.get_view_url
 
 ```python
-add_edit_link_to_file(self: Any, file_path: Path, position: str)
+get_view_url(self: Any, file_path: Path, line_number: Any, branch: Any)
 ```
 
-Add edit link to a markdown file.
+Generate view URL for a file.
+
+**Parameters**:
+
+- `file_path`: Local path to the file
+- `line_number`: Optional line number
+- `branch`: Optional branch override
+
+**Returns**: GitHub view URL
+
+---
+
+#### EditLinkGenerator.inject_edit_link
+
+```python
+inject_edit_link(self: Any, file_path: Path, label: str, position: str)
+```
+
+Inject an edit link into a markdown file.
 
 **Parameters**:
 
 - `file_path`: Path to markdown file
-- `position`: Where to add link ("top" or "bottom")
+- `label`: Link text
+- `position`: 'top' or 'bottom'
 
 **Returns**: True if successful
 
 ---
 
-## add_edit_links_batch
-
-```python
-add_edit_links_batch(self: Any, files: list[Path], position: str)
-```
-
-Add edit links to multiple files.
-
-**Parameters**:
-
-- `files`: List of file paths
-- `position`: Where to add links
-
-**Returns**: Dictionary mapping file paths to success status
-
 ---
 
-## generate_edit_link
+## get_edit_url
 
 ```python
-generate_edit_link(self: Any, file_path: Path)
+get_edit_url(self: Any, file_path: Path, line_number: Any, branch: Any)
 ```
 
-Generate edit link for a file.
+Generate edit URL for a file.
 
 **Parameters**:
 
-- `file_path`: Path to file
+- `file_path`: Local path to the file
+- `line_number`: Optional line number to link to
+- `branch`: Optional branch override
 
 **Returns**: GitHub edit URL
 
 ---
+
+## get_view_url
+
+```python
+get_view_url(self: Any, file_path: Path, line_number: Any, branch: Any)
+```
+
+Generate view URL for a file.
+
+**Parameters**:
+
+- `file_path`: Local path to the file
+- `line_number`: Optional line number
+- `branch`: Optional branch override
+
+**Returns**: GitHub view URL
+
+---
+
+## inject_edit_link
+
+```python
+inject_edit_link(self: Any, file_path: Path, label: str, position: str)
+```
+
+Inject an edit link into a markdown file.
+
+**Parameters**:
+
+- `file_path`: Path to markdown file
+- `label`: Link text
+- `position`: 'top' or 'bottom'
+
+**Returns**: True if successful
+
+---
+

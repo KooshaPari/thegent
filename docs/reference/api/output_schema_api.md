@@ -1,0 +1,125 @@
+# output_schema API Reference
+
+> **Source**: `src/thegent/agents/output_schema.py`
+
+Output schema validation for agent runs.
+
+Validates agent output against a JSON Schema. Used by WL-113 to enforce
+structured output constraints across all agent harnesses.
+
+# @trace WL-113
+
+---
+
+## OutputSchemaValidator
+
+Validates agent output against a JSON Schema.
+
+Loads a JSON Schema from a file path and provides:
+- Output validation against that schema (fail loudly on mismatch)
+- System prompt injection text for Claude Code harness
+
+# @trace WL-113
+
+### Methods
+
+#### OutputSchemaValidator.__init__
+
+```python
+__init__(self: Any, schema_path: Any)
+```
+
+Load and store the JSON Schema from *schema_path*.
+
+**Parameters**:
+
+- `schema_path`: Path to the JSON Schema file.
+
+---
+
+#### OutputSchemaValidator.get_codex_args
+
+```python
+get_codex_args(self: Any)
+```
+
+Return the CLI args to pass to the Codex harness.
+
+**Returns**: A list of CLI arguments to append to the codex command.
+
+---
+
+#### OutputSchemaValidator.get_system_prompt_injection
+
+```python
+get_system_prompt_injection(self: Any)
+```
+
+Return schema injection text for Claude Code system prompt.
+
+**Returns**: A string containing the schema injection instruction.
+
+---
+
+#### OutputSchemaValidator.validate
+
+```python
+validate(self: Any, output: str)
+```
+
+Parse and validate *output* against the stored schema.
+
+**Parameters**:
+
+- `output`: The raw string output from the agent run.
+
+**Returns**: The parsed JSON object if valid.
+
+---
+
+---
+
+## get_codex_args
+
+```python
+get_codex_args(self: Any)
+```
+
+Return the CLI args to pass to the Codex harness.
+
+**Returns**: A list of CLI arguments to append to the codex command.
+
+---
+
+## get_system_prompt_injection
+
+```python
+get_system_prompt_injection(self: Any)
+```
+
+Return schema injection text for Claude Code system prompt.
+
+**Returns**: A string containing the schema injection instruction.
+
+---
+
+## validate
+
+```python
+validate(self: Any, output: str)
+```
+
+Parse and validate *output* against the stored schema.
+
+**Parameters**:
+
+- `output`: The raw string output from the agent run.
+
+**Returns**: The parsed JSON object if valid.
+
+**Raises**:
+
+- `ValueError`: If *output* is not valid JSON or fails schema validation.
+
+---
+

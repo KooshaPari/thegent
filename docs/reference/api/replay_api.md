@@ -1,155 +1,63 @@
 # replay API Reference
 
-> **Source**: `src/thegent/simulation/replay.py`
+> **Source**: `src/thegent/commands/replay.py`
 
-Simulation & Sandbox (Deterministic Replay).
+CLI command: thegent replay [list | run | diff]
+
+Sub-commands for the SimulationReplayEngine:
+  list  — list available session files.
+  run   — replay a session, printing events to stdout.
+  diff  — compare two sessions and print a structured diff.
 
 ---
 
-## SimulationReplay
-
-Deterministic simulation replay.
-
-### Methods
-
-#### SimulationReplay.__init__
+## replay_diff
 
 ```python
-__init__(self: Any, replay_dir: Any)
+replay_diff(session_a: Annotated[(str, Any)], session_b: Annotated[(str, Any)], sessions_root: Annotated[(Any, Any)], output_json: Annotated[(bool, Any)])
 ```
 
-Initialize simulation replay.
+Compare two sessions and print a structured diff.
 
-**Parameters**:
+Example::
 
-- `replay_dir`: Replay directory
+    thegent replay diff <session_a_id> <session_b_id>
+    thegent replay diff <id_a> <id_b> --json
 
 ---
 
-#### SimulationReplay.load_replay
+## replay_list
 
 ```python
-load_replay(self: Any, replay_id: str)
+replay_list(sessions_root: Annotated[(Any, Any)], output_json: Annotated[(bool, Any)])
 ```
 
-Load replay from file.
+List all available session files.
 
-**Parameters**:
+Example::
 
-- `replay_id`: Replay identifier
-
-**Returns**: List of events
+    thegent replay list
+    thegent replay list --json
+    thegent replay list --sessions-root /custom/path
 
 ---
 
-#### SimulationReplay.record_event
+## replay_run
 
 ```python
-record_event(self: Any, event_type: str, data: dict[(str, Any)])
+replay_run(session_id: Annotated[(str, Any)], speed: Annotated[(float, Any)], sessions_root: Annotated[(Any, Any)], output_json: Annotated[(bool, Any)], from_event: Annotated[(int, Any)])
 ```
 
-Record an event.
+Replay a session, printing each event to stdout.
 
-**Parameters**:
+SESSION_ID may be a bare session ID (matched by prefix), a path to the
+.json meta file, or a partial session stem.
 
-- `event_type`: Event type
-- `data`: Event data
+Example::
 
----
-
-#### SimulationReplay.replay
-
-```python
-replay(self: Any, replay_id: str)
-```
-
-Replay a simulation.
-
-**Parameters**:
-
-- `replay_id`: Replay identifier
-
-**Returns**: Replay results
+    thegent replay run 20260219T231757Z-copilot-p21250-1f588a47
+    thegent replay run ./path/to/session.json --json
+    thegent replay run <id> --from 5 --speed 0
 
 ---
 
-#### SimulationReplay.save_replay
-
-```python
-save_replay(self: Any, replay_id: str)
-```
-
-Save replay to file.
-
-**Parameters**:
-
-- `replay_id`: Replay identifier
-
-**Returns**: Path to replay file
-
----
-
----
-
-## load_replay
-
-```python
-load_replay(self: Any, replay_id: str)
-```
-
-Load replay from file.
-
-**Parameters**:
-
-- `replay_id`: Replay identifier
-
-**Returns**: List of events
-
----
-
-## record_event
-
-```python
-record_event(self: Any, event_type: str, data: dict[(str, Any)])
-```
-
-Record an event.
-
-**Parameters**:
-
-- `event_type`: Event type
-- `data`: Event data
-
----
-
-## replay
-
-```python
-replay(self: Any, replay_id: str)
-```
-
-Replay a simulation.
-
-**Parameters**:
-
-- `replay_id`: Replay identifier
-
-**Returns**: Replay results
-
----
-
-## save_replay
-
-```python
-save_replay(self: Any, replay_id: str)
-```
-
-Save replay to file.
-
-**Parameters**:
-
-- `replay_id`: Replay identifier
-
-**Returns**: Path to replay file
-
----

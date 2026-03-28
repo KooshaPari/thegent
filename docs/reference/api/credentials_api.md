@@ -1,0 +1,38 @@
+# credentials API Reference
+
+> **Source**: `src/thegent/provider/credentials.py`
+
+Credentials and API key management.
+
+Domain: Credentials
+Functions:
+- list_credentials, add_api_key, remove_api_key
+
+---
+
+## add_api_key
+
+```python
+add_api_key(provider: str, api_key: str)
+```
+
+Add an API key for a provider.
+
+---
+
+## list_credentials
+
+List all stored credentials.
+
+---
+
+## remove_api_key
+
+```python
+remove_api_key(provider: str)
+```
+
+Remove an API key for a provider.
+
+---
+

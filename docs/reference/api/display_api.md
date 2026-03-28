@@ -1,0 +1,43 @@
+# display API Reference
+
+> **Source**: `src/thegent/doctor/display.py`
+
+Doctor display and reporting functions.
+
+Domain: Display
+_display_*, report generation.
+
+---
+
+## display_fix_report
+
+```python
+display_fix_report(fix_report: list[dict], dry_run: bool)
+```
+
+Display fix report.
+
+**Parameters**:
+
+- `fix_report`: List of fix results
+- `dry_run`: Whether this was a dry run
+
+---
+
+## display_results
+
+```python
+display_results(results: list[CheckResult], verbose: bool)
+```
+
+Display check results.
+
+**Parameters**:
+
+- `results`: List of check results
+- `verbose`: Verbose output
+
+**Returns**: True if all checks passed
+
+---
+

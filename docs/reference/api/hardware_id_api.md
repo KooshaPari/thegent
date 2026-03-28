@@ -72,3 +72,4 @@ verify_attestation(self: Any, attestation: HardwareAttestation)
 Verify a hardware attestation token.
 
 ---
+

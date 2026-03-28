@@ -38,21 +38,13 @@ True when any non-OK result exists.
 
 ---
 
-#### AuditReport.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON export.
-
----
-
 ---
 
 ## AuditResult
 
 Result of one audit check.
+
+**Inherits from**: `SerializableMixin`
 
 ### Methods
 
@@ -63,16 +55,6 @@ is_ok(self: Any)
 ```
 
 Return True when no problem detected.
-
----
-
-#### AuditResult.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON export.
 
 ---
 
@@ -310,12 +292,3 @@ Run all audit categories and return a combined AuditReport.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON export.
-
----

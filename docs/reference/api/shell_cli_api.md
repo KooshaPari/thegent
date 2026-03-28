@@ -48,6 +48,16 @@ Diagnose shell environment issues.
 
 ---
 
+## shell_doctor_alias
+
+```python
+shell_doctor_alias(fix: bool)
+```
+
+Alias for shell doctor.
+
+---
+
 ## shell_jobs
 
 Show background job status.
@@ -82,6 +92,16 @@ Enable or disable shell startup profiling.
 
 ---
 
+## shell_profile_alias
+
+```python
+shell_profile_alias(enable: bool, disable: bool)
+```
+
+Alias for shell profile.
+
+---
+
 ## shell_reload
 
 Reload shell configuration (sources .zshrc).
@@ -93,3 +113,10 @@ Reload shell configuration (sources .zshrc).
 Show shell environment status and configuration.
 
 ---
+
+## shell_status_alias
+
+Alias for shell status.
+
+---
+

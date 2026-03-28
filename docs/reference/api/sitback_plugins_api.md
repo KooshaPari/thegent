@@ -153,3 +153,4 @@ register_widget(self: Any, name: str, fn: Callable[(Any, dict[(str, Any)])])
 Register a dashboard widget. fn() returns {title, content, border_style}.
 
 ---
+

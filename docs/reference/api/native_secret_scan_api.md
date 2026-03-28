@@ -59,3 +59,4 @@ Convenience wrapper: read *path* and call :func:`scan_secrets`.
 - `OSError`: If the file cannot be read.
 
 ---
+

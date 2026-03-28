@@ -12,15 +12,7 @@ Audit configuration, dependencies, security, and performance.
 
 A single issue found during an audit.
 
-### Methods
-
-#### AuditIssue.to_dict
-
-```python
-to_dict(self: Any)
-```
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -313,3 +305,4 @@ to_dict(self: Any) -> dict[(str, Any)]
 ```
 
 ---
+

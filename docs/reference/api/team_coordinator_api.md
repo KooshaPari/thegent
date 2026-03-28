@@ -44,6 +44,26 @@ Coordinate a task within a team based on coordination mode.
 
 ---
 
+#### TeamCoordinator.coordinate_team_task_collaborative
+
+```python
+coordinate_team_task_collaborative(self: Any, team_id: str, task: str, context: Any, active_members: list[AgentNode])
+```
+
+Collaborative (P2P) coordination implementation.
+
+---
+
+#### TeamCoordinator.coordinate_team_task_hierarchical
+
+```python
+coordinate_team_task_hierarchical(self: Any, team_id: str, task: str, context: Any, active_members: list[AgentNode])
+```
+
+Hierarchical coordination implementation.
+
+---
+
 #### TeamCoordinator.delegate_cross_team
 
 ```python
@@ -119,6 +139,26 @@ Coordinate a task within a team based on coordination mode.
 
 ---
 
+## coordinate_team_task_collaborative
+
+```python
+coordinate_team_task_collaborative(self: Any, team_id: str, task: str, context: Any, active_members: list[AgentNode])
+```
+
+Collaborative (P2P) coordination implementation.
+
+---
+
+## coordinate_team_task_hierarchical
+
+```python
+coordinate_team_task_hierarchical(self: Any, team_id: str, task: str, context: Any, active_members: list[AgentNode])
+```
+
+Hierarchical coordination implementation.
+
+---
+
 ## delegate_cross_team
 
 ```python
@@ -181,3 +221,4 @@ Get coordination status for a team.
 **Returns**: Coordination status dictionary
 
 ---
+

@@ -32,8 +32,89 @@ Dump conversation content to a file.
 
 - `conversation_id`: Unique identifier for the conversation
 - `content`: Conversation content to dump
+- `prompt`: Original prompt text
+- `synthesis`: Agent synthesis/summary text
+- `category`: run category (execution/research/planning)
+- `tags`: optional tags
+- `metadata`: optional structured metadata
+- `write_json_companion`: whether to write a JSON companion dump
 
 **Returns**: Path to the created dump file
+
+---
+
+#### ConversationDumper.dump_conversation_json
+
+```python
+dump_conversation_json(self: Any, conversation_id: str, content: str)
+```
+
+Dump conversation content to a JSON file.
+
+Mirrors the markdown dump fields and writes in the same category folder.
+
+---
+
+#### ConversationDumper.dump_index_payload
+
+```python
+dump_index_payload(self: Any)
+```
+
+Build the dump index payload without writing it to disk.
+
+---
+
+#### ConversationDumper.export_dump_index_markdown
+
+```python
+export_dump_index_markdown(self: Any, out_path: Any)
+```
+
+Write a markdown summary of category counts and latest dumps.
+
+---
+
+#### ConversationDumper.latest_dump
+
+```python
+latest_dump(self: Any, category: Any, json_only: bool)
+```
+
+Return the most recently modified dump path.
+
+**Parameters**:
+
+- `category`: Optional category folder name to scope the lookup.
+- `json_only`: If true, search JSON dumps; otherwise markdown dumps.
+
+**Returns**: Path to the latest matching dump, or None if no dump exists.
+
+---
+
+#### ConversationDumper.latest_dump_by_category
+
+```python
+latest_dump_by_category(self: Any, json_only: bool)
+```
+
+Return latest dump path strings keyed by category.
+
+**Parameters**:
+
+- `json_only`: If true, resolve latest JSON dumps per category.
+
+**Returns**: Mapping of category -> latest dump path string.
+
+---
+
+#### ConversationDumper.list_dump_categories
+
+```python
+list_dump_categories(self: Any)
+```
+
+Return sorted category names that contain markdown dumps.
 
 ---
 
@@ -46,6 +127,50 @@ list_dumps(self: Any)
 List all conversation dumps.
 
 **Returns**: List of paths to dump files
+
+---
+
+#### ConversationDumper.list_dumps_json
+
+```python
+list_dumps_json(self: Any)
+```
+
+List all conversation JSON dumps recursively.
+
+**Returns**: List of paths to JSON dump files
+
+---
+
+#### ConversationDumper.load_dump_json
+
+```python
+load_dump_json(self: Any, path: Path)
+```
+
+Load a dump JSON payload, failing open on parse errors.
+
+If a markdown path is provided, this resolves its JSON companion.
+
+---
+
+#### ConversationDumper.persist_dump_index
+
+```python
+persist_dump_index(self: Any, out_path: Any)
+```
+
+Write a JSON index with category counts and latest dump paths.
+
+---
+
+#### ConversationDumper.summarize_dump_categories
+
+```python
+summarize_dump_categories(self: Any)
+```
+
+Return markdown dump counts keyed by category directory.
 
 ---
 
@@ -63,8 +188,89 @@ Dump conversation content to a file.
 
 - `conversation_id`: Unique identifier for the conversation
 - `content`: Conversation content to dump
+- `prompt`: Original prompt text
+- `synthesis`: Agent synthesis/summary text
+- `category`: run category (execution/research/planning)
+- `tags`: optional tags
+- `metadata`: optional structured metadata
+- `write_json_companion`: whether to write a JSON companion dump
 
 **Returns**: Path to the created dump file
+
+---
+
+## dump_conversation_json
+
+```python
+dump_conversation_json(self: Any, conversation_id: str, content: str)
+```
+
+Dump conversation content to a JSON file.
+
+Mirrors the markdown dump fields and writes in the same category folder.
+
+---
+
+## dump_index_payload
+
+```python
+dump_index_payload(self: Any)
+```
+
+Build the dump index payload without writing it to disk.
+
+---
+
+## export_dump_index_markdown
+
+```python
+export_dump_index_markdown(self: Any, out_path: Any)
+```
+
+Write a markdown summary of category counts and latest dumps.
+
+---
+
+## latest_dump
+
+```python
+latest_dump(self: Any, category: Any, json_only: bool)
+```
+
+Return the most recently modified dump path.
+
+**Parameters**:
+
+- `category`: Optional category folder name to scope the lookup.
+- `json_only`: If true, search JSON dumps; otherwise markdown dumps.
+
+**Returns**: Path to the latest matching dump, or None if no dump exists.
+
+---
+
+## latest_dump_by_category
+
+```python
+latest_dump_by_category(self: Any, json_only: bool)
+```
+
+Return latest dump path strings keyed by category.
+
+**Parameters**:
+
+- `json_only`: If true, resolve latest JSON dumps per category.
+
+**Returns**: Mapping of category -> latest dump path string.
+
+---
+
+## list_dump_categories
+
+```python
+list_dump_categories(self: Any)
+```
+
+Return sorted category names that contain markdown dumps.
 
 ---
 
@@ -79,3 +285,48 @@ List all conversation dumps.
 **Returns**: List of paths to dump files
 
 ---
+
+## list_dumps_json
+
+```python
+list_dumps_json(self: Any)
+```
+
+List all conversation JSON dumps recursively.
+
+**Returns**: List of paths to JSON dump files
+
+---
+
+## load_dump_json
+
+```python
+load_dump_json(self: Any, path: Path)
+```
+
+Load a dump JSON payload, failing open on parse errors.
+
+If a markdown path is provided, this resolves its JSON companion.
+
+---
+
+## persist_dump_index
+
+```python
+persist_dump_index(self: Any, out_path: Any)
+```
+
+Write a JSON index with category counts and latest dump paths.
+
+---
+
+## summarize_dump_categories
+
+```python
+summarize_dump_categories(self: Any)
+```
+
+Return markdown dump counts keyed by category directory.
+
+---
+

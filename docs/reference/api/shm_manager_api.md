@@ -101,7 +101,7 @@ update_router_metrics(self: Any, lifecycle_inc: int, thegent_inc: int, changes_i
 ## award_xp
 
 ```python
-award_xp(self: Any, amount: int)
+award_xp(self: Any, amount: int) -> None
 ```
 
 ---
@@ -141,7 +141,7 @@ get_xp_state(self: Any) -> Any
 ## record_failure
 
 ```python
-record_failure(self: Any, target: str, category: int)
+record_failure(self: Any, target: str, category: int) -> None
 ```
 
 ---
@@ -149,7 +149,7 @@ record_failure(self: Any, target: str, category: int)
 ## record_resource_usage
 
 ```python
-record_resource_usage(self: Any, pid: int, cpu_percent: float, memory_kb: int)
+record_resource_usage(self: Any, pid: int, cpu_percent: float, memory_kb: int) -> None
 ```
 
 ---
@@ -157,7 +157,7 @@ record_resource_usage(self: Any, pid: int, cpu_percent: float, memory_kb: int)
 ## set_health_score
 
 ```python
-set_health_score(self: Any, score: float)
+set_health_score(self: Any, score: float) -> None
 ```
 
 ---
@@ -165,7 +165,7 @@ set_health_score(self: Any, score: float)
 ## update_provider_metrics
 
 ```python
-update_provider_metrics(self: Any, provider: str, request_count: int, success_count: int, latency_ms: int)
+update_provider_metrics(self: Any, provider: str, request_count: int, success_count: int, latency_ms: int) -> None
 ```
 
 ---
@@ -173,7 +173,8 @@ update_provider_metrics(self: Any, provider: str, request_count: int, success_co
 ## update_router_metrics
 
 ```python
-update_router_metrics(self: Any, lifecycle_inc: int, thegent_inc: int, changes_inc: int, hysteresis_inc: int)
+update_router_metrics(self: Any, lifecycle_inc: int, thegent_inc: int, changes_inc: int, hysteresis_inc: int) -> None
 ```
 
 ---
+

@@ -24,7 +24,7 @@ asyncio access.  It does NOT persist across process restarts.
 
 ## AsyncTaskRegistry
 
-Registry mapping task_id -&gt; asyncio.Task with status/progress tracking.
+Registry mapping task_id -> asyncio.Task with status/progress tracking.
 
 Thread-safety: this class is designed for asyncio single-threaded use.
 All mutations happen within the event loop; no locks are required.
@@ -208,3 +208,4 @@ update_progress(self: Any, task_id: str, progress: float, total: Any, message: s
 Update progress metadata for an in-flight task (called from within the task).
 
 ---
+

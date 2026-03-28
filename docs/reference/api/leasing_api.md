@@ -1,6 +1,6 @@
 # leasing API Reference
 
-> **Source**: `src/thegent/orchestration/leasing.py`
+> **Source**: `src/thegent/orchestration/resource/leasing.py`
 
 ## EditLease
 
@@ -131,3 +131,4 @@ release(self: Any, path: str, agent_id: str)
 Release a lease if held by the agent.
 
 ---
+

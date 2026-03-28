@@ -1,7 +1,74 @@
 # phases API Reference
 
-> **Source**: `src/thegent/phases/__init__.py`
+> **Source**: `src/thegent/orchestration/execution/phases.py`
 
-Phase implementations.
+Deterministic phase transition contracts (WP-1004, FR-004).
+
+Defines allowed state transitions for orchestration. Same (from_state, to_state)
+always yields same result — deterministic for replay and idempotency.
 
 ---
+
+## PhaseTransitionContract
+
+Deterministic contract for phase transitions.
+
+Usage:
+    contract = PhaseTransitionContract()
+    assert contract.validate("pending", "running")
+    assert not contract.validate("completed", "running")
+
+### Methods
+
+#### PhaseTransitionContract.allowed_targets
+
+```python
+allowed_targets(cls: Any, from_state: str)
+```
+
+Return allowed target states for from_state.
+
+---
+
+#### PhaseTransitionContract.validate
+
+```python
+validate(cls: Any, from_state: str, to_state: str)
+```
+
+Return True iff transition from_state -> to_state is allowed.
+
+---
+
+---
+
+## allowed_targets
+
+```python
+allowed_targets(cls: Any, from_state: str)
+```
+
+Return allowed target states for from_state.
+
+---
+
+## validate
+
+```python
+validate(cls: Any, from_state: str, to_state: str)
+```
+
+Return True iff transition from_state -> to_state is allowed.
+
+---
+
+## validate_transition
+
+```python
+validate_transition(from_state: str, to_state: str)
+```
+
+Validate phase transition (from_state -> to_state). Deterministic.
+
+---
+

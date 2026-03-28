@@ -1,0 +1,196 @@
+# event_queue API Reference
+
+> **Source**: `src/thegent/orchestration/event_queue.py`
+
+SubAgentEventQueue: asyncio.Queue wrapper for SubAgentEvent streaming.
+
+Provides a process-global event queue that SubAgentDispatcher publishes to
+and the thegent_orchestration_events MCP tool drains from. Also used by
+UnifiedWorkerDaemon to subscribe and consume events in the background.
+
+# @trace WL-085
+
+---
+
+## SubAgentEventQueue
+
+Thread-safe asyncio.Queue wrapper for SubAgentEvent streaming.
+
+A single instance is intended to be shared across the process as
+the canonical event sink for SubAgentDispatcher.
+
+Usage::
+
+    queue = SubAgentEventQueue()
+    queue.put(event)          # Called by SubAgentDispatcher (sync-safe)
+    async for event in queue.stream(timeout=5.0):
+        print(event)
+
+# @trace WL-085
+
+### Methods
+
+#### SubAgentEventQueue.__init__
+
+```python
+__init__(self: Any, maxsize: int)
+```
+
+---
+
+#### SubAgentEventQueue.drain_nowait
+
+```python
+drain_nowait(self: Any)
+```
+
+Return all events currently in the queue without blocking.
+
+# @trace WL-085
+
+---
+
+#### SubAgentEventQueue.empty
+
+```python
+empty(self: Any)
+```
+
+Return True if the queue currently holds no events.
+
+---
+
+#### SubAgentEventQueue.get_nowait
+
+```python
+get_nowait(self: Any)
+```
+
+Return the next event without blocking.
+
+---
+
+#### SubAgentEventQueue.maxsize
+
+```python
+maxsize(self: Any)
+```
+
+Return the maximum queue capacity.
+
+---
+
+#### SubAgentEventQueue.put
+
+```python
+put(self: Any, event: SubAgentEvent)
+```
+
+Enqueue *event* without blocking.
+
+---
+
+#### SubAgentEventQueue.qsize
+
+```python
+qsize(self: Any)
+```
+
+Return the current number of events in the queue.
+
+---
+
+---
+
+## drain_nowait
+
+```python
+drain_nowait(self: Any)
+```
+
+Return all events currently in the queue without blocking.
+
+# @trace WL-085
+
+---
+
+## empty
+
+```python
+empty(self: Any)
+```
+
+Return True if the queue currently holds no events.
+
+---
+
+## get_global_event_queue
+
+Return the process-global SubAgentEventQueue, creating it on first call.
+
+The singleton is intentionally lazy so that tests can construct their own
+instances without side-effects from module import order.
+
+# @trace WL-085
+
+---
+
+## get_nowait
+
+```python
+get_nowait(self: Any)
+```
+
+Return the next event without blocking.
+
+**Raises**:
+
+- `asyncio.QueueEmpty`: If the queue is empty.
+
+---
+
+## maxsize
+
+```python
+maxsize(self: Any)
+```
+
+Return the maximum queue capacity.
+
+---
+
+## put
+
+```python
+put(self: Any, event: SubAgentEvent)
+```
+
+Enqueue *event* without blocking.
+
+**Raises**:
+
+- `asyncio.QueueFull`: If the queue has reached its maxsize.
+
+---
+
+## qsize
+
+```python
+qsize(self: Any)
+```
+
+Return the current number of events in the queue.
+
+---
+
+## reset_global_event_queue
+
+Replace the process-global queue with a fresh instance.
+
+Intended for use in tests only. Raises RuntimeError in production-like
+contexts where the guard is enforced by callers.
+
+# @trace WL-085
+
+---
+

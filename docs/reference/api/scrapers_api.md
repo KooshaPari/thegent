@@ -57,6 +57,12 @@ SA2: gemini, SA3: claude, SA4: cursor/copilot, SA5: proxy (antigravity/minimax/g
 
 ---
 
+## scrape_ante
+
+Scrape Ante agent available models from settings.json.
+
+---
+
 ## scrape_claude
 
 Scrape claude models: try 'claude models list', else --help for --model aliases.
@@ -108,3 +114,4 @@ Scrape proxy models. Returns {provider: [model_id, ...]} for antigravity, minima
 Maps proxy model IDs to thegent providers by prefix/heuristic.
 
 ---
+

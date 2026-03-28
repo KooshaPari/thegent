@@ -98,6 +98,30 @@ Sync workstream database with WORK_STREAM.md.
 
 ---
 
+## _ThrottleResult
+
+Result of agent throttle check.
+
+---
+
+## check_agent_throttle
+
+```python
+check_agent_throttle(count: Any, warn_at: int, throttle_at: int, hard_stop_at: int)
+```
+
+Check current agent count against throttle thresholds.
+
+Returns a _ThrottleResult with action in: "ok", "warn", "throttle", "hard_stop".
+
+---
+
+## get_active_agent_count
+
+Return count of currently active agent processes.
+
+---
+
 ## handle_completion
 
 ```python
@@ -163,3 +187,4 @@ sync_database(self: Any)
 Sync workstream database with WORK_STREAM.md.
 
 ---
+

@@ -4,9 +4,9 @@
 
 Flash agent — ultra-short-lived agent that executes a single focused task and self-terminates.
 
-Ported from the dex flash agent pattern. A FlashAgent fires a single LLM call via litellm,
-enforces a strict timeout, and returns a structured result. Designed for sub-30-second
-focused tasks without persistent state.
+Ported from the dex flash agent pattern. A FlashAgent fires a single LLM call via CLIProxy
+(bifrost), enforces a strict timeout, and returns a structured result.
+Designed for sub-30-second focused tasks without persistent state.
 
 FR Traceability: FR-AGT-020 (flash agent lifecycle)
 
@@ -16,8 +16,26 @@ FR Traceability: FR-AGT-020 (flash agent lifecycle)
 
 Ultra-short-lived agent that executes a single focused task via a single LLM call.
 
-Designed for sub-30-second focused tasks. Fires one litellm.acompletion call,
-enforces timeout via asyncio.wait_for, and self-terminates.
+Designed for sub-30-second focused tasks. Uses CLIProxy (bifrost) for LLM calls.
+Falls back to litellm if available when CLIProxy is unavailable.
+
+### Methods
+
+#### FlashAgent.__init__
+
+```python
+__init__(self: Any, cliproxy_url: Optional[str])
+```
+
+Initialize the flash agent.
+
+**Parameters**:
+
+- `cliproxy_url`: URL for CLIProxy server. If None, uses CLIPROXY_URL env var
+or defaults to http://localhost:8317. Set to empty string to
+skip CLIProxy and force litellm fallback.
+
+---
 
 ---
 
@@ -32,3 +50,4 @@ Configuration for a flash agent execution.
 Result of a flash agent execution.
 
 ---
+

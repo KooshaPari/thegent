@@ -1,0 +1,209 @@
+# writer_lock API Reference
+
+> **Source**: `src/thegent/integrations/writer_lock.py`
+
+Single-Writer Lock Discipline (WL-175): Enforce serial access to shared resources.
+
+Provides a file-based lock mechanism to ensure that only one agent or process
+can write to critical resources at a time (e.g., WORK_STREAM.md, config files,
+autosync state).
+
+The lock is implemented using a lockfile at docs/reference/autosync.lock,
+which contains the owner ID and timestamp. The lock can be acquired, released,
+checked, and forcefully released in emergencies.
+
+This is a lightweight alternative to distributed locks (etcd, Zookeeper) and
+is suitable for single-machine, single-repository environments.
+
+---
+
+## SingleWriterLock
+
+File-based single-writer lock for coordinating access to shared resources.
+
+The lock is stored as a JSON file at docs/reference/autosync.lock.
+When acquired, it contains the owner ID and acquisition timestamp.
+
+This lock is intended for single-machine scenarios and does not handle
+distributed or networked scenarios. For those, consider etcd or Zookeeper.
+
+### Methods
+
+#### SingleWriterLock.__init__
+
+```python
+__init__(self: Any, lock_path: Any)
+```
+
+Initialize the lock.
+
+**Parameters**:
+
+- `lock_path`: Path to the lockfile. Defaults to docs/reference/autosync.lock.
+
+---
+
+#### SingleWriterLock.acquire
+
+```python
+acquire(self: Any, owner_id: str)
+```
+
+Acquire the lock.
+
+**Parameters**:
+
+- `owner_id`: Identifier of the lock owner (e.g., agent name, process ID).
+
+**Returns**: True if the lock was acquired, False if already held by another owner.
+
+---
+
+#### SingleWriterLock.force_release
+
+```python
+force_release(self: Any)
+```
+
+Force release the lock (emergency override).
+
+Use only in emergencies when the owner has crashed or is unresponsive.
+Does not check ownership.
+
+---
+
+#### SingleWriterLock.get_owner
+
+```python
+get_owner(self: Any)
+```
+
+Get the current lock owner.
+
+**Returns**: The owner ID if the lock is held, None otherwise.
+
+---
+
+#### SingleWriterLock.is_locked
+
+```python
+is_locked(self: Any)
+```
+
+Check if the lock is currently held.
+
+**Returns**: True if the lockfile exists and is valid, False otherwise.
+
+---
+
+#### SingleWriterLock.release
+
+```python
+release(self: Any, owner_id: str)
+```
+
+Release the lock.
+
+Only the owner can release the lock. Attempting to release a lock
+owned by someone else is a no-op (does not raise).
+
+**Parameters**:
+
+- `owner_id`: Identifier of the lock owner.
+
+---
+
+---
+
+## WriterLockAcquisitionError
+
+Raised when lock acquisition fails.
+
+**Inherits from**: `WriterLockError`
+
+**Method Resolution Order**: `WriterLockAcquisitionError -> WriterLockError`
+
+---
+
+## WriterLockError
+
+Base exception for writer lock operations.
+
+**Inherits from**: `Exception`
+
+---
+
+## acquire
+
+```python
+acquire(self: Any, owner_id: str)
+```
+
+Acquire the lock.
+
+**Parameters**:
+
+- `owner_id`: Identifier of the lock owner (e.g., agent name, process ID).
+
+**Returns**: True if the lock was acquired, False if already held by another owner.
+
+**Raises**:
+
+- `WriterLockAcquisitionError`: If the lock file cannot be created.
+
+---
+
+## force_release
+
+```python
+force_release(self: Any)
+```
+
+Force release the lock (emergency override).
+
+Use only in emergencies when the owner has crashed or is unresponsive.
+Does not check ownership.
+
+---
+
+## get_owner
+
+```python
+get_owner(self: Any)
+```
+
+Get the current lock owner.
+
+**Returns**: The owner ID if the lock is held, None otherwise.
+
+---
+
+## is_locked
+
+```python
+is_locked(self: Any)
+```
+
+Check if the lock is currently held.
+
+**Returns**: True if the lockfile exists and is valid, False otherwise.
+
+---
+
+## release
+
+```python
+release(self: Any, owner_id: str)
+```
+
+Release the lock.
+
+Only the owner can release the lock. Attempting to release a lock
+owned by someone else is a no-op (does not raise).
+
+**Parameters**:
+
+- `owner_id`: Identifier of the lock owner.
+
+---
+

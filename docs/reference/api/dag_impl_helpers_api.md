@@ -1,0 +1,16 @@
+# dag_impl_helpers API Reference
+
+> **Source**: `src/thegent/cli/commands/dag_impl_helpers.py`
+
+DAG helpers: parsing, validation, serialization (WL-120).
+
+Contains DagDocument dataclass and low-level helpers for DAG manipulation.
+
+---
+
+## DagDocument
+
+Parsed DAG session document with structure preserved for round-trip.
+
+---
+

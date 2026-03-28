@@ -1,6 +1,6 @@
 # terminal API Reference
 
-> **Source**: `src/thegent/tools/terminal.py`
+> **Source**: `src/thegent/skills/terminal.py`
 
 ## TmuxPane
 
@@ -18,7 +18,7 @@ Capture pane content.
 
 ## heliosShield_status
 
-Get status from heliosShield.
+Get status from thegent.mesh.
 
 ---
 
@@ -47,3 +47,4 @@ send_to_tmux_pane(pane_id: str, text: str, enter: bool)
 Send keys to pane.
 
 ---
+

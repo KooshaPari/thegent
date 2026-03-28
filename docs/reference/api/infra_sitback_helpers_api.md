@@ -1,0 +1,18 @@
+# infra_sitback_helpers API Reference
+
+> **Source**: `src/thegent/cli/commands/infra_sitback_helpers.py`
+
+Helpers for sitback dashboard panel rendering.
+
+---
+
+## build_dashboard_panels
+
+```python
+build_dashboard_panels(data: dict, profile: str)
+```
+
+Build dashboard panels and summary line from sitback payload.
+
+---
+

@@ -1,0 +1,12 @@
+# cli_dag API Reference
+
+> **Source**: `src/thegent/cli/commands/cli_dag.py`
+
+DAG command handlers facade (WL-120).
+
+Re-exports split modules:
+- cli_dag_validate_list_add: validation, list, add, remove
+- cli_dag_run_sync_recover: update, cancel, status, ready, run, sync, recover, checkpoints
+
+---
+

@@ -94,6 +94,16 @@ scan-analyze-plan-deploy-verify-commit loop.
 
 ---
 
+#### AgilePlusLoop.shutdown_requested
+
+```python
+shutdown_requested(self: Any)
+```
+
+True if a shutdown has been requested.
+
+---
+
 #### AgilePlusLoop.state
 
 ```python
@@ -182,6 +192,16 @@ scan-analyze-plan-deploy-verify-commit loop.
 
 ---
 
+## shutdown_requested
+
+```python
+shutdown_requested(self: Any)
+```
+
+True if a shutdown has been requested.
+
+---
+
 ## state
 
 ```python
@@ -191,3 +211,4 @@ state(self: Any)
 Current cycle state.
 
 ---
+

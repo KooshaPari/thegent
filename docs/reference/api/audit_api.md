@@ -1,27 +1,96 @@
 # audit API Reference
 
-> **Source**: `src/thegent/governance/audit.py`
+> **Source**: `src/thegent/cli/apps/audit.py`
 
-Immutable audit trail and query interface (WP-3004, FR-012).
+Logical stream: System Integrity and Health Audit.
 
 ---
 
-## query_events
+## audit_all
 
 ```python
-query_events(session_dir: Path, run_id: Any, event_type: Any, limit: int)
+audit_all(types: Any, fix: bool, severity: str, format: str)
 ```
-
-Query audit events from the registry.
 
 ---
 
-## verify_chain
+## audit_costs
 
 ```python
-verify_chain(session_dir: Path)
+audit_costs(format: str)
 ```
 
-Verify hash chain integrity of the run registry.
+---
+
+## audit_doctor
+
+```python
+audit_doctor(fix: bool)
+```
 
 ---
+
+## audit_fatigue
+
+---
+
+## audit_journal
+
+```python
+audit_journal(action: str, session_id: Any, path: str, max_age: int, watch: bool, attest: bool, batch_size: int, enhanced: bool, stream: bool, follow: bool, bootstrap_servers: str, topic: str)
+```
+
+Manage git journal for micro-commit audit trail.
+
+The git journal creates micro-commits for every file change using
+git refs that are never pushed to remote. This provides a complete
+local audit trail including secrets and sensitive files.
+
+Actions:
+    list     - List all audit sessions
+    status   - Show journal status for current session
+    snapshot - Create a snapshot of current working tree
+    prune    - Remove old audit sessions
+    show     - Show audit log for a session
+    watch    - Start real-time file watching
+    attest   - Show attestations for a session
+    stats    - Show performance statistics
+
+Enhanced Features (--enhanced):
+    - Native secret scanner integration
+    - Real-time file watching (watchman/fswatch/FSMonitor)
+    - Cryptographic attestation (SHA-256)
+    - Batching for performance
+
+---
+
+## audit_plan
+
+Heavy audit of the plan: PLAN.md, WORK_STREAM.md, and DAG consistency.
+
+---
+
+## audit_registry
+
+```python
+audit_registry(format: str)
+```
+
+---
+
+## audit_security
+
+```python
+audit_security(format: str)
+```
+
+---
+
+## audit_sweep
+
+```python
+audit_sweep(format: str)
+```
+
+---
+

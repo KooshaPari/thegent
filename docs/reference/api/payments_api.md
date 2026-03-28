@@ -72,3 +72,4 @@ verify_liquidity(self: Any, agent_id: str)
 Check if an agent has enough real-world backing for its virtual treasury.
 
 ---
+

@@ -1,6 +1,6 @@
 # cli_initiative API Reference
 
-> **Source**: `src/thegent/cli_initiative.py`
+> **Source**: `src/thegent/cli/commands/cli_initiative.py`
 
 SY-008: Initiative management and roadmap tracking from PLAN.md.
 
@@ -43,3 +43,4 @@ parse_plan_initiatives(plan_path: Path)
 Parse PLAN.md to extract initiatives/phases.
 
 ---
+

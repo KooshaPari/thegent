@@ -1,6 +1,6 @@
 # human API Reference
 
-> **Source**: `src/thegent/tools/human.py`
+> **Source**: `src/thegent/skills/human.py`
 
 Human-in-the-loop tools for thegent (WP-4009).
 
@@ -25,3 +25,4 @@ WP-4009: Human-as-a-Tool (HaaT).
 Pauses execution and waits for human input via the Cockpit or CLI.
 
 ---
+

@@ -70,3 +70,4 @@ Auto-detect and configure Serena JetBrains plugin.
 **Returns**: Dict with setup status and instructions if needed
 
 ---
+

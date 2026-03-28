@@ -1,6 +1,6 @@
 # work_chunking API Reference
 
-> **Source**: `src/thegent/orchestration/work_chunking.py`
+> **Source**: `src/thegent/orchestration/execution/work_chunking.py`
 
 Work chunking and parallelization for resource-aware task distribution.
 
@@ -35,3 +35,4 @@ Compute optimal chunk size and parallelism.
 Returns (chunk_size, num_chunks).
 
 ---
+

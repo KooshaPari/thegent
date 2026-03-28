@@ -2,7 +2,7 @@
 
 > **Source**: `src/thegent/adapters/acp_mcp_bridge.py`
 
-ACP &lt;-&gt; MCP Bridge Adapter.
+ACP <-> MCP Bridge Adapter.
 
 Bridges MCP tools to ACP task endpoints and vice versa:
 
@@ -41,17 +41,7 @@ __init__(self: Any, agent_url: str, detail: str)
 
 ACP-compatible descriptor for a single MCP tool.
 
-### Methods
-
-#### ACPToolDescriptor.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialise to a plain dict suitable for JSON transport.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -139,12 +129,3 @@ list rather than raising, so callers can safely call it unconditionally.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Serialise to a plain dict suitable for JSON transport.
-
----

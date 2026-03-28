@@ -1,0 +1,14 @@
+# server_execution_tools API Reference
+
+> **Source**: `src/thegent/mcp/server_execution_tools.py`
+
+Execution-oriented MCP tool registration helpers.
+
+---
+
+## register_execution_tools
+
+Register execution-related MCP tools and return stable handler bindings.
+
+---
+

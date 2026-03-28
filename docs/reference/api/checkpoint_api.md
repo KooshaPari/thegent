@@ -1,6 +1,6 @@
 # checkpoint API Reference
 
-> **Source**: `src/thegent/orchestration/checkpoint.py`
+> **Source**: `src/thegent/orchestration/state/checkpoint.py`
 
 Checkpoint/rollback service ops (WP-2001, FR-006).
 
@@ -35,3 +35,4 @@ list_checkpoints(session_dir: Path, limit: int)
 List recent checkpoints.
 
 ---
+

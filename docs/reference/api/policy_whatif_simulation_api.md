@@ -1,0 +1,20 @@
+# policy_whatif_simulation API Reference
+
+> **Source**: `src/thegent/integrations/policy_whatif_simulation.py`
+
+Stub module for thegent.integrations.policy_whatif_simulation.
+
+---
+
+## PolicySimulationInput
+
+Stub class.
+
+---
+
+## simulate_policy_change
+
+Stub function.
+
+---
+

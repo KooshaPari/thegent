@@ -187,3 +187,4 @@ Thread-safe: can be called multiple times safely.
 Waits up to 2 seconds for thread to finish.
 
 ---
+

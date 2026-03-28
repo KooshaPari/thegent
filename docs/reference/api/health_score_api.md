@@ -2,6 +2,15 @@
 
 > **Source**: `src/thegent/governance/health_score.py`
 
+Composite health score model (0-100) for autonomous codebase governance.
+
+Replaces XP/gamification with a weighted, multi-dimensional health metric.
+Each dimension (test coverage, lint violations, etc.) is normalized against
+targets defined in contracts/health-targets.json and combined into a single
+score that drives autonomous agent scheduling decisions.
+
+---
+
 ## DimensionScore
 
 Score for a single health dimension with normalization against target.
@@ -111,3 +120,4 @@ get_band(score: float)
 Return the appropriate HealthBand for a numeric score (0-100).
 
 ---
+

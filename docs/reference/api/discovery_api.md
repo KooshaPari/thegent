@@ -1,6 +1,6 @@
 # discovery API Reference
 
-> **Source**: `src/thegent/orchestration/discovery.py`
+> **Source**: `src/thegent/orchestration/strategies/discovery.py`
 
 ## DiscoverySystem
 
@@ -45,3 +45,4 @@ scan_agents(self: Any) -> list[dict[(str, Any)]]
 ```
 
 ---
+

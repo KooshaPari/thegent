@@ -1,6 +1,6 @@
 # collaboration API Reference
 
-> **Source**: `src/thegent/orchestration/collaboration.py`
+> **Source**: `src/thegent/orchestration/consensus/collaboration.py`
 
 WP-6008: Collaborative task resolution.
 
@@ -61,3 +61,4 @@ recruit_participants(self: Any, needed_capabilities: list[str])
 Recruit external agents based on capabilities (including P2P).
 
 ---
+

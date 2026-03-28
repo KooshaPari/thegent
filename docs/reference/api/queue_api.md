@@ -1,107 +1,79 @@
 # queue API Reference
 
-> **Source**: `src/thegent/task_queue/queue.py`
+> **Source**: `src/thegent/cli/apps/queue.py`
 
-Task queue system.
+thegent queue: Unified Prompt Queue CLI commands (FR-HAX-001).
+
+Subcommands:
+  add "<prompt>"  -- enqueue a task
+  list            -- show pending items
+  next            -- claim and print next item
+  done <id>       -- mark item complete
+  tui             -- show TUI (list/claim/complete UI)
+
+# @trace FR-HAX-001
 
 ---
 
-## TaskQueue
-
-Task queue implementation.
-
-### Methods
-
-#### TaskQueue.__init__
+## queue_add
 
 ```python
-__init__(self: Any)
+queue_add(prompt: str, project: Any, output_format: str)
 ```
 
-Initialize task queue.
+Add a task prompt to the queue.
+
+# @trace FR-HAX-001
 
 ---
 
-#### TaskQueue.complete
+## queue_done
 
 ```python
-complete(self: Any, task_id: str)
+queue_done(item_id: str, output_format: str)
 ```
 
-Mark task as complete.
+Mark a queue item as done.
 
-**Parameters**:
-
-- `task_id`: Task identifier
+# @trace FR-HAX-001
 
 ---
 
-#### TaskQueue.dequeue
+## queue_list
 
 ```python
-dequeue(self: Any)
+queue_list(project: Any, all_items: bool, output_format: str)
 ```
 
-Dequeue a task.
+List pending queue items.
 
-**Returns**: Task tuple or None
+# @trace FR-HAX-001
 
 ---
 
-#### TaskQueue.enqueue
+## queue_next
 
 ```python
-enqueue(self: Any, task_id: str, task: dict[(str, Any)])
+queue_next(project: Any, output_format: str)
 ```
 
-Enqueue a task.
+Claim and print the next pending queue item.
 
-**Parameters**:
+Exits with code 1 if the queue is empty.
 
-- `task_id`: Task identifier
-- `task`: Task dictionary
-
----
+# @trace FR-HAX-001
 
 ---
 
-## complete
+## queue_tui
 
 ```python
-complete(self: Any, task_id: str)
+queue_tui(watch: bool, interval: float, project: Any)
 ```
 
-Mark task as complete.
+Show the queue in a TUI (list/claim/complete UI).
 
-**Parameters**:
-
-- `task_id`: Task identifier
+# @trace FR-HAX-001
 
 ---
 
-## dequeue
-
-```python
-dequeue(self: Any)
-```
-
-Dequeue a task.
-
-**Returns**: Task tuple or None
-
----
-
-## enqueue
-
-```python
-enqueue(self: Any, task_id: str, task: dict[(str, Any)])
-```
-
-Enqueue a task.
-
-**Parameters**:
-
-- `task_id`: Task identifier
-- `task`: Task dictionary
-
----

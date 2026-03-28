@@ -56,6 +56,14 @@ Protocol for cost controller.
 
 ### Methods
 
+#### CostControllerProtocol.calls_remaining
+
+```python
+calls_remaining(self: Any)
+```
+
+---
+
 #### CostControllerProtocol.can_spawn
 
 ```python
@@ -72,10 +80,18 @@ get_tier(self: Any)
 
 ---
 
+#### CostControllerProtocol.get_today_usage
+
+```python
+get_today_usage(self: Any)
+```
+
+---
+
 #### CostControllerProtocol.record_call
 
 ```python
-record_call(self: Any, dimension: str, agent_type: str)
+record_call(self: Any, dimension: str, agent: str)
 ```
 
 ---
@@ -124,6 +140,14 @@ verify_task(self: Any, task: Any, execution: Any, pre_scan: Any)
 
 ---
 
+## calls_remaining
+
+```python
+calls_remaining(self: Any) -> int
+```
+
+---
+
 ## can_spawn
 
 ```python
@@ -158,7 +182,15 @@ Get tasks ready to execute (all dependencies completed).
 ## get_tier
 
 ```python
-get_tier(self: Any) -> str
+get_tier(self: Any) -> Any
+```
+
+---
+
+## get_today_usage
+
+```python
+get_today_usage(self: Any) -> Any
 ```
 
 ---
@@ -166,7 +198,7 @@ get_tier(self: Any) -> str
 ## record_call
 
 ```python
-record_call(self: Any, dimension: str, agent_type: str) -> None
+record_call(self: Any, dimension: str, agent: str) -> None
 ```
 
 ---
@@ -186,3 +218,4 @@ verify_task(self: Any, task: Any, execution: Any, pre_scan: Any) -> Any
 ```
 
 ---
+

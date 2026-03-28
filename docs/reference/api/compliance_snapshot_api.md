@@ -1,0 +1,138 @@
+# compliance_snapshot API Reference
+
+> **Source**: `src/thegent/integrations/compliance_snapshot.py`
+
+Compliance evidence snapshot scheduler.
+
+Takes periodic snapshots of compliance artifacts and stores them with timestamps
+for audit trail and historical analysis.
+
+FR traceability: WL-302 (Compliance Evidence Snapshot Scheduler)
+
+---
+
+## ComplianceSnapshotScheduler
+
+Schedules periodic snapshots of compliance evidence.
+
+### Methods
+
+#### ComplianceSnapshotScheduler.__init__
+
+```python
+__init__(self: Any, snapshot_dir: Any, schedule_interval_hours: int)
+```
+
+Initialize the scheduler.
+
+**Parameters**:
+
+- `snapshot_dir`: Directory for storing snapshots.
+- `schedule_interval_hours`: Hours between snapshots (default: 24).
+
+---
+
+#### ComplianceSnapshotScheduler.list_snapshots
+
+```python
+list_snapshots(self: Any)
+```
+
+List all snapshot files in order.
+
+**Returns**: Sorted list of snapshot file paths (oldest first).
+
+---
+
+#### ComplianceSnapshotScheduler.should_run
+
+```python
+should_run(self: Any, last_run: Any)
+```
+
+Check if a snapshot should be taken.
+
+Returns True if last_run is None or more than schedule_interval_hours
+have elapsed since last_run.
+
+**Parameters**:
+
+- `last_run`: Timestamp of last snapshot, or None if never run.
+
+**Returns**: True if a snapshot should be taken.
+
+---
+
+#### ComplianceSnapshotScheduler.take_snapshot
+
+```python
+take_snapshot(self: Any, artifacts: list[dict])
+```
+
+Take a snapshot of compliance artifacts.
+
+Writes a JSON snapshot file with timestamp to snapshot_dir.
+
+**Parameters**:
+
+- `artifacts`: List of artifact dicts to snapshot.
+
+**Returns**: Path to the written snapshot file.
+
+---
+
+---
+
+## list_snapshots
+
+```python
+list_snapshots(self: Any)
+```
+
+List all snapshot files in order.
+
+**Returns**: Sorted list of snapshot file paths (oldest first).
+
+---
+
+## should_run
+
+```python
+should_run(self: Any, last_run: Any)
+```
+
+Check if a snapshot should be taken.
+
+Returns True if last_run is None or more than schedule_interval_hours
+have elapsed since last_run.
+
+**Parameters**:
+
+- `last_run`: Timestamp of last snapshot, or None if never run.
+
+**Returns**: True if a snapshot should be taken.
+
+---
+
+## take_snapshot
+
+```python
+take_snapshot(self: Any, artifacts: list[dict])
+```
+
+Take a snapshot of compliance artifacts.
+
+Writes a JSON snapshot file with timestamp to snapshot_dir.
+
+**Parameters**:
+
+- `artifacts`: List of artifact dicts to snapshot.
+
+**Returns**: Path to the written snapshot file.
+
+**Raises**:
+
+- `ValueError`: If artifacts is not a list or contains non-dict items.
+
+---
+

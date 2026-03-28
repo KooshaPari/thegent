@@ -1,6 +1,6 @@
 # omega_consensus API Reference
 
-> **Source**: `src/thegent/orchestration/omega_consensus.py`
+> **Source**: `src/thegent/orchestration/consensus/omega_consensus.py`
 
 WP-45003: Final State Consensus Protocol (Omega).
 
@@ -121,3 +121,4 @@ propose_state(self: Any, proposer_id: str, state: Any, metadata: dict[(str, Any)
 Propose a new final state for the project.
 
 ---
+

@@ -1,39 +1,443 @@
 # circuit_breaker API Reference
 
-> **Source**: `src/thegent/orchestration/circuit_breaker.py`
+> **Source**: `src/thegent/utils/routing_impl/circuit_breaker.py`
 
-Circuit breaker service per subsystem (WP-2003, FR-007).
+WP-2001: Per-provider circuit breakers with configurable thresholds.
 
-Delegates to execution.CircuitBreakerRegistry. Provides trip, recover, half-open semantics.
+ProviderCircuitBreaker wraps pybreaker.CircuitBreaker with provider-specific
+configuration (failure_threshold, success_threshold, timeout, half_open_max_calls).
+
+ProviderCircuitBreakerRegistry is a singleton registry keyed by provider name.
+
+GW-13: Adds LiteLLM model_list integration helpers:
+  - get_healthy_deployments: filter model_list to exclude OPEN circuit providers
+  - record_deployment_failure: record a provider failure
+  - record_deployment_success: record a provider success
+  - with_circuit_breaker: execute a callable through the circuit breaker
+
+# @trace WL-039 WP-2001 FR-ROUTE-013
 
 ---
 
-## is_open
+## CircuitOpenError
+
+Raised when a call is attempted against an open circuit breaker.
+
+Wraps pybreaker.CircuitBreakerError to provide a clear, project-specific error.
+Fail fast: callers MUST NOT swallow this silently.
+
+**Inherits from**: `Exception`
+
+---
+
+## ProviderCircuitBreaker
+
+Per-provider circuit breaker backed by pybreaker.
+
+State machine: CLOSED -> OPEN (on failure_threshold failures)
+                       -> HALF_OPEN (after timeout_sec)
+                       -> CLOSED (on success_threshold successes)
+                       -> OPEN (on any failure in HALF_OPEN)
+
+Fail fast: when OPEN, call() raises CircuitOpenError immediately.
+
+### Methods
+
+#### ProviderCircuitBreaker.__init__
 
 ```python
-is_open(session_dir: Path, target: str, category: str)
+__init__(self: Any, provider: str, config: Any)
 ```
-
-True if circuit is open (blocked). False if closed or half-open (trial allowed).
 
 ---
 
-## should_allow
+#### ProviderCircuitBreaker.call
 
 ```python
-should_allow(session_dir: Path, target: str, category: str)
+call(self: Any, func: Any)
 ```
 
-True if requests to target should be allowed (circuit closed or half-open).
+Execute func through the circuit breaker.
+
+When the circuit is already OPEN before this call, raises CircuitOpenError
+immediately without invoking func (fail fast).
+
+When func raises and the circuit *just* tripped to OPEN on this call,
+the original exception propagates (caller sees the real error, not
+CircuitOpenError).
+
+Raises:
+    CircuitOpenError: when the circuit was already OPEN before this call.
+    Any exception raised by func propagates after recording failure.
 
 ---
 
-## trip
+#### ProviderCircuitBreaker.fail_counter
 
 ```python
-trip(session_dir: Path, target: str, category: str)
+fail_counter(self: Any)
 ```
 
-Record a failure; may open the circuit.
+Return current consecutive failure count.
 
 ---
+
+#### ProviderCircuitBreaker.record_failure
+
+```python
+record_failure(self: Any)
+```
+
+Manually record a failure (increments counter, may trip to OPEN).
+
+---
+
+#### ProviderCircuitBreaker.record_success
+
+```python
+record_success(self: Any)
+```
+
+Manually record a success (closes the breaker if in HALF_OPEN).
+
+---
+
+#### ProviderCircuitBreaker.reset
+
+```python
+reset(self: Any)
+```
+
+Force-close the breaker (for testing / manual recovery).
+
+---
+
+#### ProviderCircuitBreaker.state
+
+```python
+state(self: Any)
+```
+
+Return current state string: 'closed', 'open', or 'half-open'.
+
+---
+
+---
+
+## ProviderCircuitBreakerConfig
+
+Configuration for a single provider circuit breaker.
+
+---
+
+## ProviderCircuitBreakerRegistry
+
+Singleton registry of per-provider circuit breakers.
+
+Usage:
+    registry = ProviderCircuitBreakerRegistry.get_instance()
+    breaker = registry.get("openai")
+    breaker.call(my_func, arg1, arg2)
+
+### Methods
+
+#### ProviderCircuitBreakerRegistry.all_open
+
+```python
+all_open(self: Any)
+```
+
+Return list of provider names whose circuit is currently OPEN.
+
+---
+
+#### ProviderCircuitBreakerRegistry.all_states
+
+```python
+all_states(self: Any)
+```
+
+Return mapping provider -> state string for all registered breakers.
+
+---
+
+#### ProviderCircuitBreakerRegistry.clear
+
+```python
+clear(self: Any)
+```
+
+Remove all registered breakers (for testing).
+
+---
+
+#### ProviderCircuitBreakerRegistry.get
+
+```python
+get(self: Any, provider: str, config: Any)
+```
+
+Return the breaker for provider, creating it with config if not yet registered.
+
+---
+
+#### ProviderCircuitBreakerRegistry.get_instance
+
+```python
+get_instance(cls: Any)
+```
+
+Return the process-global singleton registry.
+
+---
+
+#### ProviderCircuitBreakerRegistry.register
+
+```python
+register(self: Any, provider: str, config: ProviderCircuitBreakerConfig)
+```
+
+Register (or replace) a breaker for provider with the given config.
+
+---
+
+#### ProviderCircuitBreakerRegistry.reset_instance
+
+```python
+reset_instance(cls: Any)
+```
+
+Reset the singleton (for testing only).
+
+---
+
+---
+
+## all_open
+
+```python
+all_open(self: Any)
+```
+
+Return list of provider names whose circuit is currently OPEN.
+
+---
+
+## all_states
+
+```python
+all_states(self: Any)
+```
+
+Return mapping provider -> state string for all registered breakers.
+
+---
+
+## call
+
+```python
+call(self: Any, func: Any)
+```
+
+Execute func through the circuit breaker.
+
+When the circuit is already OPEN before this call, raises CircuitOpenError
+immediately without invoking func (fail fast).
+
+When func raises and the circuit *just* tripped to OPEN on this call,
+the original exception propagates (caller sees the real error, not
+CircuitOpenError).
+
+Raises:
+    CircuitOpenError: when the circuit was already OPEN before this call.
+    Any exception raised by func propagates after recording failure.
+
+---
+
+## clear
+
+```python
+clear(self: Any)
+```
+
+Remove all registered breakers (for testing).
+
+---
+
+## fail_counter
+
+```python
+fail_counter(self: Any)
+```
+
+Return current consecutive failure count.
+
+---
+
+## get
+
+```python
+get(self: Any, provider: str, config: Any)
+```
+
+Return the breaker for provider, creating it with config if not yet registered.
+
+---
+
+## get_healthy_deployments
+
+```python
+get_healthy_deployments(model_list: list[dict[(str, Any)]], registry: Any)
+```
+
+Filter a LiteLLM model_list to exclude deployments with open circuit breakers.
+
+A deployment is excluded when its provider's circuit breaker is in OPEN state.
+If all deployments would be excluded, the full original list is returned to
+prevent a total outage (degraded service is preferable to zero service).
+
+**Parameters**:
+
+- `model_list`: LiteLLM model_list entries (each has ``model_name`` and
+``litellm_params``).
+- `registry`: Circuit breaker registry.  Defaults to the global singleton.
+
+**Returns**: Filtered model_list containing only deployments whose provider circuit
+breaker is not OPEN.  Returns the full list if all are unhealthy.
+
+---
+
+## get_instance
+
+```python
+get_instance(cls: Any)
+```
+
+Return the process-global singleton registry.
+
+---
+
+## record_deployment_failure
+
+```python
+record_deployment_failure(provider: str, error: Exception, registry: Any)
+```
+
+Record a failure for a provider's circuit breaker.
+
+Called after a failed LiteLLM completion to increment the failure counter.
+If the failure threshold is reached the circuit opens and the provider will
+be excluded from future routing until the timeout elapses.
+
+**Parameters**:
+
+- `provider`: Provider identifier (e.g. ``"openai"``).
+- `error`: The exception that caused the failure.
+- `registry`: Circuit breaker registry.  Defaults to the global singleton.
+
+---
+
+## record_deployment_success
+
+```python
+record_deployment_success(provider: str, registry: Any)
+```
+
+Record a success for a provider's circuit breaker.
+
+Helps reset the half-open state back to closed after recovery.
+
+**Parameters**:
+
+- `provider`: Provider identifier (e.g. ``"openai"``).
+- `registry`: Circuit breaker registry.  Defaults to the global singleton.
+
+---
+
+## record_failure
+
+```python
+record_failure(self: Any)
+```
+
+Manually record a failure (increments counter, may trip to OPEN).
+
+---
+
+## record_success
+
+```python
+record_success(self: Any)
+```
+
+Manually record a success (closes the breaker if in HALF_OPEN).
+
+---
+
+## register
+
+```python
+register(self: Any, provider: str, config: ProviderCircuitBreakerConfig)
+```
+
+Register (or replace) a breaker for provider with the given config.
+
+---
+
+## reset
+
+```python
+reset(self: Any)
+```
+
+Force-close the breaker (for testing / manual recovery).
+
+---
+
+## reset_instance
+
+```python
+reset_instance(cls: Any)
+```
+
+Reset the singleton (for testing only).
+
+---
+
+## state
+
+```python
+state(self: Any)
+```
+
+Return current state string: 'closed', 'open', or 'half-open'.
+
+---
+
+## with_circuit_breaker
+
+```python
+with_circuit_breaker(provider: str, func: Any)
+```
+
+Execute ``func(*args, **kwargs)`` through the provider's circuit breaker.
+
+Records success or failure automatically so that the circuit breaker state
+machine advances correctly.
+
+Args:
+    provider: Provider identifier used to look up (or create) the breaker.
+    func: Callable to execute.
+    *args: Positional arguments forwarded to ``func``.
+    registry: Circuit breaker registry.  Defaults to the global singleton.
+    **kwargs: Keyword arguments forwarded to ``func``.
+
+Returns:
+    The return value of ``func(*args, **kwargs)``.
+
+Raises:
+    CircuitOpenError: When the circuit is already OPEN before the call.
+    Any exception raised by ``func`` propagates after recording the failure.
+
+---
+

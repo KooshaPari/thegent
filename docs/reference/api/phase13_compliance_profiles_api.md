@@ -63,3 +63,4 @@ register_profile(self: Any, name: str, profile: ComplianceProfile)
 Register a compliance profile.
 
 ---
+

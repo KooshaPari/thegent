@@ -71,3 +71,4 @@ wrap_command(self: Any, command: list[str], tier: int)
 Wrap command with sandbox according to autonomy tier.
 
 ---
+

@@ -1,8 +1,11 @@
 # app API Reference
 
-> **Source**: `src/thegent/ui/compositor/app.py`
+> **Source**: `src/thegent/compositor/app.py`
 
-CompositApp - Main Textual application for the TUI compositor.
+Main Textual application for the TUI compositor.
+
+Provides the CompositApp class which manages the overall UI layout including
+header, footer, and pane management.
 
 ---
 
@@ -10,29 +13,20 @@ CompositApp - Main Textual application for the TUI compositor.
 
 Main TUI Compositor application.
 
-Features:
-- Menubar with file/edit/view/tools/help menus
-- Statusbar with session info and pane count
-- Container for terminal panes
-- Key bindings for pane management
-- Lifecycle hooks for pane initialization/cleanup
-- Error boundaries for crash recovery
+This is a Textual application that provides a multi-pane terminal interface
+with support for splitting, merging, and layout management.
 
-**Inherits from**: `App`
+**Inherits from**: `Vertical`
 
 ### Methods
 
 #### CompositApp.__init__
 
 ```python
-__init__(self: Any, session_state: SessionState | None)
+__init__(self: Any)
 ```
 
-Initialize CompositApp.
-
-**Parameters**:
-
-- `session_state`: Optional session state for persistence
+Initialize the CompositApp.
 
 ---
 
@@ -42,10 +36,7 @@ Initialize CompositApp.
 action_close_pane(self: Any)
 ```
 
-Close the current pane.
-
-Wrapped with error boundaries.
-Decrements pane count (if > 1) and updates statusbar.
+Action: Close the current pane.
 
 ---
 
@@ -55,10 +46,7 @@ Decrements pane count (if > 1) and updates statusbar.
 action_focus_next(self: Any)
 ```
 
-Focus the next pane.
-
-Wrapped with error boundaries.
-Cycles focus through available panes.
+Action: Focus on the next pane.
 
 ---
 
@@ -68,34 +56,27 @@ Cycles focus through available panes.
 action_new_pane(self: Any)
 ```
 
-Create a new terminal pane.
-
-Wrapped with error boundaries to catch pane creation failures.
-Increments pane count and updates statusbar.
+Action: Create a new pane.
 
 ---
 
-#### CompositApp.action_quit
+#### CompositApp.action_restore_layout
 
 ```python
-action_quit(self: Any)
+action_restore_layout(self: Any)
 ```
 
-Quit the application.
-
-Cleans up resources and exits.
+Action: Restore a saved layout.
 
 ---
 
-#### CompositApp.action_retry_pane
+#### CompositApp.action_save_layout
 
 ```python
-action_retry_pane(self: Any)
+action_save_layout(self: Any)
 ```
 
-Retry rendering the current pane.
-
-Clears error state and attempts to re-render.
+Action: Save the current layout.
 
 ---
 
@@ -105,10 +86,7 @@ Clears error state and attempts to re-render.
 action_split_horizontal(self: Any)
 ```
 
-Split the current pane horizontally.
-
-Wrapped with error boundaries.
-Increments pane count and updates statusbar.
+Action: Split the current pane horizontally.
 
 ---
 
@@ -118,10 +96,7 @@ Increments pane count and updates statusbar.
 action_split_vertical(self: Any)
 ```
 
-Split the current pane vertically.
-
-Wrapped with error boundaries.
-Increments pane count and updates statusbar.
+Action: Split the current pane vertically.
 
 ---
 
@@ -131,12 +106,7 @@ Increments pane count and updates statusbar.
 compose(self: Any)
 ```
 
-Compose the app layout.
-
-**Returns**: Header widget
-Main pane container
-Statusbar widget
-Footer widget
+Compose the application layout.
 
 ---
 
@@ -148,33 +118,6 @@ on_mount(self: Any)
 
 Called when the app is mounted.
 
-Lifecycle hook that:
-- Sets window title and subtitle
-- Initializes pane count
-- Spawns shell processes for panes
-- Sets up IPC/message passing
-- Initializes state tracking
-
----
-
-#### CompositApp.on_panel_mounted
-
-```python
-on_panel_mounted(self: Any, message: PanelMounted)
-```
-
-Handle PanelMounted message from terminal panes.
-
----
-
-#### CompositApp.on_panel_unmounted
-
-```python
-on_panel_unmounted(self: Any, message: PanelUnmounted)
-```
-
-Handle PanelUnmounted message from terminal panes.
-
 ---
 
 #### CompositApp.on_unmount
@@ -183,69 +126,123 @@ Handle PanelUnmounted message from terminal panes.
 on_unmount(self: Any)
 ```
 
-Called when the app is about to unmount.
+Called when the app is unmounted. Clean up resources.
 
-Lifecycle hook that:
-- Gracefully terminates all child processes
-- Cleans up IPC channels
-- Saves session state
+---
+
+#### CompositApp.save_session_state
+
+```python
+save_session_state(self: Any)
+```
+
+Save the current session state to disk.
+
+---
+
+#### CompositApp.update_pane_display
+
+```python
+update_pane_display(self: Any)
+```
+
+Update the pane display after tree changes.
+
+---
+
+#### CompositApp.update_status
+
+```python
+update_status(self: Any)
+```
+
+Update the status bar.
 
 ---
 
 ---
 
-## ErrorBoundary
+## PaneContainer
 
-Error boundary widget for displaying pane render errors.
+Container for terminal panes.
 
-**Inherits from**: `Static`
+**Inherits from**: `Container`
 
 ### Methods
 
-#### ErrorBoundary.__init__
+#### PaneContainer.__init__
 
 ```python
-__init__(self: Any, error_message: str, error_type: str, stack_trace: str, pane_id: str)
+__init__(self: Any, pane_manager: PaneManager)
 ```
 
-Initialize error boundary.
+Initialize the pane container.
 
 **Parameters**:
 
-- `error_message`: Human-readable error message
-- `error_type`: Type of error (e.g., "Render Error", "Process Error")
-- `stack_trace`: Full stack trace for debugging
-- `pane_id`: ID of the pane that failed
+- `pane_manager`: Reference to the pane manager
 
 ---
 
-#### ErrorBoundary.render
+#### PaneContainer.compose
 
 ```python
-render(self: Any)
+compose(self: Any)
 ```
 
-Render error panel.
+Compose the pane container with the root pane.
 
 ---
 
 ---
 
-## Statusbar
+## StatusBar
 
-Custom status bar showing session and pane information.
+Custom status bar widget.
 
 **Inherits from**: `Static`
 
 ### Methods
 
-#### Statusbar.render
+#### StatusBar.__init__
+
+```python
+__init__(self: Any, pane_manager: PaneManager)
+```
+
+Initialize the status bar.
+
+**Parameters**:
+
+- `pane_manager`: Reference to the pane manager
+
+---
+
+#### StatusBar.render
 
 ```python
 render(self: Any)
 ```
 
-Render status bar content.
+Render the status bar with current information.
+
+---
+
+---
+
+## _CompositRunner
+
+Minimal App shell to host CompositApp widget.
+
+**Inherits from**: `App`
+
+### Methods
+
+#### _CompositRunner.compose
+
+```python
+compose(self: Any)
+```
 
 ---
 
@@ -257,10 +254,7 @@ Render status bar content.
 action_close_pane(self: Any)
 ```
 
-Close the current pane.
-
-Wrapped with error boundaries.
-Decrements pane count (if > 1) and updates statusbar.
+Action: Close the current pane.
 
 ---
 
@@ -270,10 +264,7 @@ Decrements pane count (if > 1) and updates statusbar.
 action_focus_next(self: Any)
 ```
 
-Focus the next pane.
-
-Wrapped with error boundaries.
-Cycles focus through available panes.
+Action: Focus on the next pane.
 
 ---
 
@@ -283,34 +274,27 @@ Cycles focus through available panes.
 action_new_pane(self: Any)
 ```
 
-Create a new terminal pane.
-
-Wrapped with error boundaries to catch pane creation failures.
-Increments pane count and updates statusbar.
+Action: Create a new pane.
 
 ---
 
-## action_quit
+## action_restore_layout
 
 ```python
-action_quit(self: Any)
+action_restore_layout(self: Any)
 ```
 
-Quit the application.
-
-Cleans up resources and exits.
+Action: Restore a saved layout.
 
 ---
 
-## action_retry_pane
+## action_save_layout
 
 ```python
-action_retry_pane(self: Any)
+action_save_layout(self: Any)
 ```
 
-Retry rendering the current pane.
-
-Clears error state and attempts to re-render.
+Action: Save the current layout.
 
 ---
 
@@ -320,10 +304,7 @@ Clears error state and attempts to re-render.
 action_split_horizontal(self: Any)
 ```
 
-Split the current pane horizontally.
-
-Wrapped with error boundaries.
-Increments pane count and updates statusbar.
+Action: Split the current pane horizontally.
 
 ---
 
@@ -333,25 +314,15 @@ Increments pane count and updates statusbar.
 action_split_vertical(self: Any)
 ```
 
-Split the current pane vertically.
-
-Wrapped with error boundaries.
-Increments pane count and updates statusbar.
+Action: Split the current pane vertically.
 
 ---
 
 ## compose
 
 ```python
-compose(self: Any)
+compose(self: Any) -> ComposeResult
 ```
-
-Compose the app layout.
-
-**Returns**: Header widget
-Main pane container
-Statusbar widget
-Footer widget
 
 ---
 
@@ -363,33 +334,6 @@ on_mount(self: Any)
 
 Called when the app is mounted.
 
-Lifecycle hook that:
-- Sets window title and subtitle
-- Initializes pane count
-- Spawns shell processes for panes
-- Sets up IPC/message passing
-- Initializes state tracking
-
----
-
-## on_panel_mounted
-
-```python
-on_panel_mounted(self: Any, message: PanelMounted)
-```
-
-Handle PanelMounted message from terminal panes.
-
----
-
-## on_panel_unmounted
-
-```python
-on_panel_unmounted(self: Any, message: PanelUnmounted)
-```
-
-Handle PanelUnmounted message from terminal panes.
-
 ---
 
 ## on_unmount
@@ -398,12 +342,7 @@ Handle PanelUnmounted message from terminal panes.
 on_unmount(self: Any)
 ```
 
-Called when the app is about to unmount.
-
-Lifecycle hook that:
-- Gracefully terminates all child processes
-- Cleans up IPC channels
-- Saves session state
+Called when the app is unmounted. Clean up resources.
 
 ---
 
@@ -413,6 +352,43 @@ Lifecycle hook that:
 render(self: Any)
 ```
 
-Render status bar content.
+Render the status bar with current information.
 
 ---
+
+## run
+
+Run the CompositApp.
+
+---
+
+## save_session_state
+
+```python
+save_session_state(self: Any)
+```
+
+Save the current session state to disk.
+
+---
+
+## update_pane_display
+
+```python
+update_pane_display(self: Any)
+```
+
+Update the pane display after tree changes.
+
+---
+
+## update_status
+
+```python
+update_status(self: Any)
+```
+
+Update the status bar.
+
+---
+

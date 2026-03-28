@@ -1,81 +1,42 @@
 # terminal_pane API Reference
 
-> **Source**: `src/thegent/tui/widgets/terminal_pane.py`
+> **Source**: `src/thegent/ui/compositor/terminal_pane.py`
 
-Terminal pane widget for TUI compositor.
-
-Provides a terminal emulator pane using Python's asyncio and pty modules.
-Supports subprocess execution and output display.
+TerminalPane - PTY-based terminal widget for the compositor.
 
 ---
 
-## TerminalConfig
+## PanelMounted
 
-Configuration for terminal pane.
+Sent when a panel is mounted.
 
----
-
-## TerminalManager
-
-Manages multiple terminal panes.
+**Inherits from**: `Message`
 
 ### Methods
 
-#### TerminalManager.__init__
+#### PanelMounted.__init__
 
 ```python
-__init__(self: Any)
+__init__(self: Any, pane_id: str)
 ```
 
 ---
 
-#### TerminalManager.add_pane
-
-```python
-add_pane(self: Any, pane_id: str, pane: TerminalPane)
-```
-
-Add a terminal pane.
-
 ---
 
-#### TerminalManager.get_active
+## PanelUnmounted
+
+Sent when a panel is unmounted.
+
+**Inherits from**: `Message`
+
+### Methods
+
+#### PanelUnmounted.__init__
 
 ```python
-get_active(self: Any)
+__init__(self: Any, pane_id: str)
 ```
-
-Get the active pane.
-
----
-
-#### TerminalManager.get_pane
-
-```python
-get_pane(self: Any, pane_id: str)
-```
-
-Get a terminal pane by ID.
-
----
-
-#### TerminalManager.list_panes
-
-```python
-list_panes(self: Any)
-```
-
-List all pane IDs.
-
----
-
-#### TerminalManager.set_active
-
-```python
-set_active(self: Any, pane_id: str)
-```
-
-Set the active pane.
 
 ---
 
@@ -83,134 +44,137 @@ Set the active pane.
 
 ## TerminalPane
 
-Widget that displays terminal output and executes commands.
+A terminal pane widget backed by a PTY.
 
-**Inherits from**: `Widget`
+**Inherits from**: `Static`
 
 ### Methods
 
 #### TerminalPane.__init__
 
 ```python
-__init__(self: Any)
+__init__(self: Any, pane_id: str, working_dir: str, name: Any, id: Any, classes: Any)
 ```
+
+Initialize TerminalPane.
+
+**Parameters**:
+
+- `pane_id`: Unique identifier for this pane
+- `working_dir`: Working directory for shell
+- `name`: Display name for pane
+- `id`: Textual widget ID
+- `classes`: CSS classes
 
 ---
 
-#### TerminalPane.clear
+#### TerminalPane.close
 
 ```python
-clear(self: Any)
+close(self: Any)
 ```
 
-Clear the terminal output.
+Close this pane and cleanup resources.
+
+Lifecycle hook that:
+- Gracefully terminates the shell process
+- Cleans up PTY file descriptors
+- Handles edge cases (already terminated, permission errors)
 
 ---
 
-#### TerminalPane.get_output
+#### TerminalPane.on_mount
 
 ```python
-get_output(self: Any)
+on_mount(self: Any)
 ```
 
-Get all output as a string.
+Called when widget is mounted.
+
+Lifecycle hook that spawns the shell process on pane mount.
+This ensures the shell starts when the widget is actually displayed.
 
 ---
 
-#### TerminalPane.on_resize
+#### TerminalPane.on_unmount
 
 ```python
-on_resize(self: Any, event: Resize)
+on_unmount(self: Any)
 ```
 
-Handle terminal resize.
+Called when widget is unmounted.
 
 ---
 
----
-
-## TerminalSize
-
-Terminal dimensions in rows/cols.
-
----
-
-## add_pane
+#### TerminalPane.spawn_shell
 
 ```python
-add_pane(self: Any, pane_id: str, pane: TerminalPane)
+spawn_shell(self: Any, shell: str)
 ```
 
-Add a terminal pane.
+Spawn a shell in this pane via PTY.
+
+**Parameters**:
+
+- `shell`: Shell binary path (default: /bin/bash)
 
 ---
 
-## clear
+---
+
+## close
 
 ```python
-clear(self: Any)
+close(self: Any)
 ```
 
-Clear the terminal output.
+Close this pane and cleanup resources.
+
+Lifecycle hook that:
+- Gracefully terminates the shell process
+- Cleans up PTY file descriptors
+- Handles edge cases (already terminated, permission errors)
 
 ---
 
-## get_active
+## on_mount
 
 ```python
-get_active(self: Any)
+on_mount(self: Any)
 ```
 
-Get the active pane.
+Called when widget is mounted.
+
+Lifecycle hook that spawns the shell process on pane mount.
+This ensures the shell starts when the widget is actually displayed.
 
 ---
 
-## get_output
+## on_unmount
 
 ```python
-get_output(self: Any)
+on_unmount(self: Any)
 ```
 
-Get all output as a string.
+Called when widget is unmounted.
 
 ---
 
-## get_pane
+## spawn_shell
 
 ```python
-get_pane(self: Any, pane_id: str)
+spawn_shell(self: Any, shell: str)
 ```
 
-Get a terminal pane by ID.
+Spawn a shell in this pane via PTY.
+
+**Parameters**:
+
+- `shell`: Shell binary path (default: /bin/bash)
+
+**Raises**:
+
+- `OSError`: If PTY allocation or shell spawn fails
 
 ---
 
-## list_panes
-
-```python
-list_panes(self: Any)
-```
-
-List all pane IDs.
-
----
-
-## on_resize
-
-```python
-on_resize(self: Any, event: Resize)
-```
-
-Handle terminal resize.
-
----
-
-## set_active
-
-```python
-set_active(self: Any, pane_id: str)
-```
-
-Set the active pane.
-
----

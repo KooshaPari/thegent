@@ -199,6 +199,14 @@ Get file or directory size.
 
 ---
 
+## get_sendfile_fallback_counts
+
+---
+
+## get_sendfile_fallback_diagnostics
+
+---
+
 ## get_size
 
 ```python
@@ -272,3 +280,12 @@ remove_path(path: Any, recursive: bool)
 Remove file or directory.
 
 ---
+
+## reset_sendfile_fallback_counts
+
+---
+
+## reset_sendfile_fallback_diagnostics
+
+---
+

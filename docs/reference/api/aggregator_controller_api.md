@@ -28,10 +28,20 @@ __init__(self: Any, session_dir: Path, health_targets_path: Any)
 
 ---
 
+#### CostController.calls_remaining
+
+```python
+calls_remaining(self: Any)
+```
+
+Return number of agent calls remaining in today's budget.
+
+---
+
 #### CostController.can_spawn
 
 ```python
-can_spawn(self: Any)
+can_spawn(self: Any, estimated_calls: int)
 ```
 
 Check if new agent spawns are allowed.
@@ -86,10 +96,20 @@ utilization_pct(self: Any)
 
 ---
 
+## calls_remaining
+
+```python
+calls_remaining(self: Any)
+```
+
+Return number of agent calls remaining in today's budget.
+
+---
+
 ## can_spawn
 
 ```python
-can_spawn(self: Any)
+can_spawn(self: Any, estimated_calls: int)
 ```
 
 Check if new agent spawns are allowed.
@@ -133,3 +153,4 @@ utilization_pct(self: Any) -> float
 ```
 
 ---
+

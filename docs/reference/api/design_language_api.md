@@ -34,9 +34,8 @@ apply_to_cli(self: Any)
 
 Apply design language to CLI.
 
-Configures Rich console with design tokens.
-This is a placeholder - full implementation would configure
-Rich console styles based on tokens.
+Configures a Rich Theme map from design tokens and stores it in
+``self.cli_theme`` for CLI surfaces to consume.
 
 ---
 
@@ -73,9 +72,8 @@ apply_to_cli(self: Any)
 
 Apply design language to CLI.
 
-Configures Rich console with design tokens.
-This is a placeholder - full implementation would configure
-Rich console styles based on tokens.
+Configures a Rich Theme map from design tokens and stores it in
+``self.cli_theme`` for CLI surfaces to consume.
 
 ---
 
@@ -95,3 +93,4 @@ Get design token value.
 **Returns**: Token value, or None if not found
 
 ---
+

@@ -380,3 +380,4 @@ Split path into base and extension efficiently.
 **Returns**: Tuple of (base, extension)
 
 ---
+

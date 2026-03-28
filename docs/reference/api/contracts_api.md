@@ -13,3 +13,4 @@ Provides:
 OPT-006: Lazy adapter loading (import on first use) - Reduce startup time ~200ms.
 
 ---
+

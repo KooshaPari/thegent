@@ -72,10 +72,6 @@ Filter scraped models: remove blacklisted, keep unparseable (allow by default).
 
 ---
 
-## get_cache
-
----
-
 ## normalize_model_id
 
 ```python
@@ -158,3 +154,4 @@ to_contract_view(use_scraped: bool, provider_filter: Any, use_cache: bool)
 Return catalog with schema metadata and route details for structured consumers.
 
 ---
+

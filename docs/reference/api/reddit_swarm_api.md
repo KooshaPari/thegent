@@ -1,6 +1,6 @@
 # reddit_swarm API Reference
 
-> **Source**: `src/thegent/tools/reddit_swarm.py`
+> **Source**: `src/thegent/skills/reddit_swarm.py`
 
 ## extract_subreddits_from_links
 
@@ -41,3 +41,4 @@ suggest_related_subreddits(subreddits: list[str])
 Suggest related subreddits based on initial list.
 
 ---
+

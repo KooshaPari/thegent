@@ -1,21 +1,21 @@
 # link_checker API Reference
 
-> **Source**: `src/thegent/utils/link_checker.py`
+> **Source**: `src/thegent/docgen/link_checker.py`
 
 Automated link checking for documentation.
 
 ---
 
-## LinkChecker
+## DocLinkChecker
 
-Check links in markdown files.
+Check links in documentation files.
 
 ### Methods
 
-#### LinkChecker.__init__
+#### DocLinkChecker.__init__
 
 ```python
-__init__(self: Any, base_dir: Any)
+__init__(self: Any, base_dir: Any, ignore_patterns: Any, timeout: float)
 ```
 
 Initialize link checker.
@@ -23,60 +23,29 @@ Initialize link checker.
 **Parameters**:
 
 - `base_dir`: Base directory for documentation
+- `ignore_patterns`: List of regex patterns to ignore
+- `timeout`: HTTP request timeout
 
 ---
 
-#### LinkChecker.check_directory
+#### DocLinkChecker.check_internal_link
 
 ```python
-check_directory(self: Any, dir_path: Path, pattern: str)
+check_internal_link(self: Any, url: str, base_path: Path)
 ```
 
-Check all markdown files in a directory.
+Check if an internal link is valid.
 
 **Parameters**:
 
-- `dir_path`: Directory to check
-- `pattern`: File pattern to match
+- `url`: Internal URL
+- `base_path`: Path of the file containing the link
 
-**Returns**: Summary dictionary with results
-
----
-
-#### LinkChecker.check_file
-
-```python
-check_file(self: Any, file_path: Path)
-```
-
-Check all links in a file.
-
-**Parameters**:
-
-- `file_path`: Path to markdown file
-
-**Returns**: List of check results
+**Returns**: Check result
 
 ---
 
-#### LinkChecker.check_link
-
-```python
-check_link(self: Any, url: str, base_path: Path)
-```
-
-Check if a link is valid.
-
-**Parameters**:
-
-- `url`: Link URL
-- `base_path`: Base path for relative links
-
-**Returns**: Dictionary with status, error, etc.
-
----
-
-#### LinkChecker.find_links
+#### DocLinkChecker.find_links
 
 ```python
 find_links(self: Any, file_path: Path)
@@ -88,59 +57,26 @@ Find all links in a markdown file.
 
 - `file_path`: Path to markdown file
 
-**Returns**: List of link dictionaries with url, line, type
+**Returns**: List of link dictionaries
 
 ---
 
 ---
 
-## check_directory
+## check_internal_link
 
 ```python
-check_directory(self: Any, dir_path: Path, pattern: str)
+check_internal_link(self: Any, url: str, base_path: Path)
 ```
 
-Check all markdown files in a directory.
+Check if an internal link is valid.
 
 **Parameters**:
 
-- `dir_path`: Directory to check
-- `pattern`: File pattern to match
+- `url`: Internal URL
+- `base_path`: Path of the file containing the link
 
-**Returns**: Summary dictionary with results
-
----
-
-## check_file
-
-```python
-check_file(self: Any, file_path: Path)
-```
-
-Check all links in a file.
-
-**Parameters**:
-
-- `file_path`: Path to markdown file
-
-**Returns**: List of check results
-
----
-
-## check_link
-
-```python
-check_link(self: Any, url: str, base_path: Path)
-```
-
-Check if a link is valid.
-
-**Parameters**:
-
-- `url`: Link URL
-- `base_path`: Base path for relative links
-
-**Returns**: Dictionary with status, error, etc.
+**Returns**: Check result
 
 ---
 
@@ -156,6 +92,7 @@ Find all links in a markdown file.
 
 - `file_path`: Path to markdown file
 
-**Returns**: List of link dictionaries with url, line, type
+**Returns**: List of link dictionaries
 
 ---
+

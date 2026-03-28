@@ -84,3 +84,4 @@ encode_persona(self: Any)
 WP-44001: Serialize persona into a high-density, portable format.
 
 ---
+

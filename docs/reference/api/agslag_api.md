@@ -1,6 +1,6 @@
 # agslag API Reference
 
-> **Source**: `src/thegent/tools/agslag.py`
+> **Source**: `src/thegent/utils/agslag.py`
 
 ## research_agslag_project
 
@@ -31,3 +31,4 @@ update_research_queue(results: dict[(str, Any)], queue_file: Path)
 Update the research queue with new agslag findings.
 
 ---
+

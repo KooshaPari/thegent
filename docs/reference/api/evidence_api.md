@@ -1,6 +1,6 @@
 # evidence API Reference
 
-> **Source**: `src/thegent/orchestration/evidence.py`
+> **Source**: `src/thegent/orchestration/strategies/evidence.py`
 
 Evidence capture at every promotion gate (WP-1005, FR-004).
 
@@ -84,3 +84,4 @@ verify_evidence_hash(self: Any, run_id: str, phase: str, expected_hash: str)
 Verify stored evidence hash matches expected. Returns True if valid.
 
 ---
+

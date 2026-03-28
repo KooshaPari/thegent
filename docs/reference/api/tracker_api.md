@@ -12,17 +12,7 @@ Aggregates actual cost per run and provides budget alerting for the orchestratio
 
 Single cost entry for a token or API call.
 
-### Methods
-
-#### CostEntry.to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert entry to dictionary.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -138,12 +128,3 @@ Start tracking a new run.
 
 ---
 
-## to_dict
-
-```python
-to_dict(self: Any)
-```
-
-Convert entry to dictionary.
-
----

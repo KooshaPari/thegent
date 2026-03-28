@@ -1,0 +1,134 @@
+# install_system API Reference
+
+> **Source**: `src/thegent/install_system.py`
+
+System installation functions for thegent.
+
+Handles Homebrew, mise, and system dependency installation.
+Extracted from install.py for maintainability.
+
+---
+
+## clone_git_repo
+
+```python
+clone_git_repo(url: str, target: Path)
+```
+
+Clone a git repository.
+
+**Parameters**:
+
+- `url`: Repository URL
+- `target`: Target directory
+- `depth`: Clone depth (default: 1 for shallow clone)
+- `branch`: Specific branch to clone
+- `console`: Rich console for output
+
+**Returns**: Tuple of (success, message)
+
+---
+
+## install_homebrew
+
+```python
+install_homebrew(console: Any, dry_run: bool)
+```
+
+Install Homebrew if not present.
+
+**Parameters**:
+
+- `console`: Rich console for output
+- `dry_run`: If True, don't make changes
+
+**Returns**: Tuple of (success, message)
+
+---
+
+## install_mise
+
+```python
+install_mise(console: Any, dry_run: bool, use_nix: bool, settings: ThegentSettings | None)
+```
+
+Install mise (formerly rtx) via Homebrew or Nix.
+
+**Parameters**:
+
+- `console`: Rich console for output
+- `dry_run`: If True, don't make changes
+- `use_nix`: If True, use Nix instead of Homebrew
+- `settings`: Thegent settings
+
+**Returns**: Tuple of (success, message)
+
+---
+
+## install_system_dependencies
+
+```python
+install_system_dependencies(console: Any, dry_run: bool, settings: ThegentSettings | None)
+```
+
+Install all system dependencies.
+
+**Parameters**:
+
+- `console`: Rich console for output
+- `dry_run`: If True, don't make changes
+- `settings`: Thegent settings
+
+**Returns**: Tuple of (success, message)
+
+---
+
+## uninstall_mise_hooks
+
+```python
+uninstall_mise_hooks(console: Any)
+```
+
+Remove mise hooks from shell config files.
+
+**Parameters**:
+
+- `console`: Rich console for output
+
+**Returns**: True if hooks were removed successfully
+
+---
+
+## uninstall_system_dependencies
+
+```python
+uninstall_system_dependencies(console: Any, dry_run: bool)
+```
+
+Uninstall system dependencies installed by thegent.
+
+**Parameters**:
+
+- `console`: Rich console for output
+- `dry_run`: If True, don't make changes
+
+**Returns**: Tuple of (success, message)
+
+---
+
+## verify_mise_installation
+
+```python
+verify_mise_installation(console: Any)
+```
+
+Verify mise is properly installed and configured.
+
+**Parameters**:
+
+- `console`: Rich console for output
+
+**Returns**: True if mise is properly configured
+
+---
+

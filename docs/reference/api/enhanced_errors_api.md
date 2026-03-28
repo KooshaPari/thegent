@@ -65,6 +65,16 @@ Rich context for error reporting.
 
 ---
 
+## InfraRuntimeError
+
+Error related to runtime selection or execution.
+
+**Inherits from**: `EnhancedError`
+
+**Method Resolution Order**: `InfraRuntimeError -> EnhancedError`
+
+---
+
 ## NetworkError
 
 Error related to network connectivity.
@@ -72,16 +82,6 @@ Error related to network connectivity.
 **Inherits from**: `EnhancedError`
 
 **Method Resolution Order**: `NetworkError -> EnhancedError`
-
----
-
-## RuntimeError
-
-Error related to runtime selection or execution.
-
-**Inherits from**: `EnhancedError`
-
-**Method Resolution Order**: `RuntimeError -> EnhancedError`
 
 ---
 
@@ -145,6 +145,27 @@ Generate a detailed error report for bug reporting.
 
 ---
 
+## format_error
+
+```python
+format_error(exc: Exception)
+```
+
+Convert common exceptions to actionable, user-friendly error messages.
+
+# @trace WL-040 WP-4001
+
+Maps well-known exception types to concise messages with suggestions.
+For unrecognised exceptions the raw ``str(exc)`` is returned.
+
+**Parameters**:
+
+- `exc`: The exception to convert.
+
+**Returns**: A human-readable, actionable error string.
+
+---
+
 ## format_error_with_context
 
 ```python
@@ -154,3 +175,4 @@ format_error_with_context(error: Exception, context: Any)
 Format and display an error with rich context.
 
 ---
+

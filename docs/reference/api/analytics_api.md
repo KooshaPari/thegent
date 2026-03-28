@@ -69,3 +69,4 @@ Generate Plausible script tag.
 **Returns**: Plausible script tag HTML content
 
 ---
+

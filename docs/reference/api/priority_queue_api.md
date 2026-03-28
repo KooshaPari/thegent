@@ -371,7 +371,7 @@ Enqueue *run* without blocking.
 
 **Raises**:
 
-- `Full`: If the queue is full (only when ``maxsize &gt; 0``).
+- `Full`: If the queue is full (only when ``maxsize > 0``).
 
 ---
 
@@ -384,3 +384,4 @@ qsize(self: Any)
 Return the approximate number of items in the queue.
 
 ---
+

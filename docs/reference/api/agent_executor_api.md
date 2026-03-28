@@ -1,0 +1,131 @@
+# agent_executor API Reference
+
+> **Source**: `src/thegent/ports/driven/agent_executor.py`
+
+Agent execution interface. Breaks cli ↔ agents circular dependency.
+
+This port allows agents to run agent code without importing from cli.commands.impl.
+The concrete implementation (run_impl) lives in cli but is injected.
+
+---
+
+## AgentExecutor
+
+Execute an agent run and query DAG status.
+
+Implementations: impl_core_runners.run_impl, dag_impl_ops.dag_status_impl
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### AgentExecutor.execute_agent
+
+```python
+execute_agent(self: Any, agent: Any, prompt: str, cd: Any, mode: str, timeout: Any, full: bool, live: bool, model: Any, provider: Any, run_id: Any, owner: Any, include_contract: bool, route_contract: Any, route_request: Any, lane: str)
+```
+
+Execute an agent run.
+
+**Parameters**:
+
+- `agent`: Agent name
+- `prompt`: Prompt to execute
+- `cd`: Working directory
+- `mode`: Execution mode (write, read, etc.)
+- `timeout`: Timeout in seconds
+- `full`: Whether to return full output
+- `live`: Whether to stream live updates
+- `model`: Model override
+- `provider`: Provider override
+- `run_id`: Custom run ID
+- `owner`: Session owner
+- `include_contract`: Include contract in result
+- `route_contract`: Routing contract
+- `route_request`: Routing request
+- `lane`: Execution lane (standard, critical, etc.)
+
+**Returns**: RunResult with session_id and status
+
+---
+
+#### AgentExecutor.get_dag_status
+
+```python
+get_dag_status(self: Any, cd: Any)
+```
+
+Get DAG execution status.
+
+**Parameters**:
+
+- `cd`: Working directory
+
+**Returns**: DagStatusInfo with task statuses
+
+---
+
+---
+
+## DagStatusInfo
+
+Status information for a DAG.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## RunResult
+
+Result of an agent run.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## execute_agent
+
+```python
+execute_agent(self: Any, agent: Any, prompt: str, cd: Any, mode: str, timeout: Any, full: bool, live: bool, model: Any, provider: Any, run_id: Any, owner: Any, include_contract: bool, route_contract: Any, route_request: Any, lane: str)
+```
+
+Execute an agent run.
+
+**Parameters**:
+
+- `agent`: Agent name
+- `prompt`: Prompt to execute
+- `cd`: Working directory
+- `mode`: Execution mode (write, read, etc.)
+- `timeout`: Timeout in seconds
+- `full`: Whether to return full output
+- `live`: Whether to stream live updates
+- `model`: Model override
+- `provider`: Provider override
+- `run_id`: Custom run ID
+- `owner`: Session owner
+- `include_contract`: Include contract in result
+- `route_contract`: Routing contract
+- `route_request`: Routing request
+- `lane`: Execution lane (standard, critical, etc.)
+
+**Returns**: RunResult with session_id and status
+
+---
+
+## get_dag_status
+
+```python
+get_dag_status(self: Any, cd: Any)
+```
+
+Get DAG execution status.
+
+**Parameters**:
+
+- `cd`: Working directory
+
+**Returns**: DagStatusInfo with task statuses
+
+---
+

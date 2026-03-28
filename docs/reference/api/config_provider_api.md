@@ -68,7 +68,7 @@ resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys
 
 ## get_config_provider
 
-Factory to get the active config provider based on environment.
+Factory to get the active config provider based on settings.
 
 ---
 
@@ -89,3 +89,4 @@ resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys
 ```
 
 ---
+

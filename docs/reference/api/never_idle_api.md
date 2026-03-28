@@ -116,7 +116,7 @@ Start the never-idle loop in a background thread.
 stop(self: Any)
 ```
 
-Stop the never-idle loop.
+Stop the never-idle loop and tear down the persistent async event loop.
 
 ---
 
@@ -232,7 +232,7 @@ Start the global never-idle loop.
 stop(self: Any)
 ```
 
-Stop the never-idle loop.
+Stop the never-idle loop and tear down the persistent async event loop.
 
 ---
 
@@ -241,3 +241,4 @@ Stop the never-idle loop.
 Stop the global never-idle loop.
 
 ---
+

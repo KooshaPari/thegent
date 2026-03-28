@@ -1,6 +1,6 @@
 # swarm API Reference
 
-> **Source**: `src/thegent/orchestration/swarm.py`
+> **Source**: `src/thegent/orchestration/consensus/swarm.py`
 
 Swarm coordination and shared memory for thegent (WP-1006).
 
@@ -173,3 +173,4 @@ resolve_conflict(self: Any, proposals: list[ACLMessage])
 Find the optimal proposal using utility scores.
 
 ---
+

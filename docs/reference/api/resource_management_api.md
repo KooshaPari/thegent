@@ -1,6 +1,6 @@
 # resource_management API Reference
 
-> **Source**: `src/thegent/orchestration/resource_management.py`
+> **Source**: `src/thegent/orchestration/resource/resource_management.py`
 
 Advanced resource management with extended indices, prediction, and harness modeling.
 
@@ -172,6 +172,16 @@ Record a resource snapshot and detect leaks.
 
 ---
 
+#### ResourcePredictionEngine.should_throttle_speculative
+
+```python
+should_throttle_speculative(self: Any, new_branches: int, min_mem_available_mb: float)
+```
+
+Determine if new speculative branches should be throttled based on resource trends.
+
+---
+
 ---
 
 ## compute_stats
@@ -283,6 +293,16 @@ Sample extended system resources including child processes, threads, sockets, an
 
 ---
 
+## should_throttle_speculative
+
+```python
+should_throttle_speculative(self: Any, new_branches: int, min_mem_available_mb: float)
+```
+
+Determine if new speculative branches should be throttled based on resource trends.
+
+---
+
 ## update
 
 ```python
@@ -292,3 +312,4 @@ update(self: Any, value: float)
 Update distribution with a new value.
 
 ---
+

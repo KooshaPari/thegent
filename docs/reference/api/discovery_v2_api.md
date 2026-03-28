@@ -71,7 +71,7 @@ Register a heartbeat for an agent.
 #### HeartbeatMonitor.cleanup_stale
 
 ```python
-cleanup_stale(self: Any, callback: Any)
+cleanup_stale(self: Any, callback: Callable[..., Any] | None)
 ```
 
 Cleanup stale agent records.
@@ -103,7 +103,7 @@ Register a heartbeat for an agent.
 ## cleanup_stale
 
 ```python
-cleanup_stale(self: Any, callback: Any)
+cleanup_stale(self: Any, callback: Callable[..., Any] | None)
 ```
 
 Cleanup stale agent records.
@@ -139,3 +139,4 @@ scan(self: Any)
 Scan process tree for agents.
 
 ---
+

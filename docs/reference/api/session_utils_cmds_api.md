@@ -1,0 +1,66 @@
+# session_utils_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/session_utils_cmds.py`
+
+Thegent CLI session commands domain - extracted from cli.py (WL-124).
+
+---
+
+## events_cmd
+
+```python
+events_cmd(run_id: Any, limit: int, format: Any)
+```
+
+List raw telemetry events.
+
+---
+
+## feedback_cmd
+
+```python
+feedback_cmd(run_id: Any, score: float, note: Any)
+```
+
+Provide operator feedback for a specific run.
+
+---
+
+## history_cmd
+
+```python
+history_cmd(limit: int, format: Any)
+```
+
+List execution run history (sync and background).
+
+---
+
+## inbox_list_cmd
+
+```python
+inbox_list_cmd(owner: Any, agent: Any, event_type: Any, status: Any, sources: Any, limit: int, format: Any)
+```
+
+List unified inbox events (run registry + escalation) with optional filters.
+
+---
+
+## inbox_wait_cmd
+
+```python
+inbox_wait_cmd(owner: Any, agent: Any, event_type: Any, status: Any, sources: Any, poll: float, timeout: float, notify: bool, format: Any)
+```
+
+Wait for next inbox event matching filters. Blocks until new event or timeout.
+
+---
+
+## ps_cmd
+
+```python
+ps_cmd(all_sessions: bool, owner: Any, format: Any, include_contract: bool) -> None
+```
+
+---
+

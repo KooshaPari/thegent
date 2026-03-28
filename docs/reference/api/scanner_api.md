@@ -152,3 +152,4 @@ should_exclude(self: Any, filepath: Path)
 Check if filepath should be excluded.
 
 ---
+

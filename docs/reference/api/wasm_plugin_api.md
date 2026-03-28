@@ -628,3 +628,4 @@ Unload a registered plugin.
 **Returns**: True if unloading was successful, False otherwise.
 
 ---
+

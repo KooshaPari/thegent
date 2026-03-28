@@ -1,0 +1,114 @@
+# acl API Reference
+
+> **Source**: `src/thegent/mcp/acl.py`
+
+GW-65: Per-tool ACLs for MCP gateway.
+
+Defines access control rules for MCP tool execution.
+Each rule maps an (agent_id / virtual_key_prefix) to a set of
+allowed (server_id, tool) pairs or wildcard patterns.
+
+# @trace FR-MCP-065
+
+---
+
+## AclCheckResult
+
+---
+
+## AclRule
+
+---
+
+## McpAcl
+
+ACL registry for MCP tool access control.
+
+### Methods
+
+#### McpAcl.__init__
+
+```python
+__init__(self: Any, rules: Any)
+```
+
+---
+
+#### McpAcl.add_rule
+
+```python
+add_rule(self: Any, rule: AclRule)
+```
+
+Append an ACL rule to the registry.
+
+---
+
+#### McpAcl.check
+
+```python
+check(self: Any, principal: str, server_id: str, tool: str)
+```
+
+Check if principal can call server_id:tool.
+
+Deny rules take precedence over allow rules.
+If no rule matches, default is DENY.
+
+---
+
+#### McpAcl.list_rules
+
+```python
+list_rules(self: Any)
+```
+
+Return all registered rules.
+
+---
+
+---
+
+## add_rule
+
+```python
+add_rule(self: Any, rule: AclRule)
+```
+
+Append an ACL rule to the registry.
+
+---
+
+## check
+
+```python
+check(self: Any, principal: str, server_id: str, tool: str)
+```
+
+Check if principal can call server_id:tool.
+
+Deny rules take precedence over allow rules.
+If no rule matches, default is DENY.
+
+---
+
+## check_mcp_acl
+
+```python
+check_mcp_acl(principal: str, server_id: str, tool: str, rules: list[AclRule])
+```
+
+Convenience: one-shot ACL check against the given rule list.
+
+---
+
+## list_rules
+
+```python
+list_rules(self: Any)
+```
+
+Return all registered rules.
+
+---
+

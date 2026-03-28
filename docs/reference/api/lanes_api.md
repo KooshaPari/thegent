@@ -1,6 +1,6 @@
 # lanes API Reference
 
-> **Source**: `src/thegent/orchestration/lanes.py`
+> **Source**: `src/thegent/orchestration/execution/lanes.py`
 
 Priority and urgency lane model (WP-1002, FR-019).
 
@@ -136,3 +136,4 @@ sort_tasks(cls: Any, tasks: list[dict[(str, Any)]])
 Sort tasks by lane priority (asc) then by creation time (asc).
 
 ---
+

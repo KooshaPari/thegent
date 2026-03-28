@@ -1,6 +1,6 @@
 # shm_context API Reference
 
-> **Source**: `src/thegent/orchestration/shm_context.py`
+> **Source**: `src/thegent/orchestration/state/shm_context.py`
 
 WP-21002: Zero-Copy Context Sharing (Shared Memory).
 
@@ -139,3 +139,4 @@ write_context(self: Any, data: bytes, offset: int)
 Write context data directly to memory-mapped file.
 
 ---
+

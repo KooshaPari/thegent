@@ -55,11 +55,43 @@ Wrap a discovered tool into a standard execution function.
 
 ---
 
+## ToolAdapterWrapper
+
+Tool adapter wrapper for registry
+
+### Methods
+
+#### ToolAdapterWrapper.__init__
+
+```python
+__init__(self: Any)
+```
+
+---
+
+#### ToolAdapterWrapper.call
+
+```python
+call(self: Any)
+```
+
+---
+
+---
+
 ## ToolDefinition
 
 Metadata for a dynamically discovered tool.
 
 **Inherits from**: `BaseModel`
+
+---
+
+## call
+
+```python
+call(self: Any) -> dict
+```
 
 ---
 
@@ -92,3 +124,4 @@ wrap_tool(self: Any, tool_id: str)
 Wrap a discovered tool into a standard execution function.
 
 ---
+

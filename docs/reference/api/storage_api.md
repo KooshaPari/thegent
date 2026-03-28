@@ -1,203 +1,202 @@
 # storage API Reference
 
-> **Source**: `src/thegent/queue/storage.py`
+> **Source**: `src/thegent/ports/driven/storage.py`
 
-WP-7001: Unified prompt queue storage.
+StoragePort: Interface for file/database persistence.
 
 ---
 
-## PromptQueue
+## StoragePort
 
-Manages a unified queue of deferred agent prompts.
+Port interface for persisting and retrieving provider/model data.
+
+**Inherits from**: `Protocol`
 
 ### Methods
 
-#### PromptQueue.__init__
+#### StoragePort.create_directory
 
 ```python
-__init__(self: Any, session_dir: Path)
+create_directory(self: Any, path: Path)
 ```
+
+Create a directory and all parents.
+
+**Parameters**:
+
+- `path`: Directory path to create.
 
 ---
 
-#### PromptQueue.append
+#### StoragePort.file_exists
 
 ```python
-append(self: Any, prompt: str, project: str, agent: Any)
+file_exists(self: Any, path: Path)
 ```
 
-Append a new prompt to the queue.
+Check if a file exists.
+
+**Parameters**:
+
+- `path`: Path to check.
+
+**Returns**: True if file exists, False otherwise.
 
 ---
 
-#### PromptQueue.claim
+#### StoragePort.load_json
 
 ```python
-claim(self: Any, claimer_id: str, lease_seconds: int, project: Any)
+load_json(self: Any, path: Path)
 ```
 
-Atomically claim the first pending item. Returns claimed item or None.
+Load JSON data from file.
+
+**Parameters**:
+
+- `path`: Path to JSON file.
+
+**Returns**: Parsed JSON data as dict. Returns empty dict if file doesn't exist.
 
 ---
 
-#### PromptQueue.done
+#### StoragePort.load_yaml
 
 ```python
-done(self: Any, item_id: int)
+load_yaml(self: Any, path: Path)
 ```
 
-Mark item by id as done. Returns True if found and updated.
+Load YAML configuration file.
+
+**Parameters**:
+
+- `path`: Path to YAML file.
+
+**Returns**: Parsed YAML data as dict. Returns empty dict if file doesn't exist.
 
 ---
 
-#### PromptQueue.edit
+#### StoragePort.save_json
 
 ```python
-edit(self: Any, item_id: int, prompt: str)
+save_json(self: Any, path: Path, data: dict[(str, Any)])
 ```
 
-Edit prompt for an item. Only pending or claimed items. Returns True if updated.
+Save data as JSON.
+
+**Parameters**:
+
+- `path`: Path to JSON file.
+- `data`: Data to save.
 
 ---
 
-#### PromptQueue.extend_lease
+#### StoragePort.save_yaml
 
 ```python
-extend_lease(self: Any, item_id: int, lease_seconds: int)
+save_yaml(self: Any, path: Path, data: dict[(str, Any)])
 ```
 
-Extend lease for a claimed item. Returns True if found and updated.
+Save data as YAML.
+
+**Parameters**:
+
+- `path`: Path to YAML file.
+- `data`: Data to save.
 
 ---
 
-#### PromptQueue.get_pending_count
+---
+
+## create_directory
 
 ```python
-get_pending_count(self: Any)
+create_directory(self: Any, path: Path)
 ```
 
-Return count of pending items.
+Create a directory and all parents.
+
+**Parameters**:
+
+- `path`: Directory path to create.
 
 ---
 
-#### PromptQueue.list_all
+## file_exists
 
 ```python
-list_all(self: Any, include_done: bool, include_expired: bool, limit: Any)
+file_exists(self: Any, path: Path)
 ```
 
-List queue items with optional filters. Each item gets an 'id' (0-based position).
+Check if a file exists.
+
+**Parameters**:
+
+- `path`: Path to check.
+
+**Returns**: True if file exists, False otherwise.
 
 ---
 
-#### PromptQueue.list_pending
+## load_json
 
 ```python
-list_pending(self: Any)
+load_json(self: Any, path: Path)
 ```
 
-List all pending (unclaimed) items.
+Load JSON data from file.
+
+**Parameters**:
+
+- `path`: Path to JSON file.
+
+**Returns**: Parsed JSON data as dict. Returns empty dict if file doesn't exist.
 
 ---
 
-#### PromptQueue.release
+## load_yaml
 
 ```python
-release(self: Any, item_id: int)
+load_yaml(self: Any, path: Path)
 ```
 
-Release a claim by item id. Returns True if found and updated.
+Load YAML configuration file.
+
+**Parameters**:
+
+- `path`: Path to YAML file.
+
+**Returns**: Parsed YAML data as dict. Returns empty dict if file doesn't exist.
 
 ---
 
----
-
-## append
+## save_json
 
 ```python
-append(self: Any, prompt: str, project: str, agent: Any)
+save_json(self: Any, path: Path, data: dict[(str, Any)])
 ```
 
-Append a new prompt to the queue.
+Save data as JSON.
+
+**Parameters**:
+
+- `path`: Path to JSON file.
+- `data`: Data to save.
 
 ---
 
-## claim
+## save_yaml
 
 ```python
-claim(self: Any, claimer_id: str, lease_seconds: int, project: Any)
+save_yaml(self: Any, path: Path, data: dict[(str, Any)])
 ```
 
-Atomically claim the first pending item. Returns claimed item or None.
+Save data as YAML.
+
+**Parameters**:
+
+- `path`: Path to YAML file.
+- `data`: Data to save.
 
 ---
 
-## done
-
-```python
-done(self: Any, item_id: int)
-```
-
-Mark item by id as done. Returns True if found and updated.
-
----
-
-## edit
-
-```python
-edit(self: Any, item_id: int, prompt: str)
-```
-
-Edit prompt for an item. Only pending or claimed items. Returns True if updated.
-
----
-
-## extend_lease
-
-```python
-extend_lease(self: Any, item_id: int, lease_seconds: int)
-```
-
-Extend lease for a claimed item. Returns True if found and updated.
-
----
-
-## get_pending_count
-
-```python
-get_pending_count(self: Any)
-```
-
-Return count of pending items.
-
----
-
-## list_all
-
-```python
-list_all(self: Any, include_done: bool, include_expired: bool, limit: Any)
-```
-
-List queue items with optional filters. Each item gets an 'id' (0-based position).
-
----
-
-## list_pending
-
-```python
-list_pending(self: Any)
-```
-
-List all pending (unclaimed) items.
-
----
-
-## release
-
-```python
-release(self: Any, item_id: int)
-```
-
-Release a claim by item id. Returns True if found and updated.
-
----

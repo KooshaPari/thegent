@@ -19,7 +19,7 @@ Kill process with SIGTERM then SIGKILL if needed.
 ## mcp_prune
 
 ```python
-mcp_prune(force: bool, dry_run: bool, parent_pid: Any, interactive: bool, caller_info: Any)
+mcp_prune(force: bool, dry_run: bool, parent_pid: Any, interactive: bool, caller_info: Any, shadow_max_age_hours: int, quality_log_max_age_days: int)
 ```
 
 Kill redundant agent-related Node.js processes (LSPs, MCP servers).
@@ -44,6 +44,18 @@ Prompt user on a raw TTY if possible.
 
 ---
 
+## prune_stale_shadow_and_logs
+
+```python
+prune_stale_shadow_and_logs(dry_run: bool, shadow_max_age_hours: int, quality_log_max_age_days: int, root: Any)
+```
+
+Prune stale .shadow-* dirs and aged .quality/logs files.
+
+**Returns**: Tuple of (shadow_dirs_pruned, quality_logs_pruned).
+
+---
+
 ## show_interactive_prune_menu
 
 ```python
@@ -53,3 +65,4 @@ show_interactive_prune_menu(pid: int, cmd: str, tty: str, pane: Any)
 Show a tmux menu for interactive pruning with context.
 
 ---
+

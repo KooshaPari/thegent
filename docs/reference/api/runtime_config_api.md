@@ -1,0 +1,40 @@
+# runtime_config API Reference
+
+> **Source**: `src/thegent/config/runtime_config.py`
+
+Runtime execution configuration settings for thegent.
+
+Settings related to sandboxing, budgets, retention, and execution behavior.
+
+---
+
+## RuntimeConfig
+
+Runtime execution, sandboxing, and budget configuration.
+
+**Inherits from**: `BaseSettings`
+
+### Methods
+
+#### RuntimeConfig.parse_retention_by_domain_validator
+
+```python
+parse_retention_by_domain_validator(v: object)
+```
+
+Validate retention_by_domain.
+
+---
+
+---
+
+## parse_retention_by_domain_validator
+
+```python
+parse_retention_by_domain_validator(v: object)
+```
+
+Validate retention_by_domain.
+
+---
+

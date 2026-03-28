@@ -1,6 +1,6 @@
 # lock_free API Reference
 
-> **Source**: `src/thegent/orchestration/lock_free.py`
+> **Source**: `src/thegent/orchestration/execution/lock_free.py`
 
 WP-21003: Lock-Free Agent State Transitions.
 
@@ -94,3 +94,4 @@ set_state(self: Any, key: str, value: Any)
 Set state with a new version.
 
 ---
+

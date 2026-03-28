@@ -1,0 +1,224 @@
+# encrypted_artifact API Reference
+
+> **Source**: `src/thegent/integrations/encrypted_artifact.py`
+
+Encrypted Artifact Option (WL-254): Store encrypted artifact metadata.
+
+Provides configuration and storage for artifact encryption metadata.
+Stores encryption configuration alongside artifacts (actual encryption is
+handled by the storage backend).
+
+# @trace WL-254
+
+---
+
+## ArtifactEncryptionConfig
+
+Encryption configuration for artifacts.
+
+### Methods
+
+---
+
+## EncryptedArtifactStore
+
+Manages encrypted artifact storage and retrieval.
+
+Stores artifact data along with encryption metadata. The actual encryption
+and decryption are handled by the storage backend; this class manages
+metadata and configuration.
+
+### Methods
+
+#### EncryptedArtifactStore.__init__
+
+```python
+__init__(self: Any)
+```
+
+Initialize the encrypted artifact store.
+
+---
+
+#### EncryptedArtifactStore.get_config
+
+```python
+get_config(self: Any, artifact_id: str)
+```
+
+Get encryption configuration for an artifact.
+
+**Parameters**:
+
+- `artifact_id`: The artifact identifier.
+
+**Returns**: The ArtifactEncryptionConfig for this artifact.
+
+---
+
+#### EncryptedArtifactStore.list_artifacts
+
+```python
+list_artifacts(self: Any)
+```
+
+List all stored artifact IDs.
+
+**Returns**: List of artifact identifiers.
+
+---
+
+#### EncryptedArtifactStore.retrieve
+
+```python
+retrieve(self: Any, artifact_id: str)
+```
+
+Retrieve an artifact.
+
+**Parameters**:
+
+- `artifact_id`: The artifact to retrieve.
+
+**Returns**: The artifact data as a dictionary.
+
+---
+
+#### EncryptedArtifactStore.store
+
+```python
+store(self: Any, artifact_id: str, data: dict[(str, Any)], config: Any)
+```
+
+Store an artifact with optional encryption configuration.
+
+**Parameters**:
+
+- `artifact_id`: Unique artifact identifier.
+- `data`: Artifact data as a dictionary.
+- `config`: Encryption configuration. If None, uses default config.
+
+**Returns**: The artifact_id.
+
+---
+
+---
+
+## get_config
+
+```python
+get_config(self: Any, artifact_id: str)
+```
+
+Get encryption configuration for an artifact.
+
+**Parameters**:
+
+- `artifact_id`: The artifact identifier.
+
+**Returns**: The ArtifactEncryptionConfig for this artifact.
+
+**Raises**:
+
+- `KeyError`: If artifact_id is not found.
+
+**Examples**:
+
+```python
+>>> store = EncryptedArtifactStore()
+>>> config = ArtifactEncryptionConfig(algorithm="AES-256", key_id="prod")
+>>> store.store("art-1", {}, config)
+>>> retrieved_config = store.get_config("art-1")
+>>> retrieved_config.key_id
+"prod"
+```
+
+---
+
+## list_artifacts
+
+```python
+list_artifacts(self: Any)
+```
+
+List all stored artifact IDs.
+
+**Returns**: List of artifact identifiers.
+
+**Examples**:
+
+```python
+>>> store = EncryptedArtifactStore()
+>>> store.store("art-1", {})
+>>> store.store("art-2", {})
+>>> sorted(store.list_artifacts())
+["art-1", "art-2"]
+```
+
+---
+
+## retrieve
+
+```python
+retrieve(self: Any, artifact_id: str)
+```
+
+Retrieve an artifact.
+
+**Parameters**:
+
+- `artifact_id`: The artifact to retrieve.
+
+**Returns**: The artifact data as a dictionary.
+
+**Raises**:
+
+- `KeyError`: If artifact_id is not found.
+
+**Examples**:
+
+```python
+>>> store = EncryptedArtifactStore()
+>>> store.store("art-1", {"key": "value"})
+>>> store.retrieve("art-1")
+{"key": "value"}
+>>> store.retrieve("nonexistent")
+Traceback (most recent call last):
+    ...
+KeyError: 'Artifact art-1 not found'
+```
+
+---
+
+## store
+
+```python
+store(self: Any, artifact_id: str, data: dict[(str, Any)], config: Any)
+```
+
+Store an artifact with optional encryption configuration.
+
+**Parameters**:
+
+- `artifact_id`: Unique artifact identifier.
+- `data`: Artifact data as a dictionary.
+- `config`: Encryption configuration. If None, uses default config.
+
+**Returns**: The artifact_id.
+
+**Raises**:
+
+- `ValueError`: If artifact_id or data is invalid.
+
+**Examples**:
+
+```python
+>>> store = EncryptedArtifactStore()
+>>> config = ArtifactEncryptionConfig(algorithm="AES-256", key_id="key-1")
+>>> artifact_id = store.store("art-1", {"info": "data"}, config)
+>>> artifact_id
+"art-1"
+```
+
+---
+

@@ -10,7 +10,7 @@ can exchange messages without any network service.
 Directory layout::
 
     ~/.thegent/ipc/
-      &lt;recipient_hash&gt;/      # SHA256 of recipient address, first 16 hex chars
+      <recipient_hash>/      # SHA256 of recipient address, first 16 hex chars
         tmp/                 # staging: write here first
         new/                 # ready to be read
         cur/                 # claimed (in-flight) by receiver
@@ -22,13 +22,13 @@ Directory layout::
 Message file format (JSON, one message per file)::
 
     {
-        "msg_id":   "&lt;uuid&gt;",
-        "sender":   "&lt;project_root&gt;:&lt;agent_id&gt;",
-        "recipient": "&lt;project_root&gt;:&lt;agent_id&gt;" | "*",
-        "topic":    "&lt;string&gt;",
+        "msg_id":   "<uuid>",
+        "sender":   "<project_root>:<agent_id>",
+        "recipient": "<project_root>:<agent_id>" | "*",
+        "topic":    "<string>",
         "payload":  { ... },
-        "timestamp": &lt;unix float&gt;,
-        "reply_to": "&lt;msg_id&gt;" | null
+        "timestamp": <unix float>,
+        "reply_to": "<msg_id>" | null
     }
 
 Atomicity guarantee: every delivery uses ``os.rename`` from ``tmp/`` to
@@ -108,7 +108,7 @@ receive(self: Any, timeout: float)
 
 Claim the next message from this agent's inbox.
 
-When *timeout* is 0 the call is non-blocking; when *timeout* &gt; 0 it
+When *timeout* is 0 the call is non-blocking; when *timeout* > 0 it
 polls until a message arrives or the timeout elapses.
 
 **Parameters**:
@@ -181,7 +181,7 @@ Send a message to *recipient*.
 
 **Parameters**:
 
-- `recipient`: Target address (``"&lt;project_root&gt;:&lt;agent_id&gt;"``).
+- `recipient`: Target address (``"<project_root>:<agent_id>"``).
 - `topic`:     Message topic / type string.
 - `payload`:   Arbitrary JSON-serialisable data.
 
@@ -378,7 +378,7 @@ receive(self: Any, timeout: float)
 
 Claim the next message from this agent's inbox.
 
-When *timeout* is 0 the call is non-blocking; when *timeout* &gt; 0 it
+When *timeout* is 0 the call is non-blocking; when *timeout* > 0 it
 polls until a message arrives or the timeout elapses.
 
 **Parameters**:
@@ -481,7 +481,7 @@ Send a message to *recipient*.
 
 **Parameters**:
 
-- `recipient`: Target address (``"&lt;project_root&gt;:&lt;agent_id&gt;"``).
+- `recipient`: Target address (``"<project_root>:<agent_id>"``).
 - `topic`:     Message topic / type string.
 - `payload`:   Arbitrary JSON-serialisable data.
 
@@ -518,3 +518,4 @@ to_json(self: Any)
 Serialise to a JSON string.
 
 ---
+

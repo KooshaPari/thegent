@@ -1,6 +1,6 @@
 # cli_commands_shared_servers API Reference
 
-> **Source**: `src/thegent/cli_commands_shared_servers.py`
+> **Source**: `src/thegent/cli/commands/cli_commands_shared_servers.py`
 
 CLI Commands for Shared Server Management
 
@@ -35,3 +35,4 @@ shared_status(project_root: str)
 Show status of shared servers.
 
 ---
+

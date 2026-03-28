@@ -9,7 +9,68 @@ The PlangentPlanner decomposes a goal into a directed acyclic graph (DAG)
 of sub-tasks, and the PlangentExecutor dispatches each ready node to a
 caller-supplied runner (sync or async).
 
+When a plan is an OrchestrationPlan, execute_async() delegates to
+SubAgentDispatcher.dispatch_plan() instead of the caller-supplied runner.
+Results are collected via ResultAggregator and node statuses updated
+accordingly.
+
+LLMPlangentPlanner is a subclass of PlangentPlanner that overrides
+_generate_sub_tasks() to use a FlashAgent LLM call for structured
+decomposition. Output is validated against OrchestrationPlan schema.
+The explicit fallback strategy (model unavailable → parent heuristic)
+is documented: this is a deliberate design decision for the planning
+path only, where partial decomposition is worse than no decomposition.
+
 # @trace FR-AGT-020
+# @trace WL-084
+# @trace WL-087
+
+---
+
+## LLMPlangentPlanner
+
+PlangentPlanner subclass that uses a FlashAgent LLM call for decomposition.
+
+Overrides ``_generate_sub_tasks()`` to call a cheap model (haiku/flash)
+via :class:`~thegent.agents.flash_agent.FlashAgent`, parse its JSON
+output, and validate it against the OrchestrationPlan node schema.
+
+Fallback strategy (explicit, documented):
+    When the model is unavailable (FlashAgent returns ``success=False``
+    due to timeout or connectivity), the planner falls back to the
+    parent :class:`PlangentPlanner` heuristic decomposition.  This is
+    an intentional design decision: for the planning path, a degraded
+    heuristic plan is acceptable when the LLM is unreachable.  The
+    fallback is logged at WARNING level so it is always visible.
+    Schema validation failures are NOT subject to fallback — they raise
+    ``ValueError`` immediately (fail loud, fail fast).
+
+# @trace WL-087
+
+**Inherits from**: `PlangentPlanner`
+
+**Method Resolution Order**: `LLMPlangentPlanner -> PlangentPlanner`
+
+### Methods
+
+#### LLMPlangentPlanner.__init__
+
+```python
+__init__(self: Any)
+```
+
+Initialise the LLM-backed planner.
+
+**Parameters**:
+
+- `model`: LiteLLM model identifier for the decomposition call.
+Defaults to ``claude-haiku-4.5`` (cheap, fast).
+- `timeout_s`: Timeout in seconds for the FlashAgent call.
+- `max_tokens`: Maximum tokens the LLM may produce.
+- `separator`: Forwarded to :class:`PlangentPlanner`.
+- `max_nodes_per_level`: Forwarded to :class:`PlangentPlanner`.
+
+---
 
 ---
 
@@ -131,7 +192,7 @@ have unsatisfied dependencies due to failures).
 **Parameters**:
 
 - `plan`: The :class:`Plan` to execute.
-- `runner`: Callable ``(PlanNode) -&gt; str`` invoked for each ready
+- `runner`: Callable ``(PlanNode) -> str`` invoked for each ready
 node.  Must return the result string on success or raise an
 exception on failure.
 
@@ -277,6 +338,26 @@ Each row has keys: ``id``, ``title``, ``source``, ``priority``,
 
 ---
 
+## _AggregatorMessage
+
+Minimal duck-type compatible with ResultAggregator.add() expectations.
+
+ResultAggregator reads ``.message_type`` from each item it aggregates.
+Using this lightweight dataclass avoids importing InterAgentMessage here
+(which would create a circular dependency via the orchestration package).
+
+# @trace WL-084
+
+---
+
+## _LLMNodeSpec
+
+Intermediate parsed representation of one LLM-produced node spec.
+
+# @trace WL-087
+
+---
+
 ## decompose
 
 ```python
@@ -325,7 +406,7 @@ have unsatisfied dependencies due to failures).
 **Parameters**:
 
 - `plan`: The :class:`Plan` to execute.
-- `runner`: Callable ``(PlanNode) -&gt; str`` invoked for each ready
+- `runner`: Callable ``(PlanNode) -> str`` invoked for each ready
 node.  Must return the result string on success or raise an
 exception on failure.
 
@@ -464,3 +545,4 @@ Each row has keys: ``id``, ``title``, ``source``, ``priority``,
 **Returns**: List of dicts, one per node.
 
 ---
+

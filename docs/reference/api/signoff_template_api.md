@@ -1,0 +1,20 @@
+# signoff_template API Reference
+
+> **Source**: `src/thegent/integrations/signoff_template.py`
+
+Stub module for thegent.integrations.signoff_template.
+
+---
+
+## get_template_path
+
+Stub function.
+
+---
+
+## render_template
+
+Stub function.
+
+---
+
