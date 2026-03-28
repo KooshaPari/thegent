@@ -6,6 +6,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 import { imagetools } from 'vite-imagetools'
 import { crossProjectLinks } from './plugins/cross-project-links'
 import { contentTabsPlugin } from './plugins/content-tabs'
+import { imageOptimizationPlugin } from './plugins/image-optimization'
 import { videoEmbedPlugin } from './plugins/video-embed'
 import { sidebar } from './sidebar-canonical'
 import { createRequire } from 'module'
@@ -186,6 +187,7 @@ const config = defineConfig({
         errorColor: '#cc0000'
       })
 
+      md.use(imageOptimizationPlugin)
       // Emoji support - use defaults to avoid undefined rendering in tables
       md.use(markdownItEmoji)
     },

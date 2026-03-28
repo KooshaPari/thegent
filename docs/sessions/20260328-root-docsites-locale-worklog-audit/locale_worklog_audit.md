@@ -23,3 +23,8 @@ Generated: 2026-03-28T08:21:36.615Z
 | tokenledger-wt | true | tokenledger-wt/docs/.vitepress/config.ts | none | none | none | none | docs/sessions(1) |
 | trace | true | trace/docs/.vitepress/config.ts | none | none | none | none | docs/sessions(1) |
 | trash-cli | true | trash-cli/docs/.vitepress/config.mts | none | none | none | none | docs/sessions(1) |
+
+## Recent updates
+
+- Added `docs/.vitepress/plugins/image-optimization.ts` and wired it into `docs/.vitepress/config.ts` so markdown `<img>` renderings automatically get `loading="lazy"` and `decoding="async"` when the attributes were missing.
+- Introduced `scripts/docs-verify-media.js` plus `package.json` script and Taskfile task to rebuild the dist folder and confirm built HTML includes lazy-loaded images alongside existing `<video controls>` nodes, and added the same verification step to `.github/workflows/docs.yml`.

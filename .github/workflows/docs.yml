@@ -42,6 +42,9 @@ jobs:
       - name: Verify built docs
         run: test -f docs/.vitepress/dist/index.html
 
+      - name: Validate docsite media
+        run: bun run docs:verify-media
+
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

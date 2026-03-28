@@ -1988,6 +1988,12 @@ tasks:
     cmds:
       - bun run docs:pdf
 
+  docs:verify-media:
+    desc: Verify docsite markdown media regression (lazy images + video controls)
+    deps: [docs:build]
+    cmds:
+      - bun run docs:verify-media
+
   docs:convert-audit:
     desc: Audit docs/*.md for H1, frontmatter, See also (convert phase)
     cmds:
