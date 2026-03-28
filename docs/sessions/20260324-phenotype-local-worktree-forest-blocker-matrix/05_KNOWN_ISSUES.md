@@ -18,10 +18,10 @@
 - **`heliosCLI`**: 96 dirty paths; heavily divergent root state.
 - **`AgilePlus`**: 535 dirty paths; major forest noise.
 
-### Operational: Layout and State Blockers
+-### Operational: Layout and State Blockers
 - **`cliproxy-wtress`**: Typo duplicate of `cliproxy-wtrees` (Must-Normalize).
 - **`portage`**: Stale prunable worktrees and detached legacy lanes (Cleanup-Ready).
-- **`trace`**: `codex-required-gates*` locks were cleared on 2026-03-28 (only `trace`, `trace-wtrees/spec-docs`, and `trace-wtrees/ui-overhaul` remain in `git worktree list --porcelain`).
+- **`trace`**: `codex-required-gates*` locks were cleared on 2026-03-28; repeated `git worktree list --porcelain` now only reports the canonical three lanes (`trace` @ `b81e00522e2ae559eb308de8f4a2d7959717ccde` on `fix/tracertm-types-react`, `trace-wtrees/spec-docs` @ `ecfab33f92bb717df72a5dc1217b402cf3fdee58` on `docs/add-adr`, `trace-wtrees/ui-overhaul` @ `3eabc971ed5aa0943013f264fa75565bd8a44f7d` on `fix/ts4111-build-v2`); there are no remaining `codex-required-gates*` worktrees to unlock or remove.
 - **`trash-cli`**: Detached `PROJECT-wtrees` lane (`pr1-rust-put-fix`).
 - **`ralph-codex-loop`**: Unborn/Initializing (`HEAD` is all zeros).
 

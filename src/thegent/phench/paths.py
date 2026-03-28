@@ -44,9 +44,10 @@ def repository_root_candidates() -> list[Path]:
         base_root = phenotype_root() / "repos"
     if not base_root.exists():
         return []
-    return sorted(
+    candidates = sorted(
         path for path in base_root.iterdir() if path.is_dir() and not path.name.startswith(".")
     )
+    return candidates
 
 
 def should_include_repo(
@@ -126,14 +127,3 @@ def module_manifest_root(module: str) -> Path:
 
 def module_manifest_path(module: str) -> Path:
     return module_manifest_root(module) / "manifest.json"
-
-
-def module_manifests_root() -> Path:
-    return projects_root() / "modules"
-
-
-def repository_root_candidates() -> list[Path]:
-    base = phenotype_repos_root()
-    if not base.exists():
-        return []
-    return sorted([path for path in base.iterdir() if path.is_dir() and not path.name.startswith(".")])
