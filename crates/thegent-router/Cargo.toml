@@ -1,5 +1,4 @@
 [package]
-[package]
 name = "thegent-router"
 version = "0.1.0"
 edition = "2021"
@@ -31,3 +30,36 @@ crate-type = ["cdylib", "rlib"]
 [[bench]]
 name = "audit_bench"
 harness = false
+
+name = "thegent-router"
+version = "0.1.0"
+edition = "2021"
+description = "Pareto routing engine with hysteresis for task distribution"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+thegent-shm = { path = "../thegent-shm" }
+uuid = { version = "1.11", features = ["v4"] }
+sha2 = "0.10"
+hex = "0.4"
+pyo3 = { version = "0.24.1", optional = true, features = ["abi3-py312", "extension-module"] }
+
+[features]
+python = ["dep:pyo3"]
+
+[dev-dependencies]
+tempfile = "3.10"
+criterion.workspace = true
+
+[lib]
+name = "thegent_router"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bench]]
+name = "audit_bench"
+harness = false
+
