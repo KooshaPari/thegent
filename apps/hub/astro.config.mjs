@@ -24,6 +24,13 @@ export default defineConfig({
           label: 'Governance',
           autogenerate: { directory: 'governance' },
         },
+        {
+          label: 'About',
+          items: [
+            { label: 'Overview', link: '/about/' },
+            { label: 'Past Projects', link: '/about/projects/' },
+          ],
+        },
       ],
       customCss: ['./src/styles/custom.css'],
     }),
