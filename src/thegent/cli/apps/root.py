@@ -14,6 +14,7 @@ from thegent.cli.apps import (
     isolation,
     memory,
     orchestrate,
+    phench,
     plan,
     queue,
     registry,
@@ -39,6 +40,7 @@ def register_root_apps(app: typer.Typer, git_app: typer.Typer) -> None:
     app.add_typer(run.app, name="run", help="Execution: Agent tasks, background runs, and history.")
     app.add_typer(crew.app, name="crew", help="Crew: create, execute, inspect, and monitor crews.")
     app.add_typer(bench.app, name="bench", help="Benchmark: run benchmark suites and persist result rows.")
+    app.add_typer(phench.app, name="phench", help="Phench: deterministic project-state runtime control plane.")
     app.add_typer(sync.app, name="sync", help="Synchronization: Rules, DAG, work-stream, and catalog.")
     app.add_typer(skills.app, name="skill", help="Skills: Auto-discovery and management of agent skills.")
     app.add_typer(audit.app, name="audit", help="Integrity: System health, security, and planning risk.")
