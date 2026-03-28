@@ -8,6 +8,7 @@ Traces to: FR-INFRA-001 (package import health), FR-INFRA-002 (CLI entry points)
 """
 
 import importlib
+import importlib.util
 import sys
 
 import pytest
@@ -27,8 +28,9 @@ def test_thegent_package_importable() -> None:
 @pytest.mark.requirement("FR-INFRA-001")
 def test_thegent_top_level_init() -> None:
     """Importing thegent.__init__ must not raise."""
-    import thegent  # noqa: F401
+    import thegent
 
+    assert thegent.__name__ == "thegent"
     assert "thegent" in sys.modules
 
 
@@ -37,7 +39,7 @@ def test_thegent_top_level_init() -> None:
 @pytest.mark.requirement("FR-INFRA-002")
 def test_thegent_exit_codes_importable() -> None:
     """exit_codes module must expose EXIT_TIMEOUT at minimum."""
-    from thegent import exit_codes
+    exit_codes = importlib.import_module("thegent.exit_codes")
 
     assert hasattr(exit_codes, "EXIT_TIMEOUT"), "exit_codes.EXIT_TIMEOUT missing"
 
@@ -47,7 +49,7 @@ def test_thegent_exit_codes_importable() -> None:
 @pytest.mark.requirement("FR-INFRA-002")
 def test_thegent_constants_importable() -> None:
     """constants module must be importable."""
-    from thegent import constants  # noqa: F401
+    importlib.import_module("thegent.constants")
 
     assert "thegent.constants" in sys.modules
 
