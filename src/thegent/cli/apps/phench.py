@@ -1,32 +1,50 @@
 """Phench: stable project-state runtime control plane for Phenotype/projects."""
 
 from __future__ import annotations
-
-from dataclasses import asdict
 from pathlib import Path
 
 import typer
+from rich.console import Console
+from rich.prompt import IntPrompt
 
 from thegent.phench import (
-    add_repo,
     add_module_to_target,
+    add_repo,
     audit_shared_modules,
-    scan_shared_modules_across_repos,
+    audit_shared_modules_across_repos,
+    build_module_manifest_payload,
+    build_project_execution_matrix,
+    create_target_snapshot,
+    discover_repos,
     get_env_profile,
     init_target,
-    materialize_module_candidate_manifest,
+    list_modules,
+    list_target_snapshots,
     list_targets,
     lock_target,
+    materialize_module_candidate_manifest,
     materialize_target,
     run_env_doctor_for_target,
     run_target,
     set_env_profile,
+    set_repo_ref,
+    show_target_snapshot,
+    sync_project_modules_from_repos,
     sync_target,
     target_status,
     target_timeline,
 )
+from .phench_env import register_env_commands
+from .phench_modules import register_modules_commands
+from .phench_projects import register_projects_run
+from .phench_repos import register_repos_commands
+from .phench_run import register_run_commands
+from .phench_snapshot import register_snapshot_commands
+from .phench_sync import register_sync_commands
+from .phench_timeline import register_timeline_commands
 
 console = Console()
+
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
 target_app = typer.Typer(help="Manage project runtime targets.")
 repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
@@ -42,8 +60,14 @@ app.add_typer(modules_app, name="modules")
 app.add_typer(projects_app, name="projects")
 
 
-def _phench_attr(name: str) -> Any:
-    return getattr(import_module("thegent.phench"), name)
+def _display_lock(lock) -> None:
+    payload = {
+        "target": lock.target_name,
+        "mode": lock.mode,
+        "repos": [repo.repo_id for repo in lock.repos],
+        "lock_hash": lock.lock_hash,
+    }
+    console.print_json(data=payload)
 
 
 @target_app.command("init", help="Create a new target in Phenotype/projects.")
@@ -53,30 +77,26 @@ def target_init_cmd(
 ) -> None:
     if mode not in {"repo", "stack"}:
         raise typer.BadParameter("mode must be one of: repo, stack")
-    lock = init_target(name, mode=mode)  # type: ignore[arg-type]
-    console.print_json(
-        json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode()
-    )
+    lock = init_target(name, mode=mode)
+    _display_lock(lock)
 
 
 @target_app.command("add-repo", help="Add repo+ref selection to a target.")
 def target_add_repo_cmd(
     name: str = typer.Argument(..., help="Target name."),
-    repo: str = typer.Option(..., "--repo", help="Absolute path to repo checkout."),
+    repo: Path = typer.Option(..., "--repo", help="Absolute path to repo checkout."),
     ref: str = typer.Option(..., "--ref", help="Selected git ref (branch/tag/sha)."),
     repo_id: str | None = typer.Option(None, "--repo-id", help="Optional stable repo identifier."),
-    worktree: str | None = typer.Option(None, "--worktree", help="Optional source worktree path hint."),
+    worktree: Path | None = typer.Option(None, "--worktree", help="Optional source worktree path hint."),
 ) -> None:
-    lock = _phench_attr("add_repo")(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "repos": [repo.repo_id for repo in lock.repos],
-                "lock_hash": lock.lock_hash,
-        }
-    ).decode()
-)
+    lock = add_repo(
+        name,
+        repo_path=str(repo),
+        selected_ref=ref,
+        repo_id=repo_id,
+        worktree_path=str(worktree) if worktree else None,
+    )
+    _display_lock(lock)
 
 
 @target_app.command("add-module", help="Add module-selected repos to a target.")
@@ -92,137 +112,24 @@ def target_add_module_cmd(
         selected_ref=selected_ref,
         exclude_repos={value.strip() for value in exclude if value.strip()},
     )
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "module": module,
-                "repos": [entry.repo_id for entry in lock.repos if entry.module_name == module],
-                "lock_hash": lock.lock_hash,
-            }
-        ).decode()
-    )
-
-
-@target_app.command("add-module", help="Add module-selected repos to a target.")
-def target_add_module_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    module: str = typer.Option(..., "--module", "--mod", help="Module name under Phenotype/projects/modules."),
-    selected_ref: str | None = typer.Option(None, "--ref", help="Override selected ref for all module repos."),
-    exclude: list[str] = typer.Option([], "--exclude", help="Exact repo IDs to exclude (no glob patterns)."),
-) -> None:
-    lock = add_module_to_target(
-        name,
-        module_name=module,
-        selected_ref=selected_ref,
-        exclude_repos={value.strip() for value in exclude if value.strip()},
-    )
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "module": module,
-                "repos": [entry.repo_id for entry in lock.repos if entry.module_name == module],
-                "lock_hash": lock.lock_hash,
-            }
-        ).decode()
-    )
+    _display_lock(lock)
 
 
 @target_app.command("lock", help="Resolve selected refs to immutable SHAs.")
 def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    lock = _phench_attr("lock_target")(name)
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "lock_hash": lock.lock_hash,
-                "repos": [
-                    {
-                        "repo_id": repo.repo_id,
-                        "selected_ref": repo.selected_ref,
-                        "resolved_sha": repo.resolved_sha,
-                    }
-                    for repo in lock.repos
-                ],
-            }
-        ).decode()
-    )
+    lock = lock_target(name)
+    _display_lock(lock)
 
 
-@target_app.command("materialize", help="Materialize deterministic checkouts under Phenotype/projects/<target>/repos.")
+@target_app.command("materialize", help="Materialize deterministic checkouts for a target.")
 def target_materialize_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    runtime = _phench_attr("materialize_target")(name)
-    console.print_json(
-        json.dumps(
-            {
-                "target": runtime.target_name,
-                "materialized_root": runtime.materialized_root,
-                "repos": [asdict(repo) for repo in runtime.repo_materializations],
-            }
-        ).decode()
-    )
-
-
-register_timeline_commands(app, target_timeline_fn=_timeline_dispatch)
-register_run_commands(app, run_target_fn=_run_dispatch)
-register_env_commands(
-    env_app,
-    run_env_doctor_for_target_fn=_run_env_doctor_dispatch,
-    set_env_profile_fn=_set_env_profile_dispatch,
-    get_env_profile_fn=_get_env_profile_dispatch,
-)
-register_sync_commands(app, sync_target_fn=_sync_target_dispatch)
-register_snapshot_commands(
-    snapshot_app,
-    create_target_snapshot_fn=_snapshot_create_dispatch,
-    list_target_snapshots_fn=_snapshot_list_dispatch,
-    show_target_snapshot_fn=_snapshot_show_dispatch,
-)
-register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
-register_modules_commands(
-    modules_app,
-    sync_project_modules_from_repos_fn=_sync_project_modules_from_repos_dispatch,
-    audit_shared_modules_across_repos_fn=_audit_shared_modules_across_repos_dispatch,
-)
-
-@env_app.command("doctor", help="Run fail-fast environment doctor for a materialized target.")
-def env_doctor_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    report = _phench_attr("run_env_doctor_for_target")(name)
-    console.print_json(json.dumps(report).decode())
-    if report["doctor_status"] != "pass":
-        raise typer.Exit(2)
-
-
-@env_app.command("profile-set", help="Set or replace a named env profile for target run commands.")
-def env_profile_set_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    profile: str = typer.Option(..., "--profile", help="Profile name."),
-    vars: list[str] = typer.Option([], "--var", help="KEY=VALUE pairs; may be repeated."),
-) -> None:
-    values: dict[str, str] = {}
-    for pair in vars:
-        if "=" not in pair:
-            raise typer.BadParameter("Each --var must be KEY=VALUE")
-        key, value = pair.split("=", 1)
-        if not key:
-            raise typer.BadParameter("Environment variable key cannot be empty")
-        values[key] = value
-    state = _phench_attr("set_env_profile")(name, profile, values)
-    console.print_json(json.dumps(state).decode())
-
-
-@env_app.command("profile-show", help="Show active or named env profile for target run commands.")
-def env_profile_show_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    profile: str | None = typer.Option(None, "--profile", help="Optional profile name."),
-) -> None:
+    runtime = materialize_target(name)
     payload = {
-        "target": name,
-        "profile": profile or "active",
-        "env": _phench_attr("get_env_profile")(name, profile=profile),
+        "target": runtime.target_name,
+        "materialized_root": runtime.materialized_root,
+        "repos": [repo.repo_id for repo in runtime.repo_materializations],
     }
-    console.print_json(json.dumps(payload).decode())
+    console.print_json(data=payload)
 
 
 @app.command("sync", help="Verify and repair dual .phench mirror drift.")
@@ -230,25 +137,27 @@ def sync_cmd(
     name: str = typer.Argument(..., help="Target name."),
     prefer: str | None = typer.Option(None, "--prefer", help="Drift resolution source: projects|home."),
 ) -> None:
-    result = _phench_attr("sync_target")(name, prefer=prefer)
-    console.print_json(json.dumps(result).decode())
+    result = sync_target(name, prefer=prefer)
+    console.print_json(data=result)
 
 
 @app.command("status", help="Show lock/runtime/env status for a target.")
-def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = _phench_attr("target_status")(name)
-    console.print_json(json.dumps(state).decode())
+def status_cmd(
+    name: str = typer.Argument(..., help="Target name."),
+) -> None:
+    state = target_status(name)
+    console.print_json(data=state)
 
 
 @app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
 def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = _phench_attr("audit_shared_modules")(name)
-    console.print_json(json.dumps(state).decode())
+    state = audit_shared_modules(name)
+    console.print_json(data=state)
 
 
 @app.command("scan-shared-repos", help="Audit shared modules across repos in a phenotype workspace.")
 def scan_shared_repos_cmd(
-    repos_root: str | None = typer.Option(
+    repos_root: Path | None = typer.Option(
         None,
         "--repos-root",
         help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
@@ -303,13 +212,13 @@ def scan_shared_repos_cmd(
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc))
-    console.print_json(json.dumps(state).decode())
+    console.print_json(data=state)
 
 
 @app.command("materialize-module-manifest", help="Materialize a shared-module manifest candidate from scan output.")
 def materialize_module_manifest_cmd(
     module: str = typer.Option(..., "--module", help="Shared module name from scan results."),
-    repos_root: str | None = typer.Option(
+    repos_root: Path | None = typer.Option(
         None,
         "--repos-root",
         help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
@@ -319,17 +228,13 @@ def materialize_module_manifest_cmd(
         "--repos-root-mode",
         help="Select repository selection mode: repos (default) or worktrees.",
     ),
-    repos: list[str] = typer.Option(
-        [],
-        "--repo",
-        help="Optional explicit repo IDs to pin candidate generation.",
-    ),
+    repos: list[str] = typer.Option([], "--repo", help="Optional explicit repo IDs to pin candidate generation."),
     min_count: int = typer.Option(
         2,
         "--min-count",
         help="Minimum overlap threshold for shared-module candidates.",
     ),
-    output_dir: str | None = typer.Option(
+    output_dir: Path | None = typer.Option(
         None,
         "--output-dir",
         help="Directory to persist generated manifest. Defaults to $THGENT_PHENOTYPE_ROOT/projects/modules.",
@@ -361,16 +266,17 @@ def materialize_module_manifest_cmd(
         raise typer.BadParameter(str(exc))
 
     if print_snippets:
+        module_name = payload.get("module_name", module)
         payload["shell_snippets"] = [
-            f"thegent phench target init {payload['module_name']} --mode stack",
-            f"thegent phench target add-module {payload['module_name']} --module {payload['module_name']}",
+            f"thegent phench target init {module_name} --mode stack",
+            f"thegent phench target add-module {module_name} --module {module_name}",
         ]
-    console.print_json(json.dumps(payload).decode())
+    console.print_json(data=payload)
 
 
 @app.command("tui", help="Interactive selector: target -> timeline -> run.")
 def tui_cmd() -> None:
-    targets = _phench_attr("list_targets")()
+    targets = list_targets()
     if not targets:
         raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
 
@@ -382,10 +288,44 @@ def tui_cmd() -> None:
         raise typer.BadParameter("Target selection out of range.")
     selected_target = targets[target_index - 1]
 
-    timeline = _phench_attr("target_timeline")(selected_target, limit=20)
+    timeline = target_timeline(selected_target, limit=20)
     console.print(f"Timeline for [bold]{selected_target}[/bold] ({timeline['repo_id']}):")
     for line in timeline.get("recent", []):
         console.print(f"  {line}")
 
-    code = _phench_attr("run_target")(selected_target)
+    code = run_target(selected_target)
     raise typer.Exit(code)
+
+
+register_timeline_commands(app, target_timeline_fn=target_timeline)
+register_run_commands(app, run_target_fn=run_target)
+register_env_commands(
+    env_app,
+    run_env_doctor_for_target_fn=run_env_doctor_for_target,
+    set_env_profile_fn=set_env_profile,
+    get_env_profile_fn=get_env_profile,
+)
+register_sync_commands(app, sync_target_fn=sync_target)
+register_snapshot_commands(
+    snapshot_app,
+    create_target_snapshot_fn=create_target_snapshot,
+    list_target_snapshots_fn=list_target_snapshots,
+    show_target_snapshot_fn=show_target_snapshot,
+)
+register_repos_commands(repos_app, discover_repos_fn=discover_repos)
+register_modules_commands(
+    modules_app,
+    sync_project_modules_from_repos_fn=sync_project_modules_from_repos,
+    audit_shared_modules_across_repos_fn=audit_shared_modules_across_repos,
+)
+register_projects_run(
+    projects_app,
+    list_targets_fn=list_targets,
+    list_modules_fn=list_modules,
+    target_timeline_fn=target_timeline,
+    target_status_fn=target_status,
+    lock_target_fn=lock_target,
+    materialize_target_fn=materialize_target,
+    run_target_fn=run_target,
+    build_matrix_fn=build_project_execution_matrix,
+)

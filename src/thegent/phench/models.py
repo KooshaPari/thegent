@@ -11,12 +11,35 @@ TargetMode = Literal["repo", "stack"]
 class RepoSelection:
     repo_id: str
     repo_path: str
-    selected_ref: str
+    selected_ref: str | None = None
+    module_name: str | None = None
+    selected_runner: str | None = None
+    selected_command: str | None = None
+    selected_env_profile: str | None = None
     source_worktree_path: str | None = None
     resolved_sha: str | None = None
     preferred_runner: str | None = None
     preferred_command: str | None = None
     preferred_ref: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.selected_ref is None:
+            self.selected_ref = self.preferred_ref
+        if not self.selected_ref:
+            raise ValueError("selected_ref cannot be empty")
+
+        if self.selected_runner is None and self.preferred_runner is not None:
+            self.selected_runner = self.preferred_runner
+        elif self.selected_runner is not None and self.preferred_runner is None:
+            self.preferred_runner = self.selected_runner
+
+        if self.selected_command is None and self.preferred_command is not None:
+            self.selected_command = self.preferred_command
+        elif self.selected_command is not None and self.preferred_command is None:
+            self.preferred_command = self.selected_command
+
+        if self.preferred_ref is None:
+            self.preferred_ref = self.selected_ref
 
 
 @dataclass(slots=True)

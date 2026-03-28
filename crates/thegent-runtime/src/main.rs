@@ -67,13 +67,7 @@ use std::sync::OnceLock;
 static CIRCUIT_BREAKER: OnceLock<Mutex<CircuitBreaker>> = OnceLock::new();
 
 fn get_circuit_breaker() -> &'static Mutex<CircuitBreaker> {
-    CIRCUIT_BREAKER.get_or_init(|| {
-        Mutex::new(CircuitBreaker {
-            failure_count: 0,
-            last_failure: None,
-            open: false,
-        })
-    })
+    CIRCUIT_BREAKER.get_or_init(|| Mutex::new(CircuitBreaker::new()))
 }
 
 fn main() {
@@ -156,7 +150,6 @@ fn handle_git(args: &[String], self_path: &str) {
             }
 
             run_and_cache_safe(&target, args, "git", args);
-            return;
         }
     }
 
@@ -385,7 +378,6 @@ fn handle_find(args: &[String], is_agent: bool, self_path: &str) {
             fd_args.push(dir.to_string());
 
             run_and_cache_safe(&fd_path.to_string_lossy(), &fd_args, "find", args);
-            return;
         }
     }
 
@@ -774,8 +766,8 @@ fn try_index_safe(dir: &str, pattern: &str) -> bool {
         return false;
     }
 
-    let indexPath = get_index_file();
-    if let Ok(metadata) = fs::metadata(&indexPath) {
+    let index_path = get_index_file();
+    if let Ok(metadata) = fs::metadata(&index_path) {
         if let Ok(modified) = metadata.modified() {
             if let Ok(elapsed) = modified.elapsed() {
                 if elapsed.as_secs() > 300 {
@@ -804,14 +796,14 @@ fn try_index_safe(dir: &str, pattern: &str) -> bool {
             .arg("-c")
             .arg(format!(
                 "{} -E '{}' {} | {} '^{}'",
-                grep_path, grep_pattern, indexPath.display(), grep_path, dir
+                grep_path, grep_pattern, index_path.display(), grep_path, dir
             ))
             .output()
     } else {
         Command::new(&grep_path)
             .arg("-E")
             .arg(&grep_pattern)
-            .arg(&indexPath)
+            .arg(&index_path)
             .output()
     };
 
