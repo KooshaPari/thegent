@@ -8,6 +8,20 @@ Source: docs/reference/api/fast_websocket_api.md
 
 > **Source**: `src/thegent/infra/fast_websocket.py`
 
+Fast WebSocket client with optimized backends.
+
+This module provides optimized WebSocket client support:
+- websockets library (modern, fast, async-first)
+- websocket-client fallback (legacy support)
+- Unified API for both sync and async operations
+
+Performance improvements:
+- websockets: Modern, faster, better async support
+- Better resource management
+- Automatic backend selection
+
+---
+
 ## FastWebSocket
 
 High-performance WebSocket client with automatic backend selection.

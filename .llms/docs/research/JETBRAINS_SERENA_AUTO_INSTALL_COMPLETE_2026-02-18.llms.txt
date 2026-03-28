@@ -4,6 +4,7 @@ Source: docs/research/JETBRAINS_SERENA_AUTO_INSTALL_COMPLETE_2026-02-18.md
 
 ---
 
+<DONE>
 # JetBrains & Serena Auto-Install Complete
 
 **Date**: 2026-02-18

@@ -4,6 +4,7 @@ Source: docs/research/LIBRARY_CACHE_MIGRATION_PLAN.md
 
 ---
 
+<DONE>
 # Library Cache Migration Plan
 
 **ID**: research-library-cache

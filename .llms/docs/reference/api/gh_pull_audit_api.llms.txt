@@ -1,0 +1,25 @@
+# gh_pull_audit_api
+
+Source: docs/reference/api/gh_pull_audit_api.md
+
+---
+
+# gh_pull_audit API Reference
+
+> **Source**: `src/thegent/integrations/gh_pull_audit.py`
+
+Stub module for thegent.integrations.gh_pull_audit.
+
+---
+
+## PullReflectionAuditEntry
+
+Stub class.
+
+---
+
+## PullReflectionAuditLog
+
+Stub class.
+
+---

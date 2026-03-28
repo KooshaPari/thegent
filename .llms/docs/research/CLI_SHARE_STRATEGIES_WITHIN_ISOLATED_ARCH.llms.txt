@@ -4,6 +4,7 @@ Source: docs/research/CLI_SHARE_STRATEGIES_WITHIN_ISOLATED_ARCH.md
 
 ---
 
+<DONE>
 # Research: CLI-Share Strategies & Nested Isolation (L1/L2)
 
 **Date**: 2026-02-19

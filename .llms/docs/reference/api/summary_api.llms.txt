@@ -12,6 +12,40 @@ Summary and audit log implementation for thegent.
 
 ---
 
+## GitCommitsResult
+
+---
+
+## LogParseStats
+
+### Methods
+
+#### LogParseStats.as_dict
+
+```
+as_dict(self: Any)
+```
+
+---
+
+#### LogParseStats.sample
+
+```
+sample(self: Any, kind: str, detail: str, line: str)
+```
+
+---
+
+---
+
+## as_dict
+
+```
+as_dict(self: Any) -> dict[(str, Any)]
+```
+
+---
+
 ## get_chat_logs
 
 ```
@@ -49,6 +83,14 @@ get_time_range(period: str)
 ```
 
 Resolve period string into start and end datetimes.
+
+---
+
+## sample
+
+```
+sample(self: Any, kind: str, detail: str, line: str) -> None
+```
 
 ---
 

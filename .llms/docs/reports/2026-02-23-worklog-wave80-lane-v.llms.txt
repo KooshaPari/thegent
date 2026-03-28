@@ -1,0 +1,61 @@
+# 2026-02-23-worklog-wave80-lane-v
+
+Source: docs/reports/2026-02-23-worklog-wave80-lane-v.md
+
+---
+
+# Worklog Wave 80 - Lane V (2026-02-23)
+
+Scope: Implement next 10 open WL items for rolling replacement Lane V with tests.
+
+Deterministic selection: `WL-9790..WL-9799` (next open sequence after Lane U / `WL-9780..WL-9789`).
+
+## Completed WL Items
+
+1. `WL-9790`: Split turn-cancel recovery suppression decision into `_should_suppress_turn_cancel_recovery_response(...)`.
+2. `WL-9791`: Split recovery error-code extraction into `_extract_turn_cancel_recovery_error_code(...)`.
+3. `WL-9792`: Split turn approval-id resolution into `_resolve_turn_approval_id(...)`.
+4. `WL-9793`: Split approval lookup into `_resolve_requested_approval(...)`.
+5. `WL-9794`: Split requested-status predicate into `_is_requested_approval_status(...)`.
+6. `WL-9795`: Split approval status mutation into `_mark_approval_as_cancelled(...)`.
+7. `WL-9796`: Added regression for preserving non-requested approval states in `_cancel_turn_requested_approval(...)`.
+8. `WL-9797`: Added regression for missing-approval no-op behavior in `_cancel_turn_requested_approval(...)`.
+9. `WL-9798`: Split projection serialization result into `_build_turn_cancel_result(...)`.
+10. `WL-9799`: Updated `_build_turn_cancel_projection_payload(...)` to wrap the split result helper and added regression coverage.
+
+## Files Changed
+
+- `src/thegent/protocols/jsonrpc_agent_server.py`
+- `tests/protocols/test_wl9790_wl9799_lane_v.py`
+- `docs/reports/2026-02-23-worklog-wave80-lane-v.md`
+
+## Test Evidence
+
+Executed:
+
+- `.venv/bin/python -m pytest tests/protocols/test_wl9790_wl9799_lane_v.py -q`
+  - Result: `10 passed`
+- `.venv/bin/python -m pytest tests/protocols/test_wl9750_wl9759_lane_r.py tests/protocols/test_wl9740_wl9749_lane_q.py -q`
+  - Result: `20 passed`
+
+Governance gate:
+
+- `task quality`
+  - Ran local quality stages successfully for this repo, then failed in delegated parent cliproxy quality task (`quality:cliproxy-parent`) due pre-existing Go vet failures in sibling repo `cliproxyapi-plusplus`.
+  - Failure evidence included:
+    - `sdk/api/handlers/openai/openai_images_handlers_test.go` argument mismatch
+    - `pkg/llmproxy/api/handlers/management/api_tools_test.go` redeclared test
+    - `pkg/llmproxy/runtime/executor/usage_helpers_test.go` unused import
+
+## Evidence Mapping (WL-9790..WL-9799)
+
+- `WL-9790`: Recovery suppression decision isolated to dedicated predicate helper.
+- `WL-9791`: Recovery error-code extraction isolated to dedicated extractor helper.
+- `WL-9792`: Turn approval-id parsing isolated with explicit string requirement.
+- `WL-9793`: Approval lookup isolated from mutation flow.
+- `WL-9794`: Requested-status check isolated to explicit predicate helper.
+- `WL-9795`: Approval cancellation mutation isolated to explicit status mutator.
+- `WL-9796`: Non-requested approval status remains unchanged under cancel flow.
+- `WL-9797`: Missing approval id lookup path remains fail-safe no-op.
+- `WL-9798`: Turn serialization for cancel response isolated to dedicated result builder.
+- `WL-9799`: Projection wrapper delegates through split result helper with stable payload shape.

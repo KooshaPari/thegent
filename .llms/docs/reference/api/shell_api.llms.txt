@@ -10,7 +10,7 @@ Source: docs/reference/api/shell_api.md
 
 Shell optimization utilities.
 
-Ensures all shell invocations use the fastest available shell (zsh &gt; bash &gt; sh).
+Ensures all shell invocations use the fastest available shell (zsh > bash > sh).
 
 ---
 
@@ -18,7 +18,7 @@ Ensures all shell invocations use the fastest available shell (zsh &gt; bash &gt
 
 Get fastest available shell.
 
-Priority: zsh &gt; bash &gt; sh
+Priority: zsh > bash > sh
 
 **Returns**: Path to fastest available shell executable
 
@@ -79,7 +79,7 @@ Run shell command using fastest available shell.
 - `shell`: Shell executable path (defaults to fastest available)
 - `optimize_startup`: Skip heavy .zshrc loading for non-interactive
 - `capture_output`: Capture stdout/stderr (default: True)
-- `**kwargs`: Additional subprocess.run arguments
+- `**kwargs`: Additional shim_run arguments
 
 **Returns**: CompletedProcess result
 

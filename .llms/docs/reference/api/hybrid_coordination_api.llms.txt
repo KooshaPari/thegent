@@ -14,8 +14,8 @@ Switches between hierarchical (tree-based) and P2P (mesh) coordination
 modes based on swarm size and average agent load.
 
 Mode selection:
-  HIERARCHICAL  — swarm_size &lt; THGENT_HIER_THRESHOLD (default 5) OR avg_load &lt; 0.3
-  P2P           — swarm_size &gt;= threshold AND avg_load &gt;= 0.7
+  HIERARCHICAL  — swarm_size < THGENT_HIER_THRESHOLD (default 5) OR avg_load < 0.3
+  P2P           — swarm_size >= threshold AND avg_load >= 0.7
   ADAPTIVE      — gradual blend in the range [0.3, 0.7) avg_load
 
 Routing:

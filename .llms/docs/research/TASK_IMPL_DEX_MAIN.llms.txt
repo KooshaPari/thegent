@@ -4,6 +4,7 @@ Source: docs/research/TASK_IMPL_DEX_MAIN.md
 
 ---
 
+<DONE>
 # Task: Consolidate os.environ in dex_main.py
 
 **Priority**: P3

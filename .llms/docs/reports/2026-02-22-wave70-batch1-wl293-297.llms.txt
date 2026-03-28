@@ -1,0 +1,43 @@
+# 2026-02-22-wave70-batch1-wl293-297
+
+Source: docs/reports/2026-02-22-wave70-batch1-wl293-297.md
+
+---
+
+# Wave70 Batch1 Execution (WL-293..WL-297)
+
+Date: 2026-02-22
+Scope: First execution batch from wave70 lane1.
+
+## WL-293
+- Status: already implemented in codebase before this batch.
+- Evidence: `src/thegent/integrations/signed_capability_cache.py`, `tests/integrations/test_wl293_signed_capability_cache.py`.
+
+## WL-294
+- Implemented `src/thegent/integrations/policy_whatif_simulation.py`.
+- Added tests: `tests/integrations/test_wl294_policy_whatif_simulation.py`.
+
+## WL-295
+- Implemented `src/thegent/integrations/pagination_resilience.py`.
+- Added tests: `tests/integrations/test_wl295_pull_pagination_resilience.py`.
+
+## WL-296
+- Implemented `src/thegent/integrations/restore_verifier.py`.
+- Added tests: `tests/integrations/test_wl296_restore_verifier.py`.
+
+## WL-297
+- Implemented `src/thegent/integrations/connector_cost_accounting.py`.
+- Added tests: `tests/integrations/test_wl297_connector_cost_accounting.py`.
+
+## Verification
+Command:
+```
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python -m pytest -q \
+  tests/integrations/test_wl294_policy_whatif_simulation.py \
+  tests/integrations/test_wl295_pull_pagination_resilience.py \
+  tests/integrations/test_wl296_restore_verifier.py \
+  tests/integrations/test_wl297_connector_cost_accounting.py
+```
+
+Result:
+- `9 passed in 1.33s`

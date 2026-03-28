@@ -1,0 +1,314 @@
+# 2026-02-21-test-improvement-plan
+
+Source: docs/plans/2026-02-21-test-improvement-plan.md
+
+---
+
+# Test Improvement Plan
+> Date: 2026-02-21 (Session 3 — test structure agent)
+> Status: AUTHORITATIVE — covers test structure, coverage, and quality improvements
+
+## Current State (Baseline)
+
+| Metric | Value | Target |
+|--------|-------|--------|
+| Total test files | 681 | 750+ |
+| Total test functions | 12,625 | 15,000+ |
+| Tests with category markers | ~12% | 100% |
+| Tests with FR traceability | ~5% | 25%+ |
+| Property-based tests (hypothesis) | 0 | 50+ |
+| tests/e2e/ collected functions | 0 (broken) | ~500 |
+| Untested modules (by LOC) | 10+ modules, 60K+ LOC | 0 |
+| Rust crates with integration tests | 4/30 | 15/30 |
+
+---
+
+## BLOCKER T.0: Add Category Markers to All Tests
+
+**Problem:** 88% of 12,625 tests lack `@pytest.mark.unit`, `@pytest.mark.integration`, or `@pytest.mark.e2e`.
+
+**Impact:** CI `fast_lane_marker = "not slow and not integration and not e2e and not load"` cannot filter correctly. All 12,625 tests run every commit instead of the intended fast subset.
+
+**Action:** Mass-tagging pass across all test files:
+
+Classification rules:
+- `@pytest.mark.unit` — no I/O, no external calls, runtime <100ms
+- `@pytest.mark.integration` — calls real services OR involves 2+ modules OR >100ms
+- `@pytest.mark.e2e` — full CLI/API invocation end-to-end
+- `@pytest.mark.slow` — runtime >5s
+
+**Mechanism:** Subagent batch pass (20 files per agent, 34 parallel agents → ~40 min wall clock)
+
+**Verification:** After pass, `pytest --collect-only -m unit | wc -l` should return ~9,000+
+
+---
+
+## BLOCKER T.1: Fix tests/e2e/ Collection
+
+**Problem:** `tests/e2e/` has 67 files with **0 collected test functions**. Likely using `pytest.TestCase` subclass pattern which requires explicit collection config.
+
+**Root causes (in order of likelihood):**
+1. Tests defined as `class TestX(unittest.TestCase)` with `test_*` methods — pytest collects these but may have import errors
+2. Import errors in conftest.py or test files causing silent skip
+3. Missing `__init__.py` in subdirectories
+
+**Action:**
+Step 1: Run `pytest tests/e2e/ --collect-only 2>&1 | grep ERROR | head -20` to find import errors
+Step 2: Fix import errors (likely missing deps or path issues)
+Step 3: Convert `unittest.TestCase` subclasses to plain pytest functions (one subagent per 5 files)
+Step 4: Verify `pytest tests/e2e/ --collect-only | grep "test session starts" -A 5` shows correct count
+
+**Expected recovery:** ~500 e2e test functions
+
+---
+
+## HIGH PRIORITY T.2: Write Unit Tests for P0 Untested Modules
+
+The following source files have NO corresponding unit test file and are high-LOC critical paths:
+
+### P0 (no tests, >3K LOC)
+
+| Module | LOC | Test File Target | Test Count |
+|--------|-----|-----------------|-----------|
+| `mesh/git_parallelism.py` | 19,575 | `tests/unit/test_git_parallelism.py` | 30 |
+| `mesh/git.py` | 10,395 | `tests/unit/test_mesh_git.py` | 25 |
+| `research/cost_sensitivity_experiment.py` | 7,504 | `tests/unit/test_cost_sensitivity_experiment.py` | 15 |
+| `mesh/task_queue.py` | 7,415 | `tests/unit/test_task_queue.py` | 20 |
+| `mesh/merge.py` | 5,050 | `tests/unit/test_mesh_merge.py` | 15 |
+| `config_provider.py` | 4,354 | `tests/unit/test_config_provider.py` | 12 |
+| `mesh/mesh.py` | 4,309 | `tests/unit/test_mesh.py` | 15 |
+| `research/cost_routing.py` | 3,851 | `tests/unit/test_cost_routing.py` | 12 |
+| `mesh/injection.py` | 3,382 | `tests/unit/test_mesh_injection.py` | 10 |
+| `research/cost_sensitivity.py` | 3,226 | `tests/unit/test_cost_sensitivity.py` | 10 |
+
+**mesh/git_parallelism.py is P0-CRITICAL:** 19,575 LOC (largest single source file), zero test coverage.
+
+**Test template per module:**
+```
+"""Tests for mesh/git_parallelism.py - @trace FR-MESH-NNN"""
+import pytest
+from thegent.mesh.git_parallelism import ...
+
+@pytest.mark.unit
+class TestGitParallelism:
+    def test_spawn_task_basic(self): ...
+    def test_merge_conflict_detection(self): ...
+    def test_concurrent_limit_enforced(self): ...
+
+    @pytest.mark.parametrize("concurrency", [1, 2, 4, 8])
+    def test_concurrent_execution(self, concurrency): ...
+
+    @pytest.mark.integration
+    def test_real_git_operations(self, tmp_path): ...
+```
+
+---
+
+## HIGH PRIORITY T.3: Add 200+ Integration Tests
+
+**Current:** 21 integration tests for the entire system
+
+**Target:** 200+ integration tests covering cross-module scenarios
+
+**Priority scenarios:**
+
+| Scenario | Files Involved | Test Count |
+|----------|---------------|-----------|
+| Mesh + Router interaction | `mesh/`, `routing/` | 20 |
+| CLI + MCP server | `cli/`, `mcp/` | 20 |
+| Governance + Routing decisions | `governance/`, `routing/` | 15 |
+| Cache + Storage backends | `cache/`, storage | 15 |
+| Execution + Concurrency control | `execution.py`, concurrency | 25 |
+| Hook dispatch + Quality gates | `hooks/`, quality | 15 |
+| Agent spawn + Resource management | `agents/`, resources | 20 |
+| JSONL parsing (Rust binding) | `native/jsonl_parser.py`, Rust | 10 |
+| Retry scenarios (transient failures) | `resilience.py` | 25 |
+| Config load from environment | `config/` | 15 |
+
+**Integration test template:**
+```
+"""Integration tests for CLI + MCP - @trace FR-MCP-NNN"""
+import pytest
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_cli_run_calls_mcp(tmp_session_dir, real_mcp_server):
+    """Full end-to-end: CLI run command invokes MCP tool."""
+    result = await cli_run("thegent run 'simple task' --dry-run")
+    assert result.exit_code == 0
+    assert mcp_server.call_log[-1]["tool"] == "thegent_run"
+```
+
+---
+
+## MEDIUM PRIORITY T.4: Add Property-Based Tests
+
+**Current:** 0 hypothesis tests
+
+**Target:** 50+ property-based tests for parsers, validators, routing logic
+
+**Priority targets:**
+
+### Routing (50 test files, ~455 tests — add 15 hypothesis tests)
+```
+from hypothesis import given, strategies as st
+
+@pytest.mark.unit
+@given(
+    model=st.text(min_size=1, max_size=50),
+    provider=st.text(min_size=1, max_size=30),
+    tokens=st.integers(min_value=0, max_value=1_000_000),
+)
+def test_cost_calculation_never_negative(model, provider, tokens):
+    cost = calculate_cost(model, provider, tokens)
+    assert cost >= 0.0
+```
+
+### JSONL parsing (add 10 hypothesis tests)
+```
+@given(st.binary())
+def test_jsonl_parser_never_crashes(data):
+    """Parser should handle any binary input without crashing."""
+    try:
+        parse_jsonl(data.decode("utf-8", errors="replace"))
+    except (ValueError, UnicodeDecodeError):
+        pass  # OK to raise, must not segfault
+```
+
+### Config validation (add 10 hypothesis tests)
+```
+@given(st.floats())
+def test_budget_daily_limit_accepts_any_positive_float(value):
+    if value > 0 and not math.isnan(value):
+        config = CostGovernanceConfig(budget_daily_limit=value)
+        assert config.budget_daily_limit == value
+```
+
+---
+
+## MEDIUM PRIORITY T.5: Add FR Traceability Markers
+
+**Current:** 624 tests with `@pytest.mark.requirement()` (~5%)
+
+**Target:** 3,000+ tests (25%+)
+
+**Top FRs to trace first (by importance):**
+
+| FR | Description | Tests to Tag |
+|----|-------------|--------------|
+| FR-ROUTE-014 | Model routing decision | ~27 existing + 20 new |
+| FR-CACHE-022 | Cache eviction policy | ~28 existing + 15 new |
+| WL-103 | Work stream lifecycle | ~39 existing + 30 new |
+| FR-EXEC-001 | Execution state machine | 0 existing → 40 new |
+| FR-MESH-001 | Mesh git operations | 0 existing → 30 new |
+
+**Tagging format:**
+```
+@pytest.mark.requirement("FR-ROUTE-014")
+def test_pareto_routing_selects_optimal():
+    ...
+```
+
+---
+
+## MEDIUM PRIORITY T.6: Fix Large Test Files
+
+**Files >1,700 LOC (violate single-responsibility):**
+
+| File | LOC | Action |
+|------|-----|--------|
+| `tests/test_e2e_cli.py` | 6,125 | Split into `tests/e2e/test_cli_basic.py`, `test_cli_advanced.py`, `test_cli_edge.py` |
+| `tests/test_unit_cli_impl_coverage_d.py` | 2,468 | Split into `tests/unit/cli/test_impl_d_*.py` |
+| `tests/test_unit_cli_coverage_c.py` | 2,466 | Split into `tests/unit/cli/test_coverage_c_*.py` |
+| `tests/test_unit_cli_commands_a.py` | 2,114 | Split into `tests/unit/cli/commands/test_a_*.py` |
+| `tests/test_unit_cli_commands_b.py` | 2,004 | Split into `tests/unit/cli/commands/test_b_*.py` |
+| `tests/test_unit_cli_impl_session.py` | 1,739 | Split into `tests/unit/cli/test_session_*.py` |
+
+---
+
+## LOW PRIORITY T.7: Add Rust Integration Tests
+
+**Current:** 4/30 Rust crates have `tests/` directories
+
+**Target:** 15/30 crates with at least 1 integration test file
+
+**Priority crates (most critical to test at integration level):**
+
+| Crate | Inline Tests | Integration Tests | Why Critical |
+|-------|-------------|-------------------|--------------|
+| `thegent-maif` | 3 | 0 → add 15 | FFI boundary, artifact signing |
+| `thegent-zmx-interop` | 15 | 0 → add 10 | ZMX ABI contract |
+| `thegent-shm` | 26 | 0 → add 10 | Shared memory state |
+| `thegent-zmx` | 29 | 0 → add 10 | ZMQ IPC |
+| `thegent-fs` | 3 | 0 → add 8 | File operations |
+| `thegent-cache` | ? | 0 → add 8 | Two-tier LRU |
+
+---
+
+## Coverage Configuration Improvements
+
+**Current `pyproject.toml`:**
+```
+[tool.coverage.report]
+fail_under = 100  # Correct for agent-only
+```
+
+**Add:**
+```
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_empty = true
+# Per-module floors (start permissive, tighten):
+# [TODO] add per-module coverage minimums once baseline measured
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/conftest.py",
+    "src/thegent/abi/zig_rust_poc/*",  # C ABI POC, not Python
+    "src/thegent/infra/mojo/*.py",     # Mojo bridge (not pure Python)
+]
+```
+
+**Generate baseline:** `pytest --cov=src --cov-report=xml:coverage.xml` then commit `coverage.xml` as reference.
+
+---
+
+## Implementation Priority Order
+
+```
+BLOCKING (do first — unblocks CI fast lane):
+  T.0: Add category markers to all 12,625 tests
+  T.1: Fix tests/e2e/ collection (recover ~500 tests)
+
+HIGH (do in parallel with zero-bloat Phase 1):
+  T.2: Write unit tests for 10 P0 untested modules
+  T.3: Add 200+ integration tests
+
+MEDIUM (do in parallel with zero-bloat Phase 2+):
+  T.4: Add 50+ property-based tests (hypothesis)
+  T.5: Add FR traceability markers to 3,000+ tests
+  T.6: Split 6 large test files
+
+LOW (ongoing):
+  T.7: Add Rust integration tests for 11 crates
+  Coverage baseline + per-module floors
+```
+
+---
+
+## Expected Outcomes
+
+| After | Metric | Before | After |
+|-------|--------|--------|-------|
+| T.0 complete | Tests with markers | 12% | 100% |
+| T.0 complete | CI fast-lane runtime | ~45 min (all tests) | ~8 min (unit only) |
+| T.1 complete | tests/e2e collected | 0 | ~500 |
+| T.2 complete | Major untested modules | 10 | 0 |
+| T.3 complete | Integration tests | 21 | 200+ |
+| T.4 complete | Property-based tests | 0 | 50+ |
+| T.5 complete | FR-traced tests | 5% | 25%+ |
+| All complete | Overall coverage | Unknown | Measurable (target 100%) |

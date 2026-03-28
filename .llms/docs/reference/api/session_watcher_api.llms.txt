@@ -69,7 +69,7 @@ Register a callback for session completion events.
 
 **Parameters**:
 
-- `callback`: Function(session_id: str, exit_code: int) -&gt; None
+- `callback`: Function(session_id: str, exit_code: int) -> None
 
 ---
 
@@ -105,7 +105,7 @@ Register a callback for session completion events.
 
 **Parameters**:
 
-- `callback`: Function(session_id: str, exit_code: int) -&gt; None
+- `callback`: Function(session_id: str, exit_code: int) -> None
 
 ---
 

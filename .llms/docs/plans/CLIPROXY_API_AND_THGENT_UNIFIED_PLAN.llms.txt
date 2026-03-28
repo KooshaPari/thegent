@@ -150,11 +150,11 @@ P2, P3, P4, P5 ──> P6 (Polish)
 
 | Area                  | Path                                                       |
 |-----------------------|------------------------------------------------------------|
-| Config schema         | CLIProxyAPIPlus-fork/internal/config/config.go           |
+| Config schema         | cliproxyapi-plusplus/internal/config/config.go           |
 | Kiro reference        | Same file – `kiro:` block                                 |
-| Executor registration | CLIProxyAPIPlus-fork/sdk/cliproxy/service.go              |
-| Model definitions     | CLIProxyAPIPlus-fork/internal/registry/model_definitions.go |
-| Config example        | CLIProxyAPIPlus-fork/config.example.yaml                  |
+| Executor registration | cliproxyapi-plusplus/sdk/cliproxy/service.go              |
+| Model definitions     | cliproxyapi-plusplus/internal/registry/model_definitions.go |
+| Config example        | cliproxyapi-plusplus/config.example.yaml                  |
 | Thegent config        | thegent/config.py                                         |
 | Thegent registry      | thegent/agents/registry.py                                |
 | CursorApiRunner       | thegent/agents/cursor_api_runner.py                        |

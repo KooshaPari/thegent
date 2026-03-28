@@ -8,7 +8,7 @@ Source: docs/reference/api/security_api.md
 
 > **Source**: `src/thegent/cross_platform/security.py`
 
-Security hardening &amp; compliance.
+Security hardening & compliance.
 
 ---
 

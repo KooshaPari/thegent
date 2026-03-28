@@ -1,0 +1,100 @@
+# run_concurrency_api
+
+Source: docs/reference/api/run_concurrency_api.md
+
+---
+
+# run_concurrency API Reference
+
+> **Source**: `src/thegent/cli/services/run_concurrency.py`
+
+Concurrency control helpers for run execution.
+
+WP-5001: Resource-based dynamic limits and concurrency management.
+Extracted from run_execution_core_helpers.py for maintainability.
+
+---
+
+## ConcurrencyResult
+
+Result of concurrency check.
+
+---
+
+## ConcurrencyState
+
+State for concurrency control.
+
+### Methods
+
+---
+
+## check_concurrency
+
+```
+check_concurrency(state: ConcurrencyState, run_id: Any)
+```
+
+Check if a new run is allowed under concurrency limits.
+
+**Parameters**:
+
+- `state`: Current concurrency state
+- `run_id`: Optional run ID for queue position
+
+**Returns**: ConcurrencyResult with allow/deny and wait info
+
+---
+
+## classify_burst_load
+
+```
+classify_burst_load(recent_requests: list[float], threshold: float)
+```
+
+Classify if current load is a burst.
+
+WP-5002: Burst load classification.
+
+**Parameters**:
+
+- `recent_requests`: List of recent request timestamps
+- `threshold`: Requests per second threshold for burst
+
+**Returns**: Tuple of (is_burst, classification)
+
+---
+
+## get_adaptive_timeout
+
+```
+get_adaptive_timeout(base_timeout: int, current_load: float, is_burst: bool)
+```
+
+Get adaptive timeout based on current load.
+
+**Parameters**:
+
+- `base_timeout`: Base timeout in seconds
+- `current_load`: Current system load (0-1)
+- `is_burst`: If currently in burst mode
+
+**Returns**: Adjusted timeout in seconds
+
+---
+
+## get_resource_based_limit
+
+```
+get_resource_based_limit(settings: ThegentSettings | None)
+```
+
+Get maximum concurrent runs based on system resources.
+
+**Parameters**:
+
+- `settings`: Optional settings for limits
+
+**Returns**: Maximum concurrent runs allowed
+
+---

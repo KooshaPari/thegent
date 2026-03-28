@@ -4,6 +4,7 @@ Source: docs/research/CONVERSATION_DUMP_2026-02-19_SESSION2.md
 
 ---
 
+<DONE>
 # Conversation Dump — 2026-02-19 Session 2
 
 **Session**: Claude Code, Haiku 4.5

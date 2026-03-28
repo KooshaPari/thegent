@@ -6,11 +6,15 @@ Source: docs/reference/api/cost_aware_router_api.md
 
 # cost_aware_router API Reference
 
-> **Source**: `src/thegent/routing/cost_aware_router.py`
+> **Source**: `src/thegent/utils/routing_impl/cost_aware_router.py`
 
 Budget-aware routing and economic governance for thegent.
 
 Implements the Economic Governance Framework (WP-5003).
+Also implements:
+- GW-17: Provider budget routing (spend-cap based provider exclusion)
+- GW-18: Deployment pool concept (N backends behind one logical model name)
+- GW-21: Session stickiness (consistent-hash routing for multi-turn conversations)
 
 ---
 
@@ -59,7 +63,7 @@ __init__(self: Any, budget_manager: BudgetManager, pareto_router: Any, warn_at_p
 #### BudgetAwareRouter.route
 
 ```
-route(self: Any, project_id: str, candidates: list[RouteCandidate], strategy: str)
+route(self: Any, project_id: str, candidates: list[_ParetoRouteCandidate], strategy: str)
 ```
 
 Select the best candidate given current budget state and Pareto strategy.
@@ -148,7 +152,7 @@ Supported budget scopes (SCLI-P9.1).
 
 ## CostAwareRouter
 
-Simplified cost-aware router that selects candidates based on budget state.
+Routes to candidates while enforcing CostBudget limits (FR-COST-003).
 
 ### Methods
 
@@ -163,10 +167,10 @@ __init__(self: Any, budget: CostBudget, tracker: SimpleCostTracker)
 #### CostAwareRouter.select
 
 ```
-select(self: Any, candidates: list[_SimpleCandidate])
+select(self: Any, candidates: list[RouteCandidate])
 ```
 
-Select the best candidate given current budget state.
+Select best candidate given current spend vs budget.
 
 ---
 
@@ -174,7 +178,7 @@ Select the best candidate given current budget state.
 
 ## CostBudget
 
-Simple budget specification with daily and session limits.
+Simple per-session and per-day budget limits.
 
 ---
 
@@ -204,9 +208,198 @@ Get total cost for a project across all models.
 
 ---
 
+## DeploymentConfig
+
+A single backend deployment for a model.
+
+---
+
+## DeploymentPool
+
+A named pool of deployments behind one logical model name.
+
+---
+
+## DeploymentPoolManager
+
+Manages N deployments per logical model name.
+
+Converts DeploymentPool definitions to LiteLLM model_list entries,
+enabling LiteLLM's native load balancing across deployments.
+
+### Methods
+
+#### DeploymentPoolManager.__init__
+
+```
+__init__(self: Any, pools: list[DeploymentPool])
+```
+
+---
+
+#### DeploymentPoolManager.add_pool
+
+```
+add_pool(self: Any, pool: DeploymentPool)
+```
+
+Add a deployment pool (or replace existing pool with same name).
+
+---
+
+#### DeploymentPoolManager.get_pool
+
+```
+get_pool(self: Any, name: str)
+```
+
+Look up pool by logical model name.
+
+---
+
+#### DeploymentPoolManager.to_litellm_model_list
+
+```
+to_litellm_model_list(self: Any)
+```
+
+Convert all pools to LiteLLM model_list format.
+
+Each deployment becomes a model_list entry with model_name=pool.name,
+so LiteLLM treats them as alternatives for the same logical model.
+
+---
+
+---
+
+## ProviderBudgetConfig
+
+Spend cap configuration for a single provider.
+
+---
+
+## ProviderBudgetRouter
+
+Routes away from providers that have hit their spend caps.
+
+Tracks cumulative spend per provider and excludes over-budget providers
+from the available model list.
+
+### Methods
+
+#### ProviderBudgetRouter.__init__
+
+```
+__init__(self: Any, configs: list[ProviderBudgetConfig])
+```
+
+---
+
+#### ProviderBudgetRouter.filter_model_list
+
+```
+filter_model_list(self: Any, model_list: list[dict])
+```
+
+Remove over-budget providers from the model list.
+
+Falls back to full list if all providers are over budget.
+
+---
+
+#### ProviderBudgetRouter.get_spend_summary
+
+```
+get_spend_summary(self: Any)
+```
+
+Return {provider: {spent: X, limit: Y, remaining: Z}} for all configured providers.
+
+---
+
+#### ProviderBudgetRouter.is_provider_over_budget
+
+```
+is_provider_over_budget(self: Any, provider: str)
+```
+
+Return True if provider has exceeded its daily limit.
+
+---
+
+#### ProviderBudgetRouter.record_spend
+
+```
+record_spend(self: Any, provider: str, cost_usd: float)
+```
+
+Record spend for a provider.
+
+---
+
+#### ProviderBudgetRouter.reset_daily
+
+```
+reset_daily(self: Any)
+```
+
+Reset all daily spend counters (call at midnight or on test reset).
+
+---
+
+---
+
+## RouteCandidate
+
+A candidate route with name, cost per call, and quality score.
+
+---
+
+## SessionStickyRouter
+
+Routes requests to the same deployment for a given session_id.
+
+Uses consistent hashing (hash(session_id) % len(deployments)) so the same
+session always hits the same deployment as long as the pool is stable.
+Falls back to first deployment if pool is empty.
+
+### Methods
+
+#### SessionStickyRouter.__init__
+
+```
+__init__(self: Any, pool_manager: DeploymentPoolManager)
+```
+
+---
+
+#### SessionStickyRouter.get_deployment_for_session
+
+```
+get_deployment_for_session(self: Any, model: str, session_id: str)
+```
+
+Return the sticky deployment for this session+model combination.
+
+Returns None if no pool exists for the model.
+
+---
+
+#### SessionStickyRouter.get_litellm_params_for_session
+
+```
+get_litellm_params_for_session(self: Any, model: str, session_id: str)
+```
+
+Return litellm_params dict for the sticky deployment, or None.
+
+---
+
+---
+
 ## SimpleCostTracker
 
-Tracks session and daily cost totals.
+Tracks session and daily spend totals.
 
 ### Methods
 
@@ -229,7 +422,7 @@ daily_total(self: Any)
 #### SimpleCostTracker.record
 
 ```
-record(self: Any, amount: float)
+record(self: Any, cost: float)
 ```
 
 ---
@@ -252,12 +445,6 @@ session_total(self: Any)
 
 ---
 
-## _SimpleCandidate
-
-Route candidate for simplified CostAwareRouter.
-
----
-
 ## add_budget
 
 ```
@@ -265,6 +452,16 @@ add_budget(self: Any, budget: Budget)
 ```
 
 Add a budget allocation.
+
+---
+
+## add_pool
+
+```
+add_pool(self: Any, pool: DeploymentPool)
+```
+
+Add a deployment pool (or replace existing pool with same name).
 
 ---
 
@@ -286,6 +483,50 @@ daily_total(self: Any) -> float
 
 ---
 
+## filter_model_list
+
+```
+filter_model_list(self: Any, model_list: list[dict])
+```
+
+Remove over-budget providers from the model list.
+
+Falls back to full list if all providers are over budget.
+
+---
+
+## get_deployment_for_session
+
+```
+get_deployment_for_session(self: Any, model: str, session_id: str)
+```
+
+Return the sticky deployment for this session+model combination.
+
+Returns None if no pool exists for the model.
+
+---
+
+## get_litellm_params_for_session
+
+```
+get_litellm_params_for_session(self: Any, model: str, session_id: str)
+```
+
+Return litellm_params dict for the sticky deployment, or None.
+
+---
+
+## get_pool
+
+```
+get_pool(self: Any, name: str)
+```
+
+Look up pool by logical model name.
+
+---
+
 ## get_project_cost
 
 ```
@@ -296,10 +537,58 @@ Get total cost for a project across all models.
 
 ---
 
+## get_provider_budget_router
+
+```
+get_provider_budget_router(configs: Any)
+```
+
+Get or create the default ProviderBudgetRouter.
+
+On first call, builds configs from env vars:
+- THEGENT_BUDGET_{PROVIDER}_DAILY: daily limit in USD for provider
+E.g., THEGENT_BUDGET_OPENAI_DAILY=10.0
+
+---
+
+## get_session_sticky_extra
+
+```
+get_session_sticky_extra(model: str, session_id: Any, pool_manager: Any)
+```
+
+Build extra kwargs for router.acompletion to implement session stickiness.
+
+When session_id is provided and a pool exists for the model, returns
+{'api_base': ..., 'api_key': ...} from the sticky deployment.
+Returns {} if no stickiness is applicable.
+
+---
+
+## get_spend_summary
+
+```
+get_spend_summary(self: Any)
+```
+
+Return {provider: {spent: X, limit: Y, remaining: Z}} for all configured providers.
+
+---
+
+## is_provider_over_budget
+
+```
+is_provider_over_budget(self: Any, provider: str)
+```
+
+Return True if provider has exceeded its daily limit.
+
+---
+
 ## record
 
 ```
-record(self: Any, amount: float) -> None
+record(self: Any, cost: float) -> None
 ```
 
 ---
@@ -307,10 +596,10 @@ record(self: Any, amount: float) -> None
 ## record_spend
 
 ```
-record_spend(self: Any, project_id: str, cost: float)
+record_spend(self: Any, provider: str, cost_usd: float)
 ```
 
-Update all relevant budgets for project_id with recorded cost.
+Record spend for a provider.
 
 ---
 
@@ -321,6 +610,16 @@ remaining(self: Any)
 ```
 
 Return remaining budget in USD.
+
+---
+
+## reset_daily
+
+```
+reset_daily(self: Any)
+```
+
+Reset all daily spend counters (call at midnight or on test reset).
 
 ---
 
@@ -335,7 +634,7 @@ reset_session(self: Any) -> None
 ## route
 
 ```
-route(self: Any, project_id: str, candidates: list[RouteCandidate], strategy: str)
+route(self: Any, project_id: str, candidates: list[_ParetoRouteCandidate], strategy: str)
 ```
 
 Select the best candidate given current budget state and Pareto strategy.
@@ -345,10 +644,15 @@ Select the best candidate given current budget state and Pareto strategy.
 ## select
 
 ```
-select(self: Any, candidates: list[_SimpleCandidate])
+select(self: Any, candidates: list[RouteCandidate])
 ```
 
-Select the best candidate given current budget state.
+Select best candidate given current spend vs budget.
+
+**Raises**:
+
+- `ValueError`: If candidates is empty.
+- `BudgetExceededError`: If any budget limit is exceeded.
 
 ---
 
@@ -357,6 +661,19 @@ Select the best candidate given current budget state.
 ```
 session_total(self: Any) -> float
 ```
+
+---
+
+## to_litellm_model_list
+
+```
+to_litellm_model_list(self: Any)
+```
+
+Convert all pools to LiteLLM model_list format.
+
+Each deployment becomes a model_list entry with model_name=pool.name,
+so LiteLLM treats them as alternatives for the same logical model.
 
 ---
 

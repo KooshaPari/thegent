@@ -1,0 +1,23 @@
+# doctor_project_root_api
+
+Source: docs/reference/api/doctor_project_root_api.md
+
+---
+
+# doctor_project_root API Reference
+
+> **Source**: `src/thegent/doctor_project_root.py`
+
+Project root detection helpers for doctor.
+
+---
+
+## detect_project_root
+
+```
+detect_project_root(start: Any)
+```
+
+Detect the nearest project root containing src/thegent.
+
+---

@@ -6,8 +6,11 @@ Source: docs/reference/api/adapters_api.md
 
 # adapters API Reference
 
-> **Source**: `src/thegent/adapters/__init__.py`
+> **Source**: `src/thegent/integrations/adapters/__init__.py`
 
-thegent adapter layer: HTTP-based clients for external agent protocols.
+Adapters for workstream autosync.
+
+This package contains extracted adapter modules from workstream_autosync.py
+to reduce the main file size and improve maintainability.
 
 ---

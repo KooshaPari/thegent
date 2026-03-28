@@ -1,0 +1,1943 @@
+# spr26_prd
+
+Source: docs/specs/prds/fragemented/spr26_prd.md
+
+---
+
+# Product Requirements Document: spr26
+
+**Version:** 1.0.0  
+**Created:** 2026-02-18
+
+## 1. Overview
+
+# CSE 535/578 Course Projects - Complete Documentation
+
+## 2. Objectives
+
+## 3. Success Metrics
+
+## 4. Stakeholders
+
+## 5. Target Users
+
+- user
+
+## 6. Functional Requirements
+
+### FR-1: Dataset
+
+14 attributes total
+
+### FR-2: Requirement
+
+5+ user stories, each with 1 visualization
+
+### FR-3: Constraint
+
+Visualizations collectively must use 8+ of 14 attributes
+
+### FR-4: Problem
+
+Strategic selection needed to avoid redundancy while ensuring coverage
+
+### FR-5: Requirement
+
+3+ visualizations with 2+ variables each (plus income)
+
+### FR-6: Problem
+
+More variables = visual complexity, but too few variables = shallow insights
+
+### FR-7: Goal
+
+Balance comprehensiveness with clarity
+
+### FR-8: Ambiguity
+
+Income can be framed as:
+
+### FR-9: Impact
+
+Affects visualization type, interpretation, and marketing utility
+
+### FR-10: Problem
+
+No clear guidance in project spec which framing is correct
+
+### FR-11: The Challenge
+
+### FR-12: Resolution Plan
+
+### FR-13: The Challenge
+
+### FR-14: Resolution Plan
+
+### FR-15: The Challenge
+
+### FR-16: Resolution Plan
+
+### FR-17: Issue 1: Attribute Redundancy
+
+### FR-18: Issue 2: Multivariate Visualization Design
+
+### FR-19: Issue 3: Income Framing
+
+### FR-20: HIGH
+
+Age, Education, Gender (most predictive for college targeting)
+
+### FR-21: MEDIUM
+
+Workclass, Hours/Week, Marital Status (life stage context)
+
+### FR-22: LOWER
+
+Race, Native Country, Capital Gain/Loss (less actionable for enrollment)
+
+### FR-23: Reduce dimensions
+
+- Move one variable to faceting (small multiples)
+
+### FR-24: Aggregate data
+
+- Show percentages not raw counts
+
+### FR-25: Use interaction
+
+(in presentation):
+
+### FR-26: FIRST
+
+Resolve Issue 3 (Income Framing) - Set this early
+
+### FR-27: SECOND
+
+Resolve Issue 1 (Attribute Planning) - Choose stories
+
+### FR-28: THIRD
+
+Resolve Issue 2 (Visualization Design) - Create charts
+
+### FR-29: Inputs
+
+### FR-30: Algorithm
+
+### FR-31: Edge Cases
+
+### FR-32: Return
+
+### FR-33: Inputs
+
+### FR-34: Algorithm
+
+### FR-35: Sampling Logic (Critical Detail)
+
+### FR-36: Return
+
+### FR-37: Mathematical Background
+
+### FR-38: Algorithm
+
+### FR-39: Return
+
+### FR-40: Basic Test
+
+### FR-41: Sample Generation Test
+
+### FR-42: Row normalization
+
+Rows with no outgoing transitions need special handling
+
+### FR-43: Random sampling bounds
+
+Must use strict `<` for upper bound comparison
+
+### FR-44: Eigenvector sign
+
+Eigenvectors can be negated; ensure positive probabilities
+
+### FR-45: Complex eigenvalues
+
+Use `np.real()` to extract real component
+
+### FR-46: Floating point precision
+
+Eigenvalue may not be exactly 1.0
+
+### FR-47: State ordering
+
+Must use consistent indexing from stored states list
+
+### FR-48: Private Key
+
+Secret vector `s` of length `n`
+
+### FR-49: Public Key
+
+Tuple `(A, b)` where:
+
+### FR-50: Parameters
+
+### FR-51: Key Generation
+
+### FR-52: Encryption (for single bit)
+
+### FR-53: Decryption
+
+### FR-54: Inputs
+
+### FR-55: Algorithm
+
+### FR-56: Worked Example (from PDF)
+
+### FR-57: Return
+
+### FR-58: Inputs
+
+### FR-59: Algorithm
+
+### FR-60: Implementation
+
+### FR-61: Worked Example (from PDF)
+
+### FR-62: Return
+
+### FR-63: Inputs
+
+### FR-64: Algorithm
+
+### FR-65: Proximity Logic
+
+### FR-66: Worked Example (from PDF)
+
+### FR-67: Return
+
+### FR-68: Public Key Generation
+
+### FR-69: Encryption
+
+### FR-70: Decryption
+
+### FR-71: Modular arithmetic with negatives
+
+Python's `%` handles negatives correctly
+
+### FR-72: Integer vs float types
+
+Ensure modulus operations use integers
+
+### FR-73: Boolean indexing
+
+`random_vector.astype(bool)` for row selection
+
+### FR-74: Proximity calculation
+
+Must handle wrap-around for values near p
+
+### FR-75: Floor division
+
+Use `p // 2` not `p / 2`
+
+### FR-76: NumPy array returns
+
+Ensure proper array types in return values
+
+### FR-77: Sample Data
+
+### FR-78: Energy Consumption
+
+### FR-79: Power Consumption
+
+### FR-80: Energy Sensitivity
+
+### FR-81: Power Sensitivity
+
+### FR-82: Purpose
+
+### FR-83: Implementation
+
+### FR-84: Notes
+
+### FR-85: Inputs
+
+### FR-86: Algorithm
+
+### FR-87: Return
+
+### FR-88: Worked Example
+
+### FR-89: Inputs
+
+### FR-90: Algorithm
+
+### FR-91: Return
+
+### FR-92: Verification
+
+### FR-93: Inputs
+
+### FR-94: Algorithm
+
+### FR-95: Return
+
+### FR-96: Inputs
+
+### FR-97: Algorithm
+
+### FR-98: Return
+
+### FR-99: Key Difference from Energy Sensitivity
+
+### FR-100: Sample Dataset
+
+### FR-101: Test with Weights [1, 1, 1, 1]
+
+### FR-102: Method name typo
+
+Document says `calculate_energy_sensitivites` (missing 'i')
+
+### FR-103: Rounding
+
+Round after multiplying by 100
+
+### FR-104: Power vs Energy sensitivity
+
+Different calculation order (divide by time before vs after summing)
+
+### FR-105: CSV path
+
+File must be named exactly `dataset.csv`
+
+### FR-106: Return types
+
+Average should be float, app names should be strings
+
+### FR-107: Empty dataset
+
+Handle gracefully (though likely won't be tested)
+
+### FR-108: Metric column names
+
+Use exact column names from CSV
+
+### FR-109: Python 3.13
+
+- **Libraries**: SQLite3, Pandas 2.3.1, Matplotlib 3.10.6, NumPy 2.3.3
+
+### FR-110: Spatial
+
+Libpysal 4.13.0, ESDA 2.8.0, Geopandas 1.0.1
+
+### FR-111: Database
+
+`/course/data/CSE-578/dinofunworld.db`
+
+### FR-112: Notebook Magic
+
+`%matplotlib inline` in all notebooks
+
+### FR-113: Assignment 1: Basic Database Queries
+
+### FR-114: Assignment 2: Data Visualization (4 Charts)
+
+### FR-115: Assignment 3: Distance Matrix & Visualization
+
+### FR-116: Assignment 4: Time Series Analysis
+
+### FR-117: Assignment 5: Spatial Analysis with LibPySal
+
+### FR-118: Assignment 6: Dendrogram Creation
+
+### FR-119: Progress Report
+
+### FR-120: Final Report
+
+### FR-121: Most Popular Attraction
+
+Find attraction with most visits
+
+### FR-122: Second Most Popular Attraction
+
+Find second highest visit count
+
+### FR-123: Fast Food Visitors
+
+Count unique visitors to fast food attractions
+
+### FR-124: Control Chart
+
+Mean ± standard deviation bands
+
+### FR-125: Moving Average
+
+50-sample window
+
+### FR-126: Exponentially Weighted Moving Average
+
+50-sample window
+
+### FR-127: Expected
+
+(from forum): `{'Wrightiraptor Mountain': {'min': 1, 'max': 158, 'avg': 52.75}}`
+
+### FR-128: Your Actual
+
+`{'Wrightiraptor Mountain': {'min': 1, 'max': 120, 'avg': 37.93}}`
+
+### FR-129: Evidence Gathered So Far
+
+### FR-130: Hypothesis
+
+### FR-131: Next Steps
+
+### FR-132: Run diagnostic script
+
+(`PHASE1_COMPLETE_DIAGNOSTIC.py`) to confirm:
+
+### FR-133: If hypothesis confirmed
+
+Implement fix that:
+
+### FR-134: If hypothesis NOT confirmed
+
+Investigate other possibilities:
+
+### FR-135: Wrong
+
+Average rainfall on days when it rained = 2 inches
+
+### FR-136: Correct
+
+Average rainfall over the whole month (including dry days) = 0.5 inches
+
+### FR-137: What Was Wrong
+
+### FR-138: Evidence That Confirmed This
+
+### FR-139: Key Changes
+
+### FR-140: What This Does
+
+### FR-141: Your values were too LOW:
+
+- Your: `{'Wrightiraptor Mountain': {'min': 1, 'max': 120, 'avg': 37.93}}`
+
+### FR-142: Assignment requirements:
+
+- "average attendance **over the 3 whole days**"
+
+### FR-143: Forum discussion:
+
+- Multiple students had avg calculation issues
+
+### FR-144: Get Atmosfear Attendance Time Series
+
+### FR-145: Task
+
+### FR-146: Output Format
+
+### FR-147: Implementation
+
+### FR-148: Task
+
+### FR-149: Moving Average Formula
+
+### FR-150: Implementation
+
+### FR-151: Note
+
+### FR-152: Task
+
+### FR-153: EWMA Formula
+
+### FR-154: Implementation
+
+### FR-155: Alternative: Using halflife or com parameter
+
+### FR-156: Sequence delimiter
+
+Check actual format
+
+### FR-157: Window size
+
+Must be exactly 50
+
+### FR-158: NaN handling
+
+Moving average has NaN for first (window-1) values
+
+### FR-159: EWMA parameters
+
+span vs halflife vs com - use span=50
+
+### FR-160: Output format
+
+Q1 output is `[mean, std]` as a list
+
+### FR-161: Standard deviation
+
+Use population std (ddof=0) or sample std (ddof=1) - check which is expected
+
+### FR-162: Task
+
+### FR-163: Output Format
+
+### FR-164: Distance Metric: Edit Distance (Levenshtein)
+
+### FR-165: Implementation
+
+### FR-166: Task
+
+### FR-167: Output Format
+
+### FR-168: Key: Filter to Rides Only
+
+### FR-169: Attendance Definition
+
+### FR-170: Implementation
+
+### FR-171: Alternative: Using matplotlib directly
+
+### FR-172: Task
+
+### FR-173: Output Format
+
+### FR-174: Implementation
+
+### FR-175: Sequence delimiter
+
+Check actual format in database
+
+### FR-176: Edit distance
+
+Make sure implementation is correct (standard Levenshtein)
+
+### FR-177: Non-zero minimum
+
+Must exclude zeros before finding min
+
+### FR-178: Ride filtering
+
+Use correct category filter
+
+### FR-179: Attendance aggregation
+
+May need to aggregate by hour/day
+
+### FR-180: Output format
+
+Must be dict of dicts, not nested lists
+
+### FR-181: average
+
+(UPGMA): Uses average distance over all points in clusters
+
+### FR-182: single
+
+Uses minimum distance between clusters
+
+### FR-183: complete
+
+Uses maximum distance between clusters
+
+### FR-184: ward
+
+Minimizes variance within clusters
+
+### FR-185: Database
+
+### FR-186: Target Visitors
+
+### FR-187: Task
+
+### FR-188: Edit Distance Function
+
+### FR-189: Implementation
+
+### FR-190: Linkage Methods
+
+### FR-191: Assignment Requirement
+
+### FR-192: Scipy Linkage Output (Z matrix)
+
+### FR-193: For scipy.cluster.hierarchy.linkage
+
+### FR-194: Observation matrix
+
+(n x m): n observations with m features
+
+### FR-195: Condensed distance matrix
+
+(1D array): Upper triangle of distance matrix
+
+### FR-196: Sequence delimiter
+
+Check actual format in database (-, comma, space)
+
+### FR-197: Visitor ID order
+
+Maintain consistent order for labels
+
+### FR-198: Distance matrix format
+
+Use `squareform()` for condensed format
+
+### FR-199: Linkage method
+
+Must use 'average' as specified
+
+### FR-200: Labels
+
+Must be string type for dendrogram labels
+
+### FR-201: Symmetry
+
+Distance matrix must be symmetric (d[i,j] = d[j,i])
+
+### FR-202: Task
+
+### FR-203: Output Format
+
+### FR-204: Implementation
+
+### FR-205: Task
+
+### FR-206: Output Format
+
+### FR-207: Implementation
+
+### FR-208: Task
+
+### FR-209: Key Requirements
+
+### FR-210: Output Format
+
+### FR-211: Implementation
+
+### FR-212: Sequence Format Investigation
+
+### FR-213: Task
+
+### FR-214: Output Format
+
+### FR-215: Implementation
+
+### FR-216: Category names
+
+Exact match required (case-sensitive)
+
+### FR-217: Sequence delimiter
+
+Could be `-`, `,`, or space - check actual format
+
+### FR-218: Sequence length
+
+May vary - only use first 192
+
+### FR-219: AttractionID ordering
+
+Graph 4 requires ordering by ID
+
+### FR-220: Output format
+
+Lists vs tuples must match specification
+
+### FR-221: Graph display
+
+Must show plot AND print data
+
+### FR-222: LibPySal Built-in Data
+
+### FR-223: Loading Data
+
+### FR-224: Task
+
+### FR-225: Implementation
+
+### FR-226: Alternative: Using plot directly
+
+### FR-227: Task
+
+### FR-228: Implementation
+
+### FR-229: Task
+
+### FR-230: Moran's I Formula
+
+### FR-231: Implementation
+
+### FR-232: Alternative: Using different weight matrices
+
+### FR-233: Interpretation of Moran's I
+
+### FR-234: Data merge
+
+Column names may differ between shapefile and CSV
+
+### FR-235: CRS (Coordinate Reference System)
+
+May need to set/transform CRS
+
+### FR-236: Weight matrix
+
+Queen vs Rook contiguity - check which is expected
+
+### FR-237: Row standardization
+
+May affect Moran's I calculation
+
+### FR-238: Column selection
+
+Need to identify correct numeric column for analysis
+
+### FR-239: Centroid calculation
+
+Use `.centroid` for proportional symbol placement
+
+### FR-240: LibPySal paths
+
+Use `libpysal.examples.get_path()` to get correct file paths
+
+### FR-241: Tables
+
+### FR-242: Task
+
+### FR-243: Approach
+
+### FR-244: SQL Query
+
+### FR-245: Python Implementation
+
+### FR-246: Expected Output
+
+### FR-247: Task
+
+### FR-248: Key Insight
+
+### FR-249: Approach
+
+### FR-250: SQL Query
+
+### FR-251: Alternative (using type field)
+
+### FR-252: Python Implementation
+
+### FR-253: Expected Output
+
+### FR-254: Task
+
+### FR-255: Key Insight
+
+### FR-256: SQL Query
+
+### FR-257: Alternative (count all visits, not unique visitors)
+
+### FR-258: Python Implementation
+
+### FR-259: Expected Output
+
+### FR-260: Ride filtering
+
+Must use correct Category/type to identify rides
+
+### FR-261: "Second" means index 1
+
+After sorting DESC, second item is at index 1
+
+### FR-262: Output format
+
+Print ONLY the answer, no extra text
+
+### FR-263: Visitors vs Visits
+
+Q3 says "visitors" - may need COUNT(DISTINCT visitorID)
+
+### FR-264: Fast Food type
+
+Check exact spelling/capitalization in database
+
+### FR-265: Database path
+
+Local path differs from Ed Lessons path
+
+## 7. Non-Functional Requirements
+
+### NFR-1: CSE 535 A2 - MOBILE SECURITY (Post-Quantum Cryptography)
+
+### Requirement 1: Parameter Selection
+
+**What it means:**
+- Choose secure n, q, σ for Learning with Errors problem
+- Prevent known attacks: Gaussian elimination, BKZ lattice reduction
+- Typical values: n=256-512, q=2^12-2^16, σ=√2-√8
+
+**How we validate:**
+```
+Input: Security level (128, 192, 256-bit)
+Output: (n, q, σ) parameters
+
+Example:
+  Security=128 bits → (n=256, q=2^13, σ=√2.7)
+  Security=256 bits → (n=512, q=2^16, σ=√4.0)
+
+Check:
+- n is power of 2: ✓
+- q is prime or 2^k: ✓
+- σ provides c
+
+## 8. Features
+
+### 🟡 Dataset
+
+14 attributes total
+
+### 🟡 Requirement
+
+5+ user stories, each with 1 visualization
+
+### 🟡 Constraint
+
+Visualizations collectively must use 8+ of 14 attributes
+
+### 🟡 Problem
+
+Strategic selection needed to avoid redundancy while ensuring coverage
+
+### 🟡 Requirement
+
+3+ visualizations with 2+ variables each (plus income)
+
+### 🟡 Problem
+
+More variables = visual complexity, but too few variables = shallow insights
+
+### 🟡 Goal
+
+Balance comprehensiveness with clarity
+
+### 🟡 Ambiguity
+
+Income can be framed as:
+
+### 🟡 Impact
+
+Affects visualization type, interpretation, and marketing utility
+
+### 🟡 Problem
+
+No clear guidance in project spec which framing is correct
+
+### 🟡 The Challenge
+
+### 🟡 Resolution Plan
+
+### 🟡 The Challenge
+
+### 🟡 Resolution Plan
+
+### 🟡 The Challenge
+
+### 🟡 Resolution Plan
+
+### 🟡 Issue 1: Attribute Redundancy
+
+### 🟡 Issue 2: Multivariate Visualization Design
+
+### 🟡 Issue 3: Income Framing
+
+### 🟡 HIGH
+
+Age, Education, Gender (most predictive for college targeting)
+
+### 🟡 MEDIUM
+
+Workclass, Hours/Week, Marital Status (life stage context)
+
+### 🟡 LOWER
+
+Race, Native Country, Capital Gain/Loss (less actionable for enrollment)
+
+### 🟡 Reduce dimensions
+
+- Move one variable to faceting (small multiples)
+
+### 🟡 Aggregate data
+
+- Show percentages not raw counts
+
+### 🟡 Use interaction
+
+(in presentation):
+
+### 🟡 FIRST
+
+Resolve Issue 3 (Income Framing) - Set this early
+
+### 🟡 SECOND
+
+Resolve Issue 1 (Attribute Planning) - Choose stories
+
+### 🟡 THIRD
+
+Resolve Issue 2 (Visualization Design) - Create charts
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Edge Cases
+
+### 🟡 Return
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🔴 Sampling Logic (Critical Detail)
+
+### 🟡 Return
+
+### 🟡 Mathematical Background
+
+### 🟡 Algorithm
+
+### 🟡 Return
+
+### 🟡 Basic Test
+
+### 🟡 Sample Generation Test
+
+### 🟡 Row normalization
+
+Rows with no outgoing transitions need special handling
+
+### 🟡 Random sampling bounds
+
+Must use strict `<` for upper bound comparison
+
+### 🟡 Eigenvector sign
+
+Eigenvectors can be negated; ensure positive probabilities
+
+### 🟡 Complex eigenvalues
+
+Use `np.real()` to extract real component
+
+### 🟡 Floating point precision
+
+Eigenvalue may not be exactly 1.0
+
+### 🟡 State ordering
+
+Must use consistent indexing from stored states list
+
+### 🟡 Private Key
+
+Secret vector `s` of length `n`
+
+### 🟡 Public Key
+
+Tuple `(A, b)` where:
+
+### 🟡 Parameters
+
+### 🟡 Key Generation
+
+### 🟡 Encryption (for single bit)
+
+### 🟡 Decryption
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Worked Example (from PDF)
+
+### 🟡 Return
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Implementation
+
+### 🟡 Worked Example (from PDF)
+
+### 🟡 Return
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Proximity Logic
+
+### 🟡 Worked Example (from PDF)
+
+### 🟡 Return
+
+### 🟡 Public Key Generation
+
+### 🟡 Encryption
+
+### 🟡 Decryption
+
+### 🟡 Modular arithmetic with negatives
+
+Python's `%` handles negatives correctly
+
+### 🟡 Integer vs float types
+
+Ensure modulus operations use integers
+
+### 🟡 Boolean indexing
+
+`random_vector.astype(bool)` for row selection
+
+### 🟡 Proximity calculation
+
+Must handle wrap-around for values near p
+
+### 🟡 Floor division
+
+Use `p // 2` not `p / 2`
+
+### 🟡 NumPy array returns
+
+Ensure proper array types in return values
+
+### 🟡 Sample Data
+
+### 🟡 Energy Consumption
+
+### 🟡 Power Consumption
+
+### 🟡 Energy Sensitivity
+
+### 🟡 Power Sensitivity
+
+### 🟡 Purpose
+
+### 🟡 Implementation
+
+### 🟡 Notes
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Return
+
+### 🟡 Worked Example
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Return
+
+### 🟡 Verification
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Return
+
+### 🟡 Inputs
+
+### 🟡 Algorithm
+
+### 🟡 Return
+
+### 🟡 Key Difference from Energy Sensitivity
+
+### 🟡 Sample Dataset
+
+### 🟡 Test with Weights [1, 1, 1, 1]
+
+### 🟡 Method name typo
+
+Document says `calculate_energy_sensitivites` (missing 'i')
+
+### 🟡 Rounding
+
+Round after multiplying by 100
+
+### 🟡 Power vs Energy sensitivity
+
+Different calculation order (divide by time before vs after summing)
+
+### 🟡 CSV path
+
+File must be named exactly `dataset.csv`
+
+### 🟡 Return types
+
+Average should be float, app names should be strings
+
+### 🟡 Empty dataset
+
+Handle gracefully (though likely won't be tested)
+
+### 🟡 Metric column names
+
+Use exact column names from CSV
+
+### 🟡 Python 3.13
+
+- **Libraries**: SQLite3, Pandas 2.3.1, Matplotlib 3.10.6, NumPy 2.3.3
+
+### 🟡 Spatial
+
+Libpysal 4.13.0, ESDA 2.8.0, Geopandas 1.0.1
+
+### 🟡 Database
+
+`/course/data/CSE-578/dinofunworld.db`
+
+### 🟡 Notebook Magic
+
+`%matplotlib inline` in all notebooks
+
+### 🟡 Assignment 1: Basic Database Queries
+
+### 🟡 Assignment 2: Data Visualization (4 Charts)
+
+### 🟡 Assignment 3: Distance Matrix & Visualization
+
+### 🟡 Assignment 4: Time Series Analysis
+
+### 🟡 Assignment 5: Spatial Analysis with LibPySal
+
+### 🟡 Assignment 6: Dendrogram Creation
+
+### 🟡 Progress Report
+
+### 🟡 Final Report
+
+### 🟡 Most Popular Attraction
+
+Find attraction with most visits
+
+### 🟡 Second Most Popular Attraction
+
+Find second highest visit count
+
+### 🟡 Fast Food Visitors
+
+Count unique visitors to fast food attractions
+
+### 🟡 Control Chart
+
+Mean ± standard deviation bands
+
+### 🟡 Moving Average
+
+50-sample window
+
+### 🟡 Exponentially Weighted Moving Average
+
+50-sample window
+
+### 🟡 Expected
+
+(from forum): `{'Wrightiraptor Mountain': {'min': 1, 'max': 158, 'avg': 52.75}}`
+
+### 🟡 Your Actual
+
+`{'Wrightiraptor Mountain': {'min': 1, 'max': 120, 'avg': 37.93}}`
+
+### 🟡 Evidence Gathered So Far
+
+### 🟡 Hypothesis
+
+### 🟡 Next Steps
+
+### 🟡 Run diagnostic script
+
+(`PHASE1_COMPLETE_DIAGNOSTIC.py`) to confirm:
+
+### 🟡 If hypothesis confirmed
+
+Implement fix that:
+
+### 🟡 If hypothesis NOT confirmed
+
+Investigate other possibilities:
+
+### 🟡 Wrong
+
+Average rainfall on days when it rained = 2 inches
+
+### 🟡 Correct
+
+Average rainfall over the whole month (including dry days) = 0.5 inches
+
+### 🟡 What Was Wrong
+
+### 🟡 Evidence That Confirmed This
+
+### 🟡 Key Changes
+
+### 🟡 What This Does
+
+### 🟡 Your values were too LOW:
+
+- Your: `{'Wrightiraptor Mountain': {'min': 1, 'max': 120, 'avg': 37.93}}`
+
+### 🟡 Assignment requirements:
+
+- "average attendance **over the 3 whole days**"
+
+### 🟡 Forum discussion:
+
+- Multiple students had avg calculation issues
+
+### 🟡 Get Atmosfear Attendance Time Series
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Implementation
+
+### 🟡 Task
+
+### 🟡 Moving Average Formula
+
+### 🟡 Implementation
+
+### 🟡 Note
+
+### 🟡 Task
+
+### 🟡 EWMA Formula
+
+### 🟡 Implementation
+
+### 🟡 Alternative: Using halflife or com parameter
+
+### 🟡 Sequence delimiter
+
+Check actual format
+
+### 🟡 Window size
+
+Must be exactly 50
+
+### 🟡 NaN handling
+
+Moving average has NaN for first (window-1) values
+
+### 🟡 EWMA parameters
+
+span vs halflife vs com - use span=50
+
+### 🟡 Output format
+
+Q1 output is `[mean, std]` as a list
+
+### 🟡 Standard deviation
+
+Use population std (ddof=0) or sample std (ddof=1) - check which is expected
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Distance Metric: Edit Distance (Levenshtein)
+
+### 🟡 Implementation
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Key: Filter to Rides Only
+
+### 🟡 Attendance Definition
+
+### 🟡 Implementation
+
+### 🟡 Alternative: Using matplotlib directly
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Implementation
+
+### 🟡 Sequence delimiter
+
+Check actual format in database
+
+### 🟡 Edit distance
+
+Make sure implementation is correct (standard Levenshtein)
+
+### 🟡 Non-zero minimum
+
+Must exclude zeros before finding min
+
+### 🟡 Ride filtering
+
+Use correct category filter
+
+### 🟡 Attendance aggregation
+
+May need to aggregate by hour/day
+
+### 🟡 Output format
+
+Must be dict of dicts, not nested lists
+
+### 🟡 average
+
+(UPGMA): Uses average distance over all points in clusters
+
+### 🟡 single
+
+Uses minimum distance between clusters
+
+### 🟡 complete
+
+Uses maximum distance between clusters
+
+### 🟡 ward
+
+Minimizes variance within clusters
+
+### 🟡 Database
+
+### 🟡 Target Visitors
+
+### 🟡 Task
+
+### 🟡 Edit Distance Function
+
+### 🟡 Implementation
+
+### 🟡 Linkage Methods
+
+### 🟡 Assignment Requirement
+
+### 🟡 Scipy Linkage Output (Z matrix)
+
+### 🟡 For scipy.cluster.hierarchy.linkage
+
+### 🟡 Observation matrix
+
+(n x m): n observations with m features
+
+### 🟡 Condensed distance matrix
+
+(1D array): Upper triangle of distance matrix
+
+### 🟡 Sequence delimiter
+
+Check actual format in database (-, comma, space)
+
+### 🟡 Visitor ID order
+
+Maintain consistent order for labels
+
+### 🟡 Distance matrix format
+
+Use `squareform()` for condensed format
+
+### 🟡 Linkage method
+
+Must use 'average' as specified
+
+### 🟡 Labels
+
+Must be string type for dendrogram labels
+
+### 🟡 Symmetry
+
+Distance matrix must be symmetric (d[i,j] = d[j,i])
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Implementation
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Implementation
+
+### 🟡 Task
+
+### 🟡 Key Requirements
+
+### 🟡 Output Format
+
+### 🟡 Implementation
+
+### 🟡 Sequence Format Investigation
+
+### 🟡 Task
+
+### 🟡 Output Format
+
+### 🟡 Implementation
+
+### 🟡 Category names
+
+Exact match required (case-sensitive)
+
+### 🟡 Sequence delimiter
+
+Could be `-`, `,`, or space - check actual format
+
+### 🟡 Sequence length
+
+May vary - only use first 192
+
+### 🟡 AttractionID ordering
+
+Graph 4 requires ordering by ID
+
+### 🟡 Output format
+
+Lists vs tuples must match specification
+
+### 🟡 Graph display
+
+Must show plot AND print data
+
+### 🟡 LibPySal Built-in Data
+
+### 🟡 Loading Data
+
+### 🟡 Task
+
+### 🟡 Implementation
+
+### 🟡 Alternative: Using plot directly
+
+### 🟡 Task
+
+### 🟡 Implementation
+
+### 🟡 Task
+
+### 🟡 Moran's I Formula
+
+### 🟡 Implementation
+
+### 🟡 Alternative: Using different weight matrices
+
+### 🟡 Interpretation of Moran's I
+
+### 🟡 Data merge
+
+Column names may differ between shapefile and CSV
+
+### 🟡 CRS (Coordinate Reference System)
+
+May need to set/transform CRS
+
+### 🟡 Weight matrix
+
+Queen vs Rook contiguity - check which is expected
+
+### 🟡 Row standardization
+
+May affect Moran's I calculation
+
+### 🟡 Column selection
+
+Need to identify correct numeric column for analysis
+
+### 🟡 Centroid calculation
+
+Use `.centroid` for proportional symbol placement
+
+### 🟡 LibPySal paths
+
+Use `libpysal.examples.get_path()` to get correct file paths
+
+### 🟡 Tables
+
+### 🟡 Task
+
+### 🟡 Approach
+
+### 🟡 SQL Query
+
+### 🟡 Python Implementation
+
+### 🟡 Expected Output
+
+### 🟡 Task
+
+### 🟡 Key Insight
+
+### 🟡 Approach
+
+### 🟡 SQL Query
+
+### 🟡 Alternative (using type field)
+
+### 🟡 Python Implementation
+
+### 🟡 Expected Output
+
+### 🟡 Task
+
+### 🟡 Key Insight
+
+### 🟡 SQL Query
+
+### 🟡 Alternative (count all visits, not unique visitors)
+
+### 🟡 Python Implementation
+
+### 🟡 Expected Output
+
+### 🟡 Ride filtering
+
+Must use correct Category/type to identify rides
+
+### 🟡 "Second" means index 1
+
+After sorting DESC, second item is at index 1
+
+### 🟡 Output format
+
+Print ONLY the answer, no extra text
+
+### 🟡 Visitors vs Visits
+
+Q3 says "visitors" - may need COUNT(DISTINCT visitorID)
+
+### 🟡 Fast Food type
+
+Check exact spelling/capitalization in database
+
+### 🟡 Database path
+
+Local path differs from Ed Lessons path
+
+## 9. Architecture Overview
+
+### ✅ Screen 1: Gesture Selection
+**Status:** COMPLETE
+
+- **Component:** MainActivity
+- **UI:** Dropdown spinner with 17 gestures
+- **Gestures:**
+  - Turn on lights
+  - Turn off lights
+  - Turn on fan
+  - Turn off fan
+  - Increase fan speed
+  - Decrease fan speed
+  - Set Thermostat to specified temperature
+  - 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+**Code Reference:** `MainActivity.kt:14-31`
+
+---
+
+### ✅ Screen 2: Expert Video Playback
+**Status:** COMPLETE
+
+- **Component:** GestureDetailActivity
+- **Title:** Gesture name (e.g., "Turn on lights")
+- **Video Display:** 300x300dp VideoView with expert gesture video
+- **Controls:**
+  - Replay button (unlimited replays)
+  - PRACTICE button (launches Screen 3)
+- **Video Playback:** Plays once, stops, no auto-loop
+
+**Code Reference:** `GestureDetailActivity.kt`
+
+**Changes Made:**
+- Removed auto-looping: `mp.isLooping = false` (line 35)
+- Removed MediaController for clean UI (line 30)
+- Unlimited replay support (line 55-58)
+- Changed title to just "Repla
+
+## 10. Technical Requirements
+
+- Use aws
+- Use java
+- Use flask
+- Use go
+- Use sql
+- Use python
+- Use azure
+
+## 11. Integration Points
+
+- **Integration with config**: Integration point with config project
+- **Integration with development**: Integration point with development project
+- **Integration with OVERVIEW**: Integration point with OVERVIEW project
+- **Integration with details**: Integration point with details project
+- **Integration with requirements**: Integration point with requirements project
+- **Integration with Dataset**: Integration point with Dataset project
+- **Integration with enhanced**: Integration point with enhanced project
+- **Integration with thus**: Integration point with thus project
+- **Integration with Final**: Integration point with Final project
+- **Integration with goals**: Integration point with goals project
+- **Integration with progression**: Integration point with progression project
+- **Integration with Report**: Integration point with Report project
+- **Integration with 3**: Integration point with 3 project
+- **Integration with in**: Integration point with in project
+- **Integration with FULL**: Integration point with FULL project
+- **Integration with Structure**: Integration point with Structure project
+- **Integration with COMPLETE**: Integration point with COMPLETE project
+- **Integration with was**: Integration point with was project
+- **Integration with EVALUATION**: Integration point with EVALUATION project
+- **Integration with Summary**: Integration point with Summary project
+- **Integration with author**: Integration point with author project
+- **Integration with source**: Integration point with source project
+- **Integration with Configuration**: Integration point with Configuration project
+- **Integration with Part**: Integration point with Part project
+- **Integration with Locations**: Integration point with Locations project
+- **Integration with settings**: Integration point with settings project
+- **Integration with Name**: Integration point with Name project
+- **Integration with COMPLETION**: Integration point with COMPLETION project
+- **Integration with STRUCTURE**: Integration point with STRUCTURE project
+- **Integration with -**: Integration point with - project
+- **Integration with Deliverables**: Integration point with Deliverables project
+- **Integration with Reference**: Integration point with Reference project
+- **Integration with P1**: Integration point with P1 project
+- **Integration with root**: Integration point with root project
+- **Integration with tree**: Integration point with tree project
+- **Integration with that**: Integration point with that project
+- **Integration with for**: Integration point with for project
+- **Integration with across**: Integration point with across project
+- **Integration with configuration**: Integration point with configuration project
+- **Integration with spec**: Integration point with spec project
+- **Integration with grade**: Integration point with grade project
+- **Integration with Evaluated**: Integration point with Evaluated project
+- **Integration with folder**: Integration point with folder project
+- **Integration with working**: Integration point with working project
+- **Integration with spr26**: Integration point with spr26 project
+- **Integration with consists**: Integration point with consists project
+- **Integration with Delivery**: Integration point with Delivery project
+- **Integration with goal**: Integration point with goal project
+- **Integration with Preparation**: Integration point with Preparation project
+- **Integration with Overview**: Integration point with Overview project
+- **Integration with In**: Integration point with In project
+- **Integration with overview**: Integration point with overview project
+- **Integration with deliverables**: Integration point with deliverables project
+- **Integration with deliverable**: Integration point with deliverable project
+- **Integration with team**: Integration point with team project
+- **Integration with 1**: Integration point with 1 project
+- **Integration with management**: Integration point with management project
+- **Integration with LOCATION**: Integration point with LOCATION project
+- **Integration with Files**: Integration point with Files project
+- **Integration with has**: Integration point with has project
+- **Integration with is**: Integration point with is project
+- **Integration with name**: Integration point with name project
+- **Integration with Type**: Integration point with Type project
+- **Integration with Progress**: Integration point with Progress project
+- **Integration with progress**: Integration point with progress project
+- **Integration with STATS**: Integration point with STATS project
+- **Integration with says**: Integration point with says project
+- **Integration with applies**: Integration point with applies project
+- **Integration with explicitly**: Integration point with explicitly project
+- **Integration with structure**: Integration point with structure project
+- **Integration with objective**: Integration point with objective project
+- **Integration with summary**: Integration point with summary project
+- **Integration with HIGHLIGHTS**: Integration point with HIGHLIGHTS project
+- **Integration with overviews**: Integration point with overviews project
+- **Integration with Status**: Integration point with Status project
+- **Integration with Metrics**: Integration point with Metrics project
+- **Integration with provides**: Integration point with provides project
+- **Integration with sync**: Integration point with sync project
+- **Integration with Understanding**: Integration point with Understanding project
+- **Integration with managers**: Integration point with managers project
+- **Integration with and**: Integration point with and project
+- **Integration with will**: Integration point with will project
+- **Integration with reports**: Integration point with reports project
+- **Integration with Description**: Integration point with Description project
+- **Integration with Goal**: Integration point with Goal project
+- **Integration with 4**: Integration point with 4 project
+- **Integration with Root**: Integration point with Root project
+- **Integration with scope**: Integration point with scope project
+- **Integration with we**: Integration point with we project
+- **Integration with Complete**: Integration point with Complete project
+- **Integration with Completion**: Integration point with Completion project
+- **Integration with Python**: Integration point with Python project
+- **Integration with status**: Integration point with status project
+- **Integration with STATUS**: Integration point with STATUS project
+- **Integration with Run**: Integration point with Run project
+- **Integration with Requirements**: Integration point with Requirements project
+- **Integration with Gesture-based**: Integration point with Gesture-based project
+- **Integration with supports**: Integration point with supports project
+- **Integration with by**: Integration point with by project
+- **Integration with Organization**: Integration point with Organization project
+- **Integration with checkpoint**: Integration point with checkpoint project
+- **Integration with with**: Integration point with with project
+- **Integration with are**: Integration point with are project
+- **Integration with analyzes**: Integration point with analyzes project
+- **Integration with Overviews**: Integration point with Overviews project
+- **Integration with Mission**: Integration point with Mission project
+- **Integration with because**: Integration point with because project
+- **Integration with Evaluation**: Integration point with Evaluation project
+- **Integration with workflow**: Integration point with workflow project
+
+## 12. Timeline & Phases
+
+### Phase 1: is closer to 0 than to 3 -> message = 0
+
+Ciphertext 1: u=[3,4,3,3], v=5
+dot = 43 mod 7 = 1
+diff = (5 - 1) mod 7 = 4
+
+### Phase 2: is closer to 3 (distance 1) than to 0 (distance 3 via wrap) -> message = 1
+
+```
+
+### Return
+- Integer (0 or 1)
+
+---
+
+## Implementation Checklist
+
+- [ ] Create class A2
+- [ ] Implement `generate_public_key_vector`
+  - [ ] Matrix-vector multiplication with modular arithmetic
+  - [ ] Add error vector
+- [ ] Implement `encrypt`
+  - [ ] Extract A, b from public key tuple
+  - [ ] Sum selected rows based on binary vector
+  - [ ] Add message * floor(p/2) contribution
+  - [ ] Return tuple (u, v)
+- [ ] Implement `decrypt`
+  - [ ] Compute u · s mod p
+  - [ ] Compute (v - dot) mod p
+  - [ ] Determine message based on proximity to 0 vs p//2
+- [ ] Test with provided examples
+- [ ] Handle edge cases
+
+---
+
+## Test Cases
+
+### Public Key Generation
+```
+A = np.array([[1, 6, 6, 2], [6, 0, 5, 3], [2, 5, 4, 1]])
+s = np.array([3, 4, 0, 6])
+e = np.array([0, -1, 1])
+p = 7
+
+b = generate_public_key_vector(A, s, e, p)
+assert np.array_equal(b, np.array([4, 0, 5]))
+```
+
+### Encryption
+```
+public_key = (A, np.array([4, 0, 5]))
+random_vector = np.array([1, 0, 1])
+
+u0, v0 = encrypt(public_key, random_vector, 0, 7)
+assert np.array_equal(u0, np.array([3, 4, 3, 3]))
+assert v0 == 2
+
+u1, v1 = encrypt(public_key, random_vector, 1, 7)
+assert np.array_equal(u1, np.array([3, 4, 3, 3]))
+assert v1 == 5
+```
+
+### Decryption
+```
+s = np.array([3, 4, 0, 6])
+
+msg0 = decrypt(s, (np.array([3, 4, 3, 3]), 2), 7)
+assert msg0 == 0
+
+msg1 = decrypt(s, (np.array([3, 4, 3, 3]), 5), 7)
+assert msg1 == 1
+```
+
+---
+
+## Potential Pitfalls
+
+### Phase 3: Visitors: 165316, 1835254, 296394, 404385, 448990
+
+- Metric: Edit distance (Levenshtein) on visitor sequences
+- Output: Dictionary of dictionaries with pairwise distances
+
+**Question 2 - Parallel Coordinate Plot**
+- Data: Ride attendance statistics for 5 visitors
+- Visualization: Lines showing each visitor's pattern across rides
+
+**Question 3 - Scatterplot Matrix**
+- Same data as Q2
+- Visualization: Pairwise scatter plots of ride attendance
+
+**Deliverable**: `Assignment3.ipynb`
+
+---
+
+### Assignment 4: Time Series Analysis
+
+**Data**: Atmosfear r
+
+## 13. Milestones
+
+## 14. Dependencies
+
+## 16. Related Projects
+
+- config
+- development
+- OVERVIEW
+- details
+- requirements
+- Dataset
+- enhanced
+- thus
+- Final
+- goals
+- progression
+- Report
+- 3
+- in
+- FULL
+- Structure
+- COMPLETE
+- was
+- EVALUATION
+- Summary
+- author
+- source
+- Configuration
+- Part
+- Locations
+- settings
+- Name
+- COMPLETION
+- STRUCTURE
+- -
+- Deliverables
+- Reference
+- P1
+- root
+- tree
+- that
+- for
+- across
+- configuration
+- spec
+- grade
+- Evaluated
+- folder
+- working
+- spr26
+- consists
+- Delivery
+- goal
+- Preparation
+- Overview
+- In
+- overview
+- deliverables
+- deliverable
+- team
+- 1
+- management
+- LOCATION
+- Files
+- has
+- is
+- name
+- Type
+- Progress
+- progress
+- STATS
+- says
+- applies
+- explicitly
+- structure
+- objective
+- summary
+- HIGHLIGHTS
+- overviews
+- Status
+- Metrics
+- provides
+- sync
+- Understanding
+- managers
+- and
+- will
+- reports
+- Description
+- Goal
+- 4
+- Root
+- scope
+- we
+- Complete
+- Completion
+- Python
+- status
+- STATUS
+- Run
+- Requirements
+- Gesture-based
+- supports
+- by
+- Organization
+- checkpoint
+- with
+- are
+- analyzes
+- Overviews
+- Mission
+- because
+- Evaluation
+- workflow
+
+## 17. Shared Features
+
+- Encryption
+- Database
+- Implementation
+- 🟠 HIGH
+- 🟡 MEDIUM
+- Impact
+- Edge Cases
+- Purpose
+- Problem
+- Verification
+- Approach:
+- Key Changes
+- Note:
+- Final Report
+- Next Steps
+- Goal 1:
+- QA Complete
+- Expected
+- Standard Deviation:
+- Parameters
+- Tables
+- Output Format
+- Inputs
+- Requirement
+- The Challenge
+- Resolution Plan
+- Algorithm
+- Return
+- Decryption
+- Worked Example (from PDF)
+- Task
+- Sequence delimiter
+- Ride filtering
+- SQL Query
+- Python Implementation
+- Expected Output
+- Key Insight

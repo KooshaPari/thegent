@@ -1,0 +1,101 @@
+# health_serializers_api
+
+Source: docs/reference/api/health_serializers_api.md
+
+---
+
+# health_serializers API Reference
+
+> **Source**: `src/thegent/cli/commands/output/health_serializers.py`
+
+Reusable pure serializers for session contract health outputs.
+
+---
+
+## export_format_from_suffix
+
+```
+export_format_from_suffix(suffix: str) -> Any
+```
+
+---
+
+## infer_export_format
+
+```
+infer_export_format(path: Path, fallback: str) -> str
+```
+
+---
+
+## serialize_health_gate_csv
+
+```
+serialize_health_gate_csv(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_gate_jsonl
+
+```
+serialize_health_gate_jsonl(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_gate_md
+
+```
+serialize_health_gate_md(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_report_csv
+
+```
+serialize_health_report_csv(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_report_jsonl
+
+```
+serialize_health_report_jsonl(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_report_md
+
+```
+serialize_health_report_md(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_trend_csv
+
+```
+serialize_health_trend_csv(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_trend_jsonl
+
+```
+serialize_health_trend_jsonl(result: dict[(str, Any)]) -> str
+```
+
+---
+
+## serialize_health_trend_md
+
+```
+serialize_health_trend_md(result: dict[(str, Any)]) -> str
+```
+
+---

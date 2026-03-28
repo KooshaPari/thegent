@@ -4,6 +4,7 @@ Source: docs/research/GHOSTTY_SETUP_GUIDE_2026-02-18.md
 
 ---
 
+<DONE>
 # Ghostty Setup Guide: Features, Plugins, and Configuration (2026-02-18)
 
 ## Table of Contents

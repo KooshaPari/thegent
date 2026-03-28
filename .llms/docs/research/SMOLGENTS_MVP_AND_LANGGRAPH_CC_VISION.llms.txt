@@ -4,6 +4,7 @@ Source: docs/research/SMOLGENTS_MVP_AND_LANGGRAPH_CC_VISION.md
 
 ---
 
+<DONE>
 # SmolGents Deep Research: MVP Use Case & LangGraph-over-CC Vision
 
 > **Date**: 2026-02-18

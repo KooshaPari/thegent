@@ -1,0 +1,13 @@
+# index
+
+Title: Structured Docs IA
+Source: docs/site/index.md
+
+---
+
+## Documentation Map
+
+- [Guide](/guide/) for setup and daily usage.
+- [Operations](/operations/) for troubleshooting and runbooks.
+- [Reference](/reference/) for routing/config details.
+- [API](/api/) for generated and curated API docs.

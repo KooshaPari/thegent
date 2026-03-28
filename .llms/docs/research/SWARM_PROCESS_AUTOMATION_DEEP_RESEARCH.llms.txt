@@ -4,6 +4,7 @@ Source: docs/research/SWARM_PROCESS_AUTOMATION_DEEP_RESEARCH.md
 
 ---
 
+<DONE>
 # Swarm Process Automation — Deep Research & Plan
 
 > **Purpose**: Research and plan for automatic process pruning and long-term optimizations for multi-agent, multi-tenant, multi-project local swarms.
@@ -376,7 +377,7 @@ def _get_memory_mb_macos() -> tuple[float, float]:
 
 ```
 <key>StartInterval</key>
-<integer>900</integer>
+<integer>900</integer>  
 
 <key>StartCalendarInterval</key>
 <dict>

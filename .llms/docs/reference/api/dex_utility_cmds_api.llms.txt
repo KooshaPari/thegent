@@ -1,0 +1,132 @@
+# dex_utility_cmds_api
+
+Source: docs/reference/api/dex_utility_cmds_api.md
+
+---
+
+# dex_utility_cmds API Reference
+
+> **Source**: `src/thegent/dex_utility_cmds.py`
+
+Utility commands for dex CLI.
+
+Session management and utility commands.
+Extracted from dex_main.py for maintainability.
+
+---
+
+## dex_config
+
+```
+dex_config(key: Any, value: Any)
+```
+
+View or edit dex configuration.
+
+---
+
+## dex_doctor
+
+Run dex diagnostics.
+
+---
+
+## dex_fork
+
+```
+dex_fork(session_id: str)
+```
+
+Fork a dex session.
+
+---
+
+## dex_history
+
+```
+dex_history(limit: int)
+```
+
+Show dex session history.
+
+---
+
+## dex_inspect
+
+```
+dex_inspect(session_id: str)
+```
+
+Inspect a dex session in detail.
+
+---
+
+## dex_logs
+
+```
+dex_logs(session_id: str, follow: bool)
+```
+
+View logs for a dex session.
+
+---
+
+## dex_ps
+
+List running dex sessions.
+
+---
+
+## dex_resume
+
+```
+dex_resume(session_id: str)
+```
+
+Resume a paused dex session.
+
+---
+
+## dex_status
+
+```
+dex_status(session_id: Any)
+```
+
+Show status of dex sessions.
+
+---
+
+## dex_stop
+
+```
+dex_stop(session_id: str, force: bool)
+```
+
+Stop a running dex session.
+
+---
+
+## dex_wait
+
+```
+dex_wait(session_id: str)
+```
+
+Wait for a dex session to complete.
+
+---
+
+## register_dex_utility_commands
+
+```
+register_dex_utility_commands(app: typer.Typer)
+```
+
+Register utility commands with the app.
+
+**Parameters**:
+
+- `app`: Typer app to register commands with
+
+---

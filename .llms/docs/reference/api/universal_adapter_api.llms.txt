@@ -28,6 +28,16 @@ __init__(self: Any)
 
 ---
 
+#### UniversalToolAdapter.call
+
+```
+call(self: Any)
+```
+
+Protocol-compatible adapter entrypoint.
+
+---
+
 #### UniversalToolAdapter.call_tool
 
 ```
@@ -47,6 +57,16 @@ register_adapter(self: Any, command: str, adapter_fn: Callable[(Ellipsis, Any)])
 Register an adapter for a specific CLI command.
 
 ---
+
+---
+
+## call
+
+```
+call(self: Any)
+```
+
+Protocol-compatible adapter entrypoint.
 
 ---
 

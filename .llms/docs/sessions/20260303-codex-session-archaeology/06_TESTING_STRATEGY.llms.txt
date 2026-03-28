@@ -1,0 +1,17 @@
+# 06_TESTING_STRATEGY
+
+Source: docs/sessions/20260303-codex-session-archaeology/06_TESTING_STRATEGY.md
+
+---
+
+# Testing Strategy
+
+## Validation Completed
+- Parser executed over full 14-day Codex rollout corpus.
+- Produced stable summary and ledger artifacts.
+
+## Suggested Follow-up Validation
+1. Re-run parser with 7-day window and compare deltas.
+2. Random-sample 30 `resolved_elsewhere` entries for manual correctness.
+3. Manually inspect all `still_open` entries.
+4. After HeliosCLI implementation, add protocol + picker integration tests.

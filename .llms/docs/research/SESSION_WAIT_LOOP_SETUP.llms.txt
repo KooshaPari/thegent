@@ -4,6 +4,7 @@ Source: docs/research/SESSION_WAIT_LOOP_SETUP.md
 
 ---
 
+<DONE>
 # Session Wait Loop Setup
 
 **Date:** 2026-02-17

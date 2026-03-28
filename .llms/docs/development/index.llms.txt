@@ -1,0 +1,11 @@
+# index
+
+Source: docs/development/index.md
+
+---
+
+# Development Guide
+
+<CategorySwitcher />
+
+Engineering setup, architecture notes, and contributor workflows.

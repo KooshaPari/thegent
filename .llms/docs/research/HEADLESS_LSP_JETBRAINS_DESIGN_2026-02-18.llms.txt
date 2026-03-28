@@ -4,6 +4,7 @@ Source: docs/research/HEADLESS_LSP_JETBRAINS_DESIGN_2026-02-18.md
 
 ---
 
+<DONE>
 # Headless LSP Setup with JetBrains Integration
 
 **Date**: 2026-02-18

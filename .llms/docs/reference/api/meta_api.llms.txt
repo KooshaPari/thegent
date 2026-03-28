@@ -8,7 +8,7 @@ Source: docs/reference/api/meta_api.md
 
 > **Source**: `src/thegent/governance/meta.py`
 
-WP-20004: Meta-Governance &amp; Constitutional AI.
+WP-20004: Meta-Governance & Constitutional AI.
 
 Provides high-level, human-aligned rules (constitution) for all agent operations.
 Inspired by Constitutional AI principles (Anthropic).

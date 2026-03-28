@@ -1,0 +1,25 @@
+# maintenance_calendar_api
+
+Source: docs/reference/api/maintenance_calendar_api.md
+
+---
+
+# maintenance_calendar API Reference
+
+> **Source**: `src/thegent/integrations/maintenance_calendar.py`
+
+Stub module for thegent.integrations.maintenance_calendar.
+
+---
+
+## MaintenanceCalendar
+
+Stub class.
+
+---
+
+## MaintenanceWindow
+
+Stub class.
+
+---

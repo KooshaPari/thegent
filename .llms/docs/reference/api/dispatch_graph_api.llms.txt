@@ -6,7 +6,7 @@ Source: docs/reference/api/dispatch_graph_api.md
 
 # dispatch_graph API Reference
 
-> **Source**: `src/thegent/routing/dispatch_graph.py`
+> **Source**: `src/thegent/utils/routing_impl/dispatch_graph.py`
 
 WP-10003: Dispatch graph implementation.
 

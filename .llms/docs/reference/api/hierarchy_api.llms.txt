@@ -17,7 +17,7 @@ AgentTree — parent/child tracking for SmolGents hierarchies.
 Flat registry that tracks parent/child relationships between SmolAgents.
 
 The tree does **not** own the agents — callers are responsible for keeping
-references.  The tree only maintains a mapping of ``name -&gt; agent`` and the
+references.  The tree only maintains a mapping of ``name -> agent`` and the
 directed parent/child edges so that traversal and lookup remain O(1).
 
 Usage::

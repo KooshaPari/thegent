@@ -4,6 +4,7 @@ Source: docs/research/SMART_CONTRACT_SYSTEM_OVERVIEW.md
 
 ---
 
+<DONE>
 # Smart Contract System — Overview
 
 **Purpose:** Handoff doc for the QA governance smart-contract system. Explains what it is, where it lives, and how it works.

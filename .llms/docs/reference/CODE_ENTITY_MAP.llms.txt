@@ -1,0 +1,35 @@
+# CODE_ENTITY_MAP
+
+Source: docs/reference/CODE_ENTITY_MAP.md
+
+---
+
+# Code Entity Map - thegent
+
+## Forward Map (Code -> Requirements)
+
+| Entity | File | FR |
+|--------|------|----|
+| CLI entry point | `cli/main.py` | FR-CLI-001 |
+| Agent runner | `agents/runner.py` | FR-AGT-001 |
+| Config loader | `config/loader.py` | FR-CFG-001 |
+| Template engine | `templates/` | FR-TPL-001 |
+| Benchmark framework | `benchmark/` | FR-BEN-001 |
+| Quality hooks | `hooks/` | FR-QA-001 |
+| VitePress templates | `templates/vitepress-full/` | FR-DOC-001 |
+| Agent definitions | `agents/` | FR-AGT-002 |
+| AgilePlus contracts | `agileplus/` | FR-AGP-001 |
+
+## Reverse Map (Requirements -> Code)
+
+| FR | Primary Entities |
+|----|-----------------|
+| FR-CLI-001 | CLI entry point, command handlers |
+| FR-AGT-001 | Agent runner, agent definitions |
+| FR-AGT-002 | Agent persona definitions |
+| FR-CFG-001 | Config loader, YAML/TOML parsers |
+| FR-TPL-001 | Template engine, project scaffolds |
+| FR-BEN-001 | Benchmark framework |
+| FR-QA-001 | Quality hooks, linter configs |
+| FR-DOC-001 | VitePress templates |
+| FR-AGP-001 | AgilePlus contract schemas |

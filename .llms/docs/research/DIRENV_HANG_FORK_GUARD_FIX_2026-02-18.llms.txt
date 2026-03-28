@@ -4,6 +4,7 @@ Source: docs/research/DIRENV_HANG_FORK_GUARD_FIX_2026-02-18.md
 
 ---
 
+<DONE>
 # direnv Hang & Fork Guard Error Fix
 
 **Date**: 2026-02-18

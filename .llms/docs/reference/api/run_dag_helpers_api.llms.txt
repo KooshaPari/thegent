@@ -1,0 +1,93 @@
+# run_dag_helpers_api
+
+Source: docs/reference/api/run_dag_helpers_api.md
+
+---
+
+# run_dag_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/run_dag_helpers.py`
+
+DAG helper service wrappers for impl.py compatibility.
+
+---
+
+## dag_ready_impl
+
+```
+dag_ready_impl(cd: Any) -> dict[(str, Any)]
+```
+
+---
+
+## dag_update_task
+
+```
+dag_update_task(doc: DagDocument, task_id: str) -> bool
+```
+
+---
+
+## get_ready_task_ids
+
+```
+get_ready_task_ids(tasks: list[dict[(str, str)]]) -> list[str]
+```
+
+---
+
+## parse_dag_full
+
+```
+parse_dag_full(path: Path) -> DagDocument
+```
+
+---
+
+## parse_dag_session
+
+```
+parse_dag_session(path: Path) -> tuple[(dict[(str, str)], list[dict[(str, str)]])]
+```
+
+---
+
+## parse_depends_on
+
+```
+parse_depends_on(dep_str: str) -> list[str]
+```
+
+---
+
+## serialize_dag
+
+```
+serialize_dag(doc: DagDocument) -> str
+```
+
+---
+
+## validate_agent
+
+```
+validate_agent(agent: str) -> Any
+```
+
+---
+
+## validate_dag
+
+```
+validate_dag(doc: DagDocument) -> list[str]
+```
+
+---
+
+## validate_task_id
+
+```
+validate_task_id(task_id: str) -> Any
+```
+
+---

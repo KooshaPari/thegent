@@ -324,6 +324,33 @@ of responsibilities. Once finished, we have a fresh system with no technical deb
 
 #### **Fallback Removal**
 
+### 2.5 Polyglot Governance Orchestrator (Rule of Thumb)
+
+Treat thegent governance as a **superset orchestrator** over native language tools, not a replacement for them.
+
+#### **Architecture Boundary**
+
+- Native tools own language semantics (lint, format, type, test, vuln where applicable).
+- thegent owns policy, orchestration, caching, normalized output, governance decisions, and cross-language gates.
+
+#### **Decision Rules**
+
+1. Optimize for leverage first: compose native tools before building custom replacements.
+2. Build custom checks only for measured gaps: missing capability, unacceptable latency, unstable output, weak maintenance, or compliance constraints.
+3. Require evidence before rewrite: baseline runtime, false-positive rate, CI cost, flake rate, and DX friction.
+4. Adapter first, rewriter last: wrappers/post-processors before re-implementing a checker.
+5. Enforce compatibility contracts: stable input/output schema, deterministic exit codes, and versioned plugin API.
+6. Keep custom logic incremental-aware: changed-files mode locally; full-tree mode in CI/nightly.
+7. Roll out enforcement in tiers: advisory -> soft fail -> hard fail with explicit owner/date.
+8. Keep policy centralized: one canonical policy spec; avoid scattered hidden rules.
+9. Prefer safe auto-fix: formatting/import/order fixes in `fix` mode; unsafe transforms explicitly opt-in.
+10. Treat security/compliance as first-class: secrets, supply chain, SBOM, attestations, vulnerability and license policy.
+11. Allow exceptions only with governance: owner, reason, expiry, and removal date.
+12. Instrument every gate: timing, pass/fail trend, flake rate, and cost telemetry.
+13. Keep runner portability: POSIX-first core with language-specific plugins and pinned toolchains.
+14. Design for replacement: each custom extension has owner, tests, docs, and deprecation/exit plan.
+15. Preserve native-tool parity: upgrade custom behavior when upstream tools catch up.
+
 **Pattern: `try: new(); except: old()`**
 - **Action:** Remove `except` clause entirely
 - **Rationale:** If new code fails, fix it, don't fallback
@@ -881,3 +908,12 @@ def get_config():
 **Last Updated:** 2026-02-19
 **Next Review:** 2026-03-19
 **Authority:** Architecture team
+
+## Phenotype Governance Overlay v1
+
+- Enforce `TDD + BDD + SDD` for all feature and workflow changes.
+- Enforce `Hexagonal + Clean + SOLID` boundaries by default.
+- Favor explicit failures over silent degradation; required dependencies must fail clearly when unavailable.
+- Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
+- Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
+- Document architectural and protocol decisions before broad rollout changes.

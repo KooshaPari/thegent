@@ -4,6 +4,7 @@ Source: docs/research/PLAYWRIGHT_SETUP_COMPLETION.md
 
 ---
 
+<DONE>
 # Playwright VitePress Recording Setup - Completion Report
 
 ## Summary

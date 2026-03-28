@@ -1,0 +1,29 @@
+# 05_KNOWN_ISSUES
+
+Source: docs/sessions/20260323-agileplus-org-migration/05_KNOWN_ISSUES.md
+
+---
+
+# Known Issues
+
+## Current blockers and gaps
+
+- API write parity is partial for modules and cycles: module patch/delete and cycle transitions exist, but the full CLI parity set is still not exposed.
+- MCP tools are not yet symmetrical with the CLI surface.
+- Queue persistence is already implemented through the storage-backed backlog path; the remaining work is the queue ergonomics surface.
+- Batch import exists, but bulk mutation and apply/reconcile flows are still missing.
+- Release-governance vocabulary appears aligned in the active docs; only stale notes or generated scaffolding may still need cleanup.
+- The current operator path still invites seed-SQL-style thinking instead of a single import/apply orchestration flow.
+
+## Risk notes
+
+- The more we broaden the object model, the easier it is to create duplicate sources of truth.
+- Batch import work can expose hidden validation and migration debt.
+- CI/CD changes can accidentally drift from the documented governance channel model.
+- Org-wide migration can stall if the repo inventory is not treated as a live data set.
+
+## Workarounds
+
+- Use the existing CLI commands for single-item operations where they already work.
+- Treat the spec docs as the current source of truth for the missing flows.
+- Keep new worktree changes local until the migration plan is approved.

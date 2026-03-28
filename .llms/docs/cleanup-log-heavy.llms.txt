@@ -1,0 +1,80 @@
+# cleanup-log-heavy
+
+Source: docs/cleanup-log-heavy.md
+
+---
+
+# Heavy Repos Cleanup Log
+
+**Date:** 2026-02-27
+**Agent:** Team B
+
+## cliproxyapi++ (kooshapari/cliproxyapi-plusplus)
+
+### Before: 76 local branches, 9 open PRs (on GitHub)
+
+### PRs Closed (4)
+- #604 migrated/feature-koosh-migrate-1682-fix-tool-result-image-parts — migration superseded
+- #597 migrated/feature-koosh-migrate-1673-feat-sticky-round-robin — migration superseded
+- #596 migrated/feature-koosh-migrate-1672-fix-responses-json-corruption — migration superseded
+- #649 ci: enforce layered fix PR policy gate — superseded by direct fixes
+
+### PRs Merged (4 dependabot)
+- #654 bump github.com/jackc/pgx/v5 from 5.7.6 to 5.8.0
+- #653 bump github.com/andybalholm/brotli from 1.0.6 to 1.2.0
+- #652 bump github.com/sirupsen/logrus from 1.9.3 to 1.9.4
+- #651 bump golang.org/x/crypto from 0.45.0 to 0.48.0
+
+### PRs Remaining (1)
+- #650 bump golang.org/x/sync (not mergeable)
+
+### Branches Deleted (63)
+Gone branches (12): ci/fix-feature-koosh-migrate-1599-fix-count-tokens-4xx-no-cooldown (abe51d3a), ci/fix-feature-koosh-migrate-1648-fix-gemini-schema (fa47999f), ci/fix-feature-koosh-migrate-1668-fix-codex-usage-limit-retry-after (fd51ce14), ci/fix-feature-koosh-migrate-1672-fix-responses-json-corruption (92b07139), ci/fix-feature-koosh-migrate-1673-feat-sticky-round-robin (7dd1ab39), ci/fix-feature-koosh-migrate-1682-fix-tool-result-image-parts (8b0e08eb), ci/fix-feature-koosh-migrate-1684-fix-input-audio-from-openai-to-antigravity (5c1d6fcd), ci/fix-feature-koosh-migrate-conflict-1302 (eb8d81fc), ci/fix-feature-koosh-migrate-conflict-1539 (48d79f3d), ci/fix-feature-koosh-migrate-conflict-1686 (b83fc459), ci/fix-feature-koosh-migrate-conflict-1699 (190b4ee9), ci/fix-feature-migrate-1698-strip-empty-messages-openai-to-claude-v2 (18723ac1), cliproxy-clean-merge (03b2fdfd)
+
+Merged branches (3): test-empty-899d6bb7, test-empty-96329716, test-empty-e175c430
+
+Local-only branches (47): a (cf62ccef), chore/cliproxyctl-alias-normalization (7e90bd4f), chore/fix-gh-pages-workflow-gates-pr (e9a10a74), ci/fix-dependabot-go_modules-go_modules-6912c9fae4 (4442f22c), ci/fix-feat-* (8 branches), ci/fix-feature-koosh-migrate-* (3 branches), codex/pr515-import-path-fix-20260227 (e9a10a74), codex/pr515-import-path-fix-v2 (9d14f9bc), feat/* (8 branches), garden/* (3 branches), main-restore (ae4484af), migrated/* (19 branches), tmp-sign-test (3ee19417)
+
+### Final: 13 local branches (12 locked by worktrees + main), 1 open PR
+
+---
+
+## agentapi-plusplus (kooshapari/agentapi-plusplus)
+
+### Before: 54 local branches (after initial prune), 0 open PRs
+
+### PRs: None open
+
+### Branches Deleted (50)
+Gone branches (5): agentapi-plusplus/httpapi-fix-stack-11-pr14-linear2 (69647c5), agentapi-plusplus/httpapi-fix-stack-12-slash-commands-linear2 (db9a929), agentapi-plusplus/httpapi-fix-stack-13-voice-input-linear2 (28a38fa), chore/review-bot-governance-unblocked-20260226 (4946883), policy/layered-pr-gate-20260227 (e4319a6)
+
+Local-only branches (45): agentapi-plusplus/baseline-lint-fix (a7106a3), agentapi-plusplus/httpapi-endpoints (ff5d153), agentapi-plusplus/httpapi-fix-stack-01 through 13 (all variants: base, -new, -new-v2), garden/release-framework (6bae6fb), linear/review-bot-governance-r2-20260226 (4187e8a), stack/httpapi-core-v1b (12775c6), stack/httpapi-fix-v2-01 through v2-12 (all 8fd189f)
+
+### Final: 3 local branches (main, codex/coderabbit-rate-limit-bridge, stack/httpapi-fix-v2-13 locked by rebase), 0 open PRs
+
+---
+
+## portage (kooshapari/portage)
+
+### Before: 24 local branches, 0 open PRs
+
+### PRs: None open
+
+### Branches Deleted (18)
+Merged (3): fix/pr212-newline-normalization-clean (852069b), fix/pr213-head-refresh (852069b), linear/review-bot-governance-20260226 (1692080)
+
+Local-only (15): fix/pr212-newline-normalization (cc1c375), fix/pr212-newline-normalization-clean-v2 (367e8bb), fix/pr212-newline-normalization-nomerge (ebe1a6f), fix/pr212-newline-normalization-v2 (1d05d52), fix/pr212-newline-normalization-v3 (95c661a), fix/pr212-test-job65021324008 (3783689), garden/git-tightening (0fc7a3f), garden/release-framework (84007aa), garden/sdk-integration (914fd72), lane-c/portage-20260226 (bbbaf3e), linear/review-bot-governance-r2-20260226 (7fbbd09), merge/portage-heliosBench (cc1c375), merge/portage-heliosBench-clean (5532da7), merge/portage-heliosBench-reviewfix (7512c29), temp-test (5d5f692)
+
+### Final: 5 local branches (4 locked by worktrees + main), 0 open PRs
+
+---
+
+## Summary
+
+| Repo | Before (branches/PRs) | After (branches/PRs) | Target |
+|------|----------------------|---------------------|--------|
+| cliproxyapi++ | 76 / 9 | 13 / 1 | ≤10 / ≤10 |
+| agentapi-plusplus | 66 / 0 | 3 / 0 | ≤10 / ≤10 |
+| portage | 24 / 0 | 5 / 0 | ≤10 / ≤10 |
+
+**Note:** cliproxyapi++ has 12 branches locked by active worktrees (many in /private/tmp/). These cannot be deleted without removing the worktrees first. All deletable branches have been removed. PRs are well under target for all repos.

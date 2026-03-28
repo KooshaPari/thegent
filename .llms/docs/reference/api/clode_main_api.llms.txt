@@ -10,6 +10,13 @@ Source: docs/reference/api/clode_main_api.md
 
 Claude-backed interactive agent CLI (clode).
 
+HEXAGONAL PHASE 2B: This file is now a thin shim delegating to:
+- src/thegent/adapters/harness_base.py — Common harness logic
+- src/thegent/adapters/claude_harness.py — Claude-specific implementation
+- src/thegent/use_cases/run_harness.py — Use case orchestration
+
+Legacy imports preserved for backward compatibility.
+
 ---
 
 ## LazyConsole
@@ -31,7 +38,7 @@ Start a background task via Claude Code using the proxy.
 ## clode_bg_global
 
 ```
-clode_bg_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any)
+clode_bg_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, owner: Any, remote: Any)
 ```
 
 Start a background task via Claude Code. Model-first, no provider filter.
@@ -58,10 +65,20 @@ Composer 1.5 (via Cursor). Use -x cursor to lock.
 
 ---
 
+## clode_config
+
+```
+clode_config(legacy: bool)
+```
+
+Open interactive config manager (translation layer for existing config backends).
+
+---
+
 ## clode_doctor
 
 ```
-clode_doctor(fix: bool)
+clode_doctor(fix: bool, dry_run: bool)
 ```
 
 Run thegent doctor (harness-equiv).
@@ -91,7 +108,7 @@ Base free tier: Copilot gpt-5-mini via cliproxy. Alias for clode mini.
 ## clode_glm
 
 ```
-clode_glm(policy: str, prefer: str, dangerously_skip_permissions: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, model: Any, prompt: Any)
+clode_glm(policy: str, prefer: str, force: bool, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, model: Any, prompt: Any)
 ```
 
 Start an interactive GLM session with policy-based balancing.
@@ -105,6 +122,16 @@ clode_haiku(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, 
 ```
 
 Claude Haiku 4.5 balanced across claude, antigravity, codex (proxy API), kiro.
+
+---
+
+## clode_high
+
+```
+clode_high(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, prompt: Any)
+```
+
+Codex 5.3 high.
 
 ---
 
@@ -141,7 +168,7 @@ Print session logs.
 ## clode_max
 
 ```
-clode_max(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, prompt: Any)
+clode_max(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, force: bool, prompt: Any)
 ```
 
 MiniMax-M2.5 balanced across minimax and kilo.
@@ -201,7 +228,7 @@ Run a task via Claude Code using the proxy (synchronous).
 ## clode_run_global
 
 ```
-clode_run_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int)
+clode_run_global(model_alias: str, prompt: str, cd: Any, mode: str, timeout: int, remote: Any)
 ```
 
 Run a task via Claude Code. Model-first, no provider filter.
@@ -258,11 +285,13 @@ Wait for session completion and return session exit code.
 
 ---
 
-## cost_key
+## clode_xhigh
 
 ```
-cost_key(b: str) -> tuple[(float, float, str)]
+clode_xhigh(provider: Any, resume: Any, cd: Any, print_mode: bool, debug: bool, add_dir: list[str], output_format: Any, continue_session: bool, prompt: Any)
 ```
+
+Codex 5.3 xhigh.
 
 ---
 
@@ -292,7 +321,7 @@ Start Claude Code with model-first routing. Default: flash (Gemini 3 Flash).
 install_links(bin_dir: Path, force: bool)
 ```
 
-Install/update clode -&gt; thegent-shims harness shim under ~/.local/bin.
+Install/update clode harness aliases -> thegent-shims under ~/.local/bin.
 
 ---
 

@@ -39,7 +39,7 @@ Initialize executor with optional isolation.
 #### IsolatedExecutor.execute_for_tenant
 
 ```
-execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list, timeout_sec: int)
+execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list[str], timeout_sec: int)
 ```
 
 Execute a command for a tenant with optional isolation.
@@ -65,8 +65,8 @@ tenant contexts.
 
 Example: How to use IsolatedExecutor.
 
-&gt;&gt;&gt; import tempfile
-&gt;&gt;&gt; with tempfile.TemporaryDirectory() as tmpdir:
+>>> import tempfile
+>>> with tempfile.TemporaryDirectory() as tmpdir:
 ...     provider = SubUserIsolationProvider(base_home_dir=tmpdir)
 ...     executor = IsolatedExecutor(
 ...         isolation_provider=provider,
@@ -87,7 +87,7 @@ Output: hello
 ## execute_for_tenant
 
 ```
-execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list, timeout_sec: int)
+execute_for_tenant(self: Any, tenant_id: str, agent_id: str, command: list[str], timeout_sec: int)
 ```
 
 Execute a command for a tenant with optional isolation.

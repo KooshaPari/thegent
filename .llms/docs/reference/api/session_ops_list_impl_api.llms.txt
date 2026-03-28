@@ -1,0 +1,50 @@
+# session_ops_list_impl_api
+
+Source: docs/reference/api/session_ops_list_impl_api.md
+
+---
+
+# session_ops_list_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/session_ops_list_impl.py`
+
+Session listing operations: ps, list.
+
+Extracted from session_ops_impl.py as part of LOC reduction.
+Contains:
+- ps_impl: list active sessions from registry + legacy dirs
+- session_list_impl: list all sessions including completed ones
+
+---
+
+## ps_impl
+
+```
+ps_impl(owner: Any, all: bool, agent: Any, status: Any, limit: int, scan_ide: bool, include_contract: bool)
+```
+
+List agent sessions (managed + discovered) (WP-9006).
+
+**Parameters**:
+
+- `owner`: Filter by owner (default: current user)
+- `all`: Show sessions for all owners
+- `agent`: Filter by agent name
+- `status`: Filter by status (running, completed, failed, paused)
+- `limit`: Max sessions to return
+- `scan_ide`: Include IDE-managed sessions (Cursor, Claude CLI, Codex)
+- `include_contract`: Include route contract metadata
+
+---
+
+## session_list_impl
+
+```
+session_list_impl(owner: Any, all_sessions: bool, limit: int)
+```
+
+List all sessions including completed ones by reading state.json files.
+
+Different from ps_impl which only shows active sessions from registry.
+
+---

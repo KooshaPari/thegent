@@ -1,0 +1,74 @@
+# windows_virtual_desktop_api
+
+Source: docs/reference/api/windows_virtual_desktop_api.md
+
+---
+
+# windows_virtual_desktop API Reference
+
+> **Source**: `src/thegent/automation/providers/windows_virtual_desktop.py`
+
+Windows virtual desktop provider with high-performance automation.
+
+Uses:
+- CreateDesktop/CloseDesktop for session isolation
+- DXGI for GPU-accelerated screen capture (<30ms)
+- SendInput for low-latency input injection (<5ms)
+
+---
+
+## WindowsDesktopHandle
+
+Handle to a Windows desktop.
+
+---
+
+## WindowsVirtualDesktopProvider
+
+Windows implementation using Virtual Desktop API.
+
+**Inherits from**: `VirtualDesktopProvider`
+
+### Methods
+
+#### WindowsVirtualDesktopProvider.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### WindowsVirtualDesktopProvider.name
+
+```
+name(self: Any)
+```
+
+---
+
+#### WindowsVirtualDesktopProvider.supports_gpu
+
+```
+supports_gpu(self: Any)
+```
+
+---
+
+---
+
+## name
+
+```
+name(self: Any) -> str
+```
+
+---
+
+## supports_gpu
+
+```
+supports_gpu(self: Any) -> bool
+```
+
+---

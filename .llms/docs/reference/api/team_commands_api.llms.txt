@@ -1,0 +1,43 @@
+# team_commands_api
+
+Source: docs/reference/api/team_commands_api.md
+
+---
+
+# team_commands API Reference
+
+> **Source**: `src/thegent/cli/commands/team/team_commands.py`
+
+Team command group extracted from cli.py (WL-124).
+
+---
+
+## team_create_cmd
+
+WP-6008: Create a new multi-agent team.
+
+---
+
+## team_crew_cmd
+
+---
+
+## team_hierarchy_cmd
+
+---
+
+## team_list_cmd
+
+---
+
+## team_task_add_cmd
+
+WP-6008: Add a task to a team's backlog.
+
+---
+
+## team_task_list_cmd
+
+WP-6008: List all tasks for a team.
+
+---

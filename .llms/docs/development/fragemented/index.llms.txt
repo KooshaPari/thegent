@@ -1,0 +1,11 @@
+# index
+
+Source: docs/development/fragemented/index.md
+
+---
+
+# Fragmented Index
+
+## Source Files (2026)
+
+- research-protocol.md

@@ -6,7 +6,7 @@ Source: docs/reference/api/cli_teammates_api.md
 
 # cli_teammates API Reference
 
-> **Source**: `src/thegent/cli/commands/cli_teammates.py`
+> **Source**: `src/thegent/cli/commands/team/cli_teammates.py`
 
 CLI commands for Teammate delegation and swarm management (WP-16001/2).
 

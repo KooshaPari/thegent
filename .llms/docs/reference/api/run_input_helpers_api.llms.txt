@@ -1,0 +1,63 @@
+# run_input_helpers_api
+
+Source: docs/reference/api/run_input_helpers_api.md
+
+---
+
+# run_input_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/run_input_helpers.py`
+
+Run input/output helper services extracted from cli.commands.impl (WL-125).
+
+---
+
+## append_context_usage
+
+```
+append_context_usage(payload: dict[(str, Any)], result: RunResult)
+```
+
+WL-108/WL-103: add context usage details and top-level usage ratio.
+
+---
+
+## build_context_usage_payload
+
+WL-108: shared context usage payload used by JSON and status output paths.
+
+---
+
+## model_supports_vision
+
+```
+model_supports_vision(model: str)
+```
+
+Return True when model metadata explicitly marks vision capability.
+
+---
+
+## normalize_image_paths
+
+```
+normalize_image_paths(image_paths: Any)
+```
+
+Validate and normalize WL-114 image inputs.
+
+---
+
+## resolve_grounding_sources_for_output
+
+Resolve grounding source URLs from structured data first, text fallback second.
+
+---
+
+## validate_image_capability
+
+Validate that agent/model support image inputs.
+
+# @trace WL-114
+
+---

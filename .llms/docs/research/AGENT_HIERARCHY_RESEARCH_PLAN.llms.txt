@@ -4,6 +4,7 @@ Source: docs/research/AGENT_HIERARCHY_RESEARCH_PLAN.md
 
 ---
 
+<DONE>
 # Agent Hierarchy Research Plan
 
 > **Date**: 2026-02-18

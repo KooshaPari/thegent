@@ -6,7 +6,7 @@ Source: docs/reference/api/preemption_api.md
 
 # preemption API Reference
 
-> **Source**: `src/thegent/routing/preemption.py`
+> **Source**: `src/thegent/utils/routing_impl/preemption.py`
 
 WP-11004: Preemption and saturation avoidance policies.
 

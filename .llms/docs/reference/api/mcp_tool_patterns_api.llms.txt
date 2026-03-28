@@ -1,0 +1,13 @@
+# mcp_tool_patterns_api
+
+Source: docs/reference/api/mcp_tool_patterns_api.md
+
+---
+
+# mcp_tool_patterns API Reference
+
+> **Source**: `src/thegent/mcp_tool_patterns.py`
+
+Re-exports from thegent.mcp.tools.patterns for backwards compatibility.
+
+---

@@ -1,0 +1,44 @@
+# FULL_TURN_DELIVERY
+
+Title: Full-turn delivery
+Source: docs/reference/FULL_TURN_DELIVERY.md
+
+---
+
+# Full-turn delivery (canonical pointer)
+
+## What you must see each full turn
+
+For **every repo you touch** in a turn, a **full turn** includes:
+
+1. **Merge** — At least **one** PR **merged** to **`main`** or an approved **`release/*`** branch. **Several merges in the same turn** are normal (docs PR + code PR, stacked PRs, or multi-repo fixes).
+2. **GitHub visibility** — **Full PR URLs** in session notes or wave artifacts (`gh pr view <n>`, or `https://github.com/.../pull/...`). Optional: `gh pr list --state merged --limit 10` after the merge.
+3. **Changelog** — `CHANGELOG.md` **`## [Unreleased]`** when the change is user- or policy-visible (see [`docs/guides/CHANGELOG_PROCESS.md`](../guides/CHANGELOG_PROCESS.md)).
+4. **Version** — Semver / crate / package bump **when** the repo’s release policy calls for it; otherwise state **“no bump — reason”** in the PR body.
+5. **Docs** — Update `docs/` when behavior, CLI, or operator workflow changes.
+
+If merge is **impossible** (blocked CI with real failures, approval hold, unusable dirty tree), record an **exception** in the active session’s **`05_KNOWN_ISSUES.md`** with reason and next step—do not silently skip shipping.
+
+## Long-form spec + billing exceptions
+
+Authoritative expanded policy (billing/quota merge path, evidence table, snapshots):
+
+- [`docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/FULL_TURN_DELIVERY.md`](../sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/FULL_TURN_DELIVERY.md)
+
+Cadence and how **24-item** turns relate to docs:
+
+- [`docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/04_QUEUE_CADENCE.md`](../sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/04_QUEUE_CADENCE.md)
+
+## Next 24 (research + plan)
+
+**Wave C** (six slices × four items, each with **Ship** criteria):
+
+- [`09_NEXT_WAVE_C.md`](../sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/09_NEXT_WAVE_C.md)
+
+**Follow-on ordered queue (50 items)**:
+
+- [`19_NEXT_50_WORK_ITEMS.md`](../sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/19_NEXT_50_WORK_ITEMS.md)
+
+Canonical product backlog (thegent):
+
+- [`WORK_STREAM.md`](WORK_STREAM.md)

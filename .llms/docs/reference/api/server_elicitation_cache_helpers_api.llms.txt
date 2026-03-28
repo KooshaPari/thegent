@@ -1,0 +1,49 @@
+# server_elicitation_cache_helpers_api
+
+Source: docs/reference/api/server_elicitation_cache_helpers_api.md
+
+---
+
+# server_elicitation_cache_helpers API Reference
+
+> **Source**: `src/thegent/mcp/server_elicitation_cache_helpers.py`
+
+Elicitation cache helpers extracted from MCP server (WL-126).
+
+---
+
+## cache_elicitation_response
+
+```
+cache_elicitation_response(cache: TTLCache[(str, Any)])
+```
+
+Store elicitation response in cache.
+
+---
+
+## create_elicitation_cache
+
+Create a TTL cache for elicitation responses.
+
+---
+
+## elicitation_cache_key
+
+```
+elicitation_cache_key(prompt: str, response_type: type)
+```
+
+Generate cache key for elicitation request.
+
+---
+
+## get_cached_elicitation
+
+```
+get_cached_elicitation(cache: TTLCache[(str, Any)])
+```
+
+Fetch cached elicitation response if available.
+
+---

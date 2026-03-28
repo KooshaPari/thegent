@@ -1,0 +1,55 @@
+# 11_NEXT_WAVE_E
+
+Source: docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/11_NEXT_WAVE_E.md
+
+---
+
+# 11_NEXT_WAVE_E — next 24 items (6 × 4)
+
+**Follows** `07`–`10`. **Snapshot:** 2026-03-24. **Inventory:** skip unless running a dedicated inventory session. **Six slices** = optional parallel execution (one track per agent).
+
+## Slice 1 — Post-merge & operations (4)
+
+1. **Tag** or release note after merge if repo uses semver tags for apps.
+2. **Monitor** first production or staging deploy after merge (error rate, bus events).
+3. **Rollback plan** documented: which commit to revert if regression.
+4. **On-call / owner** for runtime secrets/PTY for one week after release.
+
+## Slice 2 — Compliance & licensing (4)
+
+5. **LICENSE** headers on new files if project requires.
+6. **Third-party** notices: Bun/Node deps unchanged or updated in lockfile review.
+7. **Export control** / cryptography note if encryption module shipped (already in tree—verify no new restrictions).
+8. **Data retention**: audit sink / temp dirs—no long-lived secrets on disk.
+
+## Slice 3 — Performance & reliability (4)
+
+9. **Latency budget** for redaction path unchanged or improved (see `redaction_latency` tests).
+10. **PTY** hot paths: no new sync I/O in tight loops without review.
+11. **Bundle size** or startup if runtime entrypoints changed—spot-check.
+12. **Resource limits** (memory, FDs) on long-running PTY sessions—sanity check.
+
+## Slice 4 — Testing depth (4)
+
+13. **Integration** vs **unit** ratio: new code has tests at correct layer.
+14. **Regression** test for any bug fixed during decomp (if applicable).
+15. **E2E** or smoke path in CI if project requires for runtime changes.
+16. **Test data** hygiene: no real keys in fixtures.
+
+## Slice 5 — Multi-repo & handoff (4)
+
+17. **Handoff** note for next agent: pointer to `07`–`11` + current branch.
+18. If **helios** changes affect **thegent** or **helios-cli**, open linked issue or PR stub.
+19. **Phenotype** shared modules: if extraction opportunity found, log in `PHENOTYPE_SHARED_REUSE_PROTOCOL` style (issue, not code in this wave).
+20. **Stale worktrees** list: regenerate from `git worktree list` after major merges.
+
+## Slice 6 — Closure & archive (4)
+
+21. Mark **completed** items in `07`–`10` (strike or move to `docs/archive/` per org policy).
+22. **Archive** or delete obsolete session duplicates if any were created by mistake.
+23. **Retrospective** one paragraph: what worked, what blocked (optional session note).
+24. **Next wave F** placeholder: only add `12_NEXT_WAVE_F.md` when E is mostly done or scope shifts.
+
+---
+
+**Roles:** **SRE** (1–4), **Legal/compliance** (5–8) as needed, **Perf** (9–12), **QA** (13–16), **Program / cross-repo** (17–20), **Scrum master or self** (21–24).

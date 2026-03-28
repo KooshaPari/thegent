@@ -1,0 +1,155 @@
+# l1_api
+
+Source: docs/reference/api/l1_api.md
+
+---
+
+# l1 API Reference
+
+> **Source**: `src/thegent/cache/l1.py`
+
+L1 Memory Cache
+
+In-memory TTL cache for fast access.
+
+---
+
+## CacheEntry
+
+Cache entry with TTL.
+
+### Methods
+
+#### CacheEntry.is_expired
+
+```
+is_expired(self: Any)
+```
+
+---
+
+---
+
+## L1MemoryCache
+
+In-memory TTL cache.
+
+### Methods
+
+#### L1MemoryCache.__init__
+
+```
+__init__(self: Any, ttl: float, max_size: int)
+```
+
+---
+
+#### L1MemoryCache.clear
+
+```
+clear(self: Any)
+```
+
+Clear all cache entries.
+
+---
+
+#### L1MemoryCache.delete
+
+```
+delete(self: Any, key: str)
+```
+
+Delete value from cache.
+
+---
+
+#### L1MemoryCache.get
+
+```
+get(self: Any, key: str)
+```
+
+Get value from cache.
+
+---
+
+#### L1MemoryCache.set
+
+```
+set(self: Any, key: str, value: Any, ttl: Optional[float])
+```
+
+Set value in cache.
+
+---
+
+#### L1MemoryCache.stats
+
+```
+stats(self: Any)
+```
+
+Get cache statistics.
+
+---
+
+---
+
+## clear
+
+```
+clear(self: Any)
+```
+
+Clear all cache entries.
+
+---
+
+## delete
+
+```
+delete(self: Any, key: str)
+```
+
+Delete value from cache.
+
+---
+
+## get
+
+```
+get(self: Any, key: str)
+```
+
+Get value from cache.
+
+---
+
+## is_expired
+
+```
+is_expired(self: Any) -> bool
+```
+
+---
+
+## set
+
+```
+set(self: Any, key: str, value: Any, ttl: Optional[float])
+```
+
+Set value in cache.
+
+---
+
+## stats
+
+```
+stats(self: Any)
+```
+
+Get cache statistics.
+
+---

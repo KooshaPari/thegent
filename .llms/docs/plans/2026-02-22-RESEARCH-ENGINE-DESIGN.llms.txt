@@ -1,0 +1,162 @@
+# 2026-02-22-RESEARCH-ENGINE-DESIGN
+
+Title: Research Engine — Periodic Knowledge Base
+Source: docs/plans/2026-02-22-RESEARCH-ENGINE-DESIGN.md
+
+---
+
+# Research Engine: Periodic Knowledge Base
+
+## Problem
+
+Manual research workflow is a bottleneck:
+- User opens 50+ tabs (arxiv, GitHub, Reddit, HN, pkg registries, blogs)
+- Pastes content to AI manually
+- AI operates on stale/sparse context
+- Same research is repeated across sessions
+
+## Goal
+
+Automated, periodic crawl pipeline that:
+1. Monitors configured sources on a schedule
+2. Extracts, summarizes, and indexes content
+3. Makes the KB queryable via `thegent research query <topic>`
+4. Auto-attunes to active project context
+5. Surfaces relevant findings proactively when agent starts a session
+
+---
+
+## Sources
+
+| Source | Type | Crawl Cadence | Notes |
+|--------|------|---------------|-------|
+| arXiv (cs.AI, cs.SE, cs.PL) | Papers | Daily | RSS feed |
+| GitHub trending | Repos | Daily | REST API, per language |
+| GitHub releases | Pkg updates | Hourly | Watched repos/orgs |
+| PyPI new/updated | Packages | Daily | RSS + JSON API |
+| npm registry | Packages | Daily | RSS |
+| crates.io | Rust packages | Daily | JSON API |
+| Reddit (r/programming, r/MachineLearning, r/LocalLLaMA, r/Python, r/rust) | Discussions | 4h | PRAW or RSS |
+| Hacker News (top/ask) | Discussions | 4h | Algolia API |
+| Selected blogs/newsletters | Articles | Daily | RSS (configurable list) |
+| GitHub Issues/PRs | Project-specific | 1h | Watched repos |
+
+---
+
+## Architecture
+
+### Components
+
+```
+ResearchEngine
+├── Scheduler          — cron-like, drives crawl jobs per source
+├── Crawler            — per-source adapters (arxiv, github, reddit, hn, rss, pypi)
+├── Extractor          — title + summary + key points extraction (LLM or heuristic)
+├── Embedder           — sentence embeddings for semantic search
+├── Store              — SQLite + vector index (sqlite-vec or DuckDB+VSS)
+├── Queryable          — natural language + keyword search API
+├── Attuner            — project-context-aware relevance scoring
+└── Reporter           — formats findings for session injection
+```
+
+### Data Model
+
+```
+@dataclass
+class ResearchItem:
+    id: str                   # sha256(url)
+    source: str               # "arxiv" | "github" | "reddit" | ...
+    url: str
+    title: str
+    summary: str              # LLM-extracted, ≤300 words
+    key_points: list[str]     # bullet extracted highlights
+    tags: list[str]           # auto-tagged topics
+    project_relevance: dict[str, float]  # project_id → relevance score 0-1
+    fetched_at: datetime
+    published_at: datetime | None
+    raw_content: str          # stored compressed
+    embedding: bytes          # vector, stored in vector index
+```
+
+### Storage
+
+- **SQLite** (`~/.thegent/research/research.db`) — metadata, summaries, tags
+- **sqlite-vec** extension — vector embeddings for semantic search
+- **Zstandard** compression — raw_content stored compressed
+
+### Query Interface
+
+```
+thegent research query "LLM routing cost optimization"
+thegent research query "pyright strict mode patterns" --source arxiv,github
+thegent research recent --since 24h --project thegent
+thegent research subscribe "agentic coding" --notify
+thegent research sources list
+thegent research sources add --url https://example.com/feed.rss --cadence daily
+```
+
+### Session Injection
+
+On `SessionStart`, the ResearchReporter:
+1. Reads active project from session context
+2. Queries KB for items with `project_relevance[project_id] > 0.5` published in last 7 days
+3. Formats top-5 as a concise briefing in `SYSTEM_CONTEXT`
+4. Agent receives: "Recent relevant research: ..."
+
+---
+
+## Project Attuning
+
+Each project has a `research-profile.toml`:
+
+```
+[research]
+topics = ["pyright", "python type checking", "LLM routing", "Rust Python extensions"]
+sources = ["arxiv", "github", "reddit/r/Python", "reddit/r/rust"]
+watch_repos = ["microsoft/pyright", "anthropics/sdk-python", "pydantic/pydantic"]
+watch_packages = ["pydantic", "structlog", "fastmcp", "anthropic"]
+```
+
+Global profile at `~/.thegent/research/global-profile.toml` covers shell setups, Claude Code workflows, AI tooling, etc.
+
+---
+
+## Implementation Phases
+
+| Phase | Scope | Items |
+|-------|-------|-------|
+| P1 | Core store + GitHub + arXiv crawlers + CLI query | WL-NEW-01..05 |
+| P2 | Reddit + HN + RSS crawlers | WL-NEW-06..08 |
+| P3 | Embeddings + semantic search | WL-NEW-09..10 |
+| P4 | Session injection + project attuning | WL-NEW-11..12 |
+| P5 | PyPI/npm/crates watch + release alerts | WL-NEW-13..14 |
+
+---
+
+## Decision: Embedding Backend
+
+**Use sqlite-vec** (not a separate vector DB):
+- Ships as a single `.so` loaded at runtime
+- No separate process/service
+- Sufficient for <1M items at 768d
+- Falls back to BM25 keyword search if sqlite-vec not available
+
+---
+
+## Backmatter
+
+**Decision delta:** New subsystem, no prior art in codebase. `research/` module exists as stub research files only.
+
+**Validation commands:**
+```
+task test:research-engine
+thegent research query "test query"
+python -m pytest tests/test_research_engine.py -v
+```
+
+**Residual risks:**
+- Rate limiting from Reddit/GitHub APIs — need backoff + caching
+- LLM extraction cost for summaries — use small model (haiku) or heuristic fallback
+- sqlite-vec availability on all platforms — confirm in CI matrix
+
+**Follow-up review:** 2026-03-22

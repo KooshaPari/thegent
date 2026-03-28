@@ -83,7 +83,7 @@ get_shm_system(session_dir: Path) -> SHMSystem
 ## get_xp_state
 
 ```
-get_xp_state(self: Any) -> dict[(str, Any)]
+get_xp_state(self: Any) -> Any
 ```
 
 ---

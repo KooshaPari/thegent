@@ -4,6 +4,7 @@ Source: docs/research/CODEX_CLIPROXY_CONFIG_AUDIT_AND_PLAN.md
 
 ---
 
+<DONE>
 # Codex CLI + CLIProxy Configuration Audit and Plan
 
 **Date**: 2026-02-18

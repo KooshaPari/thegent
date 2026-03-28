@@ -1,0 +1,177 @@
+# gateway_api
+
+Source: docs/reference/api/gateway_api.md
+
+---
+
+# gateway API Reference
+
+> **Source**: `src/thegent/mcp/gateway.py`
+
+GW-64: MCP gateway — route LLM tool calls through MCP servers.
+
+Provides a unified interface for executing MCP tools via:
+  1. Direct MCP tool execution (when MCP server is available)
+  2. REST passthrough (wrap tool call as REST request)
+
+REST endpoint pattern: POST /v1/mcp/tool/execute
+Request body:
+  {
+    "server_id": "filesystem",   # which MCP server
+    "tool": "read_file",         # tool name
+    "arguments": {"path": "/tmp/foo.txt"},
+    "timeout_sec": 30.0
+  }
+
+Response:
+  {
+    "result": <tool_result>,
+    "server_id": "filesystem",
+    "tool": "read_file",
+    "duration_ms": 142.5,
+    "error": ""   # non-empty on failure
+  }
+
+# @trace FR-MCP-064
+
+---
+
+## McpGateway
+
+Registry and dispatcher for MCP server tool calls.
+
+### Methods
+
+#### McpGateway.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### McpGateway.execute
+
+```
+execute(self: Any, call: McpToolCall)
+```
+
+Execute a tool call. Returns McpToolResult with error set on failure.
+
+---
+
+#### McpGateway.get_server
+
+```
+get_server(self: Any, server_id: str)
+```
+
+Get server config by ID.
+
+---
+
+#### McpGateway.list_servers
+
+```
+list_servers(self: Any)
+```
+
+Return all registered server configs.
+
+---
+
+#### McpGateway.register_server
+
+```
+register_server(self: Any, config: McpServerConfig)
+```
+
+Register an MCP server configuration.
+
+---
+
+#### McpGateway.unregister_server
+
+```
+unregister_server(self: Any, server_id: str)
+```
+
+Remove a server. Raises KeyError if not found.
+
+---
+
+---
+
+## McpServerConfig
+
+---
+
+## McpToolCall
+
+---
+
+## McpToolResult
+
+---
+
+## execute
+
+```
+execute(self: Any, call: McpToolCall)
+```
+
+Execute a tool call. Returns McpToolResult with error set on failure.
+
+---
+
+## get_mcp_gateway
+
+Return the singleton McpGateway instance, creating it if needed.
+
+---
+
+## get_server
+
+```
+get_server(self: Any, server_id: str)
+```
+
+Get server config by ID.
+
+---
+
+## list_servers
+
+```
+list_servers(self: Any)
+```
+
+Return all registered server configs.
+
+---
+
+## register_server
+
+```
+register_server(self: Any, config: McpServerConfig)
+```
+
+Register an MCP server configuration.
+
+---
+
+## reset_mcp_gateway
+
+Replace the singleton with a fresh instance. Intended for testing only.
+
+---
+
+## unregister_server
+
+```
+unregister_server(self: Any, server_id: str)
+```
+
+Remove a server. Raises KeyError if not found.
+
+---

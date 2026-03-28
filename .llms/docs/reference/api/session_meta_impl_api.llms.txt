@@ -1,0 +1,23 @@
+# session_meta_impl_api
+
+Source: docs/reference/api/session_meta_impl_api.md
+
+---
+
+# session_meta_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/session_meta_impl.py`
+
+Session meta I/O, state contract, output format, and continuation helpers.
+
+Extracted from session_impl.py as part of WL-120 LOC Reduction Program (Wave-3, W3-B2-split).
+Contains:
+- Session meta I/O: _read_session_meta, _save_session_meta, _find_session_meta
+- Contract string helpers: _is_non_empty_contract_string, _normalize_contract_string
+- Contract timestamp helper: _parse_contract_timestamp
+- State contract helpers: _session_state_path, _write_session_state, _resolve_latest_session_id
+- Output helpers: _normalize_output_format, _resolve_session_status
+- Background observer: _run_background_session_observer
+- Continuation helpers: _load_prior_session_output, _build_continuation_prompt
+
+---

@@ -1,0 +1,93 @@
+# workstream_entities_api
+
+Source: docs/reference/api/workstream_entities_api.md
+
+---
+
+# workstream_entities API Reference
+
+> **Source**: `src/thegent/planning/workstream_entities.py`
+
+Canonical workstream entity operations for CLI, MCP, and API surfaces.
+
+---
+
+## EntityTableSpec
+
+Canonical table metadata for safe generic CRUD.
+
+---
+
+## delete_entity
+
+```
+delete_entity(entity_type: str, entity_id: str) -> dict[(str, Any)]
+```
+
+---
+
+## entity_operation
+
+```
+entity_operation(operation: str, entity_type: str)
+```
+
+Dispatch workstream entity operations through one canonical API.
+
+---
+
+## export_entities
+
+```
+export_entities(entity_type: str) -> dict[(str, Any)]
+```
+
+---
+
+## import_entities
+
+```
+import_entities(entity_type: str, records: list[dict[(str, Any)]]) -> dict[(str, Any)]
+```
+
+---
+
+## list_entities
+
+```
+list_entities(entity_type: str)
+```
+
+List canonical records for a supported workstream entity table.
+
+---
+
+## read_entity
+
+```
+read_entity(entity_type: str, entity_id: str) -> dict[(str, Any)]
+```
+
+---
+
+## search_entities
+
+```
+search_entities(entity_type: str, query: str) -> dict[(str, Any)]
+```
+
+---
+
+## sync_entities_from_sources
+
+Sync canonical tables from markdown, AgilePlus, and queue sources.
+
+---
+
+## upsert_entity
+
+```
+upsert_entity(entity_type: str) -> dict[(str, Any)]
+```
+
+---

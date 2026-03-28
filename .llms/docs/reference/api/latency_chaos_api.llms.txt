@@ -1,0 +1,25 @@
+# latency_chaos_api
+
+Source: docs/reference/api/latency_chaos_api.md
+
+---
+
+# latency_chaos API Reference
+
+> **Source**: `src/thegent/integrations/latency_chaos.py`
+
+Stub module for thegent.integrations.latency_chaos.
+
+---
+
+## ChaosConfig
+
+Stub class.
+
+---
+
+## LatencyChaosInjector
+
+Stub class.
+
+---

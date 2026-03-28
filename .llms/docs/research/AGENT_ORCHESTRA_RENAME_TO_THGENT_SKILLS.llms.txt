@@ -4,6 +4,7 @@ Source: docs/research/AGENT_ORCHESTRA_RENAME_TO_THGENT_SKILLS.md
 
 ---
 
+<DONE>
 # Agent Orchestra → Thegent Skills Rename
 
 **Date**: 2026-02-17

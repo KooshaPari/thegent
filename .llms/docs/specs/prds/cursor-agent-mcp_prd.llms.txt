@@ -1,0 +1,189 @@
+# cursor-agent-mcp_prd
+
+Source: docs/specs/prds/cursor-agent-mcp_prd.md
+
+---
+
+# Product Requirements Document: cursor-agent-mcp
+
+**Version:** 1.0.0  
+**Created:** 2026-02-18
+
+## 1. Overview
+
+# Cursor Agent MCP Server
+
+## 2. Objectives
+
+## 3. Success Metrics
+
+## 4. Stakeholders
+
+## 5. Target Users
+
+## 6. Functional Requirements
+
+### FR-1: [Read the docs →](https://zod.dev/api)
+
+### FR-2: Parsing data
+
+### FR-3: Handling errors
+
+### FR-4: Inferring types
+
+### FR-5: Required Methods
+
+`log`, `warn`, `error`
+
+### FR-6: Ajv and Content Security Policies (CSP)
+
+### FR-7: Using transpilers with asynchronous validation functions.
+
+### FR-8: Error objects
+
+### FR-9: Error parameters
+
+### FR-10: Error logging
+
+### FR-11: Convert from Milliseconds
+
+### FR-12: Time Format Written-Out
+
+### FR-13: Security Issues
+
+### FR-14: Running Tests
+
+### FR-15: TC (Technical Committee)
+
+### FR-16: Triagers
+
+## 7. Non-Functional Requirements
+
+### NFR-1: Security notes
+
+- Child processes are spawned with `shell: false` to avoid shell injection and quoting issues.
+- Inputs are validated with Zod; unknown types are rejected.
+- Avoid logging secrets; DEBUG only prints argv and minimal env context.
+
+## 8. Features
+
+### 🟡 [Read the docs →](https://zod.dev/api)
+
+### 🟡 Parsing data
+
+### 🟡 Handling errors
+
+### 🟡 Inferring types
+
+### 🟡 Required Methods
+
+`log`, `warn`, `error`
+
+### 🟡 Ajv and Content Security Policies (CSP)
+
+### 🟡 Using transpilers with asynchronous validation functions.
+
+### 🟡 Error objects
+
+### 🟡 Error parameters
+
+### 🟡 Error logging
+
+### 🟡 Convert from Milliseconds
+
+### 🟡 Time Format Written-Out
+
+### 🟡 Security Issues
+
+### 🟡 Running Tests
+
+### 🟡 TC (Technical Committee)
+
+### 🟡 Triagers
+
+## 9. Architecture Overview
+
+Architecture details to be documented.
+
+## 10. Technical Requirements
+
+- Use react
+- Use typescript
+- Use javascript
+- Use angular
+- Use go
+- Use sql
+- Use redis
+- Use mongodb
+- Use node.js
+
+## 11. Integration Points
+
+- **Integration with policy**: Integration point with policy project
+- **Integration with is**: Integration point with is project
+- **Integration with github**: Integration point with github project
+- **Integration with 9058**: Integration point with 9058 project
+- **Integration with satazor**: Integration point with satazor project
+- **Integration with includes**: Integration point with includes project
+- **Integration with Global**: Integration point with Global project
+- **Integration with Instructions**: Integration point with Instructions project
+- **Integration with README**: Integration point with README project
+- **Integration with provides**: Integration point with provides project
+- **Integration with adheres**: Integration point with adheres project
+- **Integration with on**: Integration point with on project
+- **Integration with like**: Integration point with like project
+- **Integration with in**: Integration point with in project
+- **Integration with will**: Integration point with will project
+- **Integration with src**: Integration point with src project
+- **Integration with dougwilson**: Integration point with dougwilson project
+- **Integration with issue**: Integration point with issue project
+- **Integration with welcomes**: Integration point with welcomes project
+- **Integration with was**: Integration point with was project
+- **Integration with team**: Integration point with team project
+- **Integration with disclosure**: Integration point with disclosure project
+- **Integration with to**: Integration point with to project
+- **Integration with has**: Integration point with has project
+- **Integration with files**: Integration point with files project
+
+## 12. Timeline & Phases
+
+## 13. Milestones
+
+## 14. Dependencies
+
+## 16. Related Projects
+
+- policy
+- is
+- github
+- 9058
+- satazor
+- includes
+- Global
+- Instructions
+- README
+- provides
+- adheres
+- on
+- like
+- in
+- will
+- src
+- dougwilson
+- issue
+- welcomes
+- was
+- team
+- disclosure
+- to
+- has
+- files
+
+## 17. Shared Features
+
+- Running Tests
+- Error Logging
+- [Read the docs →](https://zod.dev/api)
+- Parsing data
+- Handling errors
+- Inferring types

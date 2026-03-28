@@ -8,6 +8,20 @@ Source: docs/reference/api/fast_file_watcher_api.md
 
 > **Source**: `src/thegent/infra/fast_file_watcher.py`
 
+Fast file watcher with optimized backends.
+
+This module provides a high-performance abstraction layer for file watching
+that automatically selects the fastest available backend:
+- watchfiles (Rust-based): 5-10x faster than watchdog
+- watchdog: Cross-platform fallback
+
+Performance improvements:
+- watchfiles uses Rust implementation (5-10x faster)
+- Better performance for high-frequency file changes
+- Automatic backend selection based on availability
+
+---
+
 ## FastFileWatcher
 
 High-performance file watcher with automatic backend selection.

@@ -1,0 +1,119 @@
+# 2026-02-23-parity-qol-next-audit
+
+Source: docs/reports/2026-02-23-parity-qol-next-audit.md
+
+---
+
+# Next Audit: Parity, Improvement, Polish, QOL (Feature-Help)
+
+Date: 2026-02-23
+Owner: Runtime/CLI
+Status: audit-complete
+Scope: review prior parity research docs and identify next practical improvements.
+
+## Sources reviewed
+
+- `docs/reference/HARNESS_PARITY_MATRIX.md`
+- `docs/context/codex.md`
+- `docs/context/claude-code.md`
+- `docs/plans/OPTIMIZATION_POLISH_QOL_AUDIT_AND_PLAN.md`
+- `docs/reports/2026-02-21-B90-W3-B2-parity-gap-report.md`
+- `docs/research/CODEX_HARNESS_OVERHAUL_DESIGN_V2.md`
+
+## Executive readout
+
+The prior parity and QOL docs are directionally strong, but some high-priority items are now implemented and several recommendations are stale. The next highest-value work is not broad redesign; it is tightening UX consistency, closing a few feature stubs, and reducing parity-doc drift so feature decisions stay accurate.
+
+## Closed vs stale findings
+
+### A) Previously-flagged QOL gaps that are now closed
+
+1. Top-level doctor command is already implemented.
+   - Evidence: `src/thegent/cli/apps/main.py` defines `@app.command("doctor")`.
+2. Top-level resume shortcut is already implemented.
+   - Evidence: `src/thegent/cli/apps/main.py` defines `@app.command("resume")`.
+3. Shell completion support is already enabled.
+   - Evidence: `src/thegent/cli/apps/main.py` sets `add_completion=True`.
+
+### B) Stale parity assumptions in docs
+
+1. Harness matrix still frames Codex as missing some features that are now partially available upstream.
+   - Example: skills/session capability assumptions conflict with newer Codex multi-agent and skill surfaces referenced in `docs/context/codex.md`.
+2. QOL plan still treats doctor as missing in main CLI.
+   - File to update: `docs/plans/OPTIMIZATION_POLISH_QOL_AUDIT_AND_PLAN.md`.
+
+## Live gaps worth fixing next
+
+### P0: Command-surface polish and trust consistency
+
+1. `team` stream still exposes placeholder commands that print "not yet implemented".
+   - Evidence: `src/thegent/cli/apps/team.py` (`list`, `hierarchy`, `crew`).
+   - Impact: weakens confidence in teammate feature surface.
+   - Recommendation:
+     - Either implement minimal real output (read from teammate registry/state), or
+     - hide these commands behind `hidden=True` until implemented.
+
+2. Welcome panel misses key onboarding commands users actually need first.
+   - Evidence: callback panel in `src/thegent/cli/apps/main.py` currently highlights `run/sync/audit/plan`, but not `setup`/`doctor`.
+   - Recommendation:
+     - Add `setup` and `doctor` explicitly.
+     - Include one line for teammate workflow entrypoint (`team teammates list`).
+
+### P1: Parity verification quality
+
+1. AGENTS/CLAUDE parity verification is format-focused, not rule-semantic.
+   - File: `docs/governance/AGENTS_CLAUDE_PARITY_VERIFICATION.md`.
+   - Recommendation:
+     - Add automated semantic checks for critical rule blocks (hash section bodies, not line ranges).
+     - Add CI test to fail if critical rule bodies diverge.
+
+2. Cross-language Rust/Python parity still deferred by skipped extension build path.
+   - File: `docs/reports/2026-02-21-B90-W3-B2-parity-gap-report.md`.
+   - Recommendation:
+     - Promote `maturin develop --release` parity job to required for parser-touching changes.
+     - Convert skip-based tests into fail-on-missing-extension in CI profile.
+
+### P1: Doc-source consolidation
+
+1. Fragmentation (`docs/fragemented/*`) duplicates high-signal parity docs.
+   - Impact: stale recommendations persist and conflict with reality.
+   - Recommendation:
+     - Define canonical source list for parity/QOL docs.
+     - Add a doc-lint check to detect duplicate titled reports in fragmented and canonical trees.
+
+## Feature-help implementation queue (next 2 sprints)
+
+### Sprint A (small, high impact)
+
+1. Improve top-level welcome panel.
+   - File: `src/thegent/cli/apps/main.py`
+   - Add: `thegent setup`, `thegent doctor`, `thegent team teammates list`.
+2. Remove or implement placeholder `team` commands.
+   - File: `src/thegent/cli/apps/team.py`
+3. Refresh stale QOL plan assumptions.
+   - File: `docs/plans/OPTIMIZATION_POLISH_QOL_AUDIT_AND_PLAN.md`
+   - Mark completed items and re-rank remaining backlog.
+
+### Sprint B (parity hardening)
+
+1. Add semantic AGENTS/CLAUDE parity CI check.
+   - Suggested path: `tests/governance/test_agents_claude_semantic_parity.py`
+2. Gate parser parity on extension availability in CI.
+   - Files: `tests/routing/test_wl131_rust_python_parity.py`, CI workflow config.
+3. Refresh `HARNESS_PARITY_MATRIX.md` against current Codex/Claude contexts.
+   - Source alignment: `docs/context/codex.md`, `docs/context/claude-code.md`.
+
+## Acceptance criteria for this next audit cycle
+
+1. No CLI command prints "not yet implemented" on primary surfaced paths.
+2. `thegent` welcome panel includes setup/doctor and one teammate discovery command.
+3. AGENTS/CLAUDE critical-rule parity is tested semantically in CI.
+4. Rust/Python parser parity no longer silently skips in CI for parser-touching changes.
+5. QOL plan and parity matrix no longer contain known stale claims.
+
+## Suggested tracking tags
+
+- `WL-POLISH-CLI-SURFACE`
+- `WL-PARITY-DOC-REFRESH`
+- `WL-PARITY-CI-SEMANTIC`
+- `WL-RUST-PY-PARITY-GATE`

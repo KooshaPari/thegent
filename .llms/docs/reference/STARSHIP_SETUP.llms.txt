@@ -23,7 +23,7 @@ When you run `task setup`, thegent creates `.starship.toml` with:
 If you use **direnv** (`.envrc`), `STARSHIP_CONFIG` is set to use it when you `cd` into thegent.
 
 1. Run `task setup` (creates `.starship.toml`)
-2. Run `thegent install-shims --force` (updates git shim with caching)
+2. Run `thegent install --scope both` or `thegent install -t all --system` (installs git shim with caching)
 3. Run `direnv allow` (loads `.envrc` with `STARSHIP_CONFIG`)
 
 ---

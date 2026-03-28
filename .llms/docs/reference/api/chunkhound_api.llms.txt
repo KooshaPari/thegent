@@ -1,0 +1,99 @@
+# chunkhound_api
+
+Source: docs/reference/api/chunkhound_api.md
+
+---
+
+# chunkhound API Reference
+
+> **Source**: `src/thegent/integrations/chunkhound.py`
+
+ChunkHound Integration - Local-first code intelligence
+
+Provides code chunking/indexing for local code intelligence.
+Low infra overhead for code analysis.
+
+Security:
+- Verify MIT license compatibility
+
+License: MIT (verified at https://github.com/chunkhound/chunkhound)
+
+---
+
+## ChunkHoundClient
+
+### Methods
+
+#### ChunkHoundClient.__init__
+
+```
+__init__(self: Any, config: Any)
+```
+
+---
+
+#### ChunkHoundClient.index
+
+```
+index(self: Any, path: str)
+```
+
+---
+
+#### ChunkHoundClient.is_enabled
+
+```
+is_enabled(self: Any)
+```
+
+---
+
+#### ChunkHoundClient.query
+
+```
+query(self: Any, query: str)
+```
+
+---
+
+---
+
+## ChunkHoundConfig
+
+**Inherits from**: `DataclassConfig`
+
+---
+
+## ChunkHoundStatus
+
+**Inherits from**: `Enum`
+
+---
+
+## get_chunkhound
+
+---
+
+## index
+
+```
+index(self: Any, path: str)
+```
+
+---
+
+## is_enabled
+
+```
+is_enabled(self: Any)
+```
+
+---
+
+## query
+
+```
+query(self: Any, query: str)
+```
+
+---

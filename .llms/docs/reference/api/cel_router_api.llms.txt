@@ -1,0 +1,149 @@
+# cel_router_api
+
+Source: docs/reference/api/cel_router_api.md
+
+---
+
+# cel_router API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/cel_router.py`
+
+GW-57: CEL-like expression routing for the thegent AI gateway.
+
+Implements a lightweight CEL-inspired expression evaluator for routing rules.
+Expressions operate on a request context dict and return a string (target model/provider)
+or None (no match).
+
+No external CEL library required — uses a custom recursive-descent parser.
+
+Supported operators:
+  ==, !=, <, <=, >, >=, in, contains, startsWith, endsWith
+  &&, ||, !
+  Attribute access: context.model, context.provider, context.metadata.user_tier
+  Literals: strings (double-quoted), numbers (int/float), booleans (true/false), null
+  Ternary: condition ? then_expr : else_expr
+
+# @trace FR-AROUTE-057
+
+---
+
+## CelEvalResult
+
+Result of evaluating CEL routes against a context.
+
+---
+
+## CelEvaluator
+
+Compiles and evaluates CEL-like routing expressions.
+
+### Methods
+
+#### CelEvaluator.__init__
+
+```
+__init__(self: Any, routes: list[CelRoute])
+```
+
+---
+
+#### CelEvaluator.evaluate
+
+```
+evaluate(self: Any, context: dict)
+```
+
+Evaluate all routes in order, return first match.
+
+---
+
+---
+
+## CelRoute
+
+A CEL-expression-based routing rule.
+
+---
+
+## _Parser
+
+Recursive-descent parser for CEL-like expressions.
+
+### Methods
+
+#### _Parser.__init__
+
+```
+__init__(self: Any, tokens: list[_Token])
+```
+
+---
+
+#### _Parser.parse
+
+```
+parse(self: Any)
+```
+
+Parse the full expression, expecting EOF at end.
+
+---
+
+---
+
+## _Token
+
+---
+
+## compile_expression
+
+```
+compile_expression(expression: str)
+```
+
+Pre-compile a CEL expression for repeated evaluation.
+
+Returns an opaque compiled expression object (an AST dict).
+Raises ValueError on syntax error.
+
+---
+
+## eval_expression
+
+```
+eval_expression(compiled: Any, context: dict)
+```
+
+Evaluate a pre-compiled expression against context. Returns bool.
+
+---
+
+## evaluate
+
+```
+evaluate(self: Any, context: dict)
+```
+
+Evaluate all routes in order, return first match.
+
+---
+
+## evaluate_cel_routes
+
+```
+evaluate_cel_routes(routes: list[CelRoute], context: dict)
+```
+
+Convenience function: evaluate a list of CelRoutes against context.
+
+---
+
+## parse
+
+```
+parse(self: Any)
+```
+
+Parse the full expression, expecting EOF at end.
+
+---

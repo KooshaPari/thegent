@@ -1,0 +1,515 @@
+# PHASE_4_MCP_TRANSPORT_SPECIFICATION
+
+Source: docs/plans/fragemented/PHASE_4_MCP_TRANSPORT_SPECIFICATION.md
+
+---
+
+# Phase 4: MCP Transport for Real-time Sync
+
+**Date:** 2026-02-19
+**Status:** Planning
+**Phases:** 4A (MCP Server Setup) + 4B (Real-time Sync) + 4C (Cross-Civilization Communication)
+**Estimated Duration:** 2-3 hours
+**Confidence:** 85% (new module, well-defined scope)
+
+---
+
+## Executive Summary
+
+Phase 4 adds real-time synchronization to the civilization framework via MCP (Model Context Protocol). Currently, the registry is file-based with in-memory caching. Phase 4 introduces streaming heartbeats, reactive updates, and cross-civilization agent communication.
+
+---
+
+## Architecture Overview
+
+### Current State (Phase 1-3)
+```
+┌─────────────────────────────────┐
+│  SwarmController (L1 Agent)     │
+├─────────────────────────────────┤
+│  Agent Identity System          │
+│  ├─ GlobalAgentRegistry         │
+│  │  ├─ In-memory cache          │
+│  │  └─ Disk persistence         │
+│  └─ Heartbeat tracking (5min)   │
+├─────────────────────────────────┤
+│  ~/.claude/civilization/        │
+│  registry.json                  │
+└─────────────────────────────────┘
+```
+
+### With Phase 4 (MCP Transport)
+```
+┌──────────────────────────────────────────────┐
+│         MCP Server (TCP/stdio)               │
+│         ├─ Real-time Registry Sync           │
+│         ├─ Streaming Heartbeats              │
+│         └─ Agent Communication               │
+└──────────────┬───────────────────────────────┘
+               │
+┌──────────────┴───────────────────────────────┐
+│         SwarmController (L1 Agent)           │
+├──────────────────────────────────────────────┤
+│  Agent Identity System + MCP Client          │
+│  ├─ GlobalAgentRegistry                      │
+│  ├─ Streaming Heartbeat Handler              │
+│  └─ Agent Message Broker                     │
+├──────────────────────────────────────────────┤
+│  ~/.claude/civilization/registry.json        │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+## Phase 4A: MCP Server Setup
+
+### Objectives
+1. Create MCP server wrapping GlobalAgentRegistry
+2. Define MCP resources and tools
+3. Initialize server in swarm_controller.py
+4. Maintain backward compatibility
+
+### Implementation Details
+
+#### 4A.1: MCP Server Class
+```
+# scripts/civilization_mcp_server.py
+
+class CivilizationMCPServer:
+    """MCP server for civilization framework registry."""
+
+    def __init__(self, registry: GlobalAgentRegistry):
+        self.registry = registry
+        self.server = MCPServer("civilization")
+
+        # Register resources
+        self.register_resources()
+
+        # Register tools
+        self.register_tools()
+
+    def register_resources(self):
+        """Register MCP resources for registry data."""
+        # civilization://agents/{agent_id}
+        # civilization://projects/{project}
+        # civilization://statistics
+        # civilization://hierarchy/{parent_id}
+
+    def register_tools(self):
+        """Register MCP tools for registry operations."""
+        # register_agent(name, level, role, ...)
+        # update_heartbeat(agent_id)
+        # get_agent(agent_id)
+        # query_agents(filter)
+        # cleanup_stale()
+
+    def start(self, host="localhost", port=3848):
+        """Start MCP server."""
+        pass
+```
+
+#### 4A.2: MCP Resources
+
+| Resource | URI | Type | Purpose |
+|----------|-----|------|---------|
+| Agent | `civilization://agents/{agent_id}` | Read-only | Get agent metadata |
+| Project | `civilization://projects/{project}` | Read-only | List agents in project |
+| Statistics | `civilization://statistics` | Read-only | Registry stats (count, projects, levels) |
+| Hierarchy | `civilization://hierarchy/{parent_id}` | Read-only | Get children of agent |
+| Active | `civilization://active` | Read-only | List active agents |
+| Stale | `civilization://stale` | Read-only | List stale agents (>5min) |
+
+#### 4A.3: MCP Tools
+
+| Tool | Input | Output | Purpose |
+|------|-------|--------|---------|
+| `update_heartbeat` | `{agent_id}` | `{success, timestamp}` | Update agent heartbeat |
+| `register_agent` | `{name, level, role, project, ...}` | `{agent_id}` | Register new agent |
+| `unregister_agent` | `{agent_id}` | `{success}` | Unregister agent |
+| `recover_stale` | `{agent_id}` | `{success, recovered}` | Attempt recovery |
+| `get_civilization_status` | `{}` | `{status_json}` | Dashboard status |
+| `query_agents` | `{filters: {level?, project?, role?}}` | `{agents}` | Query with filters |
+
+### Success Criteria for 4A
+- [ ] MCP server starts without errors
+- [ ] All 6 resources accessible
+- [ ] All 6 tools callable
+- [ ] Backward compatible (Phase 1-3 tests still pass)
+- [ ] Type-safe (Pyright clean)
+
+---
+
+## Phase 4B: Real-time Sync (Heartbeat Streaming)
+
+### Objectives
+1. Implement streaming heartbeat protocol
+2. Add real-time registry update notifications
+3. Integrate streaming into monitor cycle
+4. Handle disconnections gracefully
+
+### Implementation Details
+
+#### 4B.1: Heartbeat Streaming
+```
+# In CivilizationMCPServer
+
+class HeartbeatStream:
+    """Real-time heartbeat streaming."""
+
+    def __init__(self, registry: GlobalAgentRegistry):
+        self.registry = registry
+        self.subscribers = set()  # Connected clients
+
+    async def stream_heartbeats(self):
+        """Stream heartbeats at 1 Hz."""
+        while True:
+            heartbeats = self.registry.get_active_agents()
+            await self.broadcast({
+                "type": "heartbeats",
+                "timestamp": time.time(),
+                "agents": heartbeats
+            })
+            await asyncio.sleep(1)
+
+    async def broadcast(self, message):
+        """Broadcast to all subscribers."""
+        for client in self.subscribers:
+            try:
+                await client.send(message)
+            except Exception as e:
+                self.subscribers.discard(client)
+```
+
+#### 4B.2: Registry Change Notifications
+```
+class RegistryNotifier:
+    """Notify clients of registry changes."""
+
+    def __init__(self, registry: GlobalAgentRegistry):
+        self.registry = registry
+        self.subscribers = set()
+
+    def on_agent_registered(self, agent_id: str):
+        """Notify subscribers of new agent."""
+        self.broadcast({
+            "type": "agent_registered",
+            "agent_id": agent_id,
+            "timestamp": time.time()
+        })
+
+    def on_agent_unregistered(self, agent_id: str):
+        """Notify subscribers of removed agent."""
+        self.broadcast({
+            "type": "agent_unregistered",
+            "agent_id": agent_id,
+            "timestamp": time.time()
+        })
+
+    def on_heartbeat_updated(self, agent_id: str):
+        """Notify subscribers of heartbeat update."""
+        self.broadcast({
+            "type": "heartbeat_updated",
+            "agent_id": agent_id,
+            "timestamp": time.time()
+        })
+```
+
+#### 4B.3: Integration into SwarmController
+```
+class SwarmController:
+    def __init__(self):
+        # ... existing init ...
+        self.mcp_server = CivilizationMCPServer(self.agent_registry)
+        self.heartbeat_stream = self.mcp_server.heartbeat_stream
+
+    async def run_monitor(self):
+        """Start monitoring with MCP server."""
+        # Start MCP server in background
+        await self.mcp_server.start()
+
+        # Start heartbeat streaming
+        asyncio.create_task(self.heartbeat_stream.stream_heartbeats())
+
+        # Existing monitoring loop continues
+        await self._monitor_loop()
+```
+
+### Success Criteria for 4B
+- [ ] Heartbeats stream at 1 Hz to all subscribers
+- [ ] Registry changes notify immediately
+- [ ] Disconnections handled gracefully (auto-reconnect)
+- [ ] Performance overhead <5ms per cycle
+- [ ] All Phase 1-3 tests still pass
+
+---
+
+## Phase 4C: Cross-Civilization Communication
+
+### Objectives
+1. Implement agent-to-agent messaging protocol
+2. Enable L1-to-L1 civilization coordination
+3. Add message routing and acknowledgment
+4. Support broadcast and direct messaging
+
+### Implementation Details
+
+#### 4C.1: Message Broker
+```
+class AgentMessageBroker:
+    """Broker for inter-agent messages."""
+
+    def __init__(self, registry: GlobalAgentRegistry):
+        self.registry = registry
+        self.message_queue = asyncio.Queue()
+        self.routes = {}  # agent_id -> handler
+
+    async def send_message(self,
+                          from_agent: str,
+                          to_agent: str,
+                          message_type: str,
+                          payload: dict) -> bool:
+        """Send message to agent."""
+        msg = {
+            "id": uuid4().hex[:8],
+            "from": from_agent,
+            "to": to_agent,
+            "type": message_type,
+            "payload": payload,
+            "timestamp": time.time(),
+            "ack": False
+        }
+
+        # Route message
+        if to_agent == "broadcast":
+            return await self.broadcast_message(msg)
+        else:
+            return await self.direct_message(msg)
+
+    async def broadcast_message(self, msg):
+        """Broadcast to all agents in project."""
+        project = msg["from"].split(":")[0]
+        agents = self.registry.get_agents_by_project(project)
+
+        for agent in agents:
+            if agent.agent_id != msg["from"]:
+                await self.route_message(msg, agent.agent_id)
+
+        return True
+
+    async def direct_message(self, msg):
+        """Route to specific agent."""
+        await self.route_message(msg, msg["to"])
+        # Wait for ACK (timeout 5s)
+        return await self.wait_for_ack(msg["id"])
+```
+
+#### 4C.2: Message Types
+
+| Type | Direction | Purpose | Example |
+|------|-----------|---------|---------|
+| `heartbeat_request` | L2→L1 | Request confirmation | Health check |
+| `status_query` | L1→L2 | Ask for status | "What's your load?" |
+| `task_assignment` | L1→L2 | Assign work | "Run test suite" |
+| `result_report` | L2→L1 | Report completion | "Tests passed" |
+| `error_alert` | L2→L1 | Alert to error | "Agent X is stale" |
+| `coordination` | L1→L1 | Cross-civilization | "Merge registries" |
+| `broadcast` | L1/L2→All | Notify all agents | "Shutdown in 60s" |
+
+#### 4C.3: Message Format
+```
+@dataclass
+class AgentMessage:
+    id: str              # Unique message ID (uuid[:8])
+    from_agent: str      # Sender agent ID
+    to_agent: str        # Recipient (or "broadcast")
+    type: str            # Message type
+    payload: dict        # Message data
+    timestamp: float     # Unix timestamp
+    ack: bool            # Acknowledged?
+    ack_timestamp: float # ACK time (optional)
+```
+
+### Success Criteria for 4C
+- [ ] Direct messages routed correctly
+- [ ] Broadcast messages reach all agents
+- [ ] ACK mechanism working (5s timeout)
+- [ ] Message format validated
+- [ ] All Phase 1-3 tests still pass
+- [ ] Cross-civilization messages work
+
+---
+
+## Implementation Plan
+
+### Timeline Estimate
+| Phase | Task | Est. Time | Status |
+|-------|------|-----------|--------|
+| **4A** | MCP Server Setup | 45 min | Pending |
+| **4A** | Resources + Tools | 30 min | Pending |
+| **4B** | Heartbeat Stream | 40 min | Pending |
+| **4B** | Registry Notifier | 25 min | Pending |
+| **4C** | Message Broker | 50 min | Pending |
+| **4C** | Message Types + Format | 20 min | Pending |
+| **All** | Testing + Integration | 30 min | Pending |
+| **Total** | Full Phase 4 | ~240 min (4 hours) | Pending |
+
+### File Structure
+```
+scripts/
+├── agent_identity_system.py      (Phase 1) ✅
+├── civilization_mcp_server.py    (Phase 4A) NEW
+├── civilization_heartbeat.py     (Phase 4B) NEW
+├── civilization_message_broker.py (Phase 4C) NEW
+├── swarm_controller.py           (Modified: 4A, 4B, 4C)
+└── test_civilization_mcp.py      (New: comprehensive tests)
+```
+
+### Code Lines Estimate
+| Component | LOC | Complexity |
+|-----------|-----|-----------|
+| MCP Server Setup | 120 | Medium |
+| Resources (6x) | 80 | Low |
+| Tools (6x) | 100 | Medium |
+| Heartbeat Stream | 90 | Medium |
+| Registry Notifier | 60 | Low |
+| Message Broker | 150 | High |
+| Message Types | 50 | Low |
+| SwarmController Integration | 60 | Medium |
+| Tests (comprehensive) | 200 | Medium |
+| **Total** | ~910 | - |
+
+---
+
+## Dependencies & Assumptions
+
+### Required
+- ✅ Phase 1: Agent Identity System
+- ✅ Phase 2: SwarmController Integration
+- ✅ Phase 3: Stale Agent Cleanup
+- Python 3.8+ (async/await)
+- FastMCP or similar MCP library
+
+### Assumptions
+- MCP server can run async in SwarmController
+- Clients can connect via stdio or TCP
+- Message queue is in-memory (scale to Redis in Phase 5+)
+- Heartbeat stream is non-critical (best-effort delivery)
+- Broadcast messages are fire-and-forget
+
+---
+
+## Success Criteria
+
+### Phase 4A (MCP Server)
+- [ ] MCP server starts without errors
+- [ ] All 6 resources accessible via MCP client
+- [ ] All 6 tools callable and working
+- [ ] Backward compatible (Phase 1-3 tests pass)
+- [ ] Type-safe (Pyright: 0 errors)
+
+### Phase 4B (Real-time Sync)
+- [ ] Heartbeats stream at 1+ Hz
+- [ ] Registry changes notify immediately
+- [ ] Disconnections handled gracefully
+- [ ] Performance: <5ms overhead per cycle
+- [ ] Phase 1-3 tests still pass
+
+### Phase 4C (Cross-Civ Communication)
+- [ ] Direct messages routed correctly
+- [ ] Broadcast messages reach all agents
+- [ ] ACK mechanism working (5s timeout)
+- [ ] Message types validated
+- [ ] L1-to-L1 coordination works
+- [ ] Phase 1-3 tests still pass
+
+### Overall Phase 4
+- [ ] All 17 Phase 1-3 tests passing
+- [ ] 20+ new Phase 4 tests passing
+- [ ] Total: 37/37 tests passing
+- [ ] Syntax valid (py_compile clean)
+- [ ] Pyright: 0 errors
+- [ ] 100% backward compatible
+- [ ] <250ms added startup time
+- [ ] <10ms added per-cycle overhead
+
+---
+
+## Rollback Plan
+
+If Phase 4 fails:
+1. Disable MCP server (set `CIVILIZATION_MCP_ENABLED=0`)
+2. SwarmController continues with file-based registry
+3. Phase 1-3 functionality remains intact
+4. Restart SwarmController
+
+---
+
+## Testing Strategy
+
+### Unit Tests (Phase 4A)
+- MCP resource accessibility
+- MCP tool invocation
+- Registry integration
+
+### Integration Tests (Phase 4B)
+- Heartbeat streaming
+- Registry change notification
+- Disconnection handling
+
+### Functional Tests (Phase 4C)
+- Direct message routing
+- Broadcast message delivery
+- ACK mechanism
+- Cross-civilization coordination
+
+### Regression Tests
+- All 17 Phase 1-3 tests
+- Backward compatibility
+- No breaking changes
+
+---
+
+## Known Risks & Mitigations
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|-----------|
+| MCP library not available | Low | High | Use vendored MCP or create lightweight impl |
+| Async integration issues | Medium | Medium | Careful testing, use asyncio.gather |
+| Performance degradation | Medium | High | Profile and optimize heartbeat stream |
+| Message ordering | Low | Low | Use timestamps + ordering on receipt |
+| Resource exhaustion | Low | High | Add connection limits, message queue max |
+
+---
+
+## Documentation Plan
+
+### To Create
+- `PHASE_4_MCP_IMPLEMENTATION.md` - Deep dive
+- `CIVILIZATION_MCP_PROTOCOL.md` - Protocol spec
+- `HEARTBEAT_STREAMING_GUIDE.md` - Streaming guide
+- `AGENT_MESSAGING_GUIDE.md` - Messaging patterns
+
+### To Update
+- `CIVILIZATION_FRAMEWORK_OVERVIEW.md` - Add MCP architecture
+- `docs/reference/CODE_ENTITY_MAP.md` - New classes
+
+---
+
+## Next Steps (Phase 5+)
+
+### Phase 5: Advanced Features
+- Conflict resolution protocol
+- Agent memory persistence
+- Civilization-wide dashboards
+
+### Phase 6: Scale & Performance
+- Database backend (1000+ agents)
+- Distributed registry sync
+- Load balancing
+
+---
+
+**Status:** Planning Phase
+**Start Time:** 2026-02-19 (now)
+**Target Completion:** 2026-02-19 (same day)
+**Confidence:** 85%

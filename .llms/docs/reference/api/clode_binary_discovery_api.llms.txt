@@ -1,0 +1,27 @@
+# clode_binary_discovery_api
+
+Source: docs/reference/api/clode_binary_discovery_api.md
+
+---
+
+# clode_binary_discovery API Reference
+
+> **Source**: `src/thegent/clode_binary_discovery.py`
+
+Binary discovery helpers for clode.
+
+---
+
+## find_claude
+
+Return path to claude CLI, or None. Checks PATH and common install dirs.
+
+---
+
+## is_thegent_shim
+
+```
+is_thegent_shim(path: str) -> bool
+```
+
+---

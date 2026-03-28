@@ -40,6 +40,36 @@ audit_doctor(fix: bool)
 
 ---
 
+## audit_journal
+
+```
+audit_journal(action: str, session_id: Any, path: str, max_age: int, watch: bool, attest: bool, batch_size: int, enhanced: bool, stream: bool, follow: bool, bootstrap_servers: str, topic: str)
+```
+
+Manage git journal for micro-commit audit trail.
+
+The git journal creates micro-commits for every file change using
+git refs that are never pushed to remote. This provides a complete
+local audit trail including secrets and sensitive files.
+
+Actions:
+    list     - List all audit sessions
+    status   - Show journal status for current session
+    snapshot - Create a snapshot of current working tree
+    prune    - Remove old audit sessions
+    show     - Show audit log for a session
+    watch    - Start real-time file watching
+    attest   - Show attestations for a session
+    stats    - Show performance statistics
+
+Enhanced Features (--enhanced):
+    - Native secret scanner integration
+    - Real-time file watching (watchman/fswatch/FSMonitor)
+    - Cryptographic attestation (SHA-256)
+    - Batching for performance
+
+---
+
 ## audit_plan
 
 Heavy audit of the plan: PLAN.md, WORK_STREAM.md, and DAG consistency.

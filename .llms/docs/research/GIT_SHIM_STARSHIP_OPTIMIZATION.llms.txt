@@ -4,6 +4,7 @@ Source: docs/research/GIT_SHIM_STARSHIP_OPTIMIZATION.md
 
 ---
 
+<DONE>
 # Git Shim Starship Optimization — Fix for 8+ Minute Prompt Delays
 
 **Date:** 2026-02-17

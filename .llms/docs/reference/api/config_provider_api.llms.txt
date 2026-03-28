@@ -38,7 +38,7 @@ resolve(self: Any, tenant_id: Any, session_id: Any, request_overrides: Any, keys
 
 Resolve config for a given context.
 
-Resolution order: request_overrides -&gt; session -&gt; tenant -&gt; stamp -&gt; global.
+Resolution order: request_overrides -> session -> tenant -> stamp -> global.
 
 ---
 

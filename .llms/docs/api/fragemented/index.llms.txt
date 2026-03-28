@@ -1,0 +1,13 @@
+# index
+
+Source: docs/api/fragemented/index.md
+
+---
+
+# Fragmented Index
+
+## Source Files (2026)
+
+- cli-reference.md
+- mcp-protocol.md
+- rest-api.md

@@ -51,7 +51,7 @@ action_close_pane(self: Any)
 Close the current pane.
 
 Wrapped with error boundaries.
-Decrements pane count (if &gt; 1) and updates statusbar.
+Decrements pane count (if > 1) and updates statusbar.
 
 ---
 
@@ -257,6 +257,24 @@ Render status bar content.
 
 ---
 
+## _Closeable
+
+Protocol for widgets that support explicit close.
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### _Closeable.close
+
+```
+close(self: Any)
+```
+
+---
+
+---
+
 ## action_close_pane
 
 ```
@@ -266,7 +284,7 @@ action_close_pane(self: Any)
 Close the current pane.
 
 Wrapped with error boundaries.
-Decrements pane count (if &gt; 1) and updates statusbar.
+Decrements pane count (if > 1) and updates statusbar.
 
 ---
 
@@ -343,6 +361,14 @@ Split the current pane vertically.
 
 Wrapped with error boundaries.
 Increments pane count and updates statusbar.
+
+---
+
+## close
+
+```
+close(self: Any) -> None
+```
 
 ---
 

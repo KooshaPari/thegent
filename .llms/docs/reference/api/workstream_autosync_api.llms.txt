@@ -1,0 +1,13 @@
+# workstream_autosync_api
+
+Source: docs/reference/api/workstream_autosync_api.md
+
+---
+
+# workstream_autosync API Reference
+
+> **Source**: `src/thegent/integrations/workstream_autosync.py`
+
+Public autosync façade.
+
+---

@@ -4,6 +4,7 @@ Source: docs/research/CODEX_MINIMAX_CLIPROXY_RESEARCH_AND_PLAN.md
 
 ---
 
+<DONE>
 # Codex + CLIProxyAPIPlus: Research and Plan
 
 **Date**: 2026-02-16
@@ -183,7 +184,7 @@ P1.1 ─┬─ P1.2 ─ P1.3 ─ P1.4 ─ P1.5
 |----------|-----|
 | MiniMax Codex CLI (config pattern) | https://platform.minimax.io/docs/coding-plan/codex-cli |
 | thegent adapter | `src/thegent/cliproxy_adapter.py` |
-| CLIProxyAPIPlus fork | `../CLIProxyAPIPlus-fork/` |
+| cliproxyapi-plusplus | `../cliproxyapi-plusplus/` |
 | Catalog alignment | `docs/plans/CATALOG_CLIPROXY_FORK_ALIGNMENT.md` |
 
 ---
@@ -192,7 +193,7 @@ P1.1 ─┬─ P1.2 ─ P1.3 ─ P1.4 ─ P1.5
 
 - **All CLIProxy models do not work with Codex** — not MiniMax-specific; universal gap
 - **MiniMax guide** — good reference for pairing custom providers to Codex (config pattern)
-- **CLIProxyAPIPlus-fork may need updates** — native Responses API would obviate adapter
+- **cliproxyapi-plusplus may need updates** — native Responses API would obviate adapter
 - **Claude harness with our API does work** — confirms Chat Completions path is fine
 
 ---

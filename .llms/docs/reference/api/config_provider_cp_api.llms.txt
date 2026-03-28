@@ -16,7 +16,7 @@ WP-10002: ControlPlaneConfigProvider implementation for Control Plane Phase 2.
 
 Connects to the long-running control-plane service for configuration.
 
-Applies full resolution order (request -&gt; session -&gt; tenant -&gt; stamp -&gt; global)
+Applies full resolution order (request -> session -> tenant -> stamp -> global)
 server-side to ensure multi-tenant isolation.
 
 ### Methods

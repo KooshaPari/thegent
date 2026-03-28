@@ -10,7 +10,7 @@ Source: docs/reference/api/cache_v2_api.md
 
 Phase 9: Request Coalescing v2 implementation.
 
-Includes Singleflight, inotify cache invalidation, and heat-based LRU.
+Includes Singleflight, inotify cache invalidation, heat-based LRU, and multi-tier cache.
 
 ---
 
@@ -144,6 +144,87 @@ put(self: Any, key: str, value: Any)
 
 ---
 
+## MultiTierCache
+
+Multi-tier caching system with automatic tier management.
+
+Tiers:
+1. L1: cachetools TTLCache (fastest, automatic TTL, smallest)
+2. L2: cachetools LRUCache (medium-term, configurable size)
+3. L3: PersistDict (persistent, survives restarts, safe serialization)
+
+### Methods
+
+#### MultiTierCache.__init__
+
+```
+__init__(self: Any, l1_size: int, l2_size: int, l3_path: Any, default_ttl: Any)
+```
+
+---
+
+#### MultiTierCache.clear
+
+```
+clear(self: Any)
+```
+
+---
+
+#### MultiTierCache.delete
+
+```
+delete(self: Any, key: str)
+```
+
+---
+
+#### MultiTierCache.enable_invalidation
+
+```
+enable_invalidation(self: Any, directory: Any)
+```
+
+Enable real-time cache invalidation based on file changes.
+
+---
+
+#### MultiTierCache.get
+
+```
+get(self: Any, key: str)
+```
+
+---
+
+#### MultiTierCache.get_with_fetch
+
+```
+get_with_fetch(self: Any, key: str, fetch_func: Any, ttl: Any)
+```
+
+Get value from cache, or fetch and store if missing (Singleflight coalescing).
+
+---
+
+#### MultiTierCache.set
+
+```
+set(self: Any, key: str, value: Any, ttl: Any)
+```
+
+---
+
+#### MultiTierCache.stats
+
+```
+stats(self: Any)
+```
+
+---
+
+---
+
 ## Singleflight
 
 Implementation of Singleflight pattern to prevent duplicate requests.
@@ -170,6 +251,22 @@ Execute func for key, coalescing concurrent calls.
 
 ---
 
+## clear
+
+```
+clear(self: Any) -> None
+```
+
+---
+
+## delete
+
+```
+delete(self: Any, key: str) -> None
+```
+
+---
+
 ## do
 
 ```
@@ -180,11 +277,41 @@ Execute func for key, coalescing concurrent calls across processes.
 
 ---
 
+## enable_invalidation
+
+```
+enable_invalidation(self: Any, directory: Any)
+```
+
+Enable real-time cache invalidation based on file changes.
+
+---
+
 ## get
 
 ```
 get(self: Any, key: str) -> Any
 ```
+
+---
+
+## get_cache
+
+```
+get_cache(l1_size: int, l2_size: int, l3_path: Any, default_ttl: Any)
+```
+
+Get global multi-tier cache instance.
+
+---
+
+## get_with_fetch
+
+```
+get_with_fetch(self: Any, key: str, fetch_func: Any, ttl: Any)
+```
+
+Get value from cache, or fetch and store if missing (Singleflight coalescing).
 
 ---
 
@@ -200,6 +327,22 @@ on_modified(self: Any, event: Any)
 
 ```
 put(self: Any, key: str, value: Any)
+```
+
+---
+
+## set
+
+```
+set(self: Any, key: str, value: Any, ttl: Any) -> None
+```
+
+---
+
+## stats
+
+```
+stats(self: Any) -> dict[(str, Any)]
 ```
 
 ---

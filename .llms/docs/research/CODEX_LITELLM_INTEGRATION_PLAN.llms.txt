@@ -4,6 +4,7 @@ Source: docs/research/CODEX_LITELLM_INTEGRATION_PLAN.md
 
 ---
 
+<DONE>
 # Codex CLI + LiteLLM Integration Plan
 
 **Date**: 2026-02-18

@@ -1,0 +1,241 @@
+# SDK-INTEGRATION
+
+Source: docs/integration-guides/SDK-INTEGRATION.md
+
+---
+
+# Integration Guide: Phenotype SDKs
+
+**Date**: 2026-03-25
+**Version**: 1.0.0
+
+## Overview
+
+This guide shows how to integrate Phenotype SDKs into your application across different languages.
+
+## Table of Contents
+
+1. [Rust SDK](#rust-sdk)
+2. [TypeScript SDK](#typescript-sdk)
+3. [Python SDK](#python-sdk)
+4. [Go SDK](#go-sdk)
+
+---
+
+## Rust SDK
+
+### Installation
+
+Add to your `Cargo.toml`:
+
+```
+[dependencies]
+phenotype-logging = "0.1"
+phenotype-config = "0.1"
+phenotype-api = "0.1"
+phenotype-error = "0.1"
+```
+
+### Usage Example
+
+```
+use phenotype_config::{Config, ConfigSource};
+use phenotype_logging::{info, error};
+use phenotype_error::{AppError, ErrorCode};
+
+#[tokio::main]
+async fn main() -> Result<(), AppError> {
+    // Load configuration
+    let config = Config::from_env()
+        .with_default("LOG_LEVEL", "info")
+        .load()?;
+
+    // Initialize logging
+    info!("Starting application");
+    
+    // Use error handling
+    let result = do_something().await?;
+    
+    Ok(())
+}
+
+async fn do_something() -> Result<String, AppError> {
+    Err(AppError::new(
+        ErrorCode::INVALID_INPUT,
+        "Something went wrong",
+    ))
+}
+```
+
+---
+
+## TypeScript SDK
+
+### Installation
+
+```
+npm install @phenotype/sdk
+# or
+yarn add @phenotype/sdk
+# or
+pnpm add @phenotype/sdk
+```
+
+### Usage Example
+
+```
+import { createClient, PhenotypeConfig } from '@phenotype/sdk';
+
+const config: PhenotypeConfig = {
+  apiKey: process.env.PHENOTYPE_API_KEY!,
+  baseUrl: 'https://api.phenotype.io',
+  timeout: 30000,
+  retries: 3,
+};
+
+const client = createClient(config);
+
+// Query data
+const result = await client.query('SELECT * FROM users');
+if (result.success) {
+  console.log(result.data);
+}
+
+// Handle errors
+if (!result.success) {
+  console.error(result.error.message);
+}
+```
+
+---
+
+## Python SDK
+
+### Installation
+
+```
+pip install phenotype-sdk
+# or
+poetry add phenotype-sdk
+```
+
+### Usage Example
+
+```
+from phenotype_sdk import Client, Config
+
+config = Config(
+    api_key=os.environ["PHENOTYPE_API_KEY"],
+    base_url="https://api.phenotype.io",
+    timeout=30,
+    retries=3,
+)
+
+client = Client(config)
+
+# Query data
+result = client.query("SELECT * FROM users")
+if result.is_ok():
+    print(result.unwrap())
+else:
+    print(f"Error: {result.unwrap_err()}")
+
+# Context manager usage
+with Client(config) as client:
+    result = client.query("SELECT * FROM orders LIMIT 10")
+```
+
+---
+
+## Go SDK
+
+### Installation
+
+```
+go get github.com/phenotype/sdk@latest
+```
+
+### Usage Example
+
+```
+package main
+
+import (
+    "context"
+    "fmt"
+    
+    phenotype "github.com/phenotype/sdk"
+)
+
+func main() {
+    cfg := phenotype.DefaultConfig()
+    cfg.APIKey = os.Getenv("PHENOTYPE_API_KEY")
+    cfg.BaseURL = "https://api.phenotype.io"
+    
+    client, err := phenotype.NewClient(cfg)
+    if err != nil {
+        panic(err)
+    }
+    defer client.Close()
+    
+    ctx := context.Background()
+    
+    result, err := client.Query(ctx, "SELECT * FROM users")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    
+    fmt.Printf("Data: %v\n", result.Data)
+}
+```
+
+---
+
+## Error Handling
+
+All SDKs follow a consistent error handling pattern:
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `UNKNOWN` | Unknown error |
+| `ENTITY_NOT_FOUND` | Resource not found |
+| `VALIDATION_ERROR` | Input validation failed |
+| `AUTHENTICATION_ERROR` | Authentication failed |
+| `AUTHORIZATION_ERROR` | Authorization failed |
+| `NETWORK_ERROR` | Network communication error |
+| `TIMEOUT` | Request timeout |
+
+### Error Response
+
+```
+{
+  "code": "ENTITY_NOT_FOUND",
+  "message": "User with id '123' not found",
+  "context": {
+    "entity_type": "User",
+    "entity_id": "123"
+  },
+  "timestamp": "2026-03-25T12:00:00Z"
+}
+```
+
+---
+
+## Rate Limiting
+
+All SDKs implement automatic rate limiting:
+
+- Exponential backoff on 429 responses
+- Configurable retry count
+- Request queuing (optional)
+
+---
+
+## Support
+
+- **Documentation**: https://docs.phenotype.io
+- **GitHub Issues**: https://github.com/phenotype/phenotype/issues
+- **Discord**: https://discord.gg/phenotype

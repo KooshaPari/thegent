@@ -4,6 +4,7 @@ Source: docs/research/research-governance-compliance-reports.md
 
 ---
 
+<DONE>
 # Governance Compliance Reports Research
 
 > **WORK_STREAM ID:** research-governance-compliance-reports

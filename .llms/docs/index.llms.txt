@@ -4,6 +4,34 @@ Source: docs/index.md
 
 ---
 
+## Who This Documentation Is For
+
+- Operators running shared agent infrastructure.
+- Platform engineers integrating multi-agent workflows.
+- Internal developers extending core routing and governance.
+- Contributors improving reliability, docs, and tooling.
+
+## Start Here
+
+1. [Start Here](/start-here.md) for first-run onboarding.
+2. [Tutorials](/tutorials/) for step-by-step first outcomes.
+3. [How-to Guides](/how-to/) for task-oriented procedures.
+4. [Operations](/operations/) for runbooks and on-call workflows.
+5. [API](/api/) and [Reference](/reference/) for command and interface details.
+
+## Fast Verification Commands
+
+```
+# health
+curl -sS http://localhost:8317/health
+
+# model inventory
+curl -sS http://localhost:8317/v1/models -H "Authorization: Bearer YOUR_CLIENT_KEY" | jq '.data[:5]'
+
+# provider metrics
+curl -sS http://localhost:8317/v1/metrics/providers -H "Authorization: Bearer YOUR_CLIENT_KEY" | jq
+```
+
 ## See also
 
 - [WORK_STREAM.md](reference/WORK_STREAM.md) — canonical backlog

@@ -4,6 +4,7 @@ Source: docs/research/IDE_INTEGRATIONS_SUMMARY_2026-02-18.md
 
 ---
 
+<DONE>
 # IDE Integrations Summary
 
 **Date**: 2026-02-18

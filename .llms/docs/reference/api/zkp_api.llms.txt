@@ -24,7 +24,7 @@ Orchestrates Zero-Knowledge governance for sensitive context.
 #### ZKGovernor.__init__
 
 ```
-__init__(self: Any, agent_id: str)
+__init__(self: Any, agent_id: str, freshness_window_s: int)
 ```
 
 ---
@@ -36,6 +36,16 @@ generate_proof(self: Any, secret_context: str, challenge: str)
 ```
 
 Generate a ZK proof for a given secret context and challenge.
+
+---
+
+#### ZKGovernor.register_secret
+
+```
+register_secret(self: Any, secret_context: str)
+```
+
+Register secret context to enable deterministic verification.
 
 ---
 
@@ -66,6 +76,16 @@ generate_proof(self: Any, secret_context: str, challenge: str)
 ```
 
 Generate a ZK proof for a given secret context and challenge.
+
+---
+
+## register_secret
+
+```
+register_secret(self: Any, secret_context: str)
+```
+
+Register secret context to enable deterministic verification.
 
 ---
 

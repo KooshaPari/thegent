@@ -4,6 +4,7 @@ Source: docs/research/ENV_VAR_SANITIZATION_FIXES.md
 
 ---
 
+<DONE>
 # Environment Variable Sanitization Fixes
 
 > **Date**: 2026-02-18

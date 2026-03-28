@@ -6,143 +6,192 @@ Source: docs/reference/api/aggregator_api.md
 
 # aggregator API Reference
 
-> **Source**: `src/thegent/cost/aggregator.py`
+> **Source**: `src/thegent/orchestration/aggregator.py`
 
-Cost governance scaffolding (G-GP-06).
+WL-083: ResultAggregator — Aggregate inter-agent messages with cost tracking.
 
-CostEstimator and CostAggregator for per-run cost tracking.
-See docs/governance/COST_GOVERNANCE_DESIGN.md.
+Aggregates InterAgentMessage objects produced by agents and produces an
+AggregationResult summary with total count, type breakdown, success/failure
+tracking, token sum per wave, global budget overrun detection, and structured
+output dict keyed by node_id.
+
+# @trace WL-083
 
 ---
 
-## CostAggregator
+## AggregationResult
 
-Daily cost rollup by owner. G-GP-06 Phase 4.
+Structured result from aggregating inter-agent messages.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## GlobalBudgetExceededError
+
+Raised when total token usage exceeds the global budget.
+
+**Inherits from**: `RuntimeError`
 
 ### Methods
 
-#### CostAggregator.daily_total
+#### GlobalBudgetExceededError.__init__
 
 ```
-daily_total(self: Any, owner: str)
+__init__(self: Any)
 ```
-
-Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
-
----
-
-#### CostAggregator.get_all_categories_mtd
-
-```
-get_all_categories_mtd(self: Any)
-```
-
-Get MTD cost totals for all categories.
-
-**Returns**: Dictionary mapping category names to MTD costs
-
----
-
-#### CostAggregator.get_category_mtd_total
-
-```
-get_category_mtd_total(self: Any, category: str)
-```
-
-Sum cost_usd for a specific category this month.
-
-**Parameters**:
-
-- `category`: Task category (fast/normal/complex/high_complex)
-
-**Returns**: Total cost in USD for the category this month
-
----
-
-#### CostAggregator.get_mtd_total
-
-```
-get_mtd_total(self: Any)
-```
-
-Sum cost_usd for all runs this month. G-GP-06 Phase 4.
 
 ---
 
 ---
 
-## CostEstimator
+## ResultAggregator
 
-Estimate run cost from metadata. WP-5003: Cost-aware routing integration.
+Collect InterAgentMessage objects and produce aggregated results.
+
+Supports:
+- Token sum across waves
+- Partial failure tracking
+- Global budget overrun detection
+- Structured output dict keyed by node_id
+
+Usage::
+
+    agg = ResultAggregator(global_budget=100000)
+    for msg in messages:
+        agg.add(msg, wave_id="wave-1", node_id=msg.sender_id)
+    result = agg.aggregate()
+
+# @trace WL-083
 
 ### Methods
 
-#### CostEstimator.estimate
+#### ResultAggregator.__init__
 
 ```
-estimate(self: Any, model: Any, tokens_total: int, prompt_length: int)
+__init__(self: Any, global_budget: Any, tokens_per_message: int)
 ```
 
-Estimate cost in USD. Uses pricing table or heuristic fallback.
-
----
-
----
-
-## daily_total
-
-```
-daily_total(self: Any, owner: str)
-```
-
-Sum cost_usd for owner's runs today. Returns 0.0 if no cost tracking.
-
----
-
-## estimate
-
-```
-estimate(self: Any, model: Any, tokens_total: int, prompt_length: int)
-```
-
-Estimate cost in USD. Uses pricing table or heuristic fallback.
-
----
-
-## get_all_categories_mtd
-
-```
-get_all_categories_mtd(self: Any)
-```
-
-Get MTD cost totals for all categories.
-
-**Returns**: Dictionary mapping category names to MTD costs
-
----
-
-## get_category_mtd_total
-
-```
-get_category_mtd_total(self: Any, category: str)
-```
-
-Sum cost_usd for a specific category this month.
+Initialize the ResultAggregator.
 
 **Parameters**:
 
-- `category`: Task category (fast/normal/complex/high_complex)
-
-**Returns**: Total cost in USD for the category this month
+- `global_budget`: Optional global token budget. If provided and total
+tokens exceed this, GlobalBudgetExceededError is raised on aggregate().
+- `tokens_per_message`: Default tokens to count per message for budget tracking.
 
 ---
 
-## get_mtd_total
+#### ResultAggregator.add
 
 ```
-get_mtd_total(self: Any)
+add(self: Any, message: Any, wave_id: Any, node_id: Any, tokens: Any)
 ```
 
-Sum cost_usd for all runs this month. G-GP-06 Phase 4.
+Append an InterAgentMessage for later aggregation.
+
+**Parameters**:
+
+- `message`: An InterAgentMessage instance.
+- `wave_id`: Optional wave identifier for token tracking.
+- `node_id`: Optional node identifier for by-node aggregation.
+- `tokens`: Optional token count for this message. Defaults to tokens_per_message.
+
+---
+
+#### ResultAggregator.aggregate
+
+```
+aggregate(self: Any)
+```
+
+Produce an AggregationResult from all stored messages.
+
+**Returns**: Dictionary with total, by_type, results, errors, passed, by_node,
+tokens_by_wave, budget_overrun, and total_tokens.
+
+---
+
+#### ResultAggregator.clear
+
+```
+clear(self: Any)
+```
+
+Reset all internal state.
+
+# @trace WL-083
+
+---
+
+#### ResultAggregator.summary
+
+```
+summary(self: Any)
+```
+
+Return a human-readable summary string.
+
+# @trace WL-083
+
+---
+
+---
+
+## add
+
+```
+add(self: Any, message: Any, wave_id: Any, node_id: Any, tokens: Any)
+```
+
+Append an InterAgentMessage for later aggregation.
+
+**Parameters**:
+
+- `message`: An InterAgentMessage instance.
+- `wave_id`: Optional wave identifier for token tracking.
+- `node_id`: Optional node identifier for by-node aggregation.
+- `tokens`: Optional token count for this message. Defaults to tokens_per_message.
+
+---
+
+## aggregate
+
+```
+aggregate(self: Any)
+```
+
+Produce an AggregationResult from all stored messages.
+
+**Returns**: Dictionary with total, by_type, results, errors, passed, by_node,
+tokens_by_wave, budget_overrun, and total_tokens.
+
+**Raises**:
+
+- `GlobalBudgetExceededError`: If global_budget was set and total tokens exceed it.
+
+---
+
+## clear
+
+```
+clear(self: Any)
+```
+
+Reset all internal state.
+
+# @trace WL-083
+
+---
+
+## summary
+
+```
+summary(self: Any)
+```
+
+Return a human-readable summary string.
+
+# @trace WL-083
 
 ---

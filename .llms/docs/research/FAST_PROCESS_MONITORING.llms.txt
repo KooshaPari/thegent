@@ -4,6 +4,7 @@ Source: docs/research/FAST_PROCESS_MONITORING.md
 
 ---
 
+<DONE>
 # Fast Process Monitoring - Research & Implementation
 
 ## Overview

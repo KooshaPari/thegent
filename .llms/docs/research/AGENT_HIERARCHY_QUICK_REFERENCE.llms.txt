@@ -4,6 +4,7 @@ Source: docs/research/AGENT_HIERARCHY_QUICK_REFERENCE.md
 
 ---
 
+<DONE>
 # Agent Hierarchy Quick Reference
 
 > **Quick reference guide for agent hierarchy, roles, and team structure**

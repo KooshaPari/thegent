@@ -40,14 +40,19 @@ Execute the fix action. Returns a description string on success, None if not fix
 Runs environment checks and applies automatic fixes.
 
 Checks performed:
-  1. Python version &gt;= 3.11
-  2. ANTHROPIC_API_KEY env var set
-  3. ~/.thegent/ directory exists
-  4. ~/.thegent/sessions/ directory exists
-  5. pyproject.toml present in cwd
-  6. ruff available on PATH
-  7. cargo available on PATH
-  8. ~/.config/thegent/ MCP config dir exists
+  1.  Python version >= 3.11
+  2.  ANTHROPIC_API_KEY env var set
+  3.  ~/.thegent/ directory exists
+  4.  ~/.thegent/ directory is writable (fix: chmod 700)
+  5.  ~/.thegent/sessions/ directory exists
+  6.  pyproject.toml present in cwd
+  7.  .thegent/config.yaml is valid YAML (fix: thegent config wizard)
+  8.  ruff available on PATH
+  9.  cargo available on PATH
+  10. ~/.config/thegent/ MCP config dir exists
+  11. .shadow-* stale directory cleanup
+  12. .shadow-* directory count > 50 warning
+  13. autosync GA readiness baseline checks
 
 ### Methods
 
@@ -74,6 +79,8 @@ run_checks(self: Any)
 ```
 
 Run all environment checks and return results.
+
+# @trace WL-040 WP-4006
 
 ---
 
@@ -112,5 +119,7 @@ run_checks(self: Any)
 ```
 
 Run all environment checks and return results.
+
+# @trace WL-040 WP-4006
 
 ---

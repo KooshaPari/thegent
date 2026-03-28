@@ -1,0 +1,143 @@
+# tools_provider_models_api
+
+Source: docs/reference/api/tools_provider_models_api.md
+
+---
+
+# tools_provider_models API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_provider_models.py`
+
+Provider/model management tool registrations for MCP server.
+
+---
+
+## add_api_key
+
+```
+add_api_key(provider: str, api_key: str)
+```
+
+Add or update API key for a provider.
+
+---
+
+## add_model_alias
+
+```
+add_model_alias(provider: str, model: str, alias: str)
+```
+
+Add a model alias for a provider.
+
+---
+
+## add_provider
+
+```
+add_provider(name: str, base_url: str, model: str, api_key: Any, extra_aliases: Any, login_url: Any)
+```
+
+Add a new provider configuration.
+
+---
+
+## delete_provider
+
+```
+delete_provider(name: str, remove_credentials: bool)
+```
+
+Delete a provider configuration.
+
+---
+
+## discover_models
+
+```
+discover_models(provider: Any)
+```
+
+Discover available models from provider APIs.
+
+---
+
+## get_provider
+
+```
+get_provider(name: str)
+```
+
+Get a specific provider configuration.
+
+---
+
+## list_credentials
+
+List all configured credentials (API keys and OAuth).
+
+---
+
+## list_models
+
+```
+list_models(provider: Any)
+```
+
+List all models, optionally filtered by provider.
+
+---
+
+## list_providers
+
+```
+list_providers(include_credentials: bool)
+```
+
+List all configured providers with their settings.
+
+---
+
+## register_provider_model_tools
+
+---
+
+## remove_api_key
+
+```
+remove_api_key(provider: str)
+```
+
+Remove API key for a provider.
+
+---
+
+## remove_model_alias
+
+```
+remove_model_alias(provider: str, alias: str)
+```
+
+Remove a model alias from a provider.
+
+---
+
+## update_provider
+
+```
+update_provider(name: str, base_url: Any, model: Any, api_key: Any, extra_aliases: Any)
+```
+
+Update an existing provider configuration.
+
+---
+
+## validate_provider
+
+```
+validate_provider(name: str)
+```
+
+Validate a provider by testing connectivity and credentials.
+
+---

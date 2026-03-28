@@ -1,0 +1,70 @@
+# WL-106-SESSION-FORK-ROLLBACK-IMPLEMENTATION-PLAN
+
+Source: docs/plans/WL-106-SESSION-FORK-ROLLBACK-IMPLEMENTATION-PLAN.md
+
+---
+
+# WL-106 Implementation Plan: Session Fork + Turn Rollback
+
+## Status
+- `blocked` (depends on `WL-110`)
+
+## Unblock Condition
+- `WL-110` provides stable resume/session persistence contract.
+
+## Goal
+- Add session history fork and rollback semantics without touching filesystem state.
+
+## Scope
+- `fork_session(session_id, from_turn) -> new_session_id`
+- `rollback_session(session_id, n_turns)`
+- CLI:
+  - `thegent session fork <id> [--at-turn N]`
+  - `thegent session rollback <id> --turns N`
+
+## Planned File Touches
+- `src/thegent/session/manager.py`
+- `src/thegent/cli/commands/cli.py`
+- `src/thegent/cli/apps/` (session command wiring)
+- `tests/session/`
+- `tests/commands/`
+
+## Execution Steps
+1. Define immutable session turn record boundaries and turn-index validation rules.
+2. Implement fork by cloning metadata + truncating history to `from_turn`.
+3. Implement rollback by truncating last `n_turns` only (no file revert behavior).
+4. Add CLI command plumbing and clear user-facing confirmations.
+5. Add strict errors for invalid turn indices and over-rollback requests.
+
+## Validation Commands
+- `uv run pytest -q tests/session`
+- `uv run pytest -q tests/commands/test_hierarchy.py`
+- `uv run pytest -q tests/test_work_stream_manager.py`
+- `python -m py_compile src/thegent/session/manager.py`
+
+## Acceptance Criteria
+- Forked session diverges from original after new turns.
+- Rollback removes turn history only; workspace files remain unchanged.
+- CLI outputs new session ID for fork and resulting turn count for rollback.
+
+## Wave-2 Do-Next Slice (Implementation-Ready)
+
+### Deliverable
+- Land pure history-manipulation helpers and tests independent of persistence backend wiring.
+
+### Files for First Slice
+- `src/thegent/session/history_ops.py` (new)
+- `tests/session/test_history_ops.py` (new)
+
+### Concrete Tasks
+1. Implement `fork_turn_history(turns, from_turn)` with strict bounds validation.
+2. Implement `rollback_turn_history(turns, n_turns)` with fail-loud over-rollback checks.
+3. Keep operations pure/immutable so they can be reused by any session backend.
+4. Include explicit error types/messages for CLI layer passthrough.
+
+### Focused Validation
+- `uv run pytest -q tests/session/test_history_ops.py`
+- `python -m py_compile src/thegent/session/history_ops.py`
+
+### Unblock Handoff
+- Once `WL-110` persistence contract is stable, wire these helpers into `SessionManager` and CLI commands without changing helper semantics.

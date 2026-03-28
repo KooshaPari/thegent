@@ -1,0 +1,31 @@
+# stale_item_detector_api
+
+Source: docs/reference/api/stale_item_detector_api.md
+
+---
+
+# stale_item_detector API Reference
+
+> **Source**: `src/thegent/integrations/stale_item_detector.py`
+
+Stub module for thegent.integrations.stale_item_detector.
+
+---
+
+## ItemActivity
+
+Stub class.
+
+---
+
+## StaleDetectorConfig
+
+Stub class.
+
+---
+
+## StaleItemDetector
+
+Stub class.
+
+---

@@ -1,0 +1,13 @@
+# index
+
+Source: docs/concepts/fragemented/index.md
+
+---
+
+# Fragmented Index
+
+## Source Files (2026)
+
+- coordination.md
+- security-model.md
+- swarm-architecture.md

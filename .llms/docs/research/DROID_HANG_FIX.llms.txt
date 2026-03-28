@@ -4,6 +4,7 @@ Source: docs/research/DROID_HANG_FIX.md
 
 ---
 
+<DONE>
 # Droid Cmd Hang Fix
 
 **Date**: 2026-02-19

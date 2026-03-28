@@ -6,7 +6,7 @@ Source: docs/reference/api/tool_router_api.md
 
 # tool_router API Reference
 
-> **Source**: `src/thegent/routing/tool_router.py`
+> **Source**: `src/thegent/utils/routing_impl/tool_router.py`
 
 Central Tool Router for thegent.
 

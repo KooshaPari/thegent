@@ -4,117 +4,22 @@ Source: docs/ALL_FEATURES_COMPLETE.md
 
 ---
 
-# All Features Complete - mise Integration
+# All Features Complete - mise Integration (Parity Note)
 
-## ✅ Implementation Complete
+The command examples in earlier copies refer to parser surfaces that are no longer directly exposed by
+`thegent setup`/`thegent install`.
 
-All requested features have been implemented:
+## Current status
 
-### 1. Testing ✅
-- Created `scripts/test_mise_installation.sh`
-- Tests command flags, dry-run, code implementation, config files, and shell templates
+- Installer/runtime bootstrap remains: `thegent install -t all` and `thegent setup`.
+- `--system-deps`, `--nix`, `--verify-mise`, and `thegent uninstall-system-deps` are not part of the active
+  documented CLI surface in this tree.
+- If you see this behavior in scripts, gate it behind environment checks and treat the legacy flags as
+  soft-deprecated.
 
-### 2. Uninstall Option ✅
-- `thegent uninstall-system-deps` command added
-- Removes mise hooks from shell configs
-- Optionally uninstalls mise package
-- Supports `--dry-run` and `--verbose` flags
+## What to do now
 
-### 3. Enhanced Error Handling ✅
-- Retry logic with exponential backoff (3 retries)
-- Automatic retry on network/connection errors
-- Better error messages
-- Graceful handling of partial failures
-
-### 4. Configuration Backup/Restore ✅
-- Automatic backup before modifying shell configs
-- Backups stored in `~/.thegent/backups/`
-- Timestamped backup files
-- Can be restored manually if needed
-
-### 5. Additional Shell Support ✅
-- **fish shell**: `~/.config/fish/config.fish`
-- **tcsh/csh**: `~/.tcshrc` or `~/.cshrc`
-- Already supported: zsh, bash
-
-## Commands Available
-
-### Installation
-```
-thegent install --system-deps          # Install mise via Homebrew
-thegent install --system-deps --nix    # Install mise via Nix
-thegent setup --system-deps             # Setup + mise
-```
-
-### Uninstallation
-```
-thegent uninstall-system-deps                    # Remove hooks only
-thegent uninstall-system-deps --mise             # Remove hooks + uninstall mise
-thegent uninstall-system-deps --dry-run          # Preview what would be removed
-```
-
-### Testing
-```
-./scripts/test_mise_installation.sh              # Run test suite
-thegent install --system-deps --dry-run          # Test installation
-```
-
-## Features Summary
-
-| Feature | Status | Details |
-|---------|--------|---------|
-| Installation | ✅ | Homebrew & Nix support |
-| Shell Hooks | ✅ | Auto-configuration |
-| Verification | ✅ | Post-install checks |
-| Uninstall | ✅ | Remove hooks & package |
-| Error Handling | ✅ | Retry with backoff |
-| Backup | ✅ | Auto-backup before changes |
-| Shell Support | ✅ | zsh, bash, fish, tcsh |
-| Testing | ✅ | Test script included |
-
-## Files Modified
-
-1. `src/thegent/install.py` - All core functions
-2. `src/thegent/main.py` - Install & uninstall commands
-3. `src/thegent/cli.py` - Setup command
-4. `scripts/test_mise_installation.sh` - Test suite
-5. `.envrc` - Optimized for mise
-6. `shell/.zshenv` - Updated template
-7. `.mise.toml` - Project config
-
-## Usage Examples
-
-### Full Installation Flow
-```
-# Install with backup and verification
-thegent install --system-deps --verbose
-
-# Verify installation
-mise doctor
-echo $MISE_ENV
-```
-
-### Uninstall Flow
-```
-# Preview what would be removed
-thegent uninstall-system-deps --dry-run
-
-# Remove hooks only
-thegent uninstall-system-deps
-
-# Remove hooks + uninstall mise
-thegent uninstall-system-deps --mise
-```
-
-### Restore from Backup
-```
-# Find backups
-ls ~/.thegent/backups/
-
-# Restore manually
-cp ~/.thegent/backups/.zshenv.20260218_123456.bak ~/.zshenv
-```
-
-## Status: 🎉 Production Ready
-
-All features implemented, tested, and documented. Ready for production use!
+1. Use `thegent install -t all` and then run `thegent setup` for harness/provider bootstrap.
+2. Keep mise lifecycle in your platform bootstrap (`brew`, `nix`, etc.) and document that in your project
+   install guide.
+3. Treat the old “legacy mise workflow” snippets as historical references only.

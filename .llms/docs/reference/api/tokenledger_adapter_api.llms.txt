@@ -1,0 +1,288 @@
+# tokenledger_adapter_api
+
+Source: docs/reference/api/tokenledger_adapter_api.md
+
+---
+
+# tokenledger_adapter API Reference
+
+> **Source**: `src/thegent/utils/tokenledger_adapter.py`
+
+Tokenledger adapter for thegent.
+
+Fetches benchmark data from tokenledger CLI/HTTP service and provides
+a unified interface for routing decisions.
+
+Usage:
+    from thegent.utils.tokenledger_adapter import TokenledgerAdapter
+
+    adapter = TokenledgerAdapter()
+    benchmark = adapter.get_benchmark("gpt-4o")
+    quality = benchmark.intelligence_index / 100.0 if benchmark else fallback
+
+---
+
+## BenchmarkData
+
+Benchmark data for a model from tokenledger.
+
+### Methods
+
+#### BenchmarkData.get_cost_per_1k
+
+```
+get_cost_per_1k(self: Any)
+```
+
+Get cost per 1K tokens.
+
+---
+
+#### BenchmarkData.get_latency_ms
+
+```
+get_latency_ms(self: Any)
+```
+
+Get latency in milliseconds.
+
+---
+
+#### BenchmarkData.get_quality_score
+
+```
+get_quality_score(self: Any)
+```
+
+Get normalized quality score (0-1).
+
+---
+
+---
+
+## TokenledgerAdapter
+
+Adapter for fetching benchmark data from tokenledger.
+
+This adapter:
+1. Calls tokenledger CLI to get benchmark data
+2. Caches results for performance
+3. Falls back to hardcoded values on error
+
+### Methods
+
+#### TokenledgerAdapter.__init__
+
+```
+__init__(self: Any, config: Optional[TokenledgerConfig])
+```
+
+---
+
+#### TokenledgerAdapter.get_all_benchmarks
+
+```
+get_all_benchmarks(self: Any)
+```
+
+Get all available benchmarks.
+
+---
+
+#### TokenledgerAdapter.get_benchmark
+
+```
+get_benchmark(self: Any, model_id: str)
+```
+
+Get benchmark data for a model.
+
+**Parameters**:
+
+- `model_id`: Model identifier (e.g., "gpt-4o", "claude-3-5-sonnet")
+
+**Returns**: BenchmarkData if available, None otherwise
+
+---
+
+#### TokenledgerAdapter.get_cost_per_1k
+
+```
+get_cost_per_1k(self: Any, model_id: str, fallback: float)
+```
+
+Get cost per 1K tokens for a model with fallback.
+
+**Parameters**:
+
+- `model_id`: Model identifier
+- `fallback`: Fallback value if not found
+
+**Returns**: Cost per 1K tokens in USD
+
+---
+
+#### TokenledgerAdapter.get_latency_ms
+
+```
+get_latency_ms(self: Any, model_id: str, fallback: int)
+```
+
+Get latency in ms for a model with fallback.
+
+**Parameters**:
+
+- `model_id`: Model identifier
+- `fallback`: Fallback value if not found
+
+**Returns**: Latency in milliseconds
+
+---
+
+#### TokenledgerAdapter.get_quality_score
+
+```
+get_quality_score(self: Any, model_id: str, fallback: float)
+```
+
+Get quality score for a model with fallback.
+
+**Parameters**:
+
+- `model_id`: Model identifier
+- `fallback`: Fallback value if not found
+
+**Returns**: Quality score (0-1)
+
+---
+
+#### TokenledgerAdapter.is_available
+
+```
+is_available(self: Any)
+```
+
+Check if tokenledger CLI is available.
+
+---
+
+#### TokenledgerAdapter.refresh
+
+```
+refresh(self: Any)
+```
+
+Refresh benchmark data cache.
+
+---
+
+---
+
+## TokenledgerConfig
+
+Configuration for tokenledger adapter.
+
+---
+
+## get_adapter
+
+Get the global tokenledger adapter instance.
+
+---
+
+## get_all_benchmarks
+
+```
+get_all_benchmarks(self: Any)
+```
+
+Get all available benchmarks.
+
+---
+
+## get_benchmark
+
+```
+get_benchmark(self: Any, model_id: str)
+```
+
+Get benchmark data for a model.
+
+**Parameters**:
+
+- `model_id`: Model identifier (e.g., "gpt-4o", "claude-3-5-sonnet")
+
+**Returns**: BenchmarkData if available, None otherwise
+
+---
+
+## get_cost_per_1k
+
+```
+get_cost_per_1k(self: Any, model_id: str, fallback: float)
+```
+
+Get cost per 1K tokens for a model with fallback.
+
+**Parameters**:
+
+- `model_id`: Model identifier
+- `fallback`: Fallback value if not found
+
+**Returns**: Cost per 1K tokens in USD
+
+---
+
+## get_latency_ms
+
+```
+get_latency_ms(self: Any, model_id: str, fallback: int)
+```
+
+Get latency in ms for a model with fallback.
+
+**Parameters**:
+
+- `model_id`: Model identifier
+- `fallback`: Fallback value if not found
+
+**Returns**: Latency in milliseconds
+
+---
+
+## get_quality_score
+
+```
+get_quality_score(self: Any, model_id: str, fallback: float)
+```
+
+Get quality score for a model with fallback.
+
+**Parameters**:
+
+- `model_id`: Model identifier
+- `fallback`: Fallback value if not found
+
+**Returns**: Quality score (0-1)
+
+---
+
+## is_available
+
+```
+is_available(self: Any)
+```
+
+Check if tokenledger CLI is available.
+
+---
+
+## refresh
+
+```
+refresh(self: Any)
+```
+
+Refresh benchmark data cache.
+
+---

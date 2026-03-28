@@ -1,0 +1,72 @@
+# 01-rust-cli-reference-100
+
+Source: docs/research/cli-ecosystem-index/01-rust-cli-reference-100.md
+
+---
+
+# Rust CLI Reference Set (100 Packages): Evidence-Backed Rationale and Evaluation Framework
+
+**Date:** 2026-02-26
+
+## Why this report exists
+The Rust CLI seed source (`https://libs.tech/rust/cli-libraries`) is a useful starting signal but currently shows only a **35-item curated view** and renders a subset of entries with a "Show more" continuation. It is therefore a good seed, not a complete production baseline.
+
+## Seed evidence used
+- `docs/reports/cli-libraries-2026/01_rust-cli-snapshot.md` confirms the page is a partial Rust CLI feed and records 15 visible repos with explicit activity context (stars, commit deltas, last commit, and intent).
+- `docs/reports/cli-libraries-2026/02_rust-value-by-domain.md` applies structured value/risk/fit scoring to the same visible seed entries.
+- `docs/reports/cli-libraries-2026/06_rolling-recommendations.md` adds weighted scoring language and shortlist behavior for adoption decisions.
+- `docs/research/cli-ecosystem-index/06-research-base-index.md` sets the cross-language target of **Rust=100** in a deterministic index plan.
+
+## Why a 100-package Rust set is valuable
+A 100-package target is valuable because it converts a narrow trend list into an operationally resilient dependency standard:
+
+- **Coverage breadth:** The 35-item seed is useful for discovery, but enterprise CLI programs need parser, TUI, networking, process, testing, and ops-adjacent choices. 100 packages gives enough room for core plus alternatives in each function family.
+- **Concentration risk control:** The seed confirms strong maturity around a few crates (for example `clap`, `ratatui`, `atuin`) while still implying long tail candidates. A 100-item catalog supports primary + fallback replacements and explicit deprecation paths.
+- **Maintainability signal:** The existing scoring in `02_rust-value-by-domain` ties value to maintenance and risk, which only becomes statistically useful at higher sample size. A 100-size set reduces overfitting to one-off trends or recent viral projects.
+- **Decision quality over time:** Quality gates (release cadence, docs clarity, compliance posture) become reusable when applied across a fixed portfolio rather than ad hoc picks.
+- **Onboarding and reuse:** A single canonical set standardizes package selection, lowers lookup cost for teams, and shortens evaluation time for new CLI initiatives.
+
+## How to evaluate package quality
+Use a 100-point scoring rubric with explicit gates.
+
+1. **Adoption and fit (30 pts)**
+   - CLI relevance (binary surface, command patterns, installability)
+   - Ecosystem use signals (dependent crates/repos, adoption proxies)
+   - Direct fit to at least one internal CLI domain
+
+2. **Maintenance health (25 pts)**
+   - Commit/release recency and cadence
+   - Tag/release density and maintainer activity
+   - Evidence of issue/PR turnover over time
+
+3. **Documentation quality (20 pts)**
+   - API docs quality and examples (docs.rs availability)
+   - Changelog/readme clarity and upgrade guidance
+   - Discoverability of common usage patterns
+
+4. **Operational/security risk (15 pts)**
+   - Permission model and privilege assumptions
+   - Input/output trust boundaries and unsafe operations
+   - License and third-party dependency hygiene
+
+5. **Stability and integration cost (10 pts)**
+   - API break frequency, migration burden, and testability
+   - Availability of integration examples and compatibility history
+
+## Suggested selection workflow
+1. Start from the Rust CLI seed and expand with adjacent categories needed for internal workflows.
+2. Normalize each candidate into a schema: `name, maintainer signals, repo activity, latest release, docs status, license, risk notes`.
+3. Score all candidates against the rubric above.
+4. Keep only entries meeting mandatory gates:
+   - Active repo or stable maintenance evidence
+   - Adequate docs (examples or clear API usage path)
+   - Acceptable security/compliance posture
+5. Build a manifest: `core 35 + 65 expansion`, where expansion is distributed across parser/TUI/IO/process/networking/testing domains.
+
+## Recommended quality bar
+- **Tier A (90+):** include as first-class dependencies.
+- **Tier B (75–89):** include with notes and migration alternatives.
+- **Tier C (<75):** exclude from default catalog, retain only for pilot use with explicit controls.
+
+## Outcome expectation
+A 100-package curated Rust CLI set is not larger for size’s sake. It is the minimum fixed-size portfolio that supports production velocity, redundancy, and defensible decision-making while still being measurable with clear quality criteria.

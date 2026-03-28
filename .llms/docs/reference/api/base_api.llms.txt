@@ -6,401 +6,334 @@ Source: docs/reference/api/base_api.md
 
 # base API Reference
 
-> **Source**: `src/thegent/agents/smolgents/base.py`
+> **Source**: `src/thegent/tui/layouts/base.py`
 
-SmolAgent — base class for the SmolGents lightweight agent hierarchy.
-
-Design principles
------------------
-* **Smol by design**: no network calls, no LLM API keys, no heavy deps.
-  The agent executes tasks by selecting and calling :class:`~thegent.agents.smolgents.tools.Tool`
-  objects registered at construction time.
-* **Composable**: a ``SmolAgent`` can delegate subtasks to child agents
-  via :py:meth:`delegate`.  Children are standalone ``SmolAgent`` instances
-  created on demand (or supplied explicitly).
-* **Stateful memory**: per-instance dict-based memory accessible via
-  :py:meth:`remember` / :py:meth:`recall`.
-* **AgentRunner compatible**: the ``run(task)`` signature is intentionally
-  kept compatible with the broader thegent ``AgentRunner`` pattern (same
-  return type ``str``), enabling a ``SmolAgent`` to be plugged into an
-  :class:`~thegent.agents.hierarchy.AgentNode` as its ``smolagent`` field.
+Base layout classes for TUI compositor.
 
 ---
 
-## SmolAgent
+## BaseLayout
 
-Minimalist agent that executes tasks via registered tools.
+Base class for layout managers.
 
 ### Methods
 
-#### SmolAgent.__init__
+#### BaseLayout.__init__
 
 ```
-__init__(self: Any, name: str, tools: list[Tool])
+__init__(self: Any, config: Any)
 ```
 
 ---
 
-#### SmolAgent.add_tool
+#### BaseLayout.apply_config
 
 ```
-add_tool(self: Any, tool: Tool)
+apply_config(self: Any, config: LayoutConfig)
 ```
 
-Register an additional tool at runtime.
-
-**Parameters**:
-
-- `tool`: The :class:`~thegent.agents.smolgents.tools.Tool` to add.
+Apply a layout configuration.
 
 ---
 
-#### SmolAgent.children
+#### BaseLayout.get_config
 
 ```
-children(self: Any)
+get_config(self: Any)
 ```
 
-Children spawned via :py:meth:`delegate` (shallow copy).
+Get current layout configuration.
 
 ---
 
-#### SmolAgent.delegate
+#### BaseLayout.get_styles
 
 ```
-delegate(self: Any, sub_task: Any)
+get_styles(self: Any)
 ```
 
-Spawn a child SmolAgent to handle *sub_task*.
-
-A new ``SmolAgent`` is created with the same tool set as this
-agent and with *self* as its parent.  The child is appended to
-``self._children`` for later inspection (e.g. by
-:class:`~thegent.agents.smolgents.hierarchy.AgentTree`).
-
-**Parameters**:
-
-- `sub_task`: The subtask to hand off to the child agent.
-
-**Returns**: The string result or :class:`SmolGentResult` produced by the child.
+Get CSS styles for the current layout as selector->property mapping.
 
 ---
 
-#### SmolAgent.execute_job
+#### BaseLayout.reset
 
 ```
-execute_job(self: Any, job: SmolGentJob)
+reset(self: Any)
 ```
 
-Execute a structured :class:`SmolGentJob`.
-
-This method is the structured alternative to :py:meth:`run`.
-
-**Parameters**:
-
-- `job`: The :class:`SmolGentJob` to execute.
-
-**Returns**: A :class:`SmolGentResult` wrapping the agent's output.
+Reset to default layout.
 
 ---
 
-#### SmolAgent.get_tool
+#### BaseLayout.restore_state
 
 ```
-get_tool(self: Any, name: str)
+restore_state(self: Any, name: str)
 ```
 
-Return the tool with the given *name*, or *None*.
+Restore a saved layout state.
 
 ---
 
-#### SmolAgent.memory
+#### BaseLayout.save_state
 
 ```
-memory(self: Any)
+save_state(self: Any, name: str)
 ```
 
-Shallow copy of the agent's current memory dict.
+Save current layout state.
 
 ---
 
-#### SmolAgent.parent
+#### BaseLayout.toggle_maximize
 
 ```
-parent(self: Any)
+toggle_maximize(self: Any)
 ```
 
-The parent agent in the hierarchy, or *None* if this is a root.
+Toggle output maximization.
 
 ---
 
-#### SmolAgent.recall
+#### BaseLayout.toggle_sidebar
 
 ```
-recall(self: Any, key: str)
+toggle_sidebar(self: Any)
 ```
 
-Retrieve the value stored under *key*, or *None* if absent.
-
-**Parameters**:
-
-- `key`: Memory key to look up.
-
-**Returns**: The stored value, or *None* if the key is not in memory.
-
----
-
-#### SmolAgent.remember
-
-```
-remember(self: Any, key: str, value: Any)
-```
-
-Store *value* under *key* in this agent's memory.
-
-**Parameters**:
-
-- `key`: Memory key (string).
-- `value`: Arbitrary value to store.
-
----
-
-#### SmolAgent.run
-
-```
-run(self: Any, task: Any)
-```
-
-Execute *task* by selecting an appropriate tool.
-
-The selection algorithm is intentionally simple: the first tool
-whose *name* appears as a token in the task string is chosen.  If
-no match is found, the task string itself is returned unchanged
-(pass-through behaviour).
-
-If a :class:`SmolGentJob` is provided, the agent will execute it
-and return a :class:`SmolGentResult` instead of a string.
-
-**Parameters**:
-
-- `task`: Natural-language task description or structured job.
-
-**Returns**: String output from the matched tool (if task is a string),
-or :class:`SmolGentResult` (if task is a :class:`SmolGentJob`).
-
----
-
-#### SmolAgent.set_parent
-
-```
-set_parent(self: Any, parent: SmolAgent)
-```
-
-Set the parent reference.  Called by :class:`AgentTree` during registration.
-
-**Parameters**:
-
-- `parent`: The parent ``SmolAgent`` to link to this agent.
-
----
-
-#### SmolAgent.tools
-
-```
-tools(self: Any)
-```
-
-All tools available to this agent.
+Toggle sidebar visibility.
 
 ---
 
 ---
 
-## SmolGentJob
+## FullOutputLayout
 
-A structured task/job for a SmolAgent to execute.
+**Inherits from**: `BaseLayout`
+
+**Method Resolution Order**: `FullOutputLayout -> BaseLayout`
+
+### Methods
+
+#### FullOutputLayout.apply_config
+
+```
+apply_config(self: Any, config: LayoutConfig)
+```
 
 ---
 
-## SmolGentResult
+#### FullOutputLayout.get_config
 
-The result of a SmolGentJob execution.
+```
+get_config(self: Any)
+```
 
 ---
 
-## add_tool
+---
 
-```
-add_tool(self: Any, tool: Tool)
-```
+## LayoutConfig
 
-Register an additional tool at runtime.
-
-**Parameters**:
-
-- `tool`: The :class:`~thegent.agents.smolgents.tools.Tool` to add.
-
-**Raises**:
-
-- `ValueError`: If a tool with the same name already exists.
+Configuration for a layout.
 
 ---
 
-## children
+## LayoutManager
+
+Manages multiple layouts and transitions.
+
+### Methods
+
+#### LayoutManager.__init__
 
 ```
-children(self: Any)
+__init__(self: Any)
 ```
-
-Children spawned via :py:meth:`delegate` (shallow copy).
 
 ---
 
-## delegate
+#### LayoutManager.add_layout
 
 ```
-delegate(self: Any, sub_task: Any)
+add_layout(self: Any, name: str, layout: BaseLayout)
 ```
 
-Spawn a child SmolAgent to handle *sub_task*.
-
-A new ``SmolAgent`` is created with the same tool set as this
-agent and with *self* as its parent.  The child is appended to
-``self._children`` for later inspection (e.g. by
-:class:`~thegent.agents.smolgents.hierarchy.AgentTree`).
-
-**Parameters**:
-
-- `sub_task`: The subtask to hand off to the child agent.
-
-**Returns**: The string result or :class:`SmolGentResult` produced by the child.
+Add a named layout.
 
 ---
 
-## execute_job
+#### LayoutManager.get_current_layout
 
 ```
-execute_job(self: Any, job: SmolGentJob)
+get_current_layout(self: Any)
 ```
 
-Execute a structured :class:`SmolGentJob`.
-
-This method is the structured alternative to :py:meth:`run`.
-
-**Parameters**:
-
-- `job`: The :class:`SmolGentJob` to execute.
-
-**Returns**: A :class:`SmolGentResult` wrapping the agent's output.
+Get the current layout.
 
 ---
 
-## get_tool
+#### LayoutManager.list_layouts
 
 ```
-get_tool(self: Any, name: str)
+list_layouts(self: Any)
 ```
 
-Return the tool with the given *name*, or *None*.
+List available layout names.
 
 ---
 
-## memory
+#### LayoutManager.switch_layout
 
 ```
-memory(self: Any)
+switch_layout(self: Any, name: str)
 ```
 
-Shallow copy of the agent's current memory dict.
+Switch to a named layout.
 
 ---
 
-## parent
+---
+
+## SidebarLeftLayout
+
+**Inherits from**: `BaseLayout`
+
+**Method Resolution Order**: `SidebarLeftLayout -> BaseLayout`
+
+### Methods
+
+#### SidebarLeftLayout.apply_config
 
 ```
-parent(self: Any)
+apply_config(self: Any, config: LayoutConfig)
 ```
-
-The parent agent in the hierarchy, or *None* if this is a root.
 
 ---
 
-## recall
+#### SidebarLeftLayout.get_config
 
 ```
-recall(self: Any, key: str)
+get_config(self: Any)
 ```
-
-Retrieve the value stored under *key*, or *None* if absent.
-
-**Parameters**:
-
-- `key`: Memory key to look up.
-
-**Returns**: The stored value, or *None* if the key is not in memory.
 
 ---
 
-## remember
+---
+
+## add_layout
 
 ```
-remember(self: Any, key: str, value: Any)
+add_layout(self: Any, name: str, layout: BaseLayout)
 ```
 
-Store *value* under *key* in this agent's memory.
-
-**Parameters**:
-
-- `key`: Memory key (string).
-- `value`: Arbitrary value to store.
+Add a named layout.
 
 ---
 
-## run
+## apply_config
 
 ```
-run(self: Any, task: Any)
+apply_config(self: Any, config: LayoutConfig) -> None
 ```
-
-Execute *task* by selecting an appropriate tool.
-
-The selection algorithm is intentionally simple: the first tool
-whose *name* appears as a token in the task string is chosen.  If
-no match is found, the task string itself is returned unchanged
-(pass-through behaviour).
-
-If a :class:`SmolGentJob` is provided, the agent will execute it
-and return a :class:`SmolGentResult` instead of a string.
-
-**Parameters**:
-
-- `task`: Natural-language task description or structured job.
-
-**Returns**: String output from the matched tool (if task is a string),
-or :class:`SmolGentResult` (if task is a :class:`SmolGentJob`).
 
 ---
 
-## set_parent
+## get_config
 
 ```
-set_parent(self: Any, parent: SmolAgent)
+get_config(self: Any) -> LayoutConfig
 ```
-
-Set the parent reference.  Called by :class:`AgentTree` during registration.
-
-**Parameters**:
-
-- `parent`: The parent ``SmolAgent`` to link to this agent.
 
 ---
 
-## tools
+## get_current_layout
 
 ```
-tools(self: Any)
+get_current_layout(self: Any)
 ```
 
-All tools available to this agent.
+Get the current layout.
+
+---
+
+## get_styles
+
+```
+get_styles(self: Any)
+```
+
+Get CSS styles for the current layout as selector->property mapping.
+
+---
+
+## list_layouts
+
+```
+list_layouts(self: Any)
+```
+
+List available layout names.
+
+---
+
+## reset
+
+```
+reset(self: Any)
+```
+
+Reset to default layout.
+
+---
+
+## restore_state
+
+```
+restore_state(self: Any, name: str)
+```
+
+Restore a saved layout state.
+
+---
+
+## save_state
+
+```
+save_state(self: Any, name: str)
+```
+
+Save current layout state.
+
+---
+
+## switch_layout
+
+```
+switch_layout(self: Any, name: str)
+```
+
+Switch to a named layout.
+
+---
+
+## toggle_maximize
+
+```
+toggle_maximize(self: Any)
+```
+
+Toggle output maximization.
+
+---
+
+## toggle_sidebar
+
+```
+toggle_sidebar(self: Any)
+```
+
+Toggle sidebar visibility.
 
 ---

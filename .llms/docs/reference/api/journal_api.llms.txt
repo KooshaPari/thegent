@@ -1,0 +1,119 @@
+# journal_api
+
+Source: docs/reference/api/journal_api.md
+
+---
+
+# journal API Reference
+
+> **Source**: `src/thegent/sync/journal.py`
+
+Local sync decision journal primitives.
+
+# @trace WL-203
+
+---
+
+## LocalDecisionJournal
+
+Strict JSONL journal for sync decision replay.
+
+### Methods
+
+#### LocalDecisionJournal.__init__
+
+```
+__init__(self: Any, path: Path)
+```
+
+---
+
+#### LocalDecisionJournal.append
+
+```
+append(self: Any, entry: SyncDecisionEntry)
+```
+
+---
+
+#### LocalDecisionJournal.path
+
+```
+path(self: Any)
+```
+
+---
+
+#### LocalDecisionJournal.read_all
+
+```
+read_all(self: Any)
+```
+
+---
+
+#### LocalDecisionJournal.read_replayable
+
+```
+read_replayable(self: Any)
+```
+
+---
+
+---
+
+## SyncDecisionEntry
+
+A replayable decision made during a sync cycle.
+
+### Methods
+
+#### SyncDecisionEntry.create
+
+```
+create(cls: Any)
+```
+
+---
+
+---
+
+## append
+
+```
+append(self: Any, entry: SyncDecisionEntry) -> None
+```
+
+---
+
+## create
+
+```
+create(cls: Any) -> SyncDecisionEntry
+```
+
+---
+
+## path
+
+```
+path(self: Any) -> Path
+```
+
+---
+
+## read_all
+
+```
+read_all(self: Any) -> list[SyncDecisionEntry]
+```
+
+---
+
+## read_replayable
+
+```
+read_replayable(self: Any) -> list[SyncDecisionEntry]
+```
+
+---

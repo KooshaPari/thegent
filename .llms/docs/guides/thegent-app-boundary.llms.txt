@@ -1,0 +1,39 @@
+# thegent-app-boundary
+
+Source: docs/guides/thegent-app-boundary.md
+
+---
+
+# Thegent App Boundary
+
+## Module Contract
+
+`thegent-app` is the API and orchestration layer for app-facing command surfaces and startup wiring.
+
+### Owns
+
+- `thegent app` and `phench` CLI orchestration flows.
+- Cross-module startup sequencing and command registration.
+- Runtime policy integration for app-level execution defaults.
+- Module manifest discovery and project orchestration validation.
+
+### Must Not Own
+
+- MCP transport-specific lifecycle rules (owned by `thegent-mcp`).
+- Workstream control-plane routing policy (`thegent-control-plane`).
+- Execution adapter-specific operational behavior (`thegent-execution`).
+- Process governance tooling and repo policy enforcement (`thegent-governance`).
+
+### Boundary Rule
+
+`thegent-app` changes should not hardcode domain-specific behavior beyond module boundaries. New domain rules
+must route through module-owned configuration or service contracts.
+
+### Split Execution Bootstrap
+
+- Module manifests: `Phenotype/projects/modules/thegent-app/manifest.json`
+- Typical workflow command:
+
+```
+./scripts/worktree_governance.sh new backend m split-thegent-app
+```

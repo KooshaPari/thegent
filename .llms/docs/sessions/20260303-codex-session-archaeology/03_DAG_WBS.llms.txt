@@ -1,0 +1,49 @@
+# 03_DAG_WBS
+
+Source: docs/sessions/20260303-codex-session-archaeology/03_DAG_WBS.md
+
+---
+
+# DAG + WBS (24 Tasks, 6 Child-Agent Lanes)
+
+## Lane A: Session Census
+1. Enumerate session stores and recency windows.
+2. Establish parser contracts per store format.
+3. Produce store-count inventory for 14-day window.
+4. Emit sampling list for manual verification.
+
+## Lane B: Codex Unfinished Detector
+5. Parse all `rollout-*.jsonl` in last 14 days.
+6. Detect terminal completion vs error-abort-disconnect endings.
+7. Emit `unfinished_candidates` with evidence snippets.
+8. Produce aggregate summary counts and status ratios.
+
+## Lane C: Cross-Store Correlation
+9. Build same-window artifact index across factory/cursor/claude.
+10. Match likely task continuations by cwd/time/token overlap.
+11. Classify unresolved sessions into resolution dispositions.
+12. Emit resolution map with confidence scores.
+
+## Lane D: GitOps Introspection
+13. Extract `still_open` candidates with repo-like cwd paths.
+14. Check for follow-up commits/branches in corresponding repos.
+15. Mark candidates as `closed_by_gitops` or `pending_followup`.
+16. Publish reconciliation report.
+
+## Lane E: HeliosCLI UX Research
+17. Trace protocol/backend/picker code paths for thread listing.
+18. Design `Shift+Tab` scope cycle semantics.
+19. Design BM25-first search architecture with optional RAG.
+20. Design cheapest-model labeling/summarization job.
+
+## Lane F: Synthesis + Handoff
+21. Build session audit index and evidence links.
+22. Build unfinished-work ledger with next actions.
+23. Build HeliosCLI research spec and acceptance criteria.
+24. Publish deterministic handoff packet and resume instructions.
+
+## Dependency Notes
+- Lanes A/B/C run in parallel.
+- Lane D depends on C output.
+- Lane E runs parallel to D.
+- Lane F depends on all prior lanes.

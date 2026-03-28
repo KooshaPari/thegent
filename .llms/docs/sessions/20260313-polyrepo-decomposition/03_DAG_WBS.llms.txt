@@ -1,0 +1,68 @@
+# 03_DAG_WBS
+
+Source: docs/sessions/20260313-polyrepo-decomposition/03_DAG_WBS.md
+
+---
+
+# DAG / WBS
+
+## Phase 0 - Stabilize Authority Boundaries
+1. Freeze `src/thegent` vs `packages/thegent-*` duplication growth.
+2. Choose authoritative tree per bounded context.
+3. Add CI gates that fail on mirrored-file divergence for extracted domains.
+4. Remove new feature work from non-authoritative mirrors.
+
+## Phase 1 - Extract Lowest-Risk Package Repos
+1. `thegent-protocols`
+2. `thegent-sync`
+3. `thegent-audit`
+4. `thegent-planning`
+
+Dependency order:
+- `thegent-protocols` first because MCP/JSON-RPC contracts are consumed broadly.
+- `thegent-sync` after protocols because board/adapter contracts should depend on stable protocol/core interfaces.
+- `thegent-audit` and `thegent-planning` can proceed in parallel once shared contracts are fixed.
+
+## Phase 2 - Shrink CLI Monolith
+1. Extract `cli/apps/*` into command-group packages with one authoritative tree.
+2. Move governance, audit, sync, planning, and session commands behind package entrypoints.
+3. Leave only argument parsing and orchestration composition in the root CLI.
+4. Delete mirrored command implementations from `src/thegent` after parity validation.
+
+## Phase 3 - Separate Runtime Services
+1. `thegent-agent-runtime` microservice for long-lived provider / session execution.
+2. `thegent-syncd` plugin microservice for GitHub/Linear/project-board synchronization.
+3. `thegent-mcp-gateway` plugin microservice for MCP and JSON-RPC transport hosting.
+4. `thegent-auditd` service for event/audit ingestion where centralization is required.
+
+## Phase 4 - Isolate Native Subsystems
+1. Keep `thegent-hooks` as its own repo or at minimum its own releaseable crate workspace.
+2. Keep `thegent-shm` as its own low-level systems repo/crate workspace.
+3. Isolate `thegent-shims` and runtime bridge crates from application-layer Python code.
+4. Publish typed interfaces consumed by Python packages instead of cross-tree ad hoc imports.
+
+## Immediate 24-Task Backlog
+1. Mark `thegent-protocols` authoritative for `protocols`, `acp`, and MCP transport primitives.
+2. Mark `thegent-sync` authoritative for autosync and board-sync adapters.
+3. Mark `thegent-audit` authoritative for audit and governance evidence collectors.
+4. Mark `thegent-planning` authoritative for work-stream and plan-state persistence.
+5. Delete duplicate write paths into `src/thegent/protocols` after export shims are in place.
+6. Delete duplicate write paths into `src/thegent/integrations/workstream_autosync_shared.py` after package adoption.
+7. Replace stub `src/thegent/integrations/workstream_autosync.py` with package import facade or remove it.
+8. Replace `_perform_board_sync` placeholder logic with adapter interface calls.
+9. Extract GitHub board adapter into `thegent-sync` adapter package.
+10. Extract Linear adapter into `thegent-sync` adapter package.
+11. Extract autosync status contract into stable schema module.
+12. Move MCP gateway transport contracts into `thegent-protocols` only.
+13. Collapse duplicated `jsonrpc_agent_server.py` copies to package authority.
+14. Collapse duplicated `shadow_audit_git.py` copies to package authority.
+15. Collapse duplicated `planning/workstream_db.py` copies to package authority.
+16. Split `packages/thegent-cli/src/thegent_cli/apps/project.py` by bounded command families.
+17. Split `src/thegent/commands/sync.py` into orchestration, adapters, and state-update modules.
+18. Split `crates/thegent-hooks/src/main.rs` into check families and shared lint engines.
+19. Split `crates/thegent-shm/src/lib.rs` by transport, memory model, and FFI boundaries.
+20. Add repo-level anti-duplication CI for authoritative package paths.
+21. Add architecture decision record for repo/service/plugin classifications.
+22. Add compatibility tests that exercise extracted packages from the root CLI.
+23. Add release automation per extracted repo.
+24. Delete dead mirrors once parity gates are green.

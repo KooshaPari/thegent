@@ -1,0 +1,49 @@
+# ante_scraper_api
+
+Source: docs/reference/api/ante_scraper_api.md
+
+---
+
+# ante_scraper API Reference
+
+> **Source**: `src/thegent/models/ante_scraper.py`
+
+Ante session scraper.
+
+Extracts session metadata from Ante agent harness at ~/.ante/sessions/.
+Sessions are stored as JSON files with usage stats, timestamps, and model info.
+
+---
+
+## list_ante_sessions
+
+List all Ante sessions from ~/.ante/sessions/.
+
+---
+
+## parse_ante_session
+
+```
+parse_ante_session(session_file: Path)
+```
+
+Parse a single Ante session JSON file.
+
+Returns dict with:
+    - id: session ID
+    - started_at: ISO datetime string
+    - ended_at: ISO datetime string (None if ongoing)
+    - duration_secs: total duration in seconds
+    - model: model name
+    - provider: provider name
+    - input_tokens: prompt token count
+    - output_tokens: completion token count
+    - project_dir: working directory
+
+---
+
+## scrape_ante_models
+
+Scrape available Ante models from settings.json.
+
+---

@@ -1,0 +1,59 @@
+# beads_api
+
+Source: docs/reference/api/beads_api.md
+
+---
+
+# beads API Reference
+
+> **Source**: `src/thegent/integrations/beads.py`
+
+Beads Task Tracking Integration - Persistent dependency tracking.
+
+---
+
+## BeadsConfig
+
+**Inherits from**: `DataclassConfig`
+
+---
+
+## BeadsStatus
+
+**Inherits from**: `Enum`
+
+---
+
+## BeadsWrapper
+
+### Methods
+
+#### BeadsWrapper.__init__
+
+```
+__init__(self: Any, config: Any)
+```
+
+---
+
+#### BeadsWrapper.is_enabled
+
+```
+is_enabled(self: Any)
+```
+
+---
+
+---
+
+## get_beads_wrapper
+
+---
+
+## is_enabled
+
+```
+is_enabled(self: Any)
+```
+
+---

@@ -1,0 +1,41 @@
+# resources_workflow_api
+
+Source: docs/reference/api/resources_workflow_api.md
+
+---
+
+# resources_workflow API Reference
+
+> **Source**: `src/thegent/mcp/server/resources_workflow.py`
+
+Workflow resource/prompt handlers for MCP server.
+
+---
+
+## resource_workflow_gardening_impl
+
+---
+
+## resource_workflow_triggers_impl
+
+---
+
+## thegent_workflow_gardening_impl
+
+---
+
+## thegent_workflow_idea_impl
+
+```
+thegent_workflow_idea_impl(idea: str) -> str
+```
+
+---
+
+## thegent_workflow_next_item_impl
+
+---
+
+## thegent_workflow_quality_green_impl
+
+---

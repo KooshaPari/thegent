@@ -1,0 +1,31 @@
+# server_middleware_api
+
+Source: docs/reference/api/server_middleware_api.md
+
+---
+
+# server_middleware API Reference
+
+> **Source**: `src/thegent/mcp/server_middleware.py`
+
+Middleware setup for the MCP FastMCP server (WL-120 W3-C4).
+
+---
+
+## setup_middleware
+
+```
+setup_middleware(mcp: Any)
+```
+
+Register all middleware on the FastMCP instance (order: first added = outermost).
+
+Registers:
+- ErrorHandlingMiddleware
+- RateLimitingMiddleware (10 rps, burst 20)
+- TimingMiddleware
+- ResponseCachingMiddleware (30s TTL for read-only tools)
+- ResponseLimitingMiddleware (500k max response size)
+- LoggingMiddleware
+
+---

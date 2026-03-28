@@ -6,18 +6,170 @@ Source: docs/reference/api/telemetry_api.md
 
 # telemetry API Reference
 
-> **Source**: `src/thegent/telemetry/__init__.py`
+> **Source**: `src/thegent/ports/driven/telemetry.py`
 
-OTel GenAI instrumentation and run correlation (WP-Y6, NFR-013).
+TelemetryPort: Interface for logging and metrics.
 
-Provides OpenTelemetry spans with GenAI semantic conventions and run_id correlation
-across orchestration, agent calls, and status. Re-exports from observability for
-unified access.
+---
 
-Usage:
-    from thegent.telemetry import instrument_genai_call, instrument_run_bg_status
+## TelemetryPort
 
-    with instrument_genai_call(agent_name="claude", model="claude-3-5-sonnet", run_id=run_id):
-        ...
+Port interface for logging and metrics collection.
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### TelemetryPort.log_debug
+
+```
+log_debug(self: Any, event: str)
+```
+
+Log a debug event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+#### TelemetryPort.log_error
+
+```
+log_error(self: Any, event: str)
+```
+
+Log an error event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+#### TelemetryPort.log_info
+
+```
+log_info(self: Any, event: str)
+```
+
+Log an informational event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+#### TelemetryPort.log_warning
+
+```
+log_warning(self: Any, event: str)
+```
+
+Log a warning event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+#### TelemetryPort.record_metric
+
+```
+record_metric(self: Any, metric_name: str, value: float)
+```
+
+Record a numerical metric.
+
+**Parameters**:
+
+- `metric_name`: Name of the metric.
+- `value`: Metric value.
+- `**kwargs`: Additional tags/labels.
+
+---
+
+---
+
+## log_debug
+
+```
+log_debug(self: Any, event: str)
+```
+
+Log a debug event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+## log_error
+
+```
+log_error(self: Any, event: str)
+```
+
+Log an error event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+## log_info
+
+```
+log_info(self: Any, event: str)
+```
+
+Log an informational event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+## log_warning
+
+```
+log_warning(self: Any, event: str)
+```
+
+Log a warning event.
+
+**Parameters**:
+
+- `event`: Event name or message.
+- `**kwargs`: Additional context data.
+
+---
+
+## record_metric
+
+```
+record_metric(self: Any, metric_name: str, value: float)
+```
+
+Record a numerical metric.
+
+**Parameters**:
+
+- `metric_name`: Name of the metric.
+- `value`: Metric value.
+- `**kwargs`: Additional tags/labels.
 
 ---

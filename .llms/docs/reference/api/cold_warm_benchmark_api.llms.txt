@@ -1,0 +1,25 @@
+# cold_warm_benchmark_api
+
+Source: docs/reference/api/cold_warm_benchmark_api.md
+
+---
+
+# cold_warm_benchmark API Reference
+
+> **Source**: `src/thegent/integrations/cold_warm_benchmark.py`
+
+Stub module for thegent.integrations.cold_warm_benchmark.
+
+---
+
+## BenchmarkRun
+
+Stub class.
+
+---
+
+## ColdWarmBenchmarkSplitter
+
+Stub class.
+
+---

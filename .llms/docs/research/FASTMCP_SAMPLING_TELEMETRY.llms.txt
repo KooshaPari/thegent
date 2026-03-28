@@ -4,6 +4,7 @@ Source: docs/research/FASTMCP_SAMPLING_TELEMETRY.md
 
 ---
 
+<DONE>
 # FastMCP Sampling & Telemetry
 
 **Source:** gofastmcp.com/servers/sampling, gofastmcp.com/servers/telemetry

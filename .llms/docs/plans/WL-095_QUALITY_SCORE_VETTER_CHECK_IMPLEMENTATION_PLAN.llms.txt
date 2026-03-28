@@ -1,0 +1,64 @@
+# WL-095_QUALITY_SCORE_VETTER_CHECK_IMPLEMENTATION_PLAN
+
+Source: docs/plans/WL-095_QUALITY_SCORE_VETTER_CHECK_IMPLEMENTATION_PLAN.md
+
+---
+
+# WL-095 QualityScoreVetterCheck Implementation Plan
+
+## Scope
+Implement `QualityScoreVetterCheck` in `src/thegent/govern/vetter/checks.py` with deterministic JSON contract, judge-model routing, and robust failure semantics.
+
+## Current Blockers
+- Sandbox/network constraints prevent validating a real judge subprocess call path (`thegent free`) in this environment.
+- Existing `PromptQueueManager.enqueue()` API has no metadata channel, so WL-095 output metadata propagation must be coordinated with WL-096 queue contract work.
+
+## Target Contract
+- Class: `QualityScoreVetterCheck`
+- Constructor args:
+  - `judge_model: str`
+  - `rubric: list[str] | dict[str, str]`
+  - `pass_threshold: float = 0.75`
+  - `min_criterion_score: float = 0.5`
+  - `always_run: bool = False`
+- Async API shape matches `VetterCheck` protocol:
+  - `check(run_id: str, output: str, context: dict[str, Any]) -> VetterCheckResult`
+
+## Implementation Steps
+1. Add `QualityScoreVetterCheck` with strict config validation (threshold ranges, non-empty rubric).
+2. Add judge-model resolver:
+   - If `judge_model != "auto"`: use as-is.
+   - If `judge_model == "auto"`: call `CapabilityIndex.recommend("quality scoring")` and fail loudly if unavailable.
+3. Build deterministic rubric prompt and execute judge command with structured JSON response expectation.
+4. Parse JSON payload:
+   - Required: `scores`, `pass_verdict`, `critique`.
+   - Enforce strict score types: integer-only Likert values (no float/bool coercion).
+   - Enforce rubric key contract: all expected criteria must be present and no unexpected criteria allowed.
+   - Normalize rubric dict keys/descriptions with whitespace trimming and fail loudly on duplicate normalized keys.
+   - Compute normalized score and enforce both:
+     - aggregate `pass_threshold`
+     - per-criterion `min_criterion_score`
+5. Populate `VetterCheckResult`:
+   - `passed`
+   - `score`
+   - `message` (critique on failure)
+   - `metadata` (`scores`, `judge_model`, `thresholds`, raw response fingerprint)
+6. Add deterministic unit tests with mocked subprocess/model resolver for:
+   - pass path
+   - aggregate-threshold fail
+   - min-criterion fail
+   - malformed JSON fail
+   - auto-model resolution fail
+
+## Acceptance Criteria
+- `QualityScoreVetterCheck` exported from `thegent.govern.vetter`.
+- At least 10 focused unit tests pass for this check.
+- No silent catches; malformed judge output raises explicit failure path.
+- Rubric dict normalization is deterministic and rejects duplicate criteria after normalization.
+- `VetterCheckResult.metadata` always includes scoring context.
+- `VetterCheckResult.metadata["scores"]` key order is deterministic (sorted by rubric criterion name).
+- `model_resolver` must return a string model name; empty or non-string results fail loudly with `VetterConfigError`.
+
+## Validation Commands
+- `python -m py_compile src/thegent/govern/vetter/checks.py`
+- `uv run pytest -q tests/govern/test_vetter_models.py -k "quality or llm_judge"`

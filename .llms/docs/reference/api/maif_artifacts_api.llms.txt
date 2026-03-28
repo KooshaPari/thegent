@@ -16,6 +16,8 @@ MAIF Action Artifacts (Signed Artifacts).
 
 MAIF (Model-Action Interface Format) signed artifact.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
 
 #### MAIFArtifact.__init__
@@ -46,18 +48,6 @@ Sign the artifact.
 - `private_key`: Private key for signing
 
 **Returns**: Signature string
-
----
-
-#### MAIFArtifact.to_dict
-
-```
-to_dict(self: Any)
-```
-
-Convert to dictionary.
-
-**Returns**: Dictionary representation
 
 ---
 
@@ -92,18 +82,6 @@ Sign the artifact.
 - `private_key`: Private key for signing
 
 **Returns**: Signature string
-
----
-
-## to_dict
-
-```
-to_dict(self: Any)
-```
-
-Convert to dictionary.
-
-**Returns**: Dictionary representation
 
 ---
 

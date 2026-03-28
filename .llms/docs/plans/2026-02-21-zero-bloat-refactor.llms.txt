@@ -1,0 +1,1570 @@
+# 2026-02-21-zero-bloat-refactor
+
+Source: docs/plans/2026-02-21-zero-bloat-refactor.md
+
+---
+
+# Zero-Bloat Refactor: thegent + trace Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Eliminate all code bloat, consolidate duplicates, replace custom impls with libraries, and enforce complexity limits across thegent and trace with zero regressions.
+
+**Architecture:** Bottom-up refactor — fix critical runtime bugs first, then attack the largest complexity hotspots (ThegentSettings godclass, run_impl_core 928-line function), then systematic library adoption, then polyglot boundary cleanup, then cross-cutting alignment between thegent and trace.
+
+**Tech Stack:** Python (thegent + trace), Go (trace), TypeScript/React (trace frontend), Rust (thegent native/SHM), tenacity, pybreaker, cachetools, diskcache, structlog, pytest, hypothesis
+
+---
+
+## Phase 0: Critical Runtime Fixes (Unblock Everything)
+**DAG:** No dependencies. Do these before any refactor.
+
+---
+
+### Task 0.1: Fix Missing Hook Files (CRITICAL - Runtime Failures)
+
+**Files:**
+- Create: `thegent/hooks/gardener-spawn-manager.sh`
+- Create: `thegent/hooks/async-test-runner.sh`
+- Create: `thegent/hooks/post-agent-run-vetter.sh`
+- Reference: `thegent/hooks/hook-config.yaml`
+
+**Step 1: Verify which hooks are registered but missing**
+
+```
+grep -E "^\s+- " thegent/hooks/hook-config.yaml | sed 's/.*- //' | while read hook; do
+  [ ! -f "thegent/hooks/$hook" ] && echo "MISSING: $hook"
+done
+```
+Expected: prints `gardener-spawn-manager.sh`, `async-test-runner.sh`, `post-agent-run-vetter.sh`
+
+**Step 2: Read existing similar hooks for pattern**
+
+```
+head -30 thegent/hooks/gardener-continuity.sh
+head -30 thegent/hooks/gardener-parallel.sh
+```
+
+**Step 3: Create stub implementations that fail loudly**
+
+Each missing hook should:
+1. Source `hooks/lib/common.sh` for utilities
+2. Log that it ran
+3. Exit 0 (non-blocking) until properly implemented
+
+```
+# gardener-spawn-manager.sh stub
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname "$0")/lib/common.sh" 2>/dev/null || true
+hook_log "gardener-spawn-manager: stub - not yet implemented" "WARN"
+exit 0
+```
+
+**Step 4: Write test that all registered hooks exist as files**
+
+```
+# tests/hooks/test_hook_registry.py
+def test_all_registered_hooks_exist():
+    config = yaml.safe_load(Path("hooks/hook-config.yaml").read_text())
+    hooks_dir = Path("hooks")
+    for hook_name in extract_hook_files(config):
+        assert (hooks_dir / hook_name).exists(), f"Registered hook missing: {hook_name}"
+```
+
+**Step 5: Run test**
+```
+pytest tests/hooks/test_hook_registry.py -v
+```
+Expected: PASS
+
+**Step 6: Commit**
+```
+git add hooks/gardener-spawn-manager.sh hooks/async-test-runner.sh hooks/post-agent-run-vetter.sh tests/hooks/test_hook_registry.py
+git commit -m "fix: create missing hook stubs registered in hook-config.yaml"
+```
+
+---
+
+### Task 0.2: Fix Hardcoded Path in specs.py
+
+**Files:**
+- Modify: `thegent/src/thegent/cli/commands/specs.py:30`
+
+**Step 1: Read the offending line**
+```
+sed -n '25,35p' thegent/src/thegent/cli/commands/specs.py
+```
+
+**Step 2: Write failing test**
+```
+# tests/cli/test_specs_portability.py
+def test_specs_no_hardcoded_paths():
+    content = Path("src/thegent/cli/commands/specs.py").read_text()
+    assert "/Users/" not in content, "Hardcoded /Users/ path found"
+    assert "/home/" not in content, "Hardcoded /home/ path found"
+```
+
+**Step 3: Run test - expect FAIL**
+```
+pytest tests/cli/test_specs_portability.py -v
+```
+
+**Step 4: Fix - replace hardcoded path with Path(__file__).parent or config lookup**
+```
+# Before (line 30, approximate):
+# specs_dir = "/Users/kooshapari/..."
+# After:
+specs_dir = Path(__file__).parent.parent.parent / "specs"
+# or: from thegent.config import get_specs_dir; specs_dir = get_specs_dir()
+```
+
+**Step 5: Run test - expect PASS**
+```
+pytest tests/cli/test_specs_portability.py tests/cli/test_specs.py -v
+```
+
+**Step 6: Commit**
+```
+git add src/thegent/cli/commands/specs.py tests/cli/test_specs_portability.py
+git commit -m "fix: remove hardcoded /Users/ path from specs.py"
+```
+
+---
+
+## Phase 1: thegent Complexity Hotspots (Biggest Impact)
+**DAG:** Depends on Phase 0.
+
+---
+
+### Task 1.1: Split ThegentSettings Godclass (1,324 lines → 4 modules)
+
+**Files:**
+- Modify: `thegent/src/thegent/config.py` (currently 1,360 LOC)
+- Create: `thegent/src/thegent/config/base.py`
+- Create: `thegent/src/thegent/config/providers.py`
+- Create: `thegent/src/thegent/config/mcp.py`
+- Create: `thegent/src/thegent/config/execution.py`
+- Create: `thegent/src/thegent/config/__init__.py` (re-exports for backward compat)
+- Test: `thegent/tests/test_config.py`
+
+**Step 1: Read config.py fully to understand ThegentSettings structure**
+```
+grep -n "^class \|^    class \|# ---" thegent/src/thegent/config.py | head -60
+```
+
+**Step 2: Write tests for current behavior (baseline)**
+```
+# tests/config/test_settings_split.py
+from thegent.config import ThegentSettings
+
+def test_settings_loads():
+    s = ThegentSettings()
+    assert hasattr(s, 'providers')
+
+def test_settings_provider_fields_present():
+    s = ThegentSettings()
+    assert hasattr(s.providers, 'claude') or hasattr(s, 'claude_api_key')
+
+def test_settings_mcp_fields_present():
+    s = ThegentSettings()
+    assert hasattr(s, 'mcp_port') or hasattr(s.mcp, 'port')
+```
+
+**Step 3: Run tests to establish baseline**
+```
+pytest tests/config/ -v
+```
+
+**Step 4: Create config/ package with split classes**
+
+`config/base.py`: Core fields (paths, debug, logging)
+`config/providers.py`: All provider API keys, model defaults
+`config/mcp.py`: MCP server config, ports, transports
+`config/execution.py`: Timeouts, retries, resource limits
+
+Each file: max 300 LOC, max 1 Pydantic BaseSettings class.
+
+**Step 5: Update config/__init__.py to re-export ThegentSettings**
+```
+# config/__init__.py - backward compatible re-export
+from thegent.config.base import BaseSettings
+from thegent.config.providers import ProviderSettings
+from thegent.config.mcp import MCPSettings
+from thegent.config.execution import ExecutionSettings
+
+class ThegentSettings(BaseSettings, ProviderSettings, MCPSettings, ExecutionSettings):
+    """Unified settings - composed from domain modules."""
+    pass
+```
+
+**Step 6: Run full test suite - expect no regressions**
+```
+pytest tests/ -x -q
+```
+
+**Step 7: Verify no file in config/ exceeds 300 LOC**
+```
+find thegent/src/thegent/config/ -name "*.py" | xargs wc -l | sort -rn | head -10
+```
+Expected: all under 300 lines.
+
+**Step 8: Commit**
+```
+git add src/thegent/config/ tests/config/ src/thegent/config.py
+git commit -m "refactor: split ThegentSettings godclass (1324 LOC) into 4 domain config modules"
+```
+
+---
+
+### Task 1.2: Extract run_impl_core() State Machine (928 lines → <150)
+
+**Files:**
+- Modify: `thegent/src/thegent/cli/services/run_execution_core_helpers.py` (1,446 LOC)
+- Create: `thegent/src/thegent/execution/state_machine.py`
+- Create: `thegent/src/thegent/execution/phases/` (one file per phase)
+- Test: `thegent/tests/execution/test_state_machine.py`
+
+**Step 1: Map current phases in run_impl_core()**
+```
+grep -n "# Phase\|# Step\|# ---\|if.*==\|elif.*==" thegent/src/thegent/cli/services/run_execution_core_helpers.py | head -40
+```
+
+**Step 2: Write tests for each identified phase transition**
+```
+# tests/execution/test_state_machine.py
+import pytest
+from thegent.execution.state_machine import ExecutionStateMachine, ExecutionPhase
+
+def test_state_machine_initial_state():
+    sm = ExecutionStateMachine(config=mock_config())
+    assert sm.phase == ExecutionPhase.INIT
+
+def test_state_machine_transitions_to_validation():
+    sm = ExecutionStateMachine(config=mock_config())
+    sm.advance()
+    assert sm.phase == ExecutionPhase.VALIDATION
+
+def test_state_machine_handles_phase_error():
+    sm = ExecutionStateMachine(config=mock_config())
+    sm.inject_error(ExecutionPhase.VALIDATION, ValueError("bad config"))
+    with pytest.raises(ValueError):
+        sm.run()
+```
+
+**Step 3: Run tests - expect FAIL**
+```
+pytest tests/execution/test_state_machine.py -v
+```
+
+**Step 4: Create ExecutionStateMachine**
+
+```
+# execution/state_machine.py
+from enum import Enum, auto
+from dataclasses import dataclass, field
+from typing import Callable
+
+class ExecutionPhase(Enum):
+    INIT = auto()
+    VALIDATION = auto()
+    SETUP = auto()
+    RUN = auto()
+    TEARDOWN = auto()
+    DONE = auto()
+
+@dataclass
+class ExecutionStateMachine:
+    config: object
+    phase: ExecutionPhase = ExecutionPhase.INIT
+    _handlers: dict = field(default_factory=dict)
+
+    def register(self, phase: ExecutionPhase, handler: Callable):
+        self._handlers[phase] = handler
+
+    def advance(self):
+        phases = list(ExecutionPhase)
+        idx = phases.index(self.phase)
+        if idx < len(phases) - 1:
+            self.phase = phases[idx + 1]
+
+    def run(self):
+        while self.phase != ExecutionPhase.DONE:
+            handler = self._handlers.get(self.phase)
+            if handler:
+                handler(self)
+            self.advance()
+```
+
+**Step 5: Extract each phase from run_impl_core() into execution/phases/**
+
+One file per phase: `phases/init.py`, `phases/validation.py`, `phases/setup.py`, `phases/run.py`, `phases/teardown.py`. Each <100 LOC.
+
+**Step 6: Replace run_impl_core() body with state machine**
+```
+def run_impl_core(config, **kwargs):
+    sm = ExecutionStateMachine(config)
+    sm.register(ExecutionPhase.INIT, phases.init.handle)
+    sm.register(ExecutionPhase.VALIDATION, phases.validation.handle)
+    sm.register(ExecutionPhase.SETUP, phases.setup.handle)
+    sm.register(ExecutionPhase.RUN, phases.run.handle)
+    sm.register(ExecutionPhase.TEARDOWN, phases.teardown.handle)
+    sm.run()
+```
+Result: run_impl_core() = 12 lines.
+
+**Step 7: Run full test suite**
+```
+pytest tests/ -x -q --tb=short
+```
+
+**Step 8: Verify function length**
+```
+python -c "
+import ast, pathlib
+tree = ast.parse(pathlib.Path('src/thegent/cli/services/run_execution_core_helpers.py').read_text())
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef):
+        lines = node.end_lineno - node.lineno
+        if lines > 40:
+            print(f'{node.name}: {lines} lines')
+"
+```
+Expected: no output (all functions ≤40 lines).
+
+**Step 9: Commit**
+```
+git add src/thegent/execution/ src/thegent/cli/services/run_execution_core_helpers.py tests/execution/
+git commit -m "refactor: extract 928-line run_impl_core() into ExecutionStateMachine with phase handlers"
+```
+
+---
+
+### Task 1.3: Refactor doctor.py (2,061 LOC) into Plugin Architecture
+
+**Files:**
+- Modify: `thegent/src/thegent/doctor.py` (2,061 LOC)
+- Create: `thegent/src/thegent/doctor/registry.py`
+- Create: `thegent/src/thegent/doctor/checks/` (one file per check category)
+- Test: `thegent/tests/test_doctor_plugin.py`
+
+**Step 1: List all check functions currently in doctor.py**
+```
+grep -n "^def check_\|^async def check_" thegent/src/thegent/doctor.py
+```
+
+**Step 2: Write test for plugin registry**
+```
+# tests/test_doctor_plugin.py
+from thegent.doctor.registry import DoctorRegistry, DoctorCheck
+
+def test_registry_empty_on_init():
+    r = DoctorRegistry()
+    assert r.checks == []
+
+def test_registry_registers_check():
+    r = DoctorRegistry()
+    r.register(DoctorCheck(name="test", fn=lambda: None, severity="warn"))
+    assert len(r.checks) == 1
+
+def test_registry_runs_all_checks():
+    r = DoctorRegistry()
+    results = []
+    r.register(DoctorCheck(name="ok", fn=lambda: results.append("ran"), severity="error"))
+    r.run_all()
+    assert results == ["ran"]
+```
+
+**Step 3: Create registry**
+```
+# doctor/registry.py
+from dataclasses import dataclass
+from typing import Callable
+
+@dataclass
+class DoctorCheck:
+    name: str
+    fn: Callable
+    severity: str  # "error" | "warn" | "info"
+    category: str = "general"
+
+class DoctorRegistry:
+    def __init__(self):
+        self.checks: list[DoctorCheck] = []
+
+    def register(self, check: DoctorCheck):
+        self.checks.append(check)
+
+    def run_all(self) -> list[dict]:
+        return [{"name": c.name, "result": c.fn()} for c in self.checks]
+```
+
+**Step 4: Move each check category to doctor/checks/\*.py**
+
+Categories from doctor.py: `connectivity.py`, `config.py`, `dependencies.py`, `providers.py`, `mcp.py`, `hooks.py`. Each <200 LOC.
+
+**Step 5: Run existing doctor tests**
+```
+pytest tests/thegent/test_doctor_fix.py -v
+```
+Expected: all 21 tests still pass.
+
+**Step 6: Commit**
+```
+git add src/thegent/doctor/ tests/test_doctor_plugin.py
+git commit -m "refactor: doctor.py (2061 LOC) into plugin registry architecture"
+```
+
+---
+
+### Task 1.4: Refactor execution.py (2,577 LOC)
+
+**Files:**
+- Modify: `thegent/src/thegent/execution.py` (2,577 LOC)
+- Create: `thegent/src/thegent/execution/` (split into domain modules)
+
+**Step 1: Find top-level classes/functions**
+```
+grep -n "^class \|^def \|^async def " thegent/src/thegent/execution.py
+```
+
+**Step 2: Write characterization tests (snapshot existing behavior)**
+```
+# tests/execution/test_execution_compat.py
+# Test the public API surface before refactor
+from thegent.execution import ExecutionEngine, ExecutionResult
+
+def test_execution_engine_instantiates():
+    e = ExecutionEngine()
+    assert e is not None
+
+def test_execution_result_fields():
+    r = ExecutionResult(status="ok", output="")
+    assert r.status == "ok"
+```
+
+**Step 3: Run to establish baseline**
+```
+pytest tests/execution/ -v
+```
+
+**Step 4: Split into domain files**
+
+Each class/function cluster → separate file in execution/:
+- `execution/engine.py`: ExecutionEngine (orchestration only, <150 LOC)
+- `execution/result.py`: ExecutionResult, ExecutionStatus
+- `execution/runner.py`: Process/subprocess running logic
+- `execution/context.py`: ExecutionContext, environment setup
+- `execution/__init__.py`: Re-export public API
+
+**Step 5: Verify each file <300 LOC**
+```
+find src/thegent/execution/ -name "*.py" | xargs wc -l | sort -rn
+```
+
+**Step 6: Run full test suite**
+```
+pytest tests/ -q --tb=short
+```
+
+**Step 7: Commit**
+```
+git add src/thegent/execution/ tests/execution/
+git commit -m "refactor: split execution.py (2577 LOC) into domain modules"
+```
+
+---
+
+### Task 1.5: Fix 41 Manual Retry Loops → tenacity
+
+**Files:**
+- Modify: all files containing `while True.*sleep` or `time.sleep` in retry context
+- Run: `grep -rn "time\.sleep\|asyncio\.sleep" thegent/src/thegent/ | grep -v test | grep -v ".pyc"`
+
+**Step 1: Find all manual retry loops**
+```
+grep -rn "while.*retry\|while True.*sleep\|for.*attempt\|retry_count\|retry_time \*=" \
+  thegent/src/thegent/ --include="*.py" | grep -v __pycache__
+```
+Expected: ~41 locations.
+
+**Step 2: Write test that no manual retry loops exist**
+```
+# tests/test_no_manual_retries.py
+import ast
+import pathlib
+
+RETRY_PATTERNS = ["retry_count", "retry_time", "attempt_count", "max_retries"]
+
+def test_no_manual_retry_loops():
+    src = pathlib.Path("src/thegent")
+    violations = []
+    for f in src.rglob("*.py"):
+        content = f.read_text()
+        for pattern in RETRY_PATTERNS:
+            if pattern in content and "tenacity" not in content:
+                violations.append(f"{f}: contains '{pattern}' without tenacity")
+    assert not violations, "\n".join(violations)
+```
+
+**Step 3: Run test - expect FAIL (41 violations)**
+```
+pytest tests/test_no_manual_retries.py -v
+```
+
+**Step 4: Replace each manual loop with tenacity decorator**
+
+```
+# Before:
+while True:
+    try:
+        result = call_api()
+        break
+    except Exception:
+        time.sleep(2 ** attempt)
+        attempt += 1
+
+# After:
+from tenacity import retry, wait_exponential, stop_after_attempt
+
+@retry(wait=wait_exponential(min=1, max=60), stop=stop_after_attempt(5))
+def call_api():
+    ...
+```
+
+**Step 5: Run test - expect PASS**
+```
+pytest tests/test_no_manual_retries.py tests/ -q
+```
+
+**Step 6: Commit**
+```
+git commit -m "refactor: replace 41 manual retry loops with @tenacity.retry decorators"
+```
+
+---
+
+## Phase 2: Cache Consolidation (thegent)
+**DAG:** Can run parallel with Phase 1.
+
+---
+
+### Task 2.1: Create UnifiedCache (replaces 3 implementations, -600 LOC)
+
+**Files:**
+- Create: `thegent/src/thegent/cache/unified.py`
+- Modify: `thegent/src/thegent/routing/cache.py` (480 LOC → imports UnifiedCache)
+- Modify: `thegent/src/thegent/cache/multi_level.py` (213 LOC → imports UnifiedCache)
+- Modify: `thegent/src/thegent/infra/fast_cache.py` (216 LOC → imports UnifiedCache)
+- Test: `thegent/tests/cache/test_unified_cache.py`
+
+**Step 1: Map overlapping methods across all 3 implementations**
+```
+grep -n "def " thegent/src/thegent/routing/cache.py thegent/src/thegent/cache/multi_level.py thegent/src/thegent/infra/fast_cache.py
+```
+
+**Step 2: Write tests for unified interface**
+```
+# tests/cache/test_unified_cache.py
+import pytest
+from thegent.cache.unified import UnifiedCache, CacheBackend
+
+def test_unified_cache_get_set():
+    cache = UnifiedCache(backend=CacheBackend.MEMORY, maxsize=100, ttl=60)
+    cache.set("key", "value")
+    assert cache.get("key") == "value"
+
+def test_unified_cache_miss_returns_none():
+    cache = UnifiedCache(backend=CacheBackend.MEMORY, maxsize=100, ttl=60)
+    assert cache.get("missing") is None
+
+def test_unified_cache_disk_backend():
+    cache = UnifiedCache(backend=CacheBackend.DISK, path="/tmp/test_cache")
+    cache.set("k", {"data": 1})
+    assert cache.get("k") == {"data": 1}
+
+def test_unified_cache_two_level():
+    cache = UnifiedCache(backend=CacheBackend.TWO_LEVEL, maxsize=100, ttl=60)
+    cache.set("k", "v")
+    assert cache.get("k") == "v"
+
+def test_unified_cache_evicts_on_overflow():
+    cache = UnifiedCache(backend=CacheBackend.MEMORY, maxsize=2, ttl=60)
+    cache.set("a", 1); cache.set("b", 2); cache.set("c", 3)
+    assert cache.get("a") is None  # evicted
+```
+
+**Step 3: Create UnifiedCache**
+```
+# cache/unified.py
+from enum import Enum
+from cachetools import TTLCache, LRUCache
+import diskcache
+
+class CacheBackend(Enum):
+    MEMORY = "memory"
+    DISK = "disk"
+    TWO_LEVEL = "two_level"
+
+class UnifiedCache:
+    def __init__(self, backend: CacheBackend, maxsize: int = 1000, ttl: int = 3600, path: str = None):
+        if backend == CacheBackend.MEMORY:
+            self._cache = TTLCache(maxsize=maxsize, ttl=ttl)
+        elif backend == CacheBackend.DISK:
+            self._cache = diskcache.Cache(path or "/tmp/thegent_cache")
+        elif backend == CacheBackend.TWO_LEVEL:
+            self._l1 = TTLCache(maxsize=maxsize // 10, ttl=ttl // 10)
+            self._l2 = diskcache.Cache(path or "/tmp/thegent_cache_l2")
+
+    def get(self, key: str):
+        if hasattr(self, '_l1'):
+            v = self._l1.get(key)
+            if v is None:
+                v = self._l2.get(key)
+                if v is not None:
+                    self._l1[key] = v
+            return v
+        return self._cache.get(key)
+
+    def set(self, key: str, value, ttl: int = None):
+        if hasattr(self, '_l1'):
+            self._l1[key] = value
+            self._l2.set(key, value, expire=ttl)
+        else:
+            self._cache[key] = value
+
+    def delete(self, key: str):
+        if hasattr(self, '_l1'):
+            self._l1.pop(key, None)
+            self._l2.delete(key)
+        else:
+            self._cache.pop(key, None)
+
+    def clear(self):
+        if hasattr(self, '_l1'):
+            self._l1.clear(); self._l2.clear()
+        else:
+            self._cache.clear()
+```
+
+**Step 4: Run tests - expect PASS**
+```
+pytest tests/cache/test_unified_cache.py -v
+```
+
+**Step 5: Migrate DualCache to wrap UnifiedCache**
+```
+# routing/cache.py - now a thin LLM-specific wrapper
+from thegent.cache.unified import UnifiedCache, CacheBackend
+
+class DualCache:
+    """LLM response cache - thin wrapper over UnifiedCache."""
+    def __init__(self, maxsize=1000, ttl=3600):
+        self._cache = UnifiedCache(CacheBackend.TWO_LEVEL, maxsize=maxsize, ttl=ttl)
+
+    def get_response(self, prompt_hash: str): return self._cache.get(prompt_hash)
+    def set_response(self, prompt_hash: str, response): self._cache.set(prompt_hash, response)
+```
+
+**Step 6: Replace MultiLevelCache and MultiTierCache with aliases**
+```
+# cache/multi_level.py
+from thegent.cache.unified import UnifiedCache, CacheBackend
+MultiLevelCache = lambda **kw: UnifiedCache(CacheBackend.TWO_LEVEL, **kw)
+
+# infra/fast_cache.py
+from thegent.cache.unified import UnifiedCache, CacheBackend
+MultiTierCache = lambda **kw: UnifiedCache(CacheBackend.TWO_LEVEL, **kw)
+```
+
+**Step 7: Run full test suite**
+```
+pytest tests/ -q --tb=short
+```
+
+**Step 8: Verify LOC reduction**
+```
+wc -l thegent/src/thegent/cache/unified.py thegent/src/thegent/routing/cache.py \
+       thegent/src/thegent/cache/multi_level.py thegent/src/thegent/infra/fast_cache.py
+```
+Expected total: ~200 LOC (vs 909 LOC before = -709 LOC).
+
+**Step 9: Commit**
+```
+git commit -m "refactor: consolidate 3 cache impls (909 LOC) into UnifiedCache (-709 LOC)"
+```
+
+---
+
+## Phase 3: thegent Logging Migration (1605 imports → structlog only)
+**DAG:** Independent, can run parallel with Phase 2.
+
+---
+
+### Task 3.1: Migrate thegent from mixed logging → structlog
+
+**Files:**
+- Modify: All files using `import logging` or `logging.getLogger()` in thegent/src/thegent/
+
+**Step 1: Count current violations**
+```
+grep -rn "^import logging\|logging\.getLogger" thegent/src/thegent/ --include="*.py" | wc -l
+```
+Expected: ~1605 references across many files.
+
+**Step 2: Write enforcement test**
+```
+# tests/test_no_stdlib_logging.py
+import pathlib, re
+
+def test_no_stdlib_logging_in_src():
+    src = pathlib.Path("src/thegent")
+    violations = []
+    for f in src.rglob("*.py"):
+        content = f.read_text()
+        if re.search(r'^import logging$|logging\.getLogger', content, re.MULTILINE):
+            violations.append(str(f))
+    assert not violations, f"Files using stdlib logging (migrate to structlog):\n" + "\n".join(violations)
+```
+
+**Step 3: Run test - expect FAIL**
+```
+pytest tests/test_no_stdlib_logging.py -v
+```
+
+**Step 4: Create centralized structlog config**
+```
+# thegent/src/thegent/logging_config.py
+import structlog
+
+def configure_logging(level: str = "INFO", format: str = "json"):
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.JSONRenderer() if format == "json"
+            else structlog.dev.ConsoleRenderer(),
+        ],
+        logger_factory=structlog.PrintLoggerFactory(),
+    )
+
+def get_logger(name: str = __name__):
+    return structlog.get_logger(name)
+```
+
+**Step 5: Batch replace in each file**
+```
+# For each file with stdlib logging:
+# Replace: import logging -> import structlog
+# Replace: logger = logging.getLogger(__name__) -> logger = structlog.get_logger(__name__)
+# Replace: logging.info/debug/warning/error -> logger.info/debug/warning/error
+find thegent/src/thegent -name "*.py" -exec sed -i \
+  -e 's/^import logging$/import structlog/' \
+  -e 's/logging\.getLogger(__name__)/structlog.get_logger(__name__)/' \
+  -e 's/logging\.getLogger(\(.*\))/structlog.get_logger(\1)/' {} \;
+```
+
+**Step 6: Run test - expect PASS**
+```
+pytest tests/test_no_stdlib_logging.py -v
+```
+
+**Step 7: Run full test suite to catch regressions**
+```
+pytest tests/ -q --tb=short
+```
+
+**Step 8: Commit**
+```
+git commit -m "refactor: migrate 1605 stdlib logging references to structlog"
+```
+
+---
+
+## Phase 4: Polyglot Boundary Cleanup (thegent)
+**DAG:** Independent.
+
+---
+
+### Task 4.1: Remove Mojo Bridge (complexity 4, benefit 1)
+
+**Files:**
+- Delete: `thegent/src/thegent/infra/mojo_bridge.py` (564 LOC)
+- Modify: All callers of mojo_bridge
+
+**Step 1: Find all callers**
+```
+grep -rn "mojo_bridge\|from.*mojo\|import.*mojo" thegent/src/thegent/ --include="*.py"
+```
+
+**Step 2: Write test for pure Python replacement**
+```
+# tests/test_mojo_replacement.py
+from thegent.scoring import score_model_output  # new pure Python function
+
+def test_scoring_returns_float():
+    result = score_model_output(output="test", criteria={"quality": 0.8})
+    assert isinstance(result, float)
+    assert 0.0 <= result <= 1.0
+```
+
+**Step 3: Implement pure Python scorer (replacing Mojo)**
+
+The Mojo bridge was doing model output scoring. Replace with Python:
+```
+# thegent/src/thegent/scoring.py
+def score_model_output(output: str, criteria: dict[str, float]) -> float:
+    """Pure Python scoring - replaces Mojo subprocess bridge."""
+    scores = []
+    for criterion, weight in criteria.items():
+        score = _score_criterion(output, criterion)
+        scores.append(score * weight)
+    return sum(scores) / len(scores) if scores else 0.0
+
+def _score_criterion(output: str, criterion: str) -> float:
+    # Simple heuristic scoring - extend as needed
+    if criterion == "quality":
+        return min(len(output) / 1000, 1.0)
+    return 0.5
+```
+
+**Step 4: Update callers to use new scoring module**
+
+**Step 5: Run test - expect PASS**
+```
+pytest tests/test_mojo_replacement.py -v
+```
+
+**Step 6: Delete mojo_bridge.py**
+```
+rm thegent/src/thegent/infra/mojo_bridge.py
+pytest tests/ -q  # no regressions
+```
+
+**Step 7: Commit**
+```
+git commit -m "refactor: remove Mojo bridge (564 LOC) - replace with pure Python scoring"
+```
+
+---
+
+### Task 4.2: Remove Zig POCs (226 LOC, unused)
+
+**Files:**
+- Delete: All Zig files found by `find thegent/ -name "*.zig"`
+
+**Step 1: Verify Zig files are unreferenced**
+```
+find thegent/ -name "*.zig"
+# For each file found, check if anything imports/references it:
+grep -rn "\.zig\|zig_" thegent/src/ thegent/hooks/
+```
+Expected: zero references.
+
+**Step 2: Delete**
+```
+find thegent/ -name "*.zig" -delete
+git add -A
+git commit -m "chore: remove unused Zig POC files (226 LOC)"
+```
+
+---
+
+### Task 4.3: Replace governance-gates.sh (2,519 LOC shell → Python)
+
+**Files:**
+- Delete: `thegent/hooks/governance-gates.sh` (2,519 LOC)
+- Create: `thegent/src/thegent/governance/gates.py`
+- Create: `thegent/hooks/governance-gates-runner.sh` (thin caller, <20 LOC)
+- Test: `thegent/tests/governance/test_gates.py`
+
+**Step 1: Read current shell script structure**
+```
+grep -n "^# ==\|^function \|^check_\|^run_" thegent/hooks/governance-gates.sh | head -50
+```
+
+**Step 2: Write tests for Python equivalent**
+```
+# tests/governance/test_gates.py
+from thegent.governance.gates import GovernanceGates, GateResult
+
+def test_gates_instantiate():
+    g = GovernanceGates()
+    assert g is not None
+
+def test_gate_passes_clean_code():
+    g = GovernanceGates()
+    result = g.run_gate("max_function_length", file="tests/fixtures/clean.py")
+    assert result.passed
+
+def test_gate_fails_long_function():
+    g = GovernanceGates()
+    result = g.run_gate("max_function_length", file="tests/fixtures/long_fn.py")
+    assert not result.passed
+    assert "40" in result.message
+```
+
+**Step 3: Run tests - expect FAIL**
+```
+pytest tests/governance/test_gates.py -v
+```
+
+**Step 4: Implement GovernanceGates in Python**
+```
+# governance/gates.py
+from dataclasses import dataclass
+import ast, pathlib
+from typing import Callable
+
+@dataclass
+class GateResult:
+    passed: bool
+    message: str
+    gate: str
+
+class GovernanceGates:
+    def __init__(self):
+        self._gates: dict[str, Callable] = {
+            "max_function_length": self._check_max_function_length,
+            "no_manual_retries": self._check_no_manual_retries,
+            "no_stdlib_logging": self._check_no_stdlib_logging,
+        }
+
+    def run_gate(self, gate: str, file: str) -> GateResult:
+        fn = self._gates.get(gate)
+        if not fn:
+            return GateResult(False, f"Unknown gate: {gate}", gate)
+        return fn(pathlib.Path(file))
+
+    def run_all(self, path: pathlib.Path) -> list[GateResult]:
+        results = []
+        for gate, fn in self._gates.items():
+            for f in path.rglob("*.py"):
+                results.append(fn(f))
+        return results
+
+    def _check_max_function_length(self, file: pathlib.Path) -> GateResult:
+        tree = ast.parse(file.read_text())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                lines = node.end_lineno - node.lineno
+                if lines > 40:
+                    return GateResult(False, f"{node.name}: {lines} lines (max 40)", "max_function_length")
+        return GateResult(True, "OK", "max_function_length")
+```
+
+**Step 5: Create thin shell caller**
+```
+#!/usr/bin/env bash
+# governance-gates-runner.sh - thin caller for Python governance gates
+set -euo pipefail
+python -m thegent.governance.gates "$@"
+```
+
+**Step 6: Run tests - expect PASS**
+```
+pytest tests/governance/ -v
+```
+
+**Step 7: Delete shell script, update hook-config.yaml to point to runner**
+```
+rm thegent/hooks/governance-gates.sh
+# Update hook-config.yaml: governance-gates.sh -> governance-gates-runner.sh
+```
+
+**Step 8: Run full test suite + time it (expect 4x faster)**
+```
+time pytest tests/ -q
+```
+
+**Step 9: Commit**
+```
+git commit -m "refactor: replace governance-gates.sh (2519 LOC) with Python GovernanceGates (4x faster)"
+```
+
+---
+
+## Phase 5: trace Refactors
+**DAG:** Independent from thegent phases, can run in parallel.
+
+---
+
+### Task 5.1: Add Circuit Breakers to 3 HTTP Clients
+
+**Files:**
+- Modify: `trace/python/clients/github_client.py`
+- Modify: `trace/python/clients/linear_client.py`
+- Modify: `trace/python/clients/go_client.py`
+- Test: `trace/python/tests/clients/test_circuit_breakers.py`
+
+**Step 1: Verify pybreaker is in trace deps**
+```
+grep "pybreaker" trace/pyproject.toml
+```
+If missing: add it.
+
+**Step 2: Write tests**
+```
+# tests/clients/test_circuit_breakers.py
+import pytest
+from unittest.mock import patch, AsyncMock
+from trace.clients.github_client import GitHubClient
+
+@pytest.mark.asyncio
+async def test_github_client_opens_circuit_after_failures():
+    client = GitHubClient(token="fake")
+    # Force 5 failures
+    with patch.object(client, '_http_get', side_effect=Exception("timeout")):
+        for _ in range(5):
+            with pytest.raises(Exception):
+                await client.get_repo("owner/repo")
+    # Circuit should now be open
+    assert client.circuit_breaker.current_state == "open"
+
+@pytest.mark.asyncio
+async def test_github_client_fast_fails_when_open():
+    client = GitHubClient(token="fake")
+    client.circuit_breaker.open()
+    with pytest.raises(pybreaker.CircuitBreakerError):
+        await client.get_repo("owner/repo")
+```
+
+**Step 3: Add pybreaker to each client**
+```
+# clients/github_client.py
+import pybreaker
+
+github_breaker = pybreaker.CircuitBreaker(
+    fail_max=5,
+    reset_timeout=60,
+    name="github"
+)
+
+class GitHubClient:
+    def __init__(self, token: str):
+        self.circuit_breaker = github_breaker
+        ...
+
+    @github_breaker
+    async def get_repo(self, repo: str) -> dict:
+        ...
+```
+
+**Step 4: Run tests - expect PASS**
+```
+cd trace && pytest python/tests/clients/test_circuit_breakers.py -v
+```
+
+**Step 5: Commit**
+```
+git commit -m "feat: add pybreaker circuit breakers to GitHub, Linear, Go HTTP clients"
+```
+
+---
+
+### Task 5.2: Split trace api/main.py Monolith (9,274 LOC)
+
+**Files:**
+- Modify: `trace/python/api/main.py` (9,274 LOC)
+- Create: `trace/python/api/routers/` (one router per domain)
+- Create: `trace/python/api/services/` (extracted service layer)
+
+**Step 1: List all route groups in main.py**
+```
+grep -n "@app\.\(get\|post\|put\|delete\|patch\)\|@router\." trace/python/api/main.py | head -60
+```
+
+**Step 2: Write integration test for API surface (before refactor)**
+```
+# tests/api/test_api_surface.py
+from fastapi.testclient import TestClient
+from trace.api.main import app
+
+client = TestClient(app)
+
+def test_health_endpoint():
+    r = client.get("/health")
+    assert r.status_code == 200
+
+def test_items_list_endpoint():
+    r = client.get("/api/v1/items")
+    assert r.status_code in (200, 401)  # may need auth
+```
+
+**Step 3: Extract routers by domain**
+
+Domain groups from main.py: items, specs, links, projects, workflows, search, auth, admin.
+
+```
+# api/routers/items.py
+from fastapi import APIRouter
+router = APIRouter(prefix="/api/v1/items", tags=["items"])
+
+@router.get("/")
+async def list_items(): ...
+
+@router.post("/")
+async def create_item(): ...
+```
+
+**Step 4: Reduce api/main.py to app factory + router registration**
+```
+# api/main.py - target: <100 LOC
+from fastapi import FastAPI
+from trace.api.routers import items, specs, links, projects, workflows, search, auth
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="Trace API")
+    app.include_router(items.router)
+    app.include_router(specs.router)
+    # ... etc
+    return app
+
+app = create_app()
+```
+
+**Step 5: Run integration tests**
+```
+cd trace && pytest python/tests/api/ -v
+```
+
+**Step 6: Verify api/main.py is <100 LOC**
+```
+wc -l trace/python/api/main.py
+```
+
+**Step 7: Commit**
+```
+git commit -m "refactor: split api/main.py (9274 LOC) into domain routers"
+```
+
+---
+
+### Task 5.3: Add tenacity to trace's Manual Retry Loops
+
+**Files:**
+- Modify: Files in trace containing `retry_time *= 1.5` or similar manual exponential backoff
+
+**Step 1: Find all manual retry loops in trace**
+```
+grep -rn "retry_time\|retry_count\|\* 1\.5\|sleep.*retry" trace/python/ --include="*.py"
+```
+
+**Step 2: Write test**
+```
+# tests/test_no_manual_retries_trace.py
+import pathlib, re
+
+def test_no_manual_retry_in_trace():
+    violations = []
+    for f in pathlib.Path("python").rglob("*.py"):
+        content = f.read_text()
+        if re.search(r'retry_time\s*\*=|retry_count\s*\+=', content):
+            violations.append(str(f))
+    assert not violations, "Manual retry loops found:\n" + "\n".join(violations)
+```
+
+**Step 3: Replace each with @tenacity.retry**
+(Same pattern as Task 1.5)
+
+**Step 4: Commit**
+```
+git commit -m "refactor: replace manual retry loops in trace with @tenacity.retry"
+```
+
+---
+
+### Task 5.4: Split 30 Large TypeScript Components (>200 LOC)
+
+**Files:**
+- Modify: 30 components, starting with `FlowGraphViewInner` (1,178 LOC)
+- Target: each component <200 LOC
+
+**Step 1: Find all large components**
+```
+find trace/frontend/apps/web/src -name "*.tsx" | \
+  xargs wc -l | sort -rn | awk '$1 > 200' | head -35
+```
+
+**Step 2: Write test that no component exceeds 400 LOC**
+```
+// tests/component-size.test.ts
+import { glob } from 'glob'
+import { readFileSync } from 'fs'
+
+test('no component exceeds 400 LOC', () => {
+  const files = glob.sync('src/**/*.tsx')
+  const violations = files.filter(f => {
+    const lines = readFileSync(f, 'utf8').split('\n').length
+    return lines > 400
+  })
+  expect(violations).toEqual([])
+})
+```
+
+**Step 3: Split FlowGraphViewInner (1,178 LOC) first**
+
+Extract sub-components:
+- `FlowGraphCanvas.tsx` - rendering logic
+- `FlowGraphControls.tsx` - toolbar/controls
+- `FlowGraphSidebar.tsx` - sidebar panel
+- `FlowGraphViewInner.tsx` - orchestration only, <150 LOC
+
+**Step 4: Run existing component tests**
+```
+cd trace/frontend && bun test
+```
+
+**Step 5: Repeat for remaining 29 large components**
+
+**Step 6: Run size test**
+```
+cd trace/frontend && bun test tests/component-size.test.ts
+```
+
+**Step 7: Commit after every 5 components**
+```
+git commit -m "refactor: split FlowGraphViewInner (1178 LOC) into 4 focused components"
+```
+
+---
+
+### Task 5.5: Add Runtime API Response Validation (Zod from OpenAPI)
+
+**Files:**
+- Create: `trace/frontend/apps/web/src/lib/api-validation.ts`
+- Modify: API client files to validate responses
+
+**Step 1: Check if OpenAPI spec is generated**
+```
+ls trace/python/openapi.json 2>/dev/null || curl http://localhost:8000/openapi.json > /tmp/openapi.json
+```
+
+**Step 2: Generate Zod schemas from OpenAPI**
+```
+cd trace/frontend && bunx openapi-zod-client ../python/openapi.json --output src/lib/api-schemas.ts
+```
+
+**Step 3: Write test**
+```
+// tests/api-validation.test.ts
+import { ItemSchema } from '../lib/api-schemas'
+
+test('item schema validates correctly', () => {
+  const valid = { id: '1', title: 'Test', status: 'open' }
+  expect(() => ItemSchema.parse(valid)).not.toThrow()
+})
+
+test('item schema rejects invalid', () => {
+  expect(() => ItemSchema.parse({ id: 123 })).toThrow()
+})
+```
+
+**Step 4: Add validation to API client**
+```
+// lib/api-client.ts
+import { ItemSchema } from './api-schemas'
+
+async function getItem(id: string) {
+  const data = await fetch(`/api/v1/items/${id}`).then(r => r.json())
+  return ItemSchema.parse(data)  // throws on invalid shape
+}
+```
+
+**Step 5: Commit**
+```
+git commit -m "feat: add runtime API response validation via Zod schemas from OpenAPI"
+```
+
+---
+
+## Phase 6: Cross-Cutting Library Adoption
+**DAG:** After Phase 1-5 are complete.
+
+---
+
+### Task 6.1: Add msgspec for Hot-Path Serialization
+
+**Files:**
+- Modify: Hot-path pydantic models in both thegent and trace
+
+**Step 1: Find pydantic models used in tight loops or high-frequency paths**
+```
+grep -rn "model_dump\|model_validate\|\.json()" thegent/src/ trace/python/ --include="*.py" | \
+  grep -v test | grep -v "#" | head -30
+```
+
+**Step 2: Benchmark pydantic vs msgspec**
+```
+# tests/perf/test_serialization_bench.py
+import timeit
+import pydantic
+import msgspec
+
+class ItemPydantic(pydantic.BaseModel):
+    id: str; title: str; status: str
+
+class ItemMsgspec(msgspec.Struct):
+    id: str; title: str; status: str
+
+def test_msgspec_faster_than_pydantic():
+    data = {"id": "1", "title": "Test", "status": "open"}
+    pydantic_time = timeit.timeit(lambda: ItemPydantic(**data), number=10000)
+    msgspec_time = timeit.timeit(lambda: msgspec.json.decode(
+        msgspec.json.encode(data), type=ItemMsgspec), number=10000)
+    assert msgspec_time < pydantic_time, f"msgspec ({msgspec_time:.3f}s) not faster than pydantic ({pydantic_time:.3f}s)"
+```
+
+**Step 3: Migrate 5 highest-frequency models**
+
+Target: models called >1000x/request or in event loops.
+
+**Step 4: Commit**
+```
+git commit -m "perf: adopt msgspec for 5 hot-path serialization models (2-5x faster)"
+```
+
+---
+
+### Task 6.2: Agent Persona Consolidation (53 → ~35 agents)
+
+**Files:**
+- Delete/merge: 8 clusters of duplicate agents in `thegent/agents/`
+- Modify: `thegent/agents/qa-verifier.md` (merges qa-verification-lead + quality-gatekeeper)
+
+**Step 1: List the consolidation map from prior audit**
+
+Clusters to merge:
+- `qa-verification-lead` + `quality-gatekeeper` → `qa-enforcer.md`
+- `test-strategist` + `qa-test-coverage-expert` → `qa-architect.md`
+- `gardener` + `backlog-gardener` + `blueprint-curator` + `knowledge-base-curator` → `gardener.md` (with mode flag)
+- `security-auditor` + `atoms-security-reviewer` + `compliance-liaison` → `security-guardian.md`
+- `performance-tuner` + `performance-optimization-specialist` → `performance-engineer.md`
+
+**Step 2: Write test that merged agents cover same capabilities**
+```
+# tests/agents/test_agent_consolidation.py
+import pathlib, yaml
+
+EXPECTED_AGENTS = {"qa-enforcer", "qa-architect", "gardener", "security-guardian", "performance-engineer"}
+REMOVED_AGENTS = {"qa-verification-lead", "quality-gatekeeper", "test-strategist", "atoms-security-reviewer"}
+
+def test_consolidated_agents_exist():
+    agents_dir = pathlib.Path("agents")
+    for name in EXPECTED_AGENTS:
+        assert (agents_dir / f"{name}.md").exists(), f"Missing: {name}.md"
+
+def test_removed_agents_gone():
+    agents_dir = pathlib.Path("agents")
+    for name in REMOVED_AGENTS:
+        assert not (agents_dir / f"{name}.md").exists(), f"Should be removed: {name}.md"
+```
+
+**Step 3: Create merged agents, delete originals**
+
+For each merged agent: combine unique capabilities, add mode/flag system if needed.
+
+**Step 4: Run test - expect PASS**
+```
+pytest tests/agents/test_agent_consolidation.py -v
+```
+
+**Step 5: Commit**
+```
+git commit -m "refactor: consolidate 53 agents into ~35 (remove 8 duplicate clusters)"
+```
+
+---
+
+### Task 6.3: Canonical process-compose Template
+
+**Files:**
+- Create: `thegent/templates/process-compose/process-compose.yaml`
+- Document: How to extend for project-specific services
+
+**Step 1: Read all 8 existing process-compose files and find common patterns**
+```
+for f in $(find /Users/kooshapari/temp-PRODVERCEL/485/kush -name "process-compose.yaml" 2>/dev/null); do
+  echo "=== $f ===" && head -30 "$f"
+done
+```
+
+**Step 2: Create canonical template**
+```
+# templates/process-compose/process-compose.yaml
+version: "0.5"
+log-level: info
+
+processes:
+  # Override in project-specific process-compose.yaml
+  placeholder:
+    command: "echo 'No services configured'"
+    is_daemon: true
+    disabled: true
+```
+
+**Step 3: Write test that template is valid YAML and parseable**
+```
+def test_canonical_process_compose_valid():
+    import yaml
+    content = Path("templates/process-compose/process-compose.yaml").read_text()
+    parsed = yaml.safe_load(content)
+    assert "version" in parsed
+    assert "processes" in parsed
+```
+
+**Step 4: Commit**
+```
+git commit -m "feat: add canonical process-compose template (replaces 8 ad-hoc copies)"
+```
+
+---
+
+## Phase 7: Template Gaps
+**DAG:** Independent, can run parallel with all other phases.
+
+---
+
+### Task 7.1: Add Go CI Template
+
+**Files:**
+- Create: `thegent/templates/ci/ci.go.yml`
+
+```
+# templates/ci/ci.go.yml
+name: Go CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: stable}
+      - run: go build ./...
+      - run: go test ./... -race -coverprofile=coverage.out
+      - run: go vet ./...
+      - run: golangci-lint run
+```
+
+**Step 1: Write test that template is valid YAML**
+```
+def test_go_ci_template_valid():
+    import yaml
+    content = Path("templates/ci/ci.go.yml").read_text()
+    parsed = yaml.safe_load(content)
+    assert "jobs" in parsed
+    assert "test" in parsed["jobs"]
+```
+
+**Step 2: Create file, run test, commit**
+```
+git commit -m "feat: add Go CI workflow template"
+```
+
+---
+
+### Task 7.2: Add Rust Taskfile Template
+
+**Files:**
+- Create: `thegent/templates/rust/Taskfile.rust.yml`
+
+```
+# templates/rust/Taskfile.rust.yml
+version: '3'
+tasks:
+  build: {cmd: cargo build}
+  test: {cmd: cargo test}
+  lint: {cmd: cargo clippy -- -D warnings}
+  fmt: {cmd: cargo fmt --check}
+  audit: {cmd: cargo audit}
+  quality: {deps: [fmt, lint, test, audit]}
+```
+
+**Step 1: Create, test YAML validity, commit**
+```
+git commit -m "feat: add Rust Taskfile template"
+```
+
+---
+
+### Task 7.3: Add zuban + basedpyright to Quality Templates
+
+**Files:**
+- Modify: `thegent/templates/quality/` - add zuban.toml, pyrightconfig.basedpyright.json
+
+**Step 1: Create zuban config**
+```
+# templates/quality/zuban.toml
+[zuban]
+target-version = "py313"
+strict = true
+```
+
+**Step 2: Update pyrightconfig.json to basedpyright**
+```
+// templates/quality/pyrightconfig.json
+{
+  "typeCheckingMode": "strict",
+  "useLibraryCodeForTypes": true,
+  "reportImplicitStringConcatenation": "error"
+}
+```
+
+**Step 3: Commit**
+```
+git commit -m "feat: add zuban and basedpyright configs to quality templates"
+```
+
+---
+
+## Validation Checklist (Run After All Phases)
+
+```
+# 1. No function > 40 lines in thegent src
+python scripts/check_function_length.py thegent/src/thegent/ --max 40
+
+# 2. No manual retry loops
+pytest tests/test_no_manual_retries.py tests/test_no_manual_retries_trace.py -v
+
+# 3. No stdlib logging in thegent
+pytest tests/test_no_stdlib_logging.py -v
+
+# 4. All registered hooks exist
+pytest tests/hooks/test_hook_registry.py -v
+
+# 5. No hardcoded paths
+pytest tests/cli/test_specs_portability.py -v
+
+# 6. Cache consolidation - no more than 1 cache impl
+python -c "from thegent.cache.unified import UnifiedCache; print('OK')"
+
+# 7. Full test suites pass
+pytest thegent/tests/ -q --tb=short
+cd trace && pytest python/tests/ -q --tb=short
+cd trace/frontend && bun test
+
+# 8. No component > 400 LOC in trace frontend
+cd trace/frontend && bun test tests/component-size.test.ts
+```
+
+---
+
+## Summary: LOC Impact
+
+| Change | LOC Removed |
+|--------|-------------|
+| Cache consolidation (3→1) | -709 |
+| Mojo bridge removal | -564 |
+| Zig POC removal | -226 |
+| governance-gates.sh → Python | -2,000 (shell→100 LOC Python) |
+| gardener-*.sh simplification | -~400 |
+| ThegentSettings split | net 0 (reorganized) |
+| run_impl_core extraction | net 0 (reorganized) |
+| execution.py split | net 0 (reorganized) |
+| doctor.py plugin arch | net 0 (reorganized) |
+| Agent consolidation (53→35) | -~600 (agent personas) |
+| **Total bloat eliminated** | **~4,500 LOC** |
+
+Complexity reduction: ~803 functions over 40 lines → target <50 violations after phases 1-4.

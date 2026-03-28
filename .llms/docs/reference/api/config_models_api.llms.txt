@@ -1,0 +1,119 @@
+# config_models_api
+
+Source: docs/reference/api/config_models_api.md
+
+---
+
+# config_models API Reference
+
+> **Source**: `src/thegent/config_models.py`
+
+Configuration models for different settings groups.
+
+Split from config.py for maintainability.
+
+---
+
+## BinarySettings
+
+Binary paths configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## BudgetSettings
+
+Budget and cost tracking configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## GovernanceSettings
+
+Governance and normalization configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## MCPSettings
+
+MCP and control plane configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## ModelDefaultsSettings
+
+Default model configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## OutputSettings
+
+Output configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## OwnerSettings
+
+Owner and scope configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## PathSettings
+
+Path and directory configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## RetentionSettings
+
+Retention policy configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## RoutingSettings
+
+Routing configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## SecuritySettings
+
+Security configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## SessionSettings
+
+Session and backend configuration.
+
+**Inherits from**: `BaseSettings`
+
+---
+
+## TimeoutSettings
+
+Timeout configuration.
+
+**Inherits from**: `BaseSettings`
+
+---

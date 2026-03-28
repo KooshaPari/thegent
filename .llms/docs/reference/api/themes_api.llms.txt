@@ -18,6 +18,8 @@ Provides theme management with built-in themes and custom theme support.
 
 Color palette for a theme.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
 
 #### ThemeColors.from_dict
@@ -28,19 +30,13 @@ from_dict(cls: Any, data: dict[(str, str)])
 
 ---
 
-#### ThemeColors.to_dict
-
-```
-to_dict(self: Any)
-```
-
----
-
 ---
 
 ## ThemeDefinition
 
 Complete theme definition.
+
+**Inherits from**: `SerializableMixin`
 
 ### Methods
 
@@ -48,14 +44,6 @@ Complete theme definition.
 
 ```
 from_dict(cls: Any, data: dict[(str, Any)])
-```
-
----
-
-#### ThemeDefinition.to_dict
-
-```
-to_dict(self: Any)
 ```
 
 ---
@@ -339,14 +327,6 @@ set_theme(self: Any, name: str)
 ```
 
 Set the current theme.
-
----
-
-## to_dict
-
-```
-to_dict(self: Any) -> dict[(str, Any)]
-```
 
 ---
 

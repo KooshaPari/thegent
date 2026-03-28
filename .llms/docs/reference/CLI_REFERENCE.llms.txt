@@ -1,0 +1,1036 @@
+# CLI_REFERENCE
+
+Source: docs/reference/CLI_REFERENCE.md
+
+---
+
+# thegent CLI Reference
+
+Complete reference for the `thegent` command-line interface.
+
+## Overview
+
+thegent is a unified agent orchestration system. It provides a single entry point
+for spawning, controlling, and coordinating AI agents across providers, managing
+sessions, planning work via DAG-based roadmaps, and enforcing governance policies.
+
+```
+thegent [--version] [--help] <command> [<subcommand>] [options]
+```
+
+All commands print `--help` output when invoked without required arguments. Rich
+terminal output is the default; most commands accept `--format json` for machine
+consumption.
+
+---
+
+## Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `--version` | Print the installed thegent version and exit. |
+| `--help` | Show help for any command or subcommand. |
+| `--install-completion` | Install shell completion for the active shell. |
+| `--show-completion` | Print shell completion script to stdout. |
+
+---
+
+## Top-Level Shortcut Commands
+
+These commands are available directly on the root `thegent` invocation as
+convenience aliases for common workflows.
+
+### thegent do
+
+Quick-run a prompt with the default configured agent.
+
+```
+thegent do <prompt>
+```
+
+**Arguments**
+
+| Argument | Description |
+|----------|-------------|
+| `prompt` | The prompt text to send to the agent. Required. |
+
+**Examples**
+
+```
+thegent do "Summarize the open issues in this repository"
+thegent do "Refactor the auth module to use hexagonal architecture"
+```
+
+---
+
+### thegent setup
+
+Run the interactive setup wizard and configure providers, API keys, and system
+integrations.
+
+```
+thegent setup [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--api-key TEXT` | NVIDIA NIM API key. |
+| `--model TEXT` | NVIDIA NIM model override. |
+| `--openrouter-key TEXT` | OpenRouter API key. |
+| `--kilo-key TEXT` | Kilo.ai API key. |
+| `--zai-key TEXT` | Z.AI (Zhipu) API key. |
+| `--minimax-key TEXT` | MiniMax API key. |
+| `--wizard / --no-wizard` | Run the interactive wizard (default: on). |
+| `--links / --no-links` | Install `claudeglm` / `claudemax` shell shortcuts. |
+| `--hooks / --no-hooks` | Install git hooks (pre-commit, pre-push) into `.git/hooks`. |
+| `--skills / --no-skills` | Sync thegent-skills template to `~/.claude`, `~/.cursor`, and project. |
+| `--harness / --no-harness` | Install or update the heliosShield harness. |
+| `--full` | Full setup: run all install steps, shim installation, lock-cleanup service, MCP service, and harness. |
+| `--agents TEXT` | Comma-separated list of agents to configure (e.g. `claude,codex,cursor`). Skips unconfigured agents in wizard. |
+
+**Examples**
+
+```
+thegent setup
+thegent setup --full
+thegent setup --agents claude,codex --no-wizard
+```
+
+---
+
+### thegent review
+
+Run a read-only agent review and validate structured findings.
+
+```
+thegent review <prompt> [options]
+```
+
+**Arguments**
+
+| Argument | Description |
+|----------|-------------|
+| `prompt` | Review request prompt. Required. |
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--agent TEXT` | Agent to run (defaults to the configured default). |
+| `--model TEXT` | LLM model override. |
+| `--format TEXT` | Output format: `rich` or `json` (default: `rich`). |
+
+**Examples**
+
+```
+thegent review "Check the auth module for security issues"
+thegent review "Review PR #42 for architecture compliance" --format json
+```
+
+---
+
+### thegent doctor
+
+Shortcut for `thegent audit doctor`. Check system health, environment, and
+dependencies.
+
+```
+thegent doctor [--fix]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--fix` | Attempt to fix detected issues automatically. |
+
+---
+
+### thegent help
+
+Show inline usage examples for a given command.
+
+```
+thegent help <command>
+```
+
+**Examples**
+
+```
+thegent help run
+thegent help plan
+thegent help doctor
+```
+
+---
+
+### thegent agent-server
+
+Run the thegent JSON-RPC agent server over stdio. Used for programmatic agent
+integration.
+
+```
+thegent agent-server
+```
+
+---
+
+## thegent run
+
+Execute agent tasks, manage background sessions, and inspect run history.
+
+```
+thegent run <subcommand> [options]
+```
+
+### thegent run agent
+
+Run an agent task interactively or in the foreground.
+
+```
+thegent run agent <prompt> [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--agent TEXT` | Agent name: `claude`, `openai`, `gemini`, `codex`, and others. |
+| `--model TEXT` | LLM model override (e.g. `sonnet`, `opus`, `gpt-4o`). |
+| `--cd PATH` | Working directory for the agent to operate in. |
+| `--timeout INT` | Maximum execution time in seconds. |
+| `--skill TEXT` | Activate a named skill. Repeatable. |
+| `--routing TEXT` | Routing strategy override. |
+| `--failover` | Enable automatic provider failover. |
+
+**Examples**
+
+```
+thegent run agent "Add unit tests to the payment module" --agent claude
+thegent run agent "Fix the failing CI job" --agent codex --model codex-default
+thegent run agent "Refactor this service" --cd ./services/auth --skill hexagonal
+```
+
+### thegent run bg
+
+Run an agent task in the background and return immediately. The run is tracked
+as a session.
+
+```
+thegent run bg <prompt> [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--agent TEXT` | Agent name. |
+| `--model TEXT` | LLM model override. |
+| `--cd PATH` | Working directory. |
+| `--timeout INT` | Maximum execution time in seconds. |
+| `--run-id TEXT` | Assign a stable run identifier. |
+| `--task-id TEXT` | Associate with a DAG task ID. |
+| `--lane TEXT` | Execution lane for multi-lane queuing. |
+| `--skill TEXT` | Activate a named skill. Repeatable. |
+| `--routing TEXT` | Routing strategy override. |
+| `--failover` | Enable provider failover. |
+| `--speculative` | Run speculatively without committing changes. |
+| `--idempotency-token TEXT` | Deduplicate repeated submissions. |
+
+**Examples**
+
+```
+thegent run bg "Migrate the database schema" --agent claude --task-id T-42
+thegent run bg "Run the full test suite" --lane slow --timeout 600
+```
+
+### thegent run history
+
+Show recent run history.
+
+```
+thegent run history [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--limit INT` | Maximum entries to display (default: 20). |
+| `--format TEXT` | Output format: `rich` or `json`. |
+
+---
+
+## thegent session
+
+Inspect and resume background agent sessions.
+
+```
+thegent session <subcommand> [options]
+```
+
+### thegent session list
+
+List all sessions with status information.
+
+```
+thegent session list [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--all` / `-a` | Show sessions from all owners, not just the current user. |
+| `--owner TEXT` / `-o` | Filter by owner tag. |
+| `--format TEXT` / `-F` | Output format: `rich` or `json` (default: `rich`). |
+| `--limit INT` / `-n` | Maximum sessions to return (default: 50). |
+
+**Examples**
+
+```
+thegent session list
+thegent session list --all --format json
+thegent session list --owner agent-1 --limit 10
+```
+
+### thegent session resume
+
+Resume a previously created session using the stable state contract.
+
+```
+thegent session resume [<session-id>] [options]
+```
+
+**Arguments**
+
+| Argument | Description |
+|----------|-------------|
+| `session-id` | Session ID to resume. Defaults to the latest resumable session if omitted. |
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--prompt TEXT` | Optional follow-up prompt to queue after resume. |
+| `--skill TEXT` | Activate a named skill on resume. Repeatable. |
+
+**Examples**
+
+```
+thegent session resume
+thegent session resume sess-abc123 --prompt "Now run the tests"
+thegent session resume sess-abc123 --skill hexagonal
+```
+
+---
+
+## thegent plan
+
+Manage the project roadmap via a DAG of tasks and initiatives.
+
+```
+thegent plan <subcommand> [options]
+```
+
+### thegent plan status
+
+Show the current DAG status and a visual dependency graph.
+
+```
+thegent plan status [--format TEXT]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--format TEXT` / `-F` | Output format: `rich`, `graph`, `json`, or `md` (default: `rich`). |
+
+### thegent plan next
+
+Identify the next ready tasks from the DAG (tasks whose dependencies are all complete).
+
+```
+thegent plan next [--format TEXT]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--format TEXT` / `-F` | Output format: `rich`, `json`, `ids`, or `md` (default: `rich`). |
+
+### thegent plan add
+
+Add a new task to the DAG.
+
+```
+thegent plan add <task-id> [options]
+```
+
+**Arguments**
+
+| Argument | Description |
+|----------|-------------|
+| `task-id` | Unique identifier for the new task. Required. |
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--agent TEXT` / `-a` | Agent to assign (default: `copilot`). |
+| `--prompt TEXT` / `-p` | Task prompt or description. |
+| `--dep TEXT` / `-d` | Dependency task ID. Repeatable. |
+
+**Examples**
+
+```
+thegent plan add T-100 --prompt "Implement auth refresh" --dep T-99
+thegent plan add T-101 --agent claude --dep T-100 --dep T-98
+```
+
+### thegent plan remove
+
+Remove a task from the DAG.
+
+```
+thegent plan remove <task-id>
+```
+
+### thegent plan roadmap
+
+Display high-level roadmap initiatives from `PLAN.md`.
+
+```
+thegent plan roadmap [--format TEXT]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--format TEXT` / `-F` | Output format: `rich` or `json` (default: `rich`). |
+
+---
+
+## thegent audit
+
+Check system health, security, and planning integrity.
+
+```
+thegent audit <subcommand> [options]
+```
+
+### thegent audit all
+
+Run a comprehensive system audit across all configured audit types.
+
+```
+thegent audit all [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--type TEXT` / `-t` | Specific audit types to run. Repeatable. |
+| `--fix` | Attempt to fix discovered issues automatically. |
+| `--severity TEXT` / `-s` | Minimum severity filter: `low`, `medium`, `high`, `critical`, or `all` (default: `all`). |
+| `--format TEXT` / `-F` | Output format: `rich` or `json` (default: `rich`). |
+
+**Examples**
+
+```
+thegent audit all
+thegent audit all --severity high --format json
+thegent audit all --type security --type plan --fix
+```
+
+### thegent audit doctor
+
+Check system health, environment, and installed dependencies.
+
+```
+thegent audit doctor [--fix]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--fix` | Attempt to fix detected issues. |
+
+### thegent audit plan
+
+Audit planning continuity, roadmap progress, and PERT risk.
+
+```
+thegent audit plan
+```
+
+---
+
+## thegent sync
+
+Synchronize rules, DAG state, and model catalogs.
+
+```
+thegent sync <subcommand> [options]
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `rules` | Synchronize cross-platform rules. |
+| `dag` | Synchronize the task DAG state. |
+| `models` | Refresh the model catalog from configured providers. |
+| `catalog` | Synchronize the full catalog (rules, DAG, models). |
+
+---
+
+## thegent crew
+
+Create, configure, and execute multi-agent crews.
+
+```
+thegent crew <subcommand> [options]
+```
+
+### thegent crew create
+
+Create a new crew definition.
+
+```
+thegent crew create [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--name TEXT` | Crew name. Required. |
+| `--description TEXT` | Optional description. |
+| `--mode TEXT` | Execution mode: `sequential`, `hierarchical`, or `custom` (default: `sequential`). |
+| `--output PATH` / `-o` | Write the crew definition to a JSON file. |
+
+**Examples**
+
+```
+thegent crew create --name "refactor-crew" --mode hierarchical
+thegent crew create --name "test-crew" --output ./crews/test-crew.json
+```
+
+### thegent crew add-agent
+
+Add an agent to an existing crew.
+
+```
+thegent crew add-agent <crew-id> [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--role TEXT` | Agent role within the crew. Required. |
+| `--name TEXT` | Display name for the agent. |
+| `--description TEXT` | Agent description. |
+| `--capabilities TEXT` | Comma-separated capability tags. |
+| `--model TEXT` | Model override for this agent. |
+
+### thegent crew add-task
+
+Add a task to an existing crew.
+
+```
+thegent crew add-task <crew-id> [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--description TEXT` | Task description. Required. |
+| `--dependencies TEXT` | Comma-separated task IDs this task depends on. |
+| `--agent-id TEXT` | Assign to a specific agent by ID. |
+
+### thegent crew execute
+
+Execute a crew from a JSON definition file.
+
+```
+thegent crew execute <crew-file> [options]
+```
+
+### thegent crew list
+
+List all defined crews.
+
+```
+thegent crew list [--format TEXT]
+```
+
+### thegent crew show
+
+Show details for a specific crew.
+
+```
+thegent crew show <crew-id>
+```
+
+### thegent crew status
+
+Show execution status for a crew.
+
+```
+thegent crew status <crew-id>
+```
+
+---
+
+## thegent skill
+
+Discover, list, and manage agent skills.
+
+```
+thegent skill <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `list` | List all discovered skills. |
+| `show <name>` | Show details for a named skill. |
+| `sync` | Synchronize skills from the thegent template directory. |
+| `install <name>` | Install a skill by name. |
+
+---
+
+## thegent queue
+
+Manage the unified prompt queue for deferred agent tasks.
+
+```
+thegent queue <subcommand> [options]
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `push <prompt>` | Enqueue a prompt for deferred execution. |
+| `list` | List queued prompts. |
+| `pop` | Dequeue and execute the next prompt. |
+| `clear` | Clear all queued prompts. |
+
+---
+
+## thegent team
+
+Coordinate swarms of agents, discover teammates, and manage agent hierarchies.
+
+```
+thegent team <subcommand> [options]
+```
+
+### thegent team teammates list
+
+Discover and list registered teammate personas.
+
+```
+thegent team teammates list [--format TEXT]
+```
+
+---
+
+## thegent memory
+
+Manage agent memory logs, synthesis, and gardening.
+
+```
+thegent memory <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `list` | List all memory entries. |
+| `show <id>` | Show a specific memory entry. |
+| `prune` | Remove stale or low-value memory entries (gardening). |
+| `synthesize` | Generate a synthesized summary of memory entries. |
+
+---
+
+## thegent worktree
+
+Structured worktree governance lifecycle for multi-agent development.
+
+```
+thegent worktree <subcommand> [options]
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `create <name>` | Create a governed worktree for a topic. |
+| `list` | List all managed worktrees. |
+| `status` | Show governance status of active worktrees. |
+| `close <name>` | Close and clean up a worktree. |
+| `audit` | Audit worktrees for compliance with governance rules. |
+
+---
+
+## thegent git
+
+Coordinated git workflows for multi-agent development. Requires the
+`thegent-git` optional dependency.
+
+```
+thegent git <subcommand> [options]
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `commit` | Create a governed commit with policy checks. |
+| `pr` | Open a pull request following team conventions. |
+| `sync` | Sync local branches with remote state. |
+
+---
+
+## thegent mcp
+
+Install, configure, and manage MCP (Model Context Protocol) tool integrations.
+
+```
+thegent mcp <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `install <tool>` | Install an MCP tool. |
+| `list` | List installed MCP tools. |
+| `remove <tool>` | Remove an MCP tool. |
+| `service start` | Start the MCP service. |
+| `service stop` | Stop the MCP service. |
+| `migrate` | Migrate MCP configurations to the current format. |
+
+---
+
+## thegent mesh
+
+Local agent coordination, status, and discovery.
+
+```
+thegent mesh <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `status` | Show mesh status and discovered peers. |
+| `list` | List all peers in the local mesh. |
+| `ping <peer>` | Ping a named peer to verify connectivity. |
+
+---
+
+## thegent atlas
+
+Codebase visualization: LOC statistics, tree generation, and code maps.
+
+```
+thegent atlas <subcommand> [options]
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `tree` | Print the codebase directory tree. |
+| `stats` | Show LOC and file statistics. |
+| `map` | Generate a code entity map. |
+
+---
+
+## thegent govern
+
+Governance approval, rejection, and escalation decisions.
+
+```
+thegent govern <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `approve <id>` | Approve a pending governance decision. |
+| `reject <id>` | Reject a pending governance decision. |
+| `escalate <id>` | Escalate a decision to the next policy tier. |
+| `list` | List pending governance decisions. |
+
+---
+
+## thegent enterprise
+
+Enterprise compliance, GDPR, organizational hierarchy, and key rotation.
+
+```
+thegent enterprise <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `compliance report` | Generate a compliance report. |
+| `gdpr export` | Export data subject records for GDPR. |
+| `keys rotate` | Rotate API keys and update stored credentials. |
+| `org list` | List the organizational hierarchy. |
+
+---
+
+## thegent dotfiles
+
+Deploy tool configurations from thegent templates to the home directory.
+
+```
+thegent dotfiles <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `deploy` | Deploy all configured dotfile templates. |
+| `list` | List managed dotfile templates. |
+| `diff` | Show differences between templates and current files. |
+
+---
+
+## thegent routing
+
+Control LiteLLM routing, Pareto router, and model-first routing strategies.
+
+```
+thegent routing <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `status` | Show current routing configuration. |
+| `set-strategy <name>` | Set the active routing strategy. |
+| `pareto` | Show Pareto router recommendations. |
+
+---
+
+## thegent registry
+
+Agent capability index, recommendations, and health.
+
+```
+thegent registry <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `list` | List all registered agents and capabilities. |
+| `recommend <prompt>` | Get agent recommendations for a prompt. |
+| `health` | Check health of registered agents. |
+| `rebuild` | Rebuild the capability index. |
+
+---
+
+## thegent project
+
+Project tenancy commands (alias for `thegent sys setup project`).
+
+```
+thegent project <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `init` | Initialize project tenancy for the current directory. |
+| `status` | Show project tenancy status. |
+
+---
+
+## thegent scaffold
+
+Project scaffolding and brownfield migration.
+
+```
+thegent scaffold <subcommand>
+```
+
+**Subcommands**
+
+| Subcommand | Description |
+|------------|-------------|
+| `new <name>` | Scaffold a new project from templates. |
+| `migrate` | Migrate an existing project to thegent conventions. |
+
+---
+
+## thegent install
+
+Install user and system assets for the thegent runtime.
+
+```
+thegent install [options]
+```
+
+---
+
+## thegent update
+
+Update user and system assets for the thegent runtime.
+
+```
+thegent update [options]
+```
+
+---
+
+## thegent orchestrate
+
+Sub-agent goal decomposition and execution.
+
+```
+thegent orchestrate <goal> [options]
+```
+
+**Arguments**
+
+| Argument | Description |
+|----------|-------------|
+| `goal` | High-level goal to decompose and execute. Required. |
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--agent TEXT` | Orchestrating agent to use. |
+| `--model TEXT` | Model for the orchestrator. |
+| `--max-agents INT` | Maximum concurrent sub-agents. |
+
+**Examples**
+
+```
+thegent orchestrate "Implement full OAuth2 flow with tests and docs"
+thegent orchestrate "Audit and fix all type errors" --max-agents 5
+```
+
+---
+
+## thegent session-contract-health-gate
+
+Evaluate the session contract health gate against a minimum-healthy-ratio
+threshold. Exits non-zero if the threshold is not met (suitable for CI gates).
+
+```
+thegent session-contract-health-gate [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--all` / `-a` | Include sessions from all owners. |
+| `--owner TEXT` / `-o` | Owner tag filter. |
+| `--strict` | Strict health-check mode. |
+| `--format TEXT` / `-f` | Output format: `rich`, `json`, or `md` (default: `rich`). |
+| `--min-healthy-ratio FLOAT` | Minimum healthy ratio threshold (default: `1.0`). |
+| `--policy-profile TEXT` | Health policy profile name. |
+| `--no-worse-than-baseline` | Fail if health has regressed compared to baseline. |
+| `--regression-tolerance FLOAT` | Allowed regression tolerance (default: `0.0`). |
+| `--output PATH` | Export report to a file. |
+| `--export-format TEXT` | Export format override. |
+| `--overwrite` | Overwrite an existing export file. |
+
+---
+
+## thegent session-contract-health-report
+
+Generate a human-readable session contract health report.
+
+```
+thegent session-contract-health-report [options]
+```
+
+Options are identical to `session-contract-health-gate` minus
+`--min-healthy-ratio`.
+
+---
+
+## thegent session-contract-health-trend
+
+Analyze session contract health trends over time.
+
+```
+thegent session-contract-health-trend [options]
+```
+
+**Options**
+
+| Option | Description |
+|--------|-------------|
+| `--payload-type TEXT` | Payload type to trend (default: `session_contract_health_report`). |
+| `--limit INT` | Maximum snapshots to analyze (default: 20). |
+| `--top-blocked INT` | Top N blocked rows to include (default: 25). |
+| All options from `session-contract-health-gate` | See above. |
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | API key for the Claude/Anthropic provider. |
+| `OPENAI_API_KEY` | API key for OpenAI. |
+| `THEGENT_PROVIDER` | Default agent provider (e.g. `claude`, `openai`, `gemini`). |
+| `THEGENT_MODEL` | Default model name. |
+| `THEGENT_DATA_DIR` | Override the directory used for thegent data storage. |
+| `THEGENT_LOG_LEVEL` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
+
+---
+
+## Agent Names
+
+| Agent | Flag Value | Notes |
+|-------|-----------|-------|
+| Claude (Anthropic) | `claude` | Requires `ANTHROPIC_API_KEY`. |
+| OpenAI GPT | `openai` | Requires `OPENAI_API_KEY`. |
+| Google Gemini | `gemini` | Requires Gemini credentials. |
+| Claude Code (codex) | `codex` | Claude Code harness integration. |
+
+Model names are provider-specific. Pass them with `--model`. Examples: `sonnet`,
+`opus`, `haiku` for Claude; `gpt-4o`, `o1` for OpenAI; `pro`, `flash` for Gemini.
+
+---
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success. |
+| `1` | General error or agent failure. |
+| `2` | Invalid arguments or unsupported option value. |

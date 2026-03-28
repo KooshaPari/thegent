@@ -6,7 +6,7 @@ Source: docs/reference/api/pareto_router_api.md
 
 # pareto_router API Reference
 
-> **Source**: `src/thegent/routing/pareto_router.py`
+> **Source**: `src/thegent/utils/routing_impl/pareto_router.py`
 
 Pareto-first router: hard constraints → Pareto frontier → lexicographic selection.
 

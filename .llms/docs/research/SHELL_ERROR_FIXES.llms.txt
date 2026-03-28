@@ -4,6 +4,7 @@ Source: docs/research/SHELL_ERROR_FIXES.md
 
 ---
 
+<DONE>
 # Shell Error Fixes — zsh Bad Substitution
 
 > **Status**: Fixed | **Date**: 2026-02-17

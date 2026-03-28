@@ -18,7 +18,7 @@ Source: docs/reference/TOUCHPOINT_INTEGRATION_EVALUATION.md
 | **MCP tools** | `mcp_server.py` | `thegent_do_next`, `thegent_run`, `thegent_bg`, etc. | Agent execution | WORK_STREAM, run_registry, escalation |
 | **MCP resources** | `thegent://*` URIs | workflow/triggers, workflow/gardening, sitback/dashboard, sessions, observe/summary | Agent context | run_registry, WORK_STREAM, contracts |
 | **MCP prompts** | `thegent_workflow_*` | idea, quality_green, next_item, gardening | Structured invocation | WORK_STREAM, pending-handoff |
-| **CLI** | `main.py`, `cli.py` | `plan do-next`, `plan incorporate`, `govern go cycle`, `govern go health` | Human/script invocation | Same as MCP |
+| **CLI** | `main.py`, `cli.py` | `plan next`, `plan incorporate`, `govern go cycle`, `govern go health` | Human/script invocation | Same as MCP |
 | **Skills** | `skills/*/SKILL.md` | sitback-agent, agent-orchestra | Agent persona + workflow | CLAUDE.md, WORK_STREAM, gardening |
 | **CLAUDE.md** | Root | Project instructions, workflow triggers table | All agents | — |
 | **Roles** | `agents/*.md` | Persona definitions | Agent selection | CLAUDE.md |
@@ -130,7 +130,7 @@ All touchpoints should share one **conceptual model** even if storage is split:
          ▼                             ▼                             ▼
 ┌─────────────────┐           ┌─────────────────┐           ┌─────────────────┐
 │  MCP            │           │  CLI             │           │  Headless       │
-│  tools/resources│           │  plan do-next     │           │  triggers       │
+│  tools/resources│           │  plan next     │           │  triggers       │
 │  prompts        │           │  govern go cycle  │           │  AgilePlus      │
 │                 │           │  plan incorporate│           │  gardener-loop  │
 └─────────────────┘           └─────────────────┘           └─────────────────┘
@@ -138,7 +138,7 @@ All touchpoints should share one **conceptual model** even if storage is split:
 
 ### Integration Rules
 
-1. **Single source of truth for work items**: `WORK_STREAM.md`. MCP `thegent_do_next`, CLI `plan do-next`, skills (gardening), and AgilePlus planner all read it.
+1. **Single source of truth for work items**: `WORK_STREAM.md`. MCP `thegent_do_next`, CLI `plan next`, skills (gardening), and AgilePlus planner all read it.
 2. **Single source of truth for workflow instructions**: `CLAUDE.md` + `thegent://workflow/triggers`, `thegent://workflow/gardening`. Skills and MCP prompts reference these; no duplication.
 3. **Triggers fire the same cycle**: Headless (timer/watchdog), gardener (Stop/time-based), and manual (`govern go cycle`) all invoke AgilePlusLoop. Same backlog, same evidence ledger.
 4. **Roles and skills are read-only config**: `agents/*.md` and `skills/*/SKILL.md` are loaded by runner; no runtime mutation. MD is correct.

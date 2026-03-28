@@ -4,6 +4,7 @@ Source: docs/research/CODEX_CLI_LITELLM_FIX_SUMMARY.md
 
 ---
 
+<DONE>
 # Codex CLI + LiteLLM Integration Fix Summary
 
 **Date**: 2026-02-18

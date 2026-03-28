@@ -13,6 +13,10 @@ Background task watcher for non-blocking completion detection.
 Provides polling-based detection of background task completion without blocking.
 Used by the never-idle loop to wake on task completion.
 
+Also provides :class:`WatcherDaemon` (WP-5003): auto-scaling coroutine that
+reads queue depth from :class:`~thegent.orchestration.execution.priority_queue.RunPriorityQueue`
+or :class:`~thegent.core.prompt_queue.PromptQueueManager` and calls
+
 ---
 
 ## BackgroundTaskWatcher
@@ -119,6 +123,52 @@ This is a blocking wait with timeout. For non-blocking use run_once().
 
 ---
 
+## WatcherDaemon
+
+Async daemon that auto-scales the compute pool based on queue depth (WP-5003).
+
+Runs two coroutines every ``check_interval_s`` seconds:
+
+* :meth:`_check_scale_trigger`: if queue depth > ``scale_threshold``,
+  calls ``pool_manager.expand(2)`` to add two remote workers.
+* :meth:`_check_scale_down`: if queue depth < ``scale_down_depth`` and
+  all remote workers have been idle for ``idle_threshold_s``, calls
+  ``pool_manager.shrink()`` to release idle remote nodes.
+
+### Methods
+
+#### WatcherDaemon.__init__
+
+```
+__init__(self: Any, pool_manager: ComputePoolManager, run_queue: Any, prompt_queue: Any, scale_threshold: int, scale_down_depth: int, idle_threshold_s: float, check_interval_s: float)
+```
+
+---
+
+#### WatcherDaemon.start
+
+```
+start(self: Any)
+```
+
+Start the daemon loop as a background asyncio task.
+
+**Returns**: The :class:`asyncio.Task` running the loop.
+
+---
+
+#### WatcherDaemon.stop
+
+```
+stop(self: Any)
+```
+
+Cancel the daemon loop task.
+
+---
+
+---
+
 ## check_completions
 
 ```
@@ -176,6 +226,28 @@ run_once(self: Any)
 Run one check cycle, trigger callbacks, return completions.
 
 **Returns**: List of (session_id, exit_code) tuples for completed tasks.
+
+---
+
+## start
+
+```
+start(self: Any)
+```
+
+Start the daemon loop as a background asyncio task.
+
+**Returns**: The :class:`asyncio.Task` running the loop.
+
+---
+
+## stop
+
+```
+stop(self: Any)
+```
+
+Cancel the daemon loop task.
 
 ---
 

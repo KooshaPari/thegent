@@ -28,6 +28,16 @@ Initialize compliance reporter.
 
 ---
 
+#### ComplianceReporter.build_governance_queue
+
+```
+build_governance_queue(self: Any, evidence: list[dict[(str, Any)]])
+```
+
+Create action queue ordered by severity then time.
+
+---
+
 #### ComplianceReporter.export_report
 
 ```
@@ -43,6 +53,26 @@ Export compliance report to file.
 - `format`: Report format
 
 **Returns**: Path to exported file
+
+---
+
+#### ComplianceReporter.generate_governance_rollup
+
+```
+generate_governance_rollup(self: Any, evidence: list[dict[(str, Any)]])
+```
+
+Build deterministic governance rollup aggregates.
+
+---
+
+#### ComplianceReporter.generate_governance_telemetry
+
+```
+generate_governance_telemetry(self: Any)
+```
+
+Project key telemetry counters from rollup and queue.
 
 ---
 
@@ -65,6 +95,16 @@ Generate compliance report.
 
 ---
 
+## build_governance_queue
+
+```
+build_governance_queue(self: Any, evidence: list[dict[(str, Any)]])
+```
+
+Create action queue ordered by severity then time.
+
+---
+
 ## export_report
 
 ```
@@ -80,6 +120,26 @@ Export compliance report to file.
 - `format`: Report format
 
 **Returns**: Path to exported file
+
+---
+
+## generate_governance_rollup
+
+```
+generate_governance_rollup(self: Any, evidence: list[dict[(str, Any)]])
+```
+
+Build deterministic governance rollup aggregates.
+
+---
+
+## generate_governance_telemetry
+
+```
+generate_governance_telemetry(self: Any)
+```
+
+Project key telemetry counters from rollup and queue.
 
 ---
 

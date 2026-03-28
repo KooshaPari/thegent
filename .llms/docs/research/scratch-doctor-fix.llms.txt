@@ -4,6 +4,7 @@ Source: docs/research/scratch-doctor-fix.md
 
 ---
 
+<DONE>
 # Proactive Doctor --fix Feature - Implementation Status
 
 > **WORK_STREAM ID:** scratch-doctor-fix

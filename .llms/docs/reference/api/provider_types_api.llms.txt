@@ -6,7 +6,7 @@ Source: docs/reference/api/provider_types_api.md
 
 # provider_types API Reference
 
-> **Source**: `src/thegent/routing/provider_types.py`
+> **Source**: `src/thegent/utils/routing_impl/provider_types.py`
 
 Provider type classification for execution path routing.
 

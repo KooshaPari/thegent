@@ -1,0 +1,19 @@
+# infra_cmds_api
+
+Source: docs/reference/api/infra_cmds_api.md
+
+---
+
+# infra_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/infra_cmds.py`
+
+Thegent CLI infra/system commands - re-export facade (extracted from cli.py).
+
+This module is a thin re-export facade for command groups extracted to focused modules:
+- infra_resource_cmds: Concurrency, load, cost, usage
+- infra_observe_cmds: Observe, cockpit, sitback dashboard
+- infra_utils_cmds: Config, interruptions, purge, archive, history, scratchpad, explorer
+- infra_perf_cmds: Modes, benchmark, release, forensics, monitor, operations
+
+---

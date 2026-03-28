@@ -1,0 +1,86 @@
+# install_wizard_api
+
+Source: docs/reference/api/install_wizard_api.md
+
+---
+
+# install_wizard API Reference
+
+> **Source**: `src/thegent/install_wizard.py`
+
+Installation wizard functions for thegent.
+
+Interactive installation and configuration wizard.
+Extracted from install.py for maintainability.
+
+---
+
+## run_install
+
+```
+run_install(target: str, bundle: str, mode: str, dry_run: bool, url: Any)
+```
+
+Run full installation.
+
+**Parameters**:
+
+- `target`: What to install (all, system, project, hooks)
+- `bundle`: Bundle to install
+- `mode`: Installation mode
+- `dry_run`: If True, don't make changes
+- `url`: Optional project URL
+
+**Returns**: True if successful
+
+---
+
+## run_install_project
+
+```
+run_install_project(project_path: str, bundle: str, mode: str, dry_run: bool)
+```
+
+Install thegent into a project.
+
+**Parameters**:
+
+- `project_path`: Path or URL to project
+- `bundle`: Bundle to install
+- `mode`: Installation mode (smart, force, editable)
+- `dry_run`: If True, don't make changes
+
+**Returns**: True if successful
+
+---
+
+## run_install_system
+
+```
+run_install_system(console: Any, dry_run: bool)
+```
+
+Install system dependencies.
+
+**Parameters**:
+
+- `console`: Rich console for output
+- `dry_run`: If True, don't make changes
+
+**Returns**: Tuple of (success, message)
+
+---
+
+## run_wizard
+
+```
+run_wizard(url: Any)
+```
+
+Run the interactive installation wizard.
+
+**Parameters**:
+
+- `url`: Optional project URL to install
+
+---

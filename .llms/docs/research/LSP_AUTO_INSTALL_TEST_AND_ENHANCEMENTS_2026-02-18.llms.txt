@@ -4,6 +4,7 @@ Source: docs/research/LSP_AUTO_INSTALL_TEST_AND_ENHANCEMENTS_2026-02-18.md
 
 ---
 
+<DONE>
 # LSP Auto-Install Test and Enhancements
 
 **Date**: 2026-02-18

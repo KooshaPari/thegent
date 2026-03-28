@@ -218,6 +218,25 @@ thegent run "ls -la"
 7. ⏳ Process tree mapping - TODO (for proper agent/sub-process tracking)
 8. ⏳ Hanging agent detection - TODO (enhance idle detection)
 
+## Known Vulnerabilities
+
+### CVE-2025-69872: DiskCache Pickle Deserialization
+
+**Severity:** Critical (CVSS 9.8)
+**Affected:** diskcache <= 5.6.3
+**Status:** No patch available yet
+
+**Description:** The diskcache library uses pickle for serialization by default, which allows arbitrary code execution if an attacker has write access to the cache directory.
+
+**Mitigation:**
+1. diskcache is pinned to 5.6.3 in pyproject.toml
+2. Cache directory permissions restricted to owner only
+3. Consider alternatives: PersistDict (LMDB-based), picocache (SQLite/Redis backends)
+
+**Tracking:** https://github.com/grantjenks/python-diskcache/issues
+
+---
+
 ## 🔐 Security Guarantees
 
 1. ✅ Agents cannot kill other agent processes

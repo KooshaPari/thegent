@@ -124,6 +124,26 @@ Update agent status display.
 
 ---
 
+#### StatusbarWidget.watch_context_tokens_used
+
+```
+watch_context_tokens_used(self: Any, value: Any)
+```
+
+Update context tokens display.
+
+---
+
+#### StatusbarWidget.watch_context_window_max
+
+```
+watch_context_window_max(self: Any, value: Any)
+```
+
+Update context window max display.
+
+---
+
 #### StatusbarWidget.watch_cwd
 
 ```
@@ -176,6 +196,16 @@ Create statusbar layout.
 
 ---
 
+## compute_context_usage_display
+
+```
+compute_context_usage_display(used: Any, max_val: Any)
+```
+
+Compute display text and class for context usage.
+
+---
+
 ## on_mount
 
 ```
@@ -223,6 +253,26 @@ watch_agent_status(self: Any, value: str)
 ```
 
 Update agent status display.
+
+---
+
+## watch_context_tokens_used
+
+```
+watch_context_tokens_used(self: Any, value: Any)
+```
+
+Update context tokens display.
+
+---
+
+## watch_context_window_max
+
+```
+watch_context_window_max(self: Any, value: Any)
+```
+
+Update context window max display.
 
 ---
 

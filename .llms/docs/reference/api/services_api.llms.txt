@@ -1,0 +1,13 @@
+# services_api
+
+Source: docs/reference/api/services_api.md
+
+---
+
+# services API Reference
+
+> **Source**: `src/thegent/cli/services/__init__.py`
+
+Service modules for CLI command implementations.
+
+---

@@ -4,6 +4,7 @@ Source: docs/research/LIBRARY_REPLACEMENT_PHASE_DWBS.md
 
 ---
 
+<DONE>
 # Library Replacement — Phase Design Work Breakdowns (DWBs)
 
 > **Purpose**: Detailed task breakdown for each phase of [LIBRARY_REPLACEMENT_AUDIT_DEEP.md](./LIBRARY_REPLACEMENT_AUDIT_DEEP.md). Use before implementation.

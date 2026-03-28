@@ -1,0 +1,30 @@
+# 06_TESTING_STRATEGY
+
+Source: docs/sessions/20260323-agileplus-entity-surface/06_TESTING_STRATEGY.md
+
+---
+
+# Testing Strategy
+
+## Unit Coverage
+
+- Roundtrip upsert/list/read/search/delete against a temp SQLite database.
+- Batch import from JSON record lists.
+- Source sync dispatch behavior.
+
+## CLI Coverage
+
+- Command registration for `thegent plan entity`.
+- Property parsing for key/value overrides.
+- JSON/JSONL import path handling.
+
+## MCP Coverage
+
+- Tool dispatch uses the same canonical service as the CLI.
+- Structured JSON payloads are returned for every action.
+
+## Validation Commands
+
+- `python -m py_compile src/thegent/planning/workstream_entities.py src/thegent/cli/commands/plan_entity_cmds.py`
+- Targeted pytest for `tests/planning/test_workstream_entities.py`
+- If the default pytest path is blocked by `tach`, rerun the focused tests with `-p no:tach` to validate the changed surface directly.

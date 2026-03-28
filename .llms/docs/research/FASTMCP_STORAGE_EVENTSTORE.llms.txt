@@ -4,6 +4,7 @@ Source: docs/research/FASTMCP_STORAGE_EVENTSTORE.md
 
 ---
 
+<DONE>
 # FastMCP Storage Backends & EventStore
 
 **Source:** gofastmcp.com/servers/storage-backends, fastmcp/server/event_store

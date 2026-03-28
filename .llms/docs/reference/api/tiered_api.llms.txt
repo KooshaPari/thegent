@@ -1,0 +1,151 @@
+# tiered_api
+
+Source: docs/reference/api/tiered_api.md
+
+---
+
+# tiered API Reference
+
+> **Source**: `src/thegent/cache/tiered.py`
+
+Tiered Cache
+
+Combines multiple cache layers with fallback.
+
+---
+
+## TieredCache
+
+Multi-tier cache with L1 and L2 fallbacks.
+
+### Methods
+
+#### TieredCache.__init__
+
+```
+__init__(self: Any, l1_ttl: float, l2_ttl: float, l1_max_size: int, l2_cache_dir: str)
+```
+
+---
+
+#### TieredCache.clear
+
+```
+clear(self: Any)
+```
+
+Clear all tiers.
+
+---
+
+#### TieredCache.delete
+
+```
+delete(self: Any, key: str)
+```
+
+Delete from all tiers.
+
+---
+
+#### TieredCache.get
+
+```
+get(self: Any, key: str)
+```
+
+Get from L1, fallback to L2.
+
+---
+
+#### TieredCache.get_or_set
+
+```
+get_or_set(self: Any, key: str, factory: Callable[(Any, Any)], l1_ttl: Optional[float], l2_ttl: Optional[float])
+```
+
+Get from cache or compute and cache.
+
+---
+
+#### TieredCache.set
+
+```
+set(self: Any, key: str, value: Any, l1_ttl: Optional[float], l2_ttl: Optional[float])
+```
+
+Set in both L1 and L2.
+
+---
+
+#### TieredCache.stats
+
+```
+stats(self: Any)
+```
+
+Get combined statistics.
+
+---
+
+---
+
+## clear
+
+```
+clear(self: Any)
+```
+
+Clear all tiers.
+
+---
+
+## delete
+
+```
+delete(self: Any, key: str)
+```
+
+Delete from all tiers.
+
+---
+
+## get
+
+```
+get(self: Any, key: str)
+```
+
+Get from L1, fallback to L2.
+
+---
+
+## get_or_set
+
+```
+get_or_set(self: Any, key: str, factory: Callable[(Any, Any)], l1_ttl: Optional[float], l2_ttl: Optional[float])
+```
+
+Get from cache or compute and cache.
+
+---
+
+## set
+
+```
+set(self: Any, key: str, value: Any, l1_ttl: Optional[float], l2_ttl: Optional[float])
+```
+
+Set in both L1 and L2.
+
+---
+
+## stats
+
+```
+stats(self: Any)
+```
+
+Get combined statistics.
+
+---

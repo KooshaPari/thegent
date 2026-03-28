@@ -4,6 +4,7 @@ Source: docs/research/ADR-013-POLICY-FEDERATION.md
 
 ---
 
+<DONE>
 # ADR-013: Multi-Org Policy Federation
 
 ## Status

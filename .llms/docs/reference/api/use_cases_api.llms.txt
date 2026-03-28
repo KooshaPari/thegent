@@ -1,0 +1,13 @@
+# use_cases_api
+
+Source: docs/reference/api/use_cases_api.md
+
+---
+
+# use_cases API Reference
+
+> **Source**: `src/thegent/use_cases/__init__.py`
+
+Use cases: business logic for provider and model management.
+
+---

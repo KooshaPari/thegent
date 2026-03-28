@@ -4,6 +4,7 @@ Source: docs/research/TUI_COMPOSITOR_COMPARISON.md
 
 ---
 
+<DONE>
 # TUI Compositor Comparison Research
 
 **Research Date:** 2026-02-17

@@ -4,6 +4,7 @@ Source: docs/research/REMOVE_DIRECTORY_DEPENDENCIES_AUDIT_AND_PLAN.md
 
 ---
 
+<DONE>
 # Remove Directory Dependencies — Production Installation Optimization
 
 **Date:** 2026-02-17

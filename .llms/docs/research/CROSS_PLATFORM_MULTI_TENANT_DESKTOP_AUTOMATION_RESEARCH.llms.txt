@@ -4,6 +4,7 @@ Source: docs/research/CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH.md
 
 ---
 
+<DONE>
 # Cross-Platform Multi-Tenant Desktop Automation Research & Plan
 
 **Purpose:** Research and architect Windows/Linux/macOS support, agent-user isolation patterns, multi-tenant concurrent usage, and desktop automation integration (ARMs, AppleScript, UI Automation).

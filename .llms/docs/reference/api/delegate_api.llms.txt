@@ -1,0 +1,117 @@
+# delegate_api
+
+Source: docs/reference/api/delegate_api.md
+
+---
+
+# delegate API Reference
+
+> **Source**: `src/thegent/teammates/delegate.py`
+
+Task Delegation
+
+Async delegation with status tracking, priority, and timeout handling.
+
+---
+
+## Delegate
+
+Handles task delegation to teammates.
+
+### Methods
+
+#### Delegate.__init__
+
+```
+__init__(self: Any, registry: Optional[TeammateRegistry])
+```
+
+---
+
+#### Delegate.cancel
+
+```
+cancel(self: Any, task_id: str)
+```
+
+Cancel a delegated task.
+
+---
+
+#### Delegate.delegate
+
+```
+delegate(self: Any, request: DelegationRequest)
+```
+
+Delegate task to a teammate.
+
+---
+
+#### Delegate.list_active
+
+```
+list_active(self: Any)
+```
+
+List all active tasks.
+
+---
+
+#### Delegate.status
+
+```
+status(self: Any, task_id: str)
+```
+
+Get status of delegated task.
+
+---
+
+---
+
+## DelegationRequest
+
+Request to delegate a task.
+
+---
+
+## cancel
+
+```
+cancel(self: Any, task_id: str)
+```
+
+Cancel a delegated task.
+
+---
+
+## delegate
+
+```
+delegate(self: Any, request: DelegationRequest)
+```
+
+Delegate task to a teammate.
+
+---
+
+## list_active
+
+```
+list_active(self: Any)
+```
+
+List all active tasks.
+
+---
+
+## status
+
+```
+status(self: Any, task_id: str)
+```
+
+Get status of delegated task.
+
+---

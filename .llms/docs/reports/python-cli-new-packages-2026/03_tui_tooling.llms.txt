@@ -1,0 +1,128 @@
+# 03_tui_tooling
+
+Source: docs/reports/python-cli-new-packages-2026/03_tui_tooling.md
+
+---
+
+# Python TUI & Interactive CLI Tooling (libs.tech + 2026 fit)
+
+**Date:** 2026-02-26  
+**Scope:** Python libraries from `libs.tech` relevant to terminal UIs and interactive CLI flows.
+
+## Executive summary
+
+For Python CLIs in 2026, choose the stack by interaction depth:
+- **`textual`** for full-screen, app-like TUIs.
+- **`rich`** for readable terminal output, dashboards, progress, and traceability layers.
+- **`prompt_toolkit`** for custom prompts, shells, completion, and low-level input UX.
+- **`ptpython`** when you need an embeddable advanced REPL.
+- **`inquirer` / `PyInquirer`** for simple step-by-step wizards and form-like flows.
+
+The strongest practical rule is still **separation of concerns**:
+- render/progress/presentation (`rich`) and full-layout apps (`textual`) should be isolated.
+- prompt handling (`prompt_toolkit`) should own input and completion.
+- wizard-style prompts (`inquirer`/`PyInquirer`) should be limited to interactive paths with clear non-interactive fallbacks.
+
+## Practical stack map (recommended)
+
+| Library | Usage value | Caveats in 2026 | Ideal fit |
+|---|---|---|---|
+| `rich` | Fastest way to add high-quality terminal output, tables, tree views, progress bars, and colorful diagnostics in existing CLIs. | Can produce noisy output when mixed with raw subprocess streams; performance costs visible on very large streaming logs; careful with Windows shell/font quirks for emoji and truecolor-heavy output. | **High** |
+| `prompt-toolkit` | Enables interactive shell-like prompts, completion, syntax highlighting hooks, keymaps, and multiline editors in CLI workflows. | Complex when mixed with `asyncio` and legacy signal handling; output mode management is easy to get wrong in nested prompts. | **High** |
+| `textual` | Full-screen, reactive TUI framework with widgets, layout/state, and app-level composition. Best for dashboards, monitoring consoles, and tool-rich terminal apps. | Heavier dependency and learning curve; app lifecycle and async orchestration are important; larger memory footprint than lightweight prompt tooling. | **High** when a true TUI is required |
+| `ptpython` | Advanced REPL for Python with multiline editing, syntax awareness, and improved interactive workflows. | Specialized to interactive developer shells, not a generic app UI framework; not typically suitable as primary UX for end-user product CLI. | **Medium** for developer-focused tooling |
+| `inquirer` | Lightweight prompt toolkit for common flows like confirm/input/list/checkbox, with simpler onboarding than fuller frameworks. | API maturity varies across forks; compatibility and UX polish differ from prompt-toolkit-native approaches. | **Medium** for small/medium interactive wizards |
+| `PyInquirer` | Legacy prompt abstraction that can accelerate wizard-building from existing examples and recipes. | Largely unmaintained lineage and compatibility drift risk; may depend on older `prompt-toolkit` APIs; avoid for new greenfield projects unless pinned carefully. | **Low** for long-lived new projects |
+
+## Library-by-library value and caveats
+
+### 1) `rich` — operator readability first
+
+- **Usage value**: adds immediate clarity to CLIs through colorized logs, traceable output trees, table formatting, and progress status.
+- **Best scenarios**:
+  - command output modernization without rewriting architecture.
+  - observability-oriented CLI output where humans read logs directly.
+  - mixed `print` replacements for legacy scripts.
+- **Caveats**:
+  - avoid nested progress bars in asynchronous pipelines unless centrally coordinated;
+  - keep JSON output path separate from rich-formatted TTY output;
+  - audit rendering in SSH/CI terminals early.
+
+### 2) `prompt-toolkit` — control over terminal input
+
+- **Usage value**: best choice when you need robust text-entry UX (`autocompletion`, `history`, `key bindings`, `line editing`) and shell-like interactions.
+- **Best scenarios**:
+  - interactive command shells and administrative consoles.
+  - dynamic prompts based on upstream state.
+  - multiline entry and contextual completions.
+- **Caveats**:
+  - non-trivial to combine with raw `curses`-style flows;
+  - ensure strict cleanup of prompt state on exceptions;
+  - test with non-tty paths to avoid hangs or stale terminal modes.
+
+### 3) `textual` — terminal app platform
+
+- **Usage value**: the strongest path for rich application UX inside a terminal (panels, forms, event-driven views, live state refresh).
+- **Best scenarios**:
+  - operations dashboards and workflow consoles.
+  - tools that behave like terminal GUIs, not just prompts.
+  - teams ready to accept a larger framework dependency.
+- **Caveats**:
+  - requires clearer component architecture than simpler prompts;
+  - more difficult to unit test than CLI-parser tests;
+  - full-screen mode can conflict with tools that also emit external process logs directly.
+
+### 4) `ptpython` — REPL specialization
+
+- **Usage value**: best-in-class interactive Python terminal when the CLI includes scripting or investigation modes.
+- **Best scenarios**:
+  - developer shells, internal sandbox CLIs, runtime inspect mode.
+  - onboarding helpers for script-heavy operator workflows.
+- **Caveats**:
+  - not a complete end-user interface for task-oriented product commands;
+  - should be a niche module rather than the primary UI layer.
+
+### 5) `inquirer` — simple wizard and form layer
+
+- **Usage value**: concise path to guided menus and form-like steps without inventing custom prompt mechanics.
+- **Best scenarios**:
+  - setup workflows, option wizards, one-time operators.
+  - internal tools where speed matters more than custom UX.
+- **Caveats**:
+  - inconsistent behavior across environments and forks over time;
+  - avoid mixing with heavy async logic inside prompt callbacks.
+
+### 6) `PyInquirer` — legacy interactive bridge
+
+- **Usage value**: quick migration path for teams carrying older `inquirer`-style implementations.
+- **Best scenarios**:
+  - short-lived utilities or legacy maintenance where rewrite cost is currently high.
+  - compatibility layer during transition.
+- **Caveats**:
+  - maintenance and dependency aging risk;
+  - consider migrating to maintained prompt paths (`prompt_toolkit` direct or newer maintained alternatives) for long-lived products.
+
+## Recommended 2026 adoption order
+
+1. Start with `rich` for consistent output quality and progress UX across existing CLIs.
+2. Add `prompt-toolkit` when interactive entry, completion, or in-session editing is required.
+3. Add `textual` only for cases that genuinely need full-screen TUI behavior.
+4. Use `ptpython` only when you explicitly need REPL-grade interaction.
+5. Prefer `inquirer` over `PyInquirer` for newer code; treat `PyInquirer` as legacy.
+
+## Production caveats to plan for
+
+- Keep prompt/input and rendering on clear ownership boundaries.
+- Add non-interactive (`--json`, `--batch`, stdin-driven) paths whenever you ship interactive commands.
+- Test terminal behavior on:
+  - local TTY (Linux/macOS/Windows),
+  - SSH sessions,
+  - CI logs / non-interactive shells.
+- Pin dependencies for prompt stacks because interactive UX libraries can have breaking behavior changes between minor versions.
+
+## Final recommendation
+
+For new interactive Python CLI development in 2026, prefer:
+- **Primary production stack**: `rich` + `prompt-toolkit` for most tools.
+- **Upgrade to full TUI**: `textual` only when interaction density demands it.
+- **Avoid** `PyInquirer` for greenfield products unless you have explicit legacy reasons.

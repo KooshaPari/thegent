@@ -4,6 +4,7 @@ Source: docs/research/COMPOSITOR_RESEARCH_AND_ENHANCEMENT_PLAN.md
 
 ---
 
+<DONE>
 # TUI Compositor Research and Enhancement Plan
 
 > **Status**: Research Complete | **Priority**: P1 | **Date**: 2026-02-19

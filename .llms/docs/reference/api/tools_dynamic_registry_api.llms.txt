@@ -1,0 +1,39 @@
+# tools_dynamic_registry_api
+
+Source: docs/reference/api/tools_dynamic_registry_api.md
+
+---
+
+# tools_dynamic_registry API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_dynamic_registry.py`
+
+WL-120 B90-W2-D1: Dynamic client tool registration group.
+
+Extracted from mcp/server.py — three @mcp.tool decorators that implement
+WL-105 client-owned dynamic tool registration:
+
+  - thegent_register_tool
+  - thegent_complete_tool_call
+  - thegent_list_dynamic_tools
+
+These are passed back as named attributes by register_dynamic_registry_tools()
+so that server.py can assign them to module-level names for backward compat.
+
+# @trace WL-120 B90-W2-D1
+
+---
+
+## register_dynamic_registry_tools
+
+Register the three dynamic-client-tool MCP tools and return them.
+
+**Parameters**:
+
+- `mcp`: FastMCP instance to decorate tools onto.
+- `server_tools_sessions`: Module providing _dynamic_registry attribute.
+- `error_result`: Callable that formats structured error ToolResult.
+
+**Returns**: (thegent_register_tool, thegent_complete_tool_call, thegent_list_dynamic_tools)
+
+---

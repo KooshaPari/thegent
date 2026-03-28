@@ -1,0 +1,110 @@
+# session_querier_api
+
+Source: docs/reference/api/session_querier_api.md
+
+---
+
+# session_querier API Reference
+
+> **Source**: `src/thegent/ports/driven/session_querier.py`
+
+Session query interface. Breaks cli ↔ execution circular dependency.
+
+This port allows execution modules to query session state without importing from cli.
+The concrete implementation (ps_impl, _find_session_meta) lives in cli but is injected.
+
+---
+
+## SessionQuerier
+
+Query running sessions and their metadata.
+
+Implementations: session_ops_list_impl.ps_impl, session_meta_impl._find_session_meta
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### SessionQuerier.find_session_meta
+
+```
+find_session_meta(self: Any, settings: ThegentSettings, session_id: str)
+```
+
+Find session metadata file path.
+
+**Parameters**:
+
+- `settings`: Thegent settings with session_dir
+- `session_id`: Session ID to find
+
+**Returns**: Path to session metadata JSON file
+
+---
+
+#### SessionQuerier.list_sessions
+
+```
+list_sessions(self: Any, owner: Any, all: bool, agent: Any, status: Any, limit: int, scan_ide: bool, include_contract: bool)
+```
+
+List agent sessions.
+
+**Parameters**:
+
+- `owner`: Filter by session owner
+- `all`: Include all sessions
+- `agent`: Filter by agent name
+- `status`: Filter by session status
+- `limit`: Maximum number of sessions
+- `scan_ide`: Scan IDE for sessions
+- `include_contract`: Include contract details
+
+**Returns**: List of session dictionaries with id, status, etc.
+
+---
+
+---
+
+## find_session_meta
+
+```
+find_session_meta(self: Any, settings: ThegentSettings, session_id: str)
+```
+
+Find session metadata file path.
+
+**Parameters**:
+
+- `settings`: Thegent settings with session_dir
+- `session_id`: Session ID to find
+
+**Returns**: Path to session metadata JSON file
+
+**Raises**:
+
+- `typer.BadParameter`: If session not found
+
+---
+
+## list_sessions
+
+```
+list_sessions(self: Any, owner: Any, all: bool, agent: Any, status: Any, limit: int, scan_ide: bool, include_contract: bool)
+```
+
+List agent sessions.
+
+**Parameters**:
+
+- `owner`: Filter by session owner
+- `all`: Include all sessions
+- `agent`: Filter by agent name
+- `status`: Filter by session status
+- `limit`: Maximum number of sessions
+- `scan_ide`: Scan IDE for sessions
+- `include_contract`: Include contract details
+
+**Returns**: List of session dictionaries with id, status, etc.
+
+---

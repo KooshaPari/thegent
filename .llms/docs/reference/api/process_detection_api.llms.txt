@@ -22,7 +22,7 @@ Detect known agents from running processes using regex patterns.
 
 **Parameters**:
 
-- `patterns`: Dict of agent name -&gt; regex pattern
+- `patterns`: Dict of agent name -> regex pattern
 
 ---
 

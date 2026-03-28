@@ -4,6 +4,7 @@ Source: docs/research/IDE_INTEGRATIONS_AUDIT_AND_PLAN_2026-02-18.md
 
 ---
 
+<DONE>
 # IDE Integrations Audit & Plan: Serena, JetBrains, Ghostty
 
 **Date**: 2026-02-18

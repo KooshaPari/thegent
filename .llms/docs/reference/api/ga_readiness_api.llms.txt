@@ -1,0 +1,45 @@
+# ga_readiness_api
+
+Source: docs/reference/api/ga_readiness_api.md
+
+---
+
+# ga_readiness API Reference
+
+> **Source**: `src/thegent/sync/ga_readiness.py`
+
+GA readiness checklist evaluation for autosync.
+
+# @trace WL-240
+
+---
+
+## GAReadinessResult
+
+### Methods
+
+#### GAReadinessResult.ready
+
+```
+ready(self: Any)
+```
+
+---
+
+---
+
+## evaluate_ga_readiness
+
+```
+evaluate_ga_readiness(checks: dict[(str, bool)]) -> GAReadinessResult
+```
+
+---
+
+## ready
+
+```
+ready(self: Any) -> bool
+```
+
+---

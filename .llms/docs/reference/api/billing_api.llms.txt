@@ -8,7 +8,7 @@ Source: docs/reference/api/billing_api.md
 
 > **Source**: `src/thegent/orchestration/resource/billing.py`
 
-WP-19004: Quota &amp; Billing for Multi-Tenant Teams.
+WP-19004: Quota & Billing for Multi-Tenant Teams.
 
 Enforces resource quotas (runs, tokens, storage) per team/tenant.
 

@@ -6,7 +6,7 @@ Source: docs/reference/api/donut_adapter_api.md
 
 # donut_adapter API Reference
 
-> **Source**: `src/thegent/routing/donut_adapter.py`
+> **Source**: `src/thegent/utils/routing_impl/donut_adapter.py`
 
 Donut Architecture adapter for LiteLLM routing integration.
 

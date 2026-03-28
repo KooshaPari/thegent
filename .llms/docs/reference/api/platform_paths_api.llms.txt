@@ -12,6 +12,18 @@ Platform-specific path resolution following OS conventions.
 
 ---
 
+## get_bin_dir
+
+Get platform-specific binary directory.
+
+Follows OS conventions:
+- macOS/Linux: ~/.local/bin
+- Windows: %LOCALAPPDATA%/thegent/bin
+
+**Returns**: Path to binary directory (created if needed)
+
+---
+
 ## get_config_dir
 
 Get platform-specific configuration directory.

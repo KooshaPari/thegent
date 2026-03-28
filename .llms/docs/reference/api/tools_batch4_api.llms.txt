@@ -1,0 +1,81 @@
+# tools_batch4_api
+
+Source: docs/reference/api/tools_batch4_api.md
+
+---
+
+# tools_batch4 API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_batch4.py`
+
+Batch 4 MCP tool registrations extracted from server.py.
+
+---
+
+## register_batch4_tools
+
+---
+
+## thegent_activate_skill
+
+```
+thegent_activate_skill(skill_name: str)
+```
+
+Load and return a skill payload by name.
+
+---
+
+## thegent_list_droids
+
+```
+thegent_list_droids(cd: Any, default_cwd: Any)
+```
+
+List available droids.
+
+**Parameters**:
+
+- `cd`: Optional working directory (or use meta.cwd in request)
+- `Returns`: JSON string with list of droid names
+
+---
+
+## thegent_list_skills
+
+List discoverable skills from the current discovery backend.
+
+---
+
+## thegent_macos_run_script
+
+```
+thegent_macos_run_script(script: str, language: Literal[(applescript, jxa)])
+```
+
+Run an AppleScript or JXA (JavaScript for Automation) script on macOS.
+
+Wraps *osascript* to give agents agent-driven desktop control on macOS.
+Returns a JSON object with ``{success, output, error}``.
+
+On non-macOS platforms the tool returns immediately with
+``{success: false, error: "Not macOS"}``.
+
+**Parameters**:
+
+- `script`:   Script source code to execute.
+- `language`: Scripting language — ``"applescript"`` (default) or ``"jxa"``.
+
+---
+
+## thegent_terminal_route
+
+```
+thegent_terminal_route(prompt: str, cd: Any)
+```
+
+Route a prompt to an active terminal session if matching. Falls back to thegent_run if none found.
+
+Equivalent to: thegent route <prompt>
+
+---

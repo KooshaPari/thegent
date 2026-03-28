@@ -4,6 +4,7 @@ Source: docs/research/ADR-015-ENTERPRISE-COMPLIANCE.md
 
 ---
 
+<DONE>
 # ADR-015: Enterprise Lifecycle and Compliance API
 
 ## Status

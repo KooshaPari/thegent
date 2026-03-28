@@ -1,0 +1,15 @@
+# linear_sync_api
+
+Source: docs/reference/api/linear_sync_api.md
+
+---
+
+# linear_sync API Reference
+
+> **Source**: `src/thegent/autosync/linear_sync.py`
+
+Linear sync operations.
+
+Extracts Linear API logic from main runner.
+
+---

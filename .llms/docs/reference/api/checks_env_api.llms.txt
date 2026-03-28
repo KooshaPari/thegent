@@ -1,0 +1,35 @@
+# checks_env_api
+
+Source: docs/reference/api/checks_env_api.md
+
+---
+
+# checks_env API Reference
+
+> **Source**: `src/thegent/doctor/checks_env.py`
+
+Doctor - Environment checks module.
+
+Contains: _check_environment, _check_shim_binaries
+
+---
+
+## check_environment
+
+```
+check_environment(project_root: Any)
+```
+
+Check environment variables and PATH configuration.
+
+---
+
+## check_shim_binaries
+
+```
+check_shim_binaries(project_root: Any)
+```
+
+Check thegent-hooks and thegent-shims (Rust) binary version and availability.
+
+---

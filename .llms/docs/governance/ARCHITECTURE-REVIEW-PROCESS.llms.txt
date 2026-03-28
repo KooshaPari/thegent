@@ -1,0 +1,268 @@
+# ARCHITECTURE-REVIEW-PROCESS
+
+Source: docs/governance/ARCHITECTURE-REVIEW-PROCESS.md
+
+---
+
+# Architecture Review Process
+
+**Version**: 1.0.0
+**Last Updated**: 2026-03-25
+
+## Overview
+
+This document defines the architecture review process for the Phenotype ecosystem, ensuring that all architectural decisions maintain quality, consistency, and alignment with our principles.
+
+## When to Request an Architecture Review
+
+### Mandatory Reviews
+
+An architecture review is **required** for:
+
+- [ ] New microservices or shared services
+- [ ] Changes to API contracts
+- [ ] Introduction of new external dependencies
+- [ ] Database schema changes
+- [ ] Changes to authentication/authorization
+- [ ] Changes to cross-service communication
+- [ ] New SDK or library creation
+- [ ] Breaking changes to existing libraries
+
+### Recommended Reviews
+
+An architecture review is **recommended** for:
+
+- [ ] Significant refactoring (>30% code change)
+- [ ] New integration with external services
+- [ ] Performance-critical changes
+- [ ] Security-sensitive changes
+- [ ] Changes affecting multiple teams
+
+## Review Criteria
+
+### 1. Hexagonal Architecture Compliance
+
+| Criterion | Description | Weight |
+|-----------|-------------|--------|
+| **Dependency Rule** | Domain has ZERO external dependencies | Critical |
+| **Port/Adapter Separation** | Clear separation of inbound/outbound ports | Critical |
+| **Single Responsibility** | Each module has one reason to change | High |
+| **Interface Segregation** | Clients not forced to depend on unused interfaces | High |
+
+### 2. Code Quality Standards
+
+| Criterion | Description | Weight |
+|-----------|-------------|--------|
+| **SOLID Compliance** | Single responsibility, Open-closed, Liskov, Interface segregation, Dependency inversion | Critical |
+| **DRY** | No code duplication | High |
+| **KISS** | Keep it simple | High |
+| **YAGNI** | No premature functionality | Medium |
+
+### 3. Testability
+
+| Criterion | Description | Weight |
+|-----------|-------------|--------|
+| **Unit Test Coverage** | >80% for domain layer | Critical |
+| **Test Isolation** | No dependencies between tests | High |
+| **Mockability** | External dependencies injectable | High |
+| **Contract Tests** | API contracts tested | High |
+
+### 4. Observability
+
+| Criterion | Description | Weight |
+|-----------|-------------|--------|
+| **Structured Logging** | JSON logs with correlation IDs | High |
+| **Metrics** | Key metrics exposed | High |
+| **Tracing** | Distributed tracing enabled | High |
+| **Health Checks** | Liveness and readiness probes | Critical |
+
+### 5. Security
+
+| Criterion | Description | Weight |
+|-----------|-------------|--------|
+| **Zero Trust** | No implicit trust | Critical |
+| **Secret Management** | No secrets in code | Critical |
+| **Input Validation** | All input validated | Critical |
+| **Rate Limiting** | Endpoints rate limited | High |
+
+## Review Request Process
+
+### Step 1: Prepare Architecture Decision Record (ADR)
+
+```
+# ADR-XXX: Title
+
+## Status
+Proposed | Accepted | Deprecated
+
+## Context
+What is the issue that we're seeing?
+
+## Decision
+What is the change that we're proposing?
+
+## Consequences
+What becomes easier or more difficult?
+
+## Alternatives Considered
+What other approaches were considered?
+```
+
+### Step 2: Submit Review Request
+
+```
+# Create review request
+gh issue create \
+  --title "Architecture Review: [Feature Name]" \
+  --label "architecture-review" \
+  --body "$(cat << 'EOF'
+## Overview
+Brief description of the change.
+
+## Architecture Decision Record
+Link to ADR
+
+## Impact Assessment
+- Services affected:
+- Breaking changes:
+- Migration path:
+
+## Checklist
+- [ ] Hexagonal architecture compliance
+- [ ] Security review
+- [ ] Performance impact assessed
+- [ ] Documentation updated
+EOF
+)"
+```
+
+### Step 3: Review Meeting
+
+**Attendees**:
+- Architecture team (mandatory)
+- Team leads from affected services
+- Security representative
+- Product representative (optional)
+
+**Agenda**:
+1. Overview of proposed change (10 min)
+2. Architecture walkthrough (20 min)
+3. Q&A and discussion (20 min)
+4. Decision and action items (10 min)
+
+### Step 4: Document Decision
+
+```
+## Architecture Review Decision
+
+**Date**: YYYY-MM-DD
+**Reviewers**: @person1, @person2
+**Decision**: APPROVED | APPROVED WITH CONDITIONS | REJECTED
+
+### Conditions (if any)
+- Condition 1
+- Condition 2
+
+### Action Items
+- [ ] AI-001: Do something by YYYY-MM-DD (@person)
+- [ ] AI-002: Verify something by YYYY-MM-DD (@person)
+
+### Next Steps
+1. Step 1
+2. Step 2
+```
+
+## Review Templates
+
+### Pre-Review Checklist
+
+- [ ] ADR created and linked
+- [ ] Code changes complete
+- [ ] Unit tests written (>80% coverage)
+- [ ] Integration tests written
+- [ ] Documentation updated
+- [ ] Security scan passed
+- [ ] Performance benchmarks run
+- [ ] Migration plan documented (if breaking)
+
+### Post-Review Checklist
+
+- [ ] All action items completed
+- [ ] Conditions addressed
+- [ ] Final documentation review
+- [ ] Handoff to SRE/ops
+
+## Anti-Patterns to Avoid
+
+### 1. God Objects
+
+```
+# BAD
+class EverythingManager:
+    def do_everything(self): ...
+
+# GOOD
+class OrderService:
+    def create_order(self): ...
+
+class PaymentService:
+    def process_payment(self): ...
+```
+
+### 2. Circular Dependencies
+
+```
+# BAD
+# module_a.py
+from module_b import B
+class A: ...
+
+# module_b.py
+from module_a import A
+class B: ...
+
+# GOOD
+# Use ports/adapters or shared interface
+```
+
+### 3. Anemic Domain Model
+
+```
+# BAD
+class User:
+    def __init__(self):
+        self.data = {}
+
+# GOOD
+class User:
+    def __init__(self, email: Email):
+        self.email = email
+
+    def change_email(self, new_email: Email) -> None:
+        self.email = new_email
+```
+
+### 4. God Database
+
+```
+-- BAD: One table does everything
+CREATE TABLE everything (
+    id INT,
+    type VARCHAR,  -- 'user' or 'order' or 'product'
+    user_data JSON,
+    order_data JSON,
+    product_data JSON
+);
+
+-- GOOD: Normalized schema
+CREATE TABLE users (...);
+CREATE TABLE orders (...);
+CREATE TABLE products (...);
+```
+
+## Resources
+
+- ADR-001: Repository Organization
+- ADR-010: Plugin Architecture
+- ADR-012: xDD Standards
+- Hexagonal Architecture Template

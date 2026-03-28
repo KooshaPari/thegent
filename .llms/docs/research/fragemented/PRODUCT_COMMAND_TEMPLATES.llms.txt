@@ -1,0 +1,58 @@
+# PRODUCT_COMMAND_TEMPLATES
+
+Source: docs/research/fragemented/PRODUCT_COMMAND_TEMPLATES.md
+
+---
+
+<DONE>
+# INTENT.md Template (Product Command)
+*Improve one-shot agentic engineering by centralizing intent.*
+
+---
+
+## 1. Purpose
+*Clearly explain the "Why" behind this task.*
+
+## 2. End State
+*Describe the physical result of success (e.g., "A functioning search bar with 3 filters").*
+
+## 3. Constraints
+*What the agent MUST NOT do (e.g., "Don't add new dependencies").*
+
+## 4. Tradeoffs
+*Decisions made for speed vs quality, or cost vs performance.*
+
+## 5. Risk Tolerance
+*How much can the agent "vibe" or assume vs asking for help?*
+
+## 6. Escalation Conditions
+*When should the agent stop and wait for a human?*
+
+## 7. Verification Steps
+*Physical checks (tests, screenshots, console logs) the agent must perform.*
+
+---
+
+# After Action Report (AAR) Template
+*Run this after each session to capture analysis.*
+
+## 1. Context
+*Which session/commit does this cover?*
+
+## 2. Intent
+*Briefly restate what was attempted.*
+
+## 3. What Actually Happened
+*Facts only. Did it work? Did it fail?*
+
+## 4. Delta Analysis
+*Why was the result different from the End State?*
+
+## 5. Initiative Assessment
+*Where did the AI make its own decisions?*
+
+## 6. Weaknesses in Intent
+*Which parts of the INTENT.md weren't clear enough?*
+
+## 7. Sustain / Improve
+*What worked well? What will we change next time?*

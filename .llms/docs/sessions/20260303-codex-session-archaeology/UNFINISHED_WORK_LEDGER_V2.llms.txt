@@ -1,0 +1,88 @@
+# UNFINISHED_WORK_LEDGER_V2
+
+Source: docs/sessions/20260303-codex-session-archaeology/UNFINISHED_WORK_LEDGER_V2.md
+
+---
+
+# Unfinished Work Ledger V2
+
+Derived primarily from Lane C stable-repo unfinished output, with Lane E gitops reconciliation.
+
+## Entries
+| Session ID | CWD | Confidence | Evidence |
+|---|---|---:|---|
+| `019cad6a-f099-7862-8557-50bf27e0e51f` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cad74-1767-7e53-b51f-f006ead7ee44` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cad79-35b9-7f43-aa5b-1f30900fec5e` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cadda-3491-7962-85cd-48d4df2667ab` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cadda-37fa-7a53-b12b-f777220b8391` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cae09-8694-7e52-8c9c-b386c51963b0` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cae09-8c5d-7791-97dd-a0e77df5ae5e` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cae6c-7d84-7e20-864e-79e332e040cf` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cae6e-40e7-7502-96be-fd30c69f8412` | `/Users/kooshapari/CodeProjects/Phenotype/repos/heliosApp` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cae6f-1595-74c3-a342-884df84fdf77` | `/Users/kooshapari/CodeProjects/Phenotype/repos/heliosApp` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb057-a9cf-7e71-a273-7ebc37ae56e7` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb057-aa02-7c21-a363-5db39f309a2d` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb058-a06c-7f32-9e5c-3bc69f7d560d` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb059-2872-7490-aac9-e86c788ceda4` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb061-6d9a-7443-b9cd-4873899fe0b8` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb07c-203a-7c30-8e84-c5e834003f13` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb0a5-4813-7260-9d15-fa4902608fdb` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb0ac-2c8b-7d21-8bb3-4cecd6460fae` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb0ac-e513-7222-98bd-fc8f33cff7a9` | `/Users/kooshapari/CodeProjects/Phenotype/repos/thegent` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb0fc-9447-7513-8185-59def50626ab` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb10b-1c01-73d1-879d-ccc70d16dca0` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb137-73da-7260-9eda-8b5dbe7a2cf0` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb14c-a1ca-7070-a73d-930b5352ed5d` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb162-abea-7551-acf4-61ea0309deda` | `/Users/kooshapari/CodeProjects/Phenotype/repos/heliosApp` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb1e8-6e6c-7ae3-9559-34b1aeb2159a` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb458-11ae-7c30-8f33-0ca88cc027ec` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb458-8637-73f1-a64a-6acf4936fc15` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb458-866b-7011-9278-0256836d2562` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb458-883e-7900-94c5-4778b0e87f73` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb45d-d0dc-73c1-9ccc-3d98daa4f4ce` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb45d-d15b-78e3-b7b4-096be6421171` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb45d-d1a4-7621-8744-54d61f5d0cdb` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb45d-d1ee-7ae3-b0ea-bde7f754573d` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb45d-d263-7753-8266-c862d975d059` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+| `019cb45d-d2b1-7f33-9406-608af0979333` | `/Users/kooshapari/CodeProjects/Phenotype/repos` | `0.72` | assistant_activity_without_completion_terminal |
+
+## Lane E Reconcile
+```
+{
+  "lane": "E",
+  "generated_at_utc": "2026-03-03T15:45:14Z",
+  "source": {
+    "resolution_map": "/tmp/session_audit/resolution_map.jsonl",
+    "selection_rule": "Lane E mapped to 5th still_open record (one record per lane A-E)."
+  },
+  "still_open_input": [
+    {
+      "session_id": "019c8c45-bfdb-7d62-bb38-0a938d1639ae",
+      "path": "/Users/kooshapari/.codex/sessions/2026/02/23/rollout-2026-02-23T13-51-47-019c8c45-bfdb-7d62-bb38-0a938d1639ae.jsonl",
+      "cwd": "/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_0",
+      "disposition_in_source": "still_open"
+    }
+  ],
+  "reconcile": [
+    {
+      "session_id": "019c8c45-bfdb-7d62-bb38-0a938d1639ae",
+      "repo_root_resolved": null,
+      "repo_root_resolution": "unresolved",
+      "repo_root_reason": "Session cwd is ephemeral tmp agent dir and no surviving workspace link.",
+      "gitops_introspection": {
+        "attempted": false,
+        "reason": "Not repo-backed after reconciliation; skipped git branch/commit introspection."
+      },
+      "classification": "followup_required",
+      "classification_reason": "Cannot establish durable repo root, so git-based closure cannot be proven non-destructively."
+    }
+  ],
+  "totals": {
+    "still_open_processed": 1,
+    "closed_by_gitops": 0,
+    "followup_required": 1,
+    "repo_backed_sessions": 0
+  }
+}
+```

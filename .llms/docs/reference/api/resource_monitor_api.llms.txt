@@ -133,9 +133,9 @@ is_critical(self: Any)
 Check if resource usage is critical.
 
 Critical thresholds:
-- FD usage &gt; 80% (file descriptor exhaustion risk)
-- Process count &gt; 500 (very high, may indicate leak)
-- Memory &gt; 2048MB (2GB) for this process
+- FD usage > 80% (file descriptor exhaustion risk)
+- Process count > 500 (very high, may indicate leak)
+- Memory > 2048MB (2GB) for this process
 
 ---
 
@@ -220,9 +220,9 @@ is_critical(self: Any)
 Check if resource usage is critical.
 
 Critical thresholds:
-- FD usage &gt; 80% (file descriptor exhaustion risk)
-- Process count &gt; 500 (very high, may indicate leak)
-- Memory &gt; 2048MB (2GB) for this process
+- FD usage > 80% (file descriptor exhaustion risk)
+- Process count > 500 (very high, may indicate leak)
+- Memory > 2048MB (2GB) for this process
 
 ---
 

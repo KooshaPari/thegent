@@ -1,0 +1,15 @@
+# 00_SESSION_OVERVIEW
+
+Source: docs/sessions/20260301-branding-remediation/00_SESSION_OVERVIEW.md
+
+---
+
+# Session Overview
+
+## Goal
+Execute next-step remediation for cross-repo branding inconsistencies across Phenotype repos (excluding `portage`).
+
+## Scope
+- Build a deterministic remediation matrix.
+- Classify findings as `safe` or `needs-decision`.
+- Apply only `safe` fixes in this pass.

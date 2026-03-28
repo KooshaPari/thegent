@@ -59,7 +59,7 @@ Extract condensed/final output from agent stdout.
 
 Tries JSONL first (stream-json). Falls back to plain-text heuristics.
 Prefers worker status report block (Summary, Items Done, Issues, Next Steps) when present.
-Strips &lt;think&gt; blocks from final output.
+Strips <think> blocks from final output.
 
 ---
 

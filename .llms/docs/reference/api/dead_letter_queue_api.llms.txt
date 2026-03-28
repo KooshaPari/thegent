@@ -1,0 +1,307 @@
+# dead_letter_queue_api
+
+Source: docs/reference/api/dead_letter_queue_api.md
+
+---
+
+# dead_letter_queue API Reference
+
+> **Source**: `src/thegent/sync/dead_letter_queue.py`
+
+Dead-letter queue utilities for board sync replay with backoff and ordering.
+
+# @trace WL-213
+
+---
+
+## RemoteWriteDeadLetterQueue
+
+Persistent dead-letter queue for board remote writes.
+
+### Methods
+
+#### RemoteWriteDeadLetterQueue.__init__
+
+```
+__init__(self: Any, queue_path: Path)
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.append
+
+```
+append(self: Any, record: RemoteWriteDeadLetterRecord)
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.candidates_for_replay
+
+```
+candidates_for_replay(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.create_entry_id
+
+```
+create_entry_id(self: Any, source: str, board_id: str, item: dict[(str, str)])
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.enqueue
+
+```
+enqueue(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.load
+
+```
+load(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.pending
+
+```
+pending(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterQueue.write
+
+```
+write(self: Any, entries: list[RemoteWriteDeadLetterRecord])
+```
+
+---
+
+---
+
+## RemoteWriteDeadLetterRecord
+
+Single failed remote-write mutation entry.
+
+**Inherits from**: `SerializableMixin`
+
+### Methods
+
+#### RemoteWriteDeadLetterRecord.can_retry
+
+```
+can_retry(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.first_failed_at_dt
+
+```
+first_failed_at_dt(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.from_dict
+
+```
+from_dict(cls: Any, payload: dict[(str, Any)])
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.is_due
+
+```
+is_due(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.is_pending
+
+```
+is_pending(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.last_attempt_at_dt
+
+```
+last_attempt_at_dt(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.mark_failed
+
+```
+mark_failed(self: Any)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.mark_success
+
+```
+mark_success(self: Any, now: datetime)
+```
+
+---
+
+#### RemoteWriteDeadLetterRecord.next_attempt_at_dt
+
+```
+next_attempt_at_dt(self: Any)
+```
+
+---
+
+---
+
+## append
+
+```
+append(self: Any, record: RemoteWriteDeadLetterRecord) -> None
+```
+
+---
+
+## can_retry
+
+```
+can_retry(self: Any) -> bool
+```
+
+---
+
+## candidates_for_replay
+
+```
+candidates_for_replay(self: Any) -> list[RemoteWriteDeadLetterRecord]
+```
+
+---
+
+## compute_backoff_seconds
+
+```
+compute_backoff_seconds(attempt: int)
+```
+
+Compute deterministic retry delay in seconds for a given attempt number.
+
+---
+
+## create_entry_id
+
+```
+create_entry_id(self: Any, source: str, board_id: str, item: dict[(str, str)]) -> str
+```
+
+---
+
+## enqueue
+
+```
+enqueue(self: Any) -> RemoteWriteDeadLetterRecord
+```
+
+---
+
+## first_failed_at_dt
+
+```
+first_failed_at_dt(self: Any) -> datetime
+```
+
+---
+
+## from_dict
+
+```
+from_dict(cls: Any, payload: dict[(str, Any)]) -> RemoteWriteDeadLetterRecord
+```
+
+---
+
+## is_due
+
+```
+is_due(self: Any) -> bool
+```
+
+---
+
+## is_pending
+
+```
+is_pending(self: Any) -> bool
+```
+
+---
+
+## last_attempt_at_dt
+
+```
+last_attempt_at_dt(self: Any) -> Any
+```
+
+---
+
+## load
+
+```
+load(self: Any) -> list[RemoteWriteDeadLetterRecord]
+```
+
+---
+
+## mark_failed
+
+```
+mark_failed(self: Any) -> RemoteWriteDeadLetterRecord
+```
+
+---
+
+## mark_success
+
+```
+mark_success(self: Any, now: datetime) -> RemoteWriteDeadLetterRecord
+```
+
+---
+
+## next_attempt_at_dt
+
+```
+next_attempt_at_dt(self: Any) -> datetime
+```
+
+---
+
+## pending
+
+```
+pending(self: Any) -> list[RemoteWriteDeadLetterRecord]
+```
+
+---
+
+## write
+
+```
+write(self: Any, entries: list[RemoteWriteDeadLetterRecord]) -> None
+```
+
+---

@@ -1,0 +1,55 @@
+# WL-117-VSCODE-EXTENSION-STATUS-2026-02-21
+
+Title: VS Code Extension Implementation (WL-117) — Status Update 2026-02-21
+Source: docs/plans/WL-117-VSCODE-EXTENSION-STATUS-2026-02-21.md
+
+---
+
+# VS Code Extension Implementation (WL-117) — Status Update 2026-02-21
+
+## Overview
+
+This document captures the current status of WL-117 (VS Code Extension Implementation)
+as of 2026-02-21, including dependency resolution and scaffold planning.
+
+## Dependency: WL-104 (Embedding Protocol)
+
+- **WL-104 title:** Embedding Protocol — JSON-RPC stdio Daemon Mode
+- **WL-104 status: COMPLETED** (as of 2026-02-20, per `docs/reference/WORK_STREAM.md`)
+
+WL-117 was listed as "Blocked by: WL-104" in the work stream. WL-104 is now resolved.
+
+## Current Decision
+
+**DEFERRED** — WL-117 was previously listed as completed (`claude-sonnet-4-6`, 2026-02-20)
+in the WORK_STREAM.md assignment table with the following signal:
+
+> COMPLETED: VS Code extension — agentServerClient, sessionListProvider,
+> contextBudgetStatusBar, approvalWebviewPanel, extension.ts; 31 tests passing; tsc --noEmit clean
+
+Since WL-104 is COMPLETED and a prior agent already scaffolded the extension, no
+additional blocking dependency exists. The item is DEFERRED from further wave-3 work
+because the foundational scaffold is already delivered.
+
+## Extension Scaffold Plan (Reference — for when further extension work is required)
+
+The following plan applies when expanding the VS Code extension beyond its initial scaffold:
+
+1. **Directory structure:** `extensions/vscode/` (already created by prior run)
+2. **`package.json`** — `contributes.commands` entries and `activationEvents` for all thegent commands
+3. **`src/extension.ts`** — entry point; registers all commands on activation
+4. **`src/thegentClient.ts`** — HTTP client to thegent control plane (port 3847 MCP, port 8317 proxy)
+5. **Basic commands to expose:**
+   - `thegent.status` — query control plane for session health
+   - `thegent.listSessions` — show active sessions in a tree view
+   - `thegent.openTUI` — launch TUI in integrated terminal
+6. **Testing:** `extensions/vscode/src/test/` — at minimum 15 integration tests covering all contributed commands
+
+## Summary
+
+| Item | Value |
+|------|-------|
+| WL-117 status | DEFERRED (scaffold already delivered) |
+| Blocked by | WL-104 (now COMPLETED) |
+| Prior delivery | agentServerClient, sessionListProvider, contextBudgetStatusBar, approvalWebviewPanel, extension.ts; 31 tests passing |
+| Next action | Expand feature set when wave-4 priorities include IDE integration |

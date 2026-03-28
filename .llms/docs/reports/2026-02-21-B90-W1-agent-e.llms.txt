@@ -1,0 +1,226 @@
+# 2026-02-21-B90-W1-agent-e
+
+Source: docs/reports/2026-02-21-B90-W1-agent-e.md
+
+---
+
+# B90 Wave-1 Execution Report — agent-e
+
+Date: 2026-02-21
+Plan source: `docs/plans/2026-02-21-AGENT-BATCH-90-EXECUTION-PLAN.md`
+Scope executed: `B90-W1-E1..B90-W1-E5`
+
+## B90-W1-E1 (WL-135) — Define SLO alert thresholds and breach states
+
+Status: Complete
+
+Concrete outputs:
+- SLO compliance thresholds (execution-level):
+  - latency SLO: `<= 500ms`
+  - error-rate SLO: `<= 1%`
+- Trend-health severity thresholds:
+  - `good >= 95`
+  - `warning >= 80`
+  - `degraded >= 50`
+  - else `critical`
+- Observe-summary breach states:
+  - `critical` when past-SLA backlog exists or drift budget is exceeded.
+  - `healthy` otherwise.
+- Alert conditions emitted:
+  - escalation backlog critical (`past_sla_count > 0`)
+  - contract drift over budget (`within_budget == false`).
+
+Evidence (file:line):
+- `src/thegent/governance/slo.py:12`
+- `src/thegent/governance/slo.py:30`
+- `src/thegent/cli/commands/observability_impl.py:177`
+- `src/thegent/cli/commands/observability_impl.py:179`
+- `src/thegent/cli/commands/observability_impl.py:182`
+- `src/thegent/cli/commands/observability_impl.py:280`
+- `src/thegent/cli/commands/observability_impl.py:842`
+- `src/thegent/cli/commands/observability_impl.py:844`
+- `src/thegent/cli/commands/observability_impl.py:854`
+- `src/thegent/config.py:267`
+- `src/thegent/config.py:303`
+- `src/thegent/config.py:602`
+- `src/thegent/config.py:608`
+
+## B90-W1-E2 (WL-134) — Map critical-path test dependencies
+
+Status: Complete
+
+Critical-path dependency map (current):
+1. Local task entrypoints
+- `test` -> `uv run pytest -q`
+- `test:unit` -> `uv run pytest -m unit`
+- `test:pyramid` -> `scripts/test-pyramid-validator.sh` (marker-distribution gate)
+
+2. CI quality gates (must pass)
+- `task quality:max-lines`
+- `task quality:sitback-contracts`
+- `task quality:harness-model-contracts`
+- `task bench:smoke:ci`
+
+3. Integration lane dependency
+- `integration` job has `needs: [test, quality]`; integration is blocked until both upstream jobs pass.
+
+Concrete output:
+- Stop-edge list for critical path:
+  - `quality:sitback-contracts` non-zero -> workflow failure.
+  - `quality:harness-model-contracts` non-zero -> workflow failure.
+  - any failed `test`/`quality` job -> `integration` not scheduled.
+
+Evidence (file:line):
+- `Taskfile.yml:238`
+- `Taskfile.yml:243`
+- `Taskfile.yml:264`
+- `Taskfile.yml:370`
+- `Taskfile.yml:376`
+- `Taskfile.yml:674`
+- `.github/workflows/ci.yml:103`
+- `.github/workflows/ci.yml:107`
+- `.github/workflows/ci.yml:113`
+- `.github/workflows/ci.yml:115`
+- `.github/workflows/ci.yml:118`
+- `.github/workflows/ci.yml:124`
+- `.github/workflows/ci.yml:190`
+- `.github/workflows/test.yml:38`
+- `scripts/test-pyramid-validator.sh:17`
+- `scripts/test-pyramid-validator.sh:18`
+- `scripts/test-pyramid-validator.sh:19`
+
+## B90-W1-E3 (WL-130) — Runtime ownership matrix by directory
+
+Status: Complete
+
+Concrete output: runtime ownership matrix v1
+
+| Runtime owner | Directory scope | Files | LOC |
+|---|---|---:|---:|
+| Python runtime | `src/thegent/cli` | 78 | 31406 |
+| Python runtime | `src/thegent/agents` | 74 | 14489 |
+| Python runtime | `src/thegent/mcp` | 57 | 12777 |
+| Python runtime | `src/thegent/governance` | 69 | 12135 |
+| Python runtime | `src/thegent/routing` | 53 | 12087 |
+| Rust runtime | `crates/thegent-hooks/src` | 22 | 9451 |
+| Rust runtime | `crates/thegent-tui/src` | 14 | 5453 |
+| Rust runtime | `crates/thegent-router/src` | 8 | 3043 |
+| Rust runtime | `crates/thegent-shims/src` | 13 | 1979 |
+| Rust runtime | `crates/thegent-shm/src` | 2 | 1444 |
+| Mojo runtime | `src/thegent/infra/mojo` | 1 | 10 |
+
+Evidence (file:line):
+- `docs/reference/WORK_STREAM.md:1392`
+- `docs/reference/WORK_STREAM.md:1393`
+- `docs/reference/WORK_STREAM.md:1394`
+- `docs/reference/WORK_STREAM.md:1395`
+- `docs/reference/WORK_STREAM.md:1396`
+- `src/thegent/infra/mojo/math.mojo:1`
+
+## B90-W1-E4 (WL-138) — Define promotion gate ordering and stop conditions
+
+Status: Complete
+
+Promotion gate ordering (wave-1):
+1. Decomposition preconditions: WL-138 remains blocked until WL-120 + WL-121 are satisfied.
+2. CI `test` and `quality` jobs execute independently.
+3. In `quality`, run canonical max-lines path, extension metadata sanity, mandatory harness contracts, then deterministic bench smoke.
+4. `integration` only runs after both `test` and `quality` complete successfully.
+5. Runtime promotion focus for WL-138 proceeds on: Python cuts, Rust hook decomposition, Zig ABI promotion checks, Mojo promotion gates.
+
+Stop conditions (fail-fast/fail-closed):
+- If either mandatory harness contract command exits non-zero, quality job exits `1`.
+- If `test` or `quality` fails, `integration` is blocked by `needs`.
+- If decomposition blockers (WL-120/WL-121) remain open, WL-138 promotion work is blocked.
+
+Evidence (file:line):
+- `docs/reference/WORK_STREAM.md:1384`
+- `docs/reference/WORK_STREAM.md:1389`
+- `.github/workflows/ci.yml:95`
+- `.github/workflows/ci.yml:99`
+- `.github/workflows/ci.yml:103`
+- `.github/workflows/ci.yml:107`
+- `.github/workflows/ci.yml:118`
+- `.github/workflows/ci.yml:122`
+- `.github/workflows/ci.yml:190`
+- `docs/reference/WORK_STREAM.md:1393`
+- `docs/reference/WORK_STREAM.md:1394`
+- `docs/reference/WORK_STREAM.md:1395`
+- `docs/reference/WORK_STREAM.md:1396`
+
+## B90-W1-E5 (WL-117) — Record VS Code extension dependency preconditions
+
+Status: Complete
+
+Concrete outputs: dependency preconditions list
+1. Upstream protocol prerequisite
+- WL-117 is blocked by WL-104; WL-104 defines `thegent agent-server` JSON-RPC stdio daemon interface.
+
+2. Runtime launch prerequisite
+- Extension must launch `thegent agent-server` over stdio using configured command+args.
+
+3. UX/API prerequisites for WL-117 parity
+- Side panel/session-management UI surface is required.
+- Approval flow requires `approval/requested` notification with diff and grant/reject methods.
+- Context budget signal must be propagated to extension UI.
+- Skills tree and `.vsix` packaging remain part of WL-117 acceptance target.
+
+Evidence (file:line):
+- `docs/reference/WORK_STREAM.md:963`
+- `docs/reference/WORK_STREAM.md:972`
+- `docs/reference/WORK_STREAM.md:1122`
+- `docs/reference/WORK_STREAM.md:1127`
+- `docs/reference/WORK_STREAM.md:1130`
+- `extensions/vscode/package.json:20`
+- `extensions/vscode/package.json:87`
+- `extensions/vscode/package.json:95`
+- `extensions/vscode/docs/protocol-contract.md:7`
+- `extensions/vscode/docs/protocol-contract.md:9`
+- `extensions/vscode/docs/protocol-contract.md:24`
+- `extensions/vscode/docs/protocol-contract.md:25`
+- `extensions/vscode/docs/protocol-contract.md:36`
+- `extensions/vscode/docs/protocol-contract.md:65`
+- `extensions/vscode/docs/protocol-contract.md:76`
+
+## Command evidence
+
+```
+# E1 SLO + breach thresholds
+nl -ba src/thegent/governance/slo.py | sed -n '1,120p'
+nl -ba src/thegent/cli/commands/observability_impl.py | sed -n '165,340p'
+nl -ba src/thegent/cli/commands/observability_impl.py | sed -n '820,872p'
+
+# E2 critical-path tests and dependencies
+nl -ba Taskfile.yml | sed -n '230,290p'
+nl -ba Taskfile.yml | sed -n '360,450p'
+nl -ba .github/workflows/ci.yml | sed -n '95,215p'
+nl -ba scripts/test-pyramid-validator.sh | sed -n '1,30p'
+
+# E3 runtime ownership matrix inputs
+for d in src/thegent/*; do [ -d "$d" ] || continue; c=$(find "$d" -name '*.py' | wc -l | tr -d ' '); l=$(find "$d" -name '*.py' -print0 | xargs -0 wc -l 2>/dev/null | tail -n1 | awk '{print $1+0}'); printf "%s %s %s\n" "$(basename "$d")" "$c" "$l"; done | sort -k3,3nr | sed -n '1,20p'
+for d in crates/*; do [ -d "$d/src" ] || continue; c=$(find "$d/src" -name '*.rs' | wc -l | tr -d ' '); l=$(find "$d/src" -name '*.rs' -print0 | xargs -0 wc -l 2>/dev/null | tail -n1 | awk '{print $1+0}'); printf "%s %s %s\n" "$(basename "$d")" "$c" "$l"; done | sort -k3,3nr | sed -n '1,20p'
+find src/thegent/infra -maxdepth 2 -name '*.mojo' -print
+
+# E4 promotion gate ordering + blockers
+nl -ba .github/workflows/ci.yml | sed -n '95,215p'
+nl -ba docs/reference/WORK_STREAM.md | sed -n '1384,1397p'
+
+# E5 extension preconditions
+nl -ba docs/reference/WORK_STREAM.md | sed -n '963,975p'
+nl -ba docs/reference/WORK_STREAM.md | sed -n '1122,1131p'
+nl -ba extensions/vscode/package.json | sed -n '13,100p'
+nl -ba extensions/vscode/docs/protocol-contract.md | sed -n '1,83p'
+```
+
+Observed excerpts:
+- Python top directories by LOC: `cli 78 31406`, `agents 74 14489`, `mcp 57 12777`, `governance 69 12135`, `routing 53 12087`.
+- Rust top crates by LOC: `thegent-hooks 22 9451`, `thegent-tui 14 5453`, `thegent-router 8 3043`, `thegent-shims 13 1979`, `thegent-shm 2 1444`.
+- WL-138 blocker state in work stream: `Blocked by: WL-120, WL-121`.
+- CI integration dependency: `needs: [test, quality]`.
+
+## Minimal validation checks
+
+```
+rg -n "^## B90-W1-E[1-5]" docs/reports/2026-02-21-B90-W1-agent-e.md
+rg -n 'Scope executed: `B90-W1-E1..B90-W1-E5`|Command evidence|Minimal validation checks' docs/reports/2026-02-21-B90-W1-agent-e.md
+```

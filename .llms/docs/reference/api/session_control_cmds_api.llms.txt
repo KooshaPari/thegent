@@ -1,0 +1,91 @@
+# session_control_cmds_api
+
+Source: docs/reference/api/session_control_cmds_api.md
+
+---
+
+# session_control_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/session_control_cmds.py`
+
+## deferral_list_cmd
+
+List all currently deferred tasks (WP-5004).
+
+---
+
+## deferral_resume_cmd
+
+```
+deferral_resume_cmd(run_id: str)
+```
+
+Manually resume a deferred task (WP-5004).
+
+---
+
+## pause_cmd
+
+```
+pause_cmd(session_id: Any)
+```
+
+Pause a background session (register pause event).
+
+---
+
+## resume_cmd
+
+```
+resume_cmd(session_id: Any, prompt: Any, skills: Any)
+```
+
+Resume a session in the registry state machine.
+
+---
+
+## session_cmd
+
+```
+session_cmd(session_id: Any, watch: bool, action: Any)
+```
+
+Rich TUI for session management with subagent monitoring (WP-8002).
+
+---
+
+## session_fork_cmd
+
+```
+session_fork_cmd(session_id: str, from_turn: Any, new_session_id: Any)
+```
+
+Fork a session via SessionManager API.
+
+---
+
+## session_rollback_cmd
+
+```
+session_rollback_cmd(session_id: str, n_turns: int)
+```
+
+Rollback a session via SessionManager API.
+
+---
+
+## stop_cmd
+
+```
+stop_cmd(session_id: Any, force: bool, wind_down: bool, grace: int) -> None
+```
+
+---
+
+## wait_cmd
+
+```
+wait_cmd(session_id: Any, timeout: int) -> None
+```
+
+---

@@ -1,0 +1,43 @@
+# execution_coercion_helpers_api
+
+Source: docs/reference/api/execution_coercion_helpers_api.md
+
+---
+
+# execution_coercion_helpers API Reference
+
+> **Source**: `src/thegent/execution_coercion_helpers.py`
+
+Coercion helpers for execution metadata parsing.
+
+---
+
+## as_bool
+
+```
+as_bool(value: Any, default: bool)
+```
+
+Coerce arbitrary values to bool with a safe default.
+
+---
+
+## as_float
+
+```
+as_float(value: Any, default: float)
+```
+
+Coerce arbitrary values to float with a safe default.
+
+---
+
+## as_int
+
+```
+as_int(value: Any, default: int)
+```
+
+Coerce arbitrary values to int with a safe default.
+
+---

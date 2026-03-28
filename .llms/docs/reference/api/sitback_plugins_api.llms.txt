@@ -12,9 +12,9 @@ Sitback plugin API: dashboard widgets and startup steps.
 
 Plugins are discovered from ~/.claude/sitback-plugins/ (JSON or Python).
 Each plugin can register:
-- dashboard_widgets: dict[str, callable] -&gt; name -&gt; fn() -&gt; dict (title, content, border_style)
-- startup_steps: list[str] -&gt; extra lines for startup prompt
-- harness_status: callable -&gt; dict | None (for heliosShield/FUSE; returns None if unavailable)
+- dashboard_widgets: dict[str, callable] -> name -> fn() -> dict (title, content, border_style)
+- startup_steps: list[str] -> extra lines for startup prompt
+- harness_status: callable -> dict | None (for heliosShield/FUSE; returns None if unavailable)
 
 ---
 

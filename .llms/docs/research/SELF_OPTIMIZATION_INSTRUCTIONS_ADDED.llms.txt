@@ -4,6 +4,7 @@ Source: docs/research/SELF_OPTIMIZATION_INSTRUCTIONS_ADDED.md
 
 ---
 
+<DONE>
 # Self-Optimization Instructions Added to CLAUDE.md
 
 **Date:** 2026-02-17

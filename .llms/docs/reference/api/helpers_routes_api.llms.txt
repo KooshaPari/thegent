@@ -1,0 +1,25 @@
+# helpers_routes_api
+
+Source: docs/reference/api/helpers_routes_api.md
+
+---
+
+# helpers_routes API Reference
+
+> **Source**: `src/thegent/cli/commands/models/helpers_routes.py`
+
+Route payload helpers for model_cmds.
+
+---
+
+## build_available_routes
+
+Serialize available routes for CLI contract output.
+
+---
+
+## build_resolved_route
+
+Serialize selected route for CLI contract output.
+
+---

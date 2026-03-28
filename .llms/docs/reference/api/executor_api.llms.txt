@@ -31,7 +31,7 @@ Assign tasks to agents.
 - `tasks`: List of tasks
 - `agents`: List of available agents
 
-**Returns**: Map of task_id -&gt; agent_id
+**Returns**: Map of task_id -> agent_id
 
 ---
 
@@ -83,7 +83,7 @@ execute(self: Any)
 
 Execute crew tasks.
 
-**Returns**: Map of task_id -&gt; ExecutionResult
+**Returns**: Map of task_id -> ExecutionResult
 
 ---
 
@@ -185,7 +185,7 @@ Initialize TaskExecutor.
 
 - `max_retries`: Maximum retries per task
 - `timeout_seconds`: Timeout for task execution
-- `agent_executor`: Callback function (agent_id, prompt, context) -&gt; ExecutionResult
+- `agent_executor`: Callback function (agent_id, prompt, context) -> ExecutionResult
 
 ---
 
@@ -200,9 +200,9 @@ Execute all tasks respecting dependencies.
 **Parameters**:
 
 - `tasks`: List of tasks to execute
-- `task_assignments`: Map of task_id -&gt; agent_id
+- `task_assignments`: Map of task_id -> agent_id
 
-**Returns**: Map of task_id -&gt; ExecutionResult
+**Returns**: Map of task_id -> ExecutionResult
 
 ---
 
@@ -235,7 +235,7 @@ Get input for task based on dependency results.
 **Parameters**:
 
 - `task`: Task to get input for
-- `completed_tasks`: Map of task_id -&gt; ExecutionResult
+- `completed_tasks`: Map of task_id -> ExecutionResult
 
 **Returns**: Context dictionary with dependency results
 
@@ -283,7 +283,7 @@ execute(self: Any)
 
 Execute crew tasks.
 
-**Returns**: Map of task_id -&gt; ExecutionResult
+**Returns**: Map of task_id -> ExecutionResult
 
 ---
 
@@ -298,9 +298,9 @@ Execute all tasks respecting dependencies.
 **Parameters**:
 
 - `tasks`: List of tasks to execute
-- `task_assignments`: Map of task_id -&gt; agent_id
+- `task_assignments`: Map of task_id -> agent_id
 
-**Returns**: Map of task_id -&gt; ExecutionResult
+**Returns**: Map of task_id -> ExecutionResult
 
 ---
 
@@ -333,7 +333,7 @@ Get input for task based on dependency results.
 **Parameters**:
 
 - `task`: Task to get input for
-- `completed_tasks`: Map of task_id -&gt; ExecutionResult
+- `completed_tasks`: Map of task_id -> ExecutionResult
 
 **Returns**: Context dictionary with dependency results
 

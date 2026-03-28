@@ -1,0 +1,61 @@
+# health_api
+
+Source: docs/reference/api/health_api.md
+
+---
+
+# health API Reference
+
+> **Source**: `src/thegent/sync/health.py`
+
+Connector health scoreboard helpers.
+
+# @trace WL-209
+
+---
+
+## ConnectorHealth
+
+### Methods
+
+#### ConnectorHealth.band
+
+```
+band(self: Any)
+```
+
+---
+
+#### ConnectorHealth.score
+
+```
+score(self: Any)
+```
+
+---
+
+---
+
+## band
+
+```
+band(self: Any) -> str
+```
+
+---
+
+## render_health_scoreboard
+
+```
+render_health_scoreboard(rows: list[ConnectorHealth]) -> list[str]
+```
+
+---
+
+## score
+
+```
+score(self: Any) -> int
+```
+
+---

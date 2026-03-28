@@ -107,6 +107,12 @@ These commands are used most frequently and MUST have tests:
 ### Priority 3: Remaining Commands (Week 3-4)
 All other 200+ commands
 
+## CI Coverage Gate Status
+
+- CI now includes a dedicated `preflight` job (`collect-only`, coverage contract, and required provider smoke checks).
+- A required `coverage` job in `.github/workflows/ci.yml` runs `task coverage:ci` and blocks downstream integration testing.
+- `scripts/analyze_test_coverage.py` still reports stale command-surface counts and should be refreshed after this infrastructure is stable.
+
 ---
 
 ## 🛠️ Implementation Tools Created

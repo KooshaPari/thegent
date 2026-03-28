@@ -1,0 +1,13 @@
+# protocols_api
+
+Source: docs/reference/api/protocols_api.md
+
+---
+
+# protocols API Reference
+
+> **Source**: `src/thegent/protocols/__init__.py`
+
+Protocol implementations for agent communication.
+
+---

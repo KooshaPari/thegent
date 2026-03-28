@@ -216,15 +216,7 @@ Unload the plugin.
 
 Metadata about a plugin.
 
-### Methods
-
-#### PluginInfo.to_dict
-
-```
-to_dict(self: Any)
-```
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -589,14 +581,6 @@ reload_all(self: Any)
 ```
 
 Reload all plugins.
-
----
-
-## to_dict
-
-```
-to_dict(self: Any) -> dict[(str, Any)]
-```
 
 ---
 

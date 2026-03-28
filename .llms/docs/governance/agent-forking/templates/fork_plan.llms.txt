@@ -1,0 +1,71 @@
+# fork_plan
+
+Source: docs/governance/agent-forking/templates/fork_plan.md
+
+---
+
+# Fork Plan Template
+
+- `plan_id`: `string`
+- `title`: `string`
+- `created_at`: `YYYY-MM-DD`
+- `created_by`: `string`
+- `owner`: `string`
+- `objective`: `string`
+- `success_criteria`: `string`
+- `scope`: `string`
+- `max_parallel_lanes`: `number`
+- `context_snapshot_version`: `string`
+- `immutable_context_sources`: `AGENTS.md`, `governance docs`, `task context`
+- `run_model`: `claude-code|custom`
+- `stop_condition_1`: `description + threshold`
+
+## Risk Controls
+
+- `file_ownership_model`: `strict|shared`
+- `patch_lock_scope`: `repo|path|file`
+- `allowed_mutations`: `none|patches-only|tooling-only`
+- `conflict_policy`: `manual|resolver|vote`
+- `evidence_required`: `true|false`
+- `redaction_required`: `true|false`
+
+## Lanes
+
+Duplicate this lane block per worker lane.
+
+- `lane_id`: `string`
+- `fork_count`: `integer`
+- `assigned_role`: `string`
+- `agent_profile`: `same|specialist`
+- `assignment.task`: `string`
+- `assignment.files`: `path/pattern`
+- `assignment.acceptance_checks`: `check-a`, `check-b`
+- `artifact_targets.ledger_path`: `path`
+- `artifact_targets.lane_report_path`: `path`
+- `artifact_targets.patches_path`: `path`
+- `done_criteria.item`: `string`
+
+## Completion Gate
+
+- `quality_checks.command`: `string`
+- `evidence_mandatory.command_output`: `true|false`
+- `evidence_mandatory.file_paths`: `true|false`
+- `evidence_mandatory.assumption_log`: `true|false`
+- `merge_rules.conflict_requires_handoff`: `true|false`
+- `merge_rules.fallback_behavior`: `retry|pause|escalate`
+
+## Evidence Index
+
+- `ledger`: `path`
+- `lane_reports`: `path`
+- `patch_artifacts`: `path`
+- `validation_reports`: `path`
+
+## Postmortem
+
+- `duration_minutes`: `number`
+- `status`: `pass|fail|partial`
+- `observations`: `string`
+- `conflicts_resolved`: `number`
+- `open_conflicts`: `number`
+- `next_wave`: `string`

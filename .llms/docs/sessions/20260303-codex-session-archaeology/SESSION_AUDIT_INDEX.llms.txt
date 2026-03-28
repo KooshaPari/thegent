@@ -1,0 +1,90 @@
+# SESSION_AUDIT_INDEX
+
+Source: docs/sessions/20260303-codex-session-archaeology/SESSION_AUDIT_INDEX.md
+
+---
+
+# Session Audit Index
+
+## Summary
+- Window: 14 days
+- Codex rollouts analyzed: 7057
+- Unfinished candidates: 917
+- Dispositions: resolved_elsewhere=912, redirected_or_subagent=0, temp_agent_noise=5, still_open=0
+
+## Top CWDs with Unfinished Candidates
+| CWD | Count |
+|---|---:|
+| `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | 607 |
+| `/Users/kooshapari/temp-PRODVERCEL/485/kush` | 107 |
+| `/Users/kooshapari` | 77 |
+| `/Users/kooshapari/CodeProjects/Phenotype/repos` | 47 |
+| `/Users/kooshapari/CodeProjects/Phenotype` | 20 |
+| `/Users/kooshapari/CodeProjects/Phenotype/repos/thegent` | 10 |
+| `/Users/kooshapari/CodeProjects/Phenotype/repos/heliosCLI` | 9 |
+| `/private/tmp/codex-test` | 6 |
+| `/Users/kooshapari/CodeProjects/Phenotype/repos/cliproxyapi-wtrees/cliproxy-hmr-8317` | 5 |
+| `/Users/kooshapari/CodeProjects/Phenotype/repos/cliproxyapi-wtrees/rescue-linear-batch` | 5 |
+| `/Users/kooshapari/temp-PRODVERCEL/485/kush/heliosHarness/benchmark` | 4 |
+| `/Users/kooshapari/CodeProjects/Phenotype/repos/heliosApp` | 4 |
+| `/Users/kooshapari/.codex/memories` | 4 |
+| `/Users/kooshapari/temp-PRODVERCEL/485/kush/heliosHarness/clones/codex/codex-rs` | 3 |
+| `/` | 3 |
+| `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_0` | 1 |
+| `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_5` | 1 |
+| `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_2` | 1 |
+| `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_1` | 1 |
+| `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_0` | 1 |
+
+## Still Open Candidates (Action Queue)
+| Session ID | CWD | Rollout Path |
+|---|---|---|
+| `019c8bf3-1acc-7a23-927d-e2beb454f078` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_0` | `/Users/kooshapari/.codex/sessions/2026/02/23/rollout-2026-02-23T12-21-31-019c8bf3-1acc-7a23-927d-e2beb454f078.jsonl` |
+| `019c8bf3-1acc-71c2-8e7d-bb211a4a7322` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_5` | `/Users/kooshapari/.codex/sessions/2026/02/23/rollout-2026-02-23T12-21-31-019c8bf3-1acc-71c2-8e7d-bb211a4a7322.jsonl` |
+| `019c8bf3-1acc-7493-8a07-726ebd68aab1` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_2` | `/Users/kooshapari/.codex/sessions/2026/02/23/rollout-2026-02-23T12-21-31-019c8bf3-1acc-7493-8a07-726ebd68aab1.jsonl` |
+| `019c8c45-bfc7-71d0-af83-adf4bc46e2be` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_1` | `/Users/kooshapari/.codex/sessions/2026/02/23/rollout-2026-02-23T13-51-47-019c8c45-bfc7-71d0-af83-adf4bc46e2be.jsonl` |
+| `019c8c45-bfdb-7d62-bb38-0a938d1639ae` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_0` | `/Users/kooshapari/.codex/sessions/2026/02/23/rollout-2026-02-23T13-51-47-019c8c45-bfdb-7d62-bb38-0a938d1639ae.jsonl` |
+
+## Resolved Elsewhere Samples
+| Unfinished Session | CWD | Matched Completed Session | Similarity |
+|---|---|---|---:|
+| `019c6f9d-856f-72a1-a9a5-6867ba6ff84f` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c6f94-11f8-7110-bbe1-e793ba9aa3b1` | 1.0 |
+| `019c6f9e-dd0d-7613-a818-568d36767508` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c6f94-11f8-7110-bbe1-e793ba9aa3b1` | 1.0 |
+| `019c6fe5-cac7-7c01-8697-ef3d6bed0909` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c6fd5-fa26-7ca2-ab57-e9641de2a9fd` | 1.0 |
+| `019c6fff-c6ea-7783-a3b6-83b00bf05b4c` | `/Users/kooshapari/temp-PRODVERCEL/485/kush` | `019c6fdb-37d3-7d00-a6c7-3812a016bc3f` | 1.0 |
+| `019c707e-a07e-7cc1-94f0-8350748ed6d1` | `/Users/kooshapari/temp-PRODVERCEL/485/kush` | `019c705b-ce16-7fc1-a5f7-073194c518f9` | 1.0 |
+| `019c707e-c588-7a71-babc-ee46f3f4e7e2` | `/Users/kooshapari/temp-PRODVERCEL/485/kush` | `019c705b-ce16-7fc1-a5f7-073194c518f9` | 1.0 |
+| `019c7081-0550-76d1-a56f-88fbdc0ac143` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7081-02c0-7af1-9349-8e92bee4fea9` | 1.0 |
+| `019c7085-f3a5-7d43-bea8-04e38b68b929` | `/Users/kooshapari/temp-PRODVERCEL/485/kush` | `019c705b-ce16-7fc1-a5f7-073194c518f9` | 1.0 |
+| `019c7092-0a1d-76d2-b655-5367595f42c3` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7081-02c0-7af1-9349-8e92bee4fea9` | 1.0 |
+| `019c709a-78c6-7652-96a9-d5d3f31f41c9` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7081-02c0-7af1-9349-8e92bee4fea9` | 1.0 |
+| `019c70a9-9282-7983-b975-f863c0b8fa3b` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7081-02c0-7af1-9349-8e92bee4fea9` | 1.0 |
+| `019c70a9-f83e-79e2-8c7d-64016bf21572` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7081-02c0-7af1-9349-8e92bee4fea9` | 1.0 |
+| `019c70ca-c485-7942-977e-0237313a257b` | `/Users/kooshapari/temp-PRODVERCEL/485/kush` | `019c709f-b41c-7432-8571-699ae9fbe4f7` | 1.0 |
+| `019c70fd-fc09-7610-9fdc-e1f9def6ad9e` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c70fe-28c7-70a3-9cc6-815418c2ace8` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c70fe-2241-7660-821d-a6a5ef04474f` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c70fe-0c2b-7de3-ad98-852116dbc347` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c7100-2a9c-7582-905c-4fab576e61f9` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c7118-10f1-7052-b4ee-5eeb088d8ce2` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c7118-432e-72a3-9083-208f661bb0b0` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c7119-2562-75d3-99d9-6d426d61a7e2` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c711c-7040-7ed1-8b3c-c27c9dd7e076` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c711d-c4f0-7e93-86ee-334902e67d4d` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70e9-073f-7503-bf14-e699cedeebf2` | 1.0 |
+| `019c7122-0cf0-7e51-bdf0-ad500352ab48` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c7126-5c38-76d0-8f0f-cea51582efa3` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c7129-5006-7540-a439-64516e1ceb1e` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c712a-9855-7143-ab0e-c959461e8aa6` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c712b-52ec-7432-8881-b53eb88d61a2` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c712b-250a-7330-9fbd-462a65101c54` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c712b-26e5-7682-be21-65c8312ff62f` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c70f9-bba0-7ce2-af24-7461e112bb6c` | 1.0 |
+| `019c7170-04dd-7753-ab4d-5cb4e1fdc73d` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7138-0850-7f80-911f-1958dd1e39a3` | 1.0 |
+| `019c7170-e6e3-7592-bb31-008f6c6b4e48` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c715c-6af3-75a0-9466-78668832f9da` | 1.0 |
+| `019c7196-db47-7260-8220-78782aeffe0b` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c715c-6af3-75a0-9466-78668832f9da` | 1.0 |
+| `019c71a7-4f86-7cb2-b0de-db3d260c7487` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7170-c45c-7f22-96d9-e01a61724add` | 1.0 |
+| `019c722b-203d-79f0-b20e-428bfedf68fb` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c71ce-1069-7c93-8bf1-19e9c2b4ec0c` | 1.0 |
+| `019c7237-1a24-7383-8760-5e2598abaf26` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c71ce-1069-7c93-8bf1-19e9c2b4ec0c` | 1.0 |
+| `019c7237-4dc6-7131-83fe-3b33c90f5789` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c71ce-1069-7c93-8bf1-19e9c2b4ec0c` | 1.0 |
+| `019c7237-cc11-74c3-8758-37a2bd6ace3b` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7205-e330-7751-bcb0-dd541f90ce3c` | 1.0 |
+| `019c7237-e393-7900-afd5-ed82cb4f99d4` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7205-e330-7751-bcb0-dd541f90ce3c` | 1.0 |
+| `019c723c-d29b-78e3-8528-5ae3e25d6eaf` | `/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent` | `019c7205-e330-7751-bcb0-dd541f90ce3c` | 1.0 |

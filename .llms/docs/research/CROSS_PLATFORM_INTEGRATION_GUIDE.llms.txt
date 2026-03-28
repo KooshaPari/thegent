@@ -4,6 +4,7 @@ Source: docs/research/CROSS_PLATFORM_INTEGRATION_GUIDE.md
 
 ---
 
+<DONE>
 # Cross-Platform Desktop Automation: Integration Guide
 
 **Purpose:** Comprehensive guide for integrating desktop automation with existing thegent systems (distributed coordination, observability, state persistence, testing).

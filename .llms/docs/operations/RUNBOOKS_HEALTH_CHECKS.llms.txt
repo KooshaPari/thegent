@@ -1,0 +1,59 @@
+# RUNBOOKS_HEALTH_CHECKS
+
+Source: docs/operations/RUNBOOKS_HEALTH_CHECKS.md
+
+---
+
+# Health Check Runbook
+
+Service health check procedures for Phenotype ecosystem.
+
+## Overview
+
+All services expose health endpoints for load balancer and monitoring integration.
+
+## Standard Health Endpoint
+
+```
+GET /health
+```
+
+Returns:
+- `200 OK` with `{"status": "healthy"}` when service is operational
+- `503 Service Unavailable` when degraded
+
+## Checks Per Service
+
+### phenotype-task-engine
+
+- [ ] HTTP `/health` returns 200
+- [ ] Database connectivity verified
+- [ ] Message queue accessible
+- [ ] Worker pool has available capacity
+
+### phenotype-research-engine
+
+- [ ] HTTP `/health` returns 200
+- [ ] LLM provider responsive
+- [ ] Vector store accessible
+
+### phenotype-docs-engine
+
+- [ ] HTTP `/health` returns 200
+- [ ] Storage accessible
+- [ ] Search index available
+
+## Alerts
+
+Trigger PagerDuty when:
+- Health endpoint returns 503 for > 1 minute
+- Latency exceeds 500ms for 5 consecutive checks
+- Error rate exceeds 1% over 5 minutes
+
+## Runbook Steps
+
+1. Check service logs: `kubectl logs -l app=<service>`
+2. Check pod status: `kubectl get pods -l app=<service>`
+3. Verify downstream dependencies
+4. Scale if needed: `kubectl scale deployment/<service> --replicas=N`
+5. Rollback if deploy-related: `kubectl rollout undo deployment/<service>`

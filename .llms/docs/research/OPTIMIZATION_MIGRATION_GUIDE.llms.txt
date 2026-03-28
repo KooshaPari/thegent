@@ -4,6 +4,7 @@ Source: docs/research/OPTIMIZATION_MIGRATION_GUIDE.md
 
 ---
 
+<DONE>
 # Package Optimization Migration Guide
 
 ## Overview

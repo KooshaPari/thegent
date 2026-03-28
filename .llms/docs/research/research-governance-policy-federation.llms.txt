@@ -4,6 +4,7 @@ Source: docs/research/research-governance-policy-federation.md
 
 ---
 
+<DONE>
 # Governance Policy Federation Research
 
 > **WORK_STREAM ID:** research-governance-policy-federation

@@ -4,6 +4,7 @@ Source: docs/research/phase15-enterprise-compliance-test-matrix.md
 
 ---
 
+<DONE>
 # Phase 15: Enterprise Compliance Test Matrix
 
 > **Purpose:** Verify enterprise features (egress, ledger, redaction) meet security/auditability standards.

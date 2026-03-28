@@ -1,0 +1,23 @@
+# infra_usage_helpers_api
+
+Source: docs/reference/api/infra_usage_helpers_api.md
+
+---
+
+# infra_usage_helpers API Reference
+
+> **Source**: `src/thegent/cli/commands/infra_usage_helpers.py`
+
+Helpers for usage command rich output formatting.
+
+---
+
+## build_provider_usage_table
+
+```
+build_provider_usage_table(metrics: dict[(str, dict[(str, Any)])])
+```
+
+Build provider usage table from provider metrics payload.
+
+---

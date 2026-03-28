@@ -59,7 +59,7 @@ Add an operation to the transaction.
 ## apply_multi_file_transaction
 
 ```
-apply_multi_file_transaction(changes: list[(tuple[(Path, str)], str)], cwd: Any, git_commit: bool, commit_message: str)
+apply_multi_file_transaction(changes: list[tuple[(Path, str)]], cwd: Any, git_commit: bool, commit_message: str)
 ```
 
 MTSP-13: Prepare multi-file changes and apply as a single atomic transaction.

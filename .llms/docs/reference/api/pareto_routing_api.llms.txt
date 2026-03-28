@@ -8,7 +8,7 @@ Source: docs/reference/api/pareto_routing_api.md
 
 > **Source**: `src/thegent/research/pareto_routing.py`
 
-Pareto Routing &amp; Hysteresis.
+Pareto Routing & Hysteresis.
 
 ---
 

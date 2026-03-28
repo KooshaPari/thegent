@@ -1,0 +1,113 @@
+# cleanup_api
+
+Source: docs/reference/api/cleanup_api.md
+
+---
+
+# cleanup API Reference
+
+> **Source**: `src/thegent/process/cleanup.py`
+
+Process Cleanup
+
+Tracks and cleans up child processes on interrupt.
+
+---
+
+## ProcessCleanup
+
+Tracks and cleans up child processes.
+
+### Methods
+
+#### ProcessCleanup.cleanup_all
+
+```
+cleanup_all(self: Any)
+```
+
+Kill all registered processes.
+
+---
+
+#### ProcessCleanup.cleanup_on_signal
+
+```
+cleanup_on_signal(self: Any, signum: int, frame: Any)
+```
+
+Signal handler for cleanup.
+
+---
+
+#### ProcessCleanup.register
+
+```
+register(self: Any, pid: int)
+```
+
+Register a process for cleanup.
+
+---
+
+#### ProcessCleanup.unregister
+
+```
+unregister(self: Any, pid: int)
+```
+
+Unregister a process.
+
+---
+
+---
+
+## cleanup_all
+
+```
+cleanup_all(self: Any)
+```
+
+Kill all registered processes.
+
+---
+
+## cleanup_on_signal
+
+```
+cleanup_on_signal(self: Any, signum: int, frame: Any)
+```
+
+Signal handler for cleanup.
+
+---
+
+## register
+
+```
+register(self: Any, pid: int)
+```
+
+Register a process for cleanup.
+
+---
+
+## register_cleanup
+
+```
+register_cleanup(pid: int)
+```
+
+Register a process for cleanup on exit/interrupt.
+
+---
+
+## unregister
+
+```
+unregister(self: Any, pid: int)
+```
+
+Unregister a process.
+
+---

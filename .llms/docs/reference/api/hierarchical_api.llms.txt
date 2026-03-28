@@ -1,0 +1,13 @@
+# hierarchical_api
+
+Source: docs/reference/api/hierarchical_api.md
+
+---
+
+# hierarchical API Reference
+
+> **Source**: `src/thegent/orchestration/hierarchical/__init__.py`
+
+Hierarchical agent dispatch module.
+
+---

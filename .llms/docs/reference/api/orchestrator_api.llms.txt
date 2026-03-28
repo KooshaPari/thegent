@@ -6,204 +6,49 @@ Source: docs/reference/api/orchestrator_api.md
 
 # orchestrator API Reference
 
-> **Source**: `src/thegent/sync/orchestrator.py`
+> **Source**: `src/thegent/govern/vetter/orchestrator.py`
 
-## CatalogSyncComponent
+VetterOrchestrator: runs checks in order, aggregates verdict, emits governance events.
 
-**Inherits from**: `SyncComponent`
+WL-092 baseline behavior is preserved by default:
+- failed checks -> rejected
 
-**Method Resolution Order**: `CatalogSyncComponent -> SyncComponent`
+Opt-in extensions:
+- WL-093 escalation path (policy.escalate_on)
+- WL-094 evidence append (always when evidence_store is configured)
+- WL-096 revision queue path (run_context enable_revision_queue=true)
+
+# @trace WL-092
+# @trace WL-093
+# @trace WL-094
+# @trace WL-096
+
+---
+
+## VetterOrchestrator
+
+Orchestrates VetterCheck instances against agent output per a VetterPolicy.
+
+Constructor parameters:
+  session_dir:      Path to the session directory where governance_events.jsonl is written.
+  check_registry:   Mapping of check name -> VetterCheck instance (structural protocol).
+  evidence_store:   Optional; not wired in WL-092 (reserved for WL-094).
+  hitl_workflow:    Optional; not wired in WL-092 (reserved for WL-093).
+  event_log:        Optional; not wired in WL-092 (reserved for WL-094).
+  prompt_queue:     Optional; not wired in WL-092 (reserved for WL-096).
+  federated_policy: Optional; not wired in WL-092 (reserved for WL-099).
+
+Fail fast, fail loudly. No silent error handling. No fallbacks.
+# @trace WL-092
 
 ### Methods
 
-#### CatalogSyncComponent.__init__
+#### VetterOrchestrator.__init__
 
 ```
-__init__(self: Any)
-```
-
----
-
----
-
-## DagSyncComponent
-
-**Inherits from**: `SyncComponent`
-
-**Method Resolution Order**: `DagSyncComponent -> SyncComponent`
-
-### Methods
-
-#### DagSyncComponent.__init__
-
-```
-__init__(self: Any)
+__init__(self: Any, session_dir: Path, check_registry: Any, evidence_store: Any, hitl_workflow: Any, event_log: Any, prompt_queue: Any, federated_policy: Any)
 ```
 
 ---
-
----
-
-## RulesSyncComponent
-
-**Inherits from**: `SyncComponent`
-
-**Method Resolution Order**: `RulesSyncComponent -> SyncComponent`
-
-### Methods
-
-#### RulesSyncComponent.__init__
-
-```
-__init__(self: Any)
-```
-
----
-
----
-
-## SyncComponent
-
-**Inherits from**: `ABC`
-
-### Methods
-
-#### SyncComponent.__init__
-
-```
-__init__(self: Any, name: str, description: str, depends_on: Any)
-```
-
----
-
----
-
-## SyncOrchestrator
-
-### Methods
-
-#### SyncOrchestrator.__init__
-
-```
-__init__(self: Any, registry: Any)
-```
-
----
-
----
-
-## SyncRegistry
-
-### Methods
-
-#### SyncRegistry.__init__
-
-```
-__init__(self: Any)
-```
-
----
-
-#### SyncRegistry.get_all_components
-
-```
-get_all_components(self: Any)
-```
-
----
-
-#### SyncRegistry.get_component
-
-```
-get_component(self: Any, name: str)
-```
-
----
-
-#### SyncRegistry.register
-
-```
-register(self: Any, component: SyncComponent)
-```
-
----
-
----
-
-## SyncResult
-
-### Methods
-
-#### SyncResult.to_dict
-
-```
-to_dict(self: Any)
-```
-
----
-
----
-
-## SyncStatus
-
-**Inherits from**: `Enum`
-
----
-
-## WorkStreamSyncComponent
-
-**Inherits from**: `SyncComponent`
-
-**Method Resolution Order**: `WorkStreamSyncComponent -> SyncComponent`
-
-### Methods
-
-#### WorkStreamSyncComponent.__init__
-
-```
-__init__(self: Any)
-```
-
----
-
----
-
-## get_all_components
-
-```
-get_all_components(self: Any) -> list[SyncComponent]
-```
-
----
-
-## get_component
-
-```
-get_component(self: Any, name: str) -> Any
-```
-
----
-
-## register
-
-```
-register(self: Any, component: SyncComponent)
-```
-
----
-
-## resolve
-
-```
-resolve(comp: SyncComponent)
-```
-
----
-
-## to_dict
-
-```
-to_dict(self: Any) -> dict[(str, Any)]
-```
 
 ---

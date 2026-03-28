@@ -1,0 +1,21 @@
+# governance_cmds_api
+
+Source: docs/reference/api/governance_cmds_api.md
+
+---
+
+# governance_cmds API Reference
+
+> **Source**: `src/thegent/cli/governance/governance_cmds.py`
+
+Thegent CLI governance commands facade - routes to specialized modules (WL-124).
+
+This module re-exports all governance commands from:
+- governance_audit_compliance_cmds: Audit, compliance, data protection
+- governance_escalation_hitl_cmds: Escalation and HITL approval handling
+- governance_policy_health_cmds: Policies, contracts, health scoring, drift
+- governance_discovery_guardrails_cmds: Discovery and guardrails
+
+Direct imports from submodules preserve all public names for CLI registration.
+
+---

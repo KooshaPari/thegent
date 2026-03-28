@@ -1,0 +1,25 @@
+# html_diff_artifact_api
+
+Source: docs/reference/api/html_diff_artifact_api.md
+
+---
+
+# html_diff_artifact API Reference
+
+> **Source**: `src/thegent/integrations/html_diff_artifact.py`
+
+Stub module for thegent.integrations.html_diff_artifact.
+
+---
+
+## DiffLine
+
+Stub class.
+
+---
+
+## HtmlDiffArtifact
+
+Stub class.
+
+---

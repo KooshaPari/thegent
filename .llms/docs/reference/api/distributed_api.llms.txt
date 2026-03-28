@@ -134,6 +134,8 @@ Raised when the coordinator cannot perform a lease operation.
 
 A time-bounded claim on a portion of a named resource.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
 
 #### ResourceLease.from_dict
@@ -153,16 +155,6 @@ is_expired(self: Any)
 ```
 
 Return True when the lease has passed its expiry time.
-
----
-
-#### ResourceLease.to_dict
-
-```
-to_dict(self: Any)
-```
-
-Serialise to a plain dictionary.
 
 ---
 
@@ -275,15 +267,5 @@ Release a lease by its identifier.
 - `lease_id`: The ``lease_id`` of the :class:`ResourceLease` to remove.
 
 **Returns**: ``True`` if the lease was found and removed, ``False`` otherwise.
-
----
-
-## to_dict
-
-```
-to_dict(self: Any)
-```
-
-Serialise to a plain dictionary.
 
 ---

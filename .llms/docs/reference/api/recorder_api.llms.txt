@@ -13,7 +13,7 @@ TraceRecorder: Async, non-blocking trace recording for agent execution.
 Records ToolCallRecord, DecisionRecord events to JSONL files with:
 - Async write worker (non-blocking)
 - Sensitive data redaction (API keys, passwords)
-- Result truncation (&gt;10MB cap)
+- Result truncation (>10MB cap)
 - File I/O with optional compression
 - TTL-based cleanup
 

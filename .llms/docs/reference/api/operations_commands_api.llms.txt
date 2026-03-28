@@ -1,0 +1,19 @@
+# operations_commands_api
+
+Source: docs/reference/api/operations_commands_api.md
+
+---
+
+# operations_commands API Reference
+
+> **Source**: `src/thegent/cli/commands/operations_commands.py`
+
+Operations command group extracted from infra_cmds.py (WL-124).
+
+---
+
+## operations_cmd
+
+List universal operation taxonomy (orchestrate, govern, recover, observe, plan).
+
+---

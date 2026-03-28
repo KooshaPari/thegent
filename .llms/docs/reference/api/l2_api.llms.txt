@@ -1,0 +1,185 @@
+# l2_api
+
+Source: docs/reference/api/l2_api.md
+
+---
+
+# l2 API Reference
+
+> **Source**: `src/thegent/cache/l2.py`
+
+L2 Disk Cache
+
+SQLite-backed disk cache for persistent storage.
+
+---
+
+## L2DiskCache
+
+SQLite-backed disk cache.
+
+### Methods
+
+#### L2DiskCache.__init__
+
+```
+__init__(self: Any, cache_dir: str, ttl: float)
+```
+
+---
+
+#### L2DiskCache.clear
+
+```
+clear(self: Any)
+```
+
+Clear all cache entries.
+
+---
+
+#### L2DiskCache.delete
+
+```
+delete(self: Any, key: str)
+```
+
+Delete value from cache.
+
+---
+
+#### L2DiskCache.get
+
+```
+get(self: Any, key: str)
+```
+
+Get value from cache.
+
+---
+
+#### L2DiskCache.set
+
+```
+set(self: Any, key: str, value: Any, ttl: Optional[float])
+```
+
+Set value in cache.
+
+---
+
+#### L2DiskCache.stats
+
+```
+stats(self: Any)
+```
+
+Get cache statistics.
+
+---
+
+---
+
+## _DiskCacheModuleProtocol
+
+Runtime import surface for the diskcache module.
+
+---
+
+## _DiskCacheProtocol
+
+Minimal cache interface used by L2DiskCache.
+
+### Methods
+
+#### _DiskCacheProtocol.__init__
+
+```
+__init__(self: Any, directory: str)
+```
+
+---
+
+#### _DiskCacheProtocol.clear
+
+```
+clear(self: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.delete
+
+```
+delete(self: Any, key: str)
+```
+
+---
+
+#### _DiskCacheProtocol.get
+
+```
+get(self: Any, key: str, default: Any)
+```
+
+---
+
+#### _DiskCacheProtocol.set
+
+```
+set(self: Any, key: str, value: Any, expire: Any)
+```
+
+---
+
+---
+
+## clear
+
+```
+clear(self: Any)
+```
+
+Clear all cache entries.
+
+---
+
+## delete
+
+```
+delete(self: Any, key: str)
+```
+
+Delete value from cache.
+
+---
+
+## get
+
+```
+get(self: Any, key: str)
+```
+
+Get value from cache.
+
+---
+
+## set
+
+```
+set(self: Any, key: str, value: Any, ttl: Optional[float])
+```
+
+Set value in cache.
+
+---
+
+## stats
+
+```
+stats(self: Any)
+```
+
+Get cache statistics.
+
+---

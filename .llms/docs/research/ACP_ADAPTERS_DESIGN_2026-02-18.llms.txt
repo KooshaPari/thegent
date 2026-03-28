@@ -4,6 +4,7 @@ Source: docs/research/ACP_ADAPTERS_DESIGN_2026-02-18.md
 
 ---
 
+<DONE>
 # ACP Adapters for thegent: Design & Implementation Plan
 
 **Date**: 2026-02-18

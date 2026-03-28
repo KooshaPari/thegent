@@ -1,0 +1,91 @@
+# provider_retry_config_api
+
+Source: docs/reference/api/provider_retry_config_api.md
+
+---
+
+# provider_retry_config API Reference
+
+> **Source**: `src/thegent/utils/provider_retry_config.py`
+
+Provider-specific retry and circuit breaker configuration for LLM API calls.
+
+This module provides retry configurations optimized for each LLM provider's
+rate limits, error patterns, and best practices.
+
+Configuration is based on research from:
+- MiniMax API docs and community best practices
+- GLM/Zhipu API documentation
+- OpenAI API rate limit handling
+- Anthropic Claude API guidelines
+- Google Gemini API documentation
+- DeepSeek API documentation
+- OpenRouter API documentation
+
+# @trace FR-ROUTE-013
+
+---
+
+## ProviderRetryConfig
+
+Retry configuration for a specific LLM provider.
+
+### Methods
+
+#### ProviderRetryConfig.retry_after_default
+
+```
+retry_after_default(self: Any)
+```
+
+Default retry-after value in seconds.
+
+---
+
+---
+
+## get_all_providers
+
+Get list of all configured providers.
+
+---
+
+## get_error_category
+
+```
+get_error_category(status_code: int)
+```
+
+Get the category of error for a status code.
+
+---
+
+## get_provider_retry_config
+
+```
+get_provider_retry_config(provider: str)
+```
+
+Get retry configuration for a specific provider.
+
+---
+
+## is_retryable_error
+
+```
+is_retryable_error(status_code: int)
+```
+
+Check if an HTTP status code indicates a retryable error.
+
+---
+
+## retry_after_default
+
+```
+retry_after_default(self: Any)
+```
+
+Default retry-after value in seconds.
+
+---

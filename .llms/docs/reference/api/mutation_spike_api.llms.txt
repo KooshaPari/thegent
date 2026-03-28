@@ -1,0 +1,25 @@
+# mutation_spike_api
+
+Source: docs/reference/api/mutation_spike_api.md
+
+---
+
+# mutation_spike API Reference
+
+> **Source**: `src/thegent/integrations/mutation_spike.py`
+
+Stub module for thegent.integrations.mutation_spike.
+
+---
+
+## MutationSpikeDetector
+
+Stub class.
+
+---
+
+## SpikeConfig
+
+Stub class.
+
+---

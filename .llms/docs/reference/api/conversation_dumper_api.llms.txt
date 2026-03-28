@@ -1,0 +1,349 @@
+# conversation_dumper_api
+
+Source: docs/reference/api/conversation_dumper_api.md
+
+---
+
+# conversation_dumper API Reference
+
+> **Source**: `src/thegent/session/conversation_dumper.py`
+
+Conversation dumper for auto-writing conversation dumps to docs/dumps.
+
+This module provides functionality to automatically dump conversations
+with timestamp, model, prompt, and response to configurable locations.
+
+# @trace CONV-DUMP-001
+
+---
+
+## ConversationDumper
+
+Auto-write conversation dumps to a configurable directory.
+
+Dumps include timestamp, model, prompt, and response.
+Files are named with conversation_id and timestamp.
+
+# @trace CONV-DUMP-001
+
+### Methods
+
+#### ConversationDumper.__init__
+
+```
+__init__(self: Any, dumps_dir: Any)
+```
+
+Initialize the conversation dumper.
+
+**Parameters**:
+
+- `dumps_dir`: Directory to write dumps to. Defaults to docs/dumps.
+
+---
+
+#### ConversationDumper.dump_conversation
+
+```
+dump_conversation(self: Any, conversation_id: str, model: str, prompt: str, response: str, agent_synthesis: Any, metadata: Any)
+```
+
+Dump a conversation to a file.
+
+**Parameters**:
+
+- `conversation_id`: Unique identifier for the conversation
+- `model`: The model used for the conversation
+- `prompt`: The prompt sent to the model
+- `response`: The response from the model
+- `agent_synthesis`: Optional agent synthesis/summary
+- `metadata`: Optional additional metadata
+
+**Returns**: Path to the created dump file
+
+---
+
+#### ConversationDumper.dump_conversation_json
+
+```
+dump_conversation_json(self: Any, conversation_id: str, model: str, prompt: str, response: str, agent_synthesis: Any, metadata: Any)
+```
+
+Dump a conversation to a JSON file.
+
+**Parameters**:
+
+- `conversation_id`: Unique identifier for the conversation
+- `model`: The model used for the conversation
+- `prompt`: The prompt sent to the model
+- `response`: The response from the model
+- `agent_synthesis`: Optional agent synthesis/summary
+- `metadata`: Optional additional metadata
+
+**Returns**: Path to the created dump file
+
+---
+
+#### ConversationDumper.dumps_directory
+
+```
+dumps_directory(self: Any)
+```
+
+Return the dumps directory path.
+
+---
+
+#### ConversationDumper.ensure_directory
+
+```
+ensure_directory(self: Any)
+```
+
+Ensure the dumps directory exists.
+
+Creates the directory and any necessary parent directories.
+
+---
+
+#### ConversationDumper.get_dump
+
+```
+get_dump(self: Any, dump_path: Path)
+```
+
+Read a conversation dump from a file.
+
+**Parameters**:
+
+- `dump_path`: Path to the dump file
+
+**Returns**: ConversationRecord if the file exists and is valid, None otherwise
+
+---
+
+#### ConversationDumper.list_dumps
+
+```
+list_dumps(self: Any, conversation_id: Any)
+```
+
+List all conversation dumps.
+
+**Parameters**:
+
+- `conversation_id`: Optional filter by conversation ID
+
+**Returns**: List of paths to dump files, sorted by modification time (newest first)
+
+---
+
+#### ConversationDumper.list_dumps_json
+
+```
+list_dumps_json(self: Any, conversation_id: Any)
+```
+
+List all JSON conversation dumps.
+
+**Parameters**:
+
+- `conversation_id`: Optional filter by conversation ID
+
+**Returns**: List of paths to JSON dump files, sorted by modification time (newest first)
+
+---
+
+---
+
+## ConversationRecord
+
+A single conversation record with metadata.
+
+### Methods
+
+#### ConversationRecord.to_json
+
+```
+to_json(self: Any)
+```
+
+Convert conversation to JSON-serializable dict.
+
+**Returns**: Dictionary representation
+
+---
+
+#### ConversationRecord.to_markdown
+
+```
+to_markdown(self: Any)
+```
+
+Convert conversation to markdown format.
+
+**Returns**: Formatted markdown string
+
+---
+
+---
+
+## dump_conversation
+
+```
+dump_conversation(self: Any, conversation_id: str, model: str, prompt: str, response: str, agent_synthesis: Any, metadata: Any)
+```
+
+Dump a conversation to a file.
+
+**Parameters**:
+
+- `conversation_id`: Unique identifier for the conversation
+- `model`: The model used for the conversation
+- `prompt`: The prompt sent to the model
+- `response`: The response from the model
+- `agent_synthesis`: Optional agent synthesis/summary
+- `metadata`: Optional additional metadata
+
+**Returns**: Path to the created dump file
+
+**Raises**:
+
+- `IOError`: If writing the file fails
+
+---
+
+## dump_conversation_json
+
+```
+dump_conversation_json(self: Any, conversation_id: str, model: str, prompt: str, response: str, agent_synthesis: Any, metadata: Any)
+```
+
+Dump a conversation to a JSON file.
+
+**Parameters**:
+
+- `conversation_id`: Unique identifier for the conversation
+- `model`: The model used for the conversation
+- `prompt`: The prompt sent to the model
+- `response`: The response from the model
+- `agent_synthesis`: Optional agent synthesis/summary
+- `metadata`: Optional additional metadata
+
+**Returns**: Path to the created dump file
+
+**Raises**:
+
+- `IOError`: If writing the file fails
+
+---
+
+## dumps_directory
+
+```
+dumps_directory(self: Any)
+```
+
+Return the dumps directory path.
+
+---
+
+## ensure_directory
+
+```
+ensure_directory(self: Any)
+```
+
+Ensure the dumps directory exists.
+
+Creates the directory and any necessary parent directories.
+
+---
+
+## get_dump
+
+```
+get_dump(self: Any, dump_path: Path)
+```
+
+Read a conversation dump from a file.
+
+**Parameters**:
+
+- `dump_path`: Path to the dump file
+
+**Returns**: ConversationRecord if the file exists and is valid, None otherwise
+
+---
+
+## get_dumper
+
+```
+get_dumper(dumps_dir: Any)
+```
+
+Get a ConversationDumper instance.
+
+**Parameters**:
+
+- `dumps_dir`: Optional custom dumps directory
+
+**Returns**: Configured ConversationDumper instance
+
+---
+
+## list_dumps
+
+```
+list_dumps(self: Any, conversation_id: Any)
+```
+
+List all conversation dumps.
+
+**Parameters**:
+
+- `conversation_id`: Optional filter by conversation ID
+
+**Returns**: List of paths to dump files, sorted by modification time (newest first)
+
+---
+
+## list_dumps_json
+
+```
+list_dumps_json(self: Any, conversation_id: Any)
+```
+
+List all JSON conversation dumps.
+
+**Parameters**:
+
+- `conversation_id`: Optional filter by conversation ID
+
+**Returns**: List of paths to JSON dump files, sorted by modification time (newest first)
+
+---
+
+## to_json
+
+```
+to_json(self: Any)
+```
+
+Convert conversation to JSON-serializable dict.
+
+**Returns**: Dictionary representation
+
+---
+
+## to_markdown
+
+```
+to_markdown(self: Any)
+```
+
+Convert conversation to markdown format.
+
+**Returns**: Formatted markdown string
+
+---

@@ -8,7 +8,7 @@ Source: docs/reference/api/idea_seed_system_api.md
 
 > **Source**: `src/thegent/research/idea_seed_system.py`
 
-Idea Seed Detection &amp; Storage System.
+Idea Seed Detection & Storage System.
 
 ---
 

@@ -1,0 +1,23 @@
+# task_classifier_schema_api
+
+Source: docs/reference/api/task_classifier_schema_api.md
+
+---
+
+# task_classifier_schema API Reference
+
+> **Source**: `src/thegent/governance/task_classifier_schema.py`
+
+Loader for governance task classifier schema.
+
+---
+
+## load_task_classifier_schema
+
+```
+load_task_classifier_schema(schema_path: Any)
+```
+
+Load and validate the governance task classifier schema.
+
+---

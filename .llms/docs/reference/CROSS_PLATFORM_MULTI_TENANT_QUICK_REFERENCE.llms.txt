@@ -156,11 +156,11 @@ desktop_automation:
 ## CLI Usage
 
 ```
-# Run agent with sub-user isolation (default)
-thegent run "Task" agent-name
+# Run selected agent in default mode
+thegent run agent "Task" --agent claude
 
-# Run agent with OS user isolation (requires admin/root)
-thegent run --isolation-mode osuser "Task" agent-name
+# Run with OS user isolation (requires admin/root)
+thegent run agent "Task" --agent claude --isolation-mode osuser
 
 # Check desktop automation permissions
 thegent desktop-automation check-permissions
@@ -431,7 +431,7 @@ thegent automation locks
 ```
 export THGENT_DEBUG=1
 export THGENT_LOG_LEVEL=DEBUG
-thegent run "automation test" --debug
+thegent run agent "automation test" --agent claude --debug
 ```
 
 **Step 2: Collect Diagnostics**

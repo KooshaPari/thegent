@@ -1,0 +1,33 @@
+# tools_contract_observe_api
+
+Source: docs/reference/api/tools_contract_observe_api.md
+
+---
+
+# tools_contract_observe API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_contract_observe.py`
+
+Session contract, observability, and DAG status tool handlers for MCP server.
+
+---
+
+## thegent_dag_status_impl
+
+---
+
+## thegent_inspect_impl
+
+---
+
+## thegent_observe_summary_impl
+
+---
+
+## thegent_session_contract_health_trend_impl
+
+---
+
+## thegent_session_contracts_impl
+
+---

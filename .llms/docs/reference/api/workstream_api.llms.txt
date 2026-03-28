@@ -45,6 +45,16 @@ Claim a work item by appending to the CLAIMED section.
 
 ---
 
+## lint_workstream_schema
+
+```
+lint_workstream_schema(path: Path)
+```
+
+Validate canonical WORK_STREAM structural requirements.
+
+---
+
 ## mark_completed
 
 ```
@@ -61,6 +71,26 @@ Mark a work item as completed by striking through in BACKLOG.
 **Raises**:
 
 - `FileNotFoundError`: If path does not exist.
+
+---
+
+## normalize_owner_identifier
+
+```
+normalize_owner_identifier(owner: str)
+```
+
+Normalize owner identifiers across local and remote systems.
+
+---
+
+## normalize_workstream_sections
+
+```
+normalize_workstream_sections(path: Path)
+```
+
+Sort WL sections by numeric ID and normalize status line formatting.
 
 ---
 

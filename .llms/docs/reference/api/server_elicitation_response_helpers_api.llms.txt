@@ -1,0 +1,33 @@
+# server_elicitation_response_helpers_api
+
+Source: docs/reference/api/server_elicitation_response_helpers_api.md
+
+---
+
+# server_elicitation_response_helpers API Reference
+
+> **Source**: `src/thegent/mcp/server_elicitation_response_helpers.py`
+
+Elicitation response interpretation helpers extracted from MCP server (WL-126).
+
+---
+
+## resolve_cwd_elicitation
+
+```
+resolve_cwd_elicitation(response: Any)
+```
+
+Resolve cwd path and status from an elicitation response object.
+
+---
+
+## resolve_owner_elicitation
+
+```
+resolve_owner_elicitation(response: Any)
+```
+
+Resolve owner tag and status from an elicitation response object.
+
+---

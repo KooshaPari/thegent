@@ -4,6 +4,7 @@ Source: docs/research/TERMINAL_COMPARISON_COMMUNITY_INSIGHTS_2026-02-18.md
 
 ---
 
+<DONE>
 # Terminal Comparison: Community Insights & Real-World Usage (2026-02-18)
 
 ## Executive Summary

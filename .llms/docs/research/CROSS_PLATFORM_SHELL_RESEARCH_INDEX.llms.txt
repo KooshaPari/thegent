@@ -4,6 +4,7 @@ Source: docs/research/CROSS_PLATFORM_SHELL_RESEARCH_INDEX.md
 
 ---
 
+<DONE>
 # Cross-Platform Shell Research — Complete Index
 
 **Task:** research-cross-platform-shell (P1)

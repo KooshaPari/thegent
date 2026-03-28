@@ -1,0 +1,9 @@
+# index
+
+Source: docs/how-to/index.md
+
+---
+
+# How-to Guides
+
+Task-oriented guides for known goals and troubleshooting workflows.

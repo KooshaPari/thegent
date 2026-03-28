@@ -1,0 +1,13 @@
+# apps_api
+
+Source: docs/reference/api/apps_api.md
+
+---
+
+# apps API Reference
+
+> **Source**: `src/thegent/cli/apps/__init__.py`
+
+CLI apps - modular command registrations.
+
+---

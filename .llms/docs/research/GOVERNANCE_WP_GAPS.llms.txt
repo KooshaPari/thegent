@@ -4,6 +4,7 @@ Source: docs/research/GOVERNANCE_WP_GAPS.md
 
 ---
 
+<DONE>
 # Governance WP Gaps — Implementation Notes
 
 **Date:** 2026-02-14

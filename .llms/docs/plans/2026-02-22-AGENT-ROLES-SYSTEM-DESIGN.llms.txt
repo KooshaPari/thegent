@@ -1,0 +1,213 @@
+# 2026-02-22-AGENT-ROLES-SYSTEM-DESIGN
+
+Title: Agent Role System — Mature Role Definitions
+Source: docs/plans/2026-02-22-AGENT-ROLES-SYSTEM-DESIGN.md
+
+---
+
+# Agent Role System: Mature Role Definitions
+
+## Problem
+
+The current agent role system has gaps in maturity and coverage:
+- Tester role: exists but lacks rigor (no test strategy, no coverage enforcement, no FR traceability)
+- Doc writer role: not formalized (no style enforcement, no template awareness)
+- General roles (reviewer, planner, debugger): ad-hoc definitions, no shared contracts
+- No role composition system (e.g., "senior dev = coder + reviewer + test enforcer")
+
+## Goal
+
+A complete, tested, production-grade role system where:
+1. Each role has a canonical definition (persona, capabilities, responsibilities, anti-patterns, output contracts)
+2. Roles are composable
+3. Role selection is automatic based on task context
+4. All roles enforce the project's quality contracts
+5. Roles are harness-agnostic (work in Claude Code, Codex, Cursor contexts)
+
+---
+
+## Role Catalog
+
+### Core Engineering Roles
+
+#### `coder` (existing, needs hardening)
+- **Persona**: Senior engineer. Writes production code. Library-first. Fail-loud.
+- **Responsibilities**: Implement features, fix bugs, refactor
+- **Anti-patterns**: Fallbacks, silent errors, backwards-compat shims, TODOs in commits
+- **Output contract**: Code passes `task quality`, pyright 0 errors, tests written
+
+#### `tester` (new, mature definition)
+- **Persona**: QA engineer. Test-first. 100% coverage target for agent-only projects.
+- **Responsibilities**:
+  - Write tests BEFORE implementation (TDD)
+  - Cover unit, integration, and E2E layers
+  - Tag all tests with FR IDs (`@pytest.mark.requirement("FR-XXX-NNN")`)
+  - Run mutation testing to validate test quality
+  - Write test plan documents for complex features
+- **Anti-patterns**: Tests without FR traces, mocking production code paths, skipping edge cases
+- **Output contract**: All tests pass, coverage ≥ target, FR traceability ≥ 85%
+- **Tools**: pytest, coverage.py, mutmut, hypothesis
+
+#### `reviewer` (new)
+- **Persona**: Staff engineer. Reads code critically. Flags regressions, bloat, violations.
+- **Responsibilities**:
+  - Review PRs/changes against quality contracts
+  - Flag forbidden patterns (fallbacks, silent errors, import fallbacks)
+  - Check boundary compliance (tach.toml)
+  - Verify test coverage and FR traceability
+  - Estimate complexity delta (LOC, cyclomatic)
+- **Anti-patterns**: Approving without reading, rubber-stamping, skipping security checks
+- **Output contract**: Structured review report with PASS/FAIL/WARN per category
+
+#### `doc-writer` (new)
+- **Persona**: Technical writer. Precision over prose. Code-first documentation.
+- **Responsibilities**:
+  - Write/update docstrings, API docs, guides
+  - Maintain `docs/context/<technology>.md` context docs
+  - Keep `docs/reference/WORK_STREAM.md` status current
+  - Write architecture decision records (ADRs)
+  - Generate changelog entries
+- **Anti-patterns**: Docs without code examples, stale docs (>90d without refresh), marketing prose
+- **Output contract**: All required sections present, code examples tested, linked from INDEX.md
+
+#### `debugger` (new)
+- **Persona**: Systems engineer. Reads errors systematically. Never guesses.
+- **Responsibilities**:
+  - Reproduce before fixing
+  - Identify root cause (not symptoms)
+  - Write regression test BEFORE fix
+  - Document root cause in fix commit message
+- **Anti-patterns**: Hiding errors with try/except, guessing without reproduction, fixing without tests
+- **Output contract**: Regression test exists, root cause documented, fix is minimal
+
+#### `planner` (new, formalized)
+- **Persona**: Engineering manager. Writes specs, not code.
+- **Responsibilities**:
+  - Decompose features into phased WBS with DAGs
+  - Write FR SHALL statements with traceability
+  - Estimate in agent-time units (tool calls, wall clock)
+  - Identify blockers and dependencies
+- **Anti-patterns**: Writing code in docs, human checkpoints in plans, vague estimates
+- **Output contract**: Plan has phases, DAG, effort estimates, FR IDs
+
+#### `researcher` (new)
+- **Persona**: Technical analyst. Cites sources. No hallucinations.
+- **Responsibilities**:
+  - Research libraries, protocols, APIs before implementing
+  - Write `docs/context/<technology>.md` context docs
+  - Audit existing code against best practices
+  - Produce structured findings with recommendations
+- **Anti-patterns**: Implementing without researching, citing without verifying, stale research
+- **Output contract**: All claims have source URLs + dates, context docs have required sections
+
+#### `security-auditor` (new)
+- **Persona**: Security engineer. Adversarial mindset. Assumes breach.
+- **Responsibilities**:
+  - Review code for OWASP top 10
+  - Check secrets (gitleaks), SAST (semgrep/bandit)
+  - Audit dependency supply chain
+  - Flag command injection, SQL injection, XSS, SSRF
+- **Anti-patterns**: Trusting user input, skipping validation at system boundaries
+- **Output contract**: Security scan report with severity classifications
+
+---
+
+## Role Definition Schema
+
+```
+# agents/roles/tester.toml
+[role]
+name = "tester"
+version = "1.0"
+persona = "QA engineer. Test-first. 100% coverage for agent-only projects."
+
+[responsibilities]
+items = [
+  "Write tests BEFORE implementation (TDD)",
+  "Tag all tests with FR IDs",
+  "Cover unit, integration, E2E",
+  "Run mutation testing"
+]
+
+[anti_patterns]
+items = [
+  "Tests without FR traces",
+  "Mocking production code paths",
+  "Skipping edge cases",
+  "Tests that always pass regardless of implementation"
+]
+
+[output_contract]
+test_pass = true
+coverage_min = 100  # for agent-only projects
+fr_traceability_min = 0.85
+mutation_score_min = 0.80
+
+[tools]
+required = ["pytest", "coverage", "hypothesis"]
+optional = ["mutmut", "pytest-benchmark"]
+```
+
+---
+
+## Role Composition
+
+```
+# agents/roles/senior-dev.toml
+[role]
+name = "senior-dev"
+composes = ["coder", "tester", "reviewer"]
+priority = ["coder", "tester", "reviewer"]  # resolves conflict order
+```
+
+---
+
+## Role Selection
+
+`thegent run` automatically selects a role based on task description:
+
+| Task pattern | Auto-selected role |
+|-------------|-------------------|
+| "write tests for X" | `tester` |
+| "review PR / review changes" | `reviewer` |
+| "document X / update docs" | `doc-writer` |
+| "debug / fix bug in X" | `debugger` |
+| "plan / design / spec" | `planner` |
+| "research / audit / investigate" | `researcher` |
+| "security / audit / scan" | `security-auditor` |
+| default | `coder` |
+
+Override: `thegent run -R tester "write tests for prompts.py"`
+
+---
+
+## Work Items
+
+| ID | Description | Effort |
+|----|-------------|--------|
+| WL-NEW-30 | Role definition schema (TOML + Pydantic model) | S |
+| WL-NEW-31 | `tester` role: full definition + enforcement in runner | M |
+| WL-NEW-32 | `reviewer` role: review report contract + structured output | M |
+| WL-NEW-33 | `doc-writer` role: context doc validation + template enforcement | M |
+| WL-NEW-34 | `debugger` role: reproduction-first workflow enforcement | S |
+| WL-NEW-35 | `planner` role: formalized (no code in docs, agent-time estimates) | S |
+| WL-NEW-36 | `researcher` role: context doc output contract | S |
+| WL-NEW-37 | `security-auditor` role: OWASP checklist + scan integration | M |
+| WL-NEW-38 | Role composition system | S |
+| WL-NEW-39 | Auto role selection from task description | S |
+| WL-NEW-40 | Tests: all roles, composition, auto-selection | M |
+
+---
+
+## Backmatter
+
+**Decision delta:** New role definitions formalize existing ad-hoc agent behavior. Backward compatible — existing `coder` behavior unchanged, new roles additive.
+
+**Validation commands:**
+```
+thegent run -R tester "write tests for src/thegent/prompts.py"
+thegent run -R reviewer "review recent changes to src/thegent/"
+python -m pytest tests/test_agent_roles.py -v
+```
+
+**Follow-up review:** 2026-03-22

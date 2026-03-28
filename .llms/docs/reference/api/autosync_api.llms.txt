@@ -1,0 +1,16 @@
+# autosync_api
+
+Source: docs/reference/api/autosync_api.md
+
+---
+
+# autosync API Reference
+
+> **Source**: `src/thegent/autosync/__init__.py`
+
+Autosync package.
+
+Modular package for workstream autosync functionality.
+Target: Under 800 LOC for main runner.
+
+---

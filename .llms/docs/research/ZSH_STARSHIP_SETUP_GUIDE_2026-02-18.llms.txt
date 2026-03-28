@@ -4,6 +4,7 @@ Source: docs/research/ZSH_STARSHIP_SETUP_GUIDE_2026-02-18.md
 
 ---
 
+<DONE>
 # zsh & Starship Setup Guide: Plugins, Themes, and Optimization (2026-02-18)
 
 ## Table of Contents

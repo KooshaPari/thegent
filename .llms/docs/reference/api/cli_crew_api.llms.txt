@@ -6,7 +6,7 @@ Source: docs/reference/api/cli_crew_api.md
 
 # cli_crew API Reference
 
-> **Source**: `src/thegent/cli/commands/cli_crew.py`
+> **Source**: `src/thegent/cli/commands/team/cli_crew.py`
 
 CLI commands for crew management.
 

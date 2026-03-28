@@ -1,0 +1,58 @@
+# worktree-governance-inventory
+
+Source: docs/governance/worktree-governance-inventory.md
+
+---
+
+# Worktree Governance Inventory
+
+- total: `46`
+- conformant: `12`
+- nonconformant: `34`
+
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent (main) :: -
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/.worktrees/thegent--lane-split-modules-bootstrap-v2 ((detached)) :: detached branch; path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-composite-actions (chore/composite-actions) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/cliproxyctl-fix (fix/cliproxyctl-err-msg-v7) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/code-reduction (feat/code-reduction-thegent) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/coderabbit-rate-limit-bridge (codex/coderabbit-rate-limit-bridge) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-pytest-skip-debt (codex/thegent-pytest-skip-debt) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-thegent-zig-gate-fix1 (codex/thegent-zig-gate-fix1) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-zig-command-debt (codex/zig-command-debt) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-zig-command-debt-clean (codex/zig-command-debt-clean) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-zig-gate (codex/thegent-zig-gate) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/g108-pedagogy-docs (docs/g108-pedagogy-scaffold) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/g110-tracker-fix (fix/g110-tracker-staleness) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/garden-release-framework (garden/release-framework) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/garden-secret-remediation (garden/secret-remediation) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/hexagonal (hexagonal/phase1) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/modular-arch (feat/modular-arch-wp09) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/monolith-cleanup (refactor/monolith-cleanup) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/monolith-removal (refactor/monolith-removal) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/pi-008-occ-fix (pi-008-occ-fix) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/pr-478-fix (codex/pr478-runtime-fix-v2) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/sync-hardening-queue-intent (int/sync-hardening-queue-task) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/sync-hardening-queue-intent2 (int/sync-hardening-queue-task2) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/sync-hardening-queue-intent3 (int/sync-hardening-queue-task3) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/workspace (refactor/perf-robustness) :: path outside repository root
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/backend/m/split-thegent-app/active (backend/m/split-thegent-app) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/backend/m/split-thegent-control-plane/active (backend/m/split-thegent-control-plane) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/backend/m/split-thegent-execution/active (backend/m/split-thegent-execution) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/backend/m/split-thegent-governance/active (backend/m/split-thegent-governance) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/backend/m/split-thegent-mcp/active (backend/m/split-thegent-mcp) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/infra/m/migrate-cache/active (infra/m/migrate-cache) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/int/m/mod-split-wave3/active (int/m/mod-split-wave3) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/lane/m/rebuild-pr540-v1/active (lane/m/rebuild-pr540-v1) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/lane/m/rebuild-pr541-v1/active (lane/m/rebuild-pr541-v1) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/lane/m/split-modules-bootstrap-v3/active (lane/m/split-modules-bootstrap-v3) :: -
+- PASS /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/mod/m/thegent-app-composition-v1/active (mod/m/thegent-app-composition-v1) :: -
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--codex-thegent-decomp-audit-20260313 (codex/thegent-decomp-audit-20260313) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--decomp-20260314 (decomp/20260314) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--feat-ci-stabilization-baseline (feat/ci-stabilization-baseline) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--feat-phench-project-runtime-v1 (feat/phench-project-runtime-v1-linear) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--mod-split-stage-1-fix (mod-split-stage-1-fix) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--policy-federation-onboard (agentops/policy-federation-onboard) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--track-all-user-requested-changes (chore/track-all-user-requested-changes) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/.worktrees/thegent--workstream-autosync-rework (int/workstream-autosync-rework) :: legacy or malformed worktree inside structured root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/finalize-main (tmp/finalize-main-gate) :: path outside repository root
+- WARN /Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/session-full-turn-policy-20260324 (docs/session-full-turn-policy-20260324) :: path outside repository root

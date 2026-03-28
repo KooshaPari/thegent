@@ -4,6 +4,7 @@ Source: docs/research/AGENT_HIERARCHY_AND_TEAM_STRUCTURE.md
 
 ---
 
+<DONE>
 # Agent Hierarchy and Team Structure
 
 > **Date**: 2026-02-18

@@ -6,8 +6,8 @@ Source: docs/reference/api/commands_api.md
 
 # commands API Reference
 
-> **Source**: `src/thegent/commands/__init__.py`
+> **Source**: `src/thegent/cli/commands/__init__.py`
 
-Thegent commands package.
+Namespace package for CLI command modules.
 
 ---

@@ -1,0 +1,20 @@
+# start-here
+
+Source: docs/fa-Latn/start-here.md
+
+---
+
+# Pinglish (coming soon)
+
+This documentation is currently not fully localized. Please use English for now:
+
+- [English](/)
+
+Recommended entry points (English fallback):
+- [Start Here](/start-here.md)
+- [Tutorials](/tutorials/)
+- [How-to](/how-to/)
+- [Reference](/reference/)
+- [Explanation](/explanation/)
+- [Operations](/operations/)
+- [API](/api/)

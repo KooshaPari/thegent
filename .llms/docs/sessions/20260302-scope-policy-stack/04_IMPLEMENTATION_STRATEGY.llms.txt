@@ -1,0 +1,16 @@
+# 04_IMPLEMENTATION_STRATEGY
+
+Source: docs/sessions/20260302-scope-policy-stack/04_IMPLEMENTATION_STRATEGY.md
+
+---
+
+# 04_IMPLEMENTATION_STRATEGY
+
+- Use YAML layer files per scope in `policy-contract/policy-config`.
+- Keep schema in `policy-contract/agent-scope/schema.json`.
+- Use `policy-contract/resolve.py` as single merge point.
+- For now, call resolver explicitly from harness wrappers/entry points and require policy hash logging.
+- Expand from Codex to Cursor-agent, Claude, and Factory Droid after stable output format is verified.
+
+## Cross-project reuse opportunities
+- `policy-contract` can be moved to a shared repo (`template-commons`) and vendored into sibling repos.

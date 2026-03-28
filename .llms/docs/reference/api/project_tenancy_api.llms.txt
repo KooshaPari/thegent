@@ -1,0 +1,151 @@
+# project_tenancy_api
+
+Source: docs/reference/api/project_tenancy_api.md
+
+---
+
+# project_tenancy API Reference
+
+> **Source**: `src/thegent/infra/project_tenancy.py`
+
+Project tenancy and AG-DD template orchestration.
+
+---
+
+## AssetInstallResult
+
+Deterministic template install result.
+
+---
+
+## ProjectTenancy
+
+Project tenancy manager backed by a strict JSON registry.
+
+### Methods
+
+#### ProjectTenancy.__init__
+
+```
+__init__(self: Any, registry_path: Any)
+```
+
+---
+
+#### ProjectTenancy.get_project
+
+```
+get_project(self: Any)
+```
+
+---
+
+#### ProjectTenancy.init_project
+
+```
+init_project(self: Any)
+```
+
+---
+
+#### ProjectTenancy.install_project_assets
+
+```
+install_project_assets(self: Any, path: Any)
+```
+
+---
+
+#### ProjectTenancy.list_projects
+
+```
+list_projects(self: Any)
+```
+
+---
+
+#### ProjectTenancy.spawn_template_agdd
+
+```
+spawn_template_agdd(self: Any, path: Any, mode: TemplateMode)
+```
+
+---
+
+#### ProjectTenancy.sync_project
+
+```
+sync_project(self: Any)
+```
+
+Update selected tenancy fields for an existing project record.
+
+---
+
+---
+
+## TenancyProject
+
+Strict persisted model for project tenancy records.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## TenancyRegistryPayload
+
+On-disk registry payload schema.
+
+**Inherits from**: `BaseModel`
+
+---
+
+## get_project
+
+```
+get_project(self: Any) -> Any
+```
+
+---
+
+## init_project
+
+```
+init_project(self: Any) -> TenancyProject
+```
+
+---
+
+## install_project_assets
+
+```
+install_project_assets(self: Any, path: Any) -> AssetInstallResult
+```
+
+---
+
+## list_projects
+
+```
+list_projects(self: Any) -> list[TenancyProject]
+```
+
+---
+
+## spawn_template_agdd
+
+```
+spawn_template_agdd(self: Any, path: Any, mode: TemplateMode) -> AssetInstallResult
+```
+
+---
+
+## sync_project
+
+```
+sync_project(self: Any)
+```
+
+Update selected tenancy fields for an existing project record.
+
+---

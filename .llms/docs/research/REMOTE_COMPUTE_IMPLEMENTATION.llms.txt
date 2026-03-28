@@ -4,6 +4,7 @@ Source: docs/research/REMOTE_COMPUTE_IMPLEMENTATION.md
 
 ---
 
+<DONE>
 # Research: Remote Compute Implementation (Phase 4)
 
 ## Overview

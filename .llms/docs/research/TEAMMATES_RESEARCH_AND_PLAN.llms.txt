@@ -4,6 +4,7 @@ Source: docs/research/TEAMMATES_RESEARCH_AND_PLAN.md
 
 ---
 
+<DONE>
 # Thegent Teammates: Research and Implementation Plan (2026-02-15)
 
 ## 1. Research: Claude Code Teammates

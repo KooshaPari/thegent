@@ -6,7 +6,7 @@ Source: docs/reference/api/task_router_api.md
 
 # task_router API Reference
 
-> **Source**: `src/thegent/routing/task_router.py`
+> **Source**: `src/thegent/utils/routing_impl/task_router.py`
 
 ## ConstraintValidator
 
@@ -62,8 +62,8 @@ Classify task complexity based on prompt content.
 
 Heuristics:
 - Word count (token estimate proxy)
-- Keywords (architecture, design -&gt; HIGH_COMPLEX)
-- Structure (bullets, code blocks -&gt; COMPLEX)
+- Keywords (architecture, design -> HIGH_COMPLEX)
+- Structure (bullets, code blocks -> COMPLEX)
 
 ---
 
@@ -166,6 +166,18 @@ route_dag_tasks(self: Any, dag: Any)
 ```
 
 Route multiple tasks from a DAG, considering dependencies (WP-1001).
+
+---
+
+#### TaskRouter.route_via_cliproxy
+
+```
+route_via_cliproxy(self: Any, prompt: str, max_cost_per_call: float, max_latency_ms: int, min_quality_score: float) -> tuple
+```
+
+Route using CLIProxy Pareto router endpoint.
+
+**Returns** (`tuple`): (model_id, provider, estimated_cost)
 
 ---
 
@@ -284,6 +296,18 @@ route_dag_tasks(self: Any, dag: Any)
 ```
 
 Route multiple tasks from a DAG, considering dependencies (WP-1001).
+
+---
+
+## route_via_cliproxy
+
+```
+route_via_cliproxy(self: Any, prompt: str, max_cost_per_call: float, max_latency_ms: int, min_quality_score: float) -> tuple
+```
+
+Route using CLIProxy Pareto router endpoint.
+
+**Returns** (`tuple`): (model_id, provider, estimated_cost)
 
 ---
 

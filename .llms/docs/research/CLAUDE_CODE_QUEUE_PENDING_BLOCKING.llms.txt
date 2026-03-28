@@ -4,6 +4,7 @@ Source: docs/research/CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md
 
 ---
 
+<DONE>
 # Claude Code: Queue Pending & Blocking Messages (Research & Plan)
 
 **Goal:** Replicate Codex/Cursor-agent behavior in Claude Code:

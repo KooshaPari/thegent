@@ -4,6 +4,7 @@ Source: docs/research/CROSS_PLATFORM_SHELL_RESEARCH_SUMMARY.md
 
 ---
 
+<DONE>
 # Cross-Platform Shell Research — Summary
 
 **Task:** research-cross-platform-shell

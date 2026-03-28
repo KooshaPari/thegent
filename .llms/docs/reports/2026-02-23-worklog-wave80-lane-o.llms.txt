@@ -1,0 +1,49 @@
+# 2026-02-23-worklog-wave80-lane-o
+
+Source: docs/reports/2026-02-23-worklog-wave80-lane-o.md
+
+---
+
+# Worklog Wave 80 - Lane O (2026-02-23)
+
+Scope: Implement next 10 open WL items after Lane L (`WL-9730..WL-9739`), i.e. `WL-9740..WL-9749`, with tests.
+
+Queue artifact used: `docs/reports/bulk-wi-s82-lane-c.md`.
+
+## Completed WL Items
+
+1. `WL-9740`: Added explicit parse-phase regression for missing `turn_id` in `_parse_turn_cancel_request(...)`.
+2. `WL-9741`: Added parse-phase regression for successful turn context resolution in `_parse_turn_cancel_request(...)`.
+3. `WL-9742`: Added routing-phase regression for supported cancel method acceptance via `_route_turn_cancel_method(...)`.
+4. `WL-9743`: Added precondition regression for terminal-turn rejection via `_resolve_turn_cancel_context(...)`.
+5. `WL-9744`: Added projection regression validating `_project_turn_cancel_response(...)` preserves serialized turn identity.
+6. `WL-9745`: Added notification-path regression proving terminal cancel errors are suppressed for no-id requests in `_handle_turn_cancel_request(...)`.
+7. `WL-9746`: Added execution regression proving `_execute_turn_cancel_resolution(...)` transitions turn status to `cancelled`.
+8. `WL-9747`: Added execution regression proving requested approvals are transitioned to `cancelled`.
+9. `WL-9748`: Added execution regression proving non-requested approval states are preserved.
+10. `WL-9749`: Added end-to-end notification regression proving `turn/cancel` applies side effects without emitting a response.
+
+## Files Updated
+
+- `src/thegent/protocols/jsonrpc_agent_server.py`
+- `tests/protocols/test_wl9740_wl9749_lane_o.py`
+- `docs/reports/bulk-wi-s82-lane-c.md`
+- `docs/reports/2026-02-23-worklog-wave80-lane-o.md`
+
+## Validation
+
+Commands run:
+
+```
+uv run python -m pytest -q tests/protocols/test_wl9740_wl9749_lane_o.py
+uv run python -m pytest -q tests/protocols/test_jsonrpc_agent_server_contract.py
+task quality
+```
+
+Results:
+
+- `tests/protocols/test_wl9740_wl9749_lane_o.py`: `10 passed`
+- `tests/protocols/test_jsonrpc_agent_server_contract.py`: `25 passed`
+- `task quality`: failed in delegated parent-repo lane `quality:cliproxy-parent` (`cliproxyapi-plusplus` Go vet/test issues, e.g. redeclared test and unused imports), while the lane-local Python protocol suites above passed.
+
+No commits were created.

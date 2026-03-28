@@ -8,7 +8,7 @@ Source: docs/reference/api/probing_api.md
 
 > **Source**: `src/thegent/agents/probing.py`
 
-WP-33004: Black-Box Probing &amp; Fingerprinting.
+WP-33004: Black-Box Probing & Fingerprinting.
 
 Identifies the underlying model and capabilities of black-box agents via behavioral probing.
 Generates an 'agent fingerprint' to enable better steering and policy enforcement.

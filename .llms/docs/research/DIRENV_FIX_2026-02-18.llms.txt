@@ -4,6 +4,7 @@ Source: docs/research/DIRENV_FIX_2026-02-18.md
 
 ---
 
+<DONE>
 # direnv and FUNCNEST Fix (2026-02-18)
 
 ## Problem

@@ -1,0 +1,75 @@
+# diagrams
+
+Source: docs/diagrams.md
+
+---
+
+# Architecture Diagrams
+
+This document contains architecture diagrams for the Phenotype ecosystem.
+
+## System Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      CLI / MCP / API                       │
+│              (helios, helios_mcp, REST)                   │
+└─────────────────────┬─────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    LLM Proxy Server                         │
+│              (cliproxyapi-plusplus)                        │
+│  ┌──────────────┬──────────────┬──────────────┐         │
+│  │   Provider    │    Auth      │   Routing    │         │
+│  │   Handlers   │   Manager    │   Engine     │         │
+│  └──────────────┴──────────────┴──────────────┘         │
+└─────────────────────┬─────────────────────────────────────┘
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+    ┌─────────┐ ┌─────────┐ ┌─────────┐
+    │ OpenAI  │ │Anthropic│ │ Google  │
+    │  API    │ │  API    │ │  API    │
+    └─────────┘ └─────────┘ └─────────┘
+```
+
+## Request Flow
+
+```
+Client Request
+     │
+     ▼
+┌─────────────┐
+│   Router    │──▶ Model Selection
+└─────────────┘
+     │
+     ▼
+┌─────────────┐
+│   Auth      │──▶ Credential Validation
+└─────────────┘
+     │
+     ▼
+┌─────────────┐
+│  Provider   │──▶ API Call
+│   Handler   │
+└─────────────┘
+     │
+     ▼
+┌─────────────┐
+│   Response  │──▶ Back to Client
+│  Transform  │
+└─────────────┘
+```
+
+## Repository Structure
+
+```
+phenotype/
+├── phenotype-core/          # Core packages
+├── phenotype-cli/          # CLI implementation
+├── phenotype-mcp/         # MCP server
+├── phenotype-api/         # REST API
+├── phenotype-sdk/         # Client SDKs
+└── docs/                  # Documentation
+```

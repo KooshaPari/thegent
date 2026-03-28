@@ -1,0 +1,534 @@
+# PHASE_6_MEMORY_ENHANCEMENTS_SPECIFICATION
+
+Source: docs/plans/PHASE_6_MEMORY_ENHANCEMENTS_SPECIFICATION.md
+
+---
+
+# Phase 6: Advanced Memory Enhancements Specification
+
+**Status:** Planning Phase (Awaiting Prioritization)
+**Date:** 2026-02-19
+**Scope:** Memory backend upgrades, search, analytics, and sharing
+**Estimated Effort:** 3-4 hours
+**Confidence:** 75%
+
+---
+
+## Overview
+
+Phase 6 enhances the Phase 5B Memory system with:
+1. **SQLite Backend**: Replace JSONL with SQL for better query performance
+2. **Full-Text Search**: Index and search memory content
+3. **Memory Relationships**: Link related memories across agents
+4. **Analytics**: Trend analysis and pattern detection
+5. **Sharing**: Inter-agent memory sharing and learning
+
+---
+
+## Phase 5 Recap
+
+### Delivered (Phase 5A-C)
+- **Phase 5A**: Conflict Resolution (304 LOC, 14 tests)
+- **Phase 5B**: Agent Memory - JSONL storage (446 LOC, 20 tests)
+- **Phase 5C**: Civilization Dashboards (396 LOC, 22 tests)
+- **Total**: 1,146 LOC, 56 tests, 100% passing
+
+### Current Memory System (Phase 5B)
+```
+Storage:     ~/.claude/civilization/agents/{agent_id}/memory.jsonl
+Format:      Line-delimited JSON, one memory per line
+Operations:  store, query, stats, purge, clear
+Query Types: by type, by time range, by importance
+Limitation:  Linear scan for every query (O(n))
+```
+
+### Known Limitations
+- No index: Every query scans all memories (slow for large datasets)
+- No relationships: Memories are isolated per agent
+- No search: Can't find memories by content keywords
+- No analytics: Can't detect patterns or trends
+- No sharing: Agents can't learn from each other's memories
+- Unbounded growth: Old memories need manual purge
+
+---
+
+## Phase 6 Architecture
+
+### 6.1: SQLite Backend Migration
+
+**Goal**: Upgrade from JSONL to SQL database for better performance
+
+```
+Current (JSONL):
+├─ ~/.claude/civilization/agents/{agent_id}/memory.jsonl
+└─ Memory file (line-delimited JSON)
+
+Phase 6 (SQLite):
+├─ ~/.claude/civilization/memories.db (single file)
+├─ Tables:
+│  ├─ memories (id, agent_id, type, timestamp, content, importance)
+│  ├─ memory_relationships (memory_id, related_memory_id, strength)
+│  └─ memory_index (content_hash, keyword, memory_id)
+└─ Indexes:
+   ├─ agent_id + timestamp
+   ├─ agent_id + type
+   ├─ timestamp DESC
+   └─ importance DESC
+```
+
+**Benefits:**
+- Indexed queries (O(log n) vs O(n))
+- Atomic transactions
+- Relationship tracking
+- Single file (easier backup)
+- Atomic purges
+
+**Compatibility:** Provide migration tool (JSONL → SQLite)
+
+### 6.2: Full-Text Search
+
+**Goal**: Index and search memory content
+
+```
+MemoryService.search_memories(agent_id, query: str) -> List[AgentMemory]
+# Example: search_memories("project-a", "database optimization")
+
+# Under the hood:
+# 1. Parse query → keywords
+# 2. Search memory_index table
+# 3. Rank by TF-IDF
+# 4. Return top 10 results
+```
+
+**Schema:**
+```
+CREATE TABLE memory_index (
+    id INTEGER PRIMARY KEY,
+    memory_id TEXT,
+    keyword TEXT,
+    frequency INTEGER,
+    FOREIGN KEY(memory_id) REFERENCES memories(id)
+);
+
+CREATE INDEX idx_keyword ON memory_index(keyword);
+```
+
+**Performance:**
+- Initial indexing: <100ms (per memory)
+- Search: <10ms (100 keywords)
+- Index size: ~20 bytes per keyword
+
+### 6.3: Memory Relationships
+
+**Goal**: Link related memories within and across agents
+
+```
+# Within agent: "I learned X, which helps with Y"
+MemoryService.link_memories(memory1_id, memory2_id, strength=0.8)
+
+# Across agents: "Agent A's learning helps Agent B"
+MemoryService.link_memories(
+    memory_from_agent_a,
+    memory_from_agent_b,
+    strength=0.6,
+    cross_agent=True
+)
+```
+
+**Schema:**
+```
+CREATE TABLE memory_relationships (
+    id INTEGER PRIMARY KEY,
+    memory_id_1 TEXT,
+    memory_id_2 TEXT,
+    strength REAL (0.0-1.0),
+    relationship_type TEXT (caused_by, helps_with, similar_to, contradicts),
+    created_at REAL,
+    FOREIGN KEY(memory_id_1) REFERENCES memories(id),
+    FOREIGN KEY(memory_id_2) REFERENCES memories(id)
+);
+
+CREATE INDEX idx_memory1 ON memory_relationships(memory_id_1);
+CREATE INDEX idx_memory2 ON memory_relationships(memory_id_2);
+```
+
+**Use Cases:**
+- "This error is caused by that earlier decision"
+- "This learning helps with that other learning"
+- "This is similar to that previous experience"
+
+### 6.4: Memory Analytics
+
+**Goal**: Detect patterns and trends
+
+```
+MemoryService.get_learning_trends(agent_id, days=30) -> Dict:
+    # Returns: trending keywords, peak learning times, etc.
+
+MemoryService.get_agent_patterns(agent_id) -> Dict:
+    # Returns: decision patterns, error clusters, success factors
+
+MemoryService.compare_agents(agent_id_1, agent_id_2) -> Dict:
+    # Returns: similarity score, complementary skills, learning opportunities
+```
+
+**Calculations:**
+```
+Learning Velocity:  # of learnings per day
+Error Density:      # of errors per day
+Success Pattern:    Errors / Executions by time
+Keyword Trends:     Most common keywords over time
+Skill Overlap:      Shared memories between agents
+```
+
+**Storage:**
+```
+CREATE TABLE memory_analytics (
+    id INTEGER PRIMARY KEY,
+    agent_id TEXT,
+    metric_type TEXT (learning_velocity, error_density, success_pattern),
+    metric_value REAL,
+    timestamp REAL,
+    period TEXT (daily, weekly, monthly),
+    FOREIGN KEY(agent_id) REFERENCES agents(id)
+);
+```
+
+### 6.5: Memory Sharing & Learning
+
+**Goal**: Allow agents to learn from each other
+
+```
+# Agent B queries Agent A's learnings
+shared_memories = MemoryService.get_agent_learnings(
+    source_agent_id="project-a:agent-1:L1:researcher",
+    target_agent_id="project-a:agent-1:L2:builder",
+    min_importance=0.7
+)
+
+# Create relationship showing Agent B benefited
+MemoryService.record_learning_transfer(
+    source_memory_id=learning_id,
+    target_agent_id=target_agent_id,
+    applied_at=now,
+    effectiveness=0.9  # How effective was this learning?
+)
+```
+
+**Schema:**
+```
+CREATE TABLE learning_transfers (
+    id INTEGER PRIMARY KEY,
+    source_memory_id TEXT,
+    target_agent_id TEXT,
+    transfer_timestamp REAL,
+    effectiveness REAL (0.0-1.0),
+    feedback TEXT,
+    FOREIGN KEY(source_memory_id) REFERENCES memories(id)
+);
+```
+
+**Security:**
+- All memory access is read-only
+- Agents can't delete or modify shared memories
+- Transfer tracking provides audit trail
+
+---
+
+## Implementation Plan
+
+### 6.1: SQLite Backend (60 minutes)
+- [ ] Create `MemoryStorage` interface (abstraction layer)
+- [ ] Implement `SQLiteMemoryStorage` class
+- [ ] Create migrations (JSONL → SQLite)
+- [ ] Update `MemoryService` to use new backend
+- [ ] Tests: 10+ test cases
+
+### 6.2: Full-Text Search (45 minutes)
+- [ ] Implement keyword extraction
+- [ ] Create memory indexing on store()
+- [ ] Implement search_memories() method
+- [ ] TF-IDF ranking
+- [ ] Tests: 8+ test cases
+
+### 6.3: Memory Relationships (45 minutes)
+- [ ] Implement link_memories() method
+- [ ] Relationship type definitions
+- [ ] Strength calculation
+- [ ] Query related memories
+- [ ] Tests: 8+ test cases
+
+### 6.4: Memory Analytics (30 minutes)
+- [ ] Trend calculation functions
+- [ ] Pattern detection algorithms
+- [ ] Agent comparison logic
+- [ ] Tests: 6+ test cases
+
+### 6.5: Memory Sharing (30 minutes)
+- [ ] Learning transfer recording
+- [ ] Cross-agent queries (read-only)
+- [ ] Effectiveness tracking
+- [ ] Tests: 6+ test cases
+
+### Testing & Integration (30 minutes)
+- [ ] Backward compatibility tests
+- [ ] Performance benchmarks
+- [ ] Migration validation
+- [ ] Integration with Phase 5C dashboards
+
+---
+
+## Success Criteria
+
+### Phase 6 Tests
+- [ ] 38+ new test cases passing
+- [ ] All Phase 1-5 tests still passing (73/73)
+- [ ] Total: 111+ tests passing
+
+### Performance
+- [ ] Single memory store: <5ms (vs JSONL <5ms)
+- [ ] Search (1000 memories, 5 keywords): <10ms
+- [ ] Relationship query: <5ms
+- [ ] Analytics calculation: <50ms
+
+### Code Quality
+- [ ] 100% backward compatible (no Phase 1-5 changes)
+- [ ] SQLite optional (can fallback to JSONL)
+- [ ] Full migration path (JSONL → SQLite)
+- [ ] ~600-700 new LOC
+- [ ] Comprehensive docstrings
+
+### Features
+- [ ] SQLite storage working
+- [ ] Full-text search functional
+- [ ] Relationships tracked
+- [ ] Analytics computed
+- [ ] Memory sharing enabled
+- [ ] All integrated with Phase 5C dashboards
+
+---
+
+## Design Decisions
+
+### 1. SQLite over Other Databases
+**Why SQLite:**
+- Single file (no server setup)
+- No external dependencies
+- ACID transactions
+- Full-text search support (FTS5)
+- Perfect for local agent storage
+
+**Considered:**
+- PostgreSQL: Overkill, needs server
+- MongoDB: Overkill, No FTS
+- DuckDB: Good, but SQLite more universal
+
+### 2. Abstraction Layer (MemoryStorage Interface)
+**Why:** Support multiple backends
+```
+class MemoryStorage(ABC):
+    @abstractmethod
+    def store(self, memory: AgentMemory) -> bool: ...
+    @abstractmethod
+    def query(self, agent_id: str, ...) -> List[AgentMemory]: ...
+
+class SQLiteMemoryStorage(MemoryStorage): ...
+class JSONLMemoryStorage(MemoryStorage): ...  # Fallback
+```
+
+### 3. Optional SQLite Migration
+**Why:** Gradual rollout, fallback path
+- Phase 6a: SQLite available alongside JSONL
+- Phase 6b: Automatic migration on first use
+- Fallback: If SQLite fails, use JSONL
+
+### 4. Full-Text Search via Custom Indexing
+**Why:** Better control than relying on SQLite FTS5
+- Custom keyword extraction
+- TF-IDF scoring
+- Domain-specific scoring (error > learning > decision)
+
+### 5. Relationship Strengths (0.0-1.0 scale)
+**Why:** Enable probabilistic reasoning
+- 0.8: Strong relationship (high confidence)
+- 0.5: Medium relationship
+- 0.2: Weak relationship
+- Agents can weight recommendations by strength
+
+---
+
+## Files to Create
+
+### Implementation
+- `scripts/civilization_memory_storage.py` - Storage interface and implementations
+  - MemoryStorage (ABC)
+  - SQLiteMemoryStorage (new)
+  - JSONLMemoryStorage (refactored from Phase 5B)
+
+- `scripts/civilization_memory_search.py` - Search and indexing
+  - MemorySearchEngine (keyword extraction, indexing)
+  - TFIDFRanker (ranking algorithm)
+  - Keyword tokenizer
+
+- `scripts/civilization_memory_analytics.py` - Analytics and trends
+  - MemoryAnalytics (trend calculation)
+  - PatternDetector (pattern detection)
+  - ComparisonEngine (agent comparison)
+
+### Tests
+- `scripts/test_civilization_memory_storage.py` - SQLite backend tests
+- `scripts/test_civilization_memory_search.py` - Search tests
+- `scripts/test_civilization_memory_analytics.py` - Analytics tests
+
+### Migrations
+- `scripts/migrate_memory_jsonl_to_sqlite.py` - Migration tool
+- `scripts/test_memory_migration.py` - Migration tests
+
+### Documentation
+- `docs/reports/PHASE_6_MEMORY_ENHANCEMENTS_COMPLETION_YYYY-MM-DD.md` - Completion report
+- `docs/guides/PHASE_6_MEMORY_MIGRATION_GUIDE.md` - User guide
+
+---
+
+## Known Risks & Mitigations
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|-----------|
+| SQLite file corruption | Low | High | Automatic backup, rollback to JSONL |
+| Search performance (large datasets) | Low | Medium | Index optimization, incremental indexing |
+| Memory relationships bloat | Medium | Medium | Garbage collection, strength threshold |
+| Analytics computation expensive | Medium | Low | Async computation, caching |
+| Cross-agent sharing privacy | Low | High | Read-only access, audit log |
+
+---
+
+## Optional Enhancements (If Time Permits)
+
+1. **Memory Compression**
+   - Compress old memories (>30 days)
+   - Keep recent memories uncompressed
+   - Reduces disk usage by ~70%
+
+2. **Memory Export/Import**
+   - Export to CSV, JSON, Markdown
+   - Import from external sources
+   - Useful for sharing learnings
+
+3. **Automatic Summarization**
+   - Summarize monthly memories
+   - Extract key insights
+   - Reduce storage growth
+
+4. **Anomaly Detection**
+   - Detect unusual error patterns
+   - Alert on degradation
+   - Suggest corrective actions
+
+5. **Memory Versioning**
+   - Track memory edits (if agents can update)
+   - Full history of changes
+   - Audit trail
+
+---
+
+## Dependencies
+
+### Phase 6 Requires
+- ✅ Phase 1: Agent Identity System (agent registry)
+- ✅ Phase 5B: Agent Memory (core memory model)
+- ✅ Python 3.9+ (sqlite3 stdlib)
+- New: No external dependencies (sqlite3 is in stdlib)
+
+### Phase 6 Enables
+- Phase 5C Dashboards: Can display analytics/trends
+- Phase 7+: Multi-agent learning systems
+- Potential MCP tools: Memory search, analytics
+
+---
+
+## Timeline & Prioritization
+
+### Option A: Full Phase 6 (3-4 hours)
+All five components: SQLite, search, relationships, analytics, sharing
+
+### Option B: Phase 6 Lite (2 hours)
+Core components: SQLite + search (most valuable features)
+
+### Option C: Phase 6 Focused (1.5 hours)
+SQLite backend only (immediate performance gain)
+
+**Recommendation:** Option B (SQLite + Search)
+- High value: Performance + discoverability
+- Medium effort: 45 + 45 = 90 min core work
+- Complements Phase 5C dashboards well
+
+---
+
+## Success Metrics
+
+### Adoption
+- [ ] SQLite backend adopted for new installations
+- [ ] Search used in 50%+ of dashboard queries
+- [ ] Relationships enable inter-agent learning
+
+### Performance
+- [ ] Query latency <10ms (vs JSONL linear scan)
+- [ ] Search results returned in <15ms
+- [ ] Analytics computation <50ms
+
+### Quality
+- [ ] 0 data loss during migration
+- [ ] 100% backward compatible
+- [ ] All tests passing
+
+---
+
+## For Next Session
+
+### Pre-Implementation
+1. Decide on Phase 6 scope (Full/Lite/Focused)
+2. Review SQLite schema design
+3. Plan migration testing strategy
+
+### Implementation Order
+1. SQLite backend (foundation)
+2. Full-text search (highest value)
+3. Memory relationships (enables sharing)
+4. Analytics (dashboards integration)
+5. Memory sharing (inter-agent learning)
+
+### Post-Implementation
+1. Performance benchmarks
+2. Migration from JSONL to SQLite
+3. Integration with Phase 5C dashboards
+4. Deployment plan
+
+---
+
+## Questions for Discussion
+
+1. **SQLite Migration**: Automatic on first use, or manual migration script?
+2. **Search Scope**: Search within agent only, or cross-agent search?
+3. **Relationship Strength**: Automatic calculation or manual specification?
+4. **Analytics Frequency**: Real-time calculation or batch computation?
+5. **Memory Sharing**: All agents can access all memories, or restricted by project?
+
+---
+
+## Related Documentation
+
+- Phase 5 Specification: `docs/plans/PHASE_5_ADVANCED_FEATURES_SPECIFICATION.md`
+- Phase 5B Completion: `docs/reports/PHASE_5B_AGENT_MEMORY_COMPLETION_2026-02-19.md`
+- Phase 5C Completion: `docs/reports/PHASE_5C_DASHBOARDS_COMPLETION_2026-02-19.md`
+
+---
+
+## One-Line Summary
+
+Phase 6 Plan: Upgrade Phase 5B memory from JSONL to SQLite with full-text search, cross-memory relationships, analytics/trends, and inter-agent learning sharing = Enable knowledge discovery, pattern detection, and collaborative learning across civilization.
+
+---
+
+**Status:** Planning Phase
+**Next Action:** User decision on Phase 6 scope (Full/Lite/Focused) or whether to proceed with Phase 5D first
+**Confidence:** 75% (subject to Phase 6 scope decision)

@@ -45,6 +45,6 @@ Create agent_executor callback that uses thegent's codex/cc/droid harness.
 - `timeout`: Timeout in seconds
 - `model`: Optional model override
 
-**Returns**: Callable (agent_id, prompt, context) -&gt; ExecutionResult
+**Returns**: Callable (agent_id, prompt, context) -> ExecutionResult
 
 ---

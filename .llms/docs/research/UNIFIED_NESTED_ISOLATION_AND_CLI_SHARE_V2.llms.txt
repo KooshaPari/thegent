@@ -4,6 +4,7 @@ Source: docs/research/UNIFIED_NESTED_ISOLATION_AND_CLI_SHARE_V2.md
 
 ---
 
+<DONE>
 # Research: Unified Nested Isolation & CLI-Share Deep Dive (v2.0)
 
 **Date**: 2026-02-19

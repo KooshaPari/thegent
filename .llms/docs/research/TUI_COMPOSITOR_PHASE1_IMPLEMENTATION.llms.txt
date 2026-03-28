@@ -4,6 +4,7 @@ Source: docs/research/TUI_COMPOSITOR_PHASE1_IMPLEMENTATION.md
 
 ---
 
+<DONE>
 # TUI Compositor Phase 1 Implementation
 
 **Status**: ✅ Complete

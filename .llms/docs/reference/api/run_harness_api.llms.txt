@@ -1,0 +1,91 @@
+# run_harness_api
+
+Source: docs/reference/api/run_harness_api.md
+
+---
+
+# run_harness API Reference
+
+> **Source**: `src/thegent/use_cases/run_harness.py`
+
+Use case: Run a harness (Claude/Codex) with model/provider routing.
+
+---
+
+## RunHarness
+
+Orchestrate harness execution (run_interactive, run_exec, etc.).
+
+### Methods
+
+#### RunHarness.__init__
+
+```
+__init__(self: Any, harness_type: str)
+```
+
+Initialize with harness type ('claude' or 'codex').
+
+---
+
+#### RunHarness.ensure_harness_installed
+
+```
+ensure_harness_installed(self: Any)
+```
+
+Ensure harness binary is installed. Returns path.
+
+---
+
+#### RunHarness.run_interactive
+
+```
+run_interactive(self: Any, model_alias: str, provider: Optional[str], resume: Optional[str], prompt: Optional[str])
+```
+
+Start interactive session with model/provider routing.
+
+---
+
+#### RunHarness.run_native
+
+```
+run_native(self: Any, args: Optional[list[str]])
+```
+
+Bypass proxy and run native binary directly.
+
+---
+
+---
+
+## ensure_harness_installed
+
+```
+ensure_harness_installed(self: Any)
+```
+
+Ensure harness binary is installed. Returns path.
+
+---
+
+## run_interactive
+
+```
+run_interactive(self: Any, model_alias: str, provider: Optional[str], resume: Optional[str], prompt: Optional[str])
+```
+
+Start interactive session with model/provider routing.
+
+---
+
+## run_native
+
+```
+run_native(self: Any, args: Optional[list[str]])
+```
+
+Bypass proxy and run native binary directly.
+
+---

@@ -1,0 +1,81 @@
+# cost_calculator_api
+
+Source: docs/reference/api/cost_calculator_api.md
+
+---
+
+# cost_calculator API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/cost_calculator.py`
+
+GW-33: Per-request LLM cost calculation from model pricing tables.
+
+Computes USD cost from prompt_tokens, completion_tokens, and model pricing.
+Integrates with model_metadata for current pricing data.
+
+# @trace FR-COST-033
+
+---
+
+## ModelPricing
+
+Prompt/completion pricing for a single model.
+
+---
+
+## calculate_cost
+
+```
+calculate_cost(model: str, prompt_tokens: int, completion_tokens: int)
+```
+
+Compute USD cost for a single LLM call.
+
+Returns 0.0 if pricing unknown (never raises).
+
+Formula:
+    cost = (prompt_tokens / 1_000_000) * prompt_usd_per_1m
+          + (completion_tokens / 1_000_000) * completion_usd_per_1m
+
+---
+
+## calculate_cost_from_response
+
+```
+calculate_cost_from_response(response: Any)
+```
+
+Extract token counts from a response object and compute cost.
+
+Handles both dict responses (JSON) and object responses (LiteLLM ModelResponse).
+Returns 0.0 if token counts or pricing unavailable.
+
+---
+
+## format_cost_header_value
+
+```
+format_cost_header_value(cost_usd: float)
+```
+
+Format cost as a header value: 6 decimal places USD.
+
+e.g., 0.000125 → '0.000125'
+
+---
+
+## get_model_pricing
+
+```
+get_model_pricing(model: str)
+```
+
+Look up pricing for a model.
+
+First tries model_metadata (thegent.routing.model_metadata.get_model_metadata).
+The metadata dict must have a 'pricing' key with 'prompt_usd_per_1m' and
+'completion_usd_per_1m' sub-keys for this path to succeed.
+
+Falls back to FALLBACK_PRICING. Returns None if completely unknown.
+
+---

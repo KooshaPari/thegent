@@ -1,0 +1,31 @@
+# integrity_scanner_api
+
+Source: docs/reference/api/integrity_scanner_api.md
+
+---
+
+# integrity_scanner API Reference
+
+> **Source**: `src/thegent/integrations/integrity_scanner.py`
+
+Stub module for thegent.integrations.integrity_scanner.
+
+---
+
+## IntegrityMismatch
+
+Stub class.
+
+---
+
+## IntegrityScanner
+
+Stub class.
+
+---
+
+## SeverityLevel
+
+Stub class.
+
+---

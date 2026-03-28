@@ -1,0 +1,29 @@
+# worklog_consolidation_audit
+
+Source: docs/sessions/20260328-root-docsites-locale-worklog-audit/worklog_consolidation_audit.md
+
+---
+
+# Worklog Artifact Consolidation Matrix
+
+| repo | status | action |
+|---|---|---|
+| agent-devops-setups | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| bifrost-extensions | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| cliproxyapi-plusplus | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| forgecode | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| heliosApp | complete | existing docs/sessions(0) kept as canonical; no migration needed |
+| heliosCLI | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phench | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-gauge | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phenotype-go-kit | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-infrakit | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-nexus | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phenotype-shared | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-xdd | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phenotypeActions | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| policy-contract | complete | legacy 05/06 docs merged into existing session `2026-03-03-policy-wrapper-standardization` |
+| profiler | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| tokenledger-wt | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| trace | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| trash-cli | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |

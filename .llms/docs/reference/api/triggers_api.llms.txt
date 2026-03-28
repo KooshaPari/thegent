@@ -31,6 +31,16 @@ __init__(self: Any, loop: Any, threshold: float, check_interval: int)
 
 ---
 
+#### HealthThresholdTrigger.run
+
+```
+run(self: Any, force: bool)
+```
+
+Run a single governance cycle (for health threshold, triggers immediately).
+
+---
+
 #### HealthThresholdTrigger.start
 
 ```
@@ -79,6 +89,26 @@ Run a single governance cycle.
 
 ---
 
+#### ManualTrigger.start
+
+```
+start(self: Any)
+```
+
+Start the trigger (no-op for manual mode).
+
+---
+
+#### ManualTrigger.stop
+
+```
+stop(self: Any)
+```
+
+Stop the trigger (no-op for manual mode).
+
+---
+
 ---
 
 ## TimerTrigger
@@ -94,6 +124,16 @@ Triggers governance cycles at fixed intervals.
 ```
 __init__(self: Any, loop: Any, config: TriggerConfig)
 ```
+
+---
+
+#### TimerTrigger.run
+
+```
+run(self: Any, force: bool)
+```
+
+Run a single governance cycle (for timer, triggers immediately).
 
 ---
 
@@ -135,6 +175,14 @@ Protocol for trigger implementations.
 
 ### Methods
 
+#### TriggerProtocol.run
+
+```
+run(self: Any, force: bool)
+```
+
+---
+
 #### TriggerProtocol.start
 
 ```
@@ -167,6 +215,16 @@ for changes and triggers cycles after a debounce period without new changes.
 ```
 __init__(self: Any, loop: Any, config: TriggerConfig)
 ```
+
+---
+
+#### WatchdogTrigger.run
+
+```
+run(self: Any, force: bool)
+```
+
+Run a single governance cycle (for watchdog, triggers immediately).
 
 ---
 
@@ -309,7 +367,7 @@ Called when a file is modified.
 run(self: Any, force: bool)
 ```
 
-Run a single governance cycle.
+Run a single governance cycle (for health threshold, triggers immediately).
 
 ---
 

@@ -174,17 +174,7 @@ Performs a simple HTTP GET to the ``/health`` endpoint.
 
 Manifest entry for a single borrowable thegent MCP tool.
 
-### Methods
-
-#### ToolManifest.to_dict
-
-```
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON output.
-
----
+**Inherits from**: `SerializableMixin`
 
 ---
 
@@ -284,16 +274,6 @@ list_available_tools_by_category(self: Any)
 ```
 
 Return tools grouped by category.
-
----
-
-## to_dict
-
-```
-to_dict(self: Any)
-```
-
-Serialize to plain dict for JSON output.
 
 ---
 

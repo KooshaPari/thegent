@@ -4,6 +4,7 @@ Source: docs/research/HEADLESS_LSP_IMPLEMENTATION_SUMMARY_2026-02-18.md
 
 ---
 
+<DONE>
 # Headless LSP Implementation Summary
 
 **Date**: 2026-02-18

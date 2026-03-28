@@ -18,6 +18,7 @@ For a complete listing of available reference documents, see [Integration Index]
 ## See also
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [FULL_TURN_DELIVERY.md](FULL_TURN_DELIVERY.md) — PR/merge to `main` or `release/*`, `gh` evidence, changelog, version, docs (per turn)
 - [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
 
 ---

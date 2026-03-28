@@ -1,0 +1,30 @@
+# 2026-02-21-SESSION_MEMORY_SYSTEM
+
+Source: docs/plans/fragemented/2026-02-21-SESSION_MEMORY_SYSTEM.md
+
+---
+
+# Session Memory System Plan (WL-155)
+
+## Execution
+
+### Implementation checklist
+- [ ] Confirm baseline contracts in `thegent/src/thegent/session/manager.py` and `thegent/src/thegent/session/conversation_dumper.py`.
+- [ ] Align capture hooks in `thegent/src/docs_engine/capture/session_hook.py` and `thegent/src/docs_engine/capture/writer.py` with session-memory write/read flow.
+- [ ] Validate memory-layer integration points in `thegent/src/thegent/memory/memory_manager.py` and `thegent/src/thegent/infra/memory.py`.
+- [ ] Wire/verify CLI surface for session-memory access in `thegent/src/thegent/cli/apps/session.py` and `thegent/src/thegent/cli/apps/memory.py`.
+- [ ] Add/update focused coverage in `thegent/tests/session/test_session_manager.py`, `thegent/tests/thegent/session/test_conversation_dumper.py`, and `thegent/tests/memory/test_memory_manager.py`.
+
+### Artifact paths
+- Plan artifact: `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`
+- Session runtime code: `thegent/src/thegent/session/`
+- Capture pipeline code: `thegent/src/docs_engine/capture/`
+- Memory integration code: `thegent/src/thegent/memory/`
+- Validation artifacts: `thegent/tests/session/`, `thegent/tests/memory/`, `thegent/tests/docs_engine/`
+
+### Acceptance criteria
+- Session lifecycle paths (`create/start/update/end`) persist and retrieve memory without regression in `thegent/src/thegent/session/`.
+- Capture output written by `thegent/src/docs_engine/capture/` is consumable by session-memory readers without schema drift.
+- Memory manager reads/writes are deterministic for the same session inputs in `thegent/src/thegent/memory/`.
+- CLI session/memory commands resolve to the same canonical session id/path behavior for identical inputs.
+- Targeted tests for session + memory paths pass with no new failures in touched suites.

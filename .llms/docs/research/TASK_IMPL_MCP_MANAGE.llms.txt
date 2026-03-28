@@ -4,6 +4,7 @@ Source: docs/research/TASK_IMPL_MCP_MANAGE.md
 
 ---
 
+<DONE>
 # Task: Consolidate os.environ in mcp_manage.py
 
 **Priority**: P3

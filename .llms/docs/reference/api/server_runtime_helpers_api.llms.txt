@@ -1,0 +1,37 @@
+# server_runtime_helpers_api
+
+Source: docs/reference/api/server_runtime_helpers_api.md
+
+---
+
+# server_runtime_helpers API Reference
+
+> **Source**: `src/thegent/mcp/server_runtime_helpers.py`
+
+Runtime/lifecycle helpers extracted from the MCP server module.
+
+---
+
+## create_event_store
+
+Create EventStore using Redis when FASTMCP_EVENT_STORE_URL is set.
+
+---
+
+## create_http_app
+
+Create the ASGI app and wire middleware and responses routes.
+
+---
+
+## health_response
+
+Build the standard health payload.
+
+---
+
+## run_server
+
+Run uvicorn with reload-safe import string and lifecycle enabled.
+
+---

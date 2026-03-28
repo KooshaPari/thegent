@@ -100,7 +100,7 @@ Start MCP + proxy via process-compose. Returns (success, message).
 migrate_to_unimount(client: str, mcp_url: str, workspace: Any)
 ```
 
-Replace ALL MCP server entries with a single thegent entry at mcp_url. Returns (success, message).
+Ensure uni-mount MCP keys are set while keeping existing MCP entries. Returns (success, message).
 
 ---
 

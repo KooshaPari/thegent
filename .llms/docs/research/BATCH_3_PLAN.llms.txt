@@ -4,6 +4,7 @@ Source: docs/research/BATCH_3_PLAN.md
 
 ---
 
+<DONE>
 # Batch 3 Optimizations - Planning
 
 **Status**: Planning

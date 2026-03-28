@@ -1,0 +1,25 @@
+# cycle_benchmark_api
+
+Source: docs/reference/api/cycle_benchmark_api.md
+
+---
+
+# cycle_benchmark API Reference
+
+> **Source**: `src/thegent/integrations/cycle_benchmark.py`
+
+Stub module for thegent.integrations.cycle_benchmark.
+
+---
+
+## CycleBenchmark
+
+Stub class.
+
+---
+
+## CycleBenchmarkHarness
+
+Stub class.
+
+---

@@ -1,0 +1,31 @@
+# phench_timeline_api
+
+Source: docs/reference/api/phench_timeline_api.md
+
+---
+
+# phench_timeline API Reference
+
+> **Source**: `src/thegent/cli/apps/phench_timeline.py`
+
+Phench timeline command.
+
+---
+
+## register_timeline_commands
+
+```
+register_timeline_commands(app: typer.Typer, target_timeline_fn: Any)
+```
+
+Register timeline commands on the phench app.
+
+---
+
+## timeline_cmd
+
+```
+timeline_cmd(name: str, family: Any, repo_id: Any, limit: int, branch: Any) -> None
+```
+
+---

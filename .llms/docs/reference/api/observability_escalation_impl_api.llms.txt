@@ -1,0 +1,71 @@
+# observability_escalation_impl_api
+
+Source: docs/reference/api/observability_escalation_impl_api.md
+
+---
+
+# observability_escalation_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/observability_escalation_impl.py`
+
+Observability escalation and sweep implementations (WL-120).
+
+Escalation queue operations and policy sweep.
+
+---
+
+## escalate_add_impl
+
+```
+escalate_add_impl(run_id: str, reason: str, sla_minutes: int, owner: Any, agent: Any, lane: str, priority: int)
+```
+
+WP-3008: Add a blocked run to the escalation queue.
+
+---
+
+## escalate_approve_impl
+
+```
+escalate_approve_impl(run_id: str)
+```
+
+WP-3008: Approve an escalation, marking it as approved in the queue (G-GP-05).
+
+---
+
+## escalate_list_impl
+
+```
+escalate_list_impl(past_sla_only: bool, limit: int)
+```
+
+WP-3008: List escalation queue items (blocked runs with SLA).
+
+---
+
+## escalate_resolve_impl
+
+```
+escalate_resolve_impl(run_id: str, resolution: str)
+```
+
+WP-3008: Mark an escalation item as resolved.
+
+---
+
+## sweep_impl
+
+```
+sweep_impl(drift_window: int, structural_budget: float, semantic_budget: float, include_audit: bool)
+```
+
+WP-3005: Policy drift sweep - runs drift detection, budget check, past-SLA escalations.
+
+---
+
+## update_calibration_impl
+
+G-GP-09: Recalculate and persist calibration factors for all agents.
+
+---

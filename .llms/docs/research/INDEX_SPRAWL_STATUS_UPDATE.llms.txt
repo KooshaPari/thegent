@@ -4,6 +4,7 @@ Source: docs/research/INDEX_SPRAWL_STATUS_UPDATE.md
 
 ---
 
+<DONE>
 # Index Sprawl Status Update — Complete
 
 > **Status**: Complete | **Date**: 2026-02-17

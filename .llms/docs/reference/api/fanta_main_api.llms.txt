@@ -8,6 +8,160 @@ Source: docs/reference/api/fanta_main_api.md
 
 > **Source**: `src/thegent/fanta_main.py`
 
-Fanta CLI: Antigma-backed interactive harness entrypoint.
+Fanta CLI: Antigma-backed interactive harness with dex/clode/roid-style aliases.
+
+---
+
+## anen_composer
+
+```
+anen_composer(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_config
+
+```
+anen_config(legacy: bool)
+```
+
+Open interactive config manager (translation layer for existing config backends).
+
+---
+
+## anen_doctor
+
+```
+anen_doctor(fix: bool, dry_run: bool)
+```
+
+Run thegent doctor (harness-equiv).
+
+---
+
+## anen_exec
+
+```
+anen_exec(ctx: typer.Context, model: str, prompt: str)
+```
+
+Run Antigma headlessly with model alias mapping.
+
+---
+
+## anen_flash
+
+```
+anen_flash(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_free
+
+```
+anen_free(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_glm
+
+```
+anen_glm(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_haiku
+
+```
+anen_haiku(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_high
+
+```
+anen_high(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_max
+
+```
+anen_max(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_mini
+
+```
+anen_mini(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_opus
+
+```
+anen_opus(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_sonnet
+
+```
+anen_sonnet(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_step
+
+```
+anen_step(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_ultra
+
+```
+anen_ultra(ctx: typer.Context) -> None
+```
+
+---
+
+## anen_xhigh
+
+```
+anen_xhigh(ctx: typer.Context) -> None
+```
+
+---
+
+## default_anen
+
+```
+default_anen(ctx: typer.Context)
+```
+
+Default fanta behavior: flash model (gemini-3-flash).
+
+---
+
+## install_links
+
+```
+install_links(bin_dir: Path, force: bool)
+```
+
+Install/update fanta/antigma -> thegent-shims under ~/.local/bin.
 
 ---

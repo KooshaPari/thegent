@@ -1,0 +1,61 @@
+# settings_api
+
+Source: docs/reference/api/settings_api.md
+
+---
+
+# settings API Reference
+
+> **Source**: `src/thegent/config/settings.py`
+
+Composite settings class for thegent.
+
+This module provides the main ThegentSettings class that composes model, path,
+and runtime configurations. It maintains backward compatibility with the
+original monolithic settings class.
+
+---
+
+## ThegentSettings
+
+Composite configuration for thegent CLI.
+
+This class inherits fields from ModelConfig, PathConfig, and RuntimeConfig,
+providing a single unified interface for all settings while maintaining
+logical separation of concerns internally.
+
+**Inherits from**: `BaseSettings`
+
+### Methods
+
+#### ThegentSettings.validate_setup
+
+```
+validate_setup(self: Any)
+```
+
+ROB-013: Configuration validation on startup (fail-fast).
+
+Ensures directories exist and critical settings are sane.
+
+---
+
+---
+
+## get_settings
+
+Helper to get cached settings.
+
+---
+
+## validate_setup
+
+```
+validate_setup(self: Any)
+```
+
+ROB-013: Configuration validation on startup (fail-fast).
+
+Ensures directories exist and critical settings are sane.
+
+---

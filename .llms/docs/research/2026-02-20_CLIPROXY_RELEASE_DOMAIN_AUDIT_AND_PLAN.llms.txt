@@ -4,6 +4,7 @@ Source: docs/research/2026-02-20_CLIPROXY_RELEASE_DOMAIN_AUDIT_AND_PLAN.md
 
 ---
 
+<DONE>
 # Audit and Plan: CLIProxy Accuracy, Release Infra, Domain Mapping (2026-02-20)
 
 ## Scope

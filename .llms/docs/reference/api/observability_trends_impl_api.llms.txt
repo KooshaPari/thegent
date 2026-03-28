@@ -1,0 +1,23 @@
+# observability_trends_impl_api
+
+Source: docs/reference/api/observability_trends_impl_api.md
+
+---
+
+# observability_trends_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/observability_trends_impl.py`
+
+Observe-summary payload constants and trend helpers — split from observability_impl (WL-124).
+
+---
+
+## observe_summary_impl
+
+```
+observe_summary_impl(cd: Any, limit: int, drift_window: int, structural_budget_pct: float, semantic_budget_pct: float, provider: Any, top_escalations: int, trend_samples: int, format: Any)
+```
+
+FR-X08: Unified observability summary (KPIs, drift, escalation).
+
+---

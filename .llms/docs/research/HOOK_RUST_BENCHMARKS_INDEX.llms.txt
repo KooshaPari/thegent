@@ -4,6 +4,7 @@ Source: docs/research/HOOK_RUST_BENCHMARKS_INDEX.md
 
 ---
 
+<DONE>
 # Hook Rust Migration Benchmarks — Complete Index
 
 > **Research Task**: research-hook-rust-benchmarks

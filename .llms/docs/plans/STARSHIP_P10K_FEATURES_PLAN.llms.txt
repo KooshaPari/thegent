@@ -1,0 +1,356 @@
+# STARSHIP_P10K_FEATURES_PLAN
+
+Source: docs/plans/STARSHIP_P10K_FEATURES_PLAN.md
+
+---
+
+# Plan: p10k Features for Starship
+
+**Goal:** Achieve p10k-level performance and UX while keeping Starship's simplicity.
+
+**Status:** Planning
+**Priority:** P2 (Optional Enhancement)
+
+---
+
+## 1. Feature Audit
+
+| p10k Feature | Starship Equivalent | Implementation Needed |
+|--------------|---------------------|----------------------|
+| Instant Prompt | ❌ None | Custom caching layer |
+| Transient Prompt | ❌ None | precmd/preexec hooks |
+| gitstatus Daemon | ❌ Forks git | Async wrapper + caching |
+| Async Prompt Updates | ❌ Sync | zsh-async integration |
+| Config Wizard | ❌ Manual | Use existing TOML (fine) |
+
+---
+
+## 2. Implementation Plan
+
+### Phase 1: Instant Prompt (Medium Effort)
+
+**Concept:** Cache the last prompt and print it immediately before zsh finishes loading.
+
+**Implementation:**
+```
+# At TOP of .zshrc (before anything else)
+_instant_prompt_init() {
+  local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/thegent/instant-prompt.zsh"
+  
+  if [[ -r "$cache_file" ]]; then
+    source "$cache_file"
+    # Redirect stdout during init (like p10k)
+    exec 3>&1 4>&2
+    exec 1>/dev/null 2>&1
+    THEGENT_INSTANT_PROMPT_ACTIVE=1
+  fi
+}
+_instant_prompt_init
+```
+
+**Cache Generation:**
+```
+# After starship loads, cache the prompt for next time
+_cache_instant_prompt() {
+  local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/thegent/instant-prompt.zsh"
+  local prompt_data
+  
+  # Get current directory and basic info
+  local dir="%1~"
+  local user="%n"
+  local host="%m"
+  
+  # Create minimal instant prompt
+  cat > "$cache_file" << PROMPT
+# Instant prompt cache (auto-generated)
+if [[ -z "\${THEGENT_PROMPT_LOADED:-}" ]]; then
+  PS1='${user}@${host} ${dir} ❯ '
+  exec 3>&1 4>&2
+  exec 1>/dev/null 2>&1
+  export THEGENT_INSTANT_PROMPT_ACTIVE=1
+fi
+PROMPT
+}
+```
+
+**Effort:** ~50 lines of code
+**Impact:** Instant perceived startup (same as p10k)
+
+---
+
+### Phase 2: Transient Prompt (Medium Effort)
+
+**Concept:** Show full prompt while typing, simplify after command executes.
+
+**Implementation:**
+```
+# Transient prompt - simplify after command
+_transient_prompt_setup() {
+  # Store the full prompt
+  THEGENT_FULL_PROMPT="$PS1"
+  
+  # Minimal transient prompt
+  THEGENT_TRANSIENT_PROMPT='%n@%m %1~ ❯ '
+  
+  # Pre-exec: restore full prompt for next command
+  _transient_preexec() {
+    PS1="$THEGENT_FULL_PROMPT"
+  }
+  
+  # Pre-cmd: set transient after command runs
+  _transient_precmd() {
+    # Only set transient if we're not in a multi-line command
+    if [[ "$BUFFER" == "" ]]; then
+      # Keep full prompt (user is about to type)
+      PS1="$THEGENT_FULL_PROMPT"
+    fi
+  }
+  
+  # Hook into ZLE
+  autoload -Uz add-zsh-hook
+  add-zsh-hook preexec _transient_preexec
+}
+
+# Optional: More aggressive transient (replace printed prompts)
+_transient_replace_printed() {
+  # This replaces already-printed prompts with simpler versions
+  # Requires zle-line-finish hook
+  zle-line-finish() {
+    zle -M "$THEGENT_TRANSIENT_PROMPT"
+  }
+}
+```
+
+**Effort:** ~40 lines of code
+**Impact:** Cleaner terminal history
+
+---
+
+### Phase 3: Async Git Status (High Effort)
+
+**Concept:** Run git status in background, update prompt when done.
+
+**Challenge:** Starship is synchronous - we need to wrap it.
+
+**Implementation Option A: zsh-async Wrapper**
+```
+# Async starship prompt
+_async_starship_setup() {
+  # Load zsh-async
+  autoload -Uz async && async || return
+  
+  # Start async worker
+  async_start_worker starship_prompt -n
+  
+  # Callback when starship finishes
+  _async_starship_callback() {
+    local job="$1" code="$2" output="$3"
+    
+    if [[ "$code" -eq 0 && -n "$output" ]]; then
+      # Update prompt with result
+      PROMPT="$output"
+      zle reset-prompt
+    fi
+  }
+  
+  # Register callback
+  async_register_callback starship_prompt _async_starship_callback
+  
+  # Trigger async prompt update
+  _async_update_prompt() {
+    async_job starship_prompt starship module --status
+  }
+  
+  # Hook into precmd
+  add-zsh-hook precmd _async_update_prompt
+}
+```
+
+**Implementation Option B: Cache + Background Refresh**
+```
+# Simpler approach: cache git status, refresh in background
+_cached_git_prompt() {
+  local cache_file="$THEGENT_CACHE_DIR/git-status.cache"
+  local cache_age=0
+  
+  if [[ -f "$cache_file" ]]; then
+    cache_age=$(( $(date +%s) - $(stat -f %m "$cache_file" 2>/dev/null || echo 0) ))
+  fi
+  
+  # Use cache if fresh (< 5 seconds)
+  if [[ $cache_age -lt 5 ]]; then
+    cat "$cache_file"
+    return
+  fi
+  
+  # Refresh in background
+  (starship prompt --status > "$cache_file" 2>/dev/null) &
+  
+  # Use stale cache while refreshing
+  if [[ -f "$cache_file" ]]; then
+    cat "$cache_file"
+  fi
+}
+```
+
+**Effort:** ~100-150 lines of code
+**Impact:** Faster git status in large repos
+
+---
+
+### Phase 4: Optimized Starship Config
+
+**Goal:** Reduce Starship's overhead.
+
+**Changes:**
+```
+# starship.toml optimizations
+scan_timeout = 50        # Faster module detection (default 30)
+command_timeout = 500    # Faster git commands (default 500)
+add_newline = false      # No extra newline
+
+# Disable slow modules
+[git_status]
+# Use async/cached version instead
+disabled = false
+ignore_submodules = true  # Already set
+
+[git_branch]
+# Fast, keep enabled
+disabled = false
+
+# Disable heavy language detection
+[battery]
+disabled = true
+
+[cmake]
+disabled = true
+
+[deno]
+disabled = true
+
+[dotnet]
+disabled = true
+
+[elixir]
+disabled = true
+
+[elm]
+disabled = true
+
+[erlang]
+disabled = true
+
+[helm]
+disabled = true
+
+[julia]
+disabled = true
+
+[kotlin]
+disabled = true
+
+[lua]
+disabled = true
+
+[nim]
+disabled = true
+
+[nix_shell]
+disabled = true
+
+[ocaml]
+disabled = true
+
+[perl]
+disabled = true
+
+[purescript]
+disabled = true
+
+[rlang]
+disabled = true
+
+[ruby]
+disabled = true
+
+[scala]
+disabled = true
+
+[swift]
+disabled = true
+
+[terraform]
+disabled = true
+
+[vagrant]
+disabled = true
+
+[vlang]
+disabled = true
+
+[zig]
+disabled = false  # Keep, fast
+```
+
+---
+
+## 3. Recommended Implementation Order
+
+1. **Phase 1: Instant Prompt** (High impact, medium effort)
+   - ~50 lines of code
+   - Immediate perceived speedup
+
+2. **Phase 4: Optimized Config** (Low effort, quick win)
+   - Just config changes
+   - Reduces starship overhead
+
+3. **Phase 2: Transient Prompt** (Nice to have)
+   - ~40 lines of code
+   - Cleaner UX
+
+4. **Phase 3: Async Git** (Optional, high effort)
+   - Only needed for very large git repos
+   - Consider if command lag is noticeable
+
+---
+
+## 4. Trade-offs
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Keep Starship as-is | Simple, already optimized | No instant/transient/async |
+| Add instant + transient | p10k-like UX, keeps Starship | More zsh code to maintain |
+| Switch to p10k | All features built-in | Complex config, zsh-only |
+| Hybrid (Starship + gitstatus) | Best of both worlds | Complex integration |
+
+---
+
+## 5. Recommendation
+
+**Implement Phase 1 (Instant Prompt) + Phase 4 (Config Optimization)**
+
+This gives you:
+- ✅ Instant perceived startup (like p10k)
+- ✅ Simpler config (Starship TOML)
+- ✅ ~30-50ms actual improvement
+- ✅ Minimal code to maintain
+
+**Skip Phase 3 (Async Git)** unless you have repos where git status takes >100ms.
+
+---
+
+## 6. Files to Create/Modify
+
+### New Files
+- `shell/.zsh_instant_prompt.zsh` - Instant prompt implementation
+- `shell/.zsh_transient.zsh` - Transient prompt (optional)
+
+### Modified Files
+- `shell/.zshrc` - Source instant prompt at top
+- `~/.config/starship.toml` - Optimized config
+
+---
+
+*Created: 2026-02-24*
+*Author: thegent planning*

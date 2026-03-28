@@ -1,0 +1,25 @@
+# ci_benchmark_gates_api
+
+Source: docs/reference/api/ci_benchmark_gates_api.md
+
+---
+
+# ci_benchmark_gates API Reference
+
+> **Source**: `src/thegent/integrations/ci_benchmark_gates.py`
+
+Stub module for thegent.integrations.ci_benchmark_gates.
+
+---
+
+## BenchmarkGate
+
+Stub class.
+
+---
+
+## CIBenchmarkGates
+
+Stub class.
+
+---

@@ -6,97 +6,370 @@ Source: docs/reference/api/cache_api.md
 
 # cache API Reference
 
-> **Source**: `src/thegent/utils/cache.py`
+> **Source**: `src/thegent/utils/routing_impl/cache.py`
 
-## ResourceCache
+GW-22/GW-26: Exact-match cache with DualCache L1+L2 for LLM gateway.
 
-WP-DX-023: Simple ETag-based caching for FastMCP resources.
+GW-22: Exact-match cache using hash(model+messages) -> cached response.
+GW-26: DualCache with in-memory L1 + optional disk/Redis L2.
 
-Hybrid caching strategy:
-- In-memory: TTLCache for fast access (cachetools handles TTL automatically)
-- File-based: Persistent storage across sessions (manual JSON file I/O)
-- ETag: Change detection for cache invalidation
+# @trace WP-2001 FR-CACHE-022 FR-CACHE-026
+
+---
+
+## CacheEntry
+
+A single cached response entry.
 
 ### Methods
 
-#### ResourceCache.__init__
+#### CacheEntry.is_expired
 
 ```
-__init__(self: Any, cache_dir: Path, ttl_seconds: int, max_memory_items: int)
+is_expired(self: Any)
+```
+
+Return True if the entry has exceeded its TTL.
+
+---
+
+---
+
+## DiskCache
+
+Persistent disk-backed cache using JSON files.
+
+File layout: ``{cache_dir}/{namespace}/{key[:2]}/{key}.json``
+
+Writes are atomic (write to temp file, then os.replace).
+
+### Methods
+
+#### DiskCache.__init__
+
+```
+__init__(self: Any, cache_dir: Any, default_ttl: float)
 ```
 
 ---
 
-#### ResourceCache.clear
+#### DiskCache.clear
 
 ```
-clear(self: Any)
+clear(self: Any, namespace: Any)
 ```
 
-Clear both in-memory and file-based cache.
+Delete cache files for a namespace, or all namespaces if None.
+
+Returns the count of deleted files.
 
 ---
 
-#### ResourceCache.enable_invalidation
+#### DiskCache.delete
 
 ```
-enable_invalidation(self: Any, directory: Path)
+delete(self: Any, key: str, namespace: str)
 ```
 
-Enable real-time cache invalidation based on file changes (TGNT-P9.2).
+Remove the cache file. Returns True if it existed.
 
 ---
 
-#### ResourceCache.get
+#### DiskCache.get
 
 ```
-get(self: Any, key: str)
+get(self: Any, key: str, namespace: str)
+```
+
+Return cached entry from disk, or None on miss / expiry.
+
+Expired files are deleted on access.
+
+---
+
+#### DiskCache.set
+
+```
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
+```
+
+Store a response to disk atomically and return the CacheEntry.
+
+---
+
+---
+
+## DualCache
+
+Two-level cache: in-memory L1 with optional persistent disk L2.
+
+Read strategy: L1 -> L2 (backfill L1 on L2 hit) -> miss.
+Write strategy: write to both L1 and L2 (if L2 present).
+
+### Methods
+
+#### DualCache.__init__
+
+```
+__init__(self: Any, l1: Any, l2: Any)
 ```
 
 ---
 
-#### ResourceCache.set
+#### DualCache.clear
 
 ```
-set(self: Any, key: str, payload: Any)
+clear(self: Any, namespace: Any)
+```
+
+Clear both levels. Returns the total count of entries deleted.
+
+---
+
+#### DualCache.delete
+
+```
+delete(self: Any, key: str, namespace: str)
+```
+
+Delete from both L1 and L2. Returns True if either had the entry.
+
+---
+
+#### DualCache.get
+
+```
+get(self: Any, key: str, namespace: str)
+```
+
+Return the first valid cache hit (L1 then L2), or None on double miss.
+
+On an L2 hit, the entry is backfilled into L1 for future fast access.
+
+---
+
+#### DualCache.set
+
+```
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
+```
+
+Write to both L1 and L2 (if present). Returns the L1 entry.
+
+---
+
+---
+
+## InMemoryCache
+
+Thread-safe in-memory LRU-ish cache with TTL support.
+
+Eviction policy: when size exceeds max_size, the oldest entry (by
+insertion order) is removed first.
+
+Internal key format: ``"{namespace}:{key}"``
+
+### Methods
+
+#### InMemoryCache.__init__
+
+```
+__init__(self: Any, max_size: int, default_ttl: float)
 ```
 
 ---
+
+#### InMemoryCache.clear
+
+```
+clear(self: Any, namespace: Any)
+```
+
+Clear all entries in the given namespace, or all entries if None.
+
+Returns the count of deleted entries.
+
+---
+
+#### InMemoryCache.delete
+
+```
+delete(self: Any, key: str, namespace: str)
+```
+
+Remove an entry. Returns True if it existed, False otherwise.
+
+---
+
+#### InMemoryCache.get
+
+```
+get(self: Any, key: str, namespace: str)
+```
+
+Return the cached entry or None on miss / expiry.
+
+Expired entries are removed on access (lazy eviction).
+
+---
+
+#### InMemoryCache.set
+
+```
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
+```
+
+Store a response and return the created CacheEntry.
+
+---
+
+#### InMemoryCache.size
+
+```
+size(self: Any)
+```
+
+Return the total number of entries currently stored.
+
+---
+
+---
+
+## cache_get
+
+```
+cache_get(model: str, messages: list[dict], namespace: str)
+```
+
+Look up a cached response for this request. Returns None on miss.
+
+**Parameters**:
+
+- `model`: Model identifier used for key computation.
+- `messages`: Chat messages list used for key computation.
+- `namespace`: Cache namespace to query.
+- `**kwargs`: Additional parameters (temperature, max_tokens, etc.) that
+affect the cache key.
+
+**Returns**: The cached response dict, or None if not found.
+
+---
+
+## cache_set
+
+```
+cache_set(model: str, messages: list[dict], response: dict[(str, Any)], ttl: float, namespace: str)
+```
+
+Store a response in the cache.
+
+**Parameters**:
+
+- `model`: Model identifier used for key computation.
+- `messages`: Chat messages list used for key computation.
+- `response`: The response dict to cache.
+- `ttl`: Time-to-live in seconds.
+- `namespace`: Cache namespace for storage.
+- `**kwargs`: Additional parameters (temperature, max_tokens, etc.) that
+affect the cache key.
 
 ---
 
 ## clear
 
 ```
-clear(self: Any)
+clear(self: Any, namespace: Any)
 ```
 
-Clear both in-memory and file-based cache.
+Clear both levels. Returns the total count of entries deleted.
 
 ---
 
-## enable_invalidation
+## compute_cache_key
 
 ```
-enable_invalidation(self: Any, directory: Path)
+compute_cache_key(model: str, messages: list[dict])
 ```
 
-Enable real-time cache invalidation based on file changes (TGNT-P9.2).
+Compute a deterministic SHA-256 cache key for a request.
+
+Hash input: JSON of {"model": model, "messages": messages, "extras": sorted_extras}
+where extras contains temperature, max_tokens, tools, and response_format from kwargs.
+
+**Returns**: First 32 hex characters of the SHA-256 digest.
+
+---
+
+## delete
+
+```
+delete(self: Any, key: str, namespace: str)
+```
+
+Delete from both L1 and L2. Returns True if either had the entry.
 
 ---
 
 ## get
 
 ```
-get(self: Any, key: str) -> Any
+get(self: Any, key: str, namespace: str)
 ```
+
+Return the first valid cache hit (L1 then L2), or None on double miss.
+
+On an L2 hit, the entry is backfilled into L1 for future fast access.
+
+---
+
+## get_cache
+
+```
+get_cache(l2_enabled: bool)
+```
+
+Return the process-global DualCache singleton.
+
+**Parameters**:
+
+- `l2_enabled`: When True and the instance has not yet been created,
+attach a DiskCache as the L2 layer.  Ignored if the singleton
+already exists.
+
+---
+
+## is_expired
+
+```
+is_expired(self: Any)
+```
+
+Return True if the entry has exceeded its TTL.
+
+---
+
+## reset_cache
+
+Reset the process-global DualCache singleton (for testing).
 
 ---
 
 ## set
 
 ```
-set(self: Any, key: str, payload: Any) -> str
+set(self: Any, key: str, response: dict[(str, Any)], ttl: Any, namespace: str)
 ```
+
+Write to both L1 and L2 (if present). Returns the L1 entry.
+
+---
+
+## size
+
+```
+size(self: Any)
+```
+
+Return the total number of entries currently stored.
 
 ---

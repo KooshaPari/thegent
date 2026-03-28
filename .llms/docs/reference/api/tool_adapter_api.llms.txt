@@ -8,7 +8,7 @@ Source: docs/reference/api/tool_adapter_api.md
 
 > **Source**: `src/thegent/agents/tool_adapter.py`
 
-WP-24002: Recursive Tool Discovery &amp; Adaptation.
+WP-24002: Recursive Tool Discovery & Adaptation.
 
 Enables agents to discover, wrap, and use new tools dynamically at runtime.
 Includes automatic interface adaptation for foreign tool protocols.
@@ -61,11 +61,43 @@ Wrap a discovered tool into a standard execution function.
 
 ---
 
+## ToolAdapterWrapper
+
+Tool adapter wrapper for registry
+
+### Methods
+
+#### ToolAdapterWrapper.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### ToolAdapterWrapper.call
+
+```
+call(self: Any)
+```
+
+---
+
+---
+
 ## ToolDefinition
 
 Metadata for a dynamically discovered tool.
 
 **Inherits from**: `BaseModel`
+
+---
+
+## call
+
+```
+call(self: Any) -> dict
+```
 
 ---
 

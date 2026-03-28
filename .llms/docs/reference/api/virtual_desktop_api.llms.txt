@@ -1,0 +1,259 @@
+# virtual_desktop_api
+
+Source: docs/reference/api/virtual_desktop_api.md
+
+---
+
+# virtual_desktop API Reference
+
+> **Source**: `src/thegent/automation/virtual_desktop.py`
+
+High-performance virtual desktop automation for agents.
+
+This module provides low-latency (<50ms) desktop automation using virtual desktop
+isolation, similar to UFO2's Picture-in-Picture approach. Each agent gets its own
+isolated desktop session where it can automate without colliding with the user.
+
+Architecture:
+- VirtualDesktop: Creates isolated desktop sessions per agent
+- ScreenCapture: GPU-accelerated screen capture (DXGI/X11/Quartz)
+- InputInjector: Low-latency input injection (direct API, not subprocess)
+- DesktopSession: Manages the isolated session lifecycle
+
+---
+
+## DesktopConfig
+
+Configuration for a virtual desktop session.
+
+---
+
+## DesktopSession
+
+Represents a single virtual desktop session.
+
+### Methods
+
+#### DesktopSession.__init__
+
+```
+__init__(self: Any, agent_id: str, desktop_id: str, provider: VirtualDesktopProvider, config: DesktopConfig)
+```
+
+---
+
+#### DesktopSession.last_frame
+
+```
+last_frame(self: Any)
+```
+
+---
+
+#### DesktopSession.on_frame
+
+```
+on_frame(self: Any, callback: Callable[(Any, None)])
+```
+
+Register a callback for new frames.
+
+---
+
+#### DesktopSession.state
+
+```
+state(self: Any, value: DesktopState)
+```
+
+---
+
+---
+
+## DesktopState
+
+Desktop session state.
+
+**Inherits from**: `Enum`
+
+---
+
+## InputEvent
+
+Input event for injection.
+
+---
+
+## ScreenFrame
+
+A single screen frame capture.
+
+### Methods
+
+#### ScreenFrame.latency_ms
+
+```
+latency_ms(self: Any)
+```
+
+Capture latency in milliseconds.
+
+---
+
+#### ScreenFrame.size_bytes
+
+```
+size_bytes(self: Any)
+```
+
+---
+
+---
+
+## VirtualDesktopManager
+
+Manages virtual desktop sessions for agents.
+
+### Methods
+
+#### VirtualDesktopManager.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+---
+
+## VirtualDesktopProvider
+
+Abstract base for platform-specific virtual desktop implementations.
+
+**Inherits from**: `ABC`
+
+### Methods
+
+#### VirtualDesktopProvider.name
+
+```
+name(self: Any)
+```
+
+Provider name.
+
+---
+
+#### VirtualDesktopProvider.supports_gpu
+
+```
+supports_gpu(self: Any)
+```
+
+Whether this provider supports GPU acceleration.
+
+---
+
+---
+
+## _UnsupportedPlatformVirtualDesktopProvider
+
+Fallback provider when running on unsupported platforms.
+
+**Inherits from**: `VirtualDesktopProvider`
+
+**Method Resolution Order**: `_UnsupportedPlatformVirtualDesktopProvider -> VirtualDesktopProvider`
+
+### Methods
+
+#### _UnsupportedPlatformVirtualDesktopProvider.__init__
+
+```
+__init__(self: Any, system: str)
+```
+
+---
+
+#### _UnsupportedPlatformVirtualDesktopProvider.name
+
+```
+name(self: Any)
+```
+
+---
+
+#### _UnsupportedPlatformVirtualDesktopProvider.supports_gpu
+
+```
+supports_gpu(self: Any)
+```
+
+---
+
+---
+
+## get_desktop_manager
+
+Get the global desktop manager.
+
+---
+
+## last_frame
+
+```
+last_frame(self: Any) -> Any
+```
+
+---
+
+## latency_ms
+
+```
+latency_ms(self: Any)
+```
+
+Capture latency in milliseconds.
+
+---
+
+## name
+
+```
+name(self: Any) -> str
+```
+
+---
+
+## on_frame
+
+```
+on_frame(self: Any, callback: Callable[(Any, None)])
+```
+
+Register a callback for new frames.
+
+---
+
+## size_bytes
+
+```
+size_bytes(self: Any) -> int
+```
+
+---
+
+## state
+
+```
+state(self: Any, value: DesktopState) -> None
+```
+
+---
+
+## supports_gpu
+
+```
+supports_gpu(self: Any) -> bool
+```
+
+---

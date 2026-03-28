@@ -4,6 +4,7 @@ Source: docs/research/WORKSTATION_QOL_MASTER_PLAN.md
 
 ---
 
+<DONE>
 # Workstation QOL & Agent-as-User Master Plan
 
 **Date**: 2026-02-19

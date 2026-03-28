@@ -58,7 +58,7 @@ execute(self: Any)
 
 Execute entire workflow respecting stage dependencies.
 
-**Returns**: Map of stage_id -&gt; {crew_id -&gt; {task_id -&gt; ExecutionResult}}
+**Returns**: Map of stage_id -> {crew_id -> {task_id -> ExecutionResult}}
 
 ---
 
@@ -74,7 +74,7 @@ Execute all crews in a stage.
 
 - `stage`: Stage to execute
 
-**Returns**: Map of crew_id -&gt; {task_id -&gt; ExecutionResult}
+**Returns**: Map of crew_id -> {task_id -> ExecutionResult}
 
 ---
 
@@ -84,7 +84,7 @@ Execute all crews in a stage.
 resolve_stage_dependencies(self: Any)
 ```
 
-Resolve stage dependencies using topological sort.
+Resolve stage dependencies using topological sort on a validated graph.
 
 Returns stages in execution order.
 
@@ -110,7 +110,7 @@ execute(self: Any)
 
 Execute entire workflow respecting stage dependencies.
 
-**Returns**: Map of stage_id -&gt; {crew_id -&gt; {task_id -&gt; ExecutionResult}}
+**Returns**: Map of stage_id -> {crew_id -> {task_id -> ExecutionResult}}
 
 ---
 
@@ -126,7 +126,7 @@ Execute all crews in a stage.
 
 - `stage`: Stage to execute
 
-**Returns**: Map of crew_id -&gt; {task_id -&gt; ExecutionResult}
+**Returns**: Map of crew_id -> {task_id -> ExecutionResult}
 
 ---
 
@@ -136,7 +136,7 @@ Execute all crews in a stage.
 resolve_stage_dependencies(self: Any)
 ```
 
-Resolve stage dependencies using topological sort.
+Resolve stage dependencies using topological sort on a validated graph.
 
 Returns stages in execution order.
 

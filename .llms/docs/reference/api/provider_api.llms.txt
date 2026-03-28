@@ -1,0 +1,217 @@
+# provider_api
+
+Source: docs/reference/api/provider_api.md
+
+---
+
+# provider API Reference
+
+> **Source**: `src/thegent/ports/driven/provider.py`
+
+ProviderPort: Interface for provider CRUD operations.
+
+---
+
+## ProviderPort
+
+Port interface for provider management operations.
+
+**Inherits from**: `Protocol`
+
+### Methods
+
+#### ProviderPort.add_provider
+
+```
+add_provider(self: Any, name: str, base_url: str, model: str, login_url: Any, login_instructions: Any, display_name: Any, extra_aliases: Any, api_key: Any, base_url_env: Any)
+```
+
+Add a new provider.
+
+**Parameters**:
+
+- `name`: Provider name.
+- `base_url`: Base URL for the provider API.
+- `model`: Default model name.
+- `login_url`: Optional login/authentication URL.
+- `login_instructions`: Optional list of login instruction steps.
+- `display_name`: Display name for login UI.
+- `extra_aliases`: Additional model aliases.
+- `api_key`: API key to store in config.
+- `base_url_env`: Environment variable name for base_url.
+
+**Returns**: Tuple of (success: bool, message: str).
+
+---
+
+#### ProviderPort.delete_provider
+
+```
+delete_provider(self: Any, name: str, remove_credentials: bool)
+```
+
+Delete a provider.
+
+**Parameters**:
+
+- `name`: Provider name.
+- `remove_credentials`: If True, also removes credentials.
+
+**Returns**: Tuple of (success: bool, message: str).
+
+---
+
+#### ProviderPort.get_provider
+
+```
+get_provider(self: Any, name: str)
+```
+
+Get a specific provider by name.
+
+**Parameters**:
+
+- `name`: Provider name (case-insensitive).
+
+**Returns**: Provider configuration dict, or None if not found.
+
+---
+
+#### ProviderPort.list_providers
+
+```
+list_providers(self: Any, include_credentials: bool)
+```
+
+List all configured providers.
+
+**Parameters**:
+
+- `include_credentials`: If False, strips sensitive API keys.
+
+**Returns**: List of provider configurations.
+
+---
+
+#### ProviderPort.update_provider
+
+```
+update_provider(self: Any, name: str, base_url: Any, model: Any, login_url: Any, login_instructions: Any, display_name: Any, extra_aliases: Any, api_key: Any, base_url_env: Any)
+```
+
+Update an existing provider.
+
+**Parameters**:
+
+- `name`: Provider name.
+- `base_url`: New base URL (optional).
+- `model`: New default model (optional).
+- `login_url`: New login URL (optional).
+- `login_instructions`: New login instructions (optional).
+- `display_name`: New display name (optional).
+- `extra_aliases`: New aliases (optional).
+- `api_key`: New API key (optional).
+- `base_url_env`: New env var name (optional).
+
+**Returns**: Tuple of (success: bool, message: str).
+
+---
+
+---
+
+## add_provider
+
+```
+add_provider(self: Any, name: str, base_url: str, model: str, login_url: Any, login_instructions: Any, display_name: Any, extra_aliases: Any, api_key: Any, base_url_env: Any)
+```
+
+Add a new provider.
+
+**Parameters**:
+
+- `name`: Provider name.
+- `base_url`: Base URL for the provider API.
+- `model`: Default model name.
+- `login_url`: Optional login/authentication URL.
+- `login_instructions`: Optional list of login instruction steps.
+- `display_name`: Display name for login UI.
+- `extra_aliases`: Additional model aliases.
+- `api_key`: API key to store in config.
+- `base_url_env`: Environment variable name for base_url.
+
+**Returns**: Tuple of (success: bool, message: str).
+
+---
+
+## delete_provider
+
+```
+delete_provider(self: Any, name: str, remove_credentials: bool)
+```
+
+Delete a provider.
+
+**Parameters**:
+
+- `name`: Provider name.
+- `remove_credentials`: If True, also removes credentials.
+
+**Returns**: Tuple of (success: bool, message: str).
+
+---
+
+## get_provider
+
+```
+get_provider(self: Any, name: str)
+```
+
+Get a specific provider by name.
+
+**Parameters**:
+
+- `name`: Provider name (case-insensitive).
+
+**Returns**: Provider configuration dict, or None if not found.
+
+---
+
+## list_providers
+
+```
+list_providers(self: Any, include_credentials: bool)
+```
+
+List all configured providers.
+
+**Parameters**:
+
+- `include_credentials`: If False, strips sensitive API keys.
+
+**Returns**: List of provider configurations.
+
+---
+
+## update_provider
+
+```
+update_provider(self: Any, name: str, base_url: Any, model: Any, login_url: Any, login_instructions: Any, display_name: Any, extra_aliases: Any, api_key: Any, base_url_env: Any)
+```
+
+Update an existing provider.
+
+**Parameters**:
+
+- `name`: Provider name.
+- `base_url`: New base URL (optional).
+- `model`: New default model (optional).
+- `login_url`: New login URL (optional).
+- `login_instructions`: New login instructions (optional).
+- `display_name`: New display name (optional).
+- `extra_aliases`: New aliases (optional).
+- `api_key`: New API key (optional).
+- `base_url_env`: New env var name (optional).
+
+**Returns**: Tuple of (success: bool, message: str).
+
+---

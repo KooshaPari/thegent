@@ -1,0 +1,111 @@
+# enterprise_api
+
+Source: docs/reference/api/enterprise_api.md
+
+---
+
+# enterprise API Reference
+
+> **Source**: `src/thegent/cli/apps/enterprise.py`
+
+WL-051: Enterprise CLI — compliance, GDPR, org hierarchy, and key rotation.
+
+Commands:
+  thegent enterprise compliance audit-export
+  thegent enterprise compliance evidence list
+  thegent enterprise compliance evidence purge
+  thegent enterprise gdpr purge
+  thegent enterprise org list / create / show
+  thegent enterprise keys status / rotate
+
+---
+
+## compliance_audit_export
+
+```
+compliance_audit_export(output: Path, format: str, evidence_path: Path, since_days: Any)
+```
+
+Export compliance evidence for regulators (WL-051).
+
+---
+
+## evidence_list
+
+```
+evidence_list(evidence_path: Path, limit: int)
+```
+
+List evidence records from the store (WL-051).
+
+---
+
+## evidence_purge
+
+```
+evidence_purge(older_than_days: int, evidence_path: Path)
+```
+
+Purge evidence records older than N days (WL-051).
+
+---
+
+## gdpr_purge
+
+```
+gdpr_purge(tenant: str, evidence_path: Path, retention_dir: Path)
+```
+
+Apply GDPR retention policies and purge expired data for a tenant (WL-051).
+
+---
+
+## keys_rotate
+
+```
+keys_rotate(provider: str, new_expires_at: str, webhook_url: str, key_registry: Path)
+```
+
+Rotate all API keys for a provider and notify via webhook (WL-051).
+
+---
+
+## keys_status
+
+```
+keys_status(key_registry: Path, warn_days: int)
+```
+
+Show API key expiry status (WL-051).
+
+---
+
+## org_create_cmd
+
+```
+org_create_cmd(name: str, org_registry: Path, initial_tenants: Any)
+```
+
+Create a new org namespace (WL-051).
+
+---
+
+## org_list_cmd
+
+```
+org_list_cmd(org_registry: Path)
+```
+
+List all org namespaces (WL-051).
+
+---
+
+## org_show_cmd
+
+```
+org_show_cmd(org_id: str, org_registry: Path)
+```
+
+Show details for an org namespace (WL-051).
+
+---

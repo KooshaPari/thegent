@@ -1,0 +1,85 @@
+# plan_dag_sync_recover_cmds_api
+
+Source: docs/reference/api/plan_dag_sync_recover_cmds_api.md
+
+---
+
+# plan_dag_sync_recover_cmds API Reference
+
+> **Source**: `src/thegent/cli/plan/plan_dag_sync_recover_cmds.py`
+
+Thegent CLI plan/DAG commands domain - extracted from cli.py (WL-124).
+
+---
+
+## dag_checkpoint_cmd
+
+```
+dag_checkpoint_cmd(cd: Any, reason: str)
+```
+
+Create a point-in-time checkpoint of the DAG state.
+
+---
+
+## dag_checkpoints_cmd
+
+```
+dag_checkpoints_cmd(limit: int)
+```
+
+List recent DAG checkpoints.
+
+---
+
+## dag_probe_cmd
+
+```
+dag_probe_cmd(cd: Any, baseline_id: Any)
+```
+
+Compare current DAG state with a baseline checkpoint to detect regressions.
+
+---
+
+## dag_recover_cmd
+
+```
+dag_recover_cmd(cd: Any, action: str)
+```
+
+Perform recovery playbook actions on the DAG.
+
+---
+
+## dag_rollback_cmd
+
+```
+dag_rollback_cmd(checkpoint_id: Any, cd: Any)
+```
+
+Rollback DAG state to a specific checkpoint.
+
+---
+
+## dag_run_cmd
+
+```
+dag_run_cmd(cd: Any, dry_run: bool, task: Any, max_parallel: Any, lane: Any, check_drift: bool, contract_version: Any)
+```
+
+Spawn thegent bg for each ready task; update status=running and session_id.
+
+---
+
+## dag_sync_cmd
+
+```
+dag_sync_cmd(cd: Any, auto_run_next: bool)
+```
+
+For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
+
+If --auto-run-next, spawn next ready tasks after sync.
+
+---

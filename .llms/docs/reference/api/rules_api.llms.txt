@@ -1,0 +1,35 @@
+# rules_api
+
+Source: docs/reference/api/rules_api.md
+
+---
+
+# rules API Reference
+
+> **Source**: `src/thegent/cli/apps/rules.py`
+
+WL-015: `thegent rules` CLI commands.
+
+Cross-platform rules synchronization for Cursor, Claude Code, and Codex.
+
+FR Traceability: FR-HAX-002
+
+---
+
+## rules_sync
+
+```
+rules_sync(project_dir: Any, dry_run: bool, platform: Any)
+```
+
+Sync canonical rules from .thegent/rules/ to all target platforms.
+
+Reads each *.md rule file in <project>/.thegent/rules/, parses its
+frontmatter, and writes platform-specific outputs:
+
+
+  cursor  -> .cursor/rules/thegent-rules.mdc
+  claude  -> CLAUDE.md  (managed section)
+  codex   -> .codex/skills/SKILL.md
+
+---

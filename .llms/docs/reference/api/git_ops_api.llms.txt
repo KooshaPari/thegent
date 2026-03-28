@@ -1,0 +1,57 @@
+# git_ops_api
+
+Source: docs/reference/api/git_ops_api.md
+
+---
+
+# git_ops API Reference
+
+> **Source**: `src/thegent/phench/git_ops.py`
+
+## detect_head_branch
+
+```
+detect_head_branch(checkout_path: Path) -> Any
+```
+
+---
+
+## list_timeline
+
+```
+list_timeline(repo_path: Path, limit: int, branch: Any) -> dict[(str, Any)]
+```
+
+---
+
+## materialize_repo_checkout
+
+```
+materialize_repo_checkout(source_repo: Path, checkout_path: Path, resolved_sha: str) -> None
+```
+
+---
+
+## resolve_ref_to_sha
+
+```
+resolve_ref_to_sha(repo_path: Path, ref: str) -> str
+```
+
+---
+
+## run_git
+
+```
+run_git(repo_path: Path, args: list[str]) -> str
+```
+
+---
+
+## sanitize_repo_id
+
+```
+sanitize_repo_id(value: str) -> str
+```
+
+---

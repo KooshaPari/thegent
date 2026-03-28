@@ -1,0 +1,39 @@
+# session_health_contracts_impl_api
+
+Source: docs/reference/api/session_health_contracts_impl_api.md
+
+---
+
+# session_health_contracts_impl API Reference
+
+> **Source**: `src/thegent/cli/commands/session_health_contracts_impl.py`
+
+Session contract listing and audit implementation.
+
+Extracted from session_health_impl.py as part of WL-120 LOC Reduction Program.
+Contains:
+- _extract_blocked_ratio: helper for blocked ratio extraction
+- list_session_contracts_impl: list sessions with contract metadata and quality signal
+- session_contract_audit_impl: session contract audit rows with filtering and summary
+
+---
+
+## list_session_contracts_impl
+
+```
+list_session_contracts_impl(owner: Any, all: bool, strict: bool)
+```
+
+Return sessions with route-request/route-contract metadata and contract quality signal.
+
+---
+
+## session_contract_audit_impl
+
+```
+session_contract_audit_impl(owner: Any, all: bool, missing_only: bool, summary_only: bool, strict: bool)
+```
+
+Return session contract audit rows with optional filtering and summary.
+
+---

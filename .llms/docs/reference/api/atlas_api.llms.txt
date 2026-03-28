@@ -1,0 +1,63 @@
+# atlas_api
+
+Source: docs/reference/api/atlas_api.md
+
+---
+
+# atlas API Reference
+
+> **Source**: `src/thegent/cli/atlas.py`
+
+Atlas CLI commands for thegent.
+
+---
+
+## generate
+
+```
+generate(repo: Path, quiet: bool, format: str)
+```
+
+Generate codebase atlas for repository.
+
+---
+
+## install_hooks
+
+```
+install_hooks(repo: Path)
+```
+
+Install git hooks for auto-atlas generation.
+
+---
+
+## serve
+
+```
+serve(port: int, repo: Path)
+```
+
+Start an interactive web server for the atlas.
+
+---
+
+## stats
+
+```
+stats(repo: Path, format: str)
+```
+
+Show quick statistics from atlas.
+
+---
+
+## view
+
+```
+view(atlas_type: Optional[str], repo: Path)
+```
+
+View generated atlas files.
+
+---

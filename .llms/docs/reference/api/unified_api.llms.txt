@@ -1,0 +1,127 @@
+# unified_api
+
+Source: docs/reference/api/unified_api.md
+
+---
+
+# unified API Reference
+
+> **Source**: `src/thegent/sdk/unified.py`
+
+Unified SDK Facade
+
+Provides a single entry point for all agent/SDK operations.
+
+---
+
+## UnifiedSDK
+
+Unified SDK facade for all agent operations.
+
+### Methods
+
+#### UnifiedSDK.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### UnifiedSDK.call
+
+```
+call(self: Any, adapter_name: str)
+```
+
+Call adapter by name
+
+---
+
+#### UnifiedSDK.get_adapter
+
+```
+get_adapter(self: Any, name: str)
+```
+
+Get adapter by name
+
+---
+
+#### UnifiedSDK.list_adapters
+
+```
+list_adapters(self: Any)
+```
+
+List all registered adapters
+
+---
+
+#### UnifiedSDK.register
+
+```
+register(self: Any, name: str, adapter: AdapterPort)
+```
+
+Register a new adapter
+
+---
+
+---
+
+## call
+
+```
+call(self: Any, adapter_name: str)
+```
+
+Call adapter by name
+
+---
+
+## call_adapter
+
+```
+call_adapter(name: str)
+```
+
+Call adapter by name
+
+---
+
+## get_adapter
+
+```
+get_adapter(self: Any, name: str)
+```
+
+Get adapter by name
+
+---
+
+## get_sdk
+
+Get global UnifiedSDK instance
+
+---
+
+## list_adapters
+
+```
+list_adapters(self: Any)
+```
+
+List all registered adapters
+
+---
+
+## register
+
+```
+register(self: Any, name: str, adapter: AdapterPort)
+```
+
+Register a new adapter
+
+---

@@ -1,0 +1,41 @@
+# moderation_api
+
+Source: docs/reference/api/moderation_api.md
+
+---
+
+# moderation API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/guardrails/moderation.py`
+
+## ModerationCategory
+
+---
+
+## ModerationConfig
+
+---
+
+## ModerationResult
+
+---
+
+## check_moderation
+
+```
+check_moderation(text: str, config: Any)
+```
+
+Check text against moderation rules. Uses DEFAULT_CATEGORIES if config is None.
+
+---
+
+## should_block
+
+```
+should_block(result: ModerationResult, config: Any)
+```
+
+Return True if the moderation result warrants blocking the request.
+
+---

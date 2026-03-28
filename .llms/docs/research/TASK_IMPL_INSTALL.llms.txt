@@ -4,6 +4,7 @@ Source: docs/research/TASK_IMPL_INSTALL.md
 
 ---
 
+<DONE>
 # Task: Consolidate os.environ in install.py
 
 **Priority**: P3

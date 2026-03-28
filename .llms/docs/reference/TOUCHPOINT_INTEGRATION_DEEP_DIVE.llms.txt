@@ -113,7 +113,7 @@ All documents that bear on touchpoint integration, unified work stream, and civi
 **Location**: `src/thegent/main.py`, `cli.py`, `cli_impl.py`
 
 **Work-stream commands**:
-- `thegent plan do-next` — same as thegent_do_next
+- `thegent plan next` — same as thegent_do_next
 - `thegent plan incorporate` — merge WBS into WORK_STREAM
 - `thegent govern go health` — 8-dimension gardener scan
 - `thegent govern go cycle` — AgilePlus scan→analyze→plan→deploy→verify→commit
@@ -254,9 +254,9 @@ VERIFY  →  resolve/defer  →  backlog.jsonl updated
 
 | Platform | Headless Entry | thegent |
 |----------|----------------|---------|
-| Claude Code | `claude -p "prompt"` | `thegent run -M claude "prompt"` |
-| Codex | `codex exec -` | `thegent run -M codex "prompt"` |
-| Cursor | cursor-agent CLI | `thegent run -M cursor-agent "prompt"` |
+| Claude Code | `claude -p "prompt"` | `thegent run agent "prompt" --agent claude` |
+| Codex | `codex exec -` | `thegent run agent "prompt" --agent codex` |
+| Cursor | cursor-agent CLI | `thegent run agent "prompt" --agent cursor-agent` |
 
 **Implication**: Headless triggers (timer, watchdog) run outside IDE. They use AgilePlusLoop and gardener. No UserPromptSubmit — queue/harvest apply at session boundaries. WORK_STREAM is the primary source for "what to do next" in headless.
 
@@ -296,7 +296,7 @@ PROJECT/
 |------------|-------|--------|
 | MCP thegent_do_next | WORK_STREAM, pending-handoff, escalation, plans | — |
 | MCP thegent_incorporate | WBS, plans, research, specs | WORK_STREAM |
-| CLI plan do-next | Same as do_next | — |
+| CLI plan next | Same as do_next | — |
 | CLI plan incorporate | WBS | WORK_STREAM |
 | Skills | CLAUDE.md, WORK_STREAM (via do_next) | — |
 | Agents (workers) | WORK_STREAM | WORK_STREAM (claim, complete) |
@@ -406,32 +406,32 @@ How to invoke thegent agents for heavy research, coverage, and incorporation tas
 
 | Agent | Role | Invocation | Best for |
 |-------|------|------------|----------|
-| **copilot** | GitHub Copilot (DirectAgentRunner) | `thegent run -M copilot "..."` | Quick tasks, fallback |
-| **gemini** | Google Gemini | `thegent run -M gemini "..."` | Broad research, stable |
+| **copilot** | GitHub Copilot (DirectAgentRunner) | `thegent run agent "..." --agent copilot` | Quick tasks, fallback |
+| **gemini** | Google Gemini | `thegent run agent "..." --agent gemini` | Broad research, stable |
 | **sitback** | Dashboard + orchestrator | `thegent sitback` | Multi-session, gardening, routing |
 | **agent-orchestra** | Unified orchestration | `thegent sitback --skill agent-orchestra` | Multi-agent coordination |
-| **work-stream-incorporator** | Merge fragments | `thegent run -M gemini "..."` + incorporator persona | Merge docs/plans, research → WORK_STREAM |
+| **work-stream-incorporator** | Merge fragments | `thegent run agent "..." --agent gemini` + incorporator persona | Merge docs/plans, research → WORK_STREAM |
 
 ### 9.2 Workflow: Breadth & Depth Research
 
 **1. Web research (MCP/CLI)**:
 ```
 thegent_ddg_search("MCP agent integration 2025")  # MCP tool
-thegent run -M gemini -m read-only "Search DDG for..."  # CLI fallback
+thegent run agent "Search DDG for..." --agent gemini  # CLI fallback
 ```
 
 **2. Parallel sub-agent dispatch:**
 ```
 # Spawn 3 agents for parallel research
-thegent bg -d . -m read-only "Research MCP adoption trends 2025" gemini
-thegent bg -d . -m read-only "Research Claude Code vs Codex parity" copilot
-thegent bg -d . -m read-only "Research unified backlog patterns" gemini
+thegent run agent "Research MCP adoption trends 2025" --agent gemini --bg --cd .
+thegent run agent "Research Claude Code vs Codex parity" --agent copilot --bg --cd .
+thegent run agent "Research unified backlog patterns" --agent gemini --bg --cd .
 ```
 
 **3. Sitback orchestration:**
 ```
 thegent sitback -a minimax  # or kilo, glm
-# In Sitback: thegent_do_next → pick next; thegent_run/thegent_bg for dispatch
+# In Sitback: thegent_do_next → pick next; thegent run ... --bg for dispatch
 # thegent_ddg_search for web research
 ```
 
@@ -445,7 +445,7 @@ thegent plan incorporate  # Merge WBS → WORK_STREAM
 
 | Skill | Research-related tools |
 |-------|------------------------|
-| **sitback-agent** | thegent_ddg_search, thegent_do_next, thegent_run, thegent_bg, thegent_observe_summary |
+| **sitback-agent** | thegent_ddg_search, thegent_do_next, thegent_run, thegent_observe_summary |
 | **agent-orchestra** | Same + workflow triggers (idea→research→spec→work stream) |
 
 **Skills**: `skills/sitback-agent/SKILL.md`, `skills/agent-orchestra/SKILL.md`. Both reference `thegent_do_next` and WORK_STREAM. Add explicit `thegent_ddg_search` for research tasks.
@@ -454,8 +454,8 @@ thegent plan incorporate  # Merge WBS → WORK_STREAM
 
 - [ ] **Web research**: `thegent_ddg_search` or `mcp_web_fetch` (MCP resource); document in docs/research/
 - [ ] **Project paths**: Scan ~, ../, project root; index in docs/reference/ or TOUCHPOINT_INTEGRATION_DEEP_DIVE
-- [ ] **Copilot agents**: Use `thegent run -M copilot "..."` or `thegent run -M gemini "..."` for parallel research
-- [ ] **Sitback**: `thegent sitback` for dashboard + never-idle gardening; route tasks via thegent_run/thegent_bg
+- [ ] **Copilot agents**: Use `thegent run agent "..." --agent copilot` or `thegent run agent "..." --agent gemini` for parallel research
+- [ ] **Sitback**: `thegent sitback` for dashboard + never-idle gardening; route tasks via thegent_run with `--bg`
 - [ ] **Incorporation**: Merge findings into WORK_STREAM via `thegent plan incorporate` or work-stream-incorporator
 
 ---

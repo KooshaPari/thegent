@@ -6,108 +6,79 @@ Source: docs/reference/api/queue_api.md
 
 # queue API Reference
 
-> **Source**: `src/thegent/task_queue/queue.py`
+> **Source**: `src/thegent/cli/apps/queue.py`
 
-Task queue system.
+thegent queue: Unified Prompt Queue CLI commands (FR-HAX-001).
 
----
+Subcommands:
+  add "<prompt>"  -- enqueue a task
+  list            -- show pending items
+  next            -- claim and print next item
+  done <id>       -- mark item complete
+  tui             -- show TUI (list/claim/complete UI)
 
-## TaskQueue
-
-Task queue implementation.
-
-### Methods
-
-#### TaskQueue.__init__
-
-```
-__init__(self: Any)
-```
-
-Initialize task queue.
+# @trace FR-HAX-001
 
 ---
 
-#### TaskQueue.complete
+## queue_add
 
 ```
-complete(self: Any, task_id: str)
+queue_add(prompt: str, project: Any, output_format: str)
 ```
 
-Mark task as complete.
+Add a task prompt to the queue.
 
-**Parameters**:
-
-- `task_id`: Task identifier
+# @trace FR-HAX-001
 
 ---
 
-#### TaskQueue.dequeue
+## queue_done
 
 ```
-dequeue(self: Any)
+queue_done(item_id: str, output_format: str)
 ```
 
-Dequeue a task.
+Mark a queue item as done.
 
-**Returns**: Task tuple or None
+# @trace FR-HAX-001
 
 ---
 
-#### TaskQueue.enqueue
+## queue_list
 
 ```
-enqueue(self: Any, task_id: str, task: dict[(str, Any)])
+queue_list(project: Any, all_items: bool, output_format: str)
 ```
 
-Enqueue a task.
+List pending queue items.
 
-**Parameters**:
-
-- `task_id`: Task identifier
-- `task`: Task dictionary
+# @trace FR-HAX-001
 
 ---
 
----
-
-## complete
+## queue_next
 
 ```
-complete(self: Any, task_id: str)
+queue_next(project: Any, output_format: str)
 ```
 
-Mark task as complete.
+Claim and print the next pending queue item.
 
-**Parameters**:
+Exits with code 1 if the queue is empty.
 
-- `task_id`: Task identifier
-
----
-
-## dequeue
-
-```
-dequeue(self: Any)
-```
-
-Dequeue a task.
-
-**Returns**: Task tuple or None
+# @trace FR-HAX-001
 
 ---
 
-## enqueue
+## queue_tui
 
 ```
-enqueue(self: Any, task_id: str, task: dict[(str, Any)])
+queue_tui(watch: bool, interval: float, project: Any)
 ```
 
-Enqueue a task.
+Show the queue in a TUI (list/claim/complete UI).
 
-**Parameters**:
-
-- `task_id`: Task identifier
-- `task`: Task dictionary
+# @trace FR-HAX-001
 
 ---

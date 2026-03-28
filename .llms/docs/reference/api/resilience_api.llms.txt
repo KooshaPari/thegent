@@ -6,220 +6,790 @@ Source: docs/reference/api/resilience_api.md
 
 # resilience API Reference
 
-> **Source**: `src/thegent/agents/resilience.py`
+> **Source**: `src/thegent/execution/resilience.py`
 
-Retry and fallback logic for agent runs.
-
-Distinguishes:
-- rate_limit / transient: retry same provider (429, 502/503/504, etc.)
-- usage_limit: subscription/quota exhausted; fallback to different provider.
+Execution run metadata and registry for thegent orchestration.
 
 ---
 
-## FailureKind
+## CircuitBreakerRegistry
 
-Classification of agent run failure.
+Tracks failures and manages circuit states for models/agents.
 
-**Inherits from**: `StrEnum`
-
----
-
-## FailureTaxonomy
-
-WP-2005: Granular taxonomy of failures for root cause analysis.
-
-**Inherits from**: `StrEnum`
-
----
-
-## RecoveryEngine
-
-WP-2004: Automated recovery playbooks for known failure patterns.
+ROB-003: Poison pill detection for repeated identical failures - Stop infinite retry loops.
 
 ### Methods
 
-#### RecoveryEngine.suggest_playbook
+#### CircuitBreakerRegistry.__init__
 
 ```
-suggest_playbook(self: Any, failure_type: str)
+__init__(self: Any, session_dir: Path, threshold: int, window_s: int, recovery_s: int)
 ```
 
-Return a recovery playbook for the given failure type.
+---
+
+#### CircuitBreakerRegistry.is_open
+
+```
+is_open(self: Any, target: str, category: str)
+```
+
+Check if the circuit for a target in a category is open (blocked).
+
+---
+
+#### CircuitBreakerRegistry.record_failure
+
+```
+record_failure(self: Any, target: str, category: str, error_message: Any)
+```
+
+Record a failure for a target in a specific category.
+
+ROB-003: Detects poison pills (repeated identical failures) and prevents infinite retry loops.
 
 ---
 
 ---
 
-## RetryBudget
+## ContinuityWatchdog
 
-WP-2002: SLO-aware retry budget.
+WP-5005: Background watchdog for stale ownership and automatic handoffs.
 
----
-
-## ToolCircuitBreaker
-
-WP-2003: Circuit breaker for individual tools and models. Uses pybreaker.
+ROB-012: Continuity watchdog with escalation on stale ownership - No orphaned critical tasks.
 
 ### Methods
 
-#### ToolCircuitBreaker.__init__
+#### ContinuityWatchdog.__init__
 
 ```
-__init__(self: Any, name: str, threshold: int, window_s: int)
+__init__(self: Any, session_dir: Path)
 ```
 
 ---
 
-#### ToolCircuitBreaker.is_open
+#### ContinuityWatchdog.check_and_escalate_stale_critical
 
 ```
-is_open(self: Any)
+check_and_escalate_stale_critical(self: Any, max_idle_s: int)
 ```
 
-True if the circuit is open (too many recent failures).
+ROB-012: Check for stale critical tasks and escalate if needed.
+
+Returns list of escalated sessions.
 
 ---
 
-#### ToolCircuitBreaker.record_failure
+#### ContinuityWatchdog.scan_stale_sessions
 
 ```
-record_failure(self: Any)
+scan_stale_sessions(self: Any, max_idle_s: int)
 ```
 
-Record a failure event.
+Scan for sessions with no activity for max_idle_s.
+
+---
+
+#### ContinuityWatchdog.trigger_auto_handoff
+
+```
+trigger_auto_handoff(self: Any)
+```
+
+Automatically trigger a handoff for a stale session (WP-5006).
 
 ---
 
 ---
 
-## ToolClass
+## DLQManager
 
-WP-2002: Classification of tool calls for specialized retries.
-
-**Inherits from**: `StrEnum`
-
----
-
-## TransientAgentError
-
-Raised when agent failed due to retryable condition (rate limit, 502, etc.).
-
-**Inherits from**: `Exception`
+WP-Y2: Dead-Letter Queue (DLQ) for permanently failing items.
 
 ### Methods
 
-#### TransientAgentError.__init__
+#### DLQManager.__init__
 
 ```
-__init__(self: Any, result: RunResult)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
+
+#### DLQManager.enqueue
+
+```
+enqueue(self: Any, run_meta: RunMeta, error: str)
+```
+
+Add a failing run to the DLQ.
+
+---
+
+#### DLQManager.list_items
+
+```
+list_items(self: Any, status: Any, run_id: Any)
+```
+
+List items in the DLQ with optional filtering.
+
+---
+
+#### DLQManager.resolve
+
+```
+resolve(self: Any, run_id: str, resolution: str)
+```
+
+Mark a DLQ item as resolved (e.g. replayed, fixed).
 
 ---
 
 ---
 
-## UsageLimitError
+## DeferralQueue
 
-Raised when provider hit usage/quota limit; caller should fallback to different provider.
-
-**Inherits from**: `Exception`
+WP-5004: Manages non-critical tasks deferred during burst load.
 
 ### Methods
 
-#### UsageLimitError.__init__
+#### DeferralQueue.__init__
 
 ```
-__init__(self: Any, result: RunResult, agent: str)
+__init__(self: Any, session_dir: Path)
 ```
+
+---
+
+#### DeferralQueue.defer
+
+```
+defer(self: Any, run_id: str, reason: str, eta_s: int)
+```
+
+Defer a task with an estimated time to resume.
+
+---
+
+#### DeferralQueue.list_deferred
+
+```
+list_deferred(self: Any)
+```
+
+List all currently deferred tasks.
+
+---
+
+#### DeferralQueue.resume
+
+```
+resume(self: Any, run_id: str)
+```
+
+Resume a deferred task by marking it as resumed.
 
 ---
 
 ---
 
-## classify_failure
+## EscalationQueue
+
+WP-3008: Governance queue for blocked decisions with SLA tracking.
+
+### Methods
+
+#### EscalationQueue.__init__
 
 ```
-classify_failure(result: RunResult)
+__init__(self: Any, session_dir: Path)
 ```
-
-Classify failure as rate_limit (retry), usage_limit (fallback), or unknown.
 
 ---
 
-## classify_to_taxonomy
+#### EscalationQueue.add
 
 ```
-classify_to_taxonomy(error_msg: str)
+add(self: Any, run_id: str, reason: str, sla_minutes: int, owner: Any, agent: Any, lane: Any, priority: int)
 ```
 
-Classify a raw error message into the failure taxonomy.
+Add a blocked run to the escalation queue.
 
 ---
 
-## decorator
+#### EscalationQueue.list_pending
 
 ```
-decorator(fn: Callable[(Ellipsis, T)]) -> Callable[(Ellipsis, T)]
+list_pending(self: Any, past_sla_only: bool, limit: int)
 ```
+
+List escalation items. If past_sla_only, return only items past escalate_by.
+
+---
+
+#### EscalationQueue.resolve
+
+```
+resolve(self: Any, run_id: str, resolution: str)
+```
+
+Mark an escalation item as resolved. Returns True if found and updated.
+
+---
+
+---
+
+## FreshnessValidator
+
+WP-4005: Detects stale state and enforces refresh logic.
+
+### Methods
+
+#### FreshnessValidator.__init__
+
+```
+__init__(self: Any, session_dir: Path)
+```
+
+---
+
+#### FreshnessValidator.is_stale
+
+```
+is_stale(self: Any, path: Path, max_age_s: int)
+```
+
+Check if a file or registry is stale.
+
+---
+
+#### FreshnessValidator.validate_action
+
+```
+validate_action(self: Any, context_files: list[Path])
+```
+
+Validate if the action is safe to perform based on context freshness.
+
+---
+
+---
+
+## HandoffManager
+
+WP-4006/9004: Manages shift handoffs and continuity snapshots with enforcement.
+
+### Methods
+
+#### HandoffManager.__init__
+
+```
+__init__(self: Any, session_dir: Path, warning_threshold: Any, escalation_threshold: Any)
+```
+
+---
+
+#### HandoffManager.confirm_handoff
+
+```
+confirm_handoff(self: Any, snapshot_id: str, incoming_owner: str, confidence: float)
+```
+
+WP-9004/12005: Incoming owner confirms handoff completeness with confidence.
+
+---
+
+#### HandoffManager.create_snapshot
+
+```
+create_snapshot(self: Any, owner: str, run_ids: list[str])
+```
+
+Create a continuity snapshot for a handoff.
+
+---
+
+#### HandoffManager.get_snapshot
+
+```
+get_snapshot(self: Any, snapshot_id: str)
+```
+
+Retrieve a specific handoff snapshot by ID.
+
+---
+
+#### HandoffManager.is_handoff_enforced
+
+```
+is_handoff_enforced(self: Any)
+```
+
+WP-9004: Check if a run is blocked by a pending handoff confirmation.
+
+---
+
+#### HandoffManager.list_pending_snapshots
+
+```
+list_pending_snapshots(self: Any, limit: int)
+```
+
+List pending (unconfirmed) handoff snapshots.
+
+---
+
+#### HandoffManager.verify_integrity
+
+```
+verify_integrity(self: Any, snapshot_id: str)
+```
+
+Verify the integrity of a handoff snapshot.
+
+---
+
+---
+
+## InterruptionTracker
+
+WP-4004: Fatigue tracking and interruption controls.
+
+### Methods
+
+#### InterruptionTracker.__init__
+
+```
+__init__(self: Any, session_dir: Path)
+```
+
+---
+
+#### InterruptionTracker.get_fatigue_score
+
+```
+get_fatigue_score(self: Any, window_s: int)
+```
+
+Calculate fatigue score based on recent interruptions (0.0-1.0).
+
+---
+
+#### InterruptionTracker.record_interruption
+
+```
+record_interruption(self: Any, run_id: str, severity: str)
+```
+
+Record an agent interruption event.
+
+---
+
+---
+
+## OverrideRegistry
+
+Stores policy overrides with TTL. WP-3003: revalidation on expiry.
+
+### Methods
+
+#### OverrideRegistry.__init__
+
+```
+__init__(self: Any, session_dir: Path)
+```
+
+---
+
+#### OverrideRegistry.has_unexpired
+
+```
+has_unexpired(self: Any, owner: str)
+```
+
+True if owner has an override that has not yet expired.
+
+---
+
+#### OverrideRegistry.record
+
+```
+record(self: Any, owner: str, reason: str, ttl_seconds: int)
+```
+
+Record an override; valid until now + ttl_seconds.
+
+---
+
+---
+
+## ReplayManager
+
+WP-4007/9003/9006: Decision replay and rationale snapshots with sandbox and what-if support.
+
+### Methods
+
+#### ReplayManager.__init__
+
+```
+__init__(self: Any, session_dir: Path)
+```
+
+---
+
+#### ReplayManager.enable_sandbox
+
+```
+enable_sandbox(self: Any)
+```
+
+WP-9003: Enable read-only sandbox mode for replay.
+
+---
+
+#### ReplayManager.get_replay_chain
+
+```
+get_replay_chain(self: Any, run_id: str)
+```
+
+Fetch the sequence of events for a run from the registry.
+
+---
+
+#### ReplayManager.simulate_policy_change
+
+```
+simulate_policy_change(self: Any, run_meta: RunMeta, new_settings: Any)
+```
+
+WP-4007: Pre-flight simulation of a different policy.
+
+---
+
+#### ReplayManager.what_if_branch
+
+```
+what_if_branch(self: Any, run_id: str, branch_point_index: int, new_params: dict[(str, Any)], approved: bool)
+```
+
+WP-9006/12004: Simulate an alternate outcome with branch governance.
+
+---
+
+---
+
+## add
+
+```
+add(self: Any, run_id: str, reason: str, sla_minutes: int, owner: Any, agent: Any, lane: Any, priority: int)
+```
+
+Add a blocked run to the escalation queue.
+
+---
+
+## check_and_escalate_stale_critical
+
+```
+check_and_escalate_stale_critical(self: Any, max_idle_s: int)
+```
+
+ROB-012: Check for stale critical tasks and escalate if needed.
+
+Returns list of escalated sessions.
+
+---
+
+## confirm_handoff
+
+```
+confirm_handoff(self: Any, snapshot_id: str, incoming_owner: str, confidence: float)
+```
+
+WP-9004/12005: Incoming owner confirms handoff completeness with confidence.
+
+---
+
+## create_snapshot
+
+```
+create_snapshot(self: Any, owner: str, run_ids: list[str])
+```
+
+Create a continuity snapshot for a handoff.
+
+---
+
+## defer
+
+```
+defer(self: Any, run_id: str, reason: str, eta_s: int)
+```
+
+Defer a task with an estimated time to resume.
+
+---
+
+## enable_sandbox
+
+```
+enable_sandbox(self: Any)
+```
+
+WP-9003: Enable read-only sandbox mode for replay.
+
+---
+
+## enqueue
+
+```
+enqueue(self: Any, run_meta: RunMeta, error: str)
+```
+
+Add a failing run to the DLQ.
+
+---
+
+## get_execution_diagnostics
+
+Return diagnostics snapshot for execution-path degradation.
+
+---
+
+## get_fatigue_score
+
+```
+get_fatigue_score(self: Any, window_s: int)
+```
+
+Calculate fatigue score based on recent interruptions (0.0-1.0).
+
+---
+
+## get_replay_chain
+
+```
+get_replay_chain(self: Any, run_id: str)
+```
+
+Fetch the sequence of events for a run from the registry.
+
+---
+
+## get_snapshot
+
+```
+get_snapshot(self: Any, snapshot_id: str)
+```
+
+Retrieve a specific handoff snapshot by ID.
+
+---
+
+## has_unexpired
+
+```
+has_unexpired(self: Any, owner: str)
+```
+
+True if owner has an override that has not yet expired.
+
+---
+
+## is_handoff_enforced
+
+```
+is_handoff_enforced(self: Any)
+```
+
+WP-9004: Check if a run is blocked by a pending handoff confirmation.
 
 ---
 
 ## is_open
 
 ```
-is_open(self: Any)
+is_open(self: Any, target: str, category: str)
 ```
 
-True if the circuit is open (too many recent failures).
+Check if the circuit for a target in a category is open (blocked).
 
 ---
 
-## is_retryable
+## is_stale
 
 ```
-is_retryable(result: RunResult)
+is_stale(self: Any, path: Path, max_age_s: int)
 ```
 
-Return True if failure is rate_limit or transient (retry same provider).
+Check if a file or registry is stale.
 
 ---
 
-## is_usage_limit
+## list_deferred
 
 ```
-is_usage_limit(result: RunResult)
+list_deferred(self: Any)
 ```
 
-Return True if failure indicates usage/quota limit (fallback to different provider).
+List all currently deferred tasks.
+
+---
+
+## list_items
+
+```
+list_items(self: Any, status: Any, run_id: Any)
+```
+
+List items in the DLQ with optional filtering.
+
+---
+
+## list_pending
+
+```
+list_pending(self: Any, past_sla_only: bool, limit: int)
+```
+
+List escalation items. If past_sla_only, return only items past escalate_by.
+
+---
+
+## list_pending_snapshots
+
+```
+list_pending_snapshots(self: Any, limit: int)
+```
+
+List pending (unconfirmed) handoff snapshots.
+
+---
+
+## record
+
+```
+record(self: Any, owner: str, reason: str, ttl_seconds: int)
+```
+
+Record an override; valid until now + ttl_seconds.
 
 ---
 
 ## record_failure
 
 ```
-record_failure(self: Any)
+record_failure(self: Any, target: str, category: str, error_message: Any)
 ```
 
-Record a failure event.
+Record a failure for a target in a specific category.
+
+ROB-003: Detects poison pills (repeated identical failures) and prevents infinite retry loops.
 
 ---
 
-## suggest_playbook
+## record_interruption
 
 ```
-suggest_playbook(self: Any, failure_type: str)
+record_interruption(self: Any, run_id: str, severity: str)
 ```
 
-Return a recovery playbook for the given failure type.
+Record an agent interruption event.
 
 ---
 
-## with_retry
+## reset_execution_diagnostics
+
+Reset execution diagnostics (test helper).
+
+---
+
+## resolve
 
 ```
-with_retry(max_attempts: int, min_wait: float, max_wait: float)
+resolve(self: Any, run_id: str, resolution: str)
 ```
 
-Decorator that retries on TransientAgentError with exponential backoff.
+Mark an escalation item as resolved. Returns True if found and updated.
+
+---
+
+## resume
+
+```
+resume(self: Any, run_id: str)
+```
+
+Resume a deferred task by marking it as resumed.
+
+---
+
+## scan_stale_sessions
+
+```
+scan_stale_sessions(self: Any, max_idle_s: int)
+```
+
+Scan for sessions with no activity for max_idle_s.
+
+---
+
+## simulate_policy_change
+
+```
+simulate_policy_change(self: Any, run_meta: RunMeta, new_settings: Any)
+```
+
+WP-4007: Pre-flight simulation of a different policy.
+
+---
+
+## trigger_auto_handoff
+
+```
+trigger_auto_handoff(self: Any)
+```
+
+Automatically trigger a handoff for a stale session (WP-5006).
+
+---
+
+## validate_action
+
+```
+validate_action(self: Any, context_files: list[Path])
+```
+
+Validate if the action is safe to perform based on context freshness.
+
+---
+
+## verify_integrity
+
+```
+verify_integrity(self: Any, snapshot_id: str)
+```
+
+Verify the integrity of a handoff snapshot.
+
+---
+
+## warn_bounded
+
+```
+warn_bounded(message: str) -> None
+```
+
+---
+
+## what_if_branch
+
+```
+what_if_branch(self: Any, run_id: str, branch_point_index: int, new_params: dict[(str, Any)], approved: bool)
+```
+
+WP-9006/12004: Simulate an alternate outcome with branch governance.
 
 ---

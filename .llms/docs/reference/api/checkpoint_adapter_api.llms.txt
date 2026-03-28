@@ -1,0 +1,163 @@
+# checkpoint_adapter_api
+
+Source: docs/reference/api/checkpoint_adapter_api.md
+
+---
+
+# checkpoint_adapter API Reference
+
+> **Source**: `src/thegent/integrations/adapters/checkpoint_adapter.py`
+
+Checkpoint and failure queue adapter for workstream autosync.
+
+Handles checkpoint persistence and failure queue management.
+
+---
+
+## CheckpointAdapter
+
+Adapter for checkpoint and failure queue operations.
+
+### Methods
+
+#### CheckpointAdapter.__init__
+
+```
+__init__(self: Any, config: Any, failure_queue: SyncFailureQueue)
+```
+
+---
+
+#### CheckpointAdapter.clear_checkpoint
+
+```
+clear_checkpoint(self: Any)
+```
+
+Clear checkpoint file.
+
+---
+
+#### CheckpointAdapter.get_checkpoint_path
+
+```
+get_checkpoint_path(self: Any)
+```
+
+---
+
+#### CheckpointAdapter.get_failure_queue_path
+
+```
+get_failure_queue_path(self: Any)
+```
+
+---
+
+#### CheckpointAdapter.load_checkpoint
+
+```
+load_checkpoint(self: Any)
+```
+
+Load checkpoint from disk.
+
+---
+
+#### CheckpointAdapter.load_failure_queue
+
+```
+load_failure_queue(self: Any)
+```
+
+Load failure queue from disk.
+
+---
+
+#### CheckpointAdapter.save_checkpoint
+
+```
+save_checkpoint(self: Any, checkpoint: SyncCheckpoint)
+```
+
+Save checkpoint to disk.
+
+---
+
+#### CheckpointAdapter.save_failure_queue
+
+```
+save_failure_queue(self: Any)
+```
+
+Save failure queue to disk.
+
+---
+
+---
+
+## clear_checkpoint
+
+```
+clear_checkpoint(self: Any)
+```
+
+Clear checkpoint file.
+
+---
+
+## get_checkpoint_path
+
+```
+get_checkpoint_path(self: Any) -> Path
+```
+
+---
+
+## get_failure_queue_path
+
+```
+get_failure_queue_path(self: Any) -> Path
+```
+
+---
+
+## load_checkpoint
+
+```
+load_checkpoint(self: Any)
+```
+
+Load checkpoint from disk.
+
+---
+
+## load_failure_queue
+
+```
+load_failure_queue(self: Any)
+```
+
+Load failure queue from disk.
+
+---
+
+## save_checkpoint
+
+```
+save_checkpoint(self: Any, checkpoint: SyncCheckpoint)
+```
+
+Save checkpoint to disk.
+
+---
+
+## save_failure_queue
+
+```
+save_failure_queue(self: Any)
+```
+
+Save failure queue to disk.
+
+---

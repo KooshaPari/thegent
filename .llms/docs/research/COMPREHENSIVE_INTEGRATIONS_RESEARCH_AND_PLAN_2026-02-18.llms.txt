@@ -4,6 +4,7 @@ Source: docs/research/COMPREHENSIVE_INTEGRATIONS_RESEARCH_AND_PLAN_2026-02-18.md
 
 ---
 
+<DONE>
 # Comprehensive Integrations Research & Plan: JetBrains, Hooks, MCP, Skills, Shell, OS
 
 **Date**: 2026-02-18

@@ -4,6 +4,7 @@ Source: docs/research/TERMINAL_COMPARISON_GHOSTTY_COMMANDERAI_2026-02-18.md
 
 ---
 
+<DONE>
 # Terminal Comparison: Ghostty vs CommanderAI vs Alternatives (2026-02-18)
 
 ## Executive Summary

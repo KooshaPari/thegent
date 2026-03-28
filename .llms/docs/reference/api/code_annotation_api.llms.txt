@@ -26,6 +26,16 @@ __init__(self: Any, annotation_format: str)
 
 ---
 
+#### CodeAnnotationGenerator.format_reflection_annotation
+
+```
+format_reflection_annotation(self: Any, payload: dict[(str, Any)])
+```
+
+Normalize a remote->local annotation payload to canonical schema/order.
+
+---
+
 #### CodeAnnotationGenerator.generate_annotation_component
 
 ```
@@ -57,6 +67,16 @@ Parse annotations from code (comments like # @annotation).
 **Returns**: List of annotations
 
 ---
+
+---
+
+## format_reflection_annotation
+
+```
+format_reflection_annotation(self: Any, payload: dict[(str, Any)])
+```
+
+Normalize a remote->local annotation payload to canonical schema/order.
 
 ---
 

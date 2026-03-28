@@ -1,0 +1,74 @@
+# 06-research-base-index
+
+Source: docs/research/cli-ecosystem-index/06-research-base-index.md
+
+---
+
+# CLI Ecosystem Index
+
+**Status:** Active scaffold
+**Owner:** AI research pass
+**Last updated:** 2026-02-26
+**Scope:** Multi-language CLI ecosystem investigation for Rust, Zig, and Mojo package ecosystems.
+
+## 1) Objective
+Create a canonical root index for the CLI ecosystem investigation that records scope, methods, evidence inputs, assumptions, and a deterministic recommendation framework. This document is the authoritative entrypoint for all follow-up findings and is the only source for cross-report navigation, target scope, and decision criteria.
+
+## 2) Method
+- Evidence-first indexing: each claim must link to one of the five subordinate reports or a source list entry.
+- Reproducibility-first collection: prioritize machine-enumerable metadata and explicit inclusion criteria.
+- Language-segment isolation: Rust, Zig, and Mojo are analyzed independently then merged in this base index.
+- Update discipline: append to `data_gaps`, `method`, and `targets` only through dated decisions.
+- Deterministic outputs only: no narrative-only conclusions, no unverifiable assumptions in final scoring.
+
+### Inclusion Rules
+1. The package has a CLI-oriented artifact (binary, command runner, plugin, or installable CLI entry).
+2. Source metadata exists in a public index at the time of collection.
+3. Metadata fields can be normalized into: name, version, repository, maintainer signals, license, release recency.
+4. For parity across languages, entries are capped by target counts below.
+
+## 3) Package Targets
+- **Rust target:** 100 packages
+- **Zig target:** 200 packages
+- **Mojo target:** 200 packages
+
+## 4) Source List
+- Rust package indexes:
+  - `crates.io` API and downloadable index mirrors for metadata normalization.
+  - `GitHub` repositories and tags/README metadata.
+- Zig package indexes:
+  - `github.com/ziglang/zig` package ecosystem references and package registries.
+  - `zon`-based package manifests referenced in package docs and module metadata.
+- Mojo package/distribution sources:
+  - Official Mojo package directories and public distribution channels.
+  - Git-hosted repositories exposing Mojo package metadata and CLI artifacts.
+
+## 5) Data Gaps
+- No single canonical package index for Mojo CLI packages equivalent in completeness to `crates.io`.
+- Zig ecosystem metadata is partially fragmented and may not expose uniform download/install semantics.
+- Release cadence consistency varies by source and may bias “active project” classification.
+- Maintainer attribution can be incomplete when projects use obfuscation, org-only identities, or stale profiles.
+- Cross-language license metadata can be inconsistent in format and needs harmonization before scoring.
+
+## 6) One-Page Decision Summary
+- **Decision 1:** Use the fixed targets (Rust 100 / Zig 200 / Mojo 200) as a hard cap for comparative parity.
+- **Decision 2:** Prioritize CLI discoverability signals over raw star count to reduce bias toward dormant artifacts.
+- **Decision 3:** Require repository or metadata provenance for each accepted candidate before entering comparative scoring.
+- **Decision 4:** For Mojo, score entries by documented CLI functionality and explicit toolchain support because package index completeness is limited.
+- **Decision 5:** For Zig, treat non-uniform manifest formats as secondary evidence and require at least two metadata signals (e.g., tags + install docs).
+- **Decision 6:** Do not include inactive or archival projects unless historical benchmarking is explicitly needed.
+- **Decision 7:** Resolve conflicts between reports only at this base index level; subordinate reports must remain language-specialized and evidence-attached.
+- **Decision 8:** Re-run all source passes when collection timestamp exceeds 90 days or when a new package index revision materially changes top-candidates.
+
+## 7) Authoritative Child Reports (by path)
+- `docs/research/cli-ecosystem-index/01-research-rust.md`
+- `docs/research/cli-ecosystem-index/02-research-zig.md`
+- `docs/research/cli-ecosystem-index/03-research-mojo.md`
+- `docs/research/cli-ecosystem-index/04-research-method-metrics.md`
+- `docs/research/cli-ecosystem-index/05-research-decisions.md`
+
+## 8) Deterministic Data Standards
+- Time stamps in `YYYY-MM-DD`.
+- Package counts are integers and must match `targets` at validation time.
+- Scores are normalized as 0–100 with explicit weights in child reports.
+- Every entry must map to one of the three language buckets and one child report.

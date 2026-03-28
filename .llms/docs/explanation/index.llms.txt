@@ -1,0 +1,9 @@
+# index
+
+Source: docs/explanation/index.md
+
+---
+
+# Explanation
+
+Conceptual architecture, rationale, and design trade-offs.

@@ -1,0 +1,72 @@
+# port_lease_api
+
+Source: docs/reference/api/port_lease_api.md
+
+---
+
+# port_lease API Reference
+
+> **Source**: `src/thegent/testing/port_lease.py`
+
+Test runner port leasing (MTSP-16).
+
+Provides a mechanism to lease unique ports for parallel test execution
+to avoid port collisions.
+
+---
+
+## PortLeaseManager
+
+Manages port leasing for parallel test execution (MTSP-16).
+
+### Methods
+
+#### PortLeaseManager.__init__
+
+```
+__init__(self: Any, lease_dir: Any, port_range: tuple[(int, int)])
+```
+
+---
+
+#### PortLeaseManager.lease_port
+
+```
+lease_port(self: Any, timeout: int)
+```
+
+Lease a unique port. Returns the port number.
+
+---
+
+#### PortLeaseManager.release_port
+
+```
+release_port(self: Any, port: int)
+```
+
+Release a previously leased port.
+
+---
+
+---
+
+## lease_port
+
+```
+lease_port(self: Any, timeout: int)
+```
+
+Lease a unique port. Returns the port number.
+
+---
+
+## release_port
+
+```
+release_port(self: Any, port: int)
+```
+
+Release a previously leased port.
+
+---

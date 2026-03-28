@@ -4,6 +4,7 @@ Source: docs/research/WAIT_KEEPALIVE_IMPLEMENTATION.md
 
 ---
 
+<DONE>
 # Wait Command Keepalive Implementation
 
 ## Problem

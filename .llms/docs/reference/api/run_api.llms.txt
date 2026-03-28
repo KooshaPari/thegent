@@ -6,48 +6,18 @@ Source: docs/reference/api/run_api.md
 
 # run API Reference
 
-> **Source**: `src/thegent/cli/apps/run.py`
+> **Source**: `src/thegent/cli/commands/run/__init__.py`
 
-Logical stream: Agent Execution and Lifecycle.
+Thegent CLI run/execution domain (extracted from god package).
 
----
+This package encapsulates all execution and run-related commands and infrastructure:
+- Run and agent execution
+- Loop execution (continuous task loops)
+- Background execution (bg)
+- DAG execution and orchestration
+- Advanced run features (replay, retry, research)
+- Execution helpers and output formatting
 
-## run_agent
-
-```
-run_agent(prompt: str, agent: Any, model: Any, bg: bool, loop: bool, cd: Any, timeout: int, full: bool, owner: Any, run_id: Any, task_id: Any, lane: str, routing: Any, failover: bool, contract_version: Any, domain: Any, speculative: bool, idempotency_token: Any, remote: bool)
-```
-
----
-
-## run_history
-
-```
-run_history(limit: int, format: str)
-```
-
----
-
-## run_logs
-
-```
-run_logs(session_id: Any, follow: bool)
-```
-
----
-
-## run_ps
-
-```
-run_ps(all_sessions: bool, owner: Any, format: str, include_contract: bool)
-```
-
----
-
-## run_stop
-
-```
-run_stop(session_id: Any)
-```
+@trace WL-124: CLI god package decomposition - RUN domain
 
 ---

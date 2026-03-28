@@ -4,6 +4,7 @@ Source: docs/research/PLAN_USAGE_AND_BUDGET_RESEARCH.md
 
 ---
 
+<DONE>
 # Plan Usage and Budget Research
 
 **Date:** 2026-02-16

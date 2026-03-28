@@ -1,0 +1,13 @@
+# sdk_api
+
+Source: docs/reference/api/sdk_api.md
+
+---
+
+# sdk API Reference
+
+> **Source**: `src/thegent/sdk/__init__.py`
+
+Unified SDK package
+
+---

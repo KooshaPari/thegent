@@ -1,0 +1,11 @@
+# index
+
+Source: docs/troubleshooting/fragemented/index.md
+
+---
+
+# Fragmented Index
+
+## Source Files (2026)
+
+- faq.md

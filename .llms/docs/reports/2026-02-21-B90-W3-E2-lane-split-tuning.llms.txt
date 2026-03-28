@@ -1,0 +1,57 @@
+# 2026-02-21-B90-W3-E2-lane-split-tuning
+
+Title: Lane Split Tuning — WL-134 B90-W3-E2
+Source: docs/reports/2026-02-21-B90-W3-E2-lane-split-tuning.md
+
+---
+
+# Lane Split Tuning (WL-134 B90-W3-E2)
+
+## Summary
+
+Analysis of the pytest fast-lane / deep-lane split configuration as of 2026-02-21.
+
+## Current Configuration
+
+- **Config file:** `pytest-fast.ini`
+- **Fast lane addopts:** `-m "not slow and not integration and not e2e and not load" --exitfirst -q`
+- **Defined markers:** `fast`, `unit`, `slow`, `integration`, `e2e`, `load`
+
+## Test Counts
+
+- **Fast lane (default collection):** approximately 12,484 tests collected
+- **Slow/deep lane (`-m deep`):** 2 tests collected (13,316 deselected)
+- **Total collected (no filter):** approximately 13,312–13,318 tests
+
+## Target
+
+- **Fast lane must run in < 30s** (CI hard gate)
+
+## Current State Assessment
+
+The fast lane excludes `slow`, `integration`, `e2e`, and `load` markers as configured. The `deep` marker (defined in `pytest-fast.ini` comment scope) is currently used by 2 tests, and the fast-lane addopts exclude `slow`+`integration`+`e2e`+`load` but not `deep` explicitly.
+
+The fast-lane collection includes approximately 12,484 tests, which is a large number. However, most of these tests are lightweight unit/contract tests that run quickly in aggregate. The collection time itself is approximately 8-11s.
+
+## Recommendation
+
+**Current state: ACCEPTABLE for this wave.**
+
+No additional markers need to be added at this wave. Rationale:
+
+1. The overwhelming majority of fast-lane tests are pure Python unit tests with no I/O or external service calls — they execute quickly.
+2. The `deep` marker is effectively unused (2 tests), making a `not deep` exclusion in addopts redundant.
+3. Integration tests are already excluded via the `not integration` filter.
+4. If fast lane duration exceeds 30s in CI measurement, the recommended next step is to move integration-adjacent tests from the default collection into `@pytest.mark.slow` or `@pytest.mark.integration`.
+
+## Lane Tuning Decision
+
+**No additional markers needed at this wave (B90 Wave-3).**
+
+The `-m "not slow and not integration and not e2e and not load"` addopts in `pytest-fast.ini` are sufficient. Monitor CI timing; if fast-lane wall clock exceeds 30s, revisit by moving heavy fixtures into `@pytest.mark.slow`.
+
+## Artifacts
+
+- `pytest-fast.ini` — fast lane configuration
+- `Taskfile.yml:test:fast-lane` — task wrapper for `uv run pytest -c pytest-fast.ini`
+- `Taskfile.yml:test:deep` — deep lane: `uv run pytest -m deep -q --timeout=300`

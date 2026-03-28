@@ -4,6 +4,7 @@ Source: docs/research/DOCTOR_OAUTH_ONLY_UPDATE.md
 
 ---
 
+<DONE>
 # Doctor Command: OAuth-Only Authentication Update
 
 **Date:** 2026-02-17

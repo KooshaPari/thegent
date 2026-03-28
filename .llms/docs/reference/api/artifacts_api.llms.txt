@@ -16,7 +16,7 @@ Provides signed, immutable records of agent actions (WP-3002).
 
 ## MAIFArtifact
 
-Represents a signed MAIF artifact.
+Mutable artifact record used by MAIFManager and tests.
 
 ---
 
@@ -47,7 +47,7 @@ Retrieve artifact by ID.
 #### MAIFArtifactStore.store
 
 ```
-store(self: Any, artifact: MAIFArtifact)
+store(self: Any, artifact: dict[(str, Any)])
 ```
 
 Store artifact in local cache.
@@ -79,6 +79,14 @@ record_action(self: Any, action_type: str, payload: dict[(str, Any)], chain_of_t
 Record an action as a signed MAIF artifact.
 
 ---
+
+---
+
+## generate_key_pair
+
+Generate an RSA key pair for signing MAIF artifacts.
+
+**Returns**: Tuple of (private_key, public_key).
 
 ---
 
@@ -118,6 +126,16 @@ Record an action as a signed MAIF artifact.
 
 ---
 
+## require_supported_schema_version
+
+```
+require_supported_schema_version(payload: dict[(str, Any)])
+```
+
+Validate required schema_version field for MAIF artifacts.
+
+---
+
 ## save_private_key
 
 ```
@@ -134,14 +152,23 @@ Save private key to PEM file.
 sign_artifact(artifact: MAIFArtifact, private_key: rsa.RSAPrivateKey)
 ```
 
-Sign a MAIFArtifact with RSA private key (MAIF).
+Sign a MAIFArtifact in-place and return the base64-encoded signature.
+
+Sets artifact.signature to the computed signature string.
+
+**Parameters**:
+
+- `artifact`: The artifact to sign (mutated in-place).
+- `private_key`: RSA private key used for signing.
+
+**Returns**: Base64-encoded signature string.
 
 ---
 
 ## store
 
 ```
-store(self: Any, artifact: MAIFArtifact)
+store(self: Any, artifact: dict[(str, Any)])
 ```
 
 Store artifact in local cache.
@@ -154,6 +181,13 @@ Store artifact in local cache.
 verify_artifact(artifact: MAIFArtifact, public_key: rsa.RSAPublicKey)
 ```
 
-Verify a MAIFArtifact signature (MAIF).
+Verify a MAIFArtifact's signature.
+
+**Parameters**:
+
+- `artifact`: Artifact to verify.
+- `public_key`: RSA public key corresponding to the signing private key.
+
+**Returns**: True if the signature is valid, False otherwise.
 
 ---

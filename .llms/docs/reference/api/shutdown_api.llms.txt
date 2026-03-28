@@ -1,0 +1,167 @@
+# shutdown_api
+
+Source: docs/reference/api/shutdown_api.md
+
+---
+
+# shutdown API Reference
+
+> **Source**: `src/thegent/production/shutdown.py`
+
+Graceful Shutdown
+
+Handles graceful shutdown with cleanup.
+
+---
+
+## GracefulShutdown
+
+Manages graceful shutdown.
+
+### Methods
+
+#### GracefulShutdown.__init__
+
+```
+__init__(self: Any, timeout: float)
+```
+
+---
+
+#### GracefulShutdown.install
+
+```
+install(self: Any)
+```
+
+Install signal handlers.
+
+---
+
+#### GracefulShutdown.is_shutting_down
+
+```
+is_shutting_down(self: Any)
+```
+
+Check if shutting down.
+
+---
+
+#### GracefulShutdown.register
+
+```
+register(self: Any, handler: Callable)
+```
+
+Register a shutdown handler.
+
+---
+
+#### GracefulShutdown.shutdown
+
+```
+shutdown(self: Any)
+```
+
+Trigger shutdown programmatically.
+
+---
+
+#### GracefulShutdown.uninstall
+
+```
+uninstall(self: Any)
+```
+
+Restore original signal handlers.
+
+---
+
+---
+
+## ShutdownContext
+
+Context manager for shutdown-aware operations.
+
+### Methods
+
+#### ShutdownContext.__init__
+
+```
+__init__(self: Any, shutdown: GracefulShutdown)
+```
+
+---
+
+#### ShutdownContext.check
+
+```
+check(self: Any)
+```
+
+Check if should continue.
+
+---
+
+---
+
+## check
+
+```
+check(self: Any)
+```
+
+Check if should continue.
+
+---
+
+## install
+
+```
+install(self: Any)
+```
+
+Install signal handlers.
+
+---
+
+## is_shutting_down
+
+```
+is_shutting_down(self: Any)
+```
+
+Check if shutting down.
+
+---
+
+## register
+
+```
+register(self: Any, handler: Callable)
+```
+
+Register a shutdown handler.
+
+---
+
+## shutdown
+
+```
+shutdown(self: Any)
+```
+
+Trigger shutdown programmatically.
+
+---
+
+## uninstall
+
+```
+uninstall(self: Any)
+```
+
+Restore original signal handlers.
+
+---

@@ -1,0 +1,2147 @@
+# netweave-3_prd
+
+Source: docs/specs/prds/netweave-3_prd.md
+
+---
+
+# Product Requirements Document: netweave-3
+
+**Version:** 1.0.0  
+**Created:** 2026-02-18
+
+## 1. Overview
+
+# NetWeave Traffic Simulation
+
+## 2. Objectives
+
+## 3. Success Metrics
+
+## 4. Stakeholders
+
+## 5. Target Users
+
+- User
+- user
+
+## 6. Functional Requirements
+
+### FR-1: Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### FR-2: Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### FR-3: Start/Stop
+
+Begin or pause the simulation
+
+### FR-4: Reset
+
+Reset the simulation to its initial state
+
+### FR-5: Speed
+
+Adjust the simulation speed
+
+### FR-6: Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### FR-7: Generate Random
+
+Create a new random road network
+
+### FR-8: Process Canvas
+
+Process the current canvas drawing into a network
+
+### FR-9: cmd/netweave
+
+Main application entry point
+
+### FR-10: internal/simulation
+
+Core traffic simulation using cellular automata
+
+### FR-11: internal/graph
+
+Road network graph representation
+
+### FR-12: internal/canvas
+
+Canvas interface for drawing road networks
+
+### FR-13: internal/ml
+
+ML image processor for converting drawings to graphs
+
+### FR-14: internal/render
+
+Visualization engine for rendering the simulation
+
+### FR-15: internal/ui
+
+User interface and integration of all components
+
+### FR-16: web/static
+
+Static web assets for the user interface
+
+### FR-17: Prerequisites
+
+### FR-18: Installation Steps
+
+### FR-19: Canvas Mode
+
+### FR-20: Basic Mode
+
+### FR-21: Simulation Controls
+
+### FR-22: Project Structure
+
+### FR-23: Building from Source
+
+### FR-24: Running Tests
+
+### FR-25: Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### FR-26: Canvas Interface
+
+NVIDIA Canvas-like interface for drawing semantic color maps of road networks
+
+### FR-27: ML Image Processor
+
+Converts semantic drawings into road network graphs
+
+### FR-28: Image2Image Engine
+
+Renders OpenStreetMap-like visualizations of the simulation
+
+### FR-29: Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### FR-30: Start/Stop
+
+Begin or pause the simulation
+
+### FR-31: Reset
+
+Reset the simulation to its initial state
+
+### FR-32: Speed
+
+Adjust the simulation speed
+
+### FR-33: Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### FR-34: Generate Random
+
+Create a new random road network
+
+### FR-35: Process Canvas
+
+Process the current canvas drawing into a network
+
+### FR-36: cmd/netweave
+
+Main application entry point
+
+### FR-37: internal/simulation
+
+Core traffic simulation using cellular automata
+
+### FR-38: internal/graph
+
+Road network graph representation
+
+### FR-39: internal/canvas
+
+Canvas interface for drawing road networks
+
+### FR-40: internal/ml
+
+ML image processor for converting drawings to graphs
+
+### FR-41: internal/render
+
+Visualization engine for rendering the simulation
+
+### FR-42: internal/ui
+
+User interface and integration of all components
+
+### FR-43: web/static
+
+Static web assets for the user interface
+
+### FR-44: Prerequisites
+
+### FR-45: Installation Steps
+
+### FR-46: Canvas Mode
+
+### FR-47: Basic Mode
+
+### FR-48: Simulation Controls
+
+### FR-49: Project Structure
+
+### FR-50: Building from Source
+
+### FR-51: Running Tests
+
+### FR-52: Inputs
+
+User interactions, simulation control commands
+
+### FR-53: Outputs
+
+Display rendering, status updates
+
+### FR-54: Interfaces
+
+- `StartCanvasMode()`: Launch the canvas interface
+
+### FR-55: Inputs
+
+User drawing actions, tool selections
+
+### FR-56: Outputs
+
+Semantic color map
+
+### FR-57: Interfaces
+
+- `DrawRoad(type, points)`: Draw road segment
+
+### FR-58: Inputs
+
+Semantic color map
+
+### FR-59: Outputs
+
+Road network graph
+
+### FR-60: Interfaces
+
+- `ProcessImage(image)`: Convert image to graph
+
+### FR-61: Inputs
+
+Generation parameters
+
+### FR-62: Outputs
+
+Road network graph
+
+### FR-63: Interfaces
+
+- `GenerateNetwork(params)`: Create random road network
+
+### FR-64: Data Structure
+
+Represents the road network topology
+
+### FR-65: Interfaces
+
+- `AddRoad(start, end, properties)`: Add road segment
+
+### FR-66: Inputs
+
+Road network graph, simulation parameters
+
+### FR-67: Outputs
+
+Vehicle positions, traffic state
+
+### FR-68: Interfaces
+
+- `InitSimulation(graph)`: Initialize with road network
+
+### FR-69: Inputs
+
+Road network graph, traffic state
+
+### FR-70: Outputs
+
+OpenStreetMap-like visualization
+
+### FR-71: Interfaces
+
+- `RenderMap(graph)`: Render base map
+
+### FR-72: High-Level Architecture
+
+### FR-73: 1. User Interface
+
+### FR-74: 2. Canvas Interface
+
+### FR-75: 3. ML Image to Graph Processor
+
+### FR-76: 4. Random Network Generator
+
+### FR-77: 5. Road Network Graph
+
+### FR-78: 6. Core Traffic Simulation
+
+### FR-79: 7. Image2Image Engine
+
+### FR-80: Go Modules Structure
+
+### FR-81: Technology Stack
+
+### FR-82: Backend
+
+- Go (1.18+) for core simulation and server
+
+### FR-83: Frontend
+
+- WebAssembly for Go code running in browser
+
+### FR-84: ML Components
+
+- TensorFlow or PyTorch models wrapped with Go bindings
+
+### FR-85: Rendering
+
+- OpenGL or WebGL for visualization
+
+### FR-86: Map Creation Flow
+
+- User draws on canvas → Semantic color map → ML processor → Road network graph
+
+### FR-87: Simulation Flow
+
+- Road network graph → Core simulation → Vehicle movement → Traffic state
+
+### FR-88: User Interaction Flow
+
+- UI controls → Simulation parameters → Core simulation update
+
+### FR-89: Simulation Concurrency
+
+- Time steps processed sequentially
+
+### FR-90: Rendering Concurrency
+
+- Separate goroutine for rendering
+
+### FR-91: Simulation Optimization
+
+- Spatial partitioning for efficient vehicle interaction
+
+### FR-92: Rendering Optimization
+
+- Viewport culling for large networks
+
+### FR-93: Plugin Architecture
+
+- Interface-based design for component replacement
+
+### FR-94: Scalability
+
+- Distributed simulation capability
+
+### FR-95: View logs
+
+`gcloud app logs tail -s netweave`
+
+### FR-96: Update application
+
+Make changes and redeploy with `gcloud app deploy`
+
+### FR-97: Terminate deployment
+
+1. Go to the [App Engine Dashboard](https://console.cloud.google.com/appengine)
+
+### FR-98: View logs
+
+`heroku logs --tail -a netweave-traffic-sim`
+
+### FR-99: Update application
+
+Make changes, rebuild and push the container
+
+### FR-100: Terminate deployment
+
+1. Run `heroku apps:destroy -a netweave-traffic-sim`
+
+### FR-101: View deployment
+
+Go to the Netlify dashboard
+
+### FR-102: Update application
+
+Make changes and redeploy
+
+### FR-103: Terminate deployment
+
+1. Go to the Netlify dashboard
+
+### FR-104: App Engine
+
+`https://netweave-dot-[YOUR_PROJECT_ID].appspot.com`
+
+### FR-105: Heroku
+
+`https://netweave-traffic-sim.herokuapp.com`
+
+### FR-106: Netlify
+
+Custom URL provided after deployment
+
+### FR-107: Prerequisites
+
+### FR-108: Deployment Steps
+
+### FR-109: Managing Your Deployment
+
+### FR-110: Prerequisites
+
+### FR-111: Deployment to Heroku
+
+### FR-112: Managing Your Deployment
+
+### FR-113: Deployment to Netlify
+
+### FR-114: Managing Your Deployment
+
+### FR-115: Google Cloud Platform (App Engine)
+
+2. **Docker Container (Heroku, DigitalOcean, etc.)**
+
+### FR-116: Static Deployment (Netlify, Vercel)
+
+## 1. Google Cloud Platform (App Engine)
+
+### FR-117: Inputs
+
+User interactions, simulation control commands
+
+### FR-118: Outputs
+
+Display rendering, status updates
+
+### FR-119: Interfaces
+
+- `StartCanvasMode()`: Launch the canvas interface
+
+### FR-120: Inputs
+
+User drawing actions, tool selections
+
+### FR-121: Outputs
+
+Semantic color map
+
+### FR-122: Interfaces
+
+- `DrawRoad(type, points)`: Draw road segment
+
+### FR-123: Inputs
+
+Semantic color map
+
+### FR-124: Outputs
+
+Road network graph
+
+### FR-125: Interfaces
+
+- `ProcessImage(image)`: Convert image to graph
+
+### FR-126: Inputs
+
+Generation parameters
+
+### FR-127: Outputs
+
+Road network graph
+
+### FR-128: Interfaces
+
+- `GenerateNetwork(params)`: Create random road network
+
+### FR-129: Data Structure
+
+Represents the road network topology
+
+### FR-130: Interfaces
+
+- `AddRoad(start, end, properties)`: Add road segment
+
+### FR-131: Inputs
+
+Road network graph, simulation parameters
+
+### FR-132: Outputs
+
+Vehicle positions, traffic state
+
+### FR-133: Interfaces
+
+- `InitSimulation(graph)`: Initialize with road network
+
+### FR-134: Inputs
+
+Road network graph, traffic state
+
+### FR-135: Outputs
+
+OpenStreetMap-like visualization
+
+### FR-136: Interfaces
+
+- `RenderMap(graph)`: Render base map
+
+### FR-137: High-Level Architecture
+
+### FR-138: 1. User Interface
+
+### FR-139: 2. Canvas Interface
+
+### FR-140: 3. ML Image to Graph Processor
+
+### FR-141: 4. Random Network Generator
+
+### FR-142: 5. Road Network Graph
+
+### FR-143: 6. Core Traffic Simulation
+
+### FR-144: 7. Image2Image Engine
+
+### FR-145: Go Modules Structure
+
+### FR-146: Technology Stack
+
+### FR-147: Backend
+
+- Go (1.18+) for core simulation and server
+
+### FR-148: Frontend
+
+- WebAssembly for Go code running in browser
+
+### FR-149: ML Components
+
+- TensorFlow or PyTorch models wrapped with Go bindings
+
+### FR-150: Rendering
+
+- OpenGL or WebGL for visualization
+
+### FR-151: Map Creation Flow
+
+- User draws on canvas → Semantic color map → ML processor → Road network graph
+
+### FR-152: Simulation Flow
+
+- Road network graph → Core simulation → Vehicle movement → Traffic state
+
+### FR-153: User Interaction Flow
+
+- UI controls → Simulation parameters → Core simulation update
+
+### FR-154: Simulation Concurrency
+
+- Time steps processed sequentially
+
+### FR-155: Rendering Concurrency
+
+- Separate goroutine for rendering
+
+### FR-156: Simulation Optimization
+
+- Spatial partitioning for efficient vehicle interaction
+
+### FR-157: Rendering Optimization
+
+- Viewport culling for large networks
+
+### FR-158: Plugin Architecture
+
+- Interface-based design for component replacement
+
+### FR-159: Scalability
+
+- Distributed simulation capability
+
+### FR-160: Canvas Mode
+
+A drawing interface allowing users to create custom road networks with semantic color maps
+
+### FR-161: Basic Mode
+
+Automated generation of random road networks for quick simulation testing
+
+### FR-162: Go
+
+Core simulation engine and server components
+
+### FR-163: JavaScript/HTML/CSS
+
+Web-based user interface
+
+### FR-164: WebSockets
+
+Real-time communication between client and server
+
+### FR-165: Image Processing Libraries
+
+For canvas interpretation and visualization
+
+### FR-166: Nodes
+
+Represent intersections with properties such as position and type (four-way, three-way, roundabout)
+
+### FR-167: Edges
+
+Represent road segments with properties including length, lanes, speed limit, and type
+
+### FR-168: Points of Interest (POIs)
+
+Represent destinations such as residential areas, workplaces, and commercial zones
+
+### FR-169: Residential
+
+Homes and apartment buildings
+
+### FR-170: Commercial
+
+Shops, malls, and retail areas
+
+### FR-171: Industrial
+
+Factories and warehouses
+
+### FR-172: Educational
+
+Schools and universities
+
+### FR-173: Recreational
+
+Parks and entertainment venues
+
+### FR-174: Healthcare
+
+Hospitals and clinics
+
+### FR-175: Road Tool
+
+Draw road segments with customizable properties
+
+### FR-176: Intersection Tool
+
+Place intersections of different types
+
+### FR-177: Zone Tool
+
+Define areas with specific characteristics
+
+### FR-178: POI Tool
+
+Place points of interest with different types
+
+### FR-179: Eraser Tool
+
+Remove elements from the canvas
+
+### FR-180: Black
+
+Roads
+
+### FR-181: Red
+
+Intersections
+
+### FR-182: Blue
+
+Residential POIs
+
+### FR-183: Orange
+
+Commercial POIs
+
+### FR-184: Gray
+
+Industrial POIs
+
+### FR-185: Yellow
+
+Educational POIs
+
+### FR-186: Green
+
+Recreational POIs
+
+### FR-187: Red
+
+Healthcare POIs
+
+### FR-188: 1.1 Background
+
+### FR-189: 1.2 Core Capabilities
+
+### FR-190: 2.1 Core Components
+
+### FR-191: 2.2 Technology Stack
+
+### FR-192: 3.1 Graph Structure
+
+### FR-193: 3.2 Points of Interest (POIs)
+
+### FR-194: 4.1 Cellular Automata Implementation
+
+### FR-195: 4.2 Vehicle Representation
+
+### FR-196: 4.3 Agent-Based Behavior
+
+### FR-197: 5.1 Drawing Tools
+
+### FR-198: 5.2 Semantic Color Mapping
+
+### FR-199: 6.1 Image to Graph Conversion
+
+### FR-200: 6.2 Network Validation
+
+### FR-201: 7.1 Traffic Flow Analysis
+
+### FR-202: 7.2 Route Planning
+
+### FR-203: 7.3 Time-Based Simulation
+
+### FR-204: 8.1 Map Rendering
+
+### FR-205: 8.2 Real-Time Updates
+
+### FR-206: 9.1 Urban Planning
+
+### FR-207: 9.2 Traffic Management
+
+### FR-208: 9.3 Educational Applications
+
+### FR-209: 10.1 Server Architecture
+
+### FR-210: 10.2 Client Interface
+
+### FR-211: 11.1 Enhanced Routing Algorithms
+
+### FR-212: 11.2 Advanced Agent Behavior
+
+### FR-213: 11.3 Integration Capabilities
+
+### FR-214: Graph Network
+
+Represents the road infrastructure as nodes (intersections) and edges (road segments)
+
+### FR-215: Cellular Automata Engine
+
+Implements the Nagel-Schreckenberg model for realistic traffic flow
+
+### FR-216: Canvas Interface
+
+Provides an intuitive drawing environment for creating road networks
+
+### FR-217: ML Image Processor
+
+Converts semantic drawings into functional road network graphs
+
+### FR-218: Simulation Engine
+
+Manages vehicle movement, agent behavior, and traffic dynamics
+
+### FR-219: Visualization Engine
+
+Renders the simulation state in an OpenStreetMap-like visual style
+
+### FR-220: Web Interface
+
+Delivers the user experience through a browser-based interface
+
+### FR-221: Acceleration
+
+Vehicles tend to accelerate up to their maximum speed
+
+### FR-222: Deceleration
+
+Vehicles slow down to avoid collisions
+
+### FR-223: Randomization
+
+Random speed fluctuations to model human driving behavior
+
+### FR-224: Movement
+
+Vehicles advance based on their current speed
+
+### FR-225: Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### FR-226: Canvas Interface
+
+NVIDIA Canvas-like interface for drawing semantic color maps of road networks
+
+### FR-227: ML Image Processor
+
+Converts semantic drawings into road network graphs
+
+### FR-228: Image2Image Engine
+
+Renders OpenStreetMap-like visualizations of the simulation
+
+### FR-229: Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### FR-230: Start/Stop
+
+Begin or pause the simulation
+
+### FR-231: Reset
+
+Reset the simulation to its initial state
+
+### FR-232: Speed
+
+Adjust the simulation speed
+
+### FR-233: Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### FR-234: Generate Random
+
+Create a new random road network
+
+### FR-235: Process Canvas
+
+Process the current canvas drawing into a network
+
+### FR-236: cmd/netweave
+
+Main application entry point
+
+### FR-237: internal/simulation
+
+Core traffic simulation using cellular automata
+
+### FR-238: internal/graph
+
+Road network graph representation
+
+### FR-239: internal/canvas
+
+Canvas interface for drawing road networks
+
+### FR-240: internal/ml
+
+ML image processor for converting drawings to graphs
+
+### FR-241: internal/render
+
+Visualization engine for rendering the simulation
+
+### FR-242: internal/ui
+
+User interface and integration of all components
+
+### FR-243: web/static
+
+Static web assets for the user interface
+
+### FR-244: Prerequisites
+
+### FR-245: Installation Steps
+
+### FR-246: Canvas Mode
+
+### FR-247: Basic Mode
+
+### FR-248: Simulation Controls
+
+### FR-249: Project Structure
+
+### FR-250: Building from Source
+
+### FR-251: Running Tests
+
+### FR-252: Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### FR-253: Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### FR-254: Start/Stop
+
+Begin or pause the simulation
+
+### FR-255: Reset
+
+Reset the simulation to its initial state
+
+### FR-256: Speed
+
+Adjust the simulation speed
+
+### FR-257: Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### FR-258: Generate Random
+
+Create a new random road network
+
+### FR-259: Process Canvas
+
+Process the current canvas drawing into a network
+
+### FR-260: cmd/netweave
+
+Main application entry point
+
+### FR-261: internal/simulation
+
+Core traffic simulation using cellular automata
+
+### FR-262: internal/graph
+
+Road network graph representation
+
+### FR-263: internal/canvas
+
+Canvas interface for drawing road networks
+
+### FR-264: internal/ml
+
+ML image processor for converting drawings to graphs
+
+### FR-265: internal/render
+
+Visualization engine for rendering the simulation
+
+### FR-266: internal/ui
+
+User interface and integration of all components
+
+### FR-267: web/static
+
+Static web assets for the user interface
+
+### FR-268: Prerequisites
+
+### FR-269: Installation Steps
+
+### FR-270: Canvas Mode
+
+### FR-271: Basic Mode
+
+### FR-272: Simulation Controls
+
+### FR-273: Project Structure
+
+### FR-274: Building from Source
+
+### FR-275: Running Tests
+
+### FR-276: Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### FR-277: Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### FR-278: Start/Stop
+
+Begin or pause the simulation
+
+### FR-279: Reset
+
+Reset the simulation to its initial state
+
+### FR-280: Speed
+
+Adjust the simulation speed
+
+### FR-281: Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### FR-282: Generate Random
+
+Create a new random road network
+
+### FR-283: Process Canvas
+
+Process the current canvas drawing into a network
+
+### FR-284: cmd/netweave
+
+Main application entry point
+
+### FR-285: internal/simulation
+
+Core traffic simulation using cellular automata
+
+### FR-286: internal/graph
+
+Road network graph representation
+
+### FR-287: internal/canvas
+
+Canvas interface for drawing road networks
+
+### FR-288: internal/ml
+
+ML image processor for converting drawings to graphs
+
+### FR-289: internal/render
+
+Visualization engine for rendering the simulation
+
+### FR-290: internal/ui
+
+User interface and integration of all components
+
+### FR-291: web/static
+
+Static web assets for the user interface
+
+### FR-292: Prerequisites
+
+### FR-293: Installation Steps
+
+### FR-294: Canvas Mode
+
+### FR-295: Basic Mode
+
+### FR-296: Simulation Controls
+
+### FR-297: Project Structure
+
+### FR-298: Building from Source
+
+### FR-299: Running Tests
+
+## 7. Non-Functional Requirements
+
+## 8. Features
+
+### 🟡 Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### 🟡 Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### 🟡 Start/Stop
+
+Begin or pause the simulation
+
+### 🟡 Reset
+
+Reset the simulation to its initial state
+
+### 🟡 Speed
+
+Adjust the simulation speed
+
+### 🟡 Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### 🟡 Generate Random
+
+Create a new random road network
+
+### 🟡 Process Canvas
+
+Process the current canvas drawing into a network
+
+### 🟡 cmd/netweave
+
+Main application entry point
+
+### 🟡 internal/simulation
+
+Core traffic simulation using cellular automata
+
+### 🟡 internal/graph
+
+Road network graph representation
+
+### 🟡 internal/canvas
+
+Canvas interface for drawing road networks
+
+### 🟡 internal/ml
+
+ML image processor for converting drawings to graphs
+
+### 🟡 internal/render
+
+Visualization engine for rendering the simulation
+
+### 🟡 internal/ui
+
+User interface and integration of all components
+
+### 🟡 web/static
+
+Static web assets for the user interface
+
+### 🟡 Prerequisites
+
+### 🟡 Installation Steps
+
+### 🟡 Canvas Mode
+
+### 🟡 Basic Mode
+
+### 🟡 Simulation Controls
+
+### 🟡 Project Structure
+
+### 🟡 Building from Source
+
+### 🟡 Running Tests
+
+### 🟡 Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### 🟡 Canvas Interface
+
+NVIDIA Canvas-like interface for drawing semantic color maps of road networks
+
+### 🟡 ML Image Processor
+
+Converts semantic drawings into road network graphs
+
+### 🟡 Image2Image Engine
+
+Renders OpenStreetMap-like visualizations of the simulation
+
+### 🟡 Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### 🟡 Start/Stop
+
+Begin or pause the simulation
+
+### 🟡 Reset
+
+Reset the simulation to its initial state
+
+### 🟡 Speed
+
+Adjust the simulation speed
+
+### 🟡 Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### 🟡 Generate Random
+
+Create a new random road network
+
+### 🟡 Process Canvas
+
+Process the current canvas drawing into a network
+
+### 🟡 cmd/netweave
+
+Main application entry point
+
+### 🟡 internal/simulation
+
+Core traffic simulation using cellular automata
+
+### 🟡 internal/graph
+
+Road network graph representation
+
+### 🟡 internal/canvas
+
+Canvas interface for drawing road networks
+
+### 🟡 internal/ml
+
+ML image processor for converting drawings to graphs
+
+### 🟡 internal/render
+
+Visualization engine for rendering the simulation
+
+### 🟡 internal/ui
+
+User interface and integration of all components
+
+### 🟡 web/static
+
+Static web assets for the user interface
+
+### 🟡 Prerequisites
+
+### 🟡 Installation Steps
+
+### 🟡 Canvas Mode
+
+### 🟡 Basic Mode
+
+### 🟡 Simulation Controls
+
+### 🟡 Project Structure
+
+### 🟡 Building from Source
+
+### 🟡 Running Tests
+
+### 🟡 Inputs
+
+User interactions, simulation control commands
+
+### 🟡 Outputs
+
+Display rendering, status updates
+
+### 🟡 Interfaces
+
+- `StartCanvasMode()`: Launch the canvas interface
+
+### 🟡 Inputs
+
+User drawing actions, tool selections
+
+### 🟡 Outputs
+
+Semantic color map
+
+### 🟡 Interfaces
+
+- `DrawRoad(type, points)`: Draw road segment
+
+### 🟡 Inputs
+
+Semantic color map
+
+### 🟡 Outputs
+
+Road network graph
+
+### 🟡 Interfaces
+
+- `ProcessImage(image)`: Convert image to graph
+
+### 🟡 Inputs
+
+Generation parameters
+
+### 🟡 Outputs
+
+Road network graph
+
+### 🟡 Interfaces
+
+- `GenerateNetwork(params)`: Create random road network
+
+### 🟡 Data Structure
+
+Represents the road network topology
+
+### 🟡 Interfaces
+
+- `AddRoad(start, end, properties)`: Add road segment
+
+### 🟡 Inputs
+
+Road network graph, simulation parameters
+
+### 🟡 Outputs
+
+Vehicle positions, traffic state
+
+### 🟡 Interfaces
+
+- `InitSimulation(graph)`: Initialize with road network
+
+### 🟡 Inputs
+
+Road network graph, traffic state
+
+### 🟡 Outputs
+
+OpenStreetMap-like visualization
+
+### 🟡 Interfaces
+
+- `RenderMap(graph)`: Render base map
+
+### 🟠 High-Level Architecture
+
+### 🟡 1. User Interface
+
+### 🟡 2. Canvas Interface
+
+### 🟡 3. ML Image to Graph Processor
+
+### 🟡 4. Random Network Generator
+
+### 🟡 5. Road Network Graph
+
+### 🟡 6. Core Traffic Simulation
+
+### 🟡 7. Image2Image Engine
+
+### 🟡 Go Modules Structure
+
+### 🟡 Technology Stack
+
+### 🟡 Backend
+
+- Go (1.18+) for core simulation and server
+
+### 🟡 Frontend
+
+- WebAssembly for Go code running in browser
+
+### 🟡 ML Components
+
+- TensorFlow or PyTorch models wrapped with Go bindings
+
+### 🟡 Rendering
+
+- OpenGL or WebGL for visualization
+
+### 🟡 Map Creation Flow
+
+- User draws on canvas → Semantic color map → ML processor → Road network graph
+
+### 🟡 Simulation Flow
+
+- Road network graph → Core simulation → Vehicle movement → Traffic state
+
+### 🟡 User Interaction Flow
+
+- UI controls → Simulation parameters → Core simulation update
+
+### 🟡 Simulation Concurrency
+
+- Time steps processed sequentially
+
+### 🟡 Rendering Concurrency
+
+- Separate goroutine for rendering
+
+### 🟡 Simulation Optimization
+
+- Spatial partitioning for efficient vehicle interaction
+
+### 🟡 Rendering Optimization
+
+- Viewport culling for large networks
+
+### 🟡 Plugin Architecture
+
+- Interface-based design for component replacement
+
+### 🟡 Scalability
+
+- Distributed simulation capability
+
+### 🟡 View logs
+
+`gcloud app logs tail -s netweave`
+
+### 🟡 Update application
+
+Make changes and redeploy with `gcloud app deploy`
+
+### 🟡 Terminate deployment
+
+1. Go to the [App Engine Dashboard](https://console.cloud.google.com/appengine)
+
+### 🟡 View logs
+
+`heroku logs --tail -a netweave-traffic-sim`
+
+### 🟡 Update application
+
+Make changes, rebuild and push the container
+
+### 🟡 Terminate deployment
+
+1. Run `heroku apps:destroy -a netweave-traffic-sim`
+
+### 🟡 View deployment
+
+Go to the Netlify dashboard
+
+### 🟡 Update application
+
+Make changes and redeploy
+
+### 🟡 Terminate deployment
+
+1. Go to the Netlify dashboard
+
+### 🟡 App Engine
+
+`https://netweave-dot-[YOUR_PROJECT_ID].appspot.com`
+
+### 🟡 Heroku
+
+`https://netweave-traffic-sim.herokuapp.com`
+
+### 🟡 Netlify
+
+Custom URL provided after deployment
+
+### 🟡 Prerequisites
+
+### 🟡 Deployment Steps
+
+### 🟡 Managing Your Deployment
+
+### 🟡 Prerequisites
+
+### 🟡 Deployment to Heroku
+
+### 🟡 Managing Your Deployment
+
+### 🟡 Deployment to Netlify
+
+### 🟡 Managing Your Deployment
+
+### 🟡 Google Cloud Platform (App Engine)
+
+2. **Docker Container (Heroku, DigitalOcean, etc.)**
+
+### 🟡 Static Deployment (Netlify, Vercel)
+
+## 1. Google Cloud Platform (App Engine)
+
+### 🟡 Inputs
+
+User interactions, simulation control commands
+
+### 🟡 Outputs
+
+Display rendering, status updates
+
+### 🟡 Interfaces
+
+- `StartCanvasMode()`: Launch the canvas interface
+
+### 🟡 Inputs
+
+User drawing actions, tool selections
+
+### 🟡 Outputs
+
+Semantic color map
+
+### 🟡 Interfaces
+
+- `DrawRoad(type, points)`: Draw road segment
+
+### 🟡 Inputs
+
+Semantic color map
+
+### 🟡 Outputs
+
+Road network graph
+
+### 🟡 Interfaces
+
+- `ProcessImage(image)`: Convert image to graph
+
+### 🟡 Inputs
+
+Generation parameters
+
+### 🟡 Outputs
+
+Road network graph
+
+### 🟡 Interfaces
+
+- `GenerateNetwork(params)`: Create random road network
+
+### 🟡 Data Structure
+
+Represents the road network topology
+
+### 🟡 Interfaces
+
+- `AddRoad(start, end, properties)`: Add road segment
+
+### 🟡 Inputs
+
+Road network graph, simulation parameters
+
+### 🟡 Outputs
+
+Vehicle positions, traffic state
+
+### 🟡 Interfaces
+
+- `InitSimulation(graph)`: Initialize with road network
+
+### 🟡 Inputs
+
+Road network graph, traffic state
+
+### 🟡 Outputs
+
+OpenStreetMap-like visualization
+
+### 🟡 Interfaces
+
+- `RenderMap(graph)`: Render base map
+
+### 🟠 High-Level Architecture
+
+### 🟡 1. User Interface
+
+### 🟡 2. Canvas Interface
+
+### 🟡 3. ML Image to Graph Processor
+
+### 🟡 4. Random Network Generator
+
+### 🟡 5. Road Network Graph
+
+### 🟡 6. Core Traffic Simulation
+
+### 🟡 7. Image2Image Engine
+
+### 🟡 Go Modules Structure
+
+### 🟡 Technology Stack
+
+### 🟡 Backend
+
+- Go (1.18+) for core simulation and server
+
+### 🟡 Frontend
+
+- WebAssembly for Go code running in browser
+
+### 🟡 ML Components
+
+- TensorFlow or PyTorch models wrapped with Go bindings
+
+### 🟡 Rendering
+
+- OpenGL or WebGL for visualization
+
+### 🟡 Map Creation Flow
+
+- User draws on canvas → Semantic color map → ML processor → Road network graph
+
+### 🟡 Simulation Flow
+
+- Road network graph → Core simulation → Vehicle movement → Traffic state
+
+### 🟡 User Interaction Flow
+
+- UI controls → Simulation parameters → Core simulation update
+
+### 🟡 Simulation Concurrency
+
+- Time steps processed sequentially
+
+### 🟡 Rendering Concurrency
+
+- Separate goroutine for rendering
+
+### 🟡 Simulation Optimization
+
+- Spatial partitioning for efficient vehicle interaction
+
+### 🟡 Rendering Optimization
+
+- Viewport culling for large networks
+
+### 🟡 Plugin Architecture
+
+- Interface-based design for component replacement
+
+### 🟡 Scalability
+
+- Distributed simulation capability
+
+### 🟡 Canvas Mode
+
+A drawing interface allowing users to create custom road networks with semantic color maps
+
+### 🟡 Basic Mode
+
+Automated generation of random road networks for quick simulation testing
+
+### 🟡 Go
+
+Core simulation engine and server components
+
+### 🟡 JavaScript/HTML/CSS
+
+Web-based user interface
+
+### 🟡 WebSockets
+
+Real-time communication between client and server
+
+### 🟡 Image Processing Libraries
+
+For canvas interpretation and visualization
+
+### 🟡 Nodes
+
+Represent intersections with properties such as position and type (four-way, three-way, roundabout)
+
+### 🟡 Edges
+
+Represent road segments with properties including length, lanes, speed limit, and type
+
+### 🟡 Points of Interest (POIs)
+
+Represent destinations such as residential areas, workplaces, and commercial zones
+
+### 🟡 Residential
+
+Homes and apartment buildings
+
+### 🟡 Commercial
+
+Shops, malls, and retail areas
+
+### 🟡 Industrial
+
+Factories and warehouses
+
+### 🟡 Educational
+
+Schools and universities
+
+### 🟡 Recreational
+
+Parks and entertainment venues
+
+### 🟡 Healthcare
+
+Hospitals and clinics
+
+### 🟡 Road Tool
+
+Draw road segments with customizable properties
+
+### 🟡 Intersection Tool
+
+Place intersections of different types
+
+### 🟡 Zone Tool
+
+Define areas with specific characteristics
+
+### 🟡 POI Tool
+
+Place points of interest with different types
+
+### 🟡 Eraser Tool
+
+Remove elements from the canvas
+
+### 🟡 Black
+
+Roads
+
+### 🟡 Red
+
+Intersections
+
+### 🟡 Blue
+
+Residential POIs
+
+### 🟡 Orange
+
+Commercial POIs
+
+### 🟡 Gray
+
+Industrial POIs
+
+### 🟡 Yellow
+
+Educational POIs
+
+### 🟡 Green
+
+Recreational POIs
+
+### 🟡 Red
+
+Healthcare POIs
+
+### 🟡 1.1 Background
+
+### 🟡 1.2 Core Capabilities
+
+### 🟡 2.1 Core Components
+
+### 🟡 2.2 Technology Stack
+
+### 🟡 3.1 Graph Structure
+
+### 🟡 3.2 Points of Interest (POIs)
+
+### 🟡 4.1 Cellular Automata Implementation
+
+### 🟡 4.2 Vehicle Representation
+
+### 🟡 4.3 Agent-Based Behavior
+
+### 🟡 5.1 Drawing Tools
+
+### 🟡 5.2 Semantic Color Mapping
+
+### 🟡 6.1 Image to Graph Conversion
+
+### 🟡 6.2 Network Validation
+
+### 🟡 7.1 Traffic Flow Analysis
+
+### 🟡 7.2 Route Planning
+
+### 🟡 7.3 Time-Based Simulation
+
+### 🟡 8.1 Map Rendering
+
+### 🟡 8.2 Real-Time Updates
+
+### 🟡 9.1 Urban Planning
+
+### 🟡 9.2 Traffic Management
+
+### 🟡 9.3 Educational Applications
+
+### 🟡 10.1 Server Architecture
+
+### 🟡 10.2 Client Interface
+
+### 🟡 11.1 Enhanced Routing Algorithms
+
+### 🟡 11.2 Advanced Agent Behavior
+
+### 🟡 11.3 Integration Capabilities
+
+### 🟡 Graph Network
+
+Represents the road infrastructure as nodes (intersections) and edges (road segments)
+
+### 🟡 Cellular Automata Engine
+
+Implements the Nagel-Schreckenberg model for realistic traffic flow
+
+### 🟡 Canvas Interface
+
+Provides an intuitive drawing environment for creating road networks
+
+### 🟡 ML Image Processor
+
+Converts semantic drawings into functional road network graphs
+
+### 🟡 Simulation Engine
+
+Manages vehicle movement, agent behavior, and traffic dynamics
+
+### 🟡 Visualization Engine
+
+Renders the simulation state in an OpenStreetMap-like visual style
+
+### 🟡 Web Interface
+
+Delivers the user experience through a browser-based interface
+
+### 🟡 Acceleration
+
+Vehicles tend to accelerate up to their maximum speed
+
+### 🟡 Deceleration
+
+Vehicles slow down to avoid collisions
+
+### 🟡 Randomization
+
+Random speed fluctuations to model human driving behavior
+
+### 🟡 Movement
+
+Vehicles advance based on their current speed
+
+### 🟡 Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### 🟡 Canvas Interface
+
+NVIDIA Canvas-like interface for drawing semantic color maps of road networks
+
+### 🟡 ML Image Processor
+
+Converts semantic drawings into road network graphs
+
+### 🟡 Image2Image Engine
+
+Renders OpenStreetMap-like visualizations of the simulation
+
+### 🟡 Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### 🟡 Start/Stop
+
+Begin or pause the simulation
+
+### 🟡 Reset
+
+Reset the simulation to its initial state
+
+### 🟡 Speed
+
+Adjust the simulation speed
+
+### 🟡 Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### 🟡 Generate Random
+
+Create a new random road network
+
+### 🟡 Process Canvas
+
+Process the current canvas drawing into a network
+
+### 🟡 cmd/netweave
+
+Main application entry point
+
+### 🟡 internal/simulation
+
+Core traffic simulation using cellular automata
+
+### 🟡 internal/graph
+
+Road network graph representation
+
+### 🟡 internal/canvas
+
+Canvas interface for drawing road networks
+
+### 🟡 internal/ml
+
+ML image processor for converting drawings to graphs
+
+### 🟡 internal/render
+
+Visualization engine for rendering the simulation
+
+### 🟡 internal/ui
+
+User interface and integration of all components
+
+### 🟡 web/static
+
+Static web assets for the user interface
+
+### 🟡 Prerequisites
+
+### 🟡 Installation Steps
+
+### 🟡 Canvas Mode
+
+### 🟡 Basic Mode
+
+### 🟡 Simulation Controls
+
+### 🟡 Project Structure
+
+### 🟡 Building from Source
+
+### 🟡 Running Tests
+
+### 🟡 Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### 🟡 Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### 🟡 Start/Stop
+
+Begin or pause the simulation
+
+### 🟡 Reset
+
+Reset the simulation to its initial state
+
+### 🟡 Speed
+
+Adjust the simulation speed
+
+### 🟡 Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### 🟡 Generate Random
+
+Create a new random road network
+
+### 🟡 Process Canvas
+
+Process the current canvas drawing into a network
+
+### 🟡 cmd/netweave
+
+Main application entry point
+
+### 🟡 internal/simulation
+
+Core traffic simulation using cellular automata
+
+### 🟡 internal/graph
+
+Road network graph representation
+
+### 🟡 internal/canvas
+
+Canvas interface for drawing road networks
+
+### 🟡 internal/ml
+
+ML image processor for converting drawings to graphs
+
+### 🟡 internal/render
+
+Visualization engine for rendering the simulation
+
+### 🟡 internal/ui
+
+User interface and integration of all components
+
+### 🟡 web/static
+
+Static web assets for the user interface
+
+### 🟡 Prerequisites
+
+### 🟡 Installation Steps
+
+### 🟡 Canvas Mode
+
+### 🟡 Basic Mode
+
+### 🟡 Simulation Controls
+
+### 🟡 Project Structure
+
+### 🟡 Building from Source
+
+### 🟡 Running Tests
+
+### 🟡 Core Traffic Simulation
+
+Implementation of the Nagel-Schreckenberg model for realistic traffic flow
+
+### 🟡 Two Operation Modes
+
+- Canvas Mode: Draw your own road network using the canvas interface
+
+### 🟡 Start/Stop
+
+Begin or pause the simulation
+
+### 🟡 Reset
+
+Reset the simulation to its initial state
+
+### 🟡 Speed
+
+Adjust the simulation speed
+
+### 🟡 Add Vehicles
+
+Add a specified number of random vehicles to the network
+
+### 🟡 Generate Random
+
+Create a new random road network
+
+### 🟡 Process Canvas
+
+Process the current canvas drawing into a network
+
+### 🟡 cmd/netweave
+
+Main application entry point
+
+### 🟡 internal/simulation
+
+Core traffic simulation using cellular automata
+
+### 🟡 internal/graph
+
+Road network graph representation
+
+### 🟡 internal/canvas
+
+Canvas interface for drawing road networks
+
+### 🟡 internal/ml
+
+ML image processor for converting drawings to graphs
+
+### 🟡 internal/render
+
+Visualization engine for rendering the simulation
+
+### 🟡 internal/ui
+
+User interface and integration of all components
+
+### 🟡 web/static
+
+Static web assets for the user interface
+
+### 🟡 Prerequisites
+
+### 🟡 Installation Steps
+
+### 🟡 Canvas Mode
+
+### 🟡 Basic Mode
+
+### 🟡 Simulation Controls
+
+### 🟡 Project Structure
+
+### 🟡 Building from Source
+
+### 🟡 Running Tests
+
+## 9. Architecture Overview
+
+Architecture details to be documented.
+
+## 10. Technical Requirements
+
+- Use javascript
+- Use go
+- Use node.js
+- Use docker
+
+## 11. Integration Points
+
+- **Integration with Setup**: Integration point with Setup project
+- **Integration with Structure**: Integration point with Structure project
+- **Integration with is**: Integration point with is project
+- **Integration with directory**: Integration point with directory project
+
+## 12. Timeline & Phases
+
+## 13. Milestones
+
+## 14. Dependencies
+
+## 16. Related Projects
+
+- Setup
+- Structure
+- is
+- directory
+
+## 17. Shared Features
+
+- Core Components
+- Real-time Updates
+- Scalability:
+- Speed
+- Go
+- Prerequisites
+- Running Tests
+- Project Structure
+- Green
+- Yellow
+- Red
+- Components
+- View Logs
+- Black
+- Core Capabilities
+- Backend
+- Technology Stack
+- High-Level Architecture
+- Interfaces
+- Blue
+- Simulation Engine ✅
+- Frontend
+- Plugin Architecture
+- UI Rendering
+- Building from Source
+- Core Traffic Simulation
+- Two Operation Modes
+- Start/Stop
+- Reset
+- Add Vehicles
+- Generate Random
+- Process Canvas
+- cmd/netweave
+- internal/simulation
+- internal/graph
+- internal/canvas
+- internal/ml
+- internal/render
+- internal/ui
+- web/static
+- Installation Steps
+- Canvas Mode
+- Basic Mode
+- Simulation Controls
+- Canvas Interface
+- ML Image Processor
+- Image2Image Engine
+- Inputs
+- Outputs
+- Data Structure
+- 1. User Interface
+- 3. ML Image to Graph Processor
+- 4. Random Network Generator
+- 5. Road Network Graph
+- Go Modules Structure
+- Map Creation Flow
+- Simulation Flow
+- User Interaction Flow
+- Simulation Concurrency
+- Rendering Concurrency
+- Simulation Optimization
+- Rendering Optimization
+- Update application
+- Terminate deployment
+- Managing Your Deployment
+- Points of Interest (POIs)

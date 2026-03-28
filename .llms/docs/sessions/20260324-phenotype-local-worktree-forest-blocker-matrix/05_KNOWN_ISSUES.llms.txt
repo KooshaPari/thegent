@@ -1,0 +1,43 @@
+# 05_KNOWN_ISSUES
+
+Source: docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/05_KNOWN_ISSUES.md
+
+---
+
+# 05_KNOWN_ISSUES
+
+## Resolution criteria (when an item leaves this list)
+
+- **Repair-bound lane**: `git status` clean on that worktree path, branch merged or intentionally parked with no uncommitted product changes needed for migration.
+- **Prune candidate**: `git worktree list` no longer references the path, or path removed with `git worktree remove` after confirming no unique commits worth keeping.
+- **Detached lane**: either reattached to a registered worktree, or explicitly abandoned and removed per repo policy.
+- **Locked initializing**: git/worktree initialization completed or lane removed; re-run `git worktree list` to confirm.
+
+## GitHub / CI (release merges)
+
+- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** (`feat/migrate-cache` → `main`): **mergeable** in GitHub sense but **required CI red** (Lint & Test, Policy Gate, Build wheels, etc.) — **do not merge** until fix-forward; tracked in `FULL_TURN_DELIVERY.md`.
+
+## Blocked Forest Registry
+
+### Critical: Dirty-Root Blockers
+- **`heliosApp`**: 353 dirty paths; all expanded child lanes are dirty/divergent (No-Prune).
+- **`heliosCLI`**: 96 dirty paths; heavily divergent root state.
+- **`AgilePlus`**: 535 dirty paths; major forest noise.
+
+### Operational: Layout and State Blockers
+- **`cliproxy-wtress`**: Typo duplicate of `cliproxy-wtrees` (Must-Normalize).
+- **`portage`**: Stale prunable worktrees and detached legacy lanes (Cleanup-Ready).
+- **`trace`**: `codex-required-gates*` locks were cleared on 2026-03-28 (only `trace`, `trace-wtrees/spec-docs`, and `trace-wtrees/ui-overhaul` remain in `git worktree list --porcelain`).
+- **`trash-cli`**: Detached `PROJECT-wtrees` lane (`pr1-rust-put-fix`).
+- **`ralph-codex-loop`**: Unborn/Initializing (`HEAD` is all zeros).
+
+### Structural: Mixed-Layout Blockers
+- **`AgilePlus`, `phenotype-shared`, `phenotypeActions`**: Mixed canonical + legacy layouts prevent stable forest governance.
+- **`phenotypeActions` (2026-03-24):** `git status` fails with **`expected submodule path 'PROJECT-wtrees/add-lint-test-action' not to be a symbolic link`** — repair submodule/symlink layout before any merge or worktree ops.
+- **`heliosApp` (2026-03-24):** Extensive type errors (200+) in `apps/desktop` and `apps/runtime` (missing modules/types, `InMemoryLocalBus` vs `LocalBus` mismatches, Bun API `spawnSync/file/Glob` missing).
+
+### Missing / non-repo paths
+- **`ralph-codex-loop`:** Decided **archive** (2026-03-24); already in `.archive/ralph-codex-loop`.
+- **`template-commons-wtrees`:** Directory present but **not a git repo** — confirm whether it should be a hub, symlink, or removed.
+- **`heliosApp`**: Missing `CONTRIBUTING.md` and disk space runbook (2026-03-24).
+- **`portage`**: No cron schedule for `/private/tmp` cleanup found.

@@ -4,6 +4,7 @@ Source: docs/research/CROSS_PROJECT_FEATURE_BORROWING_PLAN.md
 
 ---
 
+<DONE>
 # Cross-Project Feature Borrowing Plan
 
 > **Status**: 📋 **IMPLEMENTATION PLAN** | **Date**: 2026-02-18
@@ -52,6 +53,28 @@ This plan details **specific features** that can be borrowed from more active/re
 **Effort**: 2-4 hours per project
 
 **Priority**: P1
+
+### 1.2 Backlog Schema Borrowing (heliosguard backlog/priority closure)
+
+To close `borrow-heliosguard-priority` and `borrow-heliosguard-backlog`, this plan standardizes the minimum backlog schema borrowed from heliosShield-style governance:
+
+| Column | Required | Purpose |
+|--------|----------|---------|
+| `ID` | Yes | Stable work item identifier |
+| `Priority` | Yes | P0-P4 operational urgency |
+| `Module` | Yes | Owning subsystem/domain |
+| `SLA` | Yes | Expected response/completion window |
+| `Status` | Yes | `todo`, `claimed`, `in_progress`, `blocked`, `done` |
+| `Depends On` | Recommended | DAG predecessor IDs |
+| `Evidence` | Recommended | Validation command, artifact path, or report link |
+
+Recommended row format:
+
+```
+| ID | Priority | Module | SLA | Status | Depends On | Evidence |
+|----|----------|--------|-----|--------|------------|----------|
+| WG-001 | P1 | delegation | 1 sprint | in_progress | WG-000 | docs/reports/<report>.md |
+```
 
 ---
 

@@ -4,6 +4,7 @@ Source: docs/research/TYPE_CHECKER_MIGRATION_ANALYSIS.md
 
 ---
 
+<DONE>
 # Type Checker Migration Analysis: ty/zuban/basedpyright vs Pyright/Pylance
 
 ## Current State

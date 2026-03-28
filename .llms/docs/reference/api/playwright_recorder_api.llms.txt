@@ -79,17 +79,9 @@ Validate browser is one of the supported types.
 
 Result of a recording session.
 
+**Inherits from**: `SerializableMixin`
+
 ### Methods
-
-#### RecordingResult.to_dict
-
-```
-to_dict(self: Any)
-```
-
-Convert to dictionary.
-
----
 
 #### RecordingResult.to_json
 
@@ -126,16 +118,6 @@ model_post_init(self: Any, __context: Any)
 ```
 
 Create output directory after model init.
-
----
-
-## to_dict
-
-```
-to_dict(self: Any)
-```
-
-Convert to dictionary.
 
 ---
 

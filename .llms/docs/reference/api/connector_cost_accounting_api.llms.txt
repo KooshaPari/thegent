@@ -1,0 +1,91 @@
+# connector_cost_accounting_api
+
+Source: docs/reference/api/connector_cost_accounting_api.md
+
+---
+
+# connector_cost_accounting API Reference
+
+> **Source**: `src/thegent/integrations/connector_cost_accounting.py`
+
+Per-connector cost accounting for sync budgeting.
+
+# @trace WL-297
+
+---
+
+## ConnectorCostLedger
+
+In-memory ledger of per-connector usage/cost metrics.
+
+### Methods
+
+#### ConnectorCostLedger.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### ConnectorCostLedger.record
+
+```
+record(self: Any)
+```
+
+---
+
+#### ConnectorCostLedger.summary_by_connector
+
+```
+summary_by_connector(self: Any)
+```
+
+---
+
+#### ConnectorCostLedger.total_cost
+
+```
+total_cost(self: Any)
+```
+
+---
+
+---
+
+## ConnectorCostSummary
+
+Aggregated connector cost/usage summary.
+
+---
+
+## ConnectorUsageEvent
+
+Single connector usage event.
+
+---
+
+## record
+
+```
+record(self: Any) -> ConnectorUsageEvent
+```
+
+---
+
+## summary_by_connector
+
+```
+summary_by_connector(self: Any) -> list[ConnectorCostSummary]
+```
+
+---
+
+## total_cost
+
+```
+total_cost(self: Any) -> float
+```
+
+---

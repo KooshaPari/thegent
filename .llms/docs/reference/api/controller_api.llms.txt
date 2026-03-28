@@ -1,0 +1,115 @@
+# controller_api
+
+Source: docs/reference/api/controller_api.md
+
+---
+
+# controller API Reference
+
+> **Source**: `src/thegent/sync/controller.py`
+
+Sync maintenance freeze controls.
+
+# @trace WL-206
+
+---
+
+## FreezeState
+
+---
+
+## SyncController
+
+Controls write freeze/unfreeze state for sync operations.
+
+### Methods
+
+#### SyncController.__init__
+
+```
+__init__(self: Any, state_path: Path)
+```
+
+---
+
+#### SyncController.assert_writes_allowed
+
+```
+assert_writes_allowed(self: Any)
+```
+
+---
+
+#### SyncController.freeze
+
+```
+freeze(self: Any)
+```
+
+---
+
+#### SyncController.is_frozen
+
+```
+is_frozen(self: Any)
+```
+
+---
+
+#### SyncController.status
+
+```
+status(self: Any)
+```
+
+---
+
+#### SyncController.unfreeze
+
+```
+unfreeze(self: Any)
+```
+
+---
+
+---
+
+## assert_writes_allowed
+
+```
+assert_writes_allowed(self: Any) -> None
+```
+
+---
+
+## freeze
+
+```
+freeze(self: Any) -> FreezeState
+```
+
+---
+
+## is_frozen
+
+```
+is_frozen(self: Any) -> bool
+```
+
+---
+
+## status
+
+```
+status(self: Any) -> Any
+```
+
+---
+
+## unfreeze
+
+```
+unfreeze(self: Any) -> None
+```
+
+---

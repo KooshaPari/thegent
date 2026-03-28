@@ -1,0 +1,265 @@
+# reflection_rollback_api
+
+Source: docs/reference/api/reflection_rollback_api.md
+
+---
+
+# reflection_rollback API Reference
+
+> **Source**: `src/thegent/integrations/reflection_rollback.py`
+
+Reflection rollback command.
+
+# @trace WL-185
+
+---
+
+## ReflectionRollbackManager
+
+Disk-backed work stream snapshot manager.
+
+### Methods
+
+#### ReflectionRollbackManager.__init__
+
+```
+__init__(self: Any, snapshots_dir: Any)
+```
+
+---
+
+#### ReflectionRollbackManager.cleanup_old_snapshots
+
+```
+cleanup_old_snapshots(self: Any)
+```
+
+Delete persisted snapshots until only `keep_last_n` newest remain.
+
+---
+
+#### ReflectionRollbackManager.list_snapshots
+
+```
+list_snapshots(self: Any)
+```
+
+List known snapshots sorted newest first.
+
+---
+
+#### ReflectionRollbackManager.rollback_to
+
+```
+rollback_to(self: Any, snapshot_id: str, work_stream_path: Path)
+```
+
+Restore the content of a previously captured snapshot.
+
+---
+
+#### ReflectionRollbackManager.take_snapshot
+
+```
+take_snapshot(self: Any, work_stream_path: Path, cycle_id: Any)
+```
+
+Read a work stream file, persist a snapshot, and return the in-memory snapshot.
+
+---
+
+---
+
+## ReflectionRollbackStore
+
+Store for managing rollback entries.
+
+### Methods
+
+#### ReflectionRollbackStore.__init__
+
+```
+__init__(self: Any)
+```
+
+Initialize the rollback store.
+
+---
+
+#### ReflectionRollbackStore.list_entries
+
+```
+list_entries(self: Any)
+```
+
+Get all recorded rollback entries.
+
+**Returns**: List of RollbackEntry records in insertion order.
+
+---
+
+#### ReflectionRollbackStore.record
+
+```
+record(self: Any, entry_id: str, snapshot: dict[(str, Any)])
+```
+
+Record a new rollback entry.
+
+**Parameters**:
+
+- `entry_id`: Unique identifier for this rollback entry.
+- `snapshot`: Dictionary containing the snapshot data.
+
+**Returns**: The created RollbackEntry.
+
+---
+
+#### ReflectionRollbackStore.rollback_to
+
+```
+rollback_to(self: Any, entry_id: str)
+```
+
+Rollback to a previously recorded entry.
+
+**Parameters**:
+
+- `entry_id`: Unique identifier of the entry to rollback to.
+
+**Returns**: The snapshot dictionary from that entry.
+
+---
+
+---
+
+## RollbackEntry
+
+Represents a single rollback entry snapshot.
+
+---
+
+## RollbackSnapshot
+
+Persisted snapshot record for `WORK_STREAM.md` content.
+
+### Methods
+
+#### RollbackSnapshot.__init__
+
+```
+__init__(self: Any, snapshot_id: str, timestamp: str, work_stream_content: str, cycle_id: str)
+```
+
+---
+
+#### RollbackSnapshot.from_file
+
+```
+from_file(cls: Any, snapshot_path: Path)
+```
+
+Load and validate a persisted snapshot.
+
+---
+
+#### RollbackSnapshot.to_file_dict
+
+```
+to_file_dict(self: Any)
+```
+
+Return a JSON-serializable dictionary.
+
+---
+
+---
+
+## cleanup_old_snapshots
+
+```
+cleanup_old_snapshots(self: Any)
+```
+
+Delete persisted snapshots until only `keep_last_n` newest remain.
+
+---
+
+## from_file
+
+```
+from_file(cls: Any, snapshot_path: Path)
+```
+
+Load and validate a persisted snapshot.
+
+---
+
+## list_entries
+
+```
+list_entries(self: Any)
+```
+
+Get all recorded rollback entries.
+
+**Returns**: List of RollbackEntry records in insertion order.
+
+---
+
+## list_snapshots
+
+```
+list_snapshots(self: Any)
+```
+
+List known snapshots sorted newest first.
+
+---
+
+## record
+
+```
+record(self: Any, entry_id: str, snapshot: dict[(str, Any)])
+```
+
+Record a new rollback entry.
+
+**Parameters**:
+
+- `entry_id`: Unique identifier for this rollback entry.
+- `snapshot`: Dictionary containing the snapshot data.
+
+**Returns**: The created RollbackEntry.
+
+---
+
+## rollback_to
+
+```
+rollback_to(self: Any, snapshot_id: str, work_stream_path: Path)
+```
+
+Restore the content of a previously captured snapshot.
+
+---
+
+## take_snapshot
+
+```
+take_snapshot(self: Any, work_stream_path: Path, cycle_id: Any)
+```
+
+Read a work stream file, persist a snapshot, and return the in-memory snapshot.
+
+---
+
+## to_file_dict
+
+```
+to_file_dict(self: Any)
+```
+
+Return a JSON-serializable dictionary.
+
+---

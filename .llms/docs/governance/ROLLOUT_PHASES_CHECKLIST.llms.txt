@@ -1,0 +1,66 @@
+# ROLLOUT_PHASES_CHECKLIST
+
+Source: docs/governance/ROLLOUT_PHASES_CHECKLIST.md
+
+---
+
+# Governance Rollout Phases Checklist
+
+## Phase 1 (10 percent lanes)
+
+### Entry criteria
+
+1. Governance policy check script updated to emit pass/fail/warn counters and run in strict mode.
+2. Pilot lanes have at least one representative worktree in the new worktree-policy policy path.
+
+### Delivery
+
+1. Enable governance policy checks in pilot lanes.
+2. Produce worktree inventory artifacts daily.
+3. Track pass/fail/warn counters for policy checks.
+4. Validate local and CI parity for pre-push gates.
+
+### Exit criteria
+
+1. 100% of pilot lanes execute `quality:governance:policy` with no warnings.
+2. 100% of pilot lanes produce populated `worktree_policy_*` metrics with matching CI/local checks.
+
+## Phase 2 (50 percent lanes)
+
+### Entry criteria
+
+1. Phase 1 exit criteria satisfied.
+2. `W78-B06`-class delegation recommendations available for at least one domain path.
+
+### Delivery
+
+1. Expand strict worktree policy to half of active lanes.
+2. Enforce classifier-based delegation contracts for pilot domains.
+3. Require protocol boundary artifacts on merged PR branches.
+4. Run migration tool in apply mode for selected repositories.
+
+### Exit criteria
+
+1. 50%+ of active lanes execute strict policy with `THGENT_WORKTREE_ALLOW_LEGACY=0`.
+2. Lane-level protocol-boundary artifacts exist for all merged delegation PRs in pilot scope.
+3. Migration apply runs complete with audit manifest for 50%+ of migrated worktrees.
+
+## Phase 3 (100 percent lanes)
+
+### Entry criteria
+
+1. Phase 2 exit criteria satisfied.
+2. All active lane domains have delegation contracts and inventory artifacts.
+
+### Delivery
+
+1. Remove legacy override (`THGENT_WORKTREE_ALLOW_LEGACY`) from default workflows.
+2. Enforce strict worktree naming/root policy globally.
+3. Make governance metrics SLOs mandatory release gate criteria.
+4. Require release signoff bundle with governance artifacts.
+
+### Exit criteria
+
+1. 100% of lanes execute in strict mode with zero legacy fallback hits.
+2. Full repository policy conformance report attached to merge/release evidence bundle.
+3. Release SLOs require zero failures for `worktree_policy_pass_total` and zero active warns.

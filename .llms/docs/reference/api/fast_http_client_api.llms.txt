@@ -8,6 +8,21 @@ Source: docs/reference/api/fast_http_client_api.md
 
 > **Source**: `src/thegent/infra/fast_http_client.py`
 
+Fast HTTP client with optimized backends.
+
+This module provides a high-performance abstraction layer for HTTP requests
+that automatically selects the fastest available backend:
+- curl_cffi: 2-3x faster, libcurl-based, browser fingerprinting
+- httpx: Modern, well-maintained, good async/sync support
+
+Performance improvements:
+- curl_cffi uses libcurl (2-3x faster than httpx)
+- Better connection pooling
+- Browser fingerprinting support
+- Automatic backend selection
+
+---
+
 ## FastHTTPClient
 
 High-performance HTTP client with automatic backend selection and connection pooling.

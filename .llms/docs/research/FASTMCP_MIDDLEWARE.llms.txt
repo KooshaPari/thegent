@@ -4,6 +4,7 @@ Source: docs/research/FASTMCP_MIDDLEWARE.md
 
 ---
 
+<DONE>
 # FastMCP Middleware
 
 **Source:** gofastmcp.com/servers/middleware

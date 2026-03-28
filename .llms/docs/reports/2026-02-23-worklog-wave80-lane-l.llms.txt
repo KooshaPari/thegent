@@ -1,0 +1,54 @@
+# 2026-02-23-worklog-wave80-lane-l
+
+Source: docs/reports/2026-02-23-worklog-wave80-lane-l.md
+
+---
+
+# Worklog Wave 80 - Lane L (2026-02-23)
+
+Scope: Implement next 10 open WL items after Lane K (`WL-9720..WL-9729`), i.e. `WL-9730..WL-9739`, with tests.
+
+## Completed WL Items
+
+1. `WL-9730`: Added regression proving turn-cancel parse phase rejects missing `turn_id` without side effects.
+2. `WL-9731`: Added regression proving turn-cancel success path transitions awaiting-approval turns to `cancelled`.
+3. `WL-9732`: Added regression for turn-cancel lookup miss path (`Turn not found`, `-32002`).
+4. `WL-9733`: Added regression proving turn-cancel response payload preserves serialized turn identity fields.
+5. `WL-9734`: Added regression proving terminal-turn cancel attempts fail fast (`Turn already terminal`).
+6. `WL-9735`: Added regression proving notification-style `turn/cancel` requests apply cancellation and emit no response body.
+7. `WL-9736`: Added regression proving recovery path preserves already-resolved approval state on terminal-turn cancel attempts.
+8. `WL-9737`: Added regression proving requested approvals transition to `cancelled` when the parent turn is cancelled.
+9. `WL-9738`: Added regression proving non-requested approval statuses are preserved during turn cancellation.
+10. `WL-9739`: Added regression proving invalid `params` type is rejected before cancel execution (`params_must_be_object`).
+
+## Files Changed
+
+- `tests/protocols/test_wl9730_wl9739_lane_l.py`
+- `docs/reports/bulk-wi-s82-lane-b.md`
+- `docs/reference/WORK_STREAM.md`
+- `docs/reference/WBS_AGENT_PROGRESS.md`
+- `docs/reports/2026-02-23-worklog-wave80-lane-l.md`
+
+## Validation
+
+- `uv run python -m pytest -q tests/protocols/test_wl9730_wl9739_lane_l.py`
+  - Result: `10 passed`
+- `uv run python -m pytest -q tests/protocols/test_jsonrpc_agent_server_contract.py`
+  - Result: `105 passed`
+- `task quality`
+  - Status: started and progressed into delegated parent cliproxy `go vet` step (`quality:cliproxy-parent`) in this shared workspace; completion not awaited here due long-running concurrent environment activity.
+
+## Evidence Mapping (WL-9730..WL-9739)
+
+- `WL-9730`: `turn/cancel` with missing `turn_id` returns `-32602` / `turn_id_required` and no mutation.
+- `WL-9731`: `turn/cancel` moves awaiting-approval turns to `cancelled`.
+- `WL-9732`: `turn/cancel` unknown turn returns `-32002` (`Turn not found`).
+- `WL-9733`: cancel response keeps serialized `turn.id`, `turn.session_id`, and `turn.status` fields.
+- `WL-9734`: second cancel on terminal turn returns `-32003` (`Turn already terminal`).
+- `WL-9735`: notification-mode `turn/cancel` emits no response and still mutates turn state.
+- `WL-9736`: terminal cancel attempt preserves already-resolved approval status.
+- `WL-9737`: requested approval is transitioned to `cancelled` on turn cancellation.
+- `WL-9738`: non-requested approval status is preserved during turn cancellation.
+- `WL-9739`: non-object `params` are rejected before cancel execution (`params_must_be_object`).
+
+No commits created.

@@ -1,0 +1,36 @@
+# index
+
+Source: docs/operations/index.md
+
+---
+
+# Operations
+
+Operator-facing runbooks, checks, and incident response procedures.
+
+## Remaining Work
+
+| # | Task | Phase | Notes |
+|---|------|-------|-------|
+| 1 | Health check endpoints in all services | 10 | Add `/health` endpoints to phenotype-task-engine, phenotype-research-engine |
+| 2 | Graceful shutdown in all apps | 10 | Implement SIGTERM handling in helios-cli and services |
+| 3 | Observability integration | 10 | Wire libs/shared/telemetry into phenotype-task-engine |
+| 4 | Deployment automation | 8 | Create deployment scripts for services/ |
+| 5 | Integration test pipeline | 8 | Add integration test workflow to .github/workflows/ |
+| 6 | Staging environment | 8 | Document staging setup in docs/operations/ |
+| 7 | Mutation testing | 9 | Add mutation testing to CI in phenotype-gauge |
+| 8 | Contract testing patterns | 9 | Create contract tests between services |
+| 9 | Update AGENTS.md across repos | 7 | Ensure all major repos have AGENTS.md with hexagonal workflow |
+| 10 | API documentation | 7 | Generate API docs for ports in libs/shared/ |
+
+## Completed
+
+| # | Task | Phase |
+|---|------|-------|
+| 1 | Operations index | 10 |
+| 2 | Health checks runbook | 10 |
+| 3 | Incident response playbook | 10 |
+| 4 | Test fixtures library | 9 |
+| 5 | CI/CD improvements (pre-push hooks) | 6 |
+| 6 | Deployment automation (stubs) | 8 |
+| 7 | Documentation (governance, architecture) | 7 |

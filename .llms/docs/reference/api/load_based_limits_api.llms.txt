@@ -23,14 +23,14 @@ Hysteresis tuning environment variables (WP-Y6):
   THGENT_HYSTERESIS_LOWER  - Utilization ratio below which scale-down is triggered
                              (default: 0.4). Float in range [0, 1).
   THGENT_HYSTERESIS_DWELL  - Minimum seconds between consecutive scaling events,
-                             prevents rapid thrashing (default: 30). Integer &gt;= 0.
+                             prevents rapid thrashing (default: 30). Integer >= 0.
 
 Soft deadline support (swarm-soft-deadlines):
   SoftDeadline tracks a preferred completion time for a run.
   DeadlineMonitor is a daemon thread that checks all registered deadlines
   at a configurable interval and emits structured log events:
-    - WARNING when elapsed &gt; deadline_ts * warn_at_pct
-    - ERROR   when elapsed &gt; deadline_ts (past soft deadline)
+    - WARNING when elapsed > deadline_ts * warn_at_pct
+    - ERROR   when elapsed > deadline_ts (past soft deadline)
   Soft deadlines NEVER cancel tasks — they only warn and record state.
 
 ---
@@ -411,7 +411,7 @@ Average elapsed time per completed run in milliseconds.
 ## compute_dynamic_limit
 
 ```
-compute_dynamic_limit(snapshot: ResourceSnapshot, config: Any, running_count: int)
+compute_dynamic_limit(snapshot: ResourceSnapshot, config: Any)
 ```
 
 Compute max concurrent slots from resource gates. Resource-based scaling:

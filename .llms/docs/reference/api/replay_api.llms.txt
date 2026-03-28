@@ -27,8 +27,8 @@ Compare two sessions and print a structured diff.
 
 Example::
 
-    thegent replay diff &lt;session_a_id&gt; &lt;session_b_id&gt;
-    thegent replay diff &lt;id_a&gt; &lt;id_b&gt; --json
+    thegent replay diff <session_a_id> <session_b_id>
+    thegent replay diff <id_a> <id_b> --json
 
 ---
 
@@ -63,6 +63,6 @@ Example::
 
     thegent replay run 20260219T231757Z-copilot-p21250-1f588a47
     thegent replay run ./path/to/session.json --json
-    thegent replay run &lt;id&gt; --from 5 --speed 0
+    thegent replay run <id> --from 5 --speed 0
 
 ---

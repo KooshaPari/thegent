@@ -250,6 +250,28 @@ All errors are structured via `ZmxError` (a `thiserror::Error` enum):
 
 ## 7. Future Work
 
+## 7.1 ABI Contract Versioning (WL-132 Slice)
+
+`crates/thegent-zmx-interop/src/lib.rs` now exports:
+
+```
+pub const ABI_CONTRACT_VERSION: u32 = 1;
+```
+
+Contract rule:
+
+1. Bump `ABI_CONTRACT_VERSION` whenever exported Zig C-ABI symbols or call
+   semantics change.
+2. Keep the non-zero invariant tested in crate unit tests.
+3. Gate any ABI promotion on version-aware interop tests before enabling new
+   runtime paths.
+
+Canonical gate command:
+
+```
+task quality:runtime-contracts:zig-abi
+```
+
 | Item                          | Notes                                               |
 |:------------------------------|:----------------------------------------------------|
 | `impl-rust-zmx-wrapper`       | Richer API: session metadata, send keys, capture    |

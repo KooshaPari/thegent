@@ -1,0 +1,110 @@
+# reconciliation_policy_api
+
+Source: docs/reference/api/reconciliation_policy_api.md
+
+---
+
+# reconciliation_policy API Reference
+
+> **Source**: `src/thegent/integrations/reconciliation_policy.py`
+
+Board-ID-first reconciliation policy for deterministic conflict resolution.
+
+Implements reconciliation that always uses board-id as the primary key,
+never title-based matching, with configurable fallback behavior.
+
+FR traceability: WL-161 (Board-ID-First Reconciliation Policy)
+
+---
+
+## ReconciliationMode
+
+Reconciliation modes for conflict resolution.
+
+**Inherits from**: `str, Enum`
+
+---
+
+## ReconciliationPolicy
+
+Policy defining reconciliation behavior.
+
+### Methods
+
+#### ReconciliationPolicy.requires_board_id
+
+```
+requires_board_id(self: Any, record: dict)
+```
+
+Check if a record requires a board_id for reconciliation.
+
+**Parameters**:
+
+- `record`: A record dict.
+
+**Returns**: True if the record must have a board_id.
+
+---
+
+#### ReconciliationPolicy.validate_record
+
+```
+validate_record(self: Any, record: dict)
+```
+
+Validate a record against this policy.
+
+**Parameters**:
+
+- `record`: A record dict to validate.
+
+**Returns**: True if the record is valid, False otherwise.
+
+---
+
+---
+
+## create_default_policy
+
+Create a default reconciliation policy.
+
+**Returns**: A policy with board_id_first mode and no title fallback.
+
+---
+
+## requires_board_id
+
+```
+requires_board_id(self: Any, record: dict)
+```
+
+Check if a record requires a board_id for reconciliation.
+
+**Parameters**:
+
+- `record`: A record dict.
+
+**Returns**: True if the record must have a board_id.
+
+---
+
+## validate_record
+
+```
+validate_record(self: Any, record: dict)
+```
+
+Validate a record against this policy.
+
+**Parameters**:
+
+- `record`: A record dict to validate.
+
+**Returns**: True if the record is valid, False otherwise.
+
+**Raises**:
+
+- `ValueError`: If title_fallback_enabled is False and record has no board_id.
+
+---

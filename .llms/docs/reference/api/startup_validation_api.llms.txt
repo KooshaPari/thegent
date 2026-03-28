@@ -1,0 +1,25 @@
+# startup_validation_api
+
+Source: docs/reference/api/startup_validation_api.md
+
+---
+
+# startup_validation API Reference
+
+> **Source**: `src/thegent/integrations/startup_validation.py`
+
+Stub module for thegent.integrations.startup_validation.
+
+---
+
+## StartupValidationResult
+
+Stub class.
+
+---
+
+## StartupValidator
+
+Stub class.
+
+---

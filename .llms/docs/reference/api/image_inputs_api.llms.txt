@@ -1,0 +1,71 @@
+# image_inputs_api
+
+Source: docs/reference/api/image_inputs_api.md
+
+---
+
+# image_inputs API Reference
+
+> **Source**: `src/thegent/agents/image_inputs.py`
+
+Helpers for WL-114 image input handling.
+
+# @trace WL-114
+
+---
+
+## build_claude_stdin_with_images
+
+```
+build_claude_stdin_with_images(prompt: str, paths: list[str])
+```
+
+Build JSONL stdin payload for Claude CLI with --input-format stream-json.
+
+Constructs a single user message with image content blocks followed by the
+text prompt. Returns a newline-terminated JSONL string.
+
+# @trace WL-114
+
+---
+
+## build_codex_image_args
+
+```
+build_codex_image_args(paths: list[str])
+```
+
+Build --image args for Codex CLI.
+
+Returns flat list: ["--image", path1, "--image", path2, ...]
+
+# @trace WL-114
+
+---
+
+## build_image_content_block
+
+```
+build_image_content_block(path: Path)
+```
+
+Build an Anthropic/OpenAI image content block from a local file.
+
+Returns a dict in Anthropic content-block format:
+{"type": "image", "source": {"type": "base64", "media_type": "...", "data": "..."}}
+
+# @trace WL-114
+
+---
+
+## encode_image_to_base64
+
+```
+encode_image_to_base64(path: Path)
+```
+
+Encode image file to base64 string.
+
+# @trace WL-114
+
+---

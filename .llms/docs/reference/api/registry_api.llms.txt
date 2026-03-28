@@ -6,41 +6,59 @@ Source: docs/reference/api/registry_api.md
 
 # registry API Reference
 
-> **Source**: `src/thegent/commands/registry.py`
+> **Source**: `src/thegent/cli/apps/registry.py`
 
-CLI commands for the cross-project persona registry.
+Logical stream: Agent Registry — capability index, recommendation, and health doctor (WL-034).
 
-Exposes:
-  thegent registry register [project_dir]
-  thegent registry search &lt;capability&gt;
-  thegent registry list
+---
 
-FR Traceability: FR-AGT-020
+## recommend_agent
+
+```
+recommend_agent(task_description: str, top_n: int)
+```
+
+Public API: recommend agents for a task. Returns list of AgentRecommendation.
+
+Used by thegent free auto-agent selection.
+
+---
+
+## registry_doctor
+
+```
+registry_doctor(format: str, fail_on_issues: bool)
+```
+
+Check every agent in the registry for:
+
+- Valid parseable YAML frontmatter
+- A 'model' or 'runner' field
+- No dangling or empty references
+
+Prints a health status table. Use --fail to exit 1 if issues found.
 
 ---
 
 ## registry_list
 
-List all personas in the cross-project registry.
+```
+registry_list(capability: Any, format: str)
+```
+
+List agents from the capability index with their declared capabilities.
 
 ---
 
-## registry_register
+## registry_recommend
 
 ```
-registry_register(project_dir: Path)
+registry_recommend(task: str, top_n: int, format: str)
 ```
 
-Discover and register personas from PROJECT_DIR/agents/.
+Recommend the best agents for a task using local TF-IDF keyword scoring.
 
----
-
-## registry_search
-
-```
-registry_search(capability: str)
-```
-
-Search for personas that advertise CAPABILITY.
+Scans ~/.claude/agents/*.md and .claude/agents/*.md for agents with
+declared capabilities and description. No LLM calls required.
 
 ---

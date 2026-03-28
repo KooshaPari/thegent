@@ -1,0 +1,13 @@
+# output_api
+
+Source: docs/reference/api/output_api.md
+
+---
+
+# output API Reference
+
+> **Source**: `src/thegent/cli/commands/output/__init__.py`
+
+Output formatting helpers for CLI commands.
+
+---

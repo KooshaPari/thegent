@@ -6,7 +6,7 @@ Source: docs/reference/api/litellm_router_api.md
 
 # litellm_router API Reference
 
-> **Source**: `src/thegent/routing/litellm_router.py`
+> **Source**: `src/thegent/utils/routing_impl/litellm_router.py`
 
 LiteLLM Router wrapper with full feature support.
 
@@ -140,6 +140,27 @@ Get alert manager (lazy initialization).
 
 ---
 
+## build_dynamic_fallback_router
+
+```
+build_dynamic_fallback_router(models: list[str], base_policy: str)
+```
+
+Build a LiteLLM Router with a dynamic model fallback chain.
+
+Results are cached for 5 minutes (same TTL as main router) to avoid
+rebuilding the model list on every call. Cache is invalidated when
+circuit breaker state changes.
+
+**Parameters**:
+
+- `models`: Ordered list of model names to try (first = primary, rest = fallbacks)
+- `base_policy`: LiteLLM routing strategy
+
+**Returns**: Router configured with the given fallback chain
+
+---
+
 ## build_fallback_chains
 
 Build fallback chains for models.
@@ -156,7 +177,29 @@ Excludes NATIVE_CLI_PROVIDERS (codex, claude).
 Routes API_KEY_PROVIDERS directly.
 Routes LOGIN_AUTH_PROVIDERS via CLIProxyAPIPlus.
 
+Also appends OpenRouter model entries from CANONICAL_TO_OPENROUTER under
+"or/<alias>" aliases to avoid conflicts with catalog model names.
+
 **Returns**: List of LiteLLM model_list entries
+
+---
+
+## build_openrouter_model_entry
+
+```
+build_openrouter_model_entry(model_alias: str, openrouter_model_id: str, api_key: Any)
+```
+
+Build a LiteLLM model_list entry for an OpenRouter model.
+
+**Parameters**:
+
+- `model_alias`: The alias to use as model_name (e.g., "or/claude-opus-4.6")
+- `openrouter_model_id`: The OpenRouter model ID in provider/model format
+(e.g., "anthropic/claude-opus-4-6")
+- `api_key`: Optional API key; if None, reads from OPENROUTER_API_KEY env var
+
+**Returns**: LiteLLM model_list entry dict for the OpenRouter model
 
 ---
 
@@ -180,7 +223,15 @@ Get Donut adapter (lazy initialization).
 
 ---
 
-## get_all_models_with_metadata
+## get_circuit_breaker_status
+
+Return current circuit breaker state for all tracked providers.
+
+Queries the global :class:`ProviderCircuitBreakerRegistry` singleton and
+returns a snapshot of every registered provider's current state.
+
+**Returns**: Dict mapping provider name to state string: ``"closed"``, ``"open"``,
+or ``"half-open"``.
 
 ---
 
@@ -224,19 +275,15 @@ get_litellm_router(policy: str)
 
 Get configured LiteLLM Router instance.
 
+Returns a cached instance; construction is throttled to once per 5 minutes
+per policy value via TTLCache so the expensive build path is not hit on
+every call.
+
 **Parameters**:
 
 - `policy`: Routing policy (cost-based-routing, fastest, round_robin, latency-based-routing)
 
-**Returns**: Configured LiteLLM Router
-
----
-
-## get_model_metadata
-
-```
-get_model_metadata(model_id: str) -> Any
-```
+**Returns**: Configured LiteLLM Router (possibly shared from cache)
 
 ---
 
@@ -258,11 +305,12 @@ Get router configuration from settings.
 
 ---
 
-## has_model_metadata
+## invalidate_router_cache
 
-```
-has_model_metadata(model_id: str) -> bool
-```
+Invalidate the cached LiteLLM Router instance.
+
+Call when external state (e.g. circuit breaker) changes and the
+cached router should be rebuilt on the next ``get_litellm_router()`` call.
 
 ---
 

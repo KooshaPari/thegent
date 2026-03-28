@@ -57,6 +57,22 @@ Get screen size.
 
 ---
 
+#### DesktopAutomationProvider.key_press
+
+```
+key_press(self: Any, key: str)
+```
+
+Press a key.
+
+**Parameters**:
+
+- `key`: Key to press (e.g., 'Return', 'Escape', 'a')
+
+**Returns**: True if successful
+
+---
+
 #### DesktopAutomationProvider.type_text
 
 ```
@@ -101,6 +117,22 @@ get_screen_size(self: Any)
 Get screen size.
 
 **Returns**: (width, height) tuple
+
+---
+
+## key_press
+
+```
+key_press(self: Any, key: str)
+```
+
+Press a key.
+
+**Parameters**:
+
+- `key`: Key to press (e.g., 'Return', 'Escape', 'a')
+
+**Returns**: True if successful
 
 ---
 

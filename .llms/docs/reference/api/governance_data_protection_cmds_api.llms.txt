@@ -1,0 +1,23 @@
+# governance_data_protection_cmds_api
+
+Source: docs/reference/api/governance_data_protection_cmds_api.md
+
+---
+
+# governance_data_protection_cmds API Reference
+
+> **Source**: `src/thegent/cli/governance/governance_data_protection_cmds.py`
+
+Data protection commands.
+
+---
+
+## data_protection_cmd
+
+```
+data_protection_cmd(format: Any)
+```
+
+Show data protection status.
+
+---

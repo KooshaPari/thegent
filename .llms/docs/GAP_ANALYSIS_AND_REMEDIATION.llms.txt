@@ -30,7 +30,7 @@ This document consolidates gaps identified across all planning, research, and im
 
 ### Required Actions
 
-1. Implement Phase 2 Cursor block in CLIProxyAPIPlus-fork.
+1. Implement Phase 2 Cursor block in cliproxyapi-plusplus.
 2. Verify Phase 1 patch `patches/cursor-minimax-channels.patch` is correct and applied.
 3. Update config.example.yaml and PROVIDER_SETUP_GUIDE.md for Cursor OAuth flow.
 
@@ -328,7 +328,7 @@ Research is complete. Implementation mapping to WP-3001–WP-3008 exists. Gaps:
 
 | ID | Item | Reason |
 |----|------|--------|
-| G-CP-01/02/03 | CLIProxy Phase 2 Cursor block, Phase 1 patch | External: CLIProxyAPIPlus-fork |
+| G-CP-01/02/03 | CLIProxy Phase 2 Cursor block, Phase 1 patch | External: cliproxyapi-plusplus |
 | G-CA-01 | Native Python Cursor API client | P4; cursor-api server acceptable for now |
 | G-FM-04 | Wire icons to tools | Blocked: FastMCP API not yet supports icon param |
 | G-FM-05 | Chaos/load/timeout test implementation | Done — test_chaos_mcp.py, test_load_mcp.py |

@@ -223,7 +223,7 @@ Results are served from the render cache where possible.
 render_all(self: Any)
 ```
 
-Render all panels and return a name -&gt; content mapping.
+Render all panels and return a name -> content mapping.
 
 Results are served from the render cache where possible.
 
@@ -675,7 +675,7 @@ Results are served from the render cache where possible.
 render_all(self: Any)
 ```
 
-Render all panels and return a name -&gt; content mapping.
+Render all panels and return a name -> content mapping.
 
 Results are served from the render cache where possible.
 

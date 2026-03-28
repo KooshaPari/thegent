@@ -55,7 +55,7 @@ action: retry-Union[failed, clear]-Union[stuck, reset]-Union[retries, fallback].
 thegent_dag_sync(cd: Any, auto_run_next: bool)
 ```
 
-Sync DAG task status from session exit (running -&gt; done/failed).
+Sync DAG task status from session exit (running -> done/failed).
 
 auto_run_next: spawn next ready tasks after sync (auto-spawn loop).
 

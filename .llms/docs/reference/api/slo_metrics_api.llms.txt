@@ -1,0 +1,144 @@
+# slo_metrics_api
+
+Source: docs/reference/api/slo_metrics_api.md
+
+---
+
+# slo_metrics API Reference
+
+> **Source**: `src/thegent/governance/slo_metrics.py`
+
+SLO metric emitter for CLI decomposition governance (WL-135 B90-W2-A5).
+
+Provides SloMetric, SloThresholds, and SloEmitter for recording and
+evaluating decomposition-focused SLO metrics defined in Wave-1 A4.
+
+Metric schema (v1.0):
+    file_loc                       — total LOC per file
+    function_loc_p95               — p95 function LOC across a module
+    impl_importers                 — count of modules importing impl.py
+    cross_boundary_import_edges    — count of core→tooling import edges
+    cli_help_p95_ms                — p95 latency (ms) for `thegent --help`
+    run_command_p95_ms             — p95 latency (ms) for `thegent run`
+    decomposition_checkpoint_pass_rate — fraction of checkpoint gates passing
+
+Thresholds (green/yellow/red):
+    green  = metric within green bounds
+    yellow = metric between green and red (warn zone)
+    red    = metric beyond red trigger threshold
+
+Fail-fast: SloEmitter raises IOError loudly if the JSONL write fails.
+No fallbacks, no silent errors.
+
+---
+
+## SloEmitter
+
+Emit SloMetric records to a JSONL file and evaluate them against thresholds.
+
+Fail-fast: raises IOError if the write fails. No silent errors.
+
+### Methods
+
+#### SloEmitter.__init__
+
+```
+__init__(self: Any, output_path: Path)
+```
+
+---
+
+#### SloEmitter.emit
+
+```
+emit(self: Any, metric: SloMetric)
+```
+
+Append metric as a JSONL line to the output file.
+
+---
+
+#### SloEmitter.evaluate
+
+```
+evaluate(self: Any, metric: SloMetric, thresholds: SloThresholds)
+```
+
+Evaluate metric against thresholds and return per-field status.
+
+---
+
+#### SloEmitter.output_path
+
+```
+output_path(self: Any)
+```
+
+Return the configured JSONL output path.
+
+---
+
+---
+
+## SloMetric
+
+Single SLO measurement snapshot.
+
+All numeric fields use float for uniformity; integer metrics like
+file_loc should be passed as int (Python will coerce to float in
+the JSON output via json.dumps with no loss of precision for ints).
+
+---
+
+## SloThresholds
+
+Green and red thresholds for each SLO metric field.
+
+green_max / green_min define the "all clear" zone.
+red_min  / red_max   define the "alert" zone.
+Fields that have no threshold in a direction use float('inf') / 0.
+
+Thresholds derived from Wave-1 A4 artifact:
+    file_loc              green_max=1200 red_min=1800
+    function_loc_p95      green_max=80   red_min=120
+    impl_importers        green_max=20   red_min=35
+    cross_boundary…       green_max=25   red_min=40
+    cli_help_p95_ms       green_max=250  red_min=400
+    run_command_p95_ms    green_max=500  red_min=800
+    checkpoint_pass_rate  green_min=1.0  red_max=0.95
+
+---
+
+## emit
+
+```
+emit(self: Any, metric: SloMetric)
+```
+
+Append metric as a JSONL line to the output file.
+
+**Raises**:
+
+- `IOError`: if the output file cannot be written.
+
+---
+
+## evaluate
+
+```
+evaluate(self: Any, metric: SloMetric, thresholds: SloThresholds)
+```
+
+Evaluate metric against thresholds and return per-field status.
+
+---
+
+## output_path
+
+```
+output_path(self: Any)
+```
+
+Return the configured JSONL output path.
+
+---

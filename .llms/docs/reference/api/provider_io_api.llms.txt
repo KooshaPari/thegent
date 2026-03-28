@@ -1,0 +1,270 @@
+# provider_io_api
+
+Source: docs/reference/api/provider_io_api.md
+
+---
+
+# provider_io API Reference
+
+> **Source**: `src/thegent/adapters/driven/provider_io.py`
+
+JSON/YAML file I/O adapter for provider/model persistence.
+
+This module adapts the storage port to concrete JSON and YAML file implementations.
+It delegates to provider_model_manager_io for core persistence logic.
+
+---
+
+## CliproxyIOAdapter
+
+Adapter for YAML-based CLIProxy config I/O.
+
+### Methods
+
+#### CliproxyIOAdapter.load_config
+
+```
+load_config(config_path: Path)
+```
+
+Load CLIProxy configuration from YAML.
+
+**Parameters**:
+
+- `config_path`: Path to the config file.
+
+**Returns**: Dict with CLIProxy configuration.
+
+---
+
+#### CliproxyIOAdapter.save_config
+
+```
+save_config(config_path: Path, config: dict[(str, Any)])
+```
+
+Save CLIProxy configuration to YAML.
+
+**Parameters**:
+
+- `config_path`: Path to the config file.
+- `config`: Dict with CLIProxy configuration.
+
+---
+
+---
+
+## ProviderIOAdapter
+
+Adapter for JSON-based provider/model I/O.
+
+### Methods
+
+#### ProviderIOAdapter.load_model_indices
+
+Load model indices from JSON.
+
+**Returns**: Dict with model index data.
+
+---
+
+#### ProviderIOAdapter.load_models
+
+Load all model definitions from JSON.
+
+**Returns**: Dict with model metadata and common aliases.
+
+---
+
+#### ProviderIOAdapter.load_provider_mapping
+
+Load provider mapping (lists of compatible/native providers).
+
+**Returns**: Dict with mapping metadata.
+
+---
+
+#### ProviderIOAdapter.load_providers
+
+Load all provider definitions from JSON.
+
+**Returns**: Dict mapping provider name to configuration.
+
+---
+
+#### ProviderIOAdapter.save_model_indices
+
+```
+save_model_indices(indices: dict[(str, Any)])
+```
+
+Save model indices to JSON.
+
+**Parameters**:
+
+- `indices`: Dict with model index data.
+
+---
+
+#### ProviderIOAdapter.save_models
+
+```
+save_models(models: dict[(str, Any)])
+```
+
+Save model definitions to JSON.
+
+**Parameters**:
+
+- `models`: Dict with model metadata and common aliases.
+
+---
+
+#### ProviderIOAdapter.save_provider_mapping
+
+```
+save_provider_mapping(mapping: dict[(str, Any)])
+```
+
+Save provider mapping to JSON.
+
+**Parameters**:
+
+- `mapping`: Dict with mapping metadata.
+
+---
+
+#### ProviderIOAdapter.save_providers
+
+```
+save_providers(providers: dict[(str, Any)])
+```
+
+Save provider definitions to JSON.
+
+**Parameters**:
+
+- `providers`: Dict mapping provider name to configuration.
+
+---
+
+---
+
+## load_config
+
+```
+load_config(config_path: Path)
+```
+
+Load CLIProxy configuration from YAML.
+
+**Parameters**:
+
+- `config_path`: Path to the config file.
+
+**Returns**: Dict with CLIProxy configuration.
+
+---
+
+## load_model_indices
+
+Load model indices from JSON.
+
+**Returns**: Dict with model index data.
+
+---
+
+## load_models
+
+Load all model definitions from JSON.
+
+**Returns**: Dict with model metadata and common aliases.
+
+---
+
+## load_provider_mapping
+
+Load provider mapping (lists of compatible/native providers).
+
+**Returns**: Dict with mapping metadata.
+
+---
+
+## load_providers
+
+Load all provider definitions from JSON.
+
+**Returns**: Dict mapping provider name to configuration.
+
+---
+
+## save_config
+
+```
+save_config(config_path: Path, config: dict[(str, Any)])
+```
+
+Save CLIProxy configuration to YAML.
+
+**Parameters**:
+
+- `config_path`: Path to the config file.
+- `config`: Dict with CLIProxy configuration.
+
+---
+
+## save_model_indices
+
+```
+save_model_indices(indices: dict[(str, Any)])
+```
+
+Save model indices to JSON.
+
+**Parameters**:
+
+- `indices`: Dict with model index data.
+
+---
+
+## save_models
+
+```
+save_models(models: dict[(str, Any)])
+```
+
+Save model definitions to JSON.
+
+**Parameters**:
+
+- `models`: Dict with model metadata and common aliases.
+
+---
+
+## save_provider_mapping
+
+```
+save_provider_mapping(mapping: dict[(str, Any)])
+```
+
+Save provider mapping to JSON.
+
+**Parameters**:
+
+- `mapping`: Dict with mapping metadata.
+
+---
+
+## save_providers
+
+```
+save_providers(providers: dict[(str, Any)])
+```
+
+Save provider definitions to JSON.
+
+**Parameters**:
+
+- `providers`: Dict mapping provider name to configuration.
+
+---

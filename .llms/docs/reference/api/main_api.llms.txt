@@ -14,36 +14,72 @@ Consolidates all legacy command sprawl into a clean, logical hierarchy.
 
 ---
 
-## install_compat
+## agent_server_cmd
+
+---
+
+## domain_map_compat
 
 ```
-install_compat(target: str, mode: str, dry_run: bool, verbose: bool, url: Any, install_service: bool)
+domain_map_compat(domain_name: str, target: str, mode: str, registrar: str, dns_provider: str, tunnel_name: str, format: str)
 ```
 
-Run installer flows previously exposed as `thegent install`.
+Compatibility shim for legacy `thegent domain-map` usage.
+
+---
+
+## help_cmd
+
+```
+help_cmd(command: str)
+```
+
+Show inline usage examples for COMMAND.
+
+# @trace WL-040 WP-4004
+
+Example::
+
+    thegent help run
+    thegent help plan
+    thegent help doctor
 
 ---
 
 ## main_welcome
 
 ```
-main_welcome(ctx: typer.Context)
+main_welcome(ctx: typer.Context, _version: bool)
 ```
 
 ---
 
-## quick_do
+## session_health_gate_wrapper
 
 ```
-quick_do(prompt: str)
+session_health_gate_wrapper(all_sessions: bool, owner: Any, strict: bool, format: str, min_healthy_ratio: float, policy_profile: Any, no_worse_than_baseline: bool, regression_tolerance: float, output: Any, export_format: Any, overwrite: bool)
 ```
+
+Evaluate session contract health gate.
 
 ---
 
-## quick_ps
+## session_health_report_wrapper
 
 ```
-quick_ps(all_sessions: bool, owner: Any, format: str, include_contract: bool)
+session_health_report_wrapper(all_sessions: bool, owner: Any, strict: bool, format: str, policy_profile: Any, no_worse_than_baseline: bool, regression_tolerance: float, output: Any, export_format: Any, overwrite: bool)
 ```
+
+Generate session contract health report.
+
+---
+
+## session_health_trend_wrapper
+
+```
+session_health_trend_wrapper(payload_type: str, all_sessions: bool, owner: Any, strict: bool, policy_profile: Any, min_healthy_ratio: float, top_blocked: int, limit: int, format: str, output: Any, export_format: Any, overwrite: bool)
+```
+
+Analyze session contract health trends.
 
 ---

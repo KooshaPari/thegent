@@ -4,6 +4,7 @@ Source: docs/research/CONVERSATION_DUMP_COMPOSITOR_2026-02-19.md
 
 ---
 
+<DONE>
 # Conversation Dump: TUI Compositor Research
 
 **Date**: 2026-02-19

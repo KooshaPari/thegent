@@ -1,0 +1,71 @@
+# tools_handoff_queue_api
+
+Source: docs/reference/api/tools_handoff_queue_api.md
+
+---
+
+# tools_handoff_queue API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_handoff_queue.py`
+
+Registration helpers for handoff + queue MCP tools.
+
+---
+
+## register_handoff_queue_tools
+
+---
+
+## thegent_handoff_confirm
+
+```
+thegent_handoff_confirm(snapshot_id: str, incoming_owner: str, confidence: float)
+```
+
+Incoming owner confirms handoff completeness. Equivalent to: thegent orchestrate handoff-confirm
+
+---
+
+## thegent_handoff_list
+
+```
+thegent_handoff_list(limit: int)
+```
+
+List pending handoff snapshots. Equivalent to: thegent orchestrate handoff-list
+
+---
+
+## thegent_handoff_show
+
+```
+thegent_handoff_show(snapshot_id: str)
+```
+
+Show full handoff summary for a snapshot. Equivalent to: thegent orchestrate handoff-show
+
+---
+
+## thegent_queue_claim
+
+```
+thegent_queue_claim(claimer_id: str, project: Any, lease_seconds: int)
+```
+
+Atomically claim the first pending queue item. Returns claimed item with id, or null if queue empty.
+
+Use project to filter by project path.
+
+---
+
+## thegent_queue_list
+
+```
+thegent_queue_list(include_done: bool, include_expired: bool, limit: Any)
+```
+
+List prompt queue items (deferred prompts). Use include_done=True to see completed items.
+
+Returns items with id for claim/done/release/extend_lease/edit.
+
+---

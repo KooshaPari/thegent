@@ -26,7 +26,7 @@ resolvable (falls back to cwd when not determinable).
 
 macOS Seatbelt sandbox profile manager.
 
-Wraps agent subcommands with ``sandbox-exec -f &lt;profile&gt;`` so that agents
+Wraps agent subcommands with ``sandbox-exec -f <profile>`` so that agents
 run with the requested level of filesystem and network isolation.
 
 Example usage::
@@ -60,7 +60,7 @@ Wrap *cmd* with ``sandbox-exec`` for the given *level*.
 
 For NONE and FULL, returns *cmd* unchanged.  For all other levels,
 writes a profile to a temporary file and prepends
-``sandbox-exec -f &lt;profile&gt;`` to the command.
+``sandbox-exec -f <profile>`` to the command.
 
 The temporary profile file is written with a unique name derived from
 ``tempfile.mkstemp`` so that concurrent agents do not clobber each
@@ -183,7 +183,7 @@ Wrap *cmd* with ``sandbox-exec`` for the given *level*.
 
 For NONE and FULL, returns *cmd* unchanged.  For all other levels,
 writes a profile to a temporary file and prepends
-``sandbox-exec -f &lt;profile&gt;`` to the command.
+``sandbox-exec -f <profile>`` to the command.
 
 The temporary profile file is written with a unique name derived from
 ``tempfile.mkstemp`` so that concurrent agents do not clobber each

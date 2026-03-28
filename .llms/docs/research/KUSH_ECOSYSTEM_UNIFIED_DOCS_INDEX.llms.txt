@@ -4,6 +4,7 @@ Source: docs/research/KUSH_ECOSYSTEM_UNIFIED_DOCS_INDEX.md
 
 ---
 
+<DONE>
 # Kush Ecosystem — Unified Documentation Index
 
 > **Status**: 📚 **DOCUMENTATION INDEX** | **Date**: 2026-02-18
@@ -194,7 +195,7 @@ This document provides a unified index of all documentation across **40+ project
 - `mcp_server_discovery.py` - MCP server discovery
 - `mcp_registry.py` - MCP registry
 - `vector_graph_db.py` - Vector graph database
-- `OPENSPEC_PHASE2_PROPOSALS.md` - AgilePlus proposals
+- `agileplus/changes/` - AgilePlus proposals
 - `EXECUTION_RESULTS_FINAL.md` - Execution results
 
 ---

@@ -1,0 +1,161 @@
+# dispatcher_api
+
+Source: docs/reference/api/dispatcher_api.md
+
+---
+
+# dispatcher API Reference
+
+> **Source**: `src/thegent/orchestration/dispatcher.py`
+
+WL-082: Async SubAgentDispatcher — capability-resolved parallel dispatch.
+
+Provides async dispatch of PlanNode tasks with:
+- CapabilityIndex.recommend() for runner selection
+- asyncio.gather with semaphore for concurrency (default max 7)
+- asyncio.wait_for for per-node timeouts
+- PolicyEngine.await_approval() for HITL gates
+
+# @trace WL-082
+
+---
+
+## DispatchConfig
+
+Configuration for SubAgentDispatcher.
+
+---
+
+## DispatchResult
+
+Result from dispatching a single PlanNode.
+
+---
+
+## DispatchTimeoutError
+
+Raised when a node dispatch exceeds its timeout.
+
+# @trace WL-082
+
+**Inherits from**: `TimeoutError`
+
+---
+
+## RunnerNotFoundError
+
+Raised when no runner can be resolved for a capability.
+
+# @trace WL-082
+
+**Inherits from**: `LookupError`
+
+---
+
+## SubAgentDispatcher
+
+Async dispatcher for PlanNode tasks with capability-based runner selection.
+
+This dispatcher resolves runner capabilities via CapabilityIndex.recommend(),
+executes tasks concurrently with a semaphore, applies per-node timeouts
+via asyncio.wait_for, and optionally gates execution via HITL approval.
+
+### Methods
+
+#### SubAgentDispatcher.__init__
+
+```
+__init__(self: Any, capability_index: CapabilityIndex, policy_engine: Any, config: Any)
+```
+
+Initialize the dispatcher.
+
+**Parameters**:
+
+- `capability_index`: CapabilityIndex for resolving runner capabilities.
+- `policy_engine`: Optional PolicyEngine for HITL approval gates.
+- `config`: Optional dispatch configuration.
+
+---
+
+#### SubAgentDispatcher.capability_index
+
+```
+capability_index(self: Any)
+```
+
+Return the capability index.
+
+---
+
+#### SubAgentDispatcher.config
+
+```
+config(self: Any)
+```
+
+Return the dispatch configuration.
+
+---
+
+#### SubAgentDispatcher.policy_engine
+
+```
+policy_engine(self: Any)
+```
+
+Return the policy engine (may be None).
+
+---
+
+---
+
+## capability_index
+
+```
+capability_index(self: Any)
+```
+
+Return the capability index.
+
+---
+
+## config
+
+```
+config(self: Any)
+```
+
+Return the dispatch configuration.
+
+---
+
+## create_dispatcher
+
+```
+create_dispatcher(capability_index: Any, policy_engine: Any, max_concurrency: int, default_timeout: float, hitl_enabled: bool)
+```
+
+Factory function to create a SubAgentDispatcher.
+
+**Parameters**:
+
+- `capability_index`: Optional CapabilityIndex (builds new if None).
+- `policy_engine`: Optional PolicyEngine for HITL gates.
+- `max_concurrency`: Max concurrent dispatches (default 7).
+- `default_timeout`: Default timeout per node in seconds.
+- `hitl_enabled`: Whether HITL gates are enabled.
+
+**Returns**: Configured SubAgentDispatcher instance.
+
+---
+
+## policy_engine
+
+```
+policy_engine(self: Any)
+```
+
+Return the policy engine (may be None).
+
+---

@@ -10,7 +10,7 @@ Source: docs/reference/api/agileplus_api.md
 
 AgilePlus core loop orchestrator.
 
-State machine: IDLE -&gt; SCANNING -&gt; ANALYZING -&gt; PLANNING -&gt; DEPLOYING -&gt; VERIFYING -&gt; COMMITTING -&gt; IDLE
+State machine: IDLE -> SCANNING -> ANALYZING -> PLANNING -> DEPLOYING -> VERIFYING -> COMMITTING -> IDLE
 
 The loop composes scanner, analyzer, planner, deployer, verifier, and evidence
 ledger to form a complete autonomous governance cycle.
@@ -22,7 +22,7 @@ ledger to form a complete autonomous governance cycle.
 Orchestrates the complete 4X governance cycle.
 
 States:
-- IDLE: Health &gt;= threshold, no action needed
+- IDLE: Health >= threshold, no action needed
 - SCANNING: Running dimension scans
 - ANALYZING: Prioritizing findings
 - PLANNING: Generating remediation DAG

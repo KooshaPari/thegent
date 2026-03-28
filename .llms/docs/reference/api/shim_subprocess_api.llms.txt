@@ -1,0 +1,48 @@
+# shim_subprocess_api
+
+Source: docs/reference/api/shim_subprocess_api.md
+
+---
+
+# shim_subprocess API Reference
+
+> **Source**: `src/thegent/infra/shim_subprocess.py`
+
+Shim-aware subprocess runner.
+
+Provides shim_run that uses thegent-shims when available,
+with transparent fallback to standard subprocess.
+
+This enables gradual migration of subprocess calls to use Rust shims.
+
+---
+
+## check_output
+
+```
+check_output(args: list[str])
+```
+
+Shim-aware subprocess.check_output.
+
+---
+
+## run
+
+```
+run(args: list[str])
+```
+
+Shim-aware shim_run.
+
+Uses thegent-shims for supported commands when available,
+falls back to standard subprocess.
+
+**Parameters**:
+
+- `args`: Command arguments (e.g., ["git", "status"])
+- `**kwargs`: Additional shim_run arguments
+
+**Returns**: subprocess.CompletedProcess
+
+---

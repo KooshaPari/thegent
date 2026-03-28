@@ -1,0 +1,27 @@
+# doctor_models_api
+
+Source: docs/reference/api/doctor_models_api.md
+
+---
+
+# doctor_models API Reference
+
+> **Source**: `src/thegent/doctor_models.py`
+
+Shared models for doctor checks.
+
+---
+
+## CheckResult
+
+### Methods
+
+#### CheckResult.__init__
+
+```
+__init__(self: Any, name: str, category: str)
+```
+
+---
+
+---

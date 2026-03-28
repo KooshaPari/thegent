@@ -1,0 +1,137 @@
+# server_resource_routes_api
+
+Source: docs/reference/api/server_resource_routes_api.md
+
+---
+
+# server_resource_routes API Reference
+
+> **Source**: `src/thegent/mcp/server_resource_routes.py`
+
+MCP resource route registrations extracted from server.py (WL-120).
+
+---
+
+## register_resource_routes
+
+---
+
+## resource_agents
+
+List available agents. Returns JSON array of {name, backend}.
+
+---
+
+## resource_dag
+
+Get DAG from .factory/dag-session.md as {frontmatter, tasks} JSON.
+
+---
+
+## resource_events_session_complete
+
+Event stream for session completion events (for auto-launch system).
+
+---
+
+## resource_models
+
+```
+resource_models(provider: Any, include_contract: bool)
+```
+
+List models, optionally filtered by provider.
+
+---
+
+## resource_models_contract
+
+Return model routing contract schema metadata.
+
+---
+
+## resource_session_contract_health_gate
+
+```
+resource_session_contract_health_gate(owner: Any, all: bool, strict: bool, min_healthy_ratio: float, policy_profile: Any, no_worse_than_baseline: bool, regression_tolerance: float)
+```
+
+Contract health gate for CI/automation and policy enforcement.
+
+Returns schema-aware payload with `schema_version` and `payload_type`.
+
+---
+
+## resource_session_contract_health_report
+
+```
+resource_session_contract_health_report(owner: Any, all: bool, strict: bool, top_blocked: int, policy_profile: Any, no_worse_than_baseline: bool, regression_tolerance: float)
+```
+
+Contract health report for issue/owner triage and observability.
+
+Returns schema-aware payload with `schema_version` and `payload_type`.
+
+---
+
+## resource_session_contract_health_trend
+
+```
+resource_session_contract_health_trend(payload_type: str, owner: Any, all: bool, strict: bool, policy_profile: Any, min_healthy_ratio: float, top_blocked: int, limit: int)
+```
+
+Contract health trend snapshots for a scoped report/gate policy context.
+
+---
+
+## resource_session_contracts
+
+```
+resource_session_contracts(owner: Any, all: bool, missing_only: bool, summary_only: bool, strict: bool)
+```
+
+Contract audit for sessions including completeness summary.
+
+---
+
+## resource_session_logs
+
+```
+resource_session_logs(id: str, stderr: bool, tail: Any)
+```
+
+Get logs from a background session. Use ?stderr=true for stderr, ?tail=N for last N lines.
+
+---
+
+## resource_session_meta
+
+```
+resource_session_meta(id: str, include_contract: bool)
+```
+
+Get session metadata (status, pid, owner) by ID.
+
+---
+
+## resource_sessions
+
+```
+resource_sessions(include_contract: bool)
+```
+
+List all background sessions. Returns JSON array of session metadata.
+
+---
+
+## resource_workstream
+
+Get the canonical WORK_STREAM.md content.
+
+---
+
+## resource_workstream_db
+
+Workstream database metadata and schema info.
+
+---

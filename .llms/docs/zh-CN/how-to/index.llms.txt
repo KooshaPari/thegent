@@ -1,0 +1,12 @@
+# index
+
+Source: docs/zh-CN/how-to/index.md
+
+---
+
+# How-to (建设中)
+
+此页面在中文站点暂未提供完整内容。请使用英文 How-to 目录：
+
+- [English How-to](/how-to/)
+- [Start Here](/start-here.md)

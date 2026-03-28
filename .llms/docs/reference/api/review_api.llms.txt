@@ -1,0 +1,36 @@
+# review_api
+
+Source: docs/reference/api/review_api.md
+
+---
+
+# review API Reference
+
+> **Source**: `src/thegent/cli/apps/review.py`
+
+WL-107: Read-only code review agent app.
+
+Standalone Typer app that executes a read-only agent turn and emits a
+structured review report.  sandbox_mode=read_only and allowed_tools are
+enforced inside review_impl(); this module is the presentation layer only.
+
+# @trace WL-107
+
+---
+
+## review_run
+
+```
+review_run(prompt: str, agent: Any, model: Any, format: str)
+```
+
+WL-107: Execute a read-only review agent turn and render findings.
+
+Exit code 0 = no issues found.
+Exit code 1 = one or more issues found.
+Exit code 2 = invalid --format or review output failed schema validation.
+Any other non-zero exit code = review agent run failure.
+
+# @trace WL-107
+
+---

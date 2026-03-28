@@ -1,0 +1,19 @@
+# remediation_suggestions_api
+
+Source: docs/reference/api/remediation_suggestions_api.md
+
+---
+
+# remediation_suggestions API Reference
+
+> **Source**: `src/thegent/integrations/remediation_suggestions.py`
+
+Stub module for thegent.integrations.remediation_suggestions.
+
+---
+
+## suggest_remediation
+
+Stub function.
+
+---

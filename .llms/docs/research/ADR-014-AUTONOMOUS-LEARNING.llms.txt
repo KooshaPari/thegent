@@ -4,6 +4,7 @@ Source: docs/research/ADR-014-AUTONOMOUS-LEARNING.md
 
 ---
 
+<DONE>
 # ADR-014: Autonomous Learning and Cost Sensing
 
 ## Status

@@ -8,6 +8,19 @@ Source: docs/reference/api/terminal_keepalive_api.md
 
 > **Source**: `src/thegent/infra/terminal_keepalive.py`
 
+Terminal keepalive mechanism to prevent timeout in long-running commands.
+
+Detects the calling terminal and sends keepalive input (Enter key) periodically
+to prevent timeout (e.g., Cursor's 4-minute guard).
+
+This module provides a robust keepalive mechanism that:
+- Detects parent terminal processes using multiple methods
+- Sends keepalive signals via stdin or tmux
+- Handles errors gracefully without affecting the main process
+- Provides detailed logging for debugging
+
+---
+
 ## TerminalKeepalive
 
 Manages keepalive mechanism for long-running commands.

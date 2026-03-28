@@ -1,0 +1,39 @@
+# phench_modules_api
+
+Source: docs/reference/api/phench_modules_api.md
+
+---
+
+# phench_modules API Reference
+
+> **Source**: `src/thegent/cli/apps/phench_modules.py`
+
+Phench module governance commands.
+
+---
+
+## audit_modules_cmd
+
+```
+audit_modules_cmd(source_root: Any, include_repos: Any, exclude_repos: Any, skip_repos: Any, min_repo_count: int, include_modules: Any, exclude_modules: Any, include_repo_modules_root: bool) -> None
+```
+
+---
+
+## register_modules_commands
+
+```
+register_modules_commands(modules_app: typer.Typer)
+```
+
+Register module-level orchestration commands for phench.
+
+---
+
+## sync_modules_cmd
+
+```
+sync_modules_cmd(source_root: Any, destination_root: Any, include_repos: Any, exclude_repos: Any, include_modules: Any, exclude_modules: Any, overwrite: bool, dry_run: bool) -> None
+```
+
+---

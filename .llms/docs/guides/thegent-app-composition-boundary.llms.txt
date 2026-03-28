@@ -1,0 +1,51 @@
+# thegent-app-composition-boundary
+
+Source: docs/guides/thegent-app-composition-boundary.md
+
+---
+
+# Thegent App Composition Boundary Guide
+
+## Purpose
+
+Define and enforce V1 boundaries for the app composition layer so orchestration stays separate
+from domain ownership.
+
+## Before Boundary (Current Risk Profile)
+
+- App composition and domain logic can be co-located in practice.
+- Domain ownership can drift into orchestration files.
+- Migration sequencing is implicit rather than checkpointed.
+
+## After Boundary (Target V1)
+
+### App Composition Owns
+
+- Lifecycle orchestration.
+- Dependency wiring and module registration.
+- Cross-module routing and startup/shutdown composition.
+- Cross-cutting policy/observability hook attachment.
+
+### External Modules Own
+
+- Domain rules and invariants.
+- Domain-level validation and decision logic.
+- Persistence and provider adapters.
+- Domain-specific orchestration internal to each module.
+
+## Migration Checkpoints
+
+1. Boundary audit completed and drift areas cataloged.
+2. Composition API surface constrained to orchestration concerns only.
+3. Domain ownership moved to dedicated external modules.
+4. Contract validator added to routine validation workflow.
+
+## Validation Command
+
+Run:
+
+```
+bash scripts/validate_thegent_app_composition_contract.sh
+```
+
+Expected result: all required artifacts found and required JSON keys present.

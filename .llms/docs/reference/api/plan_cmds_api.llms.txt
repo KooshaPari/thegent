@@ -1,0 +1,18 @@
+# plan_cmds_api
+
+Source: docs/reference/api/plan_cmds_api.md
+
+---
+
+# plan_cmds API Reference
+
+> **Source**: `src/thegent/cli/commands/plan_cmds.py`
+
+Backward compatibility shim for plan commands.
+
+Phase 3 extraction (WL-125): Plan domain moved to thegent.cli.plan.
+
+This module provides backward compatibility for code that imports from
+the old location. All real functionality has been moved to the plan subpackage.
+
+---

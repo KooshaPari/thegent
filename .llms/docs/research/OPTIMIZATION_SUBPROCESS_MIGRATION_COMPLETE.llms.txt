@@ -4,6 +4,7 @@ Source: docs/research/OPTIMIZATION_SUBPROCESS_MIGRATION_COMPLETE.md
 
 ---
 
+<DONE>
 # Subprocess Migration Complete
 
 **Date**: 2026-02-18

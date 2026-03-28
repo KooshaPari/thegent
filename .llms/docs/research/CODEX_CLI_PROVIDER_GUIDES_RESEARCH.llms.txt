@@ -4,6 +4,7 @@ Source: docs/research/CODEX_CLI_PROVIDER_GUIDES_RESEARCH.md
 
 ---
 
+<DONE>
 # Codex CLI Provider Guides Research
 
 **Date**: 2026-02-18

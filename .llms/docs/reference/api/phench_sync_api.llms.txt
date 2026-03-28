@@ -1,0 +1,31 @@
+# phench_sync_api
+
+Source: docs/reference/api/phench_sync_api.md
+
+---
+
+# phench_sync API Reference
+
+> **Source**: `src/thegent/cli/apps/phench_sync.py`
+
+Phench sync command.
+
+---
+
+## register_sync_commands
+
+```
+register_sync_commands(app: typer.Typer, sync_target_fn: Any)
+```
+
+Register sync command on the phench app.
+
+---
+
+## sync_cmd
+
+```
+sync_cmd(name: str, family: Any, prefer: Any) -> None
+```
+
+---

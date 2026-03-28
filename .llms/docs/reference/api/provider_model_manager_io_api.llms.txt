@@ -1,0 +1,63 @@
+# provider_model_manager_io_api
+
+Source: docs/reference/api/provider_model_manager_io_api.md
+
+---
+
+# provider_model_manager_io API Reference
+
+> **Source**: `src/thegent/provider_model_manager_io.py`
+
+I/O and path helpers for provider/model manager data files.
+
+---
+
+## load_json
+
+```
+load_json(path: Path)
+```
+
+Load JSON file.
+
+---
+
+## load_yaml
+
+```
+load_yaml(path: Path)
+```
+
+Load YAML file.
+
+---
+
+## save_json
+
+```
+save_json(path: Path, data: dict[(str, Any)])
+```
+
+Save JSON file.
+
+---
+
+## save_yaml
+
+```
+save_yaml(path: Path, data: dict[(str, Any)])
+```
+
+Save YAML file.
+
+---
+
+## update_provider_mapping
+
+```
+update_provider_mapping(mapping_path: Path, name: str)
+```
+
+Update provider_mapping.json lists.
+
+---

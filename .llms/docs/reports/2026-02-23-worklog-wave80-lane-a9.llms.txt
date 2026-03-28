@@ -1,0 +1,40 @@
+# 2026-02-23-worklog-wave80-lane-a9
+
+Source: docs/reports/2026-02-23-worklog-wave80-lane-a9.md
+
+---
+
+# Worklog Wave 80 - Lane A9 (2026-02-23)
+
+Scope: implement the next unclaimed lane-A 10-item slice after `WL-10729`.
+
+Queue artifact used: `docs/reports/bulk-wi-s102-lane-b.md`.
+
+## Completed WL Items
+
+1. `WL-10730`: Preserved orchestration determinism by separating plan and execution boundaries.
+2. `WL-10731`: Preserved queue throughput by separating intake and worker fanout.
+3. `WL-10732`: Preserved telemetry by separating metric collection and emitter lifecycle.
+4. `WL-10733`: Preserved provider selection by separating fallback and normal selection paths.
+5. `WL-10734`: Preserved policy enforcement by separating rule discovery and action execution.
+6. `WL-10735`: Preserved sync reliability by separating source scan and mutation apply.
+7. `WL-10736`: Preserved runtime error behavior by separating recoverable and terminal branches.
+8. `WL-10737`: Preserved hook delivery by separating trigger evaluation and call sites.
+9. `WL-10738`: Preserved session lifecycle by separating claim transitions and persistence.
+10. `WL-10739`: Preserved CLI behavior by separating schema parse and command handling.
+
+## Files Changed
+
+- `tests/protocols/test_wl10730_wl10739_lane_a9.py`
+- `docs/reference/WBS_AGENT_PROGRESS.md`
+- `docs/reports/2026-02-23-worklog-wave80-lane-a9.md`
+
+## Validation
+
+```
+uv run python -m pytest -q tests/protocols/test_wl10730_wl10739_lane_a9.py
+```
+
+Results:
+
+- `uv run python -m pytest -q tests/protocols/test_wl10730_wl10739_lane_a9.py`: pass (`10 passed`).

@@ -13,6 +13,9 @@ Shadow audit Git log with secret scrubbing.
 Tracks all git operations as immutable audit entries in SQLite, with
 automatic secret scrubbing via the native secret scanner before storage.
 
+Also provides GitJournal for micro-commit journaling using git refs
+that never get pushed (local-only audit trail).
+
 WBS: wp-71002-shadow-git
 FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 
@@ -33,6 +36,349 @@ to_dict(self: Any)
 ```
 
 Serialize to a JSON-safe dict.
+
+---
+
+---
+
+## GitJournal
+
+Git-based journaling system for granular file change audit.
+
+Creates micro-commits for every file change using git's plumbing
+commands. All commits are stored in refs/audit/* namespace which
+is excluded from push by default.
+
+Key features:
+- Micro-commits on every file change (journaling)
+- Local-only refs (never pushed to remote)
+- Tracks secrets/sensitive files locally
+- Works with or without worktrees
+- Uses git's object model directly (efficient, no file copying)
+
+Usage:
+    journal = GitJournal(repo_path, session_id="run-123")
+    journal.record_file_change(path, content, action="modified")
+    journal.finalize_session()
+
+### Methods
+
+#### GitJournal.__init__
+
+```
+__init__(self: Any, repo_root: Any, session_id: str)
+```
+
+Initialize the git journal.
+
+**Parameters**:
+
+- `repo_root`: Path to git repository root
+- `session_id`: Unique session identifier for grouping commits
+- `track_secrets`: Whether to track files that may contain secrets
+- `auto_commit`: Whether to auto-commit on record_file_change
+
+---
+
+#### GitJournal.delete_session
+
+```
+delete_session(self: Any)
+```
+
+Delete the audit ref for this session (cleanup).
+
+---
+
+#### GitJournal.finalize_session
+
+```
+finalize_session(self: Any, message: str)
+```
+
+Finalize the audit session with a summary commit.
+
+---
+
+#### GitJournal.gc
+
+```
+gc(cls: Any, repo_root: Any)
+```
+
+Run git gc on audit refs to pack loose objects.
+
+This class method garbage collects all audit refs in the repository,
+reducing storage usage by packing loose objects.
+
+**Parameters**:
+
+- `repo_root`: Path to git repository root
+- `aggressive`: If True, run more thorough garbage collection
+
+**Returns**: Dictionary with gc results including success status and statistics
+
+---
+
+#### GitJournal.get_audit_log
+
+```
+get_audit_log(self: Any)
+```
+
+Get the audit log for this session as a list of commits.
+
+---
+
+#### GitJournal.get_file_history
+
+```
+get_file_history(self: Any, file_path: str)
+```
+
+Get the history of a specific file in this audit session.
+
+---
+
+#### GitJournal.list_sessions
+
+```
+list_sessions(cls: Any, repo_root: Any)
+```
+
+List all audit sessions in a repository.
+
+---
+
+#### GitJournal.prune_old_sessions
+
+```
+prune_old_sessions(cls: Any, repo_root: Any, max_age_days: int)
+```
+
+Prune audit sessions older than max_age_days.
+
+---
+
+#### GitJournal.record_file_change
+
+```
+record_file_change(self: Any, file_path: Any, content: Any)
+```
+
+Record a file change as a micro-commit.
+
+**Parameters**:
+
+- `file_path`: Path to the file (relative to repo root)
+- `content`: File content (None for deletion)
+- `action`: Action type (modified, created, deleted)
+- `metadata`: Additional metadata to include in commit message
+
+**Returns**: The commit SHA
+
+---
+
+#### GitJournal.record_snapshot
+
+```
+record_snapshot(self: Any, message: str)
+```
+
+Create a snapshot commit of current working tree state.
+
+This reads the actual working directory and creates a commit
+representing the current state, useful for periodic snapshots.
+
+---
+
+---
+
+## GitJournalAsync
+
+Async wrapper around GitJournal for high-performance scenarios.
+
+Provides async API for non-blocking git operations.
+
+### Methods
+
+#### GitJournalAsync.__init__
+
+```
+__init__(self: Any, journal: Any)
+```
+
+Wrap a journal instance for async operations.
+
+---
+
+#### GitJournalAsync.create
+
+```
+create(cls: Any, repo_root: Any, session_id: str)
+```
+
+Create a new async journal.
+
+---
+
+---
+
+## GitJournalEnhanced
+
+Enhanced GitJournal with native secret scanner, real-time watching,
+
+cryptographic attestation, and performance optimizations.
+
+P1 Enhancements:
+- Native secret scanner integration (BKM-11)
+- Real-time file change detection (watchman/FSMonitor)
+- Cryptographic attestation (SHA-256)
+- Performance optimizations (batching, caching, async)
+
+**Inherits from**: `GitJournal`
+
+**Method Resolution Order**: `GitJournalEnhanced -> GitJournal`
+
+### Methods
+
+#### GitJournalEnhanced.__init__
+
+```
+__init__(self: Any, repo_root: Any, session_id: str)
+```
+
+Initialize enhanced git journal.
+
+**Parameters**:
+
+- `repo_root`: Path to git repository root
+- `session_id`: Unique session identifier
+- `track_secrets`: Whether to track/scrub secrets
+- `auto_commit`: Whether to auto-commit on changes
+- `enable_watching`: Enable real-time file watching
+- `enable_attestation`: Enable cryptographic attestation
+- `batch_size`: Number of changes to batch before commit
+- `cache_size`: Maximum entries in LRU blob cache (default: 1000)
+
+---
+
+#### GitJournalEnhanced.clear_cache
+
+```
+clear_cache(self: Any)
+```
+
+Clear the LRU blob cache and deduplication registry.
+
+---
+
+#### GitJournalEnhanced.finalize_session
+
+```
+finalize_session(self: Any, message: str)
+```
+
+Finalize session with attestation summary.
+
+---
+
+#### GitJournalEnhanced.gc
+
+```
+gc(self: Any)
+```
+
+Run git gc to pack loose objects in the audit ref namespace.
+
+**Parameters**:
+
+- `aggressive`: If True, run more thorough garbage collection
+
+**Returns**: Dictionary with gc results
+
+---
+
+#### GitJournalEnhanced.get_attestations
+
+```
+get_attestations(self: Any)
+```
+
+Get all attestations for this session.
+
+---
+
+#### GitJournalEnhanced.get_cache_stats
+
+```
+get_cache_stats(self: Any)
+```
+
+Get cache statistics for monitoring.
+
+---
+
+#### GitJournalEnhanced.get_performance_stats
+
+```
+get_performance_stats(self: Any)
+```
+
+Get performance statistics including cache hit/miss tracking.
+
+---
+
+#### GitJournalEnhanced.optimize_storage
+
+```
+optimize_storage(self: Any)
+```
+
+Optimize storage by running git maintenance and repacking.
+
+This method performs comprehensive storage optimization:
+1. Repacks objects into packfiles
+2. Runs git gc
+3. Clears stale cache entries
+4. Returns optimization statistics
+
+**Returns**: Dictionary with optimization results
+
+---
+
+#### GitJournalEnhanced.record_file_change
+
+```
+record_file_change(self: Any, file_path: Any, content: Any)
+```
+
+Record a file change with batching and attestation.
+
+Overrides parent to add:
+- Native secret scanning
+- Batching for performance
+- Cryptographic attestation
+
+---
+
+#### GitJournalEnhanced.start_watching
+
+```
+start_watching(self: Any)
+```
+
+Start watching for file changes in real-time.
+
+---
+
+#### GitJournalEnhanced.verify_attestation
+
+```
+verify_attestation(self: Any, attestation: dict[(str, Any)])
+```
+
+Verify an attestation's integrity.
 
 ---
 
@@ -94,6 +440,36 @@ Both the message and diff are scrubbed for secrets before storage.
 
 ---
 
+## clear_cache
+
+```
+clear_cache(self: Any)
+```
+
+Clear the LRU blob cache and deduplication registry.
+
+---
+
+## create
+
+```
+create(cls: Any, repo_root: Any, session_id: str)
+```
+
+Create a new async journal.
+
+---
+
+## delete_session
+
+```
+delete_session(self: Any)
+```
+
+Delete the audit ref for this session (cleanup).
+
+---
+
 ## export_audit
 
 ```
@@ -104,18 +480,117 @@ Export the audit log for a project to a JSON file.
 
 ---
 
-## get_audit_log
+## finalize_session
 
 ```
-get_audit_log(self: Any, project_id: str, limit: Any)
+finalize_session(self: Any, message: str)
 ```
 
-Return audit entries for a project, ordered by creation time.
+Finalize session with attestation summary.
+
+---
+
+## gc
+
+```
+gc(self: Any)
+```
+
+Run git gc to pack loose objects in the audit ref namespace.
 
 **Parameters**:
 
-- `project_id`: The project whose audit log to retrieve.
-- `limit`: Maximum number of entries to return.  None means all.
+- `aggressive`: If True, run more thorough garbage collection
+
+**Returns**: Dictionary with gc results
+
+---
+
+## get_attestations
+
+```
+get_attestations(self: Any)
+```
+
+Get all attestations for this session.
+
+---
+
+## get_audit_log
+
+```
+get_audit_log(self: Any)
+```
+
+Get the audit log for this session as a list of commits.
+
+---
+
+## get_cache_stats
+
+```
+get_cache_stats(self: Any)
+```
+
+Get cache statistics for monitoring.
+
+---
+
+## get_file_history
+
+```
+get_file_history(self: Any, file_path: str)
+```
+
+Get the history of a specific file in this audit session.
+
+---
+
+## get_performance_stats
+
+```
+get_performance_stats(self: Any)
+```
+
+Get performance statistics including cache hit/miss tracking.
+
+---
+
+## list_sessions
+
+```
+list_sessions(cls: Any, repo_root: Any)
+```
+
+List all audit sessions in a repository.
+
+---
+
+## optimize_storage
+
+```
+optimize_storage(self: Any)
+```
+
+Optimize storage by running git maintenance and repacking.
+
+This method performs comprehensive storage optimization:
+1. Repacks objects into packfiles
+2. Runs git gc
+3. Clears stale cache entries
+4. Returns optimization statistics
+
+**Returns**: Dictionary with optimization results
+
+---
+
+## prune_old_sessions
+
+```
+prune_old_sessions(cls: Any, repo_root: Any, max_age_days: int)
+```
+
+Prune audit sessions older than max_age_days.
 
 ---
 
@@ -131,6 +606,44 @@ Both the message and diff are scrubbed for secrets before storage.
 
 ---
 
+## record_file_change
+
+```
+record_file_change(self: Any, file_path: Any, content: Any)
+```
+
+Record a file change with batching and attestation.
+
+Overrides parent to add:
+- Native secret scanning
+- Batching for performance
+- Cryptographic attestation
+
+---
+
+## record_snapshot
+
+```
+record_snapshot(self: Any, message: str)
+```
+
+Create a snapshot commit of current working tree state.
+
+This reads the actual working directory and creates a commit
+representing the current state, useful for periodic snapshots.
+
+---
+
+## start_watching
+
+```
+start_watching(self: Any)
+```
+
+Start watching for file changes in real-time.
+
+---
+
 ## to_dict
 
 ```
@@ -138,5 +651,19 @@ to_dict(self: Any)
 ```
 
 Serialize to a JSON-safe dict.
+
+---
+
+## verify_attestation
+
+```
+verify_attestation(self: Any, attestation: dict[(str, Any)])
+```
+
+Verify an attestation's integrity.
+
+---
+
+## watch_thread
 
 ---

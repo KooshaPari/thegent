@@ -4,6 +4,7 @@ Source: docs/research/MODEL_METADATA_FIX_SUMMARY.md
 
 ---
 
+<DONE>
 # Model Metadata Fix Summary
 
 ## Issue

@@ -4,6 +4,7 @@ Source: docs/research/MD_NORMALIZATION_GUIDE.md
 
 ---
 
+<DONE>
 # MD Documentation Normalization Guide
 
 > **Status**: Complete | **Date**: 2026-02-17

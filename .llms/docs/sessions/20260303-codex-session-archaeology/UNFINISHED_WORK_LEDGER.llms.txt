@@ -1,0 +1,29 @@
+# UNFINISHED_WORK_LEDGER
+
+Source: docs/sessions/20260303-codex-session-archaeology/UNFINISHED_WORK_LEDGER.md
+
+---
+
+# Unfinished Work Ledger
+
+## Totals
+- Unfinished candidates: **917**
+- Resolved elsewhere: **912**
+- Redirected/subagent: **0**
+- Temp-agent noise filtered: **5**
+- Still open: **0**
+
+## Filtered Noise
+| Session ID | CWD | Why still open |
+|---|---|---|
+| `019c8bf3-1acc-7a23-927d-e2beb454f078` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_0` | temp-agent cwd noise; filtered from unresolved queues |
+| `019c8bf3-1acc-71c2-8e7d-bb211a4a7322` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_5` | temp-agent cwd noise; filtered from unresolved queues |
+| `019c8bf3-1acc-7493-8a07-726ebd68aab1` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpd6hdlsmn/agent_2` | temp-agent cwd noise; filtered from unresolved queues |
+| `019c8c45-bfc7-71d0-af83-adf4bc46e2be` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_1` | temp-agent cwd noise; filtered from unresolved queues |
+| `019c8c45-bfdb-7d62-bb38-0a938d1639ae` | `/private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/tmpuw1b2o86/agent_0` | temp-agent cwd noise; filtered from unresolved queues |
+
+## Recommended Next Actions
+1. Keep temp-agent cwd entries (`/private/var/folders/.../agent_*`) excluded from future unresolved queues.
+2. Add stronger completion signal extraction (e.g., explicit terminal event enums).
+3. Add repo-aware gitops pass only for stable repo cwd values.
+4. No actionable follow-up remains in this session's current ledger.

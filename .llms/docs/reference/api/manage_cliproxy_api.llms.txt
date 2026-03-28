@@ -1,0 +1,376 @@
+# manage_cliproxy_api
+
+Source: docs/reference/api/manage_cliproxy_api.md
+
+---
+
+# manage_cliproxy API Reference
+
+> **Source**: `src/thegent/use_cases/manage_cliproxy.py`
+
+Business logic for cliproxy provider lifecycle and credentials management.
+
+Pure orchestration for:
+- Provider configuration
+- OAuth vs API-key routing
+- Credentials lifecycle
+- Factory config lookup
+- Auto-restart on credential changes
+
+---
+
+## CredentialsResolver
+
+Resolves credentials from multiple sources.
+
+### Methods
+
+#### CredentialsResolver.get_factory_api_key
+
+```
+get_factory_api_key(provider: str)
+```
+
+Look up API key in factory config.
+
+Returns (api_key, source_path) or (None, "").
+
+---
+
+#### CredentialsResolver.is_oauth_only
+
+```
+is_oauth_only(provider: str)
+```
+
+Check if provider only supports OAuth.
+
+---
+
+#### CredentialsResolver.should_use_oauth
+
+```
+should_use_oauth(provider: str)
+```
+
+Check if provider should use OAuth flow.
+
+---
+
+---
+
+## ProviderConfigManager
+
+Manages provider configuration and credentials.
+
+### Methods
+
+#### ProviderConfigManager.__init__
+
+```
+__init__(self: Any, settings: ThegentSettings)
+```
+
+---
+
+#### ProviderConfigManager.build_provider_login_configs
+
+```
+build_provider_login_configs(self: Any)
+```
+
+Build login config dict from provider definitions.
+
+---
+
+#### ProviderConfigManager.get_provider_definitions
+
+```
+get_provider_definitions(self: Any)
+```
+
+Load provider definitions from internal JSON (cached).
+
+---
+
+#### ProviderConfigManager.get_provider_login_config
+
+```
+get_provider_login_config(self: Any, provider: str)
+```
+
+Get login configuration for provider.
+
+---
+
+#### ProviderConfigManager.has_oauth_credentials
+
+```
+has_oauth_credentials(self: Any, provider: str)
+```
+
+Check if provider has OAuth credentials in auth dir.
+
+---
+
+#### ProviderConfigManager.has_provider_credentials
+
+```
+has_provider_credentials(self: Any, provider: str)
+```
+
+Check if provider has credentials in config.
+
+---
+
+#### ProviderConfigManager.inject_api_key
+
+```
+inject_api_key(self: Any, config: dict[(str, Any)], provider: str, api_key: str, cfg: dict[(str, Any)])
+```
+
+Inject API key into cliproxy config.
+
+---
+
+#### ProviderConfigManager.inject_cursor_config
+
+```
+inject_cursor_config(self: Any, config: dict[(str, Any)])
+```
+
+Inject cursor configuration if available.
+
+---
+
+#### ProviderConfigManager.inject_kiro_config
+
+```
+inject_kiro_config(self: Any, config: dict[(str, Any)])
+```
+
+Inject kiro configuration if available.
+
+---
+
+#### ProviderConfigManager.load_config
+
+```
+load_config(self: Any)
+```
+
+Load cliproxy config file.
+
+---
+
+#### ProviderConfigManager.save_config
+
+```
+save_config(self: Any, config: dict[(str, Any)])
+```
+
+Save cliproxy config to file.
+
+---
+
+---
+
+## ProxyHealthChecker
+
+Checks proxy health and readiness.
+
+### Methods
+
+#### ProxyHealthChecker.is_adapter_running
+
+```
+is_adapter_running(base_url: str)
+```
+
+Check if server at base_url is the adapter (has /v1/responses).
+
+---
+
+#### ProxyHealthChecker.is_openrouter_backend
+
+```
+is_openrouter_backend(backend_url: str)
+```
+
+Check if backend is OpenRouter.
+
+---
+
+#### ProxyHealthChecker.is_reachable
+
+```
+is_reachable(base_url: str, timeout: float)
+```
+
+Check if proxy is reachable at base_url.
+
+---
+
+---
+
+## build_provider_login_configs
+
+```
+build_provider_login_configs(self: Any)
+```
+
+Build login config dict from provider definitions.
+
+---
+
+## get_factory_api_key
+
+```
+get_factory_api_key(provider: str)
+```
+
+Look up API key in factory config.
+
+Returns (api_key, source_path) or (None, "").
+
+---
+
+## get_provider_definitions
+
+```
+get_provider_definitions(self: Any)
+```
+
+Load provider definitions from internal JSON (cached).
+
+---
+
+## get_provider_login_config
+
+```
+get_provider_login_config(self: Any, provider: str)
+```
+
+Get login configuration for provider.
+
+---
+
+## has_oauth_credentials
+
+```
+has_oauth_credentials(self: Any, provider: str)
+```
+
+Check if provider has OAuth credentials in auth dir.
+
+---
+
+## has_provider_credentials
+
+```
+has_provider_credentials(self: Any, provider: str)
+```
+
+Check if provider has credentials in config.
+
+---
+
+## inject_api_key
+
+```
+inject_api_key(self: Any, config: dict[(str, Any)], provider: str, api_key: str, cfg: dict[(str, Any)])
+```
+
+Inject API key into cliproxy config.
+
+---
+
+## inject_cursor_config
+
+```
+inject_cursor_config(self: Any, config: dict[(str, Any)])
+```
+
+Inject cursor configuration if available.
+
+---
+
+## inject_kiro_config
+
+```
+inject_kiro_config(self: Any, config: dict[(str, Any)])
+```
+
+Inject kiro configuration if available.
+
+---
+
+## is_adapter_running
+
+```
+is_adapter_running(base_url: str)
+```
+
+Check if server at base_url is the adapter (has /v1/responses).
+
+---
+
+## is_oauth_only
+
+```
+is_oauth_only(provider: str)
+```
+
+Check if provider only supports OAuth.
+
+---
+
+## is_openrouter_backend
+
+```
+is_openrouter_backend(backend_url: str)
+```
+
+Check if backend is OpenRouter.
+
+---
+
+## is_reachable
+
+```
+is_reachable(base_url: str, timeout: float)
+```
+
+Check if proxy is reachable at base_url.
+
+---
+
+## load_config
+
+```
+load_config(self: Any)
+```
+
+Load cliproxy config file.
+
+---
+
+## save_config
+
+```
+save_config(self: Any, config: dict[(str, Any)])
+```
+
+Save cliproxy config to file.
+
+---
+
+## should_use_oauth
+
+```
+should_use_oauth(provider: str)
+```
+
+Check if provider should use OAuth flow.
+
+---

@@ -1,0 +1,824 @@
+# workspace_backup_20251019_172555_prd
+
+Source: docs/specs/prds/fragemented/workspace_backup_20251019_172555_prd.md
+
+---
+
+# Product Requirements Document: workspace_backup_20251019_172555
+
+**Version:** 1.0.0  
+**Created:** 2026-02-18
+
+## 1. Overview
+
+Project workspace_backup_20251019_172555 requirements and specifications.
+
+## 2. Objectives
+
+## 3. Success Metrics
+
+## 4. Stakeholders
+
+## 5. Target Users
+
+## 6. Functional Requirements
+
+## 7. Non-Functional Requirements
+
+## 8. Features
+
+## 9. Architecture Overview
+
+Architecture details to be documented.
+
+## 10. Technical Requirements
+
+- Use react
+- Use gcp
+- Use angular
+- Use kubernetes
+- Use docker
+- Use rust
+- Use javascript
+- Use sql
+- Use azure
+- Use mysql
+
+## 11. Integration Points
+
+- **Integration with config**: Integration point with config project
+- **Integration with --detailed**: Integration point with --detailed project
+- **Integration with off**: Integration point with off project
+- **Integration with within**: Integration point with within project
+- **Integration with details**: Integration point with details project
+- **Integration with I**: Integration point with I project
+- **Integration with docker**: Integration point with docker project
+- **Integration with implement**: Integration point with implement project
+- **Integration with logger**: Integration point with logger project
+- **Integration with README**: Integration point with README project
+- **Integration with guides**: Integration point with guides project
+- **Integration with 485**: Integration point with 485 project
+- **Integration with configured**: Integration point with configured project
+- **Integration with environment**: Integration point with environment project
+- **Integration with else**: Integration point with else project
+- **Integration with need**: Integration point with need project
+- **Integration with 3**: Integration point with 3 project
+- **Integration with in**: Integration point with in project
+- **Integration with owner**: Integration point with owner project
+- **Integration with sources**: Integration point with sources project
+- **Integration with build**: Integration point with build project
+- **Integration with add**: Integration point with add project
+- **Integration with Structure**: Integration point with Structure project
+- **Integration with project**: Integration point with project project
+- **Integration with assessed**: Integration point with assessed project
+- **Integration with pulumi**: Integration point with pulumi project
+- **Integration with entities**: Integration point with entities project
+- **Integration with directories**: Integration point with directories project
+- **Integration with analysis**: Integration point with analysis project
+- **Integration with Environments**: Integration point with Environments project
+- **Integration with Integration**: Integration point with Integration project
+- **Integration with to**: Integration point with to project
+- **Integration with metadata**: Integration point with metadata project
+- **Integration with HEALTH**: Integration point with HEALTH project
+- **Integration with python**: Integration point with python project
+- **Integration with Name**: Integration point with Name project
+- **Integration with uv**: Integration point with uv project
+- **Integration with running**: Integration point with running project
+- **Integration with -**: Integration point with - project
+- **Integration with --output**: Integration point with --output project
+- **Integration with uses**: Integration point with uses project
+- **Integration with limit**: Integration point with limit project
+- **Integration with now**: Integration point with now project
+- **Integration with Workflow**: Integration point with Workflow project
+- **Integration with root**: Integration point with root project
+- **Integration with standards**: Integration point with standards project
+- **Integration with Migration**: Integration point with Migration project
+- **Integration with --threshold**: Integration point with --threshold project
+- **Integration with that**: Integration point with that project
+- **Integration with for**: Integration point with for project
+- **Integration with needs**: Integration point with needs project
+- **Integration with path**: Integration point with path project
+- **Integration with tested**: Integration point with tested project
+- **Integration with configuration**: Integration point with configuration project
+- **Integration with import**: Integration point with import project
+- **Integration with prioritizing**: Integration point with prioritizing project
+- **Integration with --rules**: Integration point with --rules project
+- **Integration with work**: Integration point with work project
+- **Integration with folder**: Integration point with folder project
+- **Integration with constraints**: Integration point with constraints project
+- **Integration with Updated**: Integration point with Updated project
+- **Integration with on-board**: Integration point with on-board project
+- **Integration with ---**: Integration point with --- project
+- **Integration with dependencies**: Integration point with dependencies project
+- **Integration with Overview**: Integration point with Overview project
+- **Integration with use**: Integration point with use project
+- **Integration with instantly**: Integration point with instantly project
+- **Integration with Verification**: Integration point with Verification project
+- **Integration with comply**: Integration point with comply project
+- **Integration with limits**: Integration point with limits project
+- **Integration with solved**: Integration point with solved project
+- **Integration with claims**: Integration point with claims project
+- **Integration with 1**: Integration point with 1 project
+- **Integration with management**: Integration point with management project
+- **Integration with Files**: Integration point with Files project
+- **Integration with Location**: Integration point with Location project
+- **Integration with metrics**: Integration point with metrics project
+- **Integration with has**: Integration point with has project
+- **Integration with permissions**: Integration point with permissions project
+- **Integration with operations**: Integration point with operations project
+- **Integration with is**: Integration point with is project
+- **Integration with name**: Integration point with name project
+- **Integration with Type**: Integration point with Type project
+- **Integration with setup**: Integration point with setup project
+- **Integration with router-integration**: Integration point with router-integration project
+- **Integration with Support**: Integration point with Support project
+- **Integration with 2**: Integration point with 2 project
+- **Integration with test-env**: Integration point with test-env project
+- **Integration with must**: Integration point with must project
+- **Integration with context**: Integration point with context project
+- **Integration with morph-integration**: Integration point with morph-integration project
+- **Integration with includes**: Integration point with includes project
+- **Integration with structure**: Integration point with structure project
+- **Integration with or**: Integration point with or project
+- **Integration with cd**: Integration point with cd project
+- **Integration with summary**: Integration point with summary project
+- **Integration with via**: Integration point with via project
+- **Integration with benefit**: Integration point with benefit project
+- **Integration with Status**: Integration point with Status project
+- **Integration with Entity**: Integration point with Entity project
+- **Integration with migrate**: Integration point with migrate project
+- **Integration with owner_id**: Integration point with owner_id project
+- **Integration with paths**: Integration point with paths project
+- **Integration with support**: Integration point with support project
+- **Integration with description**: Integration point with description project
+- **Integration with warning-free**: Integration point with warning-free project
+- **Integration with Managers**: Integration point with Managers project
+- **Integration with Documentation**: Integration point with Documentation project
+- **Integration with issues**: Integration point with issues project
+- **Integration with type**: Integration point with type project
+- **Integration with owners**: Integration point with owners project
+- **Integration with Root**: Integration point with Root project
+- **Integration with scope**: Integration point with scope project
+- **Integration with implements**: Integration point with implements project
+- **Integration with documentation**: Integration point with documentation project
+- **Integration with files**: Integration point with files project
+- **Integration with Settings**: Integration point with Settings project
+- **Integration with Complete**: Integration point with Complete project
+- **Integration with state**: Integration point with state project
+- **Integration with run**: Integration point with run project
+- **Integration with pheno-refactor**: Integration point with pheno-refactor project
+- **Integration with into**: Integration point with into project
+- **Integration with report**: Integration point with report project
+- **Integration with depend**: Integration point with depend project
+- **Integration with does**: Integration point with does project
+- **Integration with keeps**: Integration point with keeps project
+- **Integration with logic**: Integration point with logic project
+- **Integration with entity**: Integration point with entity project
+- **Integration with requires**: Integration point with requires project
+- **Integration with completion**: Integration point with completion project
+- **Integration with generated**: Integration point with generated project
+- **Integration with tracking**: Integration point with tracking project
+- **Integration with by**: Integration point with by project
+- **Integration with managing**: Integration point with managing project
+- **Integration with code**: Integration point with code project
+- **Integration with previously**: Integration point with previously project
+- **Integration with Config**: Integration point with Config project
+- **Integration with slug**: Integration point with slug project
+- **Integration with with**: Integration point with with project
+- **Integration with are**: Integration point with are project
+- **Integration with 5**: Integration point with 5 project
+- **Integration with deployment**: Integration point with deployment project
+- **Integration with analyzer**: Integration point with analyzer project
+- **Integration with at**: Integration point with at project
+- **Integration with conventions**: Integration point with conventions project
+- **Integration with directory**: Integration point with directory project
+- **Integration with file**: Integration point with file project
+
+## 12. Timeline & Phases
+
+### Phase 1: rotated files for mcp_server.log (200MB total)
+
+### Phase 2: new reusable SDK modules
+
+- Benefits all SDK users
+
+**Timeline**: 9 weeks (3 months)
+
+---
+
+## Production Readiness
+
+### Deployment Checklist ✅
+
+**Pre-Deployment**:
+- [x] All tests passing (90/90)
+- [x] QA approval obtained
+- [x] Security scan complete
+- [x] Documentation complete
+- [x] Rollback plan ready
+- [x] Performance validated
+- [x] Observability validated
+
+**Deployment Plan**:
+- [ ] Deploy to staging
+- [ ] Validate in staging (24 hours)
+- [ ] Deploy to production
+- [ ] Monitor production (24 hours)
+- [ ] Execute
+
+### Phase 3: Domain Entities
+
+### Phase 4: breaking changes
+
+### Q8: Can I refactor incrementally?
+
+**A:** Yes! This is the recommended approach:
+
+**Incremental Refactoring Strategy:**
+
+1. **Week 1: Analysis & Planning**
+   - Run analysis on entire project
+   - Identify top 5 refactoring candidates
+   - Create extraction plans
+
+2. **Week 2-3: Refactor Critical Files**
+   - Extract top 2-3 largest files
+   - Validate each extraction
+   - Run full test suite after each
+
+3. **Week 4-5: Address Layer Violations**
+   - Fix FastAPI in domain/application
+   -
+
+### Phase 5: Comprehensive Reports Created by Agents
+
+1. **GIT_COMMIT_ANALYSIS_VARIANT_CREATION_PATTERNS.md** (24 KB)
+   - Detailed timeline of variant creation (Oct 7-15)
+   - 5 root cause patterns with git evidence
+   - 467 MB waste documented
+   - Prevention recommendations (immediate/medium/long-term)
+
+2. **VARIANT_CONSOLIDATION_ACTION_PLAN.md** (18 KB)
+   - 5 executable consolidation phases
+   - Specific bash commands for each task
+   - Verification checklists
+   - Rollback procedures
+   - 4-5 hour implementation timeline
+
+3. **OPTION_A_VS_B
+
+### Phase 6: → CheckConstraintError (400)
+
+### Phase 7: → UniqueConstraintError (409)
+
+### Phase 8: → ForeignKeyError (400)
+
+### Phase 9: → NotNullConstraintError (400)
+
+### Phase 10: → PermissionDeniedError (403)
+
+**Test Results**:
+- ✅ 13 test classes created
+- ✅ 50+ test cases
+- ✅ 100% exception type coverage
+- ✅ PostgreSQL normalization tested
+- ✅ HTTP response formatting tested
+- ✅ Backward compatibility verified
+
+**Benefits**:
+- Unified error handling system
+- Rich error context (ID, timestamp, component, operation)
+- HTTP integration ready
+- Database error normalization
+- Retryability detection
+- Zero breaking changes
+
+**Documentation**: PHASE_2.6_EXCEPTION_HIERARCHY_REPORT.md (900+ lines)
+
+---
+
+##
+
+### Phase 11: broken symlinks block deployment
+
+### Phase 12: CLI entry points without documentation of why each exists
+
+**Pattern:**
+```
+Agent #1 creates: setup_python314t_proper.py (06:31)
+Agent #2 creates: setup_python314_stable.py (11:48) - doesn't know about Agent #1's work
+Agent #3 analyzes: "Which is correct?" Creates CLEANUP_LOG.md
+```
+
+**Evidence:** Timestamps show parallel creation
+- Oct 14 06:28 and 06:31: TWO setup scripts created 3 minutes apart
+- Oct 14 05:45 and 11:49: Test scripts 6+ hours apart suggest different agents
+
+**Root Cause:** Likely no shared state/awareness between parallel agent instances working on same problem.
+
+---
+
+### Root Cause #3: Conservative File Creation Philosophy
+**Frequency:** 5 instances
+**Severity:** MEDIUM
+**Examples:**
+- Creating `atoms-mcp-enhanced.py` instead of modifying `atoms`
+- Creating `setup_production_environment.py` instead of updating existing setup
+- Creating new test files instead of extending existing ones
+
+**Pattern:**
+```
+Agent calculates risk:
+  ↓
+"Modifying existing file might break things"
+  ↓
+"Creating new file is safer"
+  ↓
+"Let others decide which to use"
+  ↓
+Result: Parallel safe variants
+```
+
+**Evidence:** Both wrapper files (atoms_mcp_simplified.py and atoms-mcp-enhanced.py) call the SAME underlying function - evidence that agent knew how to parameterize but chose to create separate files instead.
+
+---
+
+### Root Cause #4: No Clear "Source of Truth" Architecture
+**Frequency:** 7 instances
+**Severity:** HIGH
+**Examples:**
+- Both setup approaches and tests coexist
+- Multiple consolidation documents (code + markdown)
+- Multiple phase status documents
+
+**Pattern:**
+```
+Multiple valid ways to implement:
+  ↓
+No clear architecture decision documented
+  ↓
+Each agent creates their preferred variant
+  ↓
+Result: 3-5 parallel implementations
+```
+
+**Evidence:** ATOMS-PHENOMIGR.py duplicates CONSOLIDATION_ANALYSIS_AND_PLAN.md perfectly - both agents created "comprehensive migration plan" independently.
+
+---
+
+### Root Cause #5: Premature Documentation Variant Creation
+**Frequency:** 4 instances
+**Severity:** MEDIUM
+**Examples:**
+- CLEANUP_LOG.md documents cleanup (analysis)
+- CLEANUP_SUMMARY.md documents same cleanup (summary)
+- PHASE3_STATUS_SUMMARY.md + PHASE2_COMPLETE_SUMMARY.md (similar intent)
+
+**Pattern:**
+```
+Agent completes analysis:
+  ↓
+Creates documentation of findings
+  ↓
+Different agent needs slightly different format
+  ↓
+Creates second documentation variant
+  ↓
+Result: Redundant docs with minimal difference
+```
+
+**Evidence:** CLEANUP_LOG.md is 280+ lines; if same info needed in summary format, agent could have created CLEANUP_SUMMARY as 50-line version with link to CLEANUP_LOG. Instead, created completely separate document.
+
+---
+
+## PART 3: IMPACT QUANTIFICATION
+
+### Code Duplication Impact
+
+| Category | Files | Total Size | Redundancy | Could Save |
+|----------|-------|------------|-----------|-----------|
+| Python 3.14 Setup Scripts | 5 kept, 1 archived | 45 KB | 80% | 36 KB |
+| Performance Tests | 4 kept, 2 archived | 24 KB | 75% | 18 KB |
+| CLI Entry Points | 3 active | 1.2 KB | 95% | 1.1 KB |
+| Migration Docs | 2 parallel | 105 KB | 100% | 52 KB |
+| Environment Dirs | 5 directories | 466 MB | 100% | 466 MB |
+| Analysis/Summary Docs | 4+ variants | 120 KB | 40% | 48 KB |
+| **TOTAL IMPACT** | | **~467 MB** | | **~467 MB** |
+
+**Key Insight:** 99.9% of wasted space is from test environments. Python/doc duplication is manageable at 200KB. **Real waste is environmental, not code.**
+
+---
+
+## PART 4: WHAT AGENTS INTENDED vs WHAT THEY ACTUALLY DID
+
+### Case Study 1: CLI Entry Points
+
+**What Agent Intended:** "Create additional CLI entry point for simplified mode"
+**What They Actually Did:** Created 3 separate entry points with no consolidated logic
+**Evidence:**
+- atoms_mcp_simplified.py and atoms-mcp-enhanced.py call `atoms.main(mode=...)` 
+- Shows they knew the pattern but didn't refactor atoms itself
+- Both files are 15 lines with identical structure
+
+**Impact:** Confusion about which entry point to use; maintenance burden if atoms.main() signature changes
+
+**How to Fix:** Delete the wrapper files, update atoms CLI parser to accept --mode flag
+
+---
+
+### Case Study 2: Python 3.14 Setup
+
+**What Agent Intended:** "Create robust Python 3.14 environment with free-threading"
+**What They Actually Did:** Created 5 separate setup scripts with no consolidation attempt
+**Evidence:**
+- Each script has different error handling approach
+- Each script tested different aspects
+- Cleanup analysis admits "all can be replaced by setup_production_environment.py"
+
+**Impact:** 
+- Confusion about which setup to run
+
+### Phase 13: missing dependencies cause runtime errors
+
+**Timeline to Fix:**
+- **4 hours:** Application deployable (Phase 1)
+- **7 days:** 80% functionality (Phase 1+2)
+- **26 days:** 100% functionality, cleaned up (all phases)
+
+**Resource Need:** 1-2 developers for 26 days (can adjust timeline based on capacity)
+
+**Next Step:** Execute Phase 1 tasks (see `FEATURE_RESTORATION_ROADMAP.md`)
+
+---
+
+## 📖 READING TIME ESTIMATES
+
+| Document | Time | Best For |
+|----------|------|----------|
+| This file | 5 min | Getting oriented |
+| MASTER_REGRESSION_REPO
+
+### Phase 14: detailed sections
+
+- Layer-by-layer analysis
+- Code examples and patterns
+- Missing components documentation
+- Detailed recommendations
+
+**📌 [ARCHITECTURE_QUICK_REFERENCE.txt](ARCHITECTURE_QUICK_REFERENCE.txt)** - One-Page Reference
+- Key findings in tabular format
+- Compliance scorecard
+- What's working / What's broken
+- Files analyzed
+
+## Key Findings at a Glance
+
+### The Core Problem
+
+```
+CLAIMED:  Hexagonal Architecture (Ports & Adapters)
+ACTUAL:   Two parallel implementations - Hexagonal layer + Runtime laye
+
+### Phase 15: comprehensive tests
+
+### Phase 16: async tests (require pytest-asyncio configuration)
+
+---
+
+## Usage Example
+
+```
+import asyncio
+from pheno.workflow.orchestrator import (
+    WorkflowOrchestrator,
+    build_simple_workflow,
+)
+
+# Define handlers
+def fetch_data(context: dict) -> dict:
+    return {"records": [1, 2, 3]}
+
+def process_data(context: dict) -> str:
+    records = context.get("step_fetch_data_output", {}).get("records", [])
+    return f"Processed {len(records)} records"
+
+# Build workflow
+workflow = build_simple_workflow(
+    "pipeline",
+    [("fetch_data", fetch_data
+
+### Phase 17: Forbidden returned for unauthorized access
+
+### Input Validation
+- Pydantic DTOs validate all input data
+- Entity type validation
+- Data schema validation through domain services
+
+### Error Information
+- Proper HTTP status codes
+- Detailed error messages (safe for client)
+- Full stack traces in logs (for debugging)
+
+## Performance Considerations
+
+### Efficient Processing
+- Async/await for non-blocking I/O
+- Direct use case invocation (no unnecessary layers)
+- Minimal data transformation
+
+### Logging Efficiency
+- Structured logging with
+
+### Phase 18: Value Objects
+
+### Phase 19: KB of redundant setup code
+
+- Uncertainty about which script is "correct"
+- All 5 directories created: `python314_freethreaded/`, `python314_standard/`, `python314t_project/`, `test-env/`, `production_env/`
+- 466MB of disk space wasted on parallel test environments
+
+---
+
+#### Oct 14 (Performance Testing)
+**Agent Task:** Establish performance baseline
+
+**Files Created (Sequential Variants):**
+
+| File | Date | Size | Purpose |
+|------|------|------|---------|
+| `test_python314_free_threaded.py` | Oct 14 05:45 | 5.4 KB | Free-threaded testing |
+| `test_python314_stable.py` | Oct 14 11:49 | 3.7 KB | Stable version testing |
+| `test_free_threading_benefits.py` | Oct 14 11:57 | 6.3 KB | Benefit demonstration |
+| `simple_load_test.py` | Oct 14 12:55 | 9.0 KB | Simplified load testing |
+
+**Root Cause Analysis:**
+- **What SHOULD have happened:** Create comprehensive baseline test, validate it works, document approach
+- **What ACTUALLY happened:** 4 separate test scripts with different approaches
+- **Agent Reasoning (Inferred):** "Each test aspect needs its own script for isolation and clarity"
+- **Problem:** Agents didn't know about each other's work; each assumed they were starting fresh
+
+**Evidence:**
+- `test_python314_free_threaded.py` + `test_free_threading_benefits.py` test same thing
+- `simple_load_test.py` duplicates `baseline_performance_test.py` (kept) logic
+- No imports between scripts; each standalone
+
+**Impact:**
+
+### Phase 20: KB of redundant test code
+
+- Maintenance confusion: which test do we run?
+- Added later: `baseline_performance_test.py` (12 KB, Oct 15)
+- Added later: `load_test_production.py` (12 KB, Oct 15)
+
+---
+
+#### Oct 15 (Critical Day - Discovery & Documentation of Duplicates)
+
+**Morning (Cleanup Analysis):**
+Agent reviewed all experimental artifacts and documented them in CLEANUP_LOG.md
+
+**Files Created (Documenting Duplicates):**
+1. `CLEANUP_LOG.md` - catalogs all variants and suggests archival
+2. `PHASE3_STATUS_SUMMARY.md` - deployment status
+3. `PHASE_2_COMPLETE_SUMMARY.md` - phase completion
+4. `PHASE2_COMPLETION_SUMMARY.md` - similar document (duplicate naming)
+
+**Late Afternoon (Regression Analysis):**
+Comprehensive analysis discovered:
+1. `MASTER_REGRESSION_REPORT_OCT15.md` - 740 lines analyzing regressions
+2. `ANALYSIS_INDEX_AND_QUICK_START.md` - navigation guide
+3. Parallel documents analyzing same issues
+
+**Root Cause of Documentation Duplication:**
+- **What SHOULD have happened:** Single comprehensive report
+- **What ACTUALLY happened:** Multiple reports with overlapping content
+- **Agent Reasoning (Inferred):** "Different audience needs (managers vs developers), different reports"
+- **Problem:** This creates MORE work to maintain consistency
+
+---
+
+## PART 2: ROOT CAUSE PATTERN ANALYSIS
+
+### Root Cause #1: Agent Uncertainty About Existing State
+**Frequency:** 8 instances
+**Severity:** HIGH
+**Examples:**
+- Setup scripts: Agents weren't sure if existing scripts were correct
+- Performance tests: Agents weren't sure if previous tests were comprehensive
+- CLI entries: Agents weren't sure if existing atoms could handle new modes
+
+**Pattern:**
+```
+Agent sees ambiguous problem:
+  ↓
+Agent asks: "Is existing implementation correct?"
+  ↓
+Agent uncertain about answer:
+  ↓
+Agent creates NEW file to be "safe"
+  ↓
+Result: Parallel implementations
+```
+
+**Evidence:** In CLEANUP_LOG.md, agent explicitly notes: "Can be recreated using setup scripts if needed" - suggesting agent knew these were experimental but created them anyway.
+
+---
+
+### Root Cause #2: Lack of Inter-Agent Communication
+**Frequency:** 6 instances
+**Severity:** CRITICAL
+**Examples:**
+
+### Phase 21: DevOps Engineer (part-time, 4 weeks)
+
+**Estimated Effort:** 28 person-weeks (10% less than pure Option A)
+
+**Risk Assessment:**
+
+| Risk Type | Probability | Impact | Mitigation |
+|-----------|-------------|--------|------------|
+| Breaking Changes | Medium (35%) | High | Comprehensive testing |
+| Performance Regression | Low (15%) | Medium | Benchmarking |
+| Missing Functionality | Low (18%) | High | Feature inventory |
+| Integration Issues | Low (25%) | Medium | Integration tests |
+| Coordination Complexity | Low (20%) | Low | Mi
+
+### Phase 22: lines eliminated
+
+- Zero breaking changes verification
+
+**Key Sections**:
+- Consolidation summary
+- Per-group analysis and decisions
+- Code reduction metrics
+- Quality improvements
+- Architectural validation
+
+---
+
+### PLANNING DOCUMENTS (PHASES 3-4)
+
+#### 9. PHASE_3_REFACTORING_PLAN.md
+**Type**: Phase Plan
+**Audience**: Developers, Architects
+**Purpose**:
+- Wire atoms_mcp-old application layer
+- MCP tools → use cases
+- REST endpoints → use cases
+- CLI commands → use cases
+
+#### 10. PHASE_4_CONSOLIDATION_CLEANUP_
+
+## 13. Milestones
+
+## 14. Dependencies
+
+## 16. Related Projects
+
+- config
+- --detailed
+- off
+- within
+- details
+- I
+- docker
+- implement
+- logger
+- README
+- guides
+- 485
+- configured
+- environment
+- else
+- need
+- 3
+- in
+- owner
+- sources
+- build
+- add
+- Structure
+- project
+- assessed
+- pulumi
+- entities
+- directories
+- analysis
+- Environments
+- Integration
+- to
+- metadata
+- HEALTH
+- python
+- Name
+- uv
+- running
+- -
+- --output
+- uses
+- limit
+- now
+- Workflow
+- root
+- standards
+- Migration
+- --threshold
+- that
+- for
+- needs
+- path
+- tested
+- configuration
+- import
+- prioritizing
+- --rules
+- work
+- folder
+- constraints
+- Updated
+- on-board
+- ---
+- dependencies
+- Overview
+- use
+- instantly
+- Verification
+- comply
+- limits
+- solved
+- claims
+- 1
+- management
+- Files
+- Location
+- metrics
+- has
+- permissions
+- operations
+- is
+- name
+- Type
+- setup
+- router-integration
+- Support
+- 2
+- test-env
+- must
+- context
+- morph-integration
+- includes
+- structure
+- or
+- cd
+- summary
+- via
+- benefit
+- Status
+- Entity
+- migrate
+- owner_id
+- paths
+- support
+- description
+- warning-free
+- Managers
+- Documentation
+- issues
+- type
+- owners
+- Root
+- scope
+- implements
+- documentation
+- files
+- Settings
+- Complete
+- state
+- run
+- pheno-refactor
+- into
+- report
+- depend
+- does
+- keeps
+- logic
+- entity
+- requires
+- completion
+- generated
+- tracking
+- by
+- managing
+- code
+- previously
+- Config
+- slug
+- with
+- are
+- 5
+- deployment
+- analyzer
+- at
+- conventions
+- directory
+- file

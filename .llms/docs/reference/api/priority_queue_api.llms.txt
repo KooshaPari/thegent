@@ -377,7 +377,7 @@ Enqueue *run* without blocking.
 
 **Raises**:
 
-- `Full`: If the queue is full (only when ``maxsize &gt; 0``).
+- `Full`: If the queue is full (only when ``maxsize > 0``).
 
 ---
 

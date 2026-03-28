@@ -1,0 +1,25 @@
+# onboarding_wizard_api
+
+Source: docs/reference/api/onboarding_wizard_api.md
+
+---
+
+# onboarding_wizard API Reference
+
+> **Source**: `src/thegent/integrations/onboarding_wizard.py`
+
+Stub module for thegent.integrations.onboarding_wizard.
+
+---
+
+## OnboardingStep
+
+Stub class.
+
+---
+
+## OnboardingWizard
+
+Stub class.
+
+---

@@ -4,6 +4,7 @@ Source: docs/research/QUICK_START_GHOSTTY_ZSH_STARSHIP_2026-02-18.md
 
 ---
 
+<DONE>
 # Quick Start: Ghostty + zsh + Starship Setup (2026-02-18)
 
 ## One-Line Installation

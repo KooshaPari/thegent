@@ -1,0 +1,185 @@
+# server_planning_tools_api
+
+Source: docs/reference/api/server_planning_tools_api.md
+
+---
+
+# server_planning_tools API Reference
+
+> **Source**: `src/thegent/mcp/server_planning_tools.py`
+
+Planning/escalation MCP tool registration helpers.
+
+---
+
+## register_planning_tools
+
+Register planning/escalation MCP tools and return stable handler bindings.
+
+---
+
+## thegent_dag_status
+
+```
+thegent_dag_status(cd: Any)
+```
+
+Return DAG item statuses.
+
+---
+
+## thegent_do_next
+
+```
+thegent_do_next(cd: Any, limit: int)
+```
+
+Find the next actionable work items from planning and escalation surfaces.
+
+---
+
+## thegent_escalate_add
+
+```
+thegent_escalate_add(run_id: str, reason: str, sla_minutes: int, owner: Any, agent: Any, lane: str, priority: int)
+```
+
+Add a blocked run to the escalation queue.
+
+---
+
+## thegent_escalate_approve
+
+```
+thegent_escalate_approve(run_id: str)
+```
+
+Approve an escalation (policy override).
+
+---
+
+## thegent_escalate_list
+
+```
+thegent_escalate_list(past_sla_only: bool, limit: int)
+```
+
+List escalation queue items.
+
+---
+
+## thegent_escalate_resolve
+
+```
+thegent_escalate_resolve(run_id: str, resolution: str)
+```
+
+Mark an escalation item as resolved.
+
+---
+
+## thegent_govern_list_pending
+
+List all pending HITL approval requests.
+
+---
+
+## thegent_history
+
+```
+thegent_history(limit: int)
+```
+
+List execution history.
+
+---
+
+## thegent_lock_resource
+
+```
+thegent_lock_resource(resource: str, ttl: int, cd: Any)
+```
+
+Acquire an exclusive lock on a resource.
+
+---
+
+## thegent_plan_analyze
+
+```
+thegent_plan_analyze(cd: Any, pert: bool, resources: bool, continuity: bool)
+```
+
+Run planning simulation overlays (XD1-XD3).
+
+---
+
+## thegent_plan_get_next
+
+```
+thegent_plan_get_next(cd: Any)
+```
+
+Get first work item prompt for scripting.
+
+---
+
+## thegent_plan_incorporate
+
+```
+thegent_plan_incorporate(cd: Any, dry_run: bool)
+```
+
+Merge planning fragments into backlog.
+
+---
+
+## thegent_plan_progress
+
+```
+thegent_plan_progress(limit: int)
+```
+
+Show recent runs with smaller default limit.
+
+---
+
+## thegent_plan_wait_next
+
+```
+thegent_plan_wait_next(cd: Any, poll: float, timeout: float, sources: str)
+```
+
+Block until next actionable work exists.
+
+---
+
+## thegent_retry
+
+```
+thegent_retry(run_id: str, agent_override: Any, failover: bool, cd: Any, override_reason: Any)
+```
+
+Retry a failed run by run_id.
+
+---
+
+## thegent_unlock_resource
+
+```
+thegent_unlock_resource(resource: str, token: str, cd: Any)
+```
+
+Release an exclusive lock on a resource.
+
+---
+
+## thegent_verify_context
+
+```
+thegent_verify_context(files: list[str], cd: Any)
+```
+
+Verify if any given files have changed (OCC check).
+
+---

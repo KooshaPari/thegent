@@ -1,0 +1,25 @@
+# guardrail_pack_migration_api
+
+Source: docs/reference/api/guardrail_pack_migration_api.md
+
+---
+
+# guardrail_pack_migration API Reference
+
+> **Source**: `src/thegent/integrations/guardrail_pack_migration.py`
+
+Stub module for thegent.integrations.guardrail_pack_migration.
+
+---
+
+## build_default_guardrail_pack
+
+Stub function.
+
+---
+
+## migrate_to_default_on_pack
+
+Stub function.
+
+---

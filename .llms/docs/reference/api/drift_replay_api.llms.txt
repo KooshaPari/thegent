@@ -1,0 +1,176 @@
+# drift_replay_api
+
+Source: docs/reference/api/drift_replay_api.md
+
+---
+
+# drift_replay API Reference
+
+> **Source**: `src/thegent/integrations/drift_replay.py`
+
+Drift Replay Tool for deterministic debugging.
+
+WL-317: Drift Replay Tool
+Replays drift scenarios from archived manifests for deterministic debugging.
+
+---
+
+## DriftManifest
+
+A manifest of drift events for replay.
+
+**Inherits from**: `SerializableMixin`
+
+---
+
+## DriftReplayEngine
+
+Engine for archiving and replaying drift manifests.
+
+### Methods
+
+#### DriftReplayEngine.archive_manifest
+
+```
+archive_manifest(manifest: DriftManifest, archive_dir: Path)
+```
+
+Archive a drift manifest to disk.
+
+**Parameters**:
+
+- `manifest`: DriftManifest to archive.
+- `archive_dir`: Directory to store archived manifest.
+
+**Returns**: Path where manifest was written.
+
+---
+
+#### DriftReplayEngine.list_manifests
+
+```
+list_manifests(archive_dir: Path)
+```
+
+List all manifest IDs in archive directory.
+
+**Parameters**:
+
+- `archive_dir`: Directory containing archived manifests.
+
+**Returns**: Sorted list of manifest IDs (without .json extension).
+
+---
+
+#### DriftReplayEngine.load_manifest
+
+```
+load_manifest(manifest_id: str, archive_dir: Path)
+```
+
+Load a drift manifest from archive.
+
+**Parameters**:
+
+- `manifest_id`: ID of manifest to load.
+- `archive_dir`: Directory containing archived manifests.
+
+**Returns**: Loaded DriftManifest instance.
+
+---
+
+#### DriftReplayEngine.replay
+
+```
+replay(manifest: DriftManifest)
+```
+
+Replay drifts from a manifest.
+
+Deterministically replays drift events from the manifest.
+
+**Parameters**:
+
+- `manifest`: DriftManifest to replay.
+
+**Returns**: List of drift events from the manifest.
+
+---
+
+---
+
+## archive_manifest
+
+```
+archive_manifest(manifest: DriftManifest, archive_dir: Path)
+```
+
+Archive a drift manifest to disk.
+
+**Parameters**:
+
+- `manifest`: DriftManifest to archive.
+- `archive_dir`: Directory to store archived manifest.
+
+**Returns**: Path where manifest was written.
+
+**Raises**:
+
+- `ValueError`: If archive_dir does not exist.
+
+---
+
+## list_manifests
+
+```
+list_manifests(archive_dir: Path)
+```
+
+List all manifest IDs in archive directory.
+
+**Parameters**:
+
+- `archive_dir`: Directory containing archived manifests.
+
+**Returns**: Sorted list of manifest IDs (without .json extension).
+
+---
+
+## load_manifest
+
+```
+load_manifest(manifest_id: str, archive_dir: Path)
+```
+
+Load a drift manifest from archive.
+
+**Parameters**:
+
+- `manifest_id`: ID of manifest to load.
+- `archive_dir`: Directory containing archived manifests.
+
+**Returns**: Loaded DriftManifest instance.
+
+**Raises**:
+
+- `FileNotFoundError`: If manifest file not found.
+
+---
+
+## replay
+
+```
+replay(manifest: DriftManifest)
+```
+
+Replay drifts from a manifest.
+
+Deterministically replays drift events from the manifest.
+
+**Parameters**:
+
+- `manifest`: DriftManifest to replay.
+
+**Returns**: List of drift events from the manifest.
+
+---

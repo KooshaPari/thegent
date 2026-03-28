@@ -1,0 +1,193 @@
+# rate_limit_api
+
+Source: docs/reference/api/rate_limit_api.md
+
+---
+
+# rate_limit API Reference
+
+> **Source**: `src/thegent/production/rate_limit.py`
+
+Rate Limiter
+
+Token bucket rate limiting.
+
+---
+
+## MultiRateLimiter
+
+Rate limiter with multiple buckets.
+
+### Methods
+
+#### MultiRateLimiter.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### MultiRateLimiter.acquire
+
+```
+acquire(self: Any, key: str, tokens: int, wait: bool)
+```
+
+Acquire tokens for a key.
+
+---
+
+#### MultiRateLimiter.get
+
+```
+get(self: Any, key: str, config: Optional[RateLimitConfig])
+```
+
+Get or create rate limiter for key.
+
+---
+
+#### MultiRateLimiter.stats
+
+```
+stats(self: Any)
+```
+
+Get statistics for all limiters.
+
+---
+
+---
+
+## RateLimitConfig
+
+Rate limit configuration.
+
+---
+
+## RateLimiter
+
+Token bucket rate limiter.
+
+### Methods
+
+#### RateLimiter.__init__
+
+```
+__init__(self: Any, config: Optional[RateLimitConfig])
+```
+
+---
+
+#### RateLimiter.acquire
+
+```
+acquire(self: Any, tokens: int, wait: bool)
+```
+
+Try to acquire tokens.
+
+---
+
+#### RateLimiter.available
+
+```
+available(self: Any)
+```
+
+Get available tokens.
+
+---
+
+#### RateLimiter.stats
+
+```
+stats(self: Any)
+```
+
+Get rate limiter statistics.
+
+---
+
+#### RateLimiter.try_acquire
+
+```
+try_acquire(self: Any, tokens: int)
+```
+
+Non-blocking acquire.
+
+---
+
+#### RateLimiter.wait_acquire
+
+```
+wait_acquire(self: Any, tokens: int)
+```
+
+Blocking acquire with wait.
+
+---
+
+---
+
+## acquire
+
+```
+acquire(self: Any, key: str, tokens: int, wait: bool)
+```
+
+Acquire tokens for a key.
+
+---
+
+## available
+
+```
+available(self: Any)
+```
+
+Get available tokens.
+
+---
+
+## get
+
+```
+get(self: Any, key: str, config: Optional[RateLimitConfig])
+```
+
+Get or create rate limiter for key.
+
+---
+
+## stats
+
+```
+stats(self: Any)
+```
+
+Get statistics for all limiters.
+
+---
+
+## try_acquire
+
+```
+try_acquire(self: Any, tokens: int)
+```
+
+Non-blocking acquire.
+
+---
+
+## wait_acquire
+
+```
+wait_acquire(self: Any, tokens: int)
+```
+
+Blocking acquire with wait.
+
+---

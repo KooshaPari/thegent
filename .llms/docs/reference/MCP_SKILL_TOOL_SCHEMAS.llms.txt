@@ -1,0 +1,154 @@
+# MCP_SKILL_TOOL_SCHEMAS
+
+Source: docs/reference/MCP_SKILL_TOOL_SCHEMAS.md
+
+---
+
+# MCP Skill Tool Schemas (WL-111)
+
+This document defines the current MCP contract for skill discovery and activation tools exposed by `thegent` server registry.
+
+## `thegent_list_skills`
+
+- Description: List discoverable skills from the current discovery backend.
+- Input schema:
+  - `type: object`
+  - `additionalProperties: false`
+  - `properties: {}` (no required args)
+- Output (structured content):
+  - `skills`: array of skill objects
+  - ordering: sorted case-insensitively by `name` (stable canonical contract)
+  - each skill object currently includes:
+    - `name: string`
+    - `description: string`
+    - `version: string`
+    - `entrypoint: string`
+    - `path: string`
+
+### Exact Request/Response Example
+
+Request:
+
+```
+{
+  "method": "tools/call",
+  "params": {
+    "name": "thegent_list_skills",
+    "arguments": {}
+  }
+}
+```
+
+Response:
+
+```
+{
+  "content": "{\"skills\":[{\"name\":\"thegent-skills\",\"description\":\"Core workflow guidance\",\"version\":\"1.0.0\",\"entrypoint\":\"thegent\",\"path\":\"/Users/example/.thegent/skills/thegent-skills\"}]}",
+  "structuredContent": {
+    "skills": [
+      {
+        "name": "thegent-skills",
+        "description": "Core workflow guidance",
+        "version": "1.0.0",
+        "entrypoint": "thegent",
+        "path": "/Users/example/.thegent/skills/thegent-skills"
+      }
+    ]
+  },
+  "meta": {
+    "execution_time_ms": 1,
+    "count": 1
+  }
+}
+```
+
+## `thegent_activate_skill`
+
+- Description: Load and return a skill payload by name.
+- Input schema:
+  - `type: object`
+  - `additionalProperties: false`
+  - `required: ["skill_name"]`
+  - `properties`:
+    - `skill_name: string`
+- Output (structured content on success):
+  - `skill`: object payload returned by the skill loader
+- Error payloads (fail-loud):
+  - `error: string`
+  - `remediation: string`
+  - optional `skill_name: string`
+
+### Exact Request/Response Example
+
+Request:
+
+```
+{
+  "method": "tools/call",
+  "params": {
+    "name": "thegent_activate_skill",
+    "arguments": {
+      "skill_name": "thegent-skills"
+    }
+  }
+}
+```
+
+Success response:
+
+```
+{
+  "content": "{\"skill\":{\"name\":\"thegent-skills\",\"content\":\"# thegent-skills\\nUse the quality gate before merge.\"}}",
+  "structuredContent": {
+    "skill": {
+      "name": "thegent-skills",
+      "content": "# thegent-skills\nUse the quality gate before merge."
+    }
+  },
+  "meta": {
+    "execution_time_ms": 1,
+    "skill_name": "thegent-skills"
+  }
+}
+```
+
+Error response (missing skill):
+
+```
+{
+  "content": "{\"error\":\"Skill not found: missing-skill\",\"remediation\":\"Call thegent_list_skills and retry with a listed name.\",\"exit_code\":1,\"skill_name\":\"missing-skill\"}",
+  "structuredContent": {
+    "error": "Skill not found: missing-skill",
+    "remediation": "Call thegent_list_skills and retry with a listed name.",
+    "exit_code": 1,
+    "skill_name": "missing-skill"
+  },
+  "meta": {
+    "execution_time_ms": 0
+  }
+}
+```
+
+Error response (invalid `skill_name` type):
+
+```
+{
+  "content": "{\"error\":\"skill_name must be a string\",\"remediation\":\"Provide skill_name as a string value.\",\"exit_code\":1}",
+  "structuredContent": {
+    "error": "skill_name must be a string",
+    "remediation": "Provide skill_name as a string value.",
+    "exit_code": 1
+  },
+  "meta": {
+    "execution_time_ms": 0
+  }
+}
+```
+
+## Smoke Validation
+
+The registry-level smoke test for these schemas is:
+
+```
+uv run pytest -q tests/mcp/test_tools_skills_registry_smoke.py
+```

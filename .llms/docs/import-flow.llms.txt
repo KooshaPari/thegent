@@ -1,0 +1,77 @@
+# import-flow
+
+Source: docs/import-flow.md
+
+---
+
+# Import Flow
+
+This document describes how to import and set up packages from the Phenotype ecosystem.
+
+## Go Packages
+
+### Import via go.mod
+
+```
+import (
+    "github.com/kooshapari/phenotype-go-kit/pkg/llmproxy"
+    "github.com/kooshapari/phenotype-go-kit/pkg/auth"
+)
+```
+
+### Install
+
+```
+go get github.com/kooshapari/phenotype-go-kit/pkg/llmproxy@latest
+```
+
+## NPM Packages
+
+### Install
+
+```
+npm install @phenotype/sdk
+# or
+bun add @phenotype/sdk
+```
+
+### Import
+
+```
+import { HeliosClient } from '@phenotype/sdk';
+```
+
+## Python Packages
+
+### Install
+
+```
+pip install phenotype-sdk
+# or
+uv pip install phenotype-sdk
+```
+
+### Import
+
+```
+from phenotype import HeliosClient
+```
+
+## Configuration
+
+### Go Config
+
+```
+cfg := &llmproxy.Config{
+    Port: 8080,
+    Providers: []string{"openai", "anthropic"},
+}
+```
+
+### Environment Variables
+
+```
+export HELIOS_PORT=8080
+export HELIOS_LOG_LEVEL=debug
+export HELIOS_CONFIG_PATH=~/.config/helios/config.toml
+```

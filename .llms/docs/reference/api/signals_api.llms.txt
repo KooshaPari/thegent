@@ -1,0 +1,97 @@
+# signals_api
+
+Source: docs/reference/api/signals_api.md
+
+---
+
+# signals API Reference
+
+> **Source**: `src/thegent/process/signals.py`
+
+Signal Handler
+
+Registers handlers for graceful shutdown.
+
+---
+
+## SignalHandler
+
+Handles system signals for graceful shutdown.
+
+### Methods
+
+#### SignalHandler.__init__
+
+```
+__init__(self: Any)
+```
+
+---
+
+#### SignalHandler.install
+
+```
+install(self: Any)
+```
+
+Install signal handlers.
+
+---
+
+#### SignalHandler.on_shutdown
+
+```
+on_shutdown(self: Any, callback: Callable[(Any, object)])
+```
+
+Register callback for shutdown.
+
+---
+
+#### SignalHandler.restore
+
+```
+restore(self: Any)
+```
+
+Restore original signal handlers.
+
+---
+
+---
+
+## install
+
+```
+install(self: Any)
+```
+
+Install signal handlers.
+
+---
+
+## install_signal_handlers
+
+Install global signal handlers.
+
+---
+
+## on_shutdown
+
+```
+on_shutdown(self: Any, callback: Callable[(Any, object)])
+```
+
+Register callback for shutdown.
+
+---
+
+## restore
+
+```
+restore(self: Any)
+```
+
+Restore original signal handlers.
+
+---

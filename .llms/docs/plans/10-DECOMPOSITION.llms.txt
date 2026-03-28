@@ -1,0 +1,283 @@
+# 10-DECOMPOSITION
+
+Source: docs/plans/10-DECOMPOSITION.md
+
+---
+
+# thegent Monorepo Decomposition Plan
+
+**Date**: 2026-03-25
+**Status**: Draft
+**Version**: 1.0
+
+---
+
+## Executive Summary
+
+Decompose thegent monorepo (34 Rust crates + 17 Python packages + 198 modules) into independently versioned, deployable micro-repos following KISS, DRY, SOLID, and Clean Architecture principles.
+
+---
+
+## Current State
+
+```
+thegent/
+├── crates/                    # 34 Rust crates
+│   ├── thegent-shm           # Shared memory, circuit breakers
+│   ├── thegent-subprocess    # Process management
+│   ├── thegent-cache         # Caching layer
+│   ├── thegent-router        # AI routing
+│   ├── thegent-runtime       # Runtime
+│   └── ... (29 more)
+├── packages/                  # 17 Python packages
+│   ├── thegent-cli
+│   ├── thegent-core
+│   ├── thegent-agents
+│   └── ... (13 more)
+└── src/thegent/              # 198 Python modules
+    ├── mesh/                 # Coordination (queue, merge, cache)
+    ├── orchestration/         # Execution strategies
+    ├── infra/                # Infrastructure
+    └── ... (195 more)
+```
+
+---
+
+## Decomposition Strategy
+
+### Principles
+
+1. **Single Responsibility**: Each repo does one thing well
+2. **Independence**: No circular dependencies between repos
+3. **Polyglot**: Each repo uses optimal language for its domain
+4. **Versioning**: Independent versioning per repo
+5. **Shared Core**: Extract shared primitives to dedicated libs
+
+### Dependency Graph (Target)
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │           thegent-core (shared)          │
+                    │   - SHM, Cache, Metrics, Utils, FSM     │
+                    └─────────────────────────────────────────┘
+                                       ▲
+                    ┌──────────────────┼──────────────────┐
+                    │                  │                  │
+        ┌───────────┴───┐   ┌────────┴───────┐   ┌───────┴────────┐
+        │ thegent-     │   │ thegent-       │   │ thegent-       │
+        │ execution    │   │ routing        │   │ agents         │
+        │ (Rust)      │   │ (Rust)        │   │ (Python)       │
+        └──────────────┘   └────────────────┘   └────────────────┘
+                    │                  │                  │
+                    └──────────────────┼──────────────────┘
+                                       ▼
+                    ┌─────────────────────────────────────────┐
+                    │          thegent-cli (Python)            │
+                    │   - Orchestration, CLI, Integration    │
+                    └─────────────────────────────────────────┘
+```
+
+---
+
+## Proposed Micro-Repos
+
+### Tier 1: Shared Primitives (No Dependencies)
+
+| Repo | Language | Description | Source |
+|------|----------|-------------|--------|
+| `thegent-shm` | Rust | Shared memory, circuit breakers, locks | `crates/thegent-shm` |
+| `thegent-cache` | Rust | Multi-tier caching, singleflight | `crates/thegent-cache` |
+| `thegent-metrics` | Rust | Metrics collection, observability | `crates/thegent-metrics` |
+| `thegent-utils` | Rust | Common utilities, error handling | `crates/thegent-utils` |
+| `thegent-fsm` | Rust | Finite state machine primitives | `crates/thegent-parser` (extract) |
+
+### Tier 2: Core Services (Depend on Tier 1)
+
+| Repo | Language | Description | Source |
+|------|----------|-------------|--------|
+| `thegent-subprocess` | Rust | Process spawning, management | `crates/thegent-subprocess` |
+| `thegent-runtime` | Rust | Runtime management, resource limits | `crates/thegent-runtime` |
+| `thegent-router` | Rust | AI model routing, load balancing | `crates/thegent-router` |
+| `thegent-git` | Rust | Git operations, locking | `crates/thegent-git` |
+| `thegent-fs` | Rust | File system operations | `crates/thegent-fs` |
+
+### Tier 3: Agent System (Python, Depend on Tier 1-2)
+
+| Repo | Language | Description | Source |
+|------|----------|-------------|--------|
+| `thegent-core` | Python | Core runtime, state management | `packages/thegent-core` |
+| `thegent-agents` | Python | Agent framework, behaviors | `packages/thegent-agents` |
+| `thegent-mcp` | Python | MCP server implementation | `packages/thegent-mcp` |
+| `thegent-skills` | Python | Skills registry and execution | `packages/thegent-skills` |
+
+### Tier 4: Integration (Depend on Tier 1-3)
+
+| Repo | Language | Description | Source |
+|------|----------|-------------|--------|
+| `thegent-cli` | Python | CLI interface | `packages/thegent-cli` |
+| `thegent-cliproxy` | Python | CLI Proxy adapter | `src/thegent/cliproxy` |
+| `thegent-observability` | Python | Logging, tracing, dashboards | `packages/thegent-observability` |
+| `thegent-sync` | Python | Sync and autosync | `packages/thegent-sync` |
+
+### Tier 5: CLI Share System (New Extraction)
+
+| Repo | Language | Description | Source |
+|------|----------|-------------|--------|
+| `thegent-mesh` | Python/Rust | Queue, merge, cache, coordination | `src/thegent/mesh/` |
+| `thegent-share` | Rust | Command deduplication, locks | `thegent-shm` (CMD_CACHE) |
+
+### Architecture Comparison
+
+| Feature | Original Implementation | New Repo |
+|---------|----------------------|----------|
+| Command Deduplication | `thegent-shm` + Python bridge | `thegent-share` |
+| Task Queue | `mesh/task_queue.py` | `thegent-mesh` |
+| Smart Merge | `mesh/smart_merge.py` (Mergiraf) | `thegent-mesh` |
+| Request Coalescing | `mesh/cache.py` + `infra/cache_v2.py` | `thegent-cache` |
+| Speculative Execution | `strategies/speculative_strategies.py` | `thegent-mesh` |
+| Coordination (HLC/OCC) | `mesh/coordination.py` | `thegent-mesh` |
+
+---
+
+## Extraction Order
+
+### Phase 1: Extract Tier 1 (Shared Primitives)
+1. `thegent-shm` - Already done, just ensure independence
+2. `thegent-cache` - Extract from `infra/cache_v2.py` + `crates/thegent-cache`
+3. `thegent-metrics` - Consolidate from `crates/thegent-metrics`
+4. `thegent-utils` - Consolidate from `crates/thegent-utils`
+
+### Phase 2: Extract Tier 2 (Core Services)
+5. `thegent-subprocess` - Already `crates/thegent-subprocess`
+6. `thegent-runtime` - Already `crates/thegent-runtime`
+7. `thegent-router` - Already `crates/thegent-router`
+
+### Phase 3: Extract Tier 3 (Agent System)
+8. `thegent-core` - Already `packages/thegent-core`
+9. `thegent-agents` - Already `packages/thegent-agents`
+10. `thegent-mcp` - Already `packages/thegent-mcp`
+
+### Phase 4: Consolidation
+11. `thegent-mesh` - Extract `mesh/` as new package
+12. `thegent-share` - Consolidate cmd_share into `thegent-shm`
+
+---
+
+## CLI Share System (Consolidated from Original Implementation)
+
+### Original Implementation Files
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `crates/thegent-shm/src/lib.rs` | CMD_CACHE (64 slots) | ✅ Active |
+| `crates/thegent-shm/src/lib.rs` | Circuit Breakers | ✅ Active |
+| `src/thegent/mesh/task_queue.py` | Maildir-style queue | ✅ Active |
+| `src/thegent/mesh/smart_merge.py` | Mergiraf-based merging | ✅ Active |
+| `src/thegent/mesh/cache.py` | Singleflight | ✅ Active |
+| `src/thegent/infra/cache_v2.py` | Multi-tier cache | ✅ Active |
+| `src/thegent/mesh/coordination.py` | HLC, OCC, Leases | ✅ Active |
+| `src/thegent/orchestration/strategies/speculative_strategies.py` | Racing | ✅ Active |
+| `src/thegent/orchestration/execution/cmd_share.py` | Python wrapper | ✅ Active |
+
+### Strategy Matrix
+
+| Strategy | Implementation | Lines | Dependencies |
+|----------|---------------|-------|--------------|
+| **Command Deduplication** | SHM CMD_CACHE | 1,990 | None (base) |
+| **Task Queue** | Maildir-style | 234 | SHM |
+| **Smart Merge** | Mergiraf | 609 | Git |
+| **Request Coalescing** | Singleflight | 272 | SHM |
+| **Multi-tier Cache** | L1/L2/L3 | 506 | SHM, FS |
+| **Speculative Execution** | Racing | 97 | Router |
+| **Conflict Prediction** | EditIntent | 327 | FS, Parser |
+| **Coordination** | HLC/OCC | 327 | SHM |
+
+### CLI Share Integration Path
+
+```
+Current (Monorepo):
+  thegent-shm (Rust) ←PyO3→ Python cmd_share.py
+
+Proposed (Micro-repos):
+  thegent-share/           # New meta-package
+  ├── thegent-share-core/  # Rust: cmd_cache, circuit_breakers
+  ├── thegent-mesh/        # Python: queue, merge, coordination
+  └── thegent-cli/         # CLI wrappers
+```
+
+---
+
+## Dependency Management
+
+### PyO3 Bindings Strategy
+
+For Python/Rust interop, use PyO3 bindings:
+
+```
+# Python package Cargo.toml
+[lib]
+name = "thegent_shm"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+```
+
+### Workspace Structure
+
+```
+# Recommended workspace for Rust repos
+packages:
+  - path: crates/thegent-shm
+  - path: crates/thegent-cache
+  - path: crates/thegent-subprocess
+  # etc.
+```
+
+---
+
+## Migration Path
+
+### Step 1: Document Current State
+- [x] Inventory all crates, packages, modules
+- [x] Map dependencies
+- [ ] Document API boundaries
+
+### Step 2: Extract Tier 1 (1 week)
+- [ ] Fork `thegent-shm` as `KooshaPari/thegent-shm`
+- [ ] Fork `thegent-cache` as `KooshaPari/thegent-cache`
+- [ ] Fork `thegent-metrics` as `KooshaPari/thegent-metrics`
+- [ ] Fork `thegent-utils` as `KooshaPari/thegent-utils`
+
+### Step 3: Extract Tier 2 (1 week)
+- [ ] Fork Rust crates as independent repos
+- [ ] Update dependency references
+
+### Step 4: Extract Tier 3-4 (2 weeks)
+- [ ] Fork Python packages
+- [ ] Update imports
+
+### Step 5: Extract Tier 5 (1 week)
+- [ ] Extract `thegent-mesh` from `mesh/`
+- [ ] Consolidate cmd_share
+
+---
+
+## Rollback Plan
+
+If decomposition causes issues:
+1. Keep `thegent` as reference monorepo
+2. Work in micro-repos with `thegent` as `path` dependency
+3. Graduate to standalone when stable
+
+---
+
+## References
+
+- Original cmd_share.py: `src/thegent/orchestration/execution/cmd_share.py`
+- Original smart_merge.py: `src/thegent/mesh/smart_merge.py`
+- Original task_queue.py: `src/thegent/mesh/task_queue.py`
+- Original coordination.py: `src/thegent/mesh/coordination.py`
+- Original cache_v2.py: `src/thegent/infra/cache_v2.py`
+- Original speculative_strategies.py: `src/thegent/orchestration/strategies/speculative_strategies.py`
+- Original SHM: `crates/thegent-shm/src/lib.rs`

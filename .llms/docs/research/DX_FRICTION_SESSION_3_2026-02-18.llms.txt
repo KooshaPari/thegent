@@ -4,6 +4,7 @@ Source: docs/research/DX_FRICTION_SESSION_3_2026-02-18.md
 
 ---
 
+<DONE>
 # DX/UX/AX Friction Improvements - Session 3 (2026-02-18)
 
 > **Status**: Active | **Date**: 2026-02-18

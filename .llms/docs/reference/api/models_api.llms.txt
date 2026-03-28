@@ -6,20 +6,24 @@ Source: docs/reference/api/models_api.md
 
 # models API Reference
 
-> **Source**: `src/thegent/cli/apps/models.py`
+> **Source**: `src/thegent/utils/routing_impl/models.py`
 
-Sub-stream: Model and Provider Management.
+## RoutingConstraint
 
----
-
-## models_list
-
-List all models in the catalog (static + custom).
+A constraint for routing a task.
 
 ---
 
-## models_tui
+## TaskCategory
 
-Launch rich TUI for adding and managing custom models/providers.
+Task complexity classification.
+
+**Inherits from**: `StrEnum`
+
+---
+
+## TaskMetadata
+
+Routing and classification metadata for a task.
 
 ---
