@@ -1,0 +1,77 @@
+# Release Flow
+
+This document describes the release process for Phenotype packages.
+
+## Version Strategy
+
+- **Major.Minor.Patch** format
+- Major: Breaking changes
+- Minor: New features, backward compatible
+- Patch: Bug fixes
+
+## Go Packages
+
+### 1. Update Version
+
+```bash
+# In the package directory
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+### 2. Release Notes
+
+Create GitHub release with:
+- Changes since last version
+- Breaking changes (if any)
+- Migration guide (if needed)
+
+## NPM Packages
+
+### 1. Update Version
+
+```bash
+# Update version in package.json
+npm version patch  # or minor, major
+
+# Or manually edit package.json
+```
+
+### 2. Publish
+
+```bash
+npm publish --access public
+```
+
+## Python Packages
+
+### 1. Update Version
+
+```bash
+# Update version in pyproject.toml
+git tag v1.2.3
+```
+
+### 2. Build and Publish
+
+```bash
+python -m build
+twine upload dist/*
+```
+
+## CI/CD
+
+### Automated Releases
+
+- GitHub Actions for automated builds
+- Semantic versioning via conventional commits
+- Auto-changelog generation
+
+### Release Checklist
+
+- [ ] All tests pass
+- [ ] Version updated
+- [ ] CHANGELOG updated
+- [ ] Release notes created
+- [ ] GitHub release published
+- [ ] Package published to registry
