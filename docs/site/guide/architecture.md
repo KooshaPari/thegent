@@ -1,3 +1,10 @@
+---
+type: howto
+evidence_bundle: site-guide-architecture
+---
+
+<EvidenceBundle bundle="site-guide-architecture" title="Evidence Bundle: Guide Architecture" />
+
 # Architecture
 
 `thegent` is an orchestration runtime with three primary layers: execution, governance, and interface.
