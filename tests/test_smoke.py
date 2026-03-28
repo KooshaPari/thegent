@@ -49,8 +49,9 @@ def test_thegent_exit_codes_importable() -> None:
 @pytest.mark.requirement("FR-INFRA-002")
 def test_thegent_constants_importable() -> None:
     """constants module must be importable."""
-    importlib.import_module("thegent.constants")
+    constants = importlib.import_module("thegent.constants")
 
+    assert constants.__name__ == "thegent.constants"
     assert "thegent.constants" in sys.modules
 
 
