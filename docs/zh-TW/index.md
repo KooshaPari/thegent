@@ -1,0 +1,15 @@
+---
+layout: home
+---
+
+# 繁體中文（建置中）
+
+目前此文件站尚未提供完整繁體中文版本。你可以先使用英文版本閱讀：
+
+- [English](/)
+
+建議入口：
+- [Start Here](/start-here.md)
+- [Tutorials](/tutorials/)
+- [How-to](/how-to/)
+- [Reference](/reference/)

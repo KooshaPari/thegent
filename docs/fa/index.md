@@ -1,0 +1,15 @@
+---
+layout: home
+---
+
+# فارسی (در حال تکمیل)
+
+این مستندات هنوز به طور کامل ترجمه نشده است. موقتاً می‌توانید از نسخه انگلیسی استفاده کنید:
+
+- [English](/)
+
+لینک‌های شروع:
+- [Start Here](/start-here.md)
+- [Tutorials](/tutorials/)
+- [How-to](/how-to/)
+- [Reference](/reference/)

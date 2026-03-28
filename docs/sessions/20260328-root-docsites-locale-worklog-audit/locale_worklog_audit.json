@@ -1,0 +1,211 @@
+{
+  "generated_at": "2026-03-28",
+  "rows": [
+    {
+      "repo": "agent-devops-setups",
+      "vitepress": false,
+      "config": null,
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "bifrost-extensions",
+      "vitepress": true,
+      "config": "bifrost-extensions/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "cliproxyapi-plusplus",
+      "vitepress": true,
+      "config": "cliproxyapi-plusplus/docs/.vitepress/config.ts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "forgecode",
+      "vitepress": true,
+      "config": "forgecode/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG.md only"
+    },
+    {
+      "repo": "heliosApp",
+      "vitepress": true,
+      "config": "heliosApp/docs/.vitepress/config.ts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG+sessions(0)"
+    },
+    {
+      "repo": "heliosCLI",
+      "vitepress": true,
+      "config": "heliosCLI/docs/.vitepress/config.ts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "docs/sessions(0)"
+    },
+    {
+      "repo": "phench",
+      "vitepress": true,
+      "config": "phench/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG.md only"
+    },
+    {
+      "repo": "phenotype-gauge",
+      "vitepress": true,
+      "config": "phenotype-gauge/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "phenotype-go-kit",
+      "vitepress": true,
+      "config": "phenotype-go-kit/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG.md only"
+    },
+    {
+      "repo": "phenotype-infrakit",
+      "vitepress": true,
+      "config": "phenotype-infrakit/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG.md only"
+    },
+    {
+      "repo": "phenotype-nexus",
+      "vitepress": true,
+      "config": "phenotype-nexus/docs/.vitepress/config.mts",
+      "expected_locales": [
+        "label",
+        "lang",
+        "dir"
+      ],
+      "locale_dirs": [],
+      "missing_locales": [
+        "label",
+        "lang",
+        "dir"
+      ],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "phenotype-shared",
+      "vitepress": true,
+      "config": "phenotype-shared/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG.md only"
+    },
+    {
+      "repo": "phenotype-xdd",
+      "vitepress": true,
+      "config": "phenotype-xdd/docs/.vitepress/config.mts",
+      "expected_locales": [
+        "label",
+        "lang",
+        "dir"
+      ],
+      "locale_dirs": [],
+      "missing_locales": [
+        "label",
+        "lang",
+        "dir"
+      ],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "phenotypeActions",
+      "vitepress": true,
+      "config": "phenotypeActions/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "policy-contract",
+      "vitepress": true,
+      "config": "policy-contract/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "docs/sessions(0)"
+    },
+    {
+      "repo": "profiler",
+      "vitepress": true,
+      "config": "profiler/docs/.vitepress/config.ts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "WORKLOG.md only"
+    },
+    {
+      "repo": "tokenledger-wt",
+      "vitepress": true,
+      "config": "tokenledger-wt/docs/.vitepress/config.ts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "trace",
+      "vitepress": true,
+      "config": "trace/docs/.vitepress/config.ts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    },
+    {
+      "repo": "trash-cli",
+      "vitepress": true,
+      "config": "trash-cli/docs/.vitepress/config.mts",
+      "expected_locales": [],
+      "locale_dirs": [],
+      "missing_locales": [],
+      "orphan_locale_dirs": [],
+      "worklog_status": "absent"
+    }
+  ]
+}
