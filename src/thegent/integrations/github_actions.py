@@ -235,22 +235,12 @@ def trigger_workflow(
     _log.info("Triggering workflow %s on %s@%s", workflow_id, repo, ref)
 
     # POST to dispatches endpoint; returns 204 No Content on success.
-    cmd = [
-        "gh", "api",
-        "--method", "POST",
-        path,
-        "-f", f"ref={ref}",
-    ]
+    extra: list[str] = []
     if inputs:
         for k, v in inputs.items():
-            cmd += ["-f", f"inputs[{k}]={v}"]
+            extra += ["-f", f"inputs[{k}]={v}"]
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"trigger_workflow failed for {repo}/{workflow_id}@{ref} "
-            f"(exit {result.returncode}): {result.stderr.strip()}"
-        )
+    _gh_run_cmd("api", "--method", "POST", path, "-f", f"ref={ref}", *extra)
     _log.info("Workflow dispatch accepted for %s/%s@%s", repo, workflow_id, ref)
 
 
@@ -291,15 +281,7 @@ def cancel_workflow_run(repo: str, run_id: int) -> None:
     RuntimeError
         On API failure.
     """
-    result = subprocess.run(
-        ["gh", "api", "--method", "POST", f"/repos/{repo}/actions/runs/{run_id}/cancel"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"cancel_workflow_run({run_id}) failed (exit {result.returncode}): {result.stderr.strip()}"
-        )
+    _gh_run_cmd("api", "--method", "POST", f"/repos/{repo}/actions/runs/{run_id}/cancel")
     _log.info("Cancelled workflow run %s in %s", run_id, repo)
 
 
@@ -321,13 +303,5 @@ def rerun_workflow(repo: str, run_id: int, *, failed_only: bool = False) -> None
         On API failure.
     """
     suffix = "/failed-jobs" if failed_only else ""
-    result = subprocess.run(
-        ["gh", "api", "--method", "POST", f"/repos/{repo}/actions/runs/{run_id}/rerun{suffix}"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"rerun_workflow({run_id}) failed (exit {result.returncode}): {result.stderr.strip()}"
-        )
+    _gh_run_cmd("api", "--method", "POST", f"/repos/{repo}/actions/runs/{run_id}/rerun{suffix}")
     _log.info("Re-run triggered for workflow run %s in %s (failed_only=%s)", run_id, repo, failed_only)
