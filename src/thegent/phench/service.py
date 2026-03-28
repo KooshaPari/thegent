@@ -2283,6 +2283,7 @@ def scan_shared_modules_across_repos(
     recommendations = _build_recommended_modules(shared_modules, depends_on_by_module=repo_dependencies)[
         :SCAN_SHARED_REPOS_RECOMMENDED_MODULE_COUNT_LIMIT
     ]
+        print("DEBUG recommendation stats:", [(item["module"], item["repo_count"], item["depends_on_count"]) for item in recommendations])
 
     return {
         "scan_schema_version": SCAN_SHARED_REPOS_SCHEMA_VERSION,
