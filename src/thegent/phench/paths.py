@@ -35,6 +35,16 @@ def _derive_default_repos_root() -> Path:
     return phenotype_root() / "repos"
 
 
+def repository_root_candidates() -> list[Path]:
+    """Return directories under the standard Phenotype repos root."""
+    root = phenotype_repos_root()
+    if not root.exists():
+        return []
+    return sorted(
+        path for path in root.iterdir() if path.is_dir() and not path.name.startswith(".")
+    )
+
+
 def should_include_repo(
     repo_name: str,
     include_patterns: list[str] | None = None,
@@ -112,3 +122,14 @@ def module_manifest_root(module: str) -> Path:
 
 def module_manifest_path(module: str) -> Path:
     return module_manifest_root(module) / "manifest.json"
+
+
+def module_manifests_root() -> Path:
+    return projects_root() / "modules"
+
+
+def repository_root_candidates() -> list[Path]:
+    base = phenotype_repos_root()
+    if not base.exists():
+        return []
+    return sorted([path for path in base.iterdir() if path.is_dir() and not path.name.startswith(".")])

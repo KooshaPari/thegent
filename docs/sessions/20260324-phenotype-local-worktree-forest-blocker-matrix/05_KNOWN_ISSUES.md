@@ -21,7 +21,7 @@
 ### Operational: Layout and State Blockers
 - **`cliproxy-wtress`**: Typo duplicate of `cliproxy-wtrees` (Must-Normalize).
 - **`portage`**: Stale prunable worktrees and detached legacy lanes (Cleanup-Ready).
-- **`trace`**: Locked initializing lanes (`codex-required-gates*`) block migration (Unlock-Required).
+- **`trace`**: `codex-required-gates*` locks were cleared on 2026-03-28 (only `trace`, `trace-wtrees/spec-docs`, and `trace-wtrees/ui-overhaul` remain in `git worktree list --porcelain`).
 - **`trash-cli`**: Detached `PROJECT-wtrees` lane (`pr1-rust-put-fix`).
 - **`ralph-codex-loop`**: Unborn/Initializing (`HEAD` is all zeros).
 
@@ -35,4 +35,3 @@
 - **`template-commons-wtrees`:** Directory present but **not a git repo** — confirm whether it should be a hub, symlink, or removed.
 - **`heliosApp`**: Missing `CONTRIBUTING.md` and disk space runbook (2026-03-24).
 - **`portage`**: No cron schedule for `/private/tmp` cleanup found.
-

@@ -53,3 +53,41 @@ The following worktree lanes remain in place because they are unmerged and there
 - `worktrees/phenotype-gauge/add-vitepress`
 - `worktrees/phenotype-nexus/add-docs`
 - `phenotype-xdd-wtrees/spec-docs`
+
+## Archive Index
+
+Archived worktree history already exists under:
+- `/Users/kooshapari/CodeProjects/Phenotype/repos/.archive/worktrees`
+
+This archive includes preserved summaries and worklogs for repos such as:
+- `agentapi-plusplus`
+- `AgilePlus`
+- `bifrost-extensions`
+- `clikit`
+- `cliproxyapi-plusplus`
+- `colab`
+- `crates`
+- `forgecode`
+- `heliosApp`
+- `heliosCLI`
+- `helMo`
+- `parpour`
+- `phench`
+- `phenodocs`
+- `phenotype-config`
+- `phenotype-go-kit`
+- `phenotype-infrakit`
+- `phenotype-shared`
+- `policy-contract`
+- `portage`
+- `profiler`
+- `thegent`
+- `phenotype-xdd`
+
+## Preservation Note
+
+The archive is intentionally left untouched. It exists as the long-term record for completed and merged work, while the following lanes remain active and therefore excluded from cleanup:
+- `phenotype-infrakit/.worktrees/spec-docs`
+- `worktrees/phenotype-gauge/add-vitepress`
+- `worktrees/phenotype-nexus/add-docs`
+- `phenotype-xdd-wtrees/spec-docs`

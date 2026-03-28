@@ -1,7 +1,7 @@
 ---
 work_package_id: "WP01"
 title: "Document evidence classification"
-lane: "planned"
+lane: "done"
 subtasks:
   - "T101"
   - "T102"
@@ -16,6 +16,10 @@ history:
     lane: "planned"
     agent: "system"
     action: "WP created"
+  - timestamp: "2026-03-28T12:30:00Z"
+    lane: "done"
+    agent: "codex"
+    action: "Documented frontmatter standards and WBS"
 ---
 
 # Work Package Prompt: WP01 – Document evidence classification

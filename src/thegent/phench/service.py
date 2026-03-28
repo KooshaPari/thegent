@@ -32,6 +32,7 @@ from .paths import (
     target_root,
     validate_family_name,
     phenotype_repos_root,
+    repository_root_candidates,
     target_state_root,
 )
 from .runner import build_runner_catalog, pick_command_interactive, run_command
@@ -1664,29 +1665,27 @@ def _build_scannable_candidate_name(base: str, used_names: set[str], *, max_atte
 def _build_recommended_modules(
     shared_modules: dict[str, list[str]],
     *,
-    module_prefix: str = "shared-module",
-    exclude_repos: set[str] | None = None,
-    candidate_name_regex: str | None = None,
-    min_repo_count: int = 2,
-) -> dict[str, list[str]]:
-    excluded = exclude_repos or set()
-    filtered: dict[str, list[str]] = {}
-    for module_name, repos in sorted(shared_modules.items(), key=lambda item: item[0]):
-        filtered_repos = [r for r in repos if r not in excluded]
-        if len(filtered_repos) < min_repo_count:
+    depends_on_by_module: dict[str, set[str]] | None = None,
+) -> list[dict[str, Any]]:
+    recommendations: list[dict[str, Any]] = []
+    for module_name in sorted(shared_modules.keys()):
+        repos = sorted(shared_modules[module_name])
+        if not repos:
             continue
-        filtered[module_name] = sorted(filtered_repos)
-    if not filtered:
-        return {}
-    used_names: set[str] = set()
-    result: dict[str, list[str]] = {}
-    for module_name, repos in sorted(filtered.items(), key=lambda item: item[0]):
-        prefix = _normalize_candidate_module_name(module_prefix)
-        base = _normalize_candidate_module_name(module_name)
-        candidate = _build_scannable_candidate_name(base, used_names)
-        used_names.add(candidate)
-        result[f"{prefix}-{candidate}"] = repos
-    return result
+        depends_on = sorted(depends_on_by_module.get(module_name, set())) if depends_on_by_module else []
+        recommendations.append(
+            {
+                "module": module_name,
+                "repo_ids": repos,
+                "repo_count": len(repos),
+                "depends_on": depends_on,
+                "depends_on_count": len(depends_on),
+            }
+        )
+    return sorted(
+        recommendations,
+        key=lambda item: (-item["repo_count"], -item["depends_on_count"], item["module"]),
+    )
 
 
 def _append_warning(warnings: list[str], message: str) -> None:
@@ -1764,11 +1763,26 @@ def _resolve_candidate_dependency(
 
 
 def _find_repo_module_dependencies(
-    candidates: dict[str, list[str]],
-    repo_python_modules: dict[str, set[str]],
-    repo_python_files: dict[str, list[Path]],
-) -> dict[str, str | None]:
-    return {name: _resolve_candidate_dependency(name, repo_python_modules, repo_python_files) for name in candidates}
+    repo_path: Path,
+) -> tuple[dict[str, set[str]], list[dict[str, str]]]:
+    modules = _find_repo_modules(repo_path)
+    if not modules:
+        return {}, []
+
+    dependencies: dict[str, set[str]] = {module: set() for module in modules}
+    warnings: list[dict[str, str]] = []
+
+    for py_file in _iter_repo_python_files(repo_path):
+        try:
+            content = py_file.read_text()
+        except OSError:
+            continue
+        for match in re.finditer(r"^(?:from|import)\s+([a-zA-Z_][a-zA-Z0-9_]*)", content, re.MULTILINE):
+            module_name = match.group(1)
+            if module_name in modules:
+                dependencies[module_name].add(py_file.parent.name)
+
+    return dependencies, warnings
 
 
 def _normalize_candidate_module_name(value: str) -> str:

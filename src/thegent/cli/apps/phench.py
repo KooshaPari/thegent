@@ -29,6 +29,7 @@ from thegent.phench import (
     materialize_target,
     run_env_doctor_for_target,
     run_target,
+    scan_shared_modules_across_repos,
     set_env_profile,
     show_target_snapshot,
     sync_project_modules_from_repos,
@@ -36,14 +37,14 @@ from thegent.phench import (
     target_status,
     target_timeline,
 )
-from .phench_env import register_env_commands
-from .phench_modules import register_modules_commands
-from .phench_projects import register_projects_run
-from .phench_repos import register_repos_commands
-from .phench_run import register_run_commands
-from .phench_snapshot import register_snapshot_commands
-from .phench_sync import register_sync_commands
-from .phench_timeline import register_timeline_commands
+from thegent.cli.apps.phench_env import register_env_commands
+from thegent.cli.apps.phench_modules import register_modules_commands
+from thegent.cli.apps.phench_projects import register_projects_run
+from thegent.cli.apps.phench_repos import register_repos_commands
+from thegent.cli.apps.phench_run import register_run_commands
+from thegent.cli.apps.phench_snapshot import register_snapshot_commands
+from thegent.cli.apps.phench_sync import register_sync_commands
+from thegent.cli.apps.phench_timeline import register_timeline_commands
 
 console = Console()
 

@@ -39,8 +39,8 @@ Session-end queue for **worktree / runtime hygiene**. Re-verify lane state befor
 
 ## Slice 6 — trace / trash-cli / ralph-codex-loop (4)
 
-21. **Locked** `trace-wtrees/codex-required-gates` — unlock or remove init lock; do not migrate until unlocked.
-22. Same for `codex-required-gates-fresh` and `codex-required-gates-fresh2-linear-fix2-clean`.
+21. **Resolved** `trace-wtrees/codex-required-gates*` — locks cleared 2026-03-28; `git worktree list --porcelain` now only shows `trace`, `trace-wtrees/spec-docs`, and `trace-wtrees/ui-overhaul`.
+22. Retain visibility on `codex-required-gates*` history before reusing the names; ensure no additional locked refs exist prior to future migrations.
 23. **Detached** `trash-cli/PROJECT-wtrees/pr1-rust-put-fix` — repair attachment or explicit abandon.
 24. **Unborn** `ralph-codex-loop` / child lane — init repo or remove worktree entry.
 
