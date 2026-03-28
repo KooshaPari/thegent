@@ -132,3 +132,8 @@ def _load_json_file(path: Path) -> dict:
         return orjson.loads(text)
     except Exception:
         return _json.loads(text)
+
+
+def module_manifests_root() -> Path:
+    """Return the root directory for all module manifests."""
+    return projects_root() / "modules"
