@@ -1,0 +1,336 @@
+[submodule "agent-devops-setups"]
+	path = agent-devops-setups
+	url = https://github.com/KooshaPari/agent-devops-setups.git
+
+[submodule "agent-wave"]
+	path = agent-wave
+	url = https://github.com/KooshaPari/agent-wave.git
+
+[submodule "agentapi-plusplus"]
+	path = agentapi-plusplus
+	url = https://github.com/KooshaPari/agentapi-plusplus.git
+
+[submodule "apps/AgilePlus"]
+	path = apps/AgilePlus
+	url = https://github.com/KooshaPari/AgilePlus.git
+
+[submodule "apps/helMo"]
+	path = apps/helMo
+	url = https://github.com/KooshaPari/helMo.git
+
+[submodule "apps/heliosApp"]
+	path = apps/heliosApp
+	url = https://github.com/KooshaPari/heliosApp.git
+
+[submodule "apps/heliosApp-colab"]
+	path = apps/heliosApp-colab
+	url = https://github.com/KooshaPari/heliosApp-colab.git
+
+[submodule "bifrost-extensions"]
+	path = bifrost-extensions
+	url = https://github.com/KooshaPari/bifrost-extensions.git
+
+[submodule "cliproxyapi-plusplus"]
+	path = cliproxyapi-plusplus
+	url = https://github.com/KooshaPari/cliproxyapi-plusplus.git
+
+[submodule "forgecode"]
+	path = forgecode
+	url = https://github.com/KooshaPari/forgecode.git
+
+[submodule "governance/policy-contract"]
+	path = governance/policy-contract
+	url = https://github.com/KooshaPari/policy-contract.git
+
+[submodule "heliosApp"]
+	path = heliosApp
+	url = https://github.com/KooshaPari/heliosApp.git
+
+[submodule "heliosCLI"]
+	path = heliosCLI
+	url = https://github.com/KooshaPari/heliosCLI.git
+
+[submodule "libs/crates/clikit"]
+	path = libs/crates/clikit
+	url = https://github.com/KooshaPari/clikit.git
+
+[submodule "libs/crates/flux"]
+	path = libs/crates/flux
+	url = https://github.com/KooshaPari/flux.git
+
+[submodule "libs/crates/forgecode"]
+	path = libs/crates/forgecode
+	url = https://github.com/KooshaPari/forgecode.git
+
+[submodule "libs/crates/kits-workspace"]
+	path = libs/crates/kits-workspace
+	url = https://github.com/KooshaPari/kits-workspace.git
+
+[submodule "libs/crates/phench"]
+	path = libs/crates/phench
+	url = https://github.com/KooshaPari/phench.git
+
+[submodule "libs/crates/phenodocs"]
+	path = libs/crates/phenodocs
+	url = https://github.com/KooshaPari/phenodocs.git
+
+[submodule "libs/crates/phenotype-plugin-core"]
+	path = libs/crates/phenotype-plugin-core
+	url = https://github.com/KooshaPari/phenotype-plugin-core.git
+
+[submodule "libs/go-hex"]
+	path = libs/go-hex
+	url = https://github.com/KooshaPari/go-hex.git
+
+[submodule "libs/hexagon-go"]
+	path = libs/hexagon-go
+	url = https://github.com/KooshaPari/hexagon-go.git
+
+[submodule "libs/portage"]
+	path = libs/portage
+	url = https://github.com/KooshaPari/portage.git
+
+[submodule "libs/pyhex"]
+	path = libs/pyhex
+	url = https://github.com/KooshaPari/pyhex.git
+
+[submodule "libs/quill"]
+	path = libs/quill
+	url = https://github.com/KooshaPari/quill.git
+
+[submodule "libs/template-domain-service-api"]
+	path = libs/template-domain-service-api
+	url = https://github.com/KooshaPari/template-domain-service-api.git
+
+[submodule "libs/template-domain-webapp"]
+	path = libs/template-domain-webapp
+	url = https://github.com/KooshaPari/template-domain-webapp.git
+
+[submodule "libs/template-lang-elixir-hex"]
+	path = libs/template-lang-elixir-hex
+	url = https://github.com/KooshaPari/template-lang-elixir-hex.git
+
+[submodule "libs/template-lang-go"]
+	path = libs/template-lang-go
+	url = https://github.com/KooshaPari/template-lang-go.git
+
+[submodule "libs/template-lang-kotlin"]
+	path = libs/template-lang-kotlin
+	url = https://github.com/KooshaPari/template-lang-kotlin.git
+
+[submodule "libs/template-lang-mojo"]
+	path = libs/template-lang-mojo
+	url = https://github.com/KooshaPari/template-lang-mojo.git
+
+[submodule "libs/template-lang-python"]
+	path = libs/template-lang-python
+	url = https://github.com/KooshaPari/template-lang-python.git
+
+[submodule "libs/template-lang-rust"]
+	path = libs/template-lang-rust
+	url = https://github.com/KooshaPari/template-lang-rust.git
+
+[submodule "libs/template-lang-swift"]
+	path = libs/template-lang-swift
+	url = https://github.com/KooshaPari/template-lang-swift.git
+
+[submodule "libs/template-lang-typescript"]
+	path = libs/template-lang-typescript
+	url = https://github.com/KooshaPari/template-lang-typescript.git
+
+[submodule "libs/template-lang-zig"]
+	path = libs/template-lang-zig
+	url = https://github.com/KooshaPari/template-lang-zig.git
+
+[submodule "libs/template-program-ops"]
+	path = libs/template-program-ops
+	url = https://github.com/KooshaPari/template-program-ops.git
+
+[submodule "libs/ts-hex"]
+	path = libs/ts-hex
+	url = https://github.com/KooshaPari/ts-hex.git
+
+[submodule "packages/phenotype-actions"]
+	path = packages/phenotype-actions
+	url = https://github.com/KooshaPari/phenotype-actions.git
+
+[submodule "packages/phenotype-auth-ts"]
+	path = packages/phenotype-auth-ts
+	url = https://github.com/KooshaPari/phenotype-auth-ts.git
+
+[submodule "packages/phenotype-cipher"]
+	path = packages/phenotype-cipher
+	url = https://github.com/KooshaPari/phenotype-cipher.git
+
+[submodule "packages/phenotype-cli-core"]
+	path = packages/phenotype-cli-core
+	url = https://github.com/KooshaPari/phenotype-cli-core.git
+
+[submodule "packages/phenotype-cli-extensions"]
+	path = packages/phenotype-cli-extensions
+	url = https://github.com/KooshaPari/phenotype-cli-extensions.git
+
+[submodule "packages/phenotype-colab-extensions"]
+	path = packages/phenotype-colab-extensions
+	url = https://github.com/KooshaPari/phenotype-colab-extensions.git
+
+[submodule "packages/phenotype-config-ts"]
+	path = packages/phenotype-config-ts
+	url = https://github.com/KooshaPari/phenotype-config-ts.git
+
+[submodule "packages/phenotype-dep-guard"]
+	path = packages/phenotype-dep-guard
+	url = https://github.com/KooshaPari/phenotype-dep-guard.git
+
+[submodule "packages/phenotype-docs-engine"]
+	path = packages/phenotype-docs-engine
+	url = https://github.com/KooshaPari/phenotype-docs-engine.git
+
+[submodule "packages/phenotype-evaluation"]
+	path = packages/phenotype-evaluation
+	url = https://github.com/KooshaPari/phenotype-evaluation.git
+
+[submodule "packages/phenotype-forge"]
+	path = packages/phenotype-forge
+	url = https://github.com/KooshaPari/phenotype-forge.git
+
+[submodule "packages/phenotype-gauge"]
+	path = packages/phenotype-gauge
+	url = https://github.com/KooshaPari/phenotype-gauge.git
+
+[submodule "packages/phenotype-go-kit"]
+	path = packages/phenotype-go-kit
+	url = https://github.com/KooshaPari/phenotype-go-kit.git
+
+[submodule "packages/phenotype-infrakit"]
+	path = packages/phenotype-infrakit
+	url = https://github.com/KooshaPari/phenotype-infrakit.git
+
+[submodule "packages/phenotype-logger"]
+	path = packages/phenotype-logger
+	url = https://github.com/KooshaPari/phenotype-logger.git
+
+[submodule "packages/phenotype-logging-zig"]
+	path = packages/phenotype-logging-zig
+	url = https://github.com/KooshaPari/phenotype-logging-zig.git
+
+[submodule "packages/phenotype-middleware-py"]
+	path = packages/phenotype-middleware-py
+	url = https://github.com/KooshaPari/phenotype-middleware-py.git
+
+[submodule "packages/phenotype-nexus"]
+	path = packages/phenotype-nexus
+	url = https://github.com/KooshaPari/phenotype-nexus.git
+
+[submodule "packages/phenotype-research-engine"]
+	path = packages/phenotype-research-engine
+	url = https://github.com/KooshaPari/phenotype-research-engine.git
+
+[submodule "packages/phenotype-skills-clone"]
+	path = packages/phenotype-skills-clone
+	url = https://github.com/KooshaPari/phenotype-skills-clone.git
+
+[submodule "packages/phenotype-task-engine"]
+	path = packages/phenotype-task-engine
+	url = https://github.com/KooshaPari/phenotype-task-engine.git
+
+[submodule "packages/phenotype-tracing"]
+	path = packages/phenotype-tracing
+	url = https://github.com/KooshaPari/phenotype-tracing.git
+
+[submodule "packages/phenotype-xdd"]
+	path = packages/phenotype-xdd
+	url = https://github.com/KooshaPari/phenotype-xdd.git
+
+[submodule "packages/phenotype-xdd-lib"]
+	path = packages/phenotype-xdd-lib
+	url = https://github.com/KooshaPari/phenotype-xdd-lib.git
+
+[submodule "phench"]
+	path = phench
+	url = https://github.com/KooshaPari/phench.git
+
+[submodule "phenotype-gauge"]
+	path = phenotype-gauge
+	url = https://github.com/KooshaPari/phenotype-gauge.git
+
+[submodule "phenotype-go-kit"]
+	path = phenotype-go-kit
+	url = https://github.com/KooshaPari/phenotype-go-kit.git
+
+[submodule "phenotype-infrakit"]
+	path = phenotype-infrakit
+	url = https://github.com/KooshaPari/phenotype-infrakit.git
+
+[submodule "phenotype-nexus"]
+	path = phenotype-nexus
+	url = https://github.com/KooshaPari/phenotype-nexus.git
+
+[submodule "phenotype-shared"]
+	path = phenotype-shared
+	url = https://github.com/KooshaPari/phenotype-shared.git
+
+[submodule "phenotype-xdd"]
+	path = phenotype-xdd
+	url = https://github.com/KooshaPari/phenotype-xdd.git
+
+[submodule "phenotypeActions"]
+	path = phenotypeActions
+	url = https://github.com/KooshaPari/phenotypeActions.git
+
+[submodule "policy-contract"]
+	path = policy-contract
+	url = https://github.com/KooshaPari/policy-contract.git
+
+[submodule "profiler"]
+	path = profiler
+	url = https://github.com/KooshaPari/profiler.git
+
+[submodule "services/colab"]
+	path = services/colab
+	url = https://github.com/KooshaPari/colab.git
+
+[submodule "sub-projects/thegent-sharecli"]
+	path = sub-projects/thegent-sharecli
+	url = https://github.com/KooshaPari/thegent-sharecli.git
+
+[submodule "tooling/thegent-cli-share"]
+	path = tooling/thegent-cli-share
+	url = https://github.com/KooshaPari/thegent-cli-share.git
+
+[submodule "tooling/thegent-mesh"]
+	path = tooling/thegent-mesh
+	url = https://github.com/KooshaPari/thegent-mesh.git
+
+[submodule "tooling/thegent-metrics"]
+	path = tooling/thegent-metrics
+	url = https://github.com/KooshaPari/thegent-metrics.git
+
+[submodule "tooling/thegent-plugin-host"]
+	path = tooling/thegent-plugin-host
+	url = https://github.com/KooshaPari/thegent-plugin-host.git
+
+[submodule "tooling/thegent-shm"]
+	path = tooling/thegent-shm
+	url = https://github.com/KooshaPari/thegent-shm.git
+
+[submodule "tooling/thegent-subprocess"]
+	path = tooling/thegent-subprocess
+	url = https://github.com/KooshaPari/thegent-subprocess.git
+
+[submodule "trace"]
+	path = trace
+	url = https://github.com/KooshaPari/trace.git
+
+[submodule "trash-cli"]
+	path = trash-cli
+	url = https://github.com/KooshaPari/trash-cli.git
+
+[submodule "worktrees/thegent/bun-migrate"]
+	path = worktrees/thegent/bun-migrate
+	url = https://github.com/KooshaPari/bun-migrate.git
+
+[submodule "worktrees/thegent/dotagents"]
+	path = worktrees/thegent/dotagents
+	url = https://github.com/KooshaPari/dotagents.git
+
