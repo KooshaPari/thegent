@@ -39,3 +39,44 @@ exclude = ["thegent-watcher"]
 gix = { version = "0.79.0", default-features = false, features = ["max-performance-safe"] }
 which = "6.0"
 criterion = "0.5"
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+[profile.release.package."thegent-resources"]
+opt-level = "z"
+strip = true
+
+[profile.release.package."thegent-shm"]
+opt-level = "z"
+strip = true
+
+[profile.release.package."thegent-git"]
+opt-level = 3
+
+[profile.release.package."thegent-discovery-rs"]
+opt-level = 3
+
+[profile.release.package."thegent-path-resolve"]
+opt-level = "z"
+strip = true
+
+[profile.release.package."thegent-router"]
+opt-level = 3
+
+[profile.release.package."thegent-tool-detect"]
+opt-level = "z"
+strip = true
+
+[profile.release.package."thegent-tui"]
+opt-level = "z"
+strip = true
+
+[profile.release.package."thegent-shims"]
+opt-level = "z"
+strip = true
+
+[profile.release.package."thegent-runtime"]
+opt-level = "z"
+strip = true
