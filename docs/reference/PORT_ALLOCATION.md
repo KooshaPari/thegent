@@ -1,0 +1,78 @@
+# Phenotype Ecosystem — Canonical Port Allocation
+
+> Source of truth for all service ports across canonical repos and worktrees.
+> **Last updated:** 2026-03-28
+
+## Canonical Service Ports
+
+| Range | Service | Canonical Port | Notes |
+|-------|---------|---------------|-------|
+| 3000–3099 | heliosApp frontend | 3000 | SolidJS + Bun |
+| 3100–3199 | heliosApp-colab | 3100 | Collaboration features |
+| 4000–4099 | AgilePlus dashboard | 4000 | React frontend |
+| 4100–4199 | AgilePlus API | 4100 | REST/event API |
+| 5000–5099 | cliproxyapi-plusplus | 5000 | Go CLI proxy |
+| 5100–5199 | thegent services | 5100 | Agent orchestration |
+| 6000–6099 | heliosCLI TUI/Streamlit | 6000 | Rust + Streamlit on 6080 |
+| 7000–7099 | agent-wave | 7000 | Multi-agent orchestration |
+| 8000–8099 | Byteport (reserved) | 8000 | Future: deployment platform |
+| 9000–9099 | phenotype-hub | 9000 | Astro portal site |
+| 9100–9199 | phenotype-hub API/BFF | 9100 | Go Echo BFF |
+
+## Shared Infrastructure Ports (Singletons — Never Duplicated)
+
+| Service | Port | Protocol | Notes |
+|---------|------|----------|-------|
+| PostgreSQL | 5432 | TCP | Primary DB — one instance only |
+| NATS | 4222 | TCP | Event bus + JetStream — one instance only |
+| NATS monitoring | 8222 | HTTP | NATS health/metrics endpoint |
+| Dragonfly/Redis | 6379 | TCP | Cache layer — one instance only |
+| Temporal frontend | 7233 | gRPC | Workflow UI |
+| Temporal gRPC | 7768 | gRPC | Workflow API |
+| Temporal HTTP | 8233 | HTTP | Temporal REST API |
+
+## Worktree Port Strategy
+
+**Rule:** Canonical repos use the fixed ports above. Worktrees get randomized ports in `30000–39999`.
+
+```bash
+# Worktrees are initialized with random ports via:
+scripts/init-worktree.sh <topic-name>
+# This writes .env.worktree with random ports
+# Shared infra (postgres, NATS, dragonfly) always use canonical ports
+```
+
+## Current Observed Port Usage (2026-03-28)
+
+From `lsof -i -P -n | grep LISTEN`:
+
+| Port | Service | Status |
+|------|---------|--------|
+| 3000 | heliosApp frontend | Running |
+| 3100 | heliosApp-colab | Running |
+| 4100 | AgilePlus API | Running |
+| 4101 | AgilePlus dev instance | Running |
+| 4104 | AgilePlus dev instance | Running |
+| 5000 | cliproxyapi-plusplus | Running |
+| 5432 | PostgreSQL | Running |
+| 7000 | agent-wave | Running |
+| 7233 | Temporal frontend | Running |
+| 7768 | Temporal gRPC | Running |
+| 8000 | Unknown (TBD) | Running |
+| 8233 | Temporal HTTP | Running |
+| 9096 | Unknown (TBD) | Running |
+
+## Known Conflicts
+
+| Conflict | Current | Resolution |
+|----------|---------|------------|
+| cliproxyapi health probe | 8317 (process-compose) vs 5000 (canonical) | Standardize to 5000; update process-compose.yaml |
+| heliosCLI Streamlit | 8501 (current) | Move to 6080 (within heliosCLI range) |
+| AgilePlus 4101–4104 | Multiple dev instances | Use worktree pattern: 4100 canonical + 30000+ for worktrees |
+
+## Adding a New Service
+
+1. Pick an unoccupied range from 3000–9999 (check this table first)
+2. Update this file
+3. Add to `infrastructure/process-compose.shared.yml`
+4. Document in the service's CLAUDE.md

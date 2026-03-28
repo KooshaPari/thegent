@@ -1,0 +1,21 @@
+# Specifications
+
+## Audit Contract
+- Window: 14 days.
+- Primary source: Codex rollout jsonl events.
+- Output classifications:
+  - `resolved_elsewhere`
+  - `redirected_or_subagent`
+  - `still_open`
+
+## HeliosCLI Future Research Contract
+- Add session scope cycle in picker: `Project -> All -> Favorites` via `Shift+Tab`.
+- Add searchable modes:
+  - metadata/title only
+  - BM25 over chat turns
+  - optional RAG retrieval over embeddings
+- Add cheap-model summarization/labeling pipeline for stale sessions.
+
+## Non-Goals
+- No deletion/archive changes to existing session files in this run.
+- No implementation changes to HeliosCLI code in this run.

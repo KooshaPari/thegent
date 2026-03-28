@@ -1,0 +1,27 @@
+# 02_SPECIFICATIONS
+
+## Functional requirements
+- Policy scopes must resolve in order:
+  1) system
+  2) user
+  3) repo
+  4) harness
+  5) task_domain
+  6) task_instance
+- Resolver must emit:
+  - effective policy JSON
+  - resolved scope path
+  - deterministic hash
+
+## Merge semantics
+- Scalars and objects are overridden by higher scope.
+- List rules:
+  - `commands.deny`: replace
+  - `commands.allow`: append + dedupe
+  - `required_checks`: append + dedupe
+- Conflicts are explicit via final merged view; task_instance has highest priority.
+
+## Non-functional
+- Zero destructive file actions by default.
+- Works using YAML policies and no external orchestration changes.
+

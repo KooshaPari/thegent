@@ -1,0 +1,25 @@
+[package]
+name = "phenotype-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype CLI framework following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["cli", "command", "argument", "parser", "framework"]
+categories = ["command-line", "cli"]
+
+[features]
+default = ["clap"]
+clap = ["dep:clap"]
+color = ["dep:anstyle"]
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "wrap_help"], optional = true }
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+anstyle = { version = "0.4", optional = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_cmd = "2.0"

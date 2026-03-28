@@ -1,0 +1,109 @@
+# ADR-013: Plugin Architecture Standard
+
+**Status:** Accepted  
+**Date:** 2026-03-27  
+**Deciders:** Phenotype Architecture Team
+
+---
+
+## Context
+
+The Phenotype ecosystem needs a standardized plugin architecture that allows:
+- Dynamic loading of extensions at runtime
+- Language-agnostic plugin contracts
+- Hot-reloading without restart
+- Version compatibility guarantees
+
+## Decision
+
+We adopt a **ports-and-adapters** plugin model:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Plugin Host                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   Loader    │  │   Registry  │  │  Lifecycle  │     │
+│  │   (dlopen)  │  │  (plugins)  │  │  Manager    │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                    ┌──────┴──────┐
+                    │  Plugin Port  │
+                    │  (interface)  │
+                    └───────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│  CLI Plugin   │  │ Config Plugin │  │  API Plugin  │
+│  (phenotype-  │  │ (phenotype-   │  │  (phenotype- │
+│   cli-ext)    │  │   config)      │  │   nexus)     │
+└───────────────┘  └───────────────┘  └───────────────┘
+```
+
+## Plugin Contract
+
+Every plugin must implement:
+
+```python
+class PluginPort:
+    """Required interface for all Phenotype plugins."""
+    
+    @property
+    def name(self) -> str:
+        """Unique plugin identifier."""
+        ...
+    
+    @property
+    def version(self) -> str:
+        """Semantic version of plugin."""
+        ...
+    
+    def initialize(self, config: dict) -> None:
+        """Called once during host startup."""
+        ...
+    
+    def execute(self, context: dict) -> dict:
+        """Main entry point for plugin logic."""
+        ...
+    
+    def shutdown(self) -> None:
+        """Cleanup resources on unload."""
+        ...
+```
+
+## Discovery & Loading
+
+1. **Manifest-based**: Each plugin has `plugin.json` manifest
+2. **Directory scanning**: Host scans `~/.phenotype/plugins/` by default
+3. **Hot-reload**: Plugins watched for manifest changes
+
+## Version Compatibility
+
+| Host Version | Plugin Version | Compatible |
+|-------------|---------------|------------|
+| 1.x | 1.x | ✅ Yes |
+| 1.x | 0.x | ❌ No |
+| 2.x | 1.x | ⚠️ Maybe (check changelog) |
+
+## Consequences
+
+### Positive
+- Clear separation between host and plugin logic
+- Language-agnostic (via JSON/Protocol Buffers)
+- Easy to test plugins in isolation
+
+### Negative
+- Requires plugin authors to implement standard interface
+- Serialization overhead for cross-language plugins
+
+## Implementation
+
+- **Python**: `libs/shared/plugin-host/`
+- **TypeScript**: `libs/shared/plugin-host-ts/`
+- **Rust**: `libs/shared/plugin-host-rs/`
+
+## References
+
+- [Phenotype Org-Wide Engineering Standard](../PHENOTYPE_ORG_WIDE_ENGINEERING_STANDARD.md)
+- [xDD Methodology Catalog](./xdd-methodology-catalog.md)

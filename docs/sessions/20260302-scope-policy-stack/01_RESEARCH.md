@@ -1,0 +1,7 @@
+# 01_RESEARCH
+
+- Need was user-scoped policy layering across harnesses and task domains.
+- Existing stack has strong contract files (`AGENTS.md`, `CLAUDE.md`) but lacked explicit machine-merge format.
+- Dotagents-style concept fits best as a contract-orchestrator layer rather than runtime execution layer.
+- Implemented a local schema-first approach so existing harnesses can resolve policy deterministically before execution.
+

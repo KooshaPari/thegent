@@ -1,0 +1,130 @@
+# Branch & PR Cleanup Log — Remaining 9 Repos
+
+**Date:** 2026-02-27
+**Agent:** Team C
+
+## Summary
+
+All 9 repos cleaned to ≤10 local branches and ≤10 open PRs.
+
+| Repo | Before (Local) | After (Local) | Remote Deleted | PRs Closed | PRs Open |
+|------|---------------|--------------|----------------|------------|----------|
+| thegent | 23 | 6 | 60 | 0 | 0 |
+| trash-cli | 12 | 9 | 0 | 0 | 0 |
+| 4sgm | 9 | 5 | 0 | 0 | 1 |
+| bifrost-extensions | 5 | 5 | 0 | 0 | 0 |
+| civ | 4 | 4 | 0 | 0 | 0 |
+| parpour | 4 | 4 | 0 | 0 | 0 |
+| phenodocs | 3 | 3 | 0 | 0 | 1 |
+| tokenledger | 10 | 4 | 0 | 0 | 0 |
+| trace | 9 | 4 | 0 | 0 | 0 |
+
+## thegent
+
+### Local branches deleted (17)
+- chore/review-bot-governance-stabilize (1bd753ed3)
+- codex/airlock-track-20260226 (3c935c3d2)
+- codex/pr478-runtime-fixes-20260227 (745a60eb6)
+- codex/pr478-runtime-fixes-clean (dcbb1e466)
+- fix/cli-test-fixes (c64f30a11)
+- fix/cliproxyctl-empty-response-v2 (9dda885b1)
+- fix/cliproxyctl-err-msg-v3 (9dda885b1)
+- fix/cliproxyctl-err-msg-v4 (6c3d7d840)
+- fix/cliproxyctl-err-msg-v6 (722bff2f7)
+- fix/flash-agent-graceful-fallback (90823eb55)
+- fix/remove-broken-dag-files (745a60eb6)
+- garden/sdk-integration (a941cc281)
+- lane-c/review-bot-governance (a30213f82)
+- lane-c/thegent-20260226 (1bd753ed3)
+- linear/review-bot-governance-r2-20260226 (1f38f25e1)
+- no-litellm (871f61023)
+- policy/layered-pr-gate-20260227 (f8f76f122)
+
+### Remote branches deleted (60)
+- shadow-run_* (11 branches)
+- snapshots/* (5 branches)
+- wip/* (4 branches)
+- temp/consolidate-main
+- work/test-fix
+- merge/* (8 branches)
+- reconcile/fixes
+- integration/governance-main
+- chore/* (4 branches)
+- codex/airlock-track-20260226, codex/governance-wireup, codex/hook-native-prepush-fix, codex/provider-plane-wave1, codex/quality-scope-fix
+- docstyle/technical-wording-20260223
+- fix-tests, fix-tests-v2, fix/cli-test-fixes, fix/cliproxyctl-empty-response-error, fix/cliproxyctl-empty-response-v2, fix/orjson-v2, fix/remove-broken-dag-files, fix/tests-v4, fix/tests3
+- linear/review-bot-governance-r2-20260226
+- no-litellm
+- refactor/* (3 branches)
+- thegent-feature-benchmark-ingest, thegent_stabilize_merge2
+- worktree-refactor, worktree-refactor2
+
+### Worktrees removed
+- /private/tmp/wt-thegent-lanec
+- /Users/kooshapari/intent/workspaces/wittering-manatee/thegent (detached, pruned)
+
+### Remaining (6): main, codex/coderabbit-rate-limit-bridge, codex/pr478-runtime-fix-v2, fix/cliproxyctl-err-msg-v7, garden/release-framework, garden/secret-remediation
+
+## trash-cli
+
+### Local branches deleted (5)
+- garden/changelog-standardize (6a0884e) — merged
+- linear/review-bot-governance-20260226 (6a0884e) — merged
+- lane-c/coderabbit-rate-limit (4d741f8)
+- lane-c/trash-cli-20260226 (7b939c0)
+- linear/review-bot-governance-r2-20260226 (6fa32d2)
+
+### Remote pruned (7)
+- origin/policy/layered-pr-gate-20260227
+- origin/refactor/rust-core, rust-empty, rust-list, rust-put, rust-restore, rust-rm
+
+### Worktrees removed
+- /private/tmp/wt-trash-lanec
+
+### Remaining (9): main, master, fix/coderabbit-rate-limit, fix/coderabbit-rate-limit-2, garden/git-tightening, garden/release-framework, garden/sdk-integration, mergein/coderabbit-policy, unblock/pr7-coderabbit-policy-20260227
+
+## 4sgm
+
+### Local branches deleted (4)
+- gh-pages (589a303) — merged
+- replay/gh-pages-20260225-054009 (4cd8325) — merged
+- (2 others via Phase 1 merged cleanup)
+
+### Remaining (5): main, and 4 others
+
+## bifrost-extensions
+No changes needed (already at 5 local).
+
+## civ
+No changes needed (already at 4 local).
+
+## parpour
+No changes needed (already at 4 local).
+
+## phenodocs
+No changes needed (already at 3 local).
+
+## tokenledger
+
+### Local branches deleted (3)
+- lane-c/review-bot-governance (21537c5)
+- linear/review-bot-governance-r2-20260226 (0fdb23f)
+- policy/layered-pr-gate-20260227 (d096796)
+
+### Worktrees removed
+- /private/tmp/wt-tokenledger-lanec
+
+### Remaining (4): main, garden/git-tightening, garden/release-framework, garden/sdk-integration
+
+## trace
+
+### Local branches deleted (3)
+- lane-c/review-bot-governance (d9039fcd2)
+- lane-c/trace-20260226 (134c50c8d)
+- policy/layered-pr-gate-20260227 (554d112aa)
+
+### Worktrees removed
+- /private/tmp/wt-trace-lanec
+- /private/tmp/wt-trace-lane-c-trace-20260226
+
+### Remaining (4): main, garden/release-framework, garden/sdk-integration, garden/secret-remediation

@@ -1,0 +1,10 @@
+# Standard Phenotype Ignore Rules
+node_modules/
+dist/
+build/
+.env
+.env.*
+.DS_Store
+*.log
+.factory/
+.worktrees/

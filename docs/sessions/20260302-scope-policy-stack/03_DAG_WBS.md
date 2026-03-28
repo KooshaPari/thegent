@@ -1,0 +1,17 @@
+# 03_DAG_WBS
+
+## WBS
+1. Policy schema authoring
+2. Layered sample config authoring
+3. Resolver implementation
+4. Dry-run validation command
+5. Harness wiring (Codex first)
+
+## Dependency graph
+- Schema -> configs -> resolver -> docs
+- Docs can be updated independently after resolver is stable.
+
+## Risks
+- Different harnesses currently do not yet consume resolver output automatically.
+- Runtime hardening should be added incrementally by scope layer.
+

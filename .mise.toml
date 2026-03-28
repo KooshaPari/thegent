@@ -1,4 +1,9 @@
 [tools]
+# Tool version pinning
+node = "22"
+bun = "latest"
+rust = "stable"
+go = "1.24"
 python = "3.12"
 zig = "0.15.2"
 
@@ -6,6 +11,7 @@ zig = "0.15.2"
 env_shell_expand = true
 
 [env]
+PHENOTYPE_ROOT = "{{config_root}}"
 RIPGREP_CONFIG_PATH = ""
 FUNCNEST = "1000"
 THGENT_NOTIFY_ENABLE = "1"
@@ -15,3 +21,64 @@ THGENT_NOTIFY_COOLDOWN_SEC = "8"
 THGENT_ZEN_BASE_URL = "https://api.opencode.ai"
 PYTHONPATH = "${PWD}/src"
 PATH = "${PWD}/crates/target/release/shims:${PWD}/.venv/bin:${HOME}/.local/bin:${PATH}"
+
+[tasks.dev]
+description = "Start all shared infrastructure services"
+run = "process-compose -f {{config_root}}/infrastructure/process-compose.shared.yml up"
+
+[tasks.dev-stop]
+description = "Stop all shared infrastructure services"
+run = "process-compose -f {{config_root}}/infrastructure/process-compose.shared.yml down"
+
+[tasks.status]
+description = "Show running services and ports"
+run = "lsof -i -P -n 2>/dev/null | grep LISTEN | awk '{print $9, $1}' | sort -u"
+
+[tasks.sync]
+description = "Fetch all canonical repo remotes in parallel"
+run = """
+#!/usr/bin/env bash
+REPOS=(heliosCLI heliosApp cliproxyapi-plusplus agent-wave thegent AgilePlus phenotype-gauge phenotype-go-kit)
+for repo in "${REPOS[@]}"; do
+  dir="{{config_root}}/$repo"
+  if [ -d "$dir/.git" ]; then
+    echo "Fetching $repo..." &
+    git -C "$dir" fetch origin --prune &
+  fi
+done
+wait
+echo "All repos synced"
+"""
+
+[tasks.lint-all]
+description = "Run linters across all repos"
+run = """
+#!/usr/bin/env bash
+set -e
+echo "=== heliosApp ===" && bun --cwd {{config_root}}/heliosApp run lint
+echo "=== heliosCLI ===" && cargo clippy --manifest-path {{config_root}}/heliosCLI/Cargo.toml --workspace -- -D warnings 2>&1 | tail -5
+echo "All linters passed"
+"""
+
+[tasks.test-all]
+description = "Run tests across all repos"
+run = """
+#!/usr/bin/env bash
+set -e
+echo "=== heliosApp ===" && bun --cwd {{config_root}}/heliosApp run test
+echo "=== heliosCLI Rust ===" && cargo test --manifest-path {{config_root}}/heliosCLI/Cargo.toml --workspace 2>&1 | tail -10
+echo "All tests passed"
+"""
+
+[tasks.worktree-new]
+description = "Create a new worktree with port allocation"
+alias = "wt"
+run = """
+#!/usr/bin/env bash
+REPO="${1:?Usage: mise wt <repo> <topic>}"
+TOPIC="${2:?Usage: mise wt <repo> <topic>}"
+WT_DIR="{{config_root}}/${REPO}-wtrees/${TOPIC}"
+git -C "{{config_root}}/$REPO" worktree add "$WT_DIR" -b "$TOPIC"
+bash {{config_root}}/scripts/init-worktree.sh "$TOPIC" "$REPO"
+echo "Worktree created at: $WT_DIR"
+"""

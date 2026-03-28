@@ -1,0 +1,22 @@
+[package]
+name = "phenotype-metrics"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype metrics library following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["metrics", "observability", "monitoring", "prometheus"]
+categories = ["metrics", "observability"]
+
+[features]
+default = ["std"]
+std = ["serde/std"]
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"], optional = true }
+thiserror = "1.0"
+
+[dev-dependencies]
+parking_lot = "0.12"

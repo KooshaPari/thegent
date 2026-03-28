@@ -1,0 +1,10 @@
+[package]
+name = "phenotype-metrics"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Metrics registry with Prometheus-style export for Phenotype services"
+repository = "https://github.com/phenotype-dev/phenotype-metrics"
+readme = "README.md"
+
+[dependencies]

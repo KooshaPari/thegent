@@ -1,0 +1,19 @@
+# 2026-03-02 Scope Policy Stack Rollout
+
+## Goal
+Introduce a concrete multi-scope policy model for agent/harness control:
+system → user → repo → harness → task_domain → task_instance.
+
+## Scope
+- Add policy schema and sample layer files.
+- Add a resolver script that merges layered policy and emits an effective policy hash.
+- Provide run instructions for Codex and a local policy audit path.
+
+## Success criteria
+- Deterministic policy merge for each execution scope.
+- One command can emit resolved policy + scope chain + hash.
+- No regressions in existing repos due to non-destructive policy design.
+
+## State
+- Baseline implementation added under `policy-contract/`.
+

@@ -1,0 +1,347 @@
+# Dinoforge Cloud Hand-Roll Rules Extension
+
+**Version:** 1.0.0
+**Status:** Active
+**Scope:** Dinoforge-style cloud deployments for Phenotype-owned repositories.
+**Extends:** [PHENOTYPE_ORG_WIDE_ENGINEERING_STANDARD.md](./PHENOTYPE_ORG_WIDE_ENGINEERING_STANDARD.md)
+
+---
+
+## Hand-Roll Rules (Explicit)
+
+| Rule | Requirement |
+|------|-------------|
+| **Cloud-as-Adapter** | Treat cloud targets as ports; never hardcode provider specifics in domain. |
+| **Config-per-Env** | Each environment (dev/staging/prod) has explicit schema-validated config. |
+| **Artifact-Addressable** | Deployments reference versioned artifacts; no floating `:latest`. |
+| **Secrets-at-Boundary** | Secrets injected at runtime; never in configs or code. |
+| **Rollback-Ready** | Every deployment has documented rollback procedure. |
+| **Local-CLOUD Parity** | Local dev must mirror cloud patterns via adapters; hand-rolls tracked. |
+
+---
+
+## 1. Cloud Adapter Patterns
+
+Cloud services are **adapters** implementing domain ports. Cloud targets:
+
+### Storage Adapters
+
+| Port | Cloud Implementation |
+|------|---------------------|
+| `BlobStore` | S3/GCS/Azure Blob via SDK adapter |
+| `FileStore` | EFS/FSx/Azure Files via mount adapter |
+| `CacheStore` | ElastiCache/Redis/Redis Ent via SDK adapter |
+
+```go
+// Example: Storage adapter interface (domain port)
+type BlobStore interface {
+    Upload(ctx context.Context, key string, data []byte) error
+    Download(ctx context.Context, key string) ([]byte, error)
+    Delete(ctx context.Context, key string) error
+}
+```
+
+### Queue Adapters
+
+| Port | Cloud Implementation |
+|------|---------------------|
+| `EventBus` | SQS/SNS/Event Grid via SDK adapter |
+| `TaskQueue` | SQS/Sidekiq/ASQ via SDK adapter |
+| `StreamProcessor` | Kinesis/Firehose/Event Hub via SDK adapter |
+
+### Identity Adapters
+
+| Port | Cloud Implementation |
+|------|---------------------|
+| `Authenticator` | Cognito/IAM/Entra ID via SDK adapter |
+| `Authorizer` | IAM Policies/LDAP via SDK adapter |
+| `SecretsProvider` | Secrets Manager/Parameter Store via SDK adapter |
+
+### Observability Adapters
+
+| Port | Cloud Implementation |
+|------|---------------------|
+| `MetricsEmitter` | CloudWatch/Stackdriver/Azure Monitor via SDK adapter |
+| `Tracer` | X-Ray/Distributed Tracing/Application Insights via SDK adapter |
+| `LogAggregator` | CloudWatch Logs/Stackdriver/Application Insights via SDK adapter |
+
+---
+
+## 2. Environment Configuration Management
+
+Each environment has **explicit configuration** validated at startup.
+
+### Environment Hierarchy
+
+```
+env/
+├── base/                    # Shared defaults
+│   └── config.yaml
+├── dev/
+│   └── config.yaml          # Dev overrides
+├── staging/
+│   └── config.yaml          # Staging overrides
+└── prod/
+    └── config.yaml          # Production overrides
+```
+
+### Config Schema Validation
+
+```yaml
+# Example: Schema-validated config structure
+cloud:
+  provider: aws
+  region: us-east-1
+  endpoint: null  # Use provider default
+
+storage:
+  bucket: ${DINFORE_STORAGE_BUCKET}
+  prefix: ${DINFORE_STORAGE_PREFIX}
+
+observability:
+  metrics:
+    endpoint: ${METRICS_ENDPOINT}
+    interval_seconds: 60
+  tracing:
+    enabled: true
+    sample_rate: 0.1
+```
+
+### Config Injection Rules
+
+| Environment | Config Source | Override Mechanism |
+|-------------|---------------|-------------------|
+| `dev` | Local files + `.env` | CLI flag `--config` |
+| `staging` | Secrets Manager + SSM | Parameter reference |
+| `prod` | Secrets Manager + SSM | Parameter reference + rotation |
+
+---
+
+## 3. Artifact-Addressable Deployments
+
+Deployments reference **immutable, versioned artifacts**.
+
+### Artifact Naming Convention
+
+```
+{registry}/{service}:{version}
+{registry}/{service}:{sha}-{timestamp}
+```
+
+### Artifact Registries
+
+| Artifact Type | Registry | Example |
+|---------------|----------|---------|
+| Docker Images | ECR/ACR/GCR | `123456789.dkr.ecr.us-east-1.amazonaws.com/my-service:sha-a1b2c3` |
+| Lambda Zips | S3 | `s3://my-bucket/artifacts/my-function/sha-a1b2c3.zip` |
+| Helm Charts | ChartMuseum/ACR | `phenotype-charts/my-service-0.1.0.tgz` |
+| Binaries | S3/GHR | `s3://my-bucket/releases/my-service_0.1.0_linux_amd64.tar.gz` |
+
+### Deployment Manifest
+
+```yaml
+# dinoforge-deploy.yaml
+version: 1.0
+service: phenotype-my-service
+artifact:
+  type: docker
+  ref: ${DINFORE_REGISTRY}/my-service:${DINFORE_VERSION}
+  digest: ${DINFORE_ARTIFACT_DIGEST}
+environment:
+  name: ${DINFORE_ENV}
+  region: ${DINFORE_REGION}
+resources:
+  memory: 512Mi
+  cpu: 0.5
+health_check:
+  path: /health
+  interval: 10s
+  timeout: 5s
+  healthy_threshold: 2
+```
+
+### No Floating Tags
+
+| Prohibited | Required |
+|------------|----------|
+| `:latest` | `:v1.2.3` or `:sha-a1b2c3` |
+| `latest` | Pinned digest |
+| `*` | Explicit version range |
+
+---
+
+## 4. Secrets Management
+
+Secrets are **injected at runtime**; never committed or embedded.
+
+### Secret Sources
+
+| Environment | Secret Store | Retrieval Method |
+|-------------|--------------|------------------|
+| `dev` | `.env` file (gitignored) | Env vars via dotenv |
+| `staging` | AWS Secrets Manager | SDK auto-refresh |
+| `prod` | AWS Secrets Manager + SSM | SDK auto-rotation |
+
+### Secret Naming Convention
+
+```
+{env}/{service}/{secret-name}
+phenotype/dev/my-service/database-credentials
+phenotype/prod/my-service/api-keys
+```
+
+### Injection Patterns
+
+```go
+// Example: Runtime secret injection
+type SecretsProvider interface {
+    GetSecret(ctx context.Context, name string) ([]byte, error)
+}
+
+// SDK-backed implementation (AWS Secrets Manager)
+type AWSSecretsProvider struct {
+    client *secretsmanager.Client
+}
+
+// Kubernetes-backed implementation (External Secrets Operator)
+type K8sSecretsProvider struct {
+    client client.Client
+}
+```
+
+### Prohibited Practices
+
+| Never Do | Instead |
+|----------|---------|
+| Commit `secrets.yaml` | Reference Secrets Manager |
+| Embed tokens in code | Inject via environment |
+| Log secret values | Log reference IDs only |
+| Use default credentials | Use IAM roles/workload identity |
+
+---
+
+## 5. Deployment Workflows & Rollback
+
+Every deployment has **documented rollback procedures**.
+
+### Deployment Workflow
+
+```bash
+# 1. Validate config
+dinoforge validate --env prod --config dinoforge-deploy.yaml
+
+# 2. Build artifact
+dinoforge build --service my-service --version ${VERSION}
+
+# 3. Push to registry
+dinoforge push --artifact ${ARTIFACT_REF}
+
+# 4. Deploy
+dinoforge deploy --env prod --artifact ${ARTIFACT_REF} --manifest dinoforge-deploy.yaml
+
+# 5. Verify
+dinoforge health --env prod --service my-service
+
+# 6. Confirm or rollback
+dinoforge confirm --deployment-id ${DEPLOY_ID}
+# OR
+dinoforge rollback --deployment-id ${PREV_DEPLOY_ID}
+```
+
+### Rollback Procedures
+
+| Scenario | Rollback Action |
+|----------|-----------------|
+| Health check failure | Auto-rollback to previous task definition |
+| Smoke test failure | `dinoforge rollback --deployment-id ${ID}` |
+| Manual rollback | `dinoforge rollback --env prod --service my-service --to-version ${VERSION}` |
+| Canary failure | Traffic shifts back to stable version |
+
+### Rollback Automation
+
+```yaml
+# dinoforge-deploy.yaml - rollback config
+rollback:
+  automatic: true
+  triggers:
+    - type: health_check_failure
+      threshold: 3
+    - type: error_rate
+      threshold: 5%
+    - type: latency_p99
+      threshold: 2000ms
+```
+
+### Deployment States
+
+```
+PENDING → IN_PROGRESS → VERIFYING → COMPLETED | FAILED | ROLLED_BACK
+```
+
+---
+
+## 6. Local Development Integration
+
+Local dev must mirror cloud patterns via adapters.
+
+### Local vs Automated
+
+| Aspect | Hand-Roll (Local) | Automated (CI/CD) |
+|--------|-------------------|-------------------|
+| Config | `.env` files | Secrets Manager |
+| Infra | Docker Compose / LocalStack | Cloud-native |
+| Secrets | `.env` (gitignored) | Secrets Manager |
+| Deploy | Manual | Pipeline |
+| Rollback | Manual | Automatic |
+
+### Local Dev Adapter Pattern
+
+```go
+// Local adapter implements same interface as cloud adapter
+type LocalBlobStore struct {
+    dir string
+}
+
+func (l *LocalBlobStore) Upload(ctx context.Context, key string, data []byte) error {
+    return os.WriteFile(filepath.Join(l.dir, key), data, 0644)
+}
+
+// Swap implementations via config
+var store BlobStore
+if cfg.Cloud.Provider == "local" {
+    store = NewLocalBlobStore(cfg.Local.Directory)
+} else {
+    store = NewS3Adapter(cfg.Cloud.S3)
+}
+```
+
+### Hand-Roll Tracking
+
+Local hand-rolls become **scripts** or **ADR-tracked steps**:
+
+```bash
+# Document local setup as script
+scripts/local-setup.sh
+scripts/local-teardown.sh
+scripts/local-migrate.sh
+
+# Track complex local procedures as ADR
+docs/adr/ADR-042-local-dev-cloud-emulation-setup.md
+```
+
+### Local Dev Checklist
+
+- [ ] Local adapters implement same ports as cloud adapters
+- [ ] `.env` files are gitignored
+- [ ] `docker-compose.yml` mirrors cloud service topology
+- [ ] Local scripts are documented in `scripts/`
+- [ ] One-off manual steps are converted to scripts or ADRs
+
+---
+
+## Related
+
+- [PHENOTYPE_ORG_WIDE_ENGINEERING_STANDARD.md](./PHENOTYPE_ORG_WIDE_ENGINEERING_STANDARD.md)
+- [rolling-hand-rules.md](./rolling-hand-rules.md)
+- [POLYREPO_PACKAGE_NAMING_AND_PRODUCTIZATION.md](./POLYREPO_PACKAGE_NAMING_AND_PRODUCTIZATION.md)
+- [architecture-decision-tree.md](./architecture-decision-tree.md)

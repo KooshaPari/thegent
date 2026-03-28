@@ -1,0 +1,44 @@
+# Python CLI Libraries (2026) — Top List and Signal Summary
+
+Source: https://libs.tech/python/cli-libraries  
+Captured on 2026-02-26 (all entries listed below show `added 11 months ago` on the site page).
+
+## Signal framework used
+
+- **Maturity signal**: total stars + long-term usage context.
+- **Maintenance signal**: `last commit` recency and `+` trend on the listing.
+- **Adoption guidance**: short recommendation for where to use each project in 2026.
+
+## Ranked list (Top trending entries visible on the listing page)
+
+| Library | Maturity signal | Maintenance signal | 2026 adoption guidance |
+|---|---|---|---|
+| [magmax/python-inquirer](https://github.com/magmax/python-inquirer) (1K stars, +3, last commit 4 months ago) | Low-mid maturity due to smaller user base. | Moderate maintenance activity (monthly cadence). | Use for lightweight interactive CLI prompts in side tools. |
+| [tox-dev/pipdeptree](https://github.com/tox-dev/pipdeptree) (2K, +2, last commit 2 days ago) | Small-to-mid size utility with clear domain fit. | Very good maintenance freshness. | Good default for dependency-visualization scripts and CI checks. |
+| [datafolklabs/cement](https://github.com/datafolklabs/cement) (1K, last commit 3 months ago) | Smaller but established framework footprint. | Acceptable maintenance cadence. | Useful for larger CLI app scaffolding if framework consistency is required. |
+| [copier-org/copier](https://github.com/copier-org/copier) (3K, +23, last commit 1 day ago) | Stronger adoption for project/bootstrap automation. | Very active development. | Strong candidate for internal project bootstrapping and templating workflows. |
+| [bpython/bpython](https://github.com/bpython/bpython) (2K, +2, last commit 2 months ago) | Moderate niche utility. | Reasonable maintenance, slower than high-velocity tools. | Use for REPL-enhanced workflows and developer education environments. |
+| [gptme/gptme](https://github.com/gptme/gptme) (3K, +30, last commit 9 months ago) | Emerging but visible adoption. | Slower, but meaningful momentum. | Suitable for experimentation and assisted-dev workflows; run risk review before production. |
+| [sloria/doitlive](https://github.com/sloria/doitlive) (3K, +5, last commit 1 week ago) | Stable niche with steady use in demos/presentations. | Good maintenance pace. | Good fit for team demo tooling and runbook replay. |
+| [pyinvoke/invoke](https://github.com/pyinvoke/invoke) (4K, +7, last commit 4 months ago) | Established task-execution niche with broad familiarity. | Steady maintenance. | Strong choice for task-based automation and local toolchains. |
+| [facebook/pathpicker](https://github.com/facebook/pathpicker) (5K, +6, last commit 1 year ago) | High historical adoption but aging maintenance profile. | Low maintenance urgency from last commit. | Consider for legacy internal workflows only; avoid as new mission-critical dependency. |
+| [rsalmei/alive-progress](https://github.com/rsalmei/alive-progress) (6K, +7, last commit 4 months ago) | Solid adoption for terminal UX in long jobs. | Moderate maintenance. | Use in CLIs needing user-facing progress UX. |
+| [prompt-toolkit/python-prompt-toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit) (10K, +21, last commit 3 months ago) | Strong mature dependency for advanced interactive CLIs. | Good engineering activity. | Best pick for rich terminal UIs; stable for production features. |
+| [gleitz/howdoi](https://github.com/gleitz/howdoi) (10K, +9, last commit 1 year ago) | High historical awareness but stale maintenance. | Weak freshness for current security/compatibility risk. | Use only where support burden is low; prefer newer maintained alternatives for core flows. |
+| [borgbackup/borg](https://github.com/borgbackup/borg) (13K, +51, last commit 2 days ago) | Strong ecosystem credibility in backup tooling. | Very active and likely production-tested. | Good production option for backup archiving pipelines; evaluate recovery policy and key-management integration. |
+| [pallets/click](https://github.com/pallets/click) (17K, +112, last commit 1 month ago) | High maturity and broad ecosystem gravity. | Healthy active maintenance. | Primary recommendation for most new Python CLIs in 2026, especially if team values stability and documentation depth. |
+| [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) (148K, +1603, last commit 3 days ago) | Very high usage and obvious network effect. | Exceptionally active with strong velocity. | Excellent production-grade option for media CLI workflows; monitor API/legal dependency changes and pin versions tightly. |
+
+## 2026 adoption guidance
+
+- **Safe default for new production CLIs:** `pallets/click` first, then `prompt-toolkit` where rich input UX is needed.
+- **Automation and task orchestration:** `pyinvoke/invoke`, `copier-org/copier`, `tox-dev/pipdeptree`.
+- **Developer tooling / demos:** `sloria/doitlive`, `magmax/python-inquirer`, `bpython`, `rsalmei/alive-progress`.
+- **High-velocity utility candidates:** `yt-dlp/yt-dlp`, `borgbackup/borg`, `prompt-toolkit`.
+- **Watch list (ageing maintenance despite stars):** `gleitz/howdoi` and `facebook/pathpicker` (stability and replacement planning advised before 2026 expansion).
+
+## 2026 risk posture by maintenance
+
+- **Green field risk (best):** repos with last commit in days/weeks and positive momentum (`click`, `yt-dlp`, `borg`, `copier`, `pipdeptree`).
+- **Operationally usable with checks:** repos with month-scale commits (`inquirer`, `invokes`, `prompt-toolkit`, `alive-progress`).
+- **Maintenance watch:** repos with year-old commits (`howdoi`, `pathpicker`); avoid for long-lived customer-facing paths unless maintained in a fork.

@@ -1,0 +1,1023 @@
+# Cross-Language Architecture R&D: Hexagonal + Clean + xDD
+
+## Executive Summary
+
+This document captures the research and analysis of implementing a unified hexagonal architecture pattern across multiple programming languages: **Rust**, **Go**, **TypeScript**, **Python**, **Zig**, and **C#**.
+
+---
+
+## 1. Hexagonal Architecture Implementation Comparison
+
+### 1.1 Layer Structure (Consistent Across All Languages)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    ADAPTERS (Outer)                    │
+│   HTTP Controllers, CLI, DB, Cache, External Clients   │
+└───────────────────────────┬─────────────────────────────┘
+                            │ depends on
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                 APPLICATION (Middle)                     │
+│         Use Cases, Commands, Queries, DTOs              │
+└───────────────────────────┬─────────────────────────────┘
+                            │ depends on
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   DOMAIN (Inner)                         │
+│    Entities, Value Objects, Domain Services, Ports      │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 1.2 Language-Specific Patterns
+
+| Aspect | Rust | Go | TypeScript | Python | Zig | C# |
+|--------|------|-----|------------|--------|-----|-----|
+| **Domain Isolation** | `mod` visibility | `package` | `namespace` | `__init__.py` | `const` + comptime | `namespace` |
+| **Ports (Interfaces)** | `trait` | `interface{}` / `interface` | `interface` | `ABC` / Protocol | `struct` with fn pointers | `interface` |
+| **Immutability** | `struct` (mutable by default) + `&` | Value types + copies | `const` / `Readonly` | `@dataclass(frozen=True)` | `const` | `readonly` / `init` |
+| **Dependency Injection** | Manual / Builder | Constructor injection | Manual / IoC | Constructor injection | Manual | Constructor / DI container |
+| **Error Handling** | `Result<T, E>` | `(T, error)` | `Result` type / exceptions | Exceptions / `Result` | `!T` / `anyerror` | `Exception` / `Result<T>` |
+
+---
+
+## 2. Domain Entity Implementation
+
+### 2.1 Rust Pattern
+
+```rust
+// phenotype-shared/crates/phenotype-state-machine/src/domain/entities/state_machine.rs
+
+#[derive(Debug, Clone)]
+pub struct StateMachine<S: Clone + Eq + Hash> {
+    id: Uuid,
+    name: String,
+    states: HashSet<S>,
+    transitions: HashMap<TransitionKey<S>, S>,
+    current_state: S,
+}
+
+impl<S: Clone + Eq + Hash + Display> StateMachine<S> {
+    pub fn new(name: String, initial_state: S) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            name,
+            states: HashSet::from([initial_state.clone()]),
+            transitions: HashMap::new(),
+            current_state: initial_state,
+        }
+    }
+
+    pub fn transition(&mut self, event: &str) -> Result<&S, StateMachineError> {
+        let key = TransitionKey::new(self.current_state.clone(), event.to_string());
+        self.transitions
+            .get(&key)
+            .map(|next| {
+                self.current_state = next.clone();
+                &self.current_state
+            })
+            .ok_or(StateMachineError::InvalidTransition {
+                current: self.current_state.to_string(),
+                event: event.to_string(),
+            })
+    }
+}
+```
+
+### 2.2 Go Pattern
+
+```go
+// services/config-service/domain/entities/config_entry.go
+
+type ConfigEntry struct {
+    ID        uuid.UUID
+    Key       string
+    Value     string
+    ValueType ValueType
+    Version   int
+    Metadata  map[string]string
+    createdAt time.Time
+    updatedAt time.Time
+}
+
+func NewConfigEntry(key, value string, valueType ValueType) (*ConfigEntry, error) {
+    if key == "" {
+        return nil, ErrEmptyKey
+    }
+    return &ConfigEntry{
+        ID:        uuid.New(),
+        Key:       key,
+        Value:     value,
+        ValueType: valueType,
+        Version:   1,
+        Metadata:  make(map[string]string),
+        createdAt: time.Now(),
+        updatedAt: time.Now(),
+    }, nil
+}
+
+func (e *ConfigEntry) WithUpdatedValue(value string) *ConfigEntry {
+    return &ConfigEntry{
+        ID:        e.ID,
+        Key:       e.Key,
+        Value:     value,
+        ValueType: e.ValueType,
+        Version:   e.Version + 1,
+        Metadata:  e.Metadata,
+        createdAt: e.createdAt,
+        updatedAt: time.Now(),
+    }
+}
+```
+
+### 2.3 TypeScript Pattern
+
+```typescript
+// packages/phenotype-sdk/src/domain/entities/config-entry.ts
+
+export interface ConfigEntryProps {
+  id: string;
+  key: string;
+  value: unknown;
+  valueType: ValueType;
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
+  metadata: Record<string, unknown>;
+}
+
+export class ConfigEntry {
+  private constructor(private readonly props: ConfigEntryProps) {}
+
+  static create(props: Omit<ConfigEntryProps, 'id' | 'version' | 'createdAt' | 'updatedAt'>): ConfigEntry {
+    if (!props.key || props.key.trim() === '') {
+      throw new DomainError('ConfigEntry key cannot be empty');
+    }
+    return new ConfigEntry({
+      ...props,
+      id: crypto.randomUUID(),
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  get key(): string {
+    return this.props.key;
+  }
+
+  get version(): number {
+    return this.props.version;
+  }
+
+  withUpdatedValue(value: unknown): ConfigEntry {
+    return new ConfigEntry({
+      ...this.props,
+      value,
+      version: this.props.version + 1,
+      updatedAt: new Date(),
+    });
+  }
+}
+```
+
+### 2.4 Python Pattern
+
+```python
+# libs/python/phenotype_sdk/src/phenotype_sdk/domain/entities/__init__.py
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+from uuid import UUID, uuid4
+
+@dataclass(frozen=True)
+class ConfigEntry:
+    """
+    Core domain entity representing a configuration entry.
+    Immutable and contains only business logic (DDD Entity).
+    """
+
+    key: str
+    value: ConfigValue
+    version: int = 1
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    id: UUID = field(default_factory=uuid4)
+
+    def __post_init__(self) -> None:
+        """Validate entity invariants."""
+        if not self.key:
+            raise ValueError("ConfigEntry key cannot be empty")
+        if self.version < 1:
+            raise ValueError("ConfigEntry version must be >= 1")
+
+    def with_updated_value(self, value: ConfigValue) -> "ConfigEntry":
+        """Create a new ConfigEntry with updated value (immutable update)."""
+        return ConfigEntry(
+            key=self.key,
+            value=value,
+            version=self.version + 1,
+            created_at=self.created_at,
+            updated_at=datetime.utcnow(),
+            metadata=self.metadata.copy(),
+            id=self.id,
+        )
+```
+
+### 2.5 Zig Pattern
+
+```zig
+// libs/zig/phenotype-sdk/src/domain/entities.zig
+
+pub const ConfigEntry = struct {
+    id: []const u8,
+    key: []const u8,
+    value: []const u8,
+    value_type: ValueType,
+    version: u32,
+    created_at: i64,
+    updated_at: i64,
+    metadata: std.StringHashMap([]const u8),
+
+    pub fn create(
+        key: []const u8,
+        value: []const u8,
+        value_type: ValueType,
+        allocator: std.mem.Allocator,
+    ) !ConfigEntry {
+        if (key.len == 0) return error.EmptyKey;
+
+        const now = std.time.timestamp();
+        var metadata = std.StringHashMap([]const u8).init(allocator);
+        errdefer metadata.deinit();
+
+        return ConfigEntry{
+            .id = try uuid.v4().toString(allocator),
+            .key = key,
+            .value = value,
+            .value_type = value_type,
+            .version = 1,
+            .created_at = now,
+            .updated_at = now,
+            .metadata = metadata,
+        };
+    }
+
+    pub fn withValue(self: *const ConfigEntry, new_value: []const u8) ConfigEntry {
+        return ConfigEntry{
+            .id = self.id,
+            .key = self.key,
+            .value = new_value,
+            .value_type = self.value_type,
+            .version = self.version + 1,
+            .created_at = self.created_at,
+            .updated_at = std.time.timestamp(),
+            .metadata = self.metadata,
+        };
+    }
+};
+```
+
+### 2.6 C# Pattern
+
+```csharp
+// libs/csharp/Phenotype.SDK/src/Domain/Entities/ConfigEntry.cs
+
+public sealed class ConfigEntry
+{
+    public Guid Id { get; }
+    public string Key { get; }
+    public string Value { get; }
+    public ValueObjects.ValueType ValueType { get; }
+    public int Version { get; }
+    public DateTime CreatedAt { get; }
+    public DateTime UpdatedAt { get; }
+    public IReadOnlyDictionary<string, string> Metadata { get; }
+
+    private ConfigEntry(
+        Guid id, string key, string value, ValueObjects.ValueType valueType,
+        int version, DateTime createdAt, DateTime updatedAt,
+        Dictionary<string, string> metadata)
+    {
+        Id = id;
+        Key = key;
+        Value = value;
+        ValueType = valueType;
+        Version = version;
+        CreatedAt = createdAt;
+        UpdatedAt = updatedAt;
+        Metadata = metadata;
+    }
+
+    public static ConfigEntry Create(string key, string value, ValueObjects.ValueType valueType)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("Key cannot be empty", nameof(key));
+
+        return new ConfigEntry(
+            id: Guid.NewGuid(),
+            key: key,
+            value: value,
+            valueType: valueType,
+            version: 1,
+            createdAt: DateTime.UtcNow,
+            updatedAt: DateTime.UtcNow,
+            metadata: new Dictionary<string, string>());
+    }
+
+    public ConfigEntry WithUpdatedValue(string newValue) =>
+        new(
+            id: Id,
+            key: Key,
+            value: newValue,
+            valueType: ValueType,
+            version: Version + 1,
+            createdAt: CreatedAt,
+            updatedAt: DateTime.UtcNow,
+            metadata: new Dictionary<string, string>(Metadata));
+}
+```
+
+---
+
+## 3. Port (Interface) Patterns
+
+### 3.1 Comparison Table
+
+| Language | Port Declaration | Adapter Implementation | Type Safety |
+|----------|------------------|----------------------|-------------|
+| **Rust** | `pub trait Repository { fn get(&self, key: &str) -> Result<Option<T>, E>; }` | `impl Repository for PostgresAdapter` | Static + Duck typing |
+| **Go** | `type Repository interface { Get(key string) (*Entity, error) }` | `type PostgresAdapter struct {}` | Static (compile-time) |
+| **TypeScript** | `interface Repository<T> { get(key: string): Promise<T | null>; }` | `class PostgresAdapter implements Repository<Entity>` | Static + Structural |
+| **Python** | `class Repository(ABC): @abstractmethod def get(...)` | `class PostgresAdapter(Repository)` | Duck typing |
+| **Zig** | `pub const Repository = struct { get: fn(...) }` | Function pointers | Static (comptime) |
+| **C#** | `interface IRepository<T> { Task<T?> GetAsync(string key); }` | `class PostgresAdapter : IRepository<Entity>` | Static (compile-time) |
+
+### 3.2 Best Practices by Language
+
+#### Rust: Leverage Traits for Zero-Cost Abstractions
+```rust
+pub trait ConfigRepository: Send + Sync {
+    async fn get(&self, key: &str) -> Result<Option<ConfigEntry>, RepositoryError>;
+    async fn save(&self, entry: ConfigEntry) -> Result<ConfigEntry, RepositoryError>;
+}
+
+// Default implementation for convenience
+impl<T: ConfigRepository> ConfigRepository for Arc<T> {
+    async fn get(&self, key: &str) -> Result<Option<ConfigEntry>, RepositoryError> {
+        (**self).get(key).await
+    }
+}
+```
+
+#### Go: Use Interface Composition
+```go
+type Repository interface {
+    Get(ctx context.Context, key string) (*Entity, error)
+    Save(ctx context.Context, entity *Entity) error
+}
+
+type PublishAwareRepository interface {
+    Repository
+    EventPublisher
+}
+```
+
+#### TypeScript: Discriminated Unions for Results
+```typescript
+type Result<T, E = Error> =
+  | { success: true; data: T }
+  | { success: false; error: E };
+
+async function getConfig(key: string): Promise<Result<ConfigEntry>> {
+  // ...
+}
+```
+
+#### Python: Protocol for Structural Typing
+```python
+from typing import Protocol, runtime_checkable
+
+@runtime_checkable
+class ConfigRepository(Protocol):
+    async def get(self, key: str) -> ConfigEntry | None: ...
+    async def save(self, entry: ConfigEntry) -> ConfigEntry: ...
+
+# Works with any implementation
+async def use_repository(repo: ConfigRepository) -> None:
+    entry = await repo.get("key")
+```
+
+#### Zig: Comptime Interface Validation
+```zig
+pub fn RepositoryMixin(comptime Self: type) type {
+    return struct {
+        pub fn get(self: *Self, key: []const u8) !?ConfigEntry {
+            if (!@hasDecl(Self, "get")) @compileError("Missing get method");
+            return Self.get(self, key);
+        }
+    };
+}
+```
+
+#### C#: Generic Constraints
+```csharp
+public interface IRepository<T, TId> where T : Entity<TId>
+{
+    Task<T?> GetByIdAsync(TId id, CancellationToken ct = default);
+    Task<IReadOnlyList<T>> GetAllAsync(CancellationToken ct = default);
+    Task<T> SaveAsync(T entity, CancellationToken ct = default);
+}
+```
+
+---
+
+## 4. Dependency Injection Patterns
+
+### 4.1 Language-Specific Approaches
+
+| Language | DI Container | Lifestyle | Configuration |
+|----------|-------------|-----------|---------------|
+| **Rust** | Manual / `axum` extensions | Singleton via `Arc` | Builder pattern |
+| **Go** | Manual (constructor) | - | Functional options |
+| **TypeScript** | `tsyringe` / Manual | Scoped / Singleton | Decorators |
+| **Python** | `injector` / Manual | Transient / Singleton | Decorators |
+| **Zig** | Manual | - | Comptime config |
+| **C#** | Built-in DI / `Microsoft.Extensions.DependencyInjection` | Scoped / Singleton / Transient | Registration |
+
+### 4.2 Rust: Builder Pattern with Arc
+```rust
+use std::sync::Arc;
+
+pub struct AppState<S: ConfigRepository, P: EventPublisher> {
+    repository: Arc<S>,
+    publisher: Arc<P>,
+}
+
+impl<S: ConfigRepository + 'static, P: EventPublisher + 'static> AppState<S, P> {
+    pub fn new(repository: S, publisher: P) -> Self {
+        Self {
+            repository: Arc::new(repository),
+            publisher: Arc::new(publisher),
+        }
+    }
+
+    pub fn into_app(self) -> App<impl Clone + Send + Sync + 'static> {
+        let state = Arc::new(self);
+        // Use with axum, warp, etc.
+    }
+}
+```
+
+### 4.3 Go: Functional Options
+```go
+type ServerOption func(*Server)
+
+func WithRepository(repo Repository) ServerOption {
+    return func(s *Server) {
+        s.repo = repo
+    }
+}
+
+func WithLogger(logger *slog.Logger) ServerOption {
+    return func(s *Server) {
+        s.logger = logger
+    }
+}
+
+type Server struct {
+    repo   Repository
+    logger *slog.Logger
+}
+
+func NewServer(opts ...ServerOption) *Server {
+    s := &Server{
+        repo:   &NopRepository{},
+        logger: slog.Default(),
+    }
+    for _, opt := range opts {
+        opt(s)
+    }
+    return s
+}
+```
+
+### 4.4 TypeScript: Constructor Injection
+```typescript
+@injectable()
+export class ConfigService {
+  constructor(
+    @inject(TYPES.ConfigRepository) private readonly repository: IConfigRepository,
+    @inject(TYPES.EventPublisher) private readonly publisher: IEventPublisher
+  ) {}
+
+  async createConfig(dto: CreateConfigDTO): Promise<ConfigEntry> {
+    // Implementation
+  }
+}
+
+// Registration
+container.bind<IConfigRepository>(TYPES.ConfigRepository).to(HttpConfigRepository);
+container.bind<IEventPublisher>(TYPES.EventPublisher).to(KafkaEventPublisher);
+container.bind<ConfigService>(TYPES.ConfigService).toSelf();
+```
+
+### 4.5 Python: Constructor with Protocol
+```python
+class ConfigUseCases:
+    def __init__(
+        self,
+        repository: ConfigRepository,
+        event_publisher: EventPublisher | None = None,
+    ) -> None:
+        self._repository = repository
+        self._event_publisher = event_publisher
+
+# Usage with type checking
+use_cases = ConfigUseCases(
+    repository=InMemoryConfigRepository(),
+    event_publisher=KafkaPublisher(),
+)
+```
+
+### 4.6 Zig: Comptime Configuration
+```zig
+pub fn AppBuilder(comptime Config: type) type {
+    return struct {
+        pub fn build(self: *@This()) Config.AppState {
+            return Config.AppState{
+                .repository = try Config.Repository.init(Config.allocator),
+                .publisher = try Config.Publisher.init(Config.allocator),
+            };
+        }
+    };
+}
+```
+
+### 4.7 C#: Microsoft.Extensions.DependencyInjection
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services
+builder.Services.AddSingleton<IConfigRepository, PostgresConfigRepository>();
+builder.Services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+builder.Services.AddScoped<ConfigUseCases>();
+builder.Services.AddScoped<FeatureUseCases>();
+
+// Configure options
+builder.Services.Configure<DatabaseOptions>(
+    builder.Configuration.GetSection("Database"));
+
+var app = builder.Build();
+```
+
+---
+
+## 5. xDD Methodology Application
+
+### 5.1 TDD (Test-Driven Development)
+
+| Language | Test Framework | Mocking | Assertion |
+|----------|---------------|---------|-----------|
+| **Rust** | `#[test]`, `cargo test` | `mockall`, `httptest` | `assert!`, `assert_eq!` |
+| **Go** | `testing`, `go test` | `gomock`, `gock` | `if err != nil`, `require` |
+| **TypeScript** | `jest`, `vitest` | `ts-mockito`, `msw` | `expect()` |
+| **Python** | `pytest`, `unittest` | `pytest-mock`, `responses` | `assert` |
+| **Zig** | `std.testing` | Manual | `try testing.expect()` |
+| **C#** | `xUnit`, `NUnit`, `MSTest` | `Moq`, `NSubstitute` | `Assert`, `FluentAssertions` |
+
+### 5.2 BDD (Behavior-Driven Development)
+
+```rust
+// Rust: Using rstest for BDD-style tests
+#[rstest]
+#[case("valid-key", true)]
+#[case("invalid key with spaces", false)]
+#[case("", false)]
+fn test_key_validation(#[case] key: &str, #[case] expected: bool) {
+    let result = validate_key(key);
+    assert_eq!(result.is_ok(), expected);
+}
+```
+
+```typescript
+// TypeScript: Using Cucumber
+import { Given, When, Then } from '@cucumber/cucumber';
+
+Given('a configuration entry with key {string}', function(key: string) {
+  this.configEntry = ConfigEntry.create({ key, value: 'test', valueType: 'string' });
+});
+
+When('I update the value to {string}', function(newValue: string) {
+  this.updatedEntry = this.configEntry.withUpdatedValue(newValue);
+});
+
+Then('the version should be incremented', function() {
+  expect(this.updatedEntry.version).toBe(this.configEntry.version + 1);
+});
+```
+
+### 5.3 DDD (Domain-Driven Design)
+
+**Bounded Contexts Identified:**
+
+| Context | Entities | Value Objects | Domain Services |
+|---------|----------|---------------|-----------------|
+| **Configuration** | ConfigEntry, ConfigNamespace | ConfigValue, ValueType | ConfigValidator |
+| **Feature Flags** | FeatureFlag, TargetingRule | RolloutPercentage | FlagEvaluator |
+| **Policy** | Policy, PolicyRule | PolicyEffect, PolicyCondition | PolicyEngine |
+| **Audit** | AuditEntry, AuditEvent | AuditAction, AuditResult | AuditLogger |
+
+### 5.4 CQRS (Command Query Responsibility Segregation)
+
+```rust
+// Command: Mutates state
+pub struct CreateConfigCommand {
+    pub key: String,
+    pub value: String,
+    pub value_type: ValueType,
+}
+
+pub async fn handle_create(
+    cmd: CreateConfigCommand,
+    repo: impl ConfigRepository,
+) -> Result<ConfigEntry, Error> {
+    // Validate, create, persist, publish event
+}
+
+// Query: Reads state
+pub struct GetConfigQuery {
+    pub key: String,
+}
+
+pub async fn handle_get(
+    query: GetConfigQuery,
+    repo: impl ConfigRepository,
+) -> Result<Option<ConfigEntry>, Error> {
+    repo.get(&query.key).await
+}
+```
+
+---
+
+## 6. Error Handling Patterns
+
+### 6.1 Unified Error Taxonomy
+
+```
+DomainError
+├── ValidationError
+├── InvariantViolation
+└── BusinessRuleViolation
+
+RepositoryError
+├── NotFoundError
+├── DuplicateKeyError
+├── ConnectionError
+└── TransactionError
+
+ApplicationError
+├── UseCaseError
+└── EventPublishingError
+```
+
+### 6.2 Language-Specific Implementations
+
+#### Rust: Custom Error Types with `thiserror`
+```rust
+#[derive(Debug, Error)]
+pub enum DomainError {
+    #[error("Validation failed: {0}")]
+    Validation(String),
+
+    #[error("Entity not found: {0}")]
+    NotFound(String),
+
+    #[error("Invariant violated: {0}")]
+    InvariantViolation(String),
+}
+
+#[derive(Debug, Error)]
+pub enum RepositoryError {
+    #[error("Connection failed: {0}")]
+    Connection(#[from] sqlx::Error),
+
+    #[error("Entity not found: {0}")]
+    NotFound(String),
+}
+```
+
+#### Go: Sentinel Errors + Wrapping
+```go
+var (
+    ErrNotFound      = errors.New("entity not found")
+    ErrInvalidInput  = errors.New("invalid input")
+    ErrDuplicateKey  = errors.New("duplicate key")
+)
+
+type DomainError struct {
+    Message string
+    Cause   error
+}
+
+func (e *DomainError) Error() string {
+    return e.Message
+}
+
+func (e *DomainError) Unwrap() error {
+    return e.Cause
+}
+```
+
+#### TypeScript: Result Type Pattern
+```typescript
+type Result<T, E = AppError> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
+class AppError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly details?: Record<string, unknown>
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
+}
+
+function mapToResult<T>(fn: () => T): Result<T, AppError> {
+  try {
+    return { ok: true, value: fn() };
+  } catch (e) {
+    return { ok: false, error: e as AppError };
+  }
+}
+```
+
+#### Python: Custom Exception Hierarchy
+```python
+class DomainError(Exception):
+    """Base class for domain errors."""
+    pass
+
+class ValidationError(DomainError):
+    """Raised when validation fails."""
+    def __init__(self, message: str, field: str | None = None):
+        super().__init__(message)
+        self.field = field
+
+class NotFoundError(DomainError):
+    """Raised when an entity is not found."""
+    pass
+
+# Usage
+try:
+    entry = ConfigEntry.create(key="", value="test")
+except ValidationError as e:
+    print(f"Validation failed for field '{e.field}': {e}")
+```
+
+#### Zig: Error Sets
+```zig
+const DomainError = error{
+    EmptyKey,
+    InvalidValue,
+    NotFound,
+};
+
+const RepositoryError = error{
+    ConnectionFailed,
+    DuplicateKey,
+    TransactionFailed,
+} || DomainError;
+
+pub fn createEntry(key: []const u8, value: []const u8) RepositoryError!ConfigEntry {
+    if (key.len == 0) return DomainError.EmptyKey;
+    // ...
+}
+```
+
+#### C#: Custom Exception Hierarchy
+```csharp
+public abstract class DomainException : Exception
+{
+    public string Code { get; }
+    public IReadOnlyDictionary<string, object>? Details { get; }
+
+    protected DomainException(string message, string code) : base(message)
+    {
+        Code = code;
+    }
+}
+
+public sealed class ValidationException : DomainException
+{
+    public string Field { get; }
+    public object? AttemptedValue { get; }
+
+    public ValidationException(string field, string message)
+        : base(message, "VALIDATION_ERROR")
+    {
+        Field = field;
+    }
+}
+
+public sealed class NotFoundException : DomainException
+{
+    public string EntityType { get; }
+    public object EntityId { get; }
+
+    public NotFoundException(string entityType, object entityId)
+        : base($"{entityType} with ID {entityId} not found", "NOT_FOUND")
+    {
+        EntityType = entityType;
+        EntityId = entityId;
+    }
+}
+```
+
+---
+
+## 7. Cross-Cutting Concerns
+
+### 7.1 Observability
+
+| Aspect | Rust | Go | TypeScript | Python | Zig | C# |
+|--------|------|-----|------------|--------|-----|-----|
+| **Logging** | `tracing` | `slog` | `pino`, `winston` | `structlog`, `loguru` | `std.log` | `ILogger<T>` |
+| **Metrics** | `metrics`, `prometheus` | `prometheus/client_golang` | `prom-client` | `prometheus_client` | Manual | `IMeter` |
+| **Tracing** | `tracing` + `otlp` | `opentelemetry-go` | `opentelemetry-js` | `opentelemetry-python` | Manual | `ActivitySource` |
+| **Health** | `axum-health` | `/health` endpoint | `/health` endpoint | `/health` endpoint | Manual | `/health` endpoint |
+
+### 7.2 Resilience Patterns
+
+```rust
+// Rust: Retry with exponential backoff
+use backon::{ExponentialBuilder, Retryable};
+
+async fn with_retry<F, T>(op: F) -> Result<T, Error>
+where
+    F: Fn() -> Retryable<'_, _, Error>,
+{
+    op().retry(ExponentialBuilder::default()
+        .with_min_delay(Duration::from_millis(100))
+        .with_max_delay(Duration::from_secs(30))
+        .with_max_times(5))
+    .await
+}
+```
+
+```typescript
+// TypeScript: Circuit Breaker
+import CircuitBreaker from 'opossum';
+
+const breaker = new CircuitBreaker(fetchConfig, {
+  timeout: 3000,
+  errorThresholdPercentage: 50,
+  resetTimeout: 30000,
+});
+
+breaker.fallback(() => getDefaultConfig());
+breaker.fire(key);
+```
+
+### 7.3 Security
+
+```go
+// Go: Context with cancellation
+func (s *Service) GetConfig(ctx context.Context, key string) (*Config, error) {
+    // Context cancellation propagates through the call stack
+    select {
+    case <-ctx.Done():
+        return nil, ctx.Err()
+    default:
+        return s.repo.Get(ctx, key)
+    }
+}
+```
+
+```csharp
+// C#: Polly for retry, circuit breaker
+var policy = Policy
+    .Handle<HttpRequestException>()
+    .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+    .RetryAsync(3)
+    .WrapAsync(Policy.BreakdownAsync);
+
+var response = await policy.ExecuteAsync(() => httpClient.GetAsync(url));
+```
+
+---
+
+## 8. Performance Considerations
+
+### 8.1 Async/Await Comparison
+
+| Language | Runtime | Executor | Fiber/ Goroutine |
+|----------|---------|---------|------------------|
+| **Rust** | `tokio`, `async-std` | Multi-threaded work-stealing | `Future` |
+| **Go** | Built-in | M:N scheduler | Goroutine |
+| **TypeScript** | `Node.js`, `Deno`, `Bun` | Event loop | `AsyncLocalStorage` |
+| **Python** | `asyncio`, `trio` | Event loop | `asyncio.Task` |
+| **Zig** | `libuv`, manual | Event loop | `@async` |
+| **C#** | `Task Parallel Library` | ThreadPool | `ValueTask` |
+
+### 8.2 Memory Efficiency
+
+| Language | Boxed Types | Zero-Cost Abstractions | Escape Analysis |
+|----------|-------------|------------------------|-----------------|
+| **Rust** | `Box<T>` | Yes (traits) | Aggressive |
+| **Go** | Pointer heap allocation | Limited | Escapes to heap |
+| **TypeScript** | Objects always heap | No | GC managed |
+| **Python** | Everything heap | No | GC managed |
+| **Zig** | `@ptrCast`, manual | Yes (comptime) | Manual |
+| **C#** | `class` heap, `struct` stack | Yes (generics) | Tiered |
+
+---
+
+## 9. Code Generation & Templates
+
+### 9.1 Template Locations
+
+```
+template-commons/
+├── templates/
+│   ├── hexagonal-rust/      # Rust workspace template
+│   ├── hexagonal-go/        # Go module template
+│   ├── hexagonal-ts/        # TypeScript package template
+│   ├── hexagonal-python/    # Python package template
+│   ├── hexagonal-zig/       # Zig project template
+│   └── hexagonal-csharp/   # C# solution template
+```
+
+### 9.2 Usage
+
+```bash
+# Create new Rust microservice
+cp -r template-commons/templates/hexagonal-rust my-service
+cd my-service
+cargo generate-lockfile
+
+# Create new Go microservice
+cp -r template-commons/templates/hexagonal-go my-service
+cd my-service
+go mod tidy
+```
+
+---
+
+## 10. Recommendations
+
+### 10.1 Language Selection by Use Case
+
+| Use Case | Primary | Secondary | Avoid |
+|----------|---------|-----------|-------|
+| **Core Libraries** | Rust | C#, Zig | Python (GIL) |
+| **Microservices** | Go | Rust, TypeScript | - |
+| **Web Frontends** | TypeScript | - | - |
+| **Data Processing** | Rust | Python (pandas) | - |
+| **Scripting/CLI** | Go | Python, Zig | - |
+| **Game/Embedded** | Zig | Rust, C++ | - |
+| **Enterprise Apps** | C# | Java, Go | - |
+
+### 10.2 Architectural Enforcement
+
+1. **Dependency Rule**: Domain never imports from Application or Adapters
+2. **Port-First Design**: Define interfaces before implementations
+3. **Immutability by Default**: Use immutable data structures in domain
+4. **Explicit over Implicit**: No magic; clear boundaries
+5. **Composition over Inheritance**: Prefer composition for code reuse
+
+### 10.3 Quality Gates
+
+| Gate | Tool | Threshold |
+|------|------|----------|
+| **Linting** | `clippy`, `golangci-lint`, `eslint`, `ruff` | 0 errors |
+| **Formatting** | `rustfmt`, `gofmt`, `prettier` | Auto-fix |
+| **Type Checking** | `mypy`, `pyright`, `TypeScript` | Strict |
+| **Tests** | `cargo test`, `go test`, `pytest` | 80% coverage |
+| **Security** | `cargo-audit`, `trivy`, `semgrep` | 0 CVEs |
+| **Performance** | `cargo bench`, `pprof` | Baseline -10% |
+
+---
+
+## 11. Conclusion
+
+This cross-language R&D demonstrates that **hexagonal architecture** can be consistently implemented across all major programming languages while respecting each language's idioms and strengths.
+
+**Key Findings:**
+
+1. **Port definitions are universal**: Interface/Protocol/Trait patterns are language-agnostic
+2. **Immutability is achievable**: Every language has mechanisms for immutable data
+3. **Dependency injection varies**: From manual (Go, Zig) to container-based (C#, TypeScript)
+4. **Error handling differs**: Result types (Rust, Zig) vs exceptions (C#, TypeScript, Python)
+5. **Testing is universal**: Every language has mature testing frameworks
+
+**Next Steps:**
+- Implement the proposed structure across all existing repositories
+- Create automated scaffolding tools for each language
+- Establish cross-language contracts for polyrepo integration
+- Document anti-patterns and gotchas for each language

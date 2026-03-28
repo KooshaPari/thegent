@@ -114,3 +114,17 @@ __pycache__/
 .github/copilot-instructions.md
 .claudeignore
 .llmignore
+
+# Worktree directories (git worktrees are managed separately)
+worktrees/
+*-wtrees/
+thegent-wtrees/
+AgilePlus-wtrees/
+trace-wtrees/
+agent-devops-setups-wtrees/
+
+# Archive directories (local retention only, not tracked)
+.archive/
+.agileplus/
+.forge/
+.env.worktree

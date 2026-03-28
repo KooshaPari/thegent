@@ -1,0 +1,10 @@
+repo,branch,dirty_files,files_ge_1000_lines,primary_manifests
+cliproxyapi++,main,4,35,go.mod;Taskfile.yml
+cliproxyapi-plusplus,main,37,33,go.mod;Taskfile.yml
+agentapi-plusplus,main,4,0,go.mod;Taskfile.yml
+thegent,main,17,61,package.json;pyproject.toml;Taskfile.yml
+heliosApp,main,3,0,justfile;package.json;Taskfile.yml
+heliosCLI,codex/tooling-flags-migration,19,91,Cargo.toml;justfile;package.json
+helios-cli,main,5,178,Cargo.toml;justfile;package.json
+portage,main,7,12,pyproject.toml;Taskfile.yml
+tokenledger,main,9,1,Cargo.toml;Taskfile.yml
