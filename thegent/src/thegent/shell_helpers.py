@@ -10,38 +10,27 @@ import shutil
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
-
-_SHELL_METACHARS = set("|&;<>()$`\n*?[]{}~")
 
 
-def _normalize_command(cmd: str | Sequence[str], shell: bool) -> tuple[str | list[str], bool]:
-    """Normalize commands to avoid unnecessary shell processes."""
+Command = str | Sequence[str]
+
+
+def run(cmd: Command, shell: bool = True, cwd: Path | None = None) -> tuple[int, str, str]:
+    """Run a command and capture its exit code, stdout, and stderr."""
     if isinstance(cmd, Sequence) and not isinstance(cmd, str):
-        return list(cmd), False
+        command: str | list[str] = [str(part) for part in cmd]
+        use_shell = False
+    elif shell:
+        command = cmd
+        use_shell = True
+    else:
+        command = shlex.split(cmd)
+        use_shell = False
 
-    if not shell:
-        return shlex.split(cmd), False
-
-    # Preserve shell=True only for strings that actually need shell parsing.
-    if any(char in cmd for char in _SHELL_METACHARS):
-        return cmd, True
-
-    try:
-        return shlex.split(cmd), False
-    except ValueError:
-        return cmd, True
-
-
-def run(
-    cmd: str | Sequence[str], shell: bool = True, cwd: Path | None = None
-) -> tuple[int, str, str]:
-    """Run shell command."""
-    normalized_cmd, use_shell = _normalize_command(cmd, shell)
     result = subprocess.run(
-        normalized_cmd,
+        command,
         shell=use_shell,
-        cwd=cwd,
+        cwd=str(cwd) if cwd is not None else None,
         capture_output=True,
         text=True,
     )
@@ -49,7 +38,7 @@ def run(
 
 
 def exists(cmd: str) -> bool:
-    """Check if command exists."""
+    """Check if command exists without spawning a shell."""
     return shutil.which(cmd) is not None
 
 
@@ -61,3 +50,4 @@ def ensure_dir(path: Path) -> None:
 def file_exists(path: Path) -> bool:
     """Check if file exists."""
     return path.exists()
+
