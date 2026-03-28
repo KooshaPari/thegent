@@ -1,6 +1,7 @@
 ---
 title: agent-wave
 description: Multi-agent orchestration platform for parallel AI workflows.
+draft: false
 ---
 
 ## Overview

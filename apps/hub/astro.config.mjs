@@ -14,15 +14,29 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Projects',
-          autogenerate: { directory: 'projects' },
+          items: [
+            { label: 'Overview', link: '/projects/' },
+            { label: 'heliosCLI', link: '/projects/helios-cli/' },
+            { label: 'heliosApp', link: '/projects/helios-app/' },
+            { label: 'AgilePlus', link: '/projects/agileplus/' },
+            { label: 'cliproxyapi', link: '/projects/cliproxy/' },
+            { label: 'agent-wave', link: '/projects/agent-wave/' },
+            { label: 'phenotype-gauge', link: '/projects/gauge/' },
+          ],
         },
         {
           label: 'Services',
-          autogenerate: { directory: 'services' },
+          items: [
+            { label: 'Service Registry', link: '/services/' },
+            { label: 'Port Allocation', link: '/services/ports/' },
+          ],
         },
         {
           label: 'Governance',
-          autogenerate: { directory: 'governance' },
+          items: [
+            { label: 'Architecture Decisions', link: '/governance/adrs/' },
+            { label: 'Standards', link: '/governance/standards/' },
+          ],
         },
       ],
       customCss: ['./src/styles/custom.css'],

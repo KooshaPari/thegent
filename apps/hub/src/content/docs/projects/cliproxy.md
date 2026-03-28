@@ -1,6 +1,7 @@
 ---
 title: cliproxyapi
 description: CLI proxy and token management for AI providers.
+draft: false
 ---
 
 ## Overview
