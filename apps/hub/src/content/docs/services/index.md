@@ -39,3 +39,19 @@ See [phenotype.us recovery plan](/governance/phenotype-us-recovery/) for details
 | PostgreSQL | 5432 | Shared DB |
 | NATS | 4222 | Message bus |
 | Dragonfly | 6379 | Cache (Redis-compatible) |
+| Temporal | 7233 | Workflow orchestration |
+
+## Start Services
+
+```bash
+# Start shared infrastructure
+process-compose -f infrastructure/process-compose.shared.yml up
+
+# Start individual services
+cd heliosApp && bun dev         # port 3000
+cd AgilePlus && pnpm dev        # port 4000
+cd cliproxyapi-plusplus && go run . # port 5000
+cd agent-wave && bun dev        # port 7000
+```
+
+See [Port Allocation](/services/ports/) for full port map.
