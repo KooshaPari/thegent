@@ -19,9 +19,9 @@ var rootCmd = &cobra.Command{
 (codex, forge, cursor, claude, droid).
 
 SITBACK ORCHESTRATION:
-  sitback           - Autonomous orchestration dashboard
+  sitback           - Autonomous orchestration dashboard (light/medium/full profiles)
   sitback --audit   - Run audit report and exit
-  bridge            - Bridge to thegent's sitback
+  bridge            - Bridge to thegent's sitback implementation
   sync              - Sync session data from all harnesses
   delegate          - Delegate tasks to specific harnesses
 
@@ -30,6 +30,8 @@ SESSION MANAGEMENT:
   start             - Start new session with provider/model
   open              - Open session in harness
   transfer          - Transfer session between harnesses
+  manage            - Interactive single-session management
+  tui               - Interactive TUI browser
 
 Default behavior: lists all sessions (directory filter off).
 Default sort: updated_by (last message actor).`,
@@ -61,6 +63,12 @@ func init() {
 	// Generation subcommands
 	rootCmd.AddCommand(completionCmd)
 	rootCmd.AddCommand(genDocsCmd)
+
+	// Set up bridge flags
+	bridgeCmd.Flags().StringVar(&thegentPath, "thegent", "",
+		"Path to thegent executable (auto-discovers if not specified)")
+	bridgeCmd.Flags().StringVarP(&thegentProfile, "profile", "p", "",
+		"Profile to pass to thegent (light, medium, full)")
 }
 
 func mustGetEnv(key string) string {

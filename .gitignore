@@ -127,3 +127,4 @@ agent-devops-setups-wtrees/
 .archive/
 .agileplus/
 .forge/
+.env.worktree
