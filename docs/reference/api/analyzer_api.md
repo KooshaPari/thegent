@@ -1,78 +1,83 @@
 # analyzer API Reference
 
-> **Source**: `src/thegent/governance/analyzer.py`
+> **Source**: `src/thegent/agents/document/analyzer.py`
 
-Finding prioritisation and ranking for governance scans.
+Document Analyzer
 
-Takes a ScanResult produced by scanner.py and produces a severity-ranked
-list of Finding objects that downstream components (backlog, remediation
-planner) consume.
-
----
-
-## Finding
-
-A single actionable finding produced by the analyser.
-
-**Inherits from**: `BaseModel`
+Analyzes markdown files to categorize, extract metadata, and identify
+patterns or characteristics.
 
 ---
 
-## HealthAnalyzer
+## DocumentAnalysis
 
-Converts raw scan results into a prioritised list of findings.
+Analysis results for a document.
 
 ### Methods
 
-#### HealthAnalyzer.__init__
+#### DocumentAnalysis.to_dict
 
 ```python
-__init__(self: Any, health_targets_path: Path)
+to_dict(self: Any)
+```
+
+Convert to dictionary.
+
+---
+
+---
+
+## DocumentAnalyzer
+
+Analyzes markdown documents.
+
+### Methods
+
+#### DocumentAnalyzer.__init__
+
+```python
+__init__(self: Any)
 ```
 
 ---
 
-#### HealthAnalyzer.analyze
+#### DocumentAnalyzer.analyze
 
 ```python
-analyze(self: Any, scan_result: ScanResult, backlog_items: Any)
+analyze(self: Any, filepath: Path)
 ```
 
-Produce a ranked list of findings from *scan_result*.
-
-Green dimensions (at or exceeding target) are excluded.
-
-**Parameters**:
-
-- `scan_result`: output of CodebaseScanner.scan_all().
-- `backlog_items`: optional list of previous backlog entries used to
-boost priority of repeatedly-attempted dimensions.  Each
-entry is expected to carry a ``dimension`` key.
-
-**Returns**: Findings sorted descending by priority (highest first).
+Analyze a markdown file.
 
 ---
+
+---
+
+## DocumentCategory
+
+Categories for documents.
+
+**Inherits from**: `Enum`
 
 ---
 
 ## analyze
 
 ```python
-analyze(self: Any, scan_result: ScanResult, backlog_items: Any)
+analyze(self: Any, filepath: Path)
 ```
 
-Produce a ranked list of findings from *scan_result*.
+Analyze a markdown file.
 
-Green dimensions (at or exceeding target) are excluded.
+---
 
-**Parameters**:
+## to_dict
 
-- `scan_result`: output of CodebaseScanner.scan_all().
-- `backlog_items`: optional list of previous backlog entries used to
-boost priority of repeatedly-attempted dimensions.  Each
-entry is expected to carry a ``dimension`` key.
+```python
+to_dict(self: Any)
+```
 
-**Returns**: Findings sorted descending by priority (highest first).
+Convert to dictionary.
 
 ---
 

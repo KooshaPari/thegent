@@ -1,6 +1,6 @@
 # model_metadata API Reference
 
-> **Source**: `src/thegent/routing/model_metadata.py`
+> **Source**: `src/thegent/utils/routing_impl/model_metadata.py`
 
 Model metadata registry for all models.
 
@@ -45,3 +45,34 @@ Check if model has metadata available.
 **Returns**: True if metadata exists, False otherwise
 
 ---
+
+## mark_metadata_stale
+
+```python
+mark_metadata_stale(metadata: dict[(str, Any)])
+```
+
+Mark metadata envelope as stale.
+
+---
+
+## stamp_metadata_freshness
+
+```python
+stamp_metadata_freshness(metadata: dict[(str, Any)])
+```
+
+Return metadata with freshness envelope fields.
+
+---
+
+## validate_metadata_freshness
+
+```python
+validate_metadata_freshness(metadata: dict[(str, Any)])
+```
+
+Return metadata with explicit freshness marker based on expires_at.
+
+---
+

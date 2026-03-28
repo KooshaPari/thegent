@@ -1,6 +1,6 @@
 # task_router API Reference
 
-> **Source**: `src/thegent/routing/task_router.py`
+> **Source**: `src/thegent/utils/routing_impl/task_router.py`
 
 ## ConstraintValidator
 
@@ -163,6 +163,18 @@ Route multiple tasks from a DAG, considering dependencies (WP-1001).
 
 ---
 
+#### TaskRouter.route_via_cliproxy
+
+```python
+route_via_cliproxy(self: Any, prompt: str, max_cost_per_call: float, max_latency_ms: int, min_quality_score: float) -> tuple
+```
+
+Route using CLIProxy Pareto router endpoint.
+
+**Returns** (`tuple`): (model_id, provider, estimated_cost)
+
+---
+
 #### TaskRouter.shape_task
 
 ```python
@@ -281,6 +293,18 @@ Route multiple tasks from a DAG, considering dependencies (WP-1001).
 
 ---
 
+## route_via_cliproxy
+
+```python
+route_via_cliproxy(self: Any, prompt: str, max_cost_per_call: float, max_latency_ms: int, min_quality_score: float) -> tuple
+```
+
+Route using CLIProxy Pareto router endpoint.
+
+**Returns** (`tuple`): (model_id, provider, estimated_cost)
+
+---
+
 ## shape_task
 
 ```python
@@ -310,3 +334,4 @@ validate(self: Any, task_metadata: TaskMetadata, registry: RunRegistry | None, m
 Validate task against constraints.
 
 ---
+

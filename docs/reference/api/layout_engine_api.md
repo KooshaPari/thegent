@@ -1,6 +1,6 @@
 # layout_engine API Reference
 
-> **Source**: `src/thegent/compositor/layout_engine.py`
+> **Source**: `src/thegent/ui/compositor/layout_engine.py`
 
 Core layout engine for TUI Compositor.
 

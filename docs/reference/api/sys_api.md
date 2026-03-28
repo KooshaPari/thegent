@@ -6,6 +6,16 @@ Logical stream: System and Lifecycle Operations.
 
 ---
 
+## setup_app_callback
+
+```python
+setup_app_callback(ctx: typer.Context)
+```
+
+Interactive system setup when no subcommand is given.
+
+---
+
 ## sys_config
 
 ```python
@@ -33,7 +43,7 @@ sys_lsp(action: str, language: Any)
 ## sys_mcp
 
 ```python
-sys_mcp(action: str, server: Any, command: Any)
+sys_mcp(action: str, server: Any, command: Any, force: bool, dry_run: bool, parent_pid: Any, shadow_age_hours: int, log_age_days: int)
 ```
 
 ---
@@ -41,12 +51,27 @@ sys_mcp(action: str, server: Any, command: Any)
 ## sys_session
 
 ```python
-sys_session(action: str, session_id: Any, force: bool)
+sys_session(action: str, session_id: Any)
 ```
 
 ---
 
-## sys_setup
+## sys_shadow
+
+```python
+sys_shadow(action: str, path: str)
+```
+
+Manage git shadow worktrees.
+
+Shadows use git worktrees (NOT file copying) for efficient isolation.
+- Active worktrees share .git objects (no disk duplication)
+- Orphaned directories are cleaned up on demand
+
+Actions:
+    status  - Show current shadow worktree status
+    cleanup - Remove orphaned shadow directories
+    stats   - Detailed statistics about shadows
 
 ---
 
@@ -57,3 +82,4 @@ sys_terminal(action: str, name: Any)
 ```
 
 ---
+

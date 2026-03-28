@@ -1,0 +1,242 @@
+# route_config API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/route_config.py`
+
+GW-10: Recursive RouteConfig schema.
+
+Implements Portkey-inspired recursive target trees for the thegent AI gateway.
+Supports fallback, loadbalance, and conditional routing strategies with
+per-target cache, retry, and circuit-breaker configuration.
+
+The schema is OpenRouter-compatible via the ``models`` shorthand and supports
+arbitrarily nested strategy nodes through recursive ``RouteTarget`` trees.
+
+GW-63: Dynamic routing node types — Conditional, Percentage, Budget-Limit.
+
+Extends RouteConfig with declarative dynamic routing nodes:
+  - PercentageSplit: routes traffic by percentage split across targets
+  - BudgetLimitRoute: routes to fallback when budget is exhausted
+
+# @trace FR-AROUTE-063
+
+---
+
+## BudgetLimitRoute
+
+Route to ``fallback_target`` when ``budget_usd`` is exhausted.
+
+Designed to integrate with ``BudgetHierarchy`` from routing/budget.py.
+The ``entity_id`` identifies the entity whose spend is checked.
+
+### Methods
+
+#### BudgetLimitRoute.select
+
+```python
+select(self: Any, current_spend_usd: float)
+```
+
+Return ``primary_target`` if within budget, else ``fallback_target``.
+
+The budget is considered exhausted when ``current_spend_usd >= budget_usd``
+(i.e. exactly at the limit triggers fallback).
+
+**Parameters**:
+
+- `current_spend_usd`: Current accumulated spend for ``entity_id``.
+
+**Returns**: ``primary_target`` or ``fallback_target``.
+
+---
+
+---
+
+## CacheConfig
+
+Cache behaviour for a route target or top-level route.
+
+---
+
+## CircuitBreakerConfig
+
+Circuit-breaker thresholds for a route target.
+
+---
+
+## PercentageSplit
+
+Route traffic by percentage split across targets.
+
+``weights`` must sum to 100.  When they do not, they are normalised
+before selection so that ``select`` always returns a valid target.
+
+### Methods
+
+#### PercentageSplit.select
+
+```python
+select(self: Any, rand_value: Any)
+```
+
+Select a target based on weighted random selection.
+
+**Parameters**:
+
+- `rand_value`: Value in [0.0, 1.0] used as the random draw.
+Defaults to ``random.random()``.
+
+**Returns**: Selected target name from ``self.targets``.
+
+---
+
+---
+
+## RetryConfig
+
+Retry policy applied before failing over to the next target.
+
+---
+
+## RouteConfig
+
+Top-level routing configuration for an AI gateway request.
+
+``RouteConfig`` describes how the gateway should select and fail over
+between providers/models for a single request.  It supports two
+authoring styles:
+
+1. **Full target tree** (``targets``): Expressive, supports nested
+   strategies, per-target overrides, and circuit-breaker configuration.
+
+2. **Simple model list** (``models``): OpenRouter-compatible shorthand
+   that specifies an ordered fallback chain as plain model-name strings.
+   The helper :func:`models_to_targets` converts this into a
+   ``targets`` list automatically.
+
+---
+
+## RouteTarget
+
+A single node in a recursive routing tree.
+
+A ``RouteTarget`` is either a *leaf* node that identifies a concrete
+provider/model pair, or an *inner* node that applies a nested strategy
+over its own ``targets`` list.
+
+Leaf node example::
+
+    RouteTarget(provider="openai", model="gpt-4o")
+
+Inner (nested strategy) node example::
+
+    RouteTarget(
+        strategy="loadbalance",
+        targets=[
+            RouteTarget(provider="openai", model="gpt-4o", weight=0.7),
+            RouteTarget(provider="anthropic", model="claude-sonnet-4-6", weight=0.3),
+        ],
+    )
+
+### Methods
+
+#### RouteTarget.is_leaf
+
+```python
+is_leaf(self: Any)
+```
+
+Return ``True`` when this node is a leaf (concrete provider target).
+
+A node is a leaf when it has no nested ``strategy`` and has a
+non-*None* ``provider``.
+
+---
+
+---
+
+## from_request_body
+
+```python
+from_request_body(body: dict[(str, Any)])
+```
+
+Extract a ``RouteConfig`` from an incoming request body dict.
+
+The function recognises two sources inside *body*:
+
+* ``body["route_config"]``: A dict that is deserialised into a full
+  :class:`RouteConfig`.  Nested dicts are converted to their dataclass
+  equivalents recursively.
+* ``body["models"]``: A list of model-name strings used as a simple
+  ordered fallback chain (OpenRouter-compatible shorthand).
+
+If neither key is present the function returns *None*, signalling that
+the gateway should fall back to its default routing logic.
+
+**Parameters**:
+
+- `body`: Parsed JSON request body.
+
+**Returns**: A :class:`RouteConfig` when routing configuration is present, or
+*None* otherwise.
+
+---
+
+## is_leaf
+
+```python
+is_leaf(self: Any)
+```
+
+Return ``True`` when this node is a leaf (concrete provider target).
+
+A node is a leaf when it has no nested ``strategy`` and has a
+non-*None* ``provider``.
+
+---
+
+## models_to_targets
+
+```python
+models_to_targets(models: list[str])
+```
+
+Convert a simple model list into an ordered fallback ``RouteTarget`` list.
+
+Each string in *models* is interpreted as either ``"provider/model"``
+(split on the first ``"/"``), or a bare model name where ``provider`` is
+left as *None*.
+
+Example::
+
+    >>> models_to_targets(["openai/gpt-4o", "anthropic/claude-sonnet-4-6"])
+    [RouteTarget(provider='openai', model='gpt-4o', ...),
+     RouteTarget(provider='anthropic', model='claude-sonnet-4-6', ...)]
+
+**Parameters**:
+
+- `models`: Ordered list of model identifiers.
+
+**Returns**: List of leaf ``RouteTarget`` objects in the same order.
+
+---
+
+## select
+
+```python
+select(self: Any, current_spend_usd: float)
+```
+
+Return ``primary_target`` if within budget, else ``fallback_target``.
+
+The budget is considered exhausted when ``current_spend_usd >= budget_usd``
+(i.e. exactly at the limit triggers fallback).
+
+**Parameters**:
+
+- `current_spend_usd`: Current accumulated spend for ``entity_id``.
+
+**Returns**: ``primary_target`` or ``fallback_target``.
+
+---
+

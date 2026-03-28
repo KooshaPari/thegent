@@ -1,71 +1,217 @@
 # hierarchy API Reference
 
-> **Source**: `src/thegent/commands/hierarchy.py`
+> **Source**: `src/thegent/agents/smolgents/hierarchy.py`
 
-CLI commands for milestone and sprint hierarchy management.
-
-Milestones and sprints are stored as projects with type metadata
-in the ProjectRegistry, providing a lightweight hierarchy for
-organizing agent work.
-
-WBS: wp-71005-hierarchy-cli
-FR Traceability: FR-VER-002 (milestone and sprint management)
-
-Commands:
-    thegent plan milestone list/create/complete
-    thegent plan sprint list/create/complete
+AgentTree — parent/child tracking for SmolGents hierarchies.
 
 ---
 
-## milestone_complete
+## AgentTree
+
+Flat registry that tracks parent/child relationships between SmolAgents.
+
+The tree does **not** own the agents — callers are responsible for keeping
+references.  The tree only maintains a mapping of ``name -> agent`` and the
+directed parent/child edges so that traversal and lookup remain O(1).
+
+Usage::
+
+    tree = AgentTree()
+    parent = SmolAgent("orchestrator", tools=[...])
+    child  = SmolAgent("specialist",   tools=[...])
+
+    tree.register(parent)
+    tree.register(child, parent_name="orchestrator")
+
+    assert tree.get("specialist") is child
+    assert tree.get_children("orchestrator") == [child]
+    assert tree.get_parent("specialist") is parent
+
+### Methods
+
+#### AgentTree.__init__
 
 ```python
-milestone_complete(name: str)
+__init__(self: Any)
 ```
-
-Mark a milestone as completed.
 
 ---
 
-## milestone_create
+#### AgentTree.get
 
 ```python
-milestone_create(name: str, label: Annotated[(Any, Any)])
+get(self: Any, name: str)
 ```
 
-Create a new milestone.
+Return the agent registered under *name*, or *None*.
 
 ---
 
-## milestone_list
-
-List all milestones.
-
----
-
-## sprint_complete
+#### AgentTree.get_ancestors
 
 ```python
-sprint_complete(name: str)
+get_ancestors(self: Any, name: str)
 ```
 
-Mark a sprint as completed.
+Return ancestors from direct parent up to the root (inclusive).
 
 ---
 
-## sprint_create
+#### AgentTree.get_children
 
 ```python
-sprint_create(name: str, label: Annotated[(Any, Any)])
+get_children(self: Any, name: str)
 ```
 
-Create a new sprint.
+Return direct children of the agent named *name*.
 
 ---
 
-## sprint_list
+#### AgentTree.get_descendants
 
-List all sprints.
+```python
+get_descendants(self: Any, name: str)
+```
+
+Return all descendants (recursive) of the named agent.
+
+---
+
+#### AgentTree.get_parent
+
+```python
+get_parent(self: Any, name: str)
+```
+
+Return the direct parent of the agent named *name*, or *None*.
+
+---
+
+#### AgentTree.list_agents
+
+```python
+list_agents(self: Any)
+```
+
+Return all registered agents in insertion order.
+
+---
+
+#### AgentTree.register
+
+```python
+register(self: Any, agent: SmolAgent)
+```
+
+Register an agent, optionally linking it to a parent.
+
+**Parameters**:
+
+- `agent`: The :class:`SmolAgent` to register.
+- `parent_name`: Name of the parent agent already registered in this
+tree.  Pass *None* for the root / orphan nodes.
+
+---
+
+#### AgentTree.to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Return a serialisable representation of the tree.
+
+---
+
+---
+
+## get
+
+```python
+get(self: Any, name: str)
+```
+
+Return the agent registered under *name*, or *None*.
+
+---
+
+## get_ancestors
+
+```python
+get_ancestors(self: Any, name: str)
+```
+
+Return ancestors from direct parent up to the root (inclusive).
+
+---
+
+## get_children
+
+```python
+get_children(self: Any, name: str)
+```
+
+Return direct children of the agent named *name*.
+
+---
+
+## get_descendants
+
+```python
+get_descendants(self: Any, name: str)
+```
+
+Return all descendants (recursive) of the named agent.
+
+---
+
+## get_parent
+
+```python
+get_parent(self: Any, name: str)
+```
+
+Return the direct parent of the agent named *name*, or *None*.
+
+---
+
+## list_agents
+
+```python
+list_agents(self: Any)
+```
+
+Return all registered agents in insertion order.
+
+---
+
+## register
+
+```python
+register(self: Any, agent: SmolAgent)
+```
+
+Register an agent, optionally linking it to a parent.
+
+**Parameters**:
+
+- `agent`: The :class:`SmolAgent` to register.
+- `parent_name`: Name of the parent agent already registered in this
+tree.  Pass *None* for the root / orphan nodes.
+
+**Raises**:
+
+- `ValueError`: If ``parent_name`` is specified but not yet registered.
+
+---
+
+## to_dict
+
+```python
+to_dict(self: Any)
+```
+
+Return a serialisable representation of the tree.
 
 ---
 

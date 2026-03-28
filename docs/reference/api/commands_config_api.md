@@ -1,0 +1,11 @@
+# commands_config API Reference
+
+> **Source**: `src/thegent/cli/commands/models/commands_config.py`
+
+Thegent CLI model/agent commands domain - re-export facade (WL-124).
+
+Main entry point for model listing, setup, and configuration commands.
+Implementation split across model_cmds_rules.py and model_cmds_setup.py.
+
+---
+

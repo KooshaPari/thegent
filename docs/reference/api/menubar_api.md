@@ -123,3 +123,4 @@ on_mount(self: Any)
 Initialize menubar after mounting.
 
 ---
+

@@ -1,6 +1,6 @@
 # pareto_router API Reference
 
-> **Source**: `src/thegent/routing/pareto_router.py`
+> **Source**: `src/thegent/utils/routing_impl/pareto_router.py`
 
 Pareto-first router: hard constraints → Pareto frontier → lexicographic selection.
 
@@ -13,11 +13,61 @@ Implements the ChatGPT Pareto research design:
 - Degraded mode at 85% budget burn (cheap offers only)
 - Route trace output (Phase 0)
 
+Also exposes the simple ParetoRouter public API:
+- RouteCandidate: lightweight dataclass {model, provider, cost_per_1k, quality_score}
+- ParetoRouter.select(): returns the Pareto-optimal candidate with highest quality/cost ratio
+
 ---
 
 ## Offer
 
 Routable offer: provider + model + indices.
+
+---
+
+## ParetoRouter
+
+Select the Pareto-optimal route that maximises quality per dollar (WP-1004).
+
+A candidate is *dominated* when another candidate has both strictly lower cost
+AND strictly higher quality (or equal on both with one strictly better).  The
+Pareto frontier is the set of non-dominated candidates.  Among frontier members,
+the one with the highest ``quality_score / cost_per_1k`` ratio is returned.
+
+Fallback (zero-cost): when every candidate has ``cost_per_1k == 0``, the
+ratio is undefined; select the candidate with the highest ``quality_score``.
+
+### Methods
+
+#### ParetoRouter.get_optimal_providers
+
+```python
+get_optimal_providers(self: Any, candidates: list[RouteCandidate])
+```
+
+Returns the non-dominated set (Pareto Front).
+
+---
+
+#### ParetoRouter.select
+
+```python
+select(self: Any, candidates: list[RouteCandidate])
+```
+
+Return the best Pareto-optimal candidate using default balanced strategy.
+
+---
+
+#### ParetoRouter.select_by_strategy
+
+```python
+select_by_strategy(self: Any, strategy: str, candidates: list[RouteCandidate])
+```
+
+Applies a strategy slice to the Pareto Front (cost, speed, quality, balanced).
+
+---
 
 ---
 
@@ -27,9 +77,25 @@ Role definition from roles.schema.yaml (Helios spec).
 
 ---
 
+## RouteCandidate
+
+A routable model candidate with cost and quality metrics.
+
+---
+
 ## RouteTrace
 
 Route trace output per Helios spec (why offer won).
+
+---
+
+## get_optimal_providers
+
+```python
+get_optimal_providers(self: Any, candidates: list[RouteCandidate])
+```
+
+Returns the non-dominated set (Pareto Front).
 
 ---
 
@@ -38,6 +104,26 @@ Route trace output per Helios spec (why offer won).
 ```python
 key(o: Offer) -> tuple[(float, float, float)]
 ```
+
+---
+
+## select
+
+```python
+select(self: Any, candidates: list[RouteCandidate])
+```
+
+Return the best Pareto-optimal candidate using default balanced strategy.
+
+---
+
+## select_by_strategy
+
+```python
+select_by_strategy(self: Any, strategy: str, candidates: list[RouteCandidate])
+```
+
+Applies a strategy slice to the Pareto Front (cost, speed, quality, balanced).
 
 ---
 
@@ -86,3 +172,4 @@ Select offer with full route trace (why offer won). Per Helios spec.
 Uses role from roles.schema.yaml when provided (min_quality, soft_order, output_tokens_multiplier).
 
 ---
+

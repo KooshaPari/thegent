@@ -1,0 +1,276 @@
+# model_suffix_parser API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/model_suffix_parser.py`
+
+GW-14: OpenRouter-style model suffix routing.
+
+Parses suffixes appended to model names:
+  :nitro      — fastest inference (maps to performance tier)
+  :floor      — cheapest inference (maps to economy tier)
+  :free       — free tier models
+  :thinking   — enable extended thinking/reasoning
+  :online     — enable web search plugin
+  :extended   — extended context window
+
+Supports multiple suffixes: "model:thinking:online"
+
+# @trace FR-ROUTE-014
+
+---
+
+## ModelSuffix
+
+**Inherits from**: `str, Enum`
+
+---
+
+## ParsedModel
+
+Result of parsing a model string with optional suffix(es).
+
+### Methods
+
+#### ParsedModel.has_suffix
+
+```python
+has_suffix(self: Any)
+```
+
+Return True when at least one suffix is present.
+
+---
+
+#### ParsedModel.is_economy_tier
+
+```python
+is_economy_tier(self: Any)
+```
+
+Return True when FLOOR suffix is present.
+
+---
+
+#### ParsedModel.is_free_tier
+
+```python
+is_free_tier(self: Any)
+```
+
+Return True when FREE suffix is present.
+
+---
+
+#### ParsedModel.is_performance_tier
+
+```python
+is_performance_tier(self: Any)
+```
+
+Return True when NITRO suffix is present.
+
+---
+
+#### ParsedModel.is_thinking
+
+```python
+is_thinking(self: Any)
+```
+
+Return True when THINKING suffix is present.
+
+---
+
+#### ParsedModel.needs_web_search
+
+```python
+needs_web_search(self: Any)
+```
+
+Return True when ONLINE suffix is present.
+
+---
+
+---
+
+## apply_suffix_to_request
+
+```python
+apply_suffix_to_request(body: dict[(str, Any)], parsed: ParsedModel)
+```
+
+Return a modified copy of body reflecting the parsed suffixes.
+
+Applies the following transformations based on suffixes present:
+  - THINKING: adds ``{"reasoning": {"effort": "high"}}`` if not already set.
+  - ONLINE: adds/merges ``{"plugins": [{"id": "web", "max_results": 5}]}``.
+  - NITRO: adds ``{"tg_tier": "performance"}`` to body metadata.
+  - FLOOR: adds ``{"tg_tier": "economy"}`` to body metadata.
+  - FREE: adds ``{"tg_tier": "free"}`` to body metadata.
+
+Does NOT mutate the original body dict.
+
+**Parameters**:
+
+- `body`: Original request body dict.
+- `parsed`: ParsedModel containing the suffixes to apply.
+
+**Returns**: A new dict with suffix-driven fields merged in.
+
+---
+
+## get_routing_hints
+
+```python
+get_routing_hints(suffix: Any)
+```
+
+Return routing hint dict for the given suffix, or {} for None.
+
+---
+
+## has_suffix
+
+```python
+has_suffix(self: Any)
+```
+
+Return True when at least one suffix is present.
+
+---
+
+## is_economy_tier
+
+```python
+is_economy_tier(self: Any)
+```
+
+Return True when FLOOR suffix is present.
+
+---
+
+## is_free_tier
+
+```python
+is_free_tier(self: Any)
+```
+
+Return True when FREE suffix is present.
+
+---
+
+## is_performance_tier
+
+```python
+is_performance_tier(self: Any)
+```
+
+Return True when NITRO suffix is present.
+
+---
+
+## is_thinking
+
+```python
+is_thinking(self: Any)
+```
+
+Return True when THINKING suffix is present.
+
+---
+
+## needs_web_search
+
+```python
+needs_web_search(self: Any)
+```
+
+Return True when ONLINE suffix is present.
+
+---
+
+## parse_model_suffix
+
+```python
+parse_model_suffix(model: str)
+```
+
+Parse a model string, extracting any trailing :suffix.
+
+**Examples**:
+
+```python
+"gpt-4o:nitro" -> ("gpt-4o", ModelSuffix.NITRO)
+"claude-opus-4.5:thinking" -> ("claude-opus-4.5", ModelSuffix.THINKING)
+"gpt-4o" -> ("gpt-4o", None)
+"openai/gpt-4o:free" -> ("openai/gpt-4o", ModelSuffix.FREE)
+"unknown:xyz" -> ("unknown:xyz", None)  # unknown suffix -> unchanged
+```
+
+---
+
+## parse_model_suffixes
+
+```python
+parse_model_suffixes(model: str)
+```
+
+Parse a model string extracting all :suffix tokens.
+
+Supports multiple suffixes: "model:thinking:online" yields both THINKING
+and ONLINE. Unknown suffix tokens are silently ignored (not treated as
+part of the base model name). The first segment before any colon sequence
+is always treated as the base model.
+
+**Parameters**:
+
+- `model`: Raw model string, optionally with colon-separated suffixes.
+
+**Returns**: ParsedModel with base_model, parsed suffixes, and raw preserved.
+
+**Examples**:
+
+```python
+"gpt-4o:nitro" -> ParsedModel(base_model="gpt-4o", suffixes=[NITRO], raw="gpt-4o:nitro")
+"anthropic/claude-sonnet-4-5:thinking:online" ->
+    ParsedModel(base_model="anthropic/claude-sonnet-4-5",
+                suffixes=[THINKING, ONLINE], raw="...")
+"gpt-4o" -> ParsedModel(base_model="gpt-4o", suffixes=[], raw="gpt-4o")
+"model:unknown" -> ParsedModel(base_model="model", suffixes=[], raw="model:unknown")
+```
+
+---
+
+## resolve_model_and_hints
+
+```python
+resolve_model_and_hints(model: str)
+```
+
+Parse model suffix and return (base_model, routing_hints).
+
+Convenience wrapper combining parse_model_suffix + get_routing_hints.
+
+---
+
+## resolve_suffix_model
+
+```python
+resolve_suffix_model(parsed: ParsedModel, model_map: Any)
+```
+
+Resolve a ParsedModel to a concrete model name.
+
+For NITRO, FLOOR, and FREE suffixes: if ``model_map`` contains a key
+``"{base_model}:{suffix}"`` the mapped value is returned. Otherwise the
+base_model is returned and tier selection is deferred to other routing
+layers.
+
+**Parameters**:
+
+- `parsed`: ParsedModel from parse_model_suffixes().
+- `model_map`: Optional mapping of "base:suffix" -> concrete model name.
+
+**Returns**: Resolved model name string.
+
+---
+

@@ -1,0 +1,75 @@
+# conditional API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/conditional.py`
+
+GW-56: Conditional routing — route by metadata, params, or url with operators.
+
+Supports $eq, $in, $regex, $and, $or operators (Portkey-compatible).
+
+# @trace FR-AROUTE-056
+
+---
+
+## ConditionalRoute
+
+A conditional routing rule mapping a condition to a target model/provider.
+
+---
+
+## build_routing_context
+
+```python
+build_routing_context(request_body: dict, metadata: Any)
+```
+
+Build a flat routing context dict from a request body and optional metadata.
+
+Body fields are prefixed with "params."; metadata fields with "metadata.".
+
+**Parameters**:
+
+- `request_body`: The raw request body dict (e.g., LiteLLM/OpenAI payload).
+- `metadata`: Optional metadata dict to include under "metadata." prefix.
+
+**Returns**: Flat dict usable as context for evaluate_condition.
+
+---
+
+## evaluate_condition
+
+```python
+evaluate_condition(condition: dict, context: dict)
+```
+
+Evaluate a routing condition against a context dict.
+
+**Parameters**:
+
+- `condition`: Condition dict using MongoDB-style operators.
+- `context`: Flat dict of key→value (e.g., {"metadata.user_id": "u123"}).
+
+**Returns**: True if the condition matches the context, False otherwise.
+
+**Raises**:
+
+- `ValueError`: If an unknown operator is encountered.
+
+---
+
+## match_conditional_route
+
+```python
+match_conditional_route(routes: list[ConditionalRoute], context: dict)
+```
+
+Return the first route whose condition matches the context, or None.
+
+**Parameters**:
+
+- `routes`: Ordered list of ConditionalRoute instances to evaluate.
+- `context`: Flat routing context dict.
+
+**Returns**: The first matching ConditionalRoute, or None if none match.
+
+---
+

@@ -1,6 +1,6 @@
 # preemption API Reference
 
-> **Source**: `src/thegent/routing/preemption.py`
+> **Source**: `src/thegent/utils/routing_impl/preemption.py`
 
 WP-11004: Preemption and saturation avoidance policies.
 
@@ -35,3 +35,4 @@ evaluate_preemption(self: Any, system_load: float, task_lane: str)
 Determine if a task should be preempted based on load and lane.
 
 ---
+

@@ -1,0 +1,32 @@
+# tools_planning API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_planning.py`
+
+Planning and history tool handlers for MCP server.
+
+---
+
+## thegent_do_next_impl
+
+---
+
+## thegent_history_impl
+
+---
+
+## thegent_plan_analyze_impl
+
+---
+
+## thegent_plan_get_next_impl
+
+---
+
+## thegent_plan_progress_impl
+
+---
+
+## thegent_plan_wait_next_impl
+
+---
+

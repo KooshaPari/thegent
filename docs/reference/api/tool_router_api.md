@@ -1,6 +1,6 @@
 # tool_router API Reference
 
-> **Source**: `src/thegent/routing/tool_router.py`
+> **Source**: `src/thegent/utils/routing_impl/tool_router.py`
 
 Central Tool Router for thegent.
 
@@ -26,7 +26,7 @@ Manages tool discovery and semantic routing.
 #### ToolRouter.__init__
 
 ```python
-__init__(self: Any, registry_path: Optional[Path])
+__init__(self: Any, registry_path: Any)
 ```
 
 ---
@@ -116,3 +116,4 @@ save_registry(self: Any)
 Persist current tool registry to the filesystem.
 
 ---
+

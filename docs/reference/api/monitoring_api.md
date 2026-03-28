@@ -1,6 +1,6 @@
 # monitoring API Reference
 
-> **Source**: `src/thegent/crew/monitoring.py`
+> **Source**: `src/thegent/agents/crew/monitoring.py`
 
 MonitoringEngine for health, performance, and cost tracking.
 
@@ -211,3 +211,4 @@ Track performance metrics for crew execution.
 **Returns**: PerformanceMetrics
 
 ---
+

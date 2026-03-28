@@ -1,0 +1,36 @@
+# tools_queue API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_queue.py`
+
+Queue tool handlers for MCP server.
+
+---
+
+## queue_add_impl
+
+---
+
+## queue_claim_impl
+
+---
+
+## queue_done_impl
+
+---
+
+## queue_edit_impl
+
+---
+
+## queue_extend_lease_impl
+
+---
+
+## queue_list_impl
+
+---
+
+## queue_release_impl
+
+---
+

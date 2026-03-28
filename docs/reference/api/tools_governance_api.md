@@ -1,0 +1,20 @@
+# tools_governance API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_governance.py`
+
+Governance approval/rejection tool handlers for MCP server.
+
+---
+
+## thegent_govern_approve_impl
+
+---
+
+## thegent_govern_reject_impl
+
+---
+
+## thegent_govern_vet_impl
+
+---
+

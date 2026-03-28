@@ -1,0 +1,14 @@
+# prompt_constraint_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/prompt_constraint_helpers.py`
+
+Prompt constraint helpers extracted from cli.commands.impl (WL-125).
+
+---
+
+## inject_time_constraint
+
+Append timeout-aware tool budget guidance to an agent prompt.
+
+---
+

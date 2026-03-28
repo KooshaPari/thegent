@@ -1,6 +1,6 @@
 # alerting API Reference
 
-> **Source**: `src/thegent/routing/alerting.py`
+> **Source**: `src/thegent/utils/routing_impl/alerting.py`
 
 Alerting integration for LiteLLM routing.
 
@@ -313,3 +313,4 @@ webhook_url(self: Any)
 Configured webhook URL.
 
 ---
+

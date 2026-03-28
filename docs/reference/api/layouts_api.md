@@ -1,0 +1,12 @@
+# layouts API Reference
+
+> **Source**: `src/thegent/ui/compositor/layouts.py`
+
+Layout primitives and menubar widget for the TUI compositor.
+
+Re-exports BaseLayout and MenubarWidget for use by CompositorApp.
+Imports directly from submodules (not the tui package init) to avoid
+circular import issues.
+
+---
+

@@ -1,0 +1,145 @@
+# provider_preferences API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/provider_preferences.py`
+
+GW-11: Provider routing preferences.
+
+Implements OpenRouter-compatible ``provider`` object parsing and Vercel-
+compatible ``providerOptions`` parsing for the thegent AI gateway.
+
+The main entry points are:
+
+* :func:`extract_provider_preferences` — reads the ``"provider"`` key from a
+  request body and returns a :class:`ProviderPreferences` instance.
+* :func:`extract_provider_options` — reads the ``"providerOptions"`` key and
+  returns a :class:`ProviderOptions` instance.
+* :func:`filter_models_by_preferences` — applies ``only``/``ignore``/``order``
+  and quantization filters to a list of ``"provider/model"`` strings.
+* :func:`to_openrouter_provider_body` — serializes
+  :class:`ProviderPreferences` back to the OpenRouter camelCase wire format.
+
+---
+
+## PriceConstraint
+
+Maximum acceptable price per 1 million tokens (USD).
+
+---
+
+## ProviderOptions
+
+Vercel AI SDK-compatible per-provider option bags.
+
+Allows callers to supply arbitrary, provider-specific configuration
+without polluting the top-level request body.
+
+---
+
+## ProviderPreferences
+
+OpenRouter-compatible provider routing preferences.
+
+Controls which providers are eligible for a request, in what order they
+are tried, and how the router selects among them.
+
+---
+
+## extract_provider_options
+
+```python
+extract_provider_options(body: dict[(str, Any)])
+```
+
+Parse the ``"providerOptions"`` object from a request body.
+
+Returns a populated :class:`ProviderOptions` when the key is present and
+is a dict, or *None* otherwise.
+
+**Parameters**:
+
+- `body`: Parsed JSON request body.
+
+**Returns**: :class:`ProviderOptions` or *None*.
+
+---
+
+## extract_provider_preferences
+
+```python
+extract_provider_preferences(body: dict[(str, Any)])
+```
+
+Parse the ``"provider"`` object from a request body.
+
+Returns a populated :class:`ProviderPreferences` when the key is present,
+or *None* when the key is absent.
+
+**Parameters**:
+
+- `body`: Parsed JSON request body.
+
+**Returns**: :class:`ProviderPreferences` or *None*.
+
+---
+
+## filter_models_by_preferences
+
+```python
+filter_models_by_preferences(models: list[str], prefs: ProviderPreferences)
+```
+
+Filter and sort a ``"provider/model"`` list by :class:`ProviderPreferences`.
+
+The filtering pipeline is applied in order:
+
+1. **Whitelist** (``prefs.only``): Keep only entries whose provider
+   matches one of the ``only`` values.  Skipped when ``only`` is empty.
+2. **Blacklist** (``prefs.ignore``): Remove entries whose provider appears
+   in ``ignore``.
+3. **Quantization filter** (``prefs.quantizations``): Keep entries whose
+   model name contains one of the quantization tags as a substring.
+   Skipped when ``quantizations`` is empty.
+4. **Ordering** (``prefs.order``): Move entries whose provider appears in
+   ``order`` to the front, preserving their relative order within the
+   priority group.  Entries not in ``order`` are appended after,
+   preserving their original relative order.  When ``allow_fallbacks`` is
+   ``False``, entries not in ``order`` are dropped entirely.
+
+The ``sort`` field and ``max_price`` constraints require external pricing
+data and are intentionally *not* applied here; callers that have pricing
+data should apply those constraints before or after this function.
+
+**Parameters**:
+
+- `models`: List of ``"provider/model"`` strings (bare model names without
+a ``"/"`` separator are kept as-is and treated as having no
+provider).
+- `prefs`: Routing preferences to apply.
+
+**Returns**: Filtered and ordered list of model strings.
+
+---
+
+## to_openrouter_provider_body
+
+```python
+to_openrouter_provider_body(prefs: ProviderPreferences)
+```
+
+Serialize :class:`ProviderPreferences` to the OpenRouter wire format.
+
+OpenRouter uses camelCase keys in its ``"provider"`` object.  This
+function produces the exact dict that should be embedded under the
+``"provider"`` key when forwarding a request to the OpenRouter API.
+
+Fields with default/empty values are included to ensure deterministic
+output regardless of whether OpenRouter treats missing keys as defaults.
+
+**Parameters**:
+
+- `prefs`: Populated :class:`ProviderPreferences` instance.
+
+**Returns**: Dict ready for JSON serialization in the ``"provider"`` field.
+
+---
+

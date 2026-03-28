@@ -1,6 +1,6 @@
 # cost_tracker API Reference
 
-> **Source**: `src/thegent/routing/cost_tracker.py`
+> **Source**: `src/thegent/utils/routing_impl/cost_tracker.py`
 
 Cost tracking for LiteLLM routing.
 
@@ -285,3 +285,4 @@ Track a single LLM call cost.
 **Returns**: The created CostEntry
 
 ---
+

@@ -34,3 +34,4 @@ user elicitation flows via the standard MCP tool-call protocol.
 - `mcp`: The FastMCP application instance.
 
 ---
+

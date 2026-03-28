@@ -1,0 +1,36 @@
+# tools_coordination API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_coordination.py`
+
+Coordination tool handlers for MCP server.
+
+---
+
+## thegent_continuity_snapshot_impl
+
+---
+
+## thegent_inbox_list_impl
+
+---
+
+## thegent_inbox_wait_impl
+
+---
+
+## thegent_pause_impl
+
+---
+
+## thegent_resume_impl
+
+---
+
+## thegent_stop_impl
+
+---
+
+## thegent_wait_impl
+
+---
+

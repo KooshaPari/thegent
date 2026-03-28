@@ -1,0 +1,201 @@
+# route_executor API Reference
+
+> **Source**: `src/thegent/utils/routing_impl/route_executor.py`
+
+Route Executor and Orchestrator: Python bridge for Rust thegent-router Phase 3.
+
+Provides the Python-side data models and orchestration logic that coordinate
+with the Rust thegent-router crate:
+- RoutingDecision / ExecutionOutcome / AgentRoutingState / RouterStatus: mirrors of Rust structs
+- read_routing_audit: reads routing_audit.jsonl written by Rust AuditLogger
+- RoutingOrchestratorBridge: in-process Python orchestrator for multi-agent routing
+- make_routing_decision_from_factors: heuristic router using ThegentSettings
+
+WL-012 Phase 3.1 / 3.2 / 3.4
+
+---
+
+## AgentRoutingState
+
+Current routing state for a single agent.
+
+---
+
+## ExecutionOutcome
+
+Outcome of dispatching a routed task.
+
+---
+
+## RouterStatus
+
+Aggregated status for `thegent router status`.
+
+### Methods
+
+#### RouterStatus.display
+
+```python
+display(self: Any)
+```
+
+Format as human-readable status string for CLI.
+
+---
+
+#### RouterStatus.to_json
+
+```python
+to_json(self: Any)
+```
+
+Serialize to JSON for machine-readable output.
+
+---
+
+---
+
+## RoutingDecision
+
+Routing decision from the Pareto router.
+
+---
+
+## RoutingOrchestratorBridge
+
+Python-side orchestrator that tracks routing decisions from the ExecutionEngine.
+
+This bridge maintains a lightweight Python-side view of routing state,
+consuming decisions produced by the Rust ParetoRouter (via the Phase 1/2
+PyO3 binding or subprocess).  It provides `router status` output without
+requiring a running Rust process.
+
+Thread-safe via internal dict operations (GIL-protected in CPython).
+
+### Methods
+
+#### RoutingOrchestratorBridge.__init__
+
+```python
+__init__(self: Any, settings: Any, policy: str)
+```
+
+---
+
+#### RoutingOrchestratorBridge.arbitrate
+
+```python
+arbitrate(self: Any)
+```
+
+Apply quorum arbitration across all agents.
+
+**Returns**: "Lifecycle" | "TheGent" or None if no agents registered.
+
+---
+
+#### RoutingOrchestratorBridge.record_decision
+
+```python
+record_decision(self: Any, agent_id: str, decision: RoutingDecision)
+```
+
+Record a routing decision for an agent.
+
+---
+
+#### RoutingOrchestratorBridge.status
+
+```python
+status(self: Any)
+```
+
+Build current RouterStatus snapshot.
+
+---
+
+---
+
+## arbitrate
+
+```python
+arbitrate(self: Any)
+```
+
+Apply quorum arbitration across all agents.
+
+**Returns**: "Lifecycle" | "TheGent" or None if no agents registered.
+
+---
+
+## display
+
+```python
+display(self: Any)
+```
+
+Format as human-readable status string for CLI.
+
+---
+
+## make_routing_decision_from_factors
+
+```python
+make_routing_decision_from_factors(complexity: str, cost_sensitive: bool, latency_critical: bool, settings: Any)
+```
+
+Create a routing decision using the Phase 3 hysteresis heuristic.
+
+Uses ThegentSettings.router_band_width and router_override_threshold
+to apply the same 4-condition logic as the Rust ParetoRouter (WL-012 P3.4).
+The compiled PyO3 wheel is not required at runtime — the heuristic matches
+the Rust behaviour for pure-Python execution paths.
+
+**Raises**:
+
+- `ValueError`: if complexity is not a known level.
+
+---
+
+## read_routing_audit
+
+```python
+read_routing_audit(audit_path: Path, limit: int)
+```
+
+Read the last `limit` entries from routing_audit.jsonl.
+
+Returns records in chronological order (oldest first within the slice).
+
+---
+
+## record_decision
+
+```python
+record_decision(self: Any, agent_id: str, decision: RoutingDecision)
+```
+
+Record a routing decision for an agent.
+
+---
+
+## status
+
+```python
+status(self: Any)
+```
+
+Build current RouterStatus snapshot.
+
+---
+
+## to_json
+
+```python
+to_json(self: Any)
+```
+
+Serialize to JSON for machine-readable output.
+
+---
+

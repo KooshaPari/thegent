@@ -1,0 +1,92 @@
+# run_post_surface_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/run_post_surface_helpers.py`
+
+Post-run command surface helpers extracted from cli.commands.impl (WL-125).
+
+---
+
+## continuity_snapshot_impl
+
+Create a continuity snapshot for shift handoff (WP-1009).
+
+---
+
+## harness_interact_impl
+
+Execute a harness action via HarnessTUIMapper.
+
+---
+
+## harness_list_actions_impl
+
+List all available harness actions.
+
+---
+
+## harness_register_host_impl
+
+Register a new host device with custom command mappings.
+
+---
+
+## inbox_list_impl
+
+List unified inbox events (run registry + escalation) with optional filters.
+
+---
+
+## inbox_wait_impl
+
+Wait for inbox items to become available (WP-1008).
+
+---
+
+## list_agents_impl
+
+List available agents. Returns list of {name, backend}.
+
+---
+
+## list_droids_impl
+
+List available droids. Returns list of droid names.
+
+---
+
+## list_models_impl
+
+List available models.
+
+---
+
+## loop_impl
+
+Run a lifecycle loop with checker oversight (WP-4008).
+
+---
+
+## plan_analyze_impl
+
+Run planning simulation overlays (XD1-XD3): PERT, resources, continuity.
+
+---
+
+## resume_impl
+
+WL-110: resume a session with stable state contract lookup.
+
+---
+
+## retry_impl
+
+Retry a failed run by run_id. Looks up prompt/agent from registry and re-runs.
+
+---
+
+## validate_task_and_record_errors
+
+Validate a single task file and record errors safely.
+
+---
+

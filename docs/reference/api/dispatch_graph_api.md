@@ -1,6 +1,6 @@
 # dispatch_graph API Reference
 
-> **Source**: `src/thegent/routing/dispatch_graph.py`
+> **Source**: `src/thegent/utils/routing_impl/dispatch_graph.py`
 
 WP-10003: Dispatch graph implementation.
 
@@ -67,3 +67,4 @@ Resolve the operation to a dispatch path.
 **Returns**: Dict with 'dispatch_path', 'resolved_command', 'status'.
 
 ---
+

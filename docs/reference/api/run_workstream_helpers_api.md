@@ -1,0 +1,58 @@
+# run_workstream_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/run_workstream_helpers.py`
+
+Workstream/planning helper service wrappers for impl.py compatibility.
+
+---
+
+## check_dependencies_satisfied
+
+```python
+check_dependencies_satisfied(item: dict[(str, Any)], completed: set[str], claimed: set[str])
+```
+
+Check if all dependencies for an item are satisfied (completed or claimed).
+
+---
+
+## collect_queued_items
+
+```python
+collect_queued_items(settings: Any, limit: int)
+```
+
+Collect defers and other queued work from PromptQueue, EscalationQueue, DeferralQueue, BacklogManager.
+
+---
+
+## collect_work_stream_items
+
+```python
+collect_work_stream_items(work_stream_path: Path, limit: int)
+```
+
+Collect available items from WORK_STREAM.md. Returns (items, sources_checked).
+
+---
+
+## parse_work_stream_md
+
+```python
+parse_work_stream_md(work_stream_path: Path)
+```
+
+Parse WORK_STREAM.md into structured data.
+
+---
+
+## priority_sort_key
+
+```python
+priority_sort_key(priority: str)
+```
+
+Convert priority string (P1, P2, P3) to sortable integer.
+
+---
+

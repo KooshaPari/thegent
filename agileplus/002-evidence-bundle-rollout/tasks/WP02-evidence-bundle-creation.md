@@ -1,7 +1,7 @@
 ---
 work_package_id: "WP02"
 title: "Evidence bundle creation"
-lane: "planned"
+lane: "doing"
 subtasks:
   - "T201"
   - "T202"
@@ -16,6 +16,10 @@ history:
     lane: "planned"
     agent: "system"
     action: "WP created"
+  - timestamp: "2026-04-01T13:00:00Z"
+    lane: "doing"
+    agent: "codex"
+    action: "Added guide/reference doc pages + placeholder bundles"
 ---
 
 # Work Package Prompt: WP02 – Evidence bundle creation

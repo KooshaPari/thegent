@@ -1,60 +1,107 @@
 # crew API Reference
 
-> **Source**: `src/thegent/cli/apps/crew.py`
+> **Source**: `src/thegent/agents/crew/crew.py`
 
-Logical stream: top-level crew management commands.
+Crew data model - orchestrates agents and tasks.
 
 ---
 
-## add_agent_cmd
+## Crew
+
+Orchestrates agents and tasks for complex problem solving.
+
+A crew manages a collection of agents and their tasks, coordinating
+their execution to achieve a goal.
+
+### Methods
+
+#### Crew.add_agent
 
 ```python
-add_agent_cmd(crew_id: str, role: str, name: str, description: str, capabilities: str, model: str) -> None
+add_agent(self: Any, agent: Any)
 ```
+
+Add agent to crew.
 
 ---
 
-## add_task_cmd
+#### Crew.add_task
 
 ```python
-add_task_cmd(crew_id: str, description: str, dependencies: str, agent_id: str) -> None
+add_task(self: Any, task: Any)
 ```
+
+Add task to crew.
 
 ---
 
-## create_cmd
+#### Crew.get_agent_by_id
 
 ```python
-create_cmd(name: str, description: str, mode: str, output: str) -> None
+get_agent_by_id(self: Any, agent_id: str)
 ```
+
+Get agent by ID.
 
 ---
 
-## execute_cmd
+#### Crew.get_task_by_id
 
 ```python
-execute_cmd(crew_file: str, cwd: str, mode: str, timeout: int, model: str) -> None
+get_task_by_id(self: Any, task_id: str)
 ```
 
----
-
-## list_cmd
+Get task by ID.
 
 ---
 
-## show_cmd
+---
+
+## ExecutionMode
+
+Crew execution modes.
+
+**Inherits from**: `StrEnum`
+
+---
+
+## add_agent
 
 ```python
-show_cmd(crew_id: str) -> None
+add_agent(self: Any, agent: Any)
 ```
+
+Add agent to crew.
 
 ---
 
-## status_cmd
+## add_task
 
 ```python
-status_cmd(crew_id: str) -> None
+add_task(self: Any, task: Any)
 ```
+
+Add task to crew.
+
+---
+
+## get_agent_by_id
+
+```python
+get_agent_by_id(self: Any, agent_id: str)
+```
+
+Get agent by ID.
+
+---
+
+## get_task_by_id
+
+```python
+get_task_by_id(self: Any, task_id: str)
+```
+
+Get task by ID.
 
 ---
 

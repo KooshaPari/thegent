@@ -1,6 +1,6 @@
 # donut_adapter API Reference
 
-> **Source**: `src/thegent/routing/donut_adapter.py`
+> **Source**: `src/thegent/utils/routing_impl/donut_adapter.py`
 
 Donut Architecture adapter for LiteLLM routing integration.
 
@@ -335,3 +335,4 @@ Record a routing request for stats tracking.
 - `is_error`: Whether the request resulted in an error
 
 ---
+

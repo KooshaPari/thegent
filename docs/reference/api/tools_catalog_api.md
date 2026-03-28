@@ -1,0 +1,28 @@
+# tools_catalog API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_catalog.py`
+
+Catalog/capability/tool-registry handlers for MCP server.
+
+---
+
+## thegent_list_agents_impl
+
+---
+
+## thegent_list_models_impl
+
+---
+
+## thegent_list_modes_impl
+
+---
+
+## thegent_list_operations_impl
+
+---
+
+## thegent_resolve_model_route_impl
+
+---
+

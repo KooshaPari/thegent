@@ -1,0 +1,20 @@
+# run_event_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/run_event_helpers.py`
+
+Run event output/detail helpers extracted from cli.commands.impl (WL-125).
+
+---
+
+## build_run_event_details
+
+Build optional serialized metadata for run end events.
+
+---
+
+## resolve_audio_transcript_for_output
+
+Resolve audio transcript with explicit result metadata taking precedence.
+
+---
+

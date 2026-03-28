@@ -1,6 +1,6 @@
 # workflow API Reference
 
-> **Source**: `src/thegent/crew/workflow.py`
+> **Source**: `src/thegent/agents/crew/workflow.py`
 
 WorkflowEngine for multi-crew stages.
 
@@ -78,7 +78,7 @@ Execute all crews in a stage.
 resolve_stage_dependencies(self: Any)
 ```
 
-Resolve stage dependencies using topological sort.
+Resolve stage dependencies using topological sort on a validated graph.
 
 Returns stages in execution order.
 
@@ -130,8 +130,9 @@ Execute all crews in a stage.
 resolve_stage_dependencies(self: Any)
 ```
 
-Resolve stage dependencies using topological sort.
+Resolve stage dependencies using topological sort on a validated graph.
 
 Returns stages in execution order.
 
 ---
+

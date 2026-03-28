@@ -1,0 +1,28 @@
+# tools_runtime API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_runtime.py`
+
+Runtime/config/status tool handlers for MCP server.
+
+---
+
+## config_resolve_impl
+
+---
+
+## logs_tool_impl
+
+---
+
+## negotiate_contract_impl
+
+---
+
+## ps_tool_impl
+
+---
+
+## status_tool_impl
+
+---
+

@@ -1,6 +1,6 @@
 # components API Reference
 
-> **Source**: `src/thegent/compositor/components.py`
+> **Source**: `src/thegent/ui/compositor/components.py`
 
 Basic component library for the TUI Compositor.
 

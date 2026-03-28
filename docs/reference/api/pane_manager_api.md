@@ -1,46 +1,52 @@
 # pane_manager API Reference
 
-> **Source**: `src/thegent/compositor/pane_manager.py`
+> **Source**: `src/thegent/ui/compositor/pane_manager.py`
 
-Pane management for the TUI compositor.
-
-Handles pane tree structure, splitting, merging, and layout operations.
+PaneManager - Pane tree management for split/merge operations.
 
 ---
 
 ## PaneManager
 
-Manages a tree of terminal panes with split/merge operations.
+Manages pane tree structure and operations.
 
 ### Methods
 
 #### PaneManager.__init__
 
 ```python
-__init__(self: Any, initial_dir: str)
+__init__(self: Any)
 ```
 
-Initialize the pane manager with a root pane.
-
-**Parameters**:
-
-- `initial_dir`: Initial working directory for the root pane
+Initialize PaneManager.
 
 ---
 
 #### PaneManager.close_pane
 
 ```python
-close_pane(self: Any, pane_id: Any)
+close_pane(self: Any)
 ```
 
-Close a pane and rebalance the tree.
+Close the current pane.
+
+**Returns**: True if successful, False otherwise
+
+---
+
+#### PaneManager.create_root_pane
+
+```python
+create_root_pane(self: Any, pane_id: str)
+```
+
+Create the root pane.
 
 **Parameters**:
 
-- `pane_id`: ID of pane to close (default: focused pane)
+- `pane_id`: ID for the root pane
 
-**Returns**: True if pane was closed, False if it's the only pane
+**Returns**: The root pane node
 
 ---
 
@@ -50,47 +56,9 @@ Close a pane and rebalance the tree.
 focus_next(self: Any)
 ```
 
-Rotate focus to the next pane.
+Focus the next pane in rotation.
 
----
-
-#### PaneManager.get_all_panes
-
-```python
-get_all_panes(self: Any)
-```
-
-Get all panes in the tree.
-
----
-
-#### PaneManager.get_focused_pane
-
-```python
-get_focused_pane(self: Any)
-```
-
-Get the currently focused pane node.
-
----
-
-#### PaneManager.get_pane_by_id
-
-```python
-get_pane_by_id(self: Any, pane_id: str)
-```
-
-Get a pane node by its ID.
-
----
-
-#### PaneManager.get_pane_count
-
-```python
-get_pane_count(self: Any)
-```
-
-Get the number of terminal panes.
+**Returns**: True if successful, False otherwise
 
 ---
 
@@ -100,13 +68,13 @@ Get the number of terminal panes.
 restore_layout(self: Any, layout_data: dict)
 ```
 
-Restore a pane tree from a serialized layout.
+Restore pane tree from a dict.
 
 **Parameters**:
 
-- `layout_data`: Serialized layout data
+- `layout_data`: Dictionary representation of tree
 
-**Returns**: True if restoration was successful
+**Returns**: True if successful, False otherwise
 
 ---
 
@@ -116,24 +84,25 @@ Restore a pane tree from a serialized layout.
 save_layout(self: Any)
 ```
 
-Serialize the pane tree to a dictionary.
+Serialize the pane tree to a dict.
+
+**Returns**: Dictionary representation of the tree
 
 ---
 
 #### PaneManager.split_pane
 
 ```python
-split_pane(self: Any, direction: str, pane_id: Any)
+split_pane(self: Any, direction: str)
 ```
 
-Split a pane in the specified direction.
+Split the current pane.
 
 **Parameters**:
 
-- `direction`: 'H' for horizontal split, 'V' for vertical split
-- `pane_id`: ID of pane to split (default: focused pane)
+- `direction`: "horizontal" or "vertical"
 
-**Returns**: The new pane node, or None if split failed
+**Returns**: The new pane node, or None if no current pane
 
 ---
 
@@ -141,45 +110,35 @@ Split a pane in the specified direction.
 
 ## PaneNode
 
-A node in the pane tree structure.
-
-### Methods
-
-#### PaneNode.is_branch
-
-```python
-is_branch(self: Any)
-```
-
-Check if this node is a branch (has children).
-
----
-
-#### PaneNode.is_leaf
-
-```python
-is_leaf(self: Any)
-```
-
-Check if this node is a leaf (contains a pane).
-
----
+Represents a node in the pane tree.
 
 ---
 
 ## close_pane
 
 ```python
-close_pane(self: Any, pane_id: Any)
+close_pane(self: Any)
 ```
 
-Close a pane and rebalance the tree.
+Close the current pane.
+
+**Returns**: True if successful, False otherwise
+
+---
+
+## create_root_pane
+
+```python
+create_root_pane(self: Any, pane_id: str)
+```
+
+Create the root pane.
 
 **Parameters**:
 
-- `pane_id`: ID of pane to close (default: focused pane)
+- `pane_id`: ID for the root pane
 
-**Returns**: True if pane was closed, False if it's the only pane
+**Returns**: The root pane node
 
 ---
 
@@ -189,67 +148,9 @@ Close a pane and rebalance the tree.
 focus_next(self: Any)
 ```
 
-Rotate focus to the next pane.
+Focus the next pane in rotation.
 
----
-
-## get_all_panes
-
-```python
-get_all_panes(self: Any)
-```
-
-Get all panes in the tree.
-
----
-
-## get_focused_pane
-
-```python
-get_focused_pane(self: Any)
-```
-
-Get the currently focused pane node.
-
----
-
-## get_pane_by_id
-
-```python
-get_pane_by_id(self: Any, pane_id: str)
-```
-
-Get a pane node by its ID.
-
----
-
-## get_pane_count
-
-```python
-get_pane_count(self: Any)
-```
-
-Get the number of terminal panes.
-
----
-
-## is_branch
-
-```python
-is_branch(self: Any)
-```
-
-Check if this node is a branch (has children).
-
----
-
-## is_leaf
-
-```python
-is_leaf(self: Any)
-```
-
-Check if this node is a leaf (contains a pane).
+**Returns**: True if successful, False otherwise
 
 ---
 
@@ -259,13 +160,13 @@ Check if this node is a leaf (contains a pane).
 restore_layout(self: Any, layout_data: dict)
 ```
 
-Restore a pane tree from a serialized layout.
+Restore pane tree from a dict.
 
 **Parameters**:
 
-- `layout_data`: Serialized layout data
+- `layout_data`: Dictionary representation of tree
 
-**Returns**: True if restoration was successful
+**Returns**: True if successful, False otherwise
 
 ---
 
@@ -275,24 +176,25 @@ Restore a pane tree from a serialized layout.
 save_layout(self: Any)
 ```
 
-Serialize the pane tree to a dictionary.
+Serialize the pane tree to a dict.
+
+**Returns**: Dictionary representation of the tree
 
 ---
 
 ## split_pane
 
 ```python
-split_pane(self: Any, direction: str, pane_id: Any)
+split_pane(self: Any, direction: str)
 ```
 
-Split a pane in the specified direction.
+Split the current pane.
 
 **Parameters**:
 
-- `direction`: 'H' for horizontal split, 'V' for vertical split
-- `pane_id`: ID of pane to split (default: focused pane)
+- `direction`: "horizontal" or "vertical"
 
-**Returns**: The new pane node, or None if split failed
+**Returns**: The new pane node, or None if no current pane
 
 ---
 

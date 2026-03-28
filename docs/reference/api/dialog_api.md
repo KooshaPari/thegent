@@ -427,3 +427,4 @@ show_toast(self: Any, message: str, duration: float, style: DialogStyle)
 Show a toast notification.
 
 ---
+

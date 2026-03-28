@@ -1,0 +1,32 @@
+# tools_terminal API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_terminal.py`
+
+Handoff and terminal-route tool handlers for MCP server.
+
+---
+
+## handoff_confirm_impl
+
+---
+
+## handoff_impl
+
+---
+
+## handoff_list_impl
+
+---
+
+## handoff_show_impl
+
+---
+
+## terminal_route_impl
+
+---
+
+## thegent_terminal_attach_impl
+
+---
+

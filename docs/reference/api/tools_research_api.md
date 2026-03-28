@@ -1,0 +1,16 @@
+# tools_research API Reference
+
+> **Source**: `src/thegent/mcp/server/tools_research.py`
+
+Research and discovery tool handlers for MCP server.
+
+---
+
+## thegent_deep_research_impl
+
+---
+
+## thegent_reddit_search_impl
+
+---
+

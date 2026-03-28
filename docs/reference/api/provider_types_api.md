@@ -1,6 +1,6 @@
 # provider_types API Reference
 
-> **Source**: `src/thegent/routing/provider_types.py`
+> **Source**: `src/thegent/utils/routing_impl/provider_types.py`
 
 Provider type classification for execution path routing.
 
@@ -29,3 +29,4 @@ Determine execution path for a provider.
 **Returns**: ExecutionPath enum value
 
 ---
+

@@ -1,6 +1,6 @@
 # auto_router API Reference
 
-> **Source**: `src/thegent/routing/auto_router.py`
+> **Source**: `src/thegent/utils/routing_impl/auto_router.py`
 
 Auto router: uses headless Gemini Flash to classify task complexity, then Pareto routing.
 
@@ -37,3 +37,4 @@ Auto-route: classify prompt, then Pareto select (agent, model).
 **Returns**: AutoRouteResult or None if routing fails
 
 ---
+

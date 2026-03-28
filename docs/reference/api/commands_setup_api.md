@@ -1,0 +1,48 @@
+# commands_setup API Reference
+
+> **Source**: `src/thegent/cli/commands/models/commands_setup.py`
+
+Thegent CLI setup and provider configuration - extracted from model_cmds_config.py.
+
+Handles unified setup: configure providers (same flow as cliproxy login), install shortcuts,
+hooks, skills, harness, and services.
+
+---
+
+## prompt_key
+
+```python
+prompt_key(msg: str) -> str
+```
+
+---
+
+## rules_sync_cmd
+
+```python
+rules_sync_cmd(force: bool, check: bool, cd: Any)
+```
+
+Sync CLAUDE.md to other platform-specific rule files (AGENTS.md, Cursor, Codex).
+
+---
+
+## setup_cmd
+
+```python
+setup_cmd(api_key: str, model: str, openrouter_key: str, kilo_key: str, zai_key: str, minimax_key: str, wizard: bool, links: bool, hooks: bool, skills: bool, harness: bool, full: bool, agents: str)
+```
+
+Unified setup: configure providers (same flow as cliproxy login) and install shortcuts.
+
+**Examples**:
+
+```python
+thegent setup                    # Interactive wizard
+thegent setup --full             # Full setup: install, shims, services, harness
+thegent setup --harness          # Install/update heliosShield harness only
+thegent setup --hooks --skills   # Project: git hooks + skills
+```
+
+---
+

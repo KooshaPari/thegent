@@ -1,0 +1,52 @@
+# helpers_metrics API Reference
+
+> **Source**: `src/thegent/cli/commands/models/helpers_metrics.py`
+
+Metrics/cost rendering helpers for model_cmds.
+
+---
+
+## build_index_data
+
+```python
+build_index_data(indices: dict[(str, dict[(str, float)])])
+```
+
+Normalize and round index data for stable output.
+
+---
+
+## collect_metrics_rows
+
+Collect bounded metrics rows across cost/speed/quality sources.
+
+---
+
+## emit_cost_values_output
+
+Emit cost values as JSON or rich table.
+
+---
+
+## emit_index_output
+
+Emit index output as JSON or rich table.
+
+---
+
+## emit_metrics_output
+
+Emit unified metrics output as JSON or rich table.
+
+---
+
+## flatten_cost_values
+
+```python
+flatten_cost_values(costs: dict[(str, dict[(str, tuple[(float, float)])])])
+```
+
+Flatten cost tuple format to printable dict structure.
+
+---
+

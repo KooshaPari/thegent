@@ -1,0 +1,82 @@
+# run_health_helpers API Reference
+
+> **Source**: `src/thegent/cli/services/run_health_helpers.py`
+
+Helpers for run/session health snapshot policy and JSONL log management.
+
+---
+
+## append_health_snapshot
+
+```python
+append_health_snapshot(payload: dict[(str, Any)], scope_key: dict[(str, Any)])
+```
+
+Append one health snapshot record and trigger retention compaction.
+
+---
+
+## coerce_issue_types
+
+```python
+coerce_issue_types(value: Any)
+```
+
+Normalize issue collection values to deterministic list[str] representation.
+
+---
+
+## compact_health_snapshot_log
+
+Trim health snapshot log to max configured lines while keeping newest entries.
+
+---
+
+## hash_health_payload
+
+```python
+hash_health_payload(payload: dict[(str, Any)])
+```
+
+Return a stable health payload signature excluding volatile metadata fields.
+
+---
+
+## health_scope_key
+
+```python
+health_scope_key(payload: dict[(str, Any)])
+```
+
+Build deterministic scope key for snapshot-series grouping.
+
+---
+
+## health_snapshot_log_path
+
+Resolve canonical health snapshot jsonl path and ensure parent directory exists.
+
+---
+
+## health_snapshot_max_lines
+
+Resolve health snapshot retention line-count with sane fallback bounds.
+
+---
+
+## load_previous_health_snapshot
+
+```python
+load_previous_health_snapshot(scope_key: dict[(str, Any)])
+```
+
+Return newest matching snapshot record for the provided scope.
+
+---
+
+## resolve_health_policy
+
+Resolve health policy config from profile (when present) plus explicit flags.
+
+---
+

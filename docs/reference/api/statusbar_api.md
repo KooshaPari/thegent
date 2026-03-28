@@ -118,6 +118,26 @@ Update agent status display.
 
 ---
 
+#### StatusbarWidget.watch_context_tokens_used
+
+```python
+watch_context_tokens_used(self: Any, value: Any)
+```
+
+Update context tokens display.
+
+---
+
+#### StatusbarWidget.watch_context_window_max
+
+```python
+watch_context_window_max(self: Any, value: Any)
+```
+
+Update context window max display.
+
+---
+
 #### StatusbarWidget.watch_cwd
 
 ```python
@@ -167,6 +187,16 @@ compose(self: Any)
 ```
 
 Create statusbar layout.
+
+---
+
+## compute_context_usage_display
+
+```python
+compute_context_usage_display(used: Any, max_val: Any)
+```
+
+Compute display text and class for context usage.
 
 ---
 
@@ -220,6 +250,26 @@ Update agent status display.
 
 ---
 
+## watch_context_tokens_used
+
+```python
+watch_context_tokens_used(self: Any, value: Any)
+```
+
+Update context tokens display.
+
+---
+
+## watch_context_window_max
+
+```python
+watch_context_window_max(self: Any, value: Any)
+```
+
+Update context window max display.
+
+---
+
 ## watch_cwd
 
 ```python
@@ -239,3 +289,4 @@ watch_session_id(self: Any, value: Any)
 Update session ID display.
 
 ---
+
