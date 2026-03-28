@@ -55,6 +55,7 @@ SCAN_SHARED_REPOS_ROOT_MODE_REPOS = "repos"
 SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES = "worktrees"
 SCAN_SHARED_REPOS_DEFAULT_MODULE_PREFIX = "shared-module"
 SCAN_SHARED_REPOS_MAX_NAME_LENGTH = 60
+DEFAULT_EXCLUDED_REPOS = frozenset({"4sgm", "parpour", "civ", "trace"})
 SCAN_SHARED_REPOS_RECOMMENDED_MODULE_COUNT_LIMIT = 10
 SCAN_SHARED_REPOS_MANIFEST_INDEX_FILENAME = "index.json"
 SCAN_SHARED_REPOS_MANIFEST_INDEX_SUMMARY_FILENAME = "index-summary.json"
@@ -947,6 +948,8 @@ def _run_single_repo_target(
     non_interactive: bool = False,
     env_overrides: dict[str, str] | None = None,
 ) -> int:
+    if command_name and command_name.startswith("-"):
+        raise ValueError("command names cannot start with '-'")
     if command_name and not runner:
         raise ValueError("--command requires --runner")
     if runner and command_name:
@@ -1643,8 +1646,137 @@ def _load_json_dict(path: Path) -> dict[str, Any]:
     return data
 
 
-def _load_module_manifest(manifest_path: Path) -> dict[str, Any]:
+def _load_module_manifest(module: str) -> dict[str, Any]:
+    manifest_path = _resolve_module_manifest_path(module)
     return _load_json_dict(manifest_path)
+
+
+def _build_scannable_candidate_name(base: str, used_names: set[str], *, max_attempts: int = 25) -> str:
+    candidate = base
+    for i in range(max_attempts):
+        if candidate not in used_names:
+            return candidate
+        candidate = f"{base}-{i + 1}"
+    suffix = hashlib.sha1(base.encode("utf-8")).hexdigest()[:8]
+    return f"{base}-{suffix}"
+
+
+def _build_recommended_modules(
+    shared_modules: dict[str, list[str]],
+    *,
+    module_prefix: str = "shared-module",
+    exclude_repos: set[str] | None = None,
+    candidate_name_regex: str | None = None,
+    min_repo_count: int = 2,
+) -> dict[str, list[str]]:
+    excluded = exclude_repos or set()
+    filtered: dict[str, list[str]] = {}
+    for module_name, repos in sorted(shared_modules.items(), key=lambda item: item[0]):
+        filtered_repos = [r for r in repos if r not in excluded]
+        if len(filtered_repos) < min_repo_count:
+            continue
+        filtered[module_name] = sorted(filtered_repos)
+    if not filtered:
+        return {}
+    used_names: set[str] = set()
+    result: dict[str, list[str]] = {}
+    for module_name, repos in sorted(filtered.items(), key=lambda item: item[0]):
+        prefix = _normalize_candidate_module_name(module_prefix)
+        base = _normalize_candidate_module_name(module_name)
+        candidate = _build_scannable_candidate_name(base, used_names)
+        used_names.add(candidate)
+        result[f"{prefix}-{candidate}"] = repos
+    return result
+
+
+def _append_warning(warnings: list[str], message: str) -> None:
+    warnings.append(message)
+
+
+def _sorted_repo_paths(repo_paths: dict[str, str]) -> dict[str, str]:
+    return dict(sorted(repo_paths.items()))
+
+
+def _read_index_payload(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    with open(path) as f:
+        return json.load(f)
+
+
+def _write_json_lines(path: Path, payload: dict[str, Any]) -> None:
+    with open(path, "w") as f:
+        json.dump(payload, f)
+
+
+def _build_candidate_manifest_index_summary(entries: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "total": len(entries),
+        "candidates": [e.get("candidate_name", "unknown") for e in entries],
+    }
+
+
+def _validate_candidate_name_regex(pattern: str) -> re.Pattern[str]:
+    try:
+        return re.compile(pattern)
+    except re.error as exc:
+        raise ValueError(f"Invalid candidate_name_regex: {exc}") from exc
+
+
+def _iter_repo_python_files(repo_path: Path) -> list[Path]:
+    python_files: list[Path] = []
+    src_dir = repo_path / "src"
+    if src_dir.is_dir():
+        for root, _dirs, files in os.walk(src_dir):
+            for file in files:
+                if file.endswith(".py"):
+                    python_files.append(Path(root) / file)
+    return python_files
+
+
+def _extract_imports_from_python(code: str) -> set[str]:
+    imports: set[str] = set()
+    for match in re.finditer(r"^(?:from|import)\s+([a-zA-Z_][a-zA-Z0-9_]*)", code, re.MULTILINE):
+        imports.add(match.group(1))
+    return imports
+
+
+def _ensure_non_symlink_path(path: Path) -> None:
+    if path.is_symlink():
+        path.unlink()
+
+
+def _resolve_candidate_dependency(
+    candidate_module_name: str, repo_python_modules: dict[str, set[str]], repo_python_files: dict[str, list[Path]]
+) -> str | None:
+    for repo_id, modules in sorted(repo_python_modules.items()):
+        if candidate_module_name in modules:
+            return repo_id
+    for repo_id, files in sorted(repo_python_files.items()):
+        for file_path in files:
+            try:
+                content = file_path.read_text()
+                if candidate_module_name in content:
+                    return repo_id
+            except OSError:
+                continue
+    return None
+
+
+def _find_repo_module_dependencies(
+    candidates: dict[str, list[str]],
+    repo_python_modules: dict[str, set[str]],
+    repo_python_files: dict[str, list[Path]],
+) -> dict[str, str | None]:
+    return {name: _resolve_candidate_dependency(name, repo_python_modules, repo_python_files) for name in candidates}
+
+
+def _normalize_candidate_module_name(value: str) -> str:
+    slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in value.strip())
+    while "--" in slug:
+        slug = slug.replace("--", "-")
+    slug = slug.strip("-")
+    return slug or "module"
 
 
 def build_module_manifest_payload(module_name: str, repo_ids: list[str]) -> dict[str, Any]:

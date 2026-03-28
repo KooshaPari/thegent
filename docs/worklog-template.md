@@ -1,4 +1,4 @@
-# <Project Name> - Worklog
+# &lt;Project Name&gt; - Worklog
 
 > Last Updated: 2026-03-25
 > Managed via: AgilePlus
@@ -17,9 +17,9 @@ All feature work is tracked in the AgilePlus repository:
 Use `agileplus` CLI to manage features:
 ```bash
 cd /Users/kooshapari/CodeProjects/Phenotype/repos/AgilePlus
-agileplus specify --title "<feature>" --description "<desc>"
+agileplus specify --title "&lt;feature&gt;" --description "&lt;desc&gt;"
 agileplus list
-agileplus show <feature-id>
+agileplus show &lt;feature-id&gt;
 ```
 
 ---
@@ -30,8 +30,8 @@ agileplus show <feature-id>
 
 **Status**: Shipped
 **Completed**: YYYY-MM-DD
-**Spec**: `<link to spec.md in AgilePlus>`
-**PRs**: `<link to merged PRs>`
+**Spec**: "`&lt;link to spec.md in AgilePlus&gt;`"
+**PRs**: "`&lt;link to merged PRs&gt;`"
 
 **Summary**:
 Brief description of what was delivered.
@@ -48,11 +48,11 @@ Brief description of what was delivered.
 
 ## Present Work (In Progress)
 
-### [Feature ID] - Feature Title
+### [&lt;Feature ID&gt;] - Feature Title
 
 **Status**: In Progress
 **Started**: YYYY-MM-DD
-**Spec**: `<link to spec.md in AgilePlus>`
+**Spec**: `link to spec.md in AgilePlus`
 **Current WP**: WP0X
 
 **Progress**:
@@ -78,8 +78,8 @@ Brief description of what was delivered.
 
 **Status**: Planned
 **Priority**: High/Medium/Low
-**Spec**: `<link to spec.md in AgilePlus>`
-**Dependencies**: `<list of blocking features>`
+**Spec**: `link to spec.md in AgilePlus`
+**Dependencies**: `list of blocking features`
 
 **Description**:
 Brief description of planned feature.
@@ -103,13 +103,13 @@ agileplus specify --title "Feature Name" --description "Brief description"
 agileplus list
 
 # Show feature details
-agileplus show <feature-id>
+agileplus show `<feature-id>`
 
 # Update work package status
-agileplus status <feature-id> --wp <wp-id> --state <state>
+agileplus status `<feature-id>` --wp `<wp-id>` --state `<state>`
 
 # Validate encoding
-agileplus validate-encoding --feature <feature-id>
+agileplus validate-encoding --feature `<feature-id>`
 ```
 
 ### State Definitions
@@ -129,9 +129,9 @@ agileplus validate-encoding --feature <feature-id>
 ### Directory Structure
 
 ```
-<project>/
+`project`/
   kitty-specs/
-    <feature-id>/
+    `feature-id`/
       spec.md          # Feature specification
       plan.md          # Architecture and plan
       meta.json        # Feature metadata

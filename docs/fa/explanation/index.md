@@ -1,0 +1,10 @@
+---
+layout: doc
+---
+
+# Explanation (در حال تکمیل)
+
+این صفحه هنوز ترجمه نشده است. لطفاً از نسخه انگلیسی استفاده کنید:
+
+- [English Explanation](/explanation/)
+- [Start Here](/start-here.md)

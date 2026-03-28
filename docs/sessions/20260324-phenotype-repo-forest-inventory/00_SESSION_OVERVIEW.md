@@ -64,4 +64,4 @@
 
 - Child-agent fan-out was attempted multiple times in this session, but the spawn path failed in this environment.
 - The pass therefore used direct inventory commands and should be resumed from this session doc if needed.
-- `agentapi-plusplus` has been rehydrated from `.archive/agentapi++-duplicate` into `/Users/kooshapari/CodeProjects/Phenotype/repos/agentapi-plusplus`; future work should reference that checkout and its native `WORKLOG.md`.
+- `agentapi-plusplus` was restored via a upstream `github.com/coder/agentapi` clone in `/Users/kooshapari/CodeProjects/Phenotype/repos/agentapi-plusplus`; future work should reference that checkout and its `WORKLOG.md`.

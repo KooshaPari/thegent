@@ -46,3 +46,10 @@ Previous wave logs are stored in `reports/`:
 - `reports/2026-02-22-worklog-wave70-*.md`
 - `reports/2026-02-21-*-WORKLOG.md`
 
+## Cleanup Blockers
+
+The following worktree lanes remain in place because they are unmerged and therefore treated as incomplete:
+- `phenotype-infrakit/.worktrees/spec-docs`
+- `worktrees/phenotype-gauge/add-vitepress`
+- `worktrees/phenotype-nexus/add-docs`
+- `phenotype-xdd-wtrees/spec-docs`

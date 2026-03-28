@@ -1,0 +1,10 @@
+---
+layout: doc
+---
+
+# Reference (در حال تکمیل)
+
+این صفحه هنوز ترجمه نشده است. لطفاً از نسخه انگلیسی استفاده کنید:
+
+- [English Reference](/reference/)
+- [Start Here](/start-here.md)

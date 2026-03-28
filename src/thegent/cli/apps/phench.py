@@ -1,10 +1,11 @@
 """Phench: stable project-state runtime control plane for Phenotype/projects."""
 
 from __future__ import annotations
+from pathlib import Path
 
 if __package__ is None:
     __package__ = "thegent.cli.apps"
-from pathlib import Path
+    __path__ = [str(Path(__file__).resolve().parent)]
 
 import typer
 from rich.console import Console

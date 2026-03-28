@@ -37,7 +37,7 @@ This document captures the research and analysis of implementing a unified hexag
 | **Ports (Interfaces)** | `trait` | `interface{}` / `interface` | `interface` | `ABC` / Protocol | `struct` with fn pointers | `interface` |
 | **Immutability** | `struct` (mutable by default) + `&` | Value types + copies | `const` / `Readonly` | `@dataclass(frozen=True)` | `const` | `readonly` / `init` |
 | **Dependency Injection** | Manual / Builder | Constructor injection | Manual / IoC | Constructor injection | Manual | Constructor / DI container |
-| **Error Handling** | `Result<T, E>` | `(T, error)` | `Result` type / exceptions | Exceptions / `Result` | `!T` / `anyerror` | `Exception` / `Result<T>` |
+| **Error Handling** | `Result&lt;T, E&gt;` | `(T, error)` | `Result` type / exceptions | Exceptions / `Result` | `!T` / `anyerror` | `Exception` / `Result&lt;T&gt;` |
 
 ---
 
@@ -348,12 +348,12 @@ public sealed class ConfigEntry
 
 | Language | Port Declaration | Adapter Implementation | Type Safety |
 |----------|------------------|----------------------|-------------|
-| **Rust** | `pub trait Repository { fn get(&self, key: &str) -> Result<Option<T>, E>; }` | `impl Repository for PostgresAdapter` | Static + Duck typing |
+| **Rust** | `pub trait Repository { fn get(&self, key: &str) -> Result<Option&lt;T&gt;, E>; }` | `impl Repository for PostgresAdapter` | Static + Duck typing |
 | **Go** | `type Repository interface { Get(key string) (*Entity, error) }` | `type PostgresAdapter struct {}` | Static (compile-time) |
-| **TypeScript** | `interface Repository<T> { get(key: string): Promise<T | null>; }` | `class PostgresAdapter implements Repository<Entity>` | Static + Structural |
+| **TypeScript** | `interface Repository&lt;T&gt; { get(key: string): Promise&lt;T | null&gt;; }` | `class PostgresAdapter implements Repository&lt;Entity&gt;` | Static + Structural |
 | **Python** | `class Repository(ABC): @abstractmethod def get(...)` | `class PostgresAdapter(Repository)` | Duck typing |
 | **Zig** | `pub const Repository = struct { get: fn(...) }` | Function pointers | Static (comptime) |
-| **C#** | `interface IRepository<T> { Task<T?> GetAsync(string key); }` | `class PostgresAdapter : IRepository<Entity>` | Static (compile-time) |
+| **C#** | `interface IRepository&lt;T&gt; { Task&lt;T?&gt; GetAsync(string key); }` | `class PostgresAdapter : IRepository&lt;Entity&gt;` | Static (compile-time) |
 
 ### 3.2 Best Practices by Language
 
@@ -386,15 +386,7 @@ type PublishAwareRepository interface {
 ```
 
 #### TypeScript: Discriminated Unions for Results
-```typescript
-type ConfigResult =
-  | { success: true; data: ConfigEntry }
-  | { success: false; error: Error };
-
-async function getConfig(key: string): Promise<ConfigResult> {
-  // ...
-}
-```
+TypeScript pairs discriminated unions with explicit result types so the caller can inspect `success` before touching the payload. A `ConfigResult` union contains both the successful shape and the failure shape (with an `Error`), and `getConfig` returns that union to ensure consumers pattern-match before use.
 
 #### Python: Protocol for Structural Typing
 ```python
@@ -847,7 +839,7 @@ public sealed class NotFoundException : DomainException
 
 | Aspect | Rust | Go | TypeScript | Python | Zig | C# |
 |--------|------|-----|------------|--------|-----|-----|
-| **Logging** | `tracing` | `slog` | `pino`, `winston` | `structlog`, `loguru` | `std.log` | `ILogger<T>` |
+| **Logging** | `tracing` | `slog` | `pino`, `winston` | `structlog`, `loguru` | `std.log` | `ILogger&lt;T&gt;` |
 | **Metrics** | `metrics`, `prometheus` | `prometheus/client_golang` | `prom-client` | `prometheus_client` | Manual | `IMeter` |
 | **Tracing** | `tracing` + `otlp` | `opentelemetry-go` | `opentelemetry-js` | `opentelemetry-python` | Manual | `ActivitySource` |
 | **Health** | `axum-health` | `/health` endpoint | `/health` endpoint | `/health` endpoint | Manual | `/health` endpoint |
@@ -929,7 +921,7 @@ var response = await policy.ExecuteAsync(() => httpClient.GetAsync(url));
 
 | Language | Boxed Types | Zero-Cost Abstractions | Escape Analysis |
 |----------|-------------|------------------------|-----------------|
-| **Rust** | `Box<T>` | Yes (traits) | Aggressive |
+| **Rust** | `Box&lt;T&gt;` | Yes (traits) | Aggressive |
 | **Go** | Pointer heap allocation | Limited | Escapes to heap |
 | **TypeScript** | Objects always heap | No | GC managed |
 | **Python** | Everything heap | No | GC managed |
