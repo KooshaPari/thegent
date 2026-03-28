@@ -122,3 +122,8 @@ thegent-wtrees/
 AgilePlus-wtrees/
 trace-wtrees/
 agent-devops-setups-wtrees/
+
+# Archive directories (local retention only, not tracked)
+.archive/
+.agileplus/
+.forge/
