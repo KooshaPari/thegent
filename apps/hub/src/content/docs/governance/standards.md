@@ -1,6 +1,7 @@
 ---
 title: Standards
 description: Language and tooling standards for the Phenotype ecosystem.
+draft: false
 ---
 
 ## Language Standards

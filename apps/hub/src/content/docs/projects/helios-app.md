@@ -1,6 +1,7 @@
 ---
 title: heliosApp
 description: SolidJS-powered AI coding interface.
+draft: false
 ---
 
 ## Overview

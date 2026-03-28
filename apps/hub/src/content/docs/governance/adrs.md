@@ -1,6 +1,7 @@
 ---
 title: Architecture Decision Records
 description: Key architectural decisions for the Phenotype ecosystem.
+draft: false
 ---
 
 ## ADR Index

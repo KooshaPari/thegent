@@ -1,6 +1,7 @@
 ---
 title: AgilePlus
 description: AI-driven project management with spec-first development.
+draft: false
 ---
 
 ## Overview

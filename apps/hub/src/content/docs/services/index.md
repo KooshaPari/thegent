@@ -1,6 +1,23 @@
 ---
-title: Service Registry
-description: All Phenotype services and their endpoints.
+title: Services
+description: Phenotype services — local dev endpoints and consulting/OSS offerings.
+draft: false
+---
+
+## About Phenotype
+
+Phenotype is an AI-augmented development platform built by [Kooshayar Parinejad](https://kooshapari.com).
+
+**Portfolio**: [kooshapari.com](https://kooshapari.com) / [ramdesigns.xyz](https://ramdesigns.xyz)
+
+**What we offer**:
+- Open-source tooling (see [Projects](/projects/))
+- Consulting on AI-augmented development workflows, hexagonal architecture, and polyrepo platform engineering
+
+**No ecommerce services are offered.** The old phenotype.us storefront (a Shopify clone) has been retired.
+phenotype.us is currently under reconstruction — it will point to this hub site once DNS is re-routed.
+See [phenotype.us recovery plan](/governance/phenotype-us-recovery/) for details.
+
 ---
 
 ## Running Services
