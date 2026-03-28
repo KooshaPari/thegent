@@ -2,22 +2,22 @@
 
 | repo | status | action |
 |---|---|---|
-| agent-devops-setups | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| bifrost-extensions | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| cliproxyapi-plusplus | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| forgecode | WORKLOG.md only | migrate WORKLOG.md -> docs/sessions/<active-session> artifacts |
-| heliosApp | WORKLOG+sessions(0) | verify all canonical files exist in docs/sessions |
-| heliosCLI | docs/sessions(0) | fill missing canonical files in existing docs/sessions |
-| phench | WORKLOG.md only | migrate WORKLOG.md -> docs/sessions/<active-session> artifacts |
-| phenotype-gauge | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| phenotype-go-kit | WORKLOG.md only | migrate WORKLOG.md -> docs/sessions/<active-session> artifacts |
-| phenotype-infrakit | WORKLOG.md only | migrate WORKLOG.md -> docs/sessions/<active-session> artifacts |
-| phenotype-nexus | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| phenotype-shared | WORKLOG.md only | migrate WORKLOG.md -> docs/sessions/<active-session> artifacts |
-| phenotype-xdd | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| phenotypeActions | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| policy-contract | docs/sessions(0) | fill missing canonical files in existing docs/sessions |
-| profiler | WORKLOG.md only | migrate WORKLOG.md -> docs/sessions/<active-session> artifacts |
-| tokenledger-wt | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| trace | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
-| trash-cli | absent | create docs/sessions/<session> with 00/01/05/06 canonical docs |
+| agent-devops-setups | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| bifrost-extensions | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| cliproxyapi-plusplus | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| forgecode | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| heliosApp | complete | existing docs/sessions(0) kept as canonical; no migration needed |
+| heliosCLI | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phench | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-gauge | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phenotype-go-kit | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-infrakit | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-nexus | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phenotype-shared | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| phenotype-xdd | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| phenotypeActions | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| policy-contract | complete | legacy 05/06 docs merged into existing session `2026-03-03-policy-wrapper-standardization` |
+| profiler | complete | WORKLOG.md migrated into docs/sessions/20260328-root-docsites-worklog-consolidation |
+| tokenledger-wt | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| trace | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |
+| trash-cli | complete | docs/sessions/20260328-root-docsites-worklog-consolidation created |

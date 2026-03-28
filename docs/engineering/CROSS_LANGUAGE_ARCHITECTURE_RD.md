@@ -387,11 +387,11 @@ type PublishAwareRepository interface {
 
 #### TypeScript: Discriminated Unions for Results
 ```typescript
-type Result<T, E = Error> =
-  | { success: true; data: T }
-  | { success: false; error: E };
+type ConfigResult =
+  | { success: true; data: ConfigEntry }
+  | { success: false; error: Error };
 
-async function getConfig(key: string): Promise<Result<ConfigEntry>> {
+async function getConfig(key: string): Promise<ConfigResult> {
   // ...
 }
 ```
