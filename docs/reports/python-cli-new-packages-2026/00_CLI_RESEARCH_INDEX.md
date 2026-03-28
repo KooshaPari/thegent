@@ -1,0 +1,23 @@
+# Python CLI New Packages Research (2026)
+
+Primary source:
+- https://libs.tech/python/cli-libraries
+
+## Report Set (6 files)
+
+1. [01_top_list_and_signal.md](01_top_list_and_signal.md)
+   - High-level assessment of Python CLI list maturity and adoption signals.
+2. [02_atuin_shell_ai.md](02_atuin_shell_ai.md)
+   - Shell-assistant-oriented and workflow-adjacent CLI value.
+3. [03_tui_tooling.md](03_tui_tooling.md)
+   - Terminal UI and interactive CLI tooling.
+4. [04_argument_parser_core.md](04_argument_parser_core.md)
+   - Argument parsing and CLI framework stack comparison.
+5. [05_workflow_productivity_cli.md](05_workflow_productivity_cli.md)
+   - Workflow/productivity utility CLIs.
+6. [06_ops_serving_utility_cli.md](06_ops_serving_utility_cli.md)
+   - Ops, serving, and infra utility CLIs.
+
+## Notes
+- Scope is research/selection guidance, not an endorsement list.
+- If you want a side-by-side Rust-vs-Python matrix, I can add `07_COMPARE_RUST_VS_PYTHON.md`.

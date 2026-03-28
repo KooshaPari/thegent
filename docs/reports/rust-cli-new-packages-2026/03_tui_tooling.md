@@ -1,0 +1,82 @@
+# Rust TUI & Interactive CLI Tooling (libs.tech + lib.rs Rust CLI) - 2026 Fit
+
+**Date:** 2026-02-26
+**Scope:** crates surfaced in Rust CLI category pages on lib.rs that are relevant to TUI and interactive CLI ergonomics.
+
+## Executive summary
+
+For 2026 planning, the most reliable layer is still a **Rust TUI core + thin input layer**:
+- use `ratatui` for rendering + layout
+- use a low-level terminal backend like `crossterm` (or `termwiz` when terminal capability coverage is important)
+- use purpose-fit prompt/input crates (`dialoguer`, `inquire`, `tui-prompts`, `tui-textarea`, `tui-input`, `reedline`/`rustyline`)
+- use `indicatif` for progress UX and `clap` / `clap_complete` for command interface/ergonomics
+
+This keeps projects maintainable in Rust 2024 toolchains while avoiding lock-in to one “all-in-one” crate.
+
+## Practical stack map (recommended)
+
+| Area | Primary crate | Why this crate works today | Caveats in 2026 | Fit | 
+|---|---|---|---|---|
+| Full-screen TUI framework | `ratatui` + `crossterm` | Mature fork path from `tui-rs`, large ecosystem, strong widget model, docs and examples for complete UI loops | Backend event handling can get brittle in complex apps unless architecture is layered by state and rendering phases; Windows/PTY edge behavior still needs explicit testing | **High** |
+| Backend alternative / terminal capability edge cases | `termwiz` | Strong terminal abstraction, surface delta model, graphics/attributes focus, active releases through 2025 | Bigger dependency surface and heavier runtime footprint; more opinionated than crossterm | **High** for terminal-heavy tools |
+| Terminal input/editing (readline-like) | `reedline` or `rustyline` | `reedline` offers modern multiline + syntax-highlighting + clipboard/history and is nu-shell-driven; `rustyline` has huge downstream usage | `reedline` API can be heavier and less ergonomic for very small CLIs; `rustyline` can feel more conservative | `reedline` **Medium-High**; `rustyline` **High** for simple needs |
+| Interactive prompts (forms) | `dialoguer`, `inquire`, `tui-prompts` | Covers most prompt types: confirm/input/select, password, history/validation (dialoguer/inquire) and richer terminal-native prompt widgets (`tui-prompts`) | `dialoguer`/`inquire` are older in release tempo than other crates; mix-and-match features may duplicate functionality | **High** for command assistants; **Medium** for long-term innovation |
+| Large interactive apps (multi-field/text editor widgets) | `tui-textarea`, `tui-input`, `tui-prompts` | Mature widget set for terminal text workflows; good for editors, logs, query boxes, selectors | Some crates still ship frequent breaking changes and backend assumptions (crossterm-first mindset) can leak into app code | **Medium-High** |
+| Fuzzy discovery / selector workflows | `skim` (+ `skim-common`) | Widely used interactive fuzzy finder behavior; strong practical fit for file/command filtering and “fuzzy everything” workflows | Terminal interaction quirks in nonstandard shells/ptys; behavior differs intentionally from fzf so flags and command mode assumptions differ | **High** if fuzzy selection is core UX |
+| CLI parsing + completion | `clap`, `clap_complete`, `interactive-clap` | Mature parser ecosystem and completion ecosystem with massive adoption; practical for production CLI surface | Keep CLI parse and interactive prompt paths decoupled to avoid duplicated validation logic | **High** |
+| Progress/status layer | `indicatif` | Highest download velocity among progress libs; mature spinner/progress API and ecosystem bridges (`indicatif-log-bridge`, `tracing-indicatif`) | UI can conflict with custom draw loops unless carefully routed through a single render path | **High** for non-TUI CLIs, **Medium** for full-screen TUIs |
+
+## Candidate notes from 2026 observations
+
+- `ratatui-explorer` (2025 releases) can accelerate file-browsing widgets if you need explorer patterns out of the box.
+- `ratatui-kit` and helper crates (`ratatui-macros`, `rat-event`, `rat-cursor`) indicate faster ecosystem specialization, but they are younger and should be adopted when composition benefits are immediate.
+- `bevy_ratatui` and `soft_ratatui` show experimentation around runtime integrations and alternate backends; useful for niche deployments, not default production choice.
+- `skim-run` extends fuzzy workflows into desktop operations, useful pattern demo but narrower user profile than general CLI.
+
+## Caveats to watch in production
+
+1. **State synchronization**
+   - Don’t redraw directly from input threads. Centralize app state and render cadence in one async/task-owned loop.
+2. **Terminal mode transitions**
+   - Full-screen TUIs must guarantee restoration of terminal state on panic, error exits, and signal paths.
+3. **Windows parity**
+   - Test ANSI/PTY combinations early; both crossterm and termwiz have Windows coverage but differ in behavior under old Windows console modes.
+4. **Release churn risk**
+   - Some newer prompt/input crates are fast-moving; pin versions, track changelog, and gate feature flags explicitly.
+5. **Dependency layering**
+   - Avoid adding both `indicatif` and custom `tui` progress rendering in overlapping codepaths unless a single source owns output.
+
+## 2026 fit recommendations (by project type)
+
+- **Ops dashboards / monitoring dashboards**: `ratatui` + `crossterm` + `indicatif` (for occasional task status).
+- **Tool wrappers (git-like, deploy, migration)**: `clap` + `clap_complete` + `dialoguer/inquire` + optional `skim` for interactive selection.
+- **Developer productivity TUIs (notes/editors/finders)**: `ratatui` + `tui-textarea` + `tui-prompts` + `tui-input`.
+- **REPL-style tools**: `clap` parsing + `reedline`/`rustyline`.
+- **High-volume terminal apps at scale**: consider `termwiz` where terminal capability handling and rendering semantics matter more than minimal dependencies.
+
+## Adoption order for new Rust CLI projects
+
+1. Start with `clap`/`clap_complete` to stabilize command grammar.
+2. Add `ratatui` only when full-screen UX is required.
+3. Add one input crate (`dialoguer` or `inquire` or `tui-prompts`) instead of multiple to reduce overlap.
+4. Add `skim` only when selection search is product-critical; avoid it as a default for every command.
+5. Add `indicatif` only for long-running tasks with user-visible progress, and place all progress rendering on one owner.
+
+## Source references
+
+- `ratatui` (lib.rs): https://lib.rs/crates/ratatui
+- `crossterm` (lib.rs): https://lib.rs/crates/crossterm
+- `termwiz` (lib.rs): https://lib.rs/crates/termwiz
+- `tui-input` (lib.rs): https://lib.rs/crates/tui-input
+- `tui-textarea` (lib.rs): https://lib.rs/crates/tui-textarea
+- `tui-prompts` (lib.rs): https://lib.rs/crates/tui-prompts
+- `tui-textarea` ecosystem: https://lib.rs/crates/tui-textarea
+- `indicatif` (lib.rs): https://lib.rs/crates/indicatif
+- `dialoguer` (lib.rs): https://lib.rs/crates/dialoguer
+- `inquire` (lib.rs): https://lib.rs/crates/inquire
+- `skim` (lib.rs): https://lib.rs/crates/skim
+- `reedline` (lib.rs): https://lib.rs/crates/reedline
+- `rustyline` (lib.rs): https://lib.rs/crates/rustyline
+- `clap` (lib.rs): https://lib.rs/crates/clap
+- `clap_complete` (lib.rs): https://lib.rs/crates/clap_complete
+

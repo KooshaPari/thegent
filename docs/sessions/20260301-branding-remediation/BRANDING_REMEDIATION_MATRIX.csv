@@ -1,0 +1,39 @@
+repo,issue_type,file,line,current_value,proposed_value,classification,notes
+4sgm,org_reference,.github/workflows/self-hosted.yml,24,KooshaPari,Phenotype,needs-decision,CI URL target depends on actual org/repo ownership
+4sgm,local_path,docs/INDEX_LANGFUSE.md,121,/Users/kooshapari/...,<PHENOTYPE_REPOS_ROOT>/...,safe,Normalize user-specific local path
+4sgm,local_path,docs/INDEX_LANGFUSE.md,127,/Users/kooshapari/...,<PHENOTYPE_REPOS_ROOT>/...,safe,Normalize user-specific local path
+agentapi-plusplus,product_brand,README.md,1,KooshaPari Fork,Phenotype fork/official branding,needs-decision,Needs final external-facing naming choice
+AgilePlus,org_reference,docs/index.md,16,KooshaPari/AgilePlus,Phenotype/AgilePlus,needs-decision,Depends on target GitHub org
+bifrost-extensions,module_path,go.mod,1,github.com/kooshapari/...,github.com/Phenotype/...,needs-decision,Module path changes can break imports
+civ,local_path,docs/CONVERSATION_TASKS_FULL.md,3,/Users/kooshapari/...,<PHENOTYPE_REPOS_ROOT>/...,safe,Normalize user-specific local path
+civ,local_path,docs/AGILE_WORKSTREAM.md,181,/Users/kooshapari/...,<PHENOTYPE_REPOS_ROOT>/...,safe,Normalize user-specific local path
+cliproxyapi-plusplus,module_path,go.mod,1,github.com/kooshapari/...,github.com/Phenotype/...,needs-decision,Go module rename blast radius
+cliproxyapi-plusplus,product_brand,.github/workflows/docker-image.yml,10,CLIProxyAPI,cliproxyapi-plusplus,needs-decision,Artifact naming may be intentionally stable
+cliproxyapi++,module_path,go.mod,1,github.com/kooshapari/cliproxyapi-plusplus,github.com/Phenotype/cliproxyapi-plusplus,needs-decision,Module path/API compatibility risk
+helios-cli,author,Cargo.toml,13,Koosha Pari,Phenotype Dev Team,needs-decision,Maintainer policy decision
+helios-cli,local_path,docs/merged.md,3,/Users/kooshapari/...,<PHENOTYPE_REPOS_ROOT>/...,safe,Normalize user-specific local path
+heliosApp-colab,repo_url,package.json,24,blackboardsh/colab,Phenotype/heliosApp-colab,needs-decision,Public package metadata target decision
+heliosApp-colab,homepage,package.json,37,blackboardsh/colab,Phenotype/heliosApp-colab,needs-decision,Public package metadata target decision
+heliosCLI,author,Cargo.toml,13,Koosha Pari,Phenotype Dev Team,needs-decision,Maintainer policy decision
+heliosCLI-upstream,product_name,README.md,2,Codex CLI,heliosCLI-upstream,needs-decision,Upstream mirror vs rebrand policy
+heliosCLI-upstream,package_name,package.json,2,codex-monorepo,helioscli-upstream-monorepo,needs-decision,Potential upstream sync conflict
+helMo,org_reference,docs/.vitepress/config.mts,22,KooshaPari/${repoName},Phenotype/${repoName},needs-decision,Depends on publishing org policy
+parpour,product_name,pyproject.toml,2,venture,parpour,needs-decision,Package rename and publishing impact
+parpour,codeowners,.github/CODEOWNERS,1,@KooshaPari,@Phenotype,needs-decision,Team/owner mapping policy
+phench,local_path,README.md,5,/Users/kooshapari/...,<PHENOTYPE_REPOS_ROOT>/...,safe,Normalize user-specific local path
+phenodocs,org_reference,README.md,8,github.com/KooshaPari/phenodocs,github.com/Phenotype/phenodocs,needs-decision,Depends on canonical org
+phenodocs,case_normalization,README.md,9,kooshaPari.github.io,KooshaPari.github.io,safe,Fix mixed-case owner slug
+phenotypeActions,org_reference,README.md,21,KooshaPari/phenotypeActions,Phenotype/phenotypeActions,needs-decision,Action reuse target org decision
+template-lang-kotlin,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-lang-mojo,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-lang-python,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-lang-rust,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-lang-swift,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-lang-typescript,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-lang-zig,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+template-program-ops,codeowners,.github/CODEOWNERS,2,@KooshaPari,@Phenotype,needs-decision,Template governance policy
+thegent,author,pyproject.toml,15,Koosha Paridehpour,Phenotype Dev Team,needs-decision,Public package metadata decision
+thegent,org_reference,pyproject.toml,25,github.com/kooshapari/thegent,github.com/Phenotype/thegent,needs-decision,Canonical repo URL decision
+tokenledger,org_reference,docs/.vitepress/config.ts,29,kooshapari/tokenledger,Phenotype/tokenledger,needs-decision,Docs social link target org
+trace,product_name,README.md,3,tracertm,trace,needs-decision,Badge + repo rename coordination required
+trace,org_reference,docs/.vitepress/config.ts,24,kooshapari/trace,Phenotype/trace,needs-decision,Docs publishing org decision

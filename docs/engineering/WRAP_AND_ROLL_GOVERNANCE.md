@@ -1,0 +1,101 @@
+# Wrap, Merge, and Rollback Governance
+
+> **Scope**: Phenotype local worktrees, canonical repos, and **DinoForge Inc Cloud**–aligned delivery.  
+> **Companion**: `100-PRACTICES.md`, `QUICK-REFERENCE.md`, `plans/xdd-hexagonal-reference-architecture.md`  
+> **Last updated**: 2026-03-25
+
+This document makes **explicit** when to **merge forward**, when to **roll back**, and when to **avoid hiding work** (stash/reset) so teams and agents converge on shared history.
+
+---
+
+## 1. Definitions
+
+| Term | Meaning |
+|------|---------|
+| **Wrap** | Finish a unit of work with a **mergeable artifact**: commit(s) on a branch, PR, or tagged release candidate. |
+| **Hand roll** | Human or agent **explicitly** chooses merge strategy, rollback path, or feature-flag plan—not silent automation. |
+| **Roll forward** | Fix on a new commit; keep history linear; prefer `revert` of a bad commit over rewriting `main`. |
+| **Rollback** | Return production or default branch to a **known-good** state (deploy previous artifact, or revert commits). |
+
+---
+
+## 2. Work-in-progress visibility (no silent loss)
+
+### 2.1 Stash policy
+
+- **Do not stash** unexpected changes **unless** they are **regressive in product terms** (e.g. worse algorithms, removed caching, broken security).  
+- Lint-only or formatting-only issues are **not** a reason to stash—fix or commit with a follow-up.  
+- **Prefer**: commit on a branch (even WIP), then merge/rebase/cherry-pick. Stashed work rarely converges across agents.
+
+### 2.2 Branch visibility
+
+- Feature and integration work lives in **`repos/worktrees/<project>/<topic>/<wtree>`** (or org-approved legacy path during migration).  
+- Canonical repo folders stay on **`main`** except for pull/merge integration.
+
+---
+
+## 3. Merge strategy (GitHub)
+
+| Situation | Preferred action |
+|-----------|------------------|
+| Feature complete | **Squash merge** or **rebase merge** per repo rules; **no merge commits** on `main` if rules forbid them. |
+| Upstream moved | **Rebase** topic branch onto target; resolve conflicts **in branch**, not on `main`. |
+| Large integration | **Stacked PRs** with documented dependency order. |
+| Binary / lockfile hell | Regenerate lockfiles in branch (`pnpm install`, `cargo generate-lockfile`), commit once. |
+
+---
+
+## 4. Rollback strategy
+
+| Layer | Trigger | Action |
+|-------|---------|--------|
+| **Runtime** | Bad deploy | Roll deployment to previous **immutable** artifact; use feature flags to disable bad path. |
+| **Git** | Bad commit on `main` | **`git revert`** (forward fix), not `reset --force` on shared history. |
+| **Data** | Bad migration | **Forward migration** + compensating transaction; avoid destructive rollback without backup. |
+| **Incident** | Sev-1 | Freeze releases; revert deploy; postmortem; ADR if architecture changed. |
+
+---
+
+## 5. CI / GitHub Actions (billing)
+
+- Organization policy: **free tier billing is exhausted** by many parallel agents—treat **macOS/Windows** or **large** runners as **may fail for billing**.  
+- **Do not** block merge solely on billed-runner failures if **Linux** checks and local verification pass.  
+- Prefer **local runners** or **workflow_dispatch** for expensive checks when configured.  
+- See global **AGENTS.md** / **CLAUDE.md** “GitHub Actions & CI Billing Policy” for the authoritative wording.
+
+---
+
+## 6. Polyrepo + hexagonal alignment
+
+- **Naming**: Reserve **`phenotype-*`** for **org-bound** packages only; reusable libraries use **neutral, productized** names. See **`PACKAGE_REPO_NAMING_TAXONOMY.md`**.
+
+- **Domain** code has **no** imports from infrastructure adapters.  
+- **Ports** are interfaces; **adapters** live in separate crates/modules/packages.  
+- Shared logic extracted to **versioned libraries** (Rust crates, Go modules, npm packages) with **semver** and **ADR** for breaking changes.  
+- **Microservices**: one service per bounded context where boundaries are clear; otherwise **modular monolith** first.
+
+---
+
+## 7. Review checklist (wrap before merge)
+
+- [ ] ADR or plan link for architectural changes  
+- [ ] Tests for new behavior; regression for fixes  
+- [ ] No secrets in repo  
+- [ ] Top-level layout matches `TOP_LEVEL_REPO_LAYOUT.md`  
+- [ ] Required CI green on **non-billed** runners (per policy)  
+- [ ] Changelog / release notes if user-facing  
+
+---
+
+## 8. Audit prompts (quarterly)
+
+1. **Branch hygiene**: stale branches without open PRs > 90 days?  
+2. **Library duplication**: same logic in 2+ repos? → extraction candidate.  
+3. **Plugin boundaries**: adapters implement ports only?  
+4. **Top-level creep**: new files at repo root without justification?  
+5. **xDD**: spot-check traceability (requirements → tests) for critical paths.  
+6. **Naming**: any new **`phenotype-*`** repos that should be **Tier B** neutral names per `PACKAGE_REPO_NAMING_TAXONOMY.md`?  
+
+---
+
+*Aligned with DinoForge Cloud engineering expectations and Phenotype worktree discipline.*

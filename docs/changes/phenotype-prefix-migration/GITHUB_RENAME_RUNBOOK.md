@@ -1,0 +1,56 @@
+# Runbook: GitHub repo rename (`phenotype-*` → neutral)
+
+Use when executing **T3** from `tasks.md` after ADR approval. Renames are **high churn**—do one repo at a time unless a stack is coordinated.
+
+## Preconditions
+
+- [ ] ADR approved (`adr-001` / `adr-002` or repo-specific ADR).
+- [ ] Inventory row updated in `docs/research/PHENOTYPE_PREFIX_REPO_INVENTORY_*.md`.
+- [ ] No open PRs that only make sense under the old name (or relabel them).
+
+## GitHub
+
+1. **Rename** the repository: Settings → General → Repository name.  
+   GitHub keeps **redirects** from the old URL for clones and web traffic for a period; do not rely on redirects forever.
+2. Update **description**, **topics**, and **homepage** to match the new name.
+3. If the repo is published to **crates.io** / **npm** / **PyPI**, plan a **semver-major** release with the new package name (or deprecation publish of the old name per registry rules).
+
+## Local and CI
+
+1. **Remotes** (every clone and worktree):
+   ```bash
+   git remote set-url origin https://github.com/<org>/<new-name>.git
+   git fetch origin
+   ```
+2. **Submodules** and **parent repos**: search for the old URL and update.
+   ```bash
+   rg 'github\.com/.*/<old-name>' .
+   ```
+3. **GitHub Actions / other CI**: update checkout paths, cache keys that embed the repo name, and any `GITHUB_REPOSITORY` assumptions.
+4. **Badges** in README: update shields.io / codecov URLs.
+
+## Language ecosystems
+
+| Stack | Update |
+|-------|--------|
+| **Rust** | `Cargo.toml` `repository`, `homepage`; crate name change = major version + migration note |
+| **npm** | `package.json` `repository`, `homepage`; publish new scope/name |
+| **Go** | `go.mod` module path; consumers need `go get` / replace directives |
+| **Python** | `pyproject.toml` URLs; PyPI project rename policy |
+
+## Verification
+
+- [ ] Fresh clone: `git clone https://github.com/<org>/<new-name>.git`
+- [ ] CI green on default branch
+- [ ] Docs links from `Phenotype/repos` hub point to the new path
+- [ ] Update inventory row in `docs/research/PHENOTYPE_PREFIX_REPO_INVENTORY_*.md` and announce so humans refresh remotes
+
+## Rollback
+
+If something breaks badly: rename back on GitHub (if still available), restore remotes, revert doc commits. Prefer **forward fix** (repair links) over silent renames.
+
+## References
+
+- `docs/engineering/PACKAGE_REPO_NAMING_TAXONOMY.md`
+- `docs/research/PHENOTYPE_PREFIX_REPO_INVENTORY_2026-03-25.md`
+- `adr-001-hex-kits.md`, `adr-002-infra-and-generic-crates.md` (same folder)

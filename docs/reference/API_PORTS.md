@@ -1,0 +1,131 @@
+# Ports API Reference
+
+> Generated documentation for hexagonal architecture ports
+
+## Core Ports
+
+### Inbound Ports (Driving Adapters)
+
+#### Repository[T]
+
+```python
+class Repository(Protocol[T]):
+    """Persistence port for aggregate roots."""
+
+    async def save(self, entity: T) -> T: ...
+    async def find_by_id(self, id: str) -> Optional[T]: ...
+    async def find_all(self, limit: int = 100) -> list[T]: ...
+    async def delete(self, id: str) -> bool: ...
+```
+
+#### EventStore[T]
+
+```python
+class EventStore(Protocol):
+    """Event sourcing persistence port."""
+
+    async def append(
+        self,
+        aggregate_id: str,
+        events: list[DomainEvent],
+        expected_version: int
+    ) -> int: ...
+
+    async def get_events(
+        self,
+        aggregate_id: str,
+        from_version: int = 0
+    ) -> list[DomainEvent]: ...
+```
+
+#### MessageBus (Protocol)
+
+```python
+class MessageBus(Protocol):
+    """Async message dispatch port."""
+
+    async def publish(self, message: DomainEvent) -> None: ...
+    async def subscribe(
+        self,
+        handler: Callable[[DomainEvent], Awaitable[None]]
+    ) -> None: ...
+```
+
+#### ConfigLoader (Protocol)
+
+```python
+class ConfigLoader(Protocol):
+    """Configuration loading port."""
+
+    def load(self, name: str) -> Config: ...
+    def get(self, key: str, default: Any = None) -> Any: ...
+    def reload(self) -> None: ...
+```
+
+#### CachePort (Protocol)
+
+```python
+class CachePort(Protocol):
+    """Caching abstraction port."""
+
+    async def get(self, key: str) -> Optional[bytes]: ...
+    async def set(self, key: str, value: bytes, ttl: int) -> None: ...
+    async def delete(self, key: str) -> None: ...
+    async def exists(self, key: str) -> bool: ...
+```
+
+### Outbound Ports (Driven Adapters)
+
+#### Persistence Adapters
+
+- `SqliteRepository` - SQLite implementation
+- `PostgresRepository` - PostgreSQL implementation
+- `MongoRepository` - MongoDB implementation
+
+#### Event Store Adapters
+
+- `SqliteEventStore` - SQLite event store
+- `PostgresEventStore` - PostgreSQL event store
+
+#### Cache Adapters
+
+- `RedisCache` - Redis implementation
+- `MemcachedCache` - Memcached implementation
+- `InMemoryCache` - Development only
+
+#### Message Bus Adapters
+
+- `RabbitMQBus` - RabbitMQ implementation
+- `KafkaBus` - Apache Kafka implementation
+- `InMemoryBus` - Development only
+
+## Using Ports
+
+### Dependency Injection
+
+```python
+from injector import Injector, inject
+
+class OrderService:
+    @inject
+    def __init__(
+        self,
+        repository: Repository[Order],
+        event_store: EventStore,
+        message_bus: MessageBus,
+    ):
+        self._repository = repository
+        self._event_store = event_store
+        self._message_bus = message_bus
+```
+
+### Port Selection
+
+Choose adapters based on requirements:
+
+| Requirement | Adapter |
+|------------|---------|
+| Simple, no setup | `InMemoryRepository` |
+| ACID transactions | `SqliteRepository` |
+| High concurrency | `PostgresRepository` |
+| Horizontal scaling | `MongoRepository` |
