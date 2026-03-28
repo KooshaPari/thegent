@@ -29,6 +29,11 @@ from thegent.phench.service import (
     set_env_profile,
     sync_target,
     sync_project_modules_from_repos,
+    list_modules,
+    audit_shared_modules_across_repos,
+    create_target_snapshot,
+    load_module_manifest,
+    materialize_module_candidate_manifest,
 )
 from thegent.phench.models import RepoSelection, RunnerCatalog, RunnerCommand, TargetLock
 from thegent.phench.store import read_dual
