@@ -1,14 +1,14 @@
 [project]
-name = "thegent-agents"
+name = "phenotype-thegent-agents"
 version = "0.1.0"
 requires-python = ">=3.12"
 description = "Agent orchestration and persona management for thegent"
 dependencies = [
-    "thegent-core",
+    "phenotype-thegent-core",
 ]
 
 [tool.uv.sources]
-thegent-core = { workspace = true }
+phenotype-thegent-core = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

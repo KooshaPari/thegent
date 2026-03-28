@@ -3,11 +3,11 @@ name = "thegent-platform"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "thegent-core",
+    "phenotype-thegent-core",
 ]
 
 [tool.uv.sources]
-thegent-core = { workspace = true }
+phenotype-thegent-core = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

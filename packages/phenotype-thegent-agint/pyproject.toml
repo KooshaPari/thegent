@@ -3,16 +3,16 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "thegent-agint"
+name = "phenotype-thegent-agint"
 dynamic = ["version"]
 description = "Productized git coordination component extracted from thegent CLI"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
-    "thegent-agents",
+    "phenotype-thegent-agents",
     "thegent-platform",
-    "thegent-core",
+    "phenotype-thegent-core",
     "typer>=0.16.0",
     "rich>=13.9.4",
 ]
@@ -22,9 +22,9 @@ source = "vcs"
 fallback-version = "0.1.0"
 
 [tool.uv.sources]
-thegent-agents = { workspace = true }
+phenotype-thegent-agents = { workspace = true }
 thegent-platform = { workspace = true }
-thegent-core = { workspace = true }
+phenotype-thegent-core = { workspace = true }
 
 [tool.ruff]
 line-length = 120

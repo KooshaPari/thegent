@@ -3,13 +3,13 @@ name = "thegent-planning"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "thegent-core",
-    "thegent-agents",
+    "phenotype-thegent-core",
+    "phenotype-thegent-agents",
 ]
 
 [tool.uv.sources]
-thegent-core = { workspace = true }
-thegent-agents = { workspace = true }
+phenotype-thegent-core = { workspace = true }
+phenotype-thegent-agents = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
