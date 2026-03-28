@@ -1,0 +1,11 @@
+./aws.go
+./flyio.go
+./netlify.go
+./railway.go
+./supabase.go
+./vercel.go
+./flyio_test.go
+./netlify_test.go
+./railway_test.go
+./supabase_test.go
+./vercel_test.go
