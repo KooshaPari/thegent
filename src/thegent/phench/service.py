@@ -1854,6 +1854,11 @@ def _collect_candidate_repos(root: Path) -> list[Path]:
     return sorted([entry for entry in root.iterdir() if entry.is_dir() and not entry.name.startswith(".")])
 
 
+def _append_warning(warnings: list[str], message: str) -> None:
+    if message not in warnings:
+        warnings.append(message)
+
+
 def _resolve_worktree_roots() -> list[Path]:
     base_root = phenotype_root()
     return sorted([entry for entry in base_root.iterdir() if entry.is_dir() and entry.name.endswith("-wtrees")])
@@ -1970,6 +1975,9 @@ def _append_repo_selection(
     selected_runner: str | None = None,
     selected_command: str | None = None,
     selected_env_profile: str | None = None,
+    preferred_runner: str | None = None,
+    preferred_command: str | None = None,
+    preferred_ref: str | None = None,
     repo_id: str | None = None,
     worktree_path: str | None = None,
 ) -> None:
@@ -1984,6 +1992,9 @@ def _append_repo_selection(
             selected_runner=selected_runner,
             selected_command=selected_command,
             selected_env_profile=selected_env_profile,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
             source_worktree_path=worktree_path,
             resolved_sha=None,
         )
@@ -2137,8 +2148,8 @@ def materialize_module_candidate_manifest(
     )
 
 
-def init_target(target: str, mode: TargetMode) -> TargetLock:
-    root = target_root(target)
+def init_target(target: str, mode: TargetMode, family: str | None = None) -> TargetLock:
+    root = target_root(target, family=family)
     root.mkdir(parents=True, exist_ok=True)
     (root / "repos").mkdir(parents=True, exist_ok=True)
 
@@ -2151,12 +2162,12 @@ def init_target(target: str, mode: TargetMode) -> TargetLock:
         created_at_utc=utc_now_iso(),
     )
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
     return lock
 
 
-def load_target_lock(target: str) -> TargetLock:
-    payload = read_dual(target, LOCK_FILE)
+def load_target_lock(target: str, family: str | None = None) -> TargetLock:
+    payload = read_dual(target, LOCK_FILE, family=family)
     return _parse_lock(payload)
 
 
@@ -2170,8 +2181,12 @@ def add_repo(
     selected_runner: str | None = None,
     selected_command: str | None = None,
     selected_env_profile: str | None = None,
+    preferred_runner: str | None = None,
+    preferred_command: str | None = None,
+    preferred_ref: str | None = None,
+    family: str | None = None,
 ) -> TargetLock:
-    lock = load_target_lock(target)
+    lock = load_target_lock(target, family=family)
     repo = Path(repo_path).expanduser().resolve()
     if not (repo / ".git").exists() and not (repo / ".git").is_file():
         raise ValueError(f"repo is not a git checkout: {repo}")
@@ -2184,12 +2199,15 @@ def add_repo(
         selected_runner=selected_runner,
         selected_command=selected_command,
         selected_env_profile=selected_env_profile,
+        preferred_runner=preferred_runner,
+        preferred_command=preferred_command,
+        preferred_ref=preferred_ref,
         repo_id=repo_id,
         worktree_path=worktree_path,
     )
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
     return lock
 
 
@@ -2198,6 +2216,7 @@ def add_module_to_target(
     module_name: str,
     selected_ref: str | None = None,
     exclude_repos: set[str] | None = None,
+    family: str | None = None,
 ) -> TargetLock:
     if not module_name.strip():
         raise ValueError("module name cannot be empty")
@@ -2205,7 +2224,7 @@ def add_module_to_target(
         raise ValueError(f"invalid module name: {module_name}")
 
     manifest = _load_module_manifest(module_name)
-    lock = load_target_lock(target)
+    lock = load_target_lock(target, family=family)
 
     candidates = _select_module_repos(manifest, exclude_repos=exclude_repos)
     if not candidates:
@@ -2226,6 +2245,5 @@ def add_module_to_target(
 
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
     return lock
-

@@ -10,9 +10,13 @@ import pytest
 from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
+    audit_shared_modules_across_repos,
     add_module_to_target,
     build_module_manifest_payload,
     build_scan_candidates,
+    create_target_snapshot,
+    load_module_manifest,
+    list_modules,
     scan_shared_modules_across_repos,
     materialize_module_candidate_manifest,
     get_env_profile,
