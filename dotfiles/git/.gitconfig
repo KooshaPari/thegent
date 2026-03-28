@@ -1,0 +1,104 @@
+# thegent dotfiles — global git config template
+# IMPORTANT: Set user.name and user.email in ~/.gitconfig.local or via:
+#   git config --global user.name "Your Name"
+#   git config --global user.email "you@example.com"
+#
+# This file is symlinked to ~/.gitconfig by thegent setup.sh
+
+[core]
+	excludesFile = ~/.gitignore_global
+	editor = cursor --wait
+	autocrlf = input
+	whitespace = fix,trailing-space,cr-at-eol
+	pager = delta
+
+[init]
+	defaultBranch = main
+
+[branch]
+	autosetupmerge = always
+	autosetuprebase = never
+
+[push]
+	default = current
+	autoSetupRemote = true
+
+[pull]
+	rebase = false
+
+[fetch]
+	prune = true
+	prunetags = true
+
+[rebase]
+	autosquash = true
+	autostash = true
+
+[merge]
+	conflictstyle = zdiff3
+	tool = cursor
+
+[diff]
+	algorithm = histogram
+	colorMoved = default
+
+# ── delta pager ───────────────────────────────────────────────────────────────
+[delta]
+	navigate = true
+	light = false
+	side-by-side = true
+	line-numbers = true
+
+[interactive]
+	diffFilter = delta --color-only
+
+# ── Aliases ───────────────────────────────────────────────────────────────────
+[alias]
+	# Worktree helpers (Phenotype governance)
+	wt-new    = "!f() { name=\"${1}\"; base=\"${2:-main}\"; repo=\"$(basename $(git rev-parse --show-toplevel))\"; dir=\"../${repo}-wtrees/${name}\"; git worktree add \"$dir\" -b \"${name}\" \"${base}\"; }; f"
+	wt-list   = worktree list
+	wt-prune  = worktree prune
+
+	# Upstream sync
+	sync-upstream = "!f() { git fetch upstream && git merge --ff-only upstream/main || git merge --no-ff upstream/main; }; f"
+	sync-origin   = "!f() { git fetch origin && git pull --rebase origin main; }; f"
+
+	# PR helpers
+	pr-stack  = "!f() { gh pr list --state open --json number,title --jq '.[] | \"#\\(.number) \\(.title)\"' | head -20; }; f"
+
+	# Logging
+	lhist     = log --oneline --graph --all --decorate
+	ll        = log --oneline --decorate -20
+	ls        = log --oneline --decorate
+
+	# Convenience
+	st        = status --short --branch
+	co        = checkout
+	br        = branch
+	ff-check  = "!f() { git merge-base --is-ancestor \"$1\" \"$2\" && echo YES || echo NO; }; f"
+
+# ── LFS ───────────────────────────────────────────────────────────────────────
+[filter "lfs"]
+	clean    = git-lfs clean -- %f
+	smudge   = git-lfs smudge -- %f
+	process  = git-lfs filter-process
+	required = true
+
+# ── Credential helpers ────────────────────────────────────────────────────────
+[credential "https://github.com"]
+	helper = !/opt/homebrew/bin/gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper = !/opt/homebrew/bin/gh auth git-credential
+
+[credential]
+	helper = cache --timeout=3600
+
+# ── Mergiraf (smart merge driver) ────────────────────────────────────────────
+[merge "mergiraf"]
+	name   = mergiraf
+	driver = /usr/bin/mergiraf merge --git %O %A %B -p %P
+
+# ── Local overrides (not tracked in git) ─────────────────────────────────────
+[include]
+	path = ~/.gitconfig.local

@@ -1,0 +1,15 @@
+# thegent dotfiles — global mise tool versions
+# Managed by thegent dotfiles; symlinked to ~/.config/mise/config.toml
+# Docs: https://mise.jdx.dev/
+
+[tools]
+node    = "22"          # LTS Active
+go      = "latest"      # latest stable
+rust    = "latest"      # latest stable
+bun     = "latest"      # latest stable
+python  = "3.12"        # latest stable 3.12.x
+
+[settings]
+# Always use the versions pinned here globally
+always_keep_download = false
+experimental = true

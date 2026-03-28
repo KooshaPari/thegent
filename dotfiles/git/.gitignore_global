@@ -1,0 +1,94 @@
+# thegent dotfiles — global gitignore
+# Applies to all git repos on this machine
+
+# ── OS generated ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Editors ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.netrwhist
+*.orig
+
+# Note: .cursor/ is intentionally NOT ignored — cursor rules are project config
+
+# ── Secrets / credentials ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+*.secret
+*_secret
+secrets.yml
+secrets.yaml
+credentials.json
+service-account*.json
+
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+.yarn/cache
+.yarn/unplugged
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── Rust ──────────────────────────────────────────────────────────────────────
+target/
+Cargo.lock          # only ignore in libraries, not binaries — project-level override
+
+# ── Go ────────────────────────────────────────────────────────────────────────
+vendor/
+*.test
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+dist/
+build/
+out/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Misc tooling ─────────────────────────────────────────────────────────────
+.mise/
+.direnv/
+.task/
+.pre-commit.log
