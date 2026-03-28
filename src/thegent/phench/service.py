@@ -1123,8 +1123,11 @@ def build_project_execution_matrix(
         runtime_hash = str(snapshot.get("runtime_hash", ""))
         if not runtime_hash:
             runtime_hash = _stable_payload_hash(runtime)
-    else:
-        report = run_env_doctor_for_target(target, family=family)
+        else:
+            if family is None:
+                report = run_env_doctor_for_target(target)
+            else:
+                report = run_env_doctor_for_target(target, family=family)
         runtime = read_dual(target, RUNTIME_FILE, family=family)
         materializations = runtime.get("repo_materializations")
         lock = load_target_lock(target, family=family)
@@ -1694,13 +1697,18 @@ def _load_module_manifest(module: str) -> ModuleManifest:
 
 
 def _build_scannable_candidate_name(base: str, used_names: set[str], *, max_attempts: int = 25) -> str:
-    candidate = base
+    candidate = base[:SCAN_SHARED_REPOS_MAX_NAME_LENGTH]
     for i in range(max_attempts):
         if candidate not in used_names:
             return candidate
-        candidate = f"{base}-{i + 1}"
+        suffix = hashlib.sha1(f"{base}:{i}".encode("utf-8")).hexdigest()[:8]
+        suffix_fragment = f"-{suffix}"
+        allowed = max(SCAN_SHARED_REPOS_MAX_NAME_LENGTH - len(suffix_fragment), 1)
+        candidate = f"{base[:allowed]}{suffix_fragment}"
     suffix = hashlib.sha1(base.encode("utf-8")).hexdigest()[:8]
-    return f"{base}-{suffix}"
+    suffix_fragment = f"-{suffix}"
+    allowed = max(SCAN_SHARED_REPOS_MAX_NAME_LENGTH - len(suffix_fragment), 1)
+    return f"{base[:allowed]}{suffix_fragment}"
 
 
 def _build_recommended_modules(
@@ -1727,7 +1735,6 @@ def _build_recommended_modules(
         recommendations,
         key=lambda item: (-item["repo_count"], -item["depends_on_count"], item["module"]),
     )
-
 
 def _append_warning(warnings: list[str], message: str) -> None:
     warnings.append(message)
@@ -1863,7 +1870,9 @@ def build_scan_candidates(
         sorted_repos = sorted(repos)
         prefix = _normalize_candidate_module_name(module_prefix)
         base = _normalize_candidate_module_name(module_name)
-        candidate_name = _build_scannable_candidate_name(f"{prefix}-{base}-{len(sorted_repos)}", used_names)
+        candidate_name = _build_scannable_candidate_name(
+            f"{prefix}-{base}-{len(sorted_repos)}", used_names
+        )
         used_names.add(candidate_name)
 
         depends_on = sorted(depends_on_by_module.get(module_name, set())) if depends_on_by_module else []
