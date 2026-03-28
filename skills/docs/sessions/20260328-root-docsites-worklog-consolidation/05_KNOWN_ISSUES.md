@@ -1,3 +1,3 @@
-# Audit Snapshot
+# Known Issues
 
 This bundle captures the canonical session scaffold for the skills doc-session consolidation pass.

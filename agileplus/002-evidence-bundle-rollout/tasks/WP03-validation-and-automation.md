@@ -1,7 +1,7 @@
 ---
 work_package_id: "WP03"
 title: "Validation and automation"
-lane: "planned"
+lane: "done"
 subtasks:
   - "T301"
   - "T302"
@@ -16,6 +16,14 @@ history:
     lane: "planned"
     agent: "system"
     action: "WP created"
+  - timestamp: "2026-04-01T13:40:00Z"
+    lane: "doing"
+    agent: "codex"
+    action: "Recorded gate output + regression guard recipe"
+  - timestamp: "2026-04-01T15:05:00Z"
+    lane: "done"
+    agent: "codex"
+    action: "Validated translation wave via docs:evidence"
 ---
 
 # Work Package Prompt: WP03 – Validation and automation

@@ -1,10 +1,25 @@
 """Phench: stable project-state runtime control plane for Phenotype/projects."""
 
 from __future__ import annotations
+import sys
 from pathlib import Path
+from types import ModuleType
+
+BASE_PATH = Path(__file__).resolve().parent
+
+def _ensure_package(name: str, path: Path) -> None:
+    if name in sys.modules:
+        return
+    module = ModuleType(name)
+    module.__path__ = [str(path)]
+    sys.modules[name] = module
+
+_ensure_package("thegent", BASE_PATH.parents[2])
+_ensure_package("thegent.cli", BASE_PATH.parents[1])
+_ensure_package("thegent.cli.apps", BASE_PATH)
 
 __package__ = "thegent.cli.apps"
-__path__ = [str(Path(__file__).resolve().parent)]
+__path__ = [str(BASE_PATH)]
 
 import typer
 from rich.console import Console

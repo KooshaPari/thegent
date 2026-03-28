@@ -317,16 +317,24 @@ def main():
         process_file(file_path, output_dir)
     else:
         # Process all matching files
-        all_files = []
-        for ext in args.extensions:
-            all_files.extend(source_dir.rglob(f"*{ext}"))
+        filtered_files = []
+        source_subdirs = [source_dir / sub for sub in ["src", "apps", "packages", "modules", "extensions", "web", "trace"]]
+        source_subdirs = [sub for sub in source_subdirs if sub.exists()]
 
-        # Filter out node_modules, dist, etc.
+        if not source_subdirs:
+            source_subdirs = [source_dir]
+
+        for subdir in source_subdirs:
+            for ext in args.extensions:
+                filtered_files.extend(list(subdir.rglob(f"*{ext}")))
+
+        # Filter out node_modules, dist, and .vitepress directories
         filtered_files = [
-            f for f in all_files if "node_modules" not in str(f) and "dist" not in str(f) and ".vitepress" not in str(f)
+            f for f in filtered_files if "node_modules" not in str(f) and "dist" not in str(f) and ".vitepress" not in str(f)
         ]
 
         print(f"Found {len(filtered_files)} TypeScript/JavaScript files")
+
 
         for file_path in filtered_files:
             try:

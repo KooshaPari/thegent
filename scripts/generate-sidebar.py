@@ -102,7 +102,7 @@ def generate_sidebar_config(docs_dir: Path, output_file: Path | None = None) -> 
 def generate_typescript_config(sidebar_config: dict, output_file: Path) -> str:
     """Generate TypeScript config code for sidebar."""
     config_str = "export const sidebar = "
-    config_str += json.dumps(sidebar_config, indent=2, ensure_ascii=False).decode().decode()
+    config_str += json.dumps(sidebar_config, indent=2, ensure_ascii=False).decode("utf-8")
     config_str += "\n"
     return config_str
 
@@ -132,7 +132,7 @@ def main():
         config_code = generate_typescript_config(sidebar_config, output_path)
         output_path.write_text(config_code, encoding="utf-8")
     else:
-        json_str = json.dumps(sidebar_config, indent=2, ensure_ascii=False).decode().decode()
+        json_str = json.dumps(sidebar_config, indent=2, ensure_ascii=False).decode("utf-8")
         output_path.write_text(json_str, encoding="utf-8")
 
     print(f"✅ Generated sidebar config: {output_path}")

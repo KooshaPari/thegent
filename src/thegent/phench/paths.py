@@ -37,11 +37,15 @@ def _derive_default_repos_root() -> Path:
 
 def repository_root_candidates() -> list[Path]:
     """Return directories under the standard Phenotype repos root."""
-    root = phenotype_repos_root()
-    if not root.exists():
+    env_root = os.environ.get("THGENT_PHENOTYPE_REPOS_ROOT")
+    if env_root:
+        base_root = Path(env_root).expanduser().resolve()
+    else:
+        base_root = phenotype_root() / "repos"
+    if not base_root.exists():
         return []
     return sorted(
-        path for path in root.iterdir() if path.is_dir() and not path.name.startswith(".")
+        path for path in base_root.iterdir() if path.is_dir() and not path.name.startswith(".")
     )
 
 
