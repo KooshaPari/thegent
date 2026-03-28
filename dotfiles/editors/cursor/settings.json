@@ -1,0 +1,49 @@
+{
+  // Cursor inherits from VS Code settings; add Cursor-specific overrides here
+
+  // ── Cursor AI settings ────────────────────────────────────────────────────
+  "cursor.cpp.enablePartialAccepts": true,
+  "cursor.chat.showSuggestedFiles": true,
+
+  // ── Inherit all VS Code settings ─────────────────────────────────────────
+  "editor.fontSize": 13,
+  "editor.fontFamily": "'Monaspace Neon', 'Cascadia Code', 'JetBrains Mono', monospace",
+  "editor.fontLigatures": true,
+  "editor.lineHeight": 1.6,
+  "editor.formatOnSave": true,
+  "editor.minimap.enabled": false,
+  "editor.inlineSuggest.enabled": true,
+  "editor.bracketPairColorization.enabled": true,
+
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.fontFamily": "'Monaspace Neon', monospace",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+
+  "files.autoSave": "onFocusChange",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+
+  "workbench.colorTheme": "GitHub Dark Default",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.startupEditor": "none",
+
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
+  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.codeActionsOnSave": { "source.organizeImports": "always" }
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always",
+      "source.fixAll": "always"
+    }
+  },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" }
+}

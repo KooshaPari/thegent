@@ -1,0 +1,105 @@
+# thegent dotfiles — global Taskfile
+# Symlinked to ~/Taskfile.yml
+# Provides cross-project convenience tasks
+# Docs: https://taskfile.dev/
+
+version: '3'
+
+vars:
+  PHENOTYPE_ROOT: "{{.HOME}}/CodeProjects/Phenotype"
+  REPOS_ROOT: "{{.PHENOTYPE_ROOT}}/repos"
+
+tasks:
+  # ── Dotfiles management ───────────────────────────────────────────────────
+  dotfiles:sync:
+    desc: Pull latest dotfiles and re-run setup
+    cmds:
+      - git -C {{.HOME}}/.thegent pull --rebase origin main
+      - "{{.HOME}}/.thegent/dotfiles/setup.sh"
+
+  dotfiles:status:
+    desc: Show which configs are symlinked
+    cmds:
+      - |
+        echo "Checking dotfile symlinks..."
+        for f in .zshrc .bashrc .aliases.sh .gitconfig .gitignore_global; do
+          if [[ -L "{{.HOME}}/$f" ]]; then
+            echo "  ✓ ~/.$f → $(readlink {{.HOME}}/$f)"
+          else
+            echo "  ✗ ~/.$f not symlinked"
+          fi
+        done
+
+  # ── Phenotype org helpers ─────────────────────────────────────────────────
+  repos:list:
+    desc: List Phenotype repos
+    cmds:
+      - ls {{.REPOS_ROOT}}
+
+  repos:status:
+    desc: Show git status for all repos
+    cmds:
+      - |
+        for repo in {{.REPOS_ROOT}}/*/; do
+          if [[ -d "$repo/.git" ]]; then
+            branch=$(git -C "$repo" branch --show-current 2>/dev/null || echo "?")
+            status=$(git -C "$repo" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+            echo "$(basename $repo) [$branch] ($status dirty)"
+          fi
+        done
+
+  # ── Development quality ───────────────────────────────────────────────────
+  lint:
+    desc: Run linter for current project (auto-detected)
+    cmds:
+      - |
+        if [[ -f go.mod ]]; then
+          golangci-lint run ./...
+        elif [[ -f Cargo.toml ]]; then
+          cargo clippy -- -D warnings
+        elif [[ -f pyproject.toml ]]; then
+          ruff check .
+        elif [[ -f package.json ]]; then
+          bun run lint
+        else
+          echo "No recognized project type — add lint task to project Taskfile"
+          exit 1
+        fi
+
+  test:
+    desc: Run tests for current project (auto-detected)
+    cmds:
+      - |
+        if [[ -f go.mod ]]; then
+          go test ./...
+        elif [[ -f Cargo.toml ]]; then
+          cargo test
+        elif [[ -f pyproject.toml ]]; then
+          pytest
+        elif [[ -f package.json ]]; then
+          bun test
+        else
+          echo "No recognized project type — add test task to project Taskfile"
+          exit 1
+        fi
+
+  quality:
+    desc: Run full quality gate (lint + test)
+    deps: [lint, test]
+    cmds:
+      - echo "Quality gate passed"
+
+  # ── System maintenance ────────────────────────────────────────────────────
+  brew:update:
+    desc: Update and upgrade Homebrew packages
+    cmds:
+      - brew update && brew upgrade && brew cleanup
+
+  mise:update:
+    desc: Update all mise-managed tools
+    cmds:
+      - mise upgrade
+
+  tools:update:
+    desc: Update all tools (brew + mise)
+    deps: [brew:update, mise:update]

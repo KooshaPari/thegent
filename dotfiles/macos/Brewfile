@@ -1,0 +1,58 @@
+# thegent dotfiles — macOS Brewfile
+# Phenotype org shared development dependencies
+
+# ── Core CLI tools ─────────────────────────────────────────────────────────
+brew "git"
+brew "gh"                   # GitHub CLI
+brew "mise"                 # Tool version manager (replaces nvm/rbenv/pyenv)
+brew "direnv"               # Per-directory env vars
+brew "starship"             # Cross-shell prompt
+
+# ── Runtimes (also managed via mise, but brew gives system fallback) ────────
+brew "go"
+brew "rustup"
+brew "bun"
+brew "python@3.12"
+brew "node"                 # fallback; prefer bun/mise
+
+# ── Dev toolchain ────────────────────────────────────────────────────────────
+brew "protobuf"
+brew "buf"                  # Protobuf linting/generation
+brew "jq"
+brew "yq"
+brew "mkcert"
+
+# ── Shell & terminal ─────────────────────────────────────────────────────────
+brew "zsh"
+brew "bash"
+brew "tmux"
+brew "zoxide"               # Smart cd
+brew "fzf"                  # Fuzzy finder
+brew "ripgrep"              # Fast grep
+brew "fd"                   # Fast find
+brew "bat"                  # Better cat
+brew "eza"                  # Better ls
+brew "delta"                # Better git diff
+
+# ── Process / system ─────────────────────────────────────────────────────────
+brew "process-compose"      # Multi-process orchestrator
+brew "htop"
+brew "hyperfine"            # Benchmarking tool
+
+# ── Productivity ─────────────────────────────────────────────────────────────
+brew "task"                 # Taskfile runner
+brew "pre-commit"
+
+# ── Security / secrets ───────────────────────────────────────────────────────
+brew "gitleaks"             # Secret scanning
+brew "age"                  # Modern encryption
+brew "sops"                 # Secrets management
+
+# ── Kubernetes / infra (optional) ────────────────────────────────────────────
+# brew "kubectl"
+# brew "helm"
+# brew "terraform"
+
+# ── Applications ─────────────────────────────────────────────────────────────
+cask "orbstack"             # Docker/containers on macOS (faster than Docker Desktop)
+cask "cursor"               # AI-first code editor
