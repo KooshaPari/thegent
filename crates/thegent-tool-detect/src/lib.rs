@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use rayon::prelude::*;
 
 #[cfg(all(feature = "python", not(test)))]
@@ -90,7 +90,7 @@ impl ToolDetector {
     }
 
     /// Get all known tool candidates for a tool name
-    fn get_candidates(&self, name: &str) -> Vec<&str> {
+    fn get_candidates<'a>(&self, name: &'a str) -> Vec<&'a str> {
         match name {
             "jq" => vec!["jaq", "jq"],
             "fd" => vec!["fd", "fdfind"],

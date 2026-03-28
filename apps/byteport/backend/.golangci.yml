@@ -1,0 +1,64 @@
+run:
+  timeout: 5m
+  go: "1.23"
+  modules-download-mode: readonly
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+    - gofmt
+    - goimports
+    - misspell
+    - unconvert
+    - unparam
+    - dogsled
+    - exhaustive
+    - exportloopref
+    - noctx
+    - bodyclose
+    - sqlclosecheck
+    - rowserrcheck
+    - errorlint
+    - wrapcheck
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  govet:
+    enable-all: true
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G104 # Errors unhandled in defer — handled elsewhere
+  goimports:
+    local-prefixes: github.com/kooshapari/byteport
+  errorlint:
+    errorf: true
+    asserts: true
+    comparison: true
+  wrapcheck:
+    ignorePackageGlobs:
+      - "github.com/gin-gonic/gin"
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: "_test.go"
+      linters:
+        - gosec
+        - wrapcheck
+        - errcheck
+    - path: "main.go"
+      linters:
+        - wrapcheck

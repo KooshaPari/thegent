@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
-use which::{which, which_in};
+use which::which;
 
 #[cfg(all(feature = "python", not(test)))]
 use pyo3::prelude::*;
@@ -50,7 +50,7 @@ impl PathResolver {
         let safe_path = self.build_safe_path();
 
         // Use which crate (fast, native, cross-platform)
-        match which_in(name, Some(safe_path)) {
+        match which(name) {
             Ok(path) => {
                 let path_str = path.to_string_lossy().to_string();
                 // Check if in skip_dirs
