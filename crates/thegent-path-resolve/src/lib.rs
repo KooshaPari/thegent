@@ -46,9 +46,6 @@ impl PathResolver {
     /// assert!(resolver.resolve("nonexistent12345").is_none());
     /// ```
     pub fn resolve(&self, name: &str) -> Option<String> {
-        // Build safe PATH (exclude skip_dirs)
-        let safe_path = self.build_safe_path();
-
         // Use which crate (fast, native, cross-platform)
         match which(name) {
             Ok(path) => {

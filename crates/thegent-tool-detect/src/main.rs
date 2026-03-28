@@ -1,7 +1,5 @@
 use clap::{Parser, ValueEnum};
 use serde_json;
-use std::collections::HashMap;
-use std::io::{self, Write};
 
 use thegent_tool_detect::ToolDetector;
 

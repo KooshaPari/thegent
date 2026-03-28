@@ -99,7 +99,6 @@ fn main() {
         }
         // Fallback: try system PATH
         exec_real(tool.clone(), &tool_args);
-        std::process::exit(127);
     }
 
     // Agent detection
@@ -675,7 +674,7 @@ fn get_cache_key(tool: &str, args: &[String]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(data.as_bytes());
     let hash = hasher.finalize();
-    let mut buf = vec![0u8; base16ct::encoded_len(hash.len())];
+    let mut buf = vec![0u8; base16ct::encoded_len(&hash)];
     let encoded = lower::encode(&hash, &mut buf).unwrap();
     String::from_utf8_lossy(encoded).to_string()
 }
