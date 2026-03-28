@@ -1,6 +1,7 @@
 ---
 title: heliosCLI
 description: Multi-runtime AI coding CLI with Rust core.
+draft: false
 ---
 
 ## Overview

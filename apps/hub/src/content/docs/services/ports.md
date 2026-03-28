@@ -1,6 +1,7 @@
 ---
 title: Port Allocation
 description: Canonical port mapping for all Phenotype services.
+draft: false
 ---
 
 ## Quick Reference
