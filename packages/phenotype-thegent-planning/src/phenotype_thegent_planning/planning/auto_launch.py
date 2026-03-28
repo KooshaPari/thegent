@@ -78,7 +78,7 @@ def get_active_agent_count() -> int:
             name = proc.info.get("name", "") or ""
             if any(agent in name for agent in ("cursor-agent", "thegent", "claude", "codex", "droid")):
                 count += 1
-        except psutil.NoSuchProcess, psutil.AccessDenied:  # noqa: PERF203 - intentional per-item error handling
+        except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
             pass
     return count
 
