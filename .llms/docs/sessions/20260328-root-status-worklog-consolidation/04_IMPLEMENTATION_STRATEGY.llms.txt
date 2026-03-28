@@ -1,0 +1,3 @@
+# Implementation Strategy
+
+This bundle captures the root status worklog consolidation pass.

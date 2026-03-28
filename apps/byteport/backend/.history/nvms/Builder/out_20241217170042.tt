@@ -1,0 +1,23 @@
+Building component nvms with `tinygo build -target=wasip1 -gc=leaking -no-debug -o main.wasm main.go`
+Building component provisioner with `tinygo build -target=wasip1 -gc=leaking -no-debug -o main.wasm main.go`
+Working directory: "..\Provisioner"
+Building component builder with `npm run build`
+Working directory: "..\Builder"
+
+> builder@1.0.0 build
+> npx webpack --mode=production && npx mkdirp target && npx j2w -i dist.js -d combined-wit -n combined -o target/builder.wasm
+
+asset [1m[32mdist.js[39m[22m 8.95 KiB [1m[33m[compared for emit][39m[22m [javascript module] (name: main)
+orphan modules 28.4 KiB [1m[33m[orphan][39m[22m 25 modules
+[1m./src/spin.ts + 2 modules[39m[22m 8.92 KiB [1m[33m[built][39m[22m [1m[33m[code generated][39m[22m
+webpack 5.97.1 compiled [1m[32msuccessfully[39m[22m in 2207 ms
+Using user provided wit in: combined-wit
+Successfully written component
+Finished building all Spin components
+Logging component stdio to "..\.spin\logs\"
+
+Serving http://127.0.0.1:3000
+Available Routes:
+  provisioner: http://127.0.0.1:3000/provision
+  builder: http://127.0.0.1:3000/build
+  nvms: http://127.0.0.1:3000 (wildcard)
