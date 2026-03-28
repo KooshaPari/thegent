@@ -1,0 +1,3 @@
+# Specifications
+
+This session bundle captures the polyrepo decomposition pass.
