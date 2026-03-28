@@ -13,7 +13,7 @@
     "docs:cli": "python3 scripts/generate-cli-examples.py",
     "docs:links": "python3 scripts/check-docs-links.py docs/",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:build": "vitepress build docs","docs:verify-media": "bun scripts/docs-verify-media.js",
     "docs:preview": "vitepress preview docs",
     "docs:pdf": "press-export-pdf docs",
     "docs:validate": "python3 scripts/validate-code-examples.py"

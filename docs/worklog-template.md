@@ -1,4 +1,4 @@
-# <Project Name> - Worklog
+# &lt;Project Name&gt; - Worklog
 
 > Last Updated: 2026-03-25
 > Managed via: AgilePlus

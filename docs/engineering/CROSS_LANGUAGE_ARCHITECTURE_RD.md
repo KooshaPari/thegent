@@ -350,10 +350,10 @@ public sealed class ConfigEntry
 |----------|------------------|----------------------|-------------|
 | **Rust** | `pub trait Repository { fn get(&self, key: &str) -> Result<Option<T>, E>; }` | `impl Repository for PostgresAdapter` | Static + Duck typing |
 | **Go** | `type Repository interface { Get(key string) (*Entity, error) }` | `type PostgresAdapter struct {}` | Static (compile-time) |
-| **TypeScript** | `interface Repository<T> { get(key: string): Promise<T | null>; }` | `class PostgresAdapter implements Repository<Entity>` | Static + Structural |
+| **TypeScript** | `interface Repository&lt;T&gt; { get(key: string): Promise&lt;T | null&gt;; }` | `class PostgresAdapter implements Repository&lt;Entity&gt;` | Static + Structural |
 | **Python** | `class Repository(ABC): @abstractmethod def get(...)` | `class PostgresAdapter(Repository)` | Duck typing |
 | **Zig** | `pub const Repository = struct { get: fn(...) }` | Function pointers | Static (comptime) |
-| **C#** | `interface IRepository<T> { Task<T?> GetAsync(string key); }` | `class PostgresAdapter : IRepository<Entity>` | Static (compile-time) |
+| **C#** | `interface IRepository&lt;T&gt; { Task&lt;T?&gt; GetAsync(string key); }` | `class PostgresAdapter : IRepository&lt;Entity&gt;` | Static (compile-time) |
 
 ### 3.2 Best Practices by Language
 
