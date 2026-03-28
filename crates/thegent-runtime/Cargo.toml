@@ -16,9 +16,3 @@ base16ct = "1.0"
 which = "6.0"
 libc = "0.2"
 nix = "0.28"
-
-[profile.release]
-opt-level = "z"
-lto = true
-strip = true
-codegen-units = 1

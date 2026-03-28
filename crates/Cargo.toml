@@ -26,6 +26,9 @@ members = [
     "thegent-memory",
     "thegent-subprocess",
     "phenotype-cache-adapter",
+    "thegent-runtime",
+    "thegent-path-resolve",
+    "thegent-tool-detect",
 ]
 exclude = ["thegent-watcher"]
 
@@ -39,3 +42,9 @@ exclude = ["thegent-watcher"]
 gix = { version = "0.79.0", default-features = false, features = ["max-performance-safe"] }
 which = "6.0"
 criterion = "0.5"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1

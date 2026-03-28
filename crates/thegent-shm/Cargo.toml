@@ -29,9 +29,3 @@ tempfile = "3.17.1"
 [features]
 default = []
 python = ["pyo3"]
-
-[profile.release]
-opt-level = "z"
-lto = true
-strip = true
-codegen-units = 1

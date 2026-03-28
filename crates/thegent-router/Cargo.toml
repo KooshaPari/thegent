@@ -1,4 +1,5 @@
 [package]
+[package]
 name = "thegent-router"
 version = "0.1.0"
 edition = "2021"
@@ -30,8 +31,3 @@ crate-type = ["cdylib", "rlib"]
 [[bench]]
 name = "audit_bench"
 harness = false
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
