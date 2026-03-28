@@ -1,5 +1,5 @@
 [project]
-name = "thegent-routing"
+name = "phenotype-thegent-routing"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
@@ -7,7 +7,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-phenotype-thegent-core = { workspace = true }
+phenotype-phenotype-thegent-core = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

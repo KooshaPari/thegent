@@ -1,0 +1,16 @@
+{
+  "name": "@phenotype/research",
+  "version": "0.1.0",
+  "description": "Phenotype research and investigation engine",
+  "license": "MIT",
+  "repository": "https://github.com/kooshapari/phenotype-monorepo",
+  "subdirectory": "packages/phenotype-research",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  }
+}

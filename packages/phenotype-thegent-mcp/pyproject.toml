@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "thegent-mcp"
+name = "phenotype-thegent-mcp"
 dynamic = ["version"]
 description = "thegent MCP server - FastMCP 3.x protocol layer for agent integration and tool orchestration"
 authors = [

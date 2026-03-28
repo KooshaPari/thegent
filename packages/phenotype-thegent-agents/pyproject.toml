@@ -8,7 +8,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-phenotype-thegent-core = { workspace = true }
+phenotype-phenotype-thegent-core = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

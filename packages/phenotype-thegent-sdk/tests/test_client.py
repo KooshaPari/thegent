@@ -11,7 +11,7 @@ import pytest
 SDK_SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SDK_SRC))
 
-from thegent_sdk import (  # noqa: E402
+from phenotype_thegent_sdk import (  # noqa: E402
     AsyncThegentClient,
     ThegentAuthenticationError,
     ThegentClient,
@@ -272,7 +272,7 @@ def test_mcp_run_success_maps_structured_content() -> None:
         assert request.url.path == "/mcp"
         body = json.loads(request.content)
         assert body["method"] == "tools/call"
-        assert body["params"]["name"] == "thegent_run"
+        assert body["params"]["name"] == "phenotype_thegent_run"
         return httpx.Response(
             200,
             json={
@@ -297,7 +297,7 @@ def test_mcp_list_sessions_parses_text_json_content() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
-        assert body["params"]["name"] == "thegent_session_list"
+        assert body["params"]["name"] == "phenotype_thegent_session_list"
         return httpx.Response(
             200,
             json={
@@ -321,7 +321,7 @@ def test_mcp_list_sessions_parses_text_json_content() -> None:
 def test_mcp_resume_maps_structured_content() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
-        assert body["params"]["name"] == "thegent_resume"
+        assert body["params"]["name"] == "phenotype_thegent_resume"
         assert body["params"]["arguments"]["session_id"] == "s-1"
         return httpx.Response(
             200,
@@ -513,7 +513,7 @@ async def test_async_mcp_run_uses_tools_call() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
         assert body["method"] == "tools/call"
-        assert body["params"]["name"] == "thegent_run"
+        assert body["params"]["name"] == "phenotype_thegent_run"
         return httpx.Response(
             200,
             json={

@@ -11,7 +11,7 @@ requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
     "phenotype-thegent-agents",
-    "thegent-platform",
+    "phenotype-thegent-platform",
     "phenotype-thegent-core",
     "typer>=0.16.0",
     "rich>=13.9.4",
@@ -22,9 +22,9 @@ source = "vcs"
 fallback-version = "0.1.0"
 
 [tool.uv.sources]
-phenotype-thegent-agents = { workspace = true }
-thegent-platform = { workspace = true }
-phenotype-thegent-core = { workspace = true }
+phenotype-phenotype-thegent-agents = { workspace = true }
+phenotype-thegent-platform = { workspace = true }
+phenotype-phenotype-thegent-core = { workspace = true }
 
 [tool.ruff]
 line-length = 120

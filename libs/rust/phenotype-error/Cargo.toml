@@ -1,0 +1,28 @@
+[package]
+name = "phenotype-error"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype error handling library following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["error", "handling", "hexagonal", "architecture"]
+categories = ["development-tools"]
+
+[dependencies]
+thiserror = "1.0"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+
+[features]
+default = ["std"]
+std = []
+
+# Quality gates
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"

@@ -1,0 +1,38 @@
+[package]
+name = "phenotype-policy"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype policy engine following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["policy", "authorization", "permissions", "hexagonal"]
+categories = ["auth"]
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["rt-multi-thread"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async traits
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = "0.12"
+
+[features]
+default = []
+opa = ["rego"]
+sql = ["sqlx"]
+redis = ["redis"]

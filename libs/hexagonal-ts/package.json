@@ -1,0 +1,34 @@
+{
+  "name": "@phenotype/libs-hexagonal-ts",
+  "version": "1.0.0",
+  "description": "Hexagonal Architecture Library with Clean Architecture and DDD for TypeScript/Node.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "hexagonal",
+    "architecture",
+    "clean-architecture",
+    "ddd",
+    "ports-and-adapters"
+  ],
+  "author": "Phenotype",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phenotype/libs"
+  },
+  "dependencies": {
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "typescript": "^5.0.0"
+  }
+}

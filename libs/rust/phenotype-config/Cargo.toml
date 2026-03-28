@@ -1,0 +1,27 @@
+[package]
+name = "phenotype-config"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype configuration library following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["config", "configuration", "settings", "env", "environment"]
+categories = ["config", "no-std"]
+
+[features]
+default = ["std"]
+std = ["serde/std", "serde_json/std"]
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"], optional = true }
+thiserror = "1.0"
+
+[dev-dependencies]
+tempfile = "3.8"
+serde_json = "1.0"
+
+[[test]]
+name = "all"
+path = "tests/all.rs"
