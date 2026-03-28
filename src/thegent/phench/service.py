@@ -489,7 +489,7 @@ def add_module_to_target(
     if "/" in module_name or "\\" in module_name or ".." in module_name:
         raise ValueError(f"invalid module name: {module_name}")
 
-    manifest = _load_module_manifest(module_name)
+    manifest = load_module_manifest(module_name)
     lock = load_target_lock(target, family=family)
 
     candidates = _select_module_repos(manifest, exclude_repos=exclude_repos)
@@ -1475,87 +1475,70 @@ def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[st
     return normalized
 
 
-def load_module_manifest(
-    module: str,
-    *,
-    available_repo_ids: list[str] | None = None,
-) -> dict[str, Any]:
+def load_module_manifest(module: str) -> ModuleManifest:
     manifest_path = _resolve_module_manifest_path(module)
-
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
-        raise ValueError(f"invalid module manifest for {module}: malformed json") from error
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid module manifest for {module}: malformed json") from exc
 
     if not isinstance(payload, dict):
         raise ValueError(f"invalid module manifest for {module}: payload must be an object")
 
-    schema_version = _validate_module_manifest_schema_version(module=module, payload=payload)
-    explicit_repos = (
-        _validate_module_repos_payload_field(payload, field="repo_ids")
-        or _validate_module_repos_payload_field(payload, field="repos")
+    schema_version = int(payload.get("schema_version", 1))
+    if schema_version not in {1}:
+        raise ValueError(f"unsupported schema version {schema_version} for manifest: {module}")
+
+    owners: list[str] = []
+    if "owners" in payload:
+        _validate_module_owners(payload, field="owners")
+        raw_owners = payload["owners"]
+        if isinstance(raw_owners, list):
+            seen: set[str] = set()
+            for o in raw_owners:
+                normalized = o.lower().strip()
+                if normalized and normalized not in seen:
+                    seen.add(normalized)
+                    owners.append(normalized)
+
+    refresh_cadence: str | None = None
+    if "refresh_cadence" in payload:
+        _validate_module_refresh_cadence(payload, field="refresh_cadence")
+        refresh_cadence = str(payload["refresh_cadence"]).lower().strip()
+
+    raw_patterns = payload.get("repo_patterns")
+    if raw_patterns is None:
+        repo_patterns: list[str] = ["*"]
+    elif isinstance(raw_patterns, list) and all(isinstance(p, str) for p in raw_patterns):
+        repo_patterns = raw_patterns
+    else:
+        raise ValueError(f"invalid repo_patterns in manifest: {module}")
+
+    # Compute repo_ids from patterns against candidates
+    temp_manifest = ModuleManifest(schema_version=schema_version, repo_patterns=repo_patterns)
+    selected_repos = _select_module_repos(temp_manifest)
+    repo_ids = sorted(r.name for r in selected_repos)
+
+    def _load_str_dict(key: str) -> dict[str, str]:
+        raw = payload.get(key)
+        if raw is None:
+            return {}
+        if not isinstance(raw, dict):
+            raise ValueError(f"invalid {key} in manifest: {module}")
+        return {str(k): str(v) for k, v in raw.items() if isinstance(k, str) and isinstance(v, str)}
+
+    return ModuleManifest(
+        schema_version=schema_version,
+        repo_patterns=repo_patterns,
+        owners=owners,
+        refresh_cadence=refresh_cadence,
+        default_ref=str(payload.get("default_ref", "HEAD")),
+        repo_ids=repo_ids,
+        repo_ref_overrides=_load_str_dict("repo_ref_overrides"),
+        repo_runner_overrides=_load_str_dict("repo_runner_overrides"),
+        repo_command_overrides=_load_str_dict("repo_command_overrides"),
+        repo_env_profile_overrides=_load_str_dict("repo_env_profile_overrides"),
     )
-    explicit_repos = _normalize_repo_id_list(explicit_repos)
-    raw_patterns = _validate_module_repos_payload_field(payload, field="repo_patterns")
-    available = _normalize_repo_id_list(available_repo_ids or [])
-    expanded: list[str] = []
-    for pattern in raw_patterns:
-        matched = sorted([repo_id for repo_id in available if fnmatch(repo_id, pattern)])
-        expanded.extend(matched)
-
-    if not explicit_repos and not raw_patterns and not available:
-        raise ValueError(
-            f"module manifest '{module}' must define 'repo_ids', 'repos', or 'repo_patterns'"
-        )
-
-    combined = _normalize_repo_id_list(explicit_repos + expanded)
-    combined = sorted(set(combined))
-    if available:
-        unavailable = [repo_id for repo_id in combined if repo_id not in available]
-        if unavailable:
-            raise ValueError(
-                f"module manifest '{module}' references unknown repos: {', '.join(unavailable)}"
-            )
-
-    module_overrides: dict[str, Any] = {
-        "schema_version": schema_version,
-        "owners": _validate_module_owners(payload, field="owners"),
-        "refresh_cadence": _validate_module_refresh_cadence(payload, field="refresh_cadence"),
-        "repo_ref_overrides": _validate_module_repos_payload_map(
-            payload,
-            field="repo_ref_overrides",
-        ),
-        "repo_runner_overrides": _validate_module_repos_payload_map(
-            payload,
-            field="repo_runner_overrides",
-        ),
-        "repo_command_overrides": _validate_module_repos_payload_map(
-            payload,
-            field="repo_command_overrides",
-        ),
-        "repo_env_profile_overrides": _validate_module_repos_payload_map(
-            payload,
-            field="repo_env_profile_overrides",
-        ),
-    }
-
-    if available:
-        for key in (
-            "repo_ref_overrides",
-            "repo_runner_overrides",
-            "repo_command_overrides",
-            "repo_env_profile_overrides",
-        ):
-            value = module_overrides[key]
-            unknown = [repo_id for repo_id in value if repo_id not in available]
-            if unknown:
-                raise ValueError(f"module manifest '{module}' has unknown {key} key(s): {', '.join(unknown)}")
-
-    if not combined:
-        raise ValueError(f"module manifest '{module}' matched no repos")
-
-    module_overrides["repo_ids"] = combined
-    return module_overrides
 
 
 def load_module_repos(
@@ -1606,6 +1589,9 @@ def run_target(
 
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
+
+    if command_name is not None and command_name.startswith("-"):
+        raise ValueError("command names cannot start with '-'")
 
     runs: list[tuple[Path, RunnerCatalog, str | None, str | None, dict[str, str] | None]] = []
     for item in matrix["repos"]:

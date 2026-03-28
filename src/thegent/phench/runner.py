@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -143,7 +144,7 @@ def pick_command_interactive(catalog: RunnerCatalog) -> RunnerCommand:
     return catalog.commands[index - 1]
 
 
-def run_command(repo_checkout: Path, runner: str, command_name: str) -> int:
+def run_command(repo_checkout: Path, runner: str, command_name: str, env_overrides: dict[str, str] | None = None) -> int:
     if runner == "task":
         cmd = ["task", command_name]
     elif runner == "just":
@@ -159,5 +160,9 @@ def run_command(repo_checkout: Path, runner: str, command_name: str) -> int:
     else:
         raise ValueError(f"Unsupported runner: {runner}")
 
-    proc = subprocess.run(cmd, cwd=str(repo_checkout), check=False)
+    env = os.environ.copy()
+    if env_overrides:
+        env.update(env_overrides)
+
+    proc = subprocess.run(cmd, cwd=str(repo_checkout), check=False, env=env)
     return proc.returncode
