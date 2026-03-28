@@ -7,6 +7,7 @@ from __future__ import annotations
 
 # Core run commands
 from thegent.cli.commands.run.run_cmds import (
+    bg_cmd,
     run_cmd,
     run_diff_cmd,
 )
@@ -20,7 +21,6 @@ from thegent.cli.commands.run.run_cmds_loop import (
 
 # Advanced run commands
 from thegent.cli.commands.run.run_cmds_advanced import (
-    bg_cmd,
     replay_cmd,
     retry_cmd,
     deep_research_cmd,

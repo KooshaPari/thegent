@@ -39,6 +39,13 @@ export default defineConfig({
             { label: 'Standards', link: '/governance/standards/' },
           ],
         },
+        {
+          label: 'About',
+          items: [
+            { label: 'Overview', link: '/about/' },
+            { label: 'Past Projects', link: '/about/projects/' },
+          ],
+        },
       ],
       customCss: ['./src/styles/custom.css'],
       head: [

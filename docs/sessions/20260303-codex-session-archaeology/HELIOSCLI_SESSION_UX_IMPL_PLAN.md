@@ -32,7 +32,7 @@
 - `searchTerm` is substring match on thread `title` only.
 - State DB filtering is currently `instr(title, ?) > 0` (case-sensitive behavior in SQLite default collation).
 - `sourceKinds` omitted/empty defaults to interactive sources (`cli`, `vscode`) via `compute_source_filters`.
-- `modelProviders` omitted currently resolves to current configured provider in app-server path.
+- `modelProviders` omitted now includes all providers in app-server path, matching the README contract.
 
 ### Resume picker scope/search surfaces
 - Resume/fork picker currently has one scope toggle only: `--all`.
@@ -255,6 +255,4 @@ Recommended: Option B.
 4. Add cheapest-model labeling table + background jobs; join labels into list.
 
 ## 7) Open implementation notes
-- Current README says empty/unset `modelProviders` includes all providers, but app-server currently defaults omitted providers to current provider; align docs+runtime in the same rollout.
 - Current `searchTerm` behavior is title-only; BM25 path should include turn text and thread names for expected picker search relevance.
-
