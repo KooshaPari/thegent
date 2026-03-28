@@ -2117,8 +2117,14 @@ def _select_module_repos(
 ) -> list[Path]:
     excluded = {sanitize_repo_id(repo_name) for repo_name in (exclude_repos or set())}
     selected: list[Path] = []
+    debug_select = os.environ.get("THGENT_DEBUG_SELECT_MODULE_REPOS") == "1"
+    if debug_select:
+        print("DEBUG select module manifest patterns:", manifest.repo_patterns)
+        print("DEBUG THGENT_PHENOTYPE_ROOT:", os.environ.get("THGENT_PHENOTYPE_ROOT"))
     for repo_path in repository_root_candidates():
         repo_id = _repo_id_from_path(repo_path)
+        if debug_select:
+            print("DEBUG candidate repo_id:", repo_id)
         if repo_id in DEFAULT_EXCLUDED_REPOS or repo_id in excluded:
             continue
         if not any(fnmatch(repo_id, pattern) for pattern in manifest.repo_patterns):
