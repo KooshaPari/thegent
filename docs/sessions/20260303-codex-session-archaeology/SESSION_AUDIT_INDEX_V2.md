@@ -1,0 +1,44 @@
+# Session Audit Index V2
+
+## Execution
+- 6 child-agent lanes executed (A-F)
+- 24 tasks total (4 per lane)
+- Artifacts source: `/tmp/session_wave2`
+
+## Consolidated Metrics
+- Lane A recent active stores: `None`
+- Lane B codex sessions parsed: `7310`
+- Lane C stable-repo unfinished rows: `35`
+- Lane D resolution rows: `10`
+- Lane E reconcile artifact present: `True`
+- Lane F research artifacts present: `True`
+
+## Lane B Status Counts
+```json
+{
+  "null": 7310
+}
+```
+
+## Lane C CWD Buckets
+```json
+{
+  "stable_repo_cwd": 35
+}
+```
+
+## Lane D Dispositions
+```json
+{
+  "null": 10
+}
+```
+
+## Key Outputs
+- `/tmp/session_wave2/lane_a_inventory.json`
+- `/tmp/session_wave2/lane_b_codex_sessions.jsonl`
+- `/tmp/session_wave2/lane_c_unfinished_v2.jsonl`
+- `/tmp/session_wave2/lane_d_resolution_map_v2.jsonl`
+- `/tmp/session_wave2/lane_e_gitops_reconcile.json`
+- `/tmp/session_wave2/lane_f_helioscli_research_v2.md`
+- `/tmp/session_wave2/lane_f_api_delta_v2.md`

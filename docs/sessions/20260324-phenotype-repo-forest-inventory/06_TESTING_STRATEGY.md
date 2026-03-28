@@ -1,0 +1,56 @@
+# Testing Strategy
+
+## Validation performed
+
+- `cargo check -p agileplus-api -p agileplus-sqlite -p agileplus-git`
+  - Result: passed
+- `cargo check --workspace` in `AgilePlus` worktree `feature/agileplus-entity-pipeline`
+  - Result: passed
+- `cargo test --workspace --exclude agileplus-bdd` in `AgilePlus` worktree
+  `feature/agileplus-entity-pipeline`
+  - Result: passed
+- `cargo test -p agileplus-contract-tests --test sync_plane_contract` in `AgilePlus`
+  worktree `feature/agileplus-entity-pipeline`
+  - Result: passed
+- `npm run docs:build` in `phenotype-design`
+  - Result: passed
+- `npm run build` in `phenotype-design` worktree `fix/markdown-lint`
+  - Result: passed
+- `bun run build` in `phenodocs` worktree `fix-markdown-lint-clean`
+  - Result: passed after installing local docs dependencies and restoring tracked temp artifacts
+- `python3.11 -m pytest tests/test_policy_federation_integration.py -q` in `thegent`
+  worktree `refactor/perf-robustness`
+  - Result: passed
+- `bun test apps/runtime/src/recovery/__tests__/state-machine.test.ts apps/runtime/src/recovery/__tests__/integration.test.ts apps/runtime/src/recovery/__tests__/chaos.test.ts` in `heliosApp`
+  - Result: root checkout passed; stale recovery worktree lanes still surfaced failures in the same sweep
+
+## Current validation status
+
+- `AgilePlus` staged changes compile after the `Clone` refactor cleanup.
+- `phenotype-design` docs build succeeds after the VitePress/theme alias change.
+- `phenotype-config` no longer has live `spec-kitty.*` artifacts in the current tree; the stale
+  inventory note should only be treated as active if those files are recreated.
+- `phenotype-config` prompt surfaces now fit under the size target after compressing
+  `spec-kitty.tasks.md` in `.claude`, `.codex`, and `.cursor` to 478-480 lines.
+- `heliosApp` recovery is fixed on the canonical checkout, but a broad Bun sweep still catches older worktree copies that need separate cleanup or exclusion.
+- `heliosApp` package scripts now exclude `worktrees/*` from the default test and coverage commands so the active checkout can validate without stale nested lanes.
+- `AgilePlus` contract-test warning cleanup removed two unused imports from
+  `tests/contracts/sync_plane_contract.rs`.
+- `phenodocs` docs validation passed after installing the local docs dependencies and removing a
+  duplicate `srcDir` entry from `.vitepress/config.mts`.
+- `thegent` policy-federation helper regression is now covered by a focused passing test, and the
+  lane-specific validation passed for concurrency, usage tracking, config isolation, and memory.
+- Focused `thegent` validation run in this pass:
+  - `python3.11 -m pytest tests/test_federated_policy.py -q`
+  - `python3.11 -m pytest tests/test_wl6860_wl6869_lane_f.py -q`
+  - `python3.11 -m pytest tests/orchestration/test_usage_tracking.py -q`
+  - `python3.11 -m pytest tests/memory/test_supermemory_client.py tests/memory/test_memory_manager.py -q`
+- `phenodocs` no longer reports local `.agents/` or `worktrees/` directories as dirty after the
+  ignore update; remaining validation blocker is the missing docs toolchain in the worktree lane.
+- `phenotypeActions` no longer reports `open_prs.json` or `open_prs_full.json` as dirty after the
+  ignore update; remaining status is only the explicit `.gitignore` policy change.
+
+## Notes
+
+- I did not run a full test sweep across every dirty repo because several repos are in intentionally staged generation states and need intent confirmation first.
+- The worklog should be updated as each repo is classified or cleaned.

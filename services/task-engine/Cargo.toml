@@ -1,0 +1,32 @@
+[package]
+name = "task-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype Task Engine - Task planning and execution scheduler"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["task", "scheduler", "planning", "execution", "hexagonal"]
+categories = ["task-management", "scheduling"]
+
+[dependencies]
+phenotype-error = { path = "../libs/rust/phenotype-error" }
+phenotype-logging = { path = "../libs/rust/phenotype-logging" }
+phenotype-config = { path = "../libs/rust/phenotype-config" }
+helix-tracing = { package = "helix-tracing", path = "../phenotype-tracing" }
+helix-logging = { package = "helix-logging", path = "../phenotype-logger" }
+phenotype-metrics = { path = "../phenotype-metrics" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+priority-queue = "1.2"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockall = "0.12"

@@ -1,0 +1,26 @@
+[package]
+name = "phenotype-cache"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype cache library following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["cache", "memory", "lru", "ttl", "hexagonal"]
+categories = ["caching", "performance"]
+
+[dependencies]
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+async-trait = "0.1"
+dashmap = "5.5"
+tokio = { version = "1.0", features = ["sync", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["test-util", "macros"] }
+
+[features]
+default = []
+serde = ["dep:serde"]

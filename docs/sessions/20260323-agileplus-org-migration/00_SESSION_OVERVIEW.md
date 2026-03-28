@@ -1,0 +1,48 @@
+# Session Overview: AgilePlus org migration, CLI/MCP/API convergence, and release governance
+
+**Date:** 2026-03-23  
+**Worktree:** `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/AgilePlus/refactor/plane-client-split`
+
+## Goals
+
+- Audit AgilePlus as the canonical spec/work-item/data-entity system for the Phenotype org.
+- Plan the next 100 work items with a bias toward complete specs, planning, research, docs, and non-code artifacts.
+- Make CLI, MCP, and HTTP API feel like one workflow surface.
+- Remove reliance on seed SQLs as the primary operator path.
+- Align local worktree development with canary/high-extreme branch/package promotion and PR-friendly CI/CD.
+
+## What was audited
+
+- `crates/agileplus-cli/src/main.rs`
+- `crates/agileplus-cli/src/commands/module.rs`
+- `crates/agileplus-cli/src/commands/cycle.rs`
+- `crates/agileplus-cli/src/commands/queue.rs`
+- `crates/agileplus-api/src/router.rs`
+- `crates/agileplus-api/src/routes/features.rs`
+- `crates/agileplus-api/src/routes/module.rs`
+- `crates/agileplus-api/src/routes/cycle.rs`
+- `python/src/agileplus_mcp/server.py`
+- `python/src/agileplus_mcp/tools/features.py`
+- `python/src/agileplus_mcp/tools/governance.py`
+- `python/src/agileplus_mcp/tools/status.py`
+- `kitty-specs/001-spec-driven-development-engine`
+- `kitty-specs/002-org-wide-release-governance-dx-automation`
+- `kitty-specs/003-agileplus-platform-completion`
+- `kitty-specs/004-modules-and-cycles`
+- `.github/workflows/*.yml`
+
+## Key decisions
+
+- Treat AgilePlus as the system of record for specs, work packages, modules, cycles, governance, and rollout tracking.
+- Treat CLI, MCP, and API as three surfaces over the same underlying object model.
+- Prioritize complete batch/import/migration flows over ad hoc SQL seeding.
+- Normalize release governance to the documented 5-tier channel model.
+- Plan org rollout as a layered migration, not a one-off repo dump.
+
+## Success criteria for this session
+
+- A clear gap map exists for CLI, MCP, API, and release governance.
+- A 100-item work plan exists and is grouped by dependency/theme.
+- The plan includes documentation, research, and migration artifacts, not just code tasks.
+- The plan is explicit about canary/high-extreme development branches and CI/CD support.
+

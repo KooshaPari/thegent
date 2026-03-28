@@ -1,0 +1,906 @@
+# Phenotype Platform Strategic Plan 2026
+
+## Executive Summary
+
+This document is the authoritative strategic plan for the Phenotype platform ecosystem in 2026. It covers six ordered phases of work to transform the current collection of loosely coupled repositories into a cohesive, self-hosted, enterprise-grade platform.
+
+**Goals:**
+
+| # | Goal | Metric |
+|---|------|--------|
+| 1 | Stabilize all canonical repos — return to `main`, clean dirty trees | 0 canonicals off-main |
+| 2 | Enterprise-grade repo graph and port allocation | Single port registry, no conflicts |
+| 3 | Phenotype Hub Site — micro-frontend aggregator portal | Live on port 9000 |
+| 4 | Byteport rearchitecture — remove AWS/OpenAI, use Ollama + Bifrost | 0 paid API calls |
+| 5 | LOC reduction via wrap-over-handroll, dedup, v1 removal | ≥20% LOC reduction |
+| 6 | Native shared services — single postgres/NATS/Dragonfly instances | 0 duplicate service instances |
+
+**Phase dependency DAG:**
+
+```
+Phase 0 (Stabilize)
+      |
+Phase 1 (Shared Infra + Port Registry)
+      |
+  ┌───┼───────┐
+  |           |
+Phase 2     Phase 3     Phase 4
+(LOC)       (Hub Site)  (Byteport)
+  |           |           |
+  └───────────┼───────────┘
+              |
+          Phase 5 (Frontend Consolidation)
+              |
+          Phase 6 (Repo Graph Cleanup)
+```
+
+Wall-clock estimates (agent-driven, no human checkpoints):
+
+| Phase | Tool Calls | Wall Clock |
+|-------|-----------|------------|
+| 0 | ~10 | 3-5 min |
+| 1 | ~15 | 5-8 min |
+| 2 | ~20 (parallel) | 8-12 min |
+| 3 | ~30 (parallel) | 10-15 min |
+| 4 | ~25 (parallel) | 10-15 min |
+| 5 | ~20 | 8-12 min |
+| 6 | ~15 | 5-8 min |
+| **Total** | **~135** | **~50-75 min** |
+
+---
+
+## Phase 0: Canonical Repo Stabilization
+
+**Priority: IMMEDIATE. No other phase starts until all canonicals are on `main` and clean.**
+
+### 0.1 Repository State Inventory
+
+| Repo | Path | Current Branch | Dirty Files | Action |
+|------|------|---------------|-------------|--------|
+| heliosCLI | `repos/heliosCLI` | `fix/bench-deprecation-clean` | 0 (merged) | `git checkout main` |
+| AgilePlus | `repos/AgilePlus` | `chore/migrate-kitty-specs-to-agileplus` | 381+ | Merge or stash, checkout main |
+| thegent | `repos/thegent` | unknown | 347 files | Categorize by provenance, commit/stash |
+| heliosApp | `repos/heliosApp` | unknown | 8 files | Commit or stash, verify main |
+| All others | `repos/*` | should be main | unknown | Audit and align |
+
+### 0.2 Dirty-Tree Commit Discipline
+
+Per governance, dirty-tree commits are split by provenance mode:
+
+- **MODE 1**: User-requested implementation changes (commit with feature message)
+- **MODE 2**: Pre-existing WIP from other actors (commit with `chore(wip):` prefix)
+- **MODE 3**: Generated/temporary artifacts — benchmark runs, telemetry snapshots, repair notes (commit with `chore(artifacts):` or move to `.archive/`)
+
+**Never mix modes in one commit.**
+
+### 0.3 Task Breakdown
+
+```
+P0.1  Audit all canonicals: git status --short -b
+      Predecessors: none
+
+P0.2  heliosCLI: git checkout main && git pull origin main
+      Predecessors: P0.1
+
+P0.3  AgilePlus: categorize dirty files, commit MODE 2 WIP, checkout main
+      Predecessors: P0.1
+
+P0.4  thegent: categorize 347 files by provenance, multi-commit, return to main
+      Predecessors: P0.1
+
+P0.5  heliosApp: commit/stash 8 files, verify main
+      Predecessors: P0.1
+
+P0.6  Final verification: all canonicals on main, clean status
+      Predecessors: P0.2, P0.3, P0.4, P0.5
+```
+
+### 0.4 Acceptance Criteria
+
+- [ ] `git status --short -b` shows `## main...origin/main` for every canonical
+- [ ] No untracked files in canonical roots (only ignored items)
+- [ ] All repos can `git pull --rebase origin main` cleanly
+
+---
+
+## Phase 1: Shared Infrastructure Setup
+
+### 1.1 Port Allocation Registry
+
+The following port ranges are reserved for canonical service instances. All worktrees and development instances MUST use the 30000–39999 range to avoid conflicts.
+
+#### Canonical Port Assignments
+
+| Range | Service | Notes |
+|-------|---------|-------|
+| **3000–3099** | heliosApp frontend | SolidJS dev server |
+| **3100–3199** | heliosApp-colab | Collaboration features |
+| **4000–4099** | AgilePlus frontend | React/Next.js |
+| **4100–4199** | AgilePlus API/backend | Go or Node API layer |
+| **5000–5099** | cliproxyapi-plusplus | Go proxy API |
+| **5100–5199** | thegent CLI services | Auxiliary services |
+| **6000–6099** | heliosCLI services | CLI service endpoints |
+| **7000–7099** | agent-wave | Agent coordination layer |
+| **8000–8099** | Byteport (rearchitected) | Self-hosted deployment platform |
+| **9000–9099** | Phenotype Hub portal | Astro 6 aggregator site |
+| **9096** | TraceRTM / metrics | Existing allocation (keep) |
+
+#### Shared Infrastructure Singletons
+
+| Port | Service | Binary/Command |
+|------|---------|---------------|
+| **5432** | PostgreSQL 16 | `pg_ctl` via Homebrew |
+| **4222** | NATS (+ JetStream) | `nats-server -js` |
+| **6379** | Dragonfly (Redis-compat) | `dragonfly` |
+| **7233** | Temporal workflow engine | Already running |
+| **7768** | Temporal UI | Already running |
+| **8222** | NATS monitoring | Auto-bound by NATS |
+
+#### Worktree Port Convention
+
+Worktrees derive their port by taking the canonical base port and adding a random offset in the range 30000–39999:
+
+```
+worktree_port = 30000 + random(0, 9999)
+# OR deterministic: base_port + 30000
+# Example: heliosApp canonical=3000, worktree=33000
+```
+
+Each worktree's `process-compose.yml` or `.env` MUST declare its port offset to prevent collisions.
+
+### 1.2 Shared Services process-compose.yml
+
+File: `/Users/kooshapari/CodeProjects/Phenotype/repos/infrastructure/process-compose.shared.yml`
+
+This file manages the singleton infrastructure services. It is started once per developer session and shared across all repos.
+
+```
+infrastructure/
+  process-compose.shared.yml    ← singleton shared services
+  process-compose.temporal.yml  ← temporal engine + UI (if not running)
+  README.md
+  scripts/
+    start-shared.sh
+    stop-shared.sh
+    status.sh
+```
+
+### 1.3 Service Registry Pattern
+
+Each repository declares its services in a `phenotype.service.json` at its root:
+
+```json
+{
+  "name": "heliosApp",
+  "version": "1.0.0",
+  "canonical_port": 3000,
+  "health_endpoint": "http://localhost:3000/health",
+  "services": [
+    { "name": "frontend", "port": 3000, "type": "web" },
+    { "name": "api", "port": 3001, "type": "api" }
+  ],
+  "hub_integration": {
+    "mf_remote": "http://localhost:3000/remoteEntry.js",
+    "nav_label": "Helio IDE",
+    "icon": "terminal"
+  }
+}
+```
+
+The Hub portal reads these at build time to generate navigation cards and health polling.
+
+### 1.4 Task Breakdown
+
+```
+P1.1  Create infrastructure/ directory structure
+      Predecessors: P0.6
+
+P1.2  Write process-compose.shared.yml (postgres, NATS, Dragonfly)
+      Predecessors: P1.1
+
+P1.3  Write process-compose.temporal.yml (conditional start)
+      Predecessors: P1.1
+
+P1.4  Write scripts/start-shared.sh, stop-shared.sh, status.sh
+      Predecessors: P1.2, P1.3
+
+P1.5  Define port-registry.json: all canonical port assignments
+      Predecessors: P1.1
+
+P1.6  Add phenotype.service.json to each canonical repo
+      Predecessors: P1.5
+
+P1.7  Write infrastructure/README.md
+      Predecessors: P1.2, P1.3, P1.4, P1.5
+```
+
+---
+
+## Phase 2: LOC Reduction Campaign
+
+**Strategy: Wrap-Over-Handroll. Before deleting, identify the OSS library that replaces the hand-rolled code.**
+
+### 2.1 Audit Targets
+
+| Repo | LOC Est. | Primary Issue | Action |
+|------|---------|--------------|--------|
+| heliosApp | ~50K | God components (pre-Biome fix) | Decompose; Biome now at 0 errors |
+| AgilePlus | ~40K | 381 dirty files, possible duplication | Audit, deduplicate utilities |
+| thegent | ~30K | 347 dirty files, governance fragmentation | Categorize, commit, extract to shared |
+| heliosCLI | ~20K | v1 code paths still present | Remove v1, keep v2 |
+| All | varies | Cross-repo utility duplication | Extract to phenotype-shared |
+
+### 2.2 Wrap-Over-Handroll Candidates
+
+| Hand-Rolled Pattern | Wraps | Target Library | Repos Affected |
+|--------------------|-------|---------------|---------------|
+| HTTP clients | reqwest / ureq | `reqwest 0.12` | heliosCLI, agent-wave |
+| Cache layer | wrap harness_cache | `phenotype-cache` lib | heliosApp, AgilePlus |
+| Config parsing | wrap phenotype-config | `phenotype-config` | all repos |
+| Auth token handling | wrap `jsonwebtoken` | existing JWT libs | heliosApp, Byteport |
+| Retry logic | wrap `backon` | `backon 1.x` | agent-wave, cliproxyapi |
+| Telemetry/tracing | wrap `tracing` + `opentelemetry` | existing OTEL setup | all services |
+
+### 2.3 Deduplication Protocol
+
+1. Run `jscpd` across all repos to identify duplicated code blocks (>50 LOC)
+2. For each candidate: identify the canonical home (usually `libs/` or a shared pkg)
+3. Extract to shared location, update all callers
+4. Delete originals
+5. Verify: all tests pass, no import errors
+
+### 2.4 v1 Removal Checklist
+
+```
+[ ] heliosCLI: identify v1 command handlers, remove
+[ ] AgilePlus: remove legacy API v1 routes (if present)
+[ ] thegent: remove obsolete template v1 variants
+[ ] phenotype-shared: remove v1 compatibility shims
+```
+
+### 2.5 Task Breakdown
+
+```
+P2.1  Run jscpd across all repos, produce duplication report
+      Predecessors: P1.6
+
+P2.2  heliosApp: decompose top 5 god components into modules
+      Predecessors: P1.6
+
+P2.3  AgilePlus: audit 381 dirty files, remove dead code
+      Predecessors: P0.3
+
+P2.4  thegent: extract governance templates to libs/
+      Predecessors: P0.4
+
+P2.5  heliosCLI: remove v1 code paths
+      Predecessors: P0.2
+
+P2.6  Identify top 3 wrap-over-handroll wins, implement
+      Predecessors: P2.1
+
+P2.7  Measure LOC reduction: verify ≥20% baseline
+      Predecessors: P2.2, P2.3, P2.4, P2.5, P2.6
+```
+
+---
+
+## Phase 3: Phenotype Hub Site
+
+### 3.1 Architecture Decision
+
+**Stack: Astro 6 + Module Federation + shadcn/ui + Tailwind CSS v4**
+
+```
+phenotype-hub/
+  src/
+    pages/
+      index.astro          ← dashboard overview
+      apps/[app].astro     ← per-app frame
+      docs/[...slug].astro ← aggregated docs
+    components/
+      AppCard.astro        ← service card with health indicator
+      NavBar.astro         ← global navigation
+      MFLoader.tsx         ← Module Federation remote loader (React island)
+    layouts/
+      Shell.astro          ← global shell with sidebar
+    lib/
+      registry.ts          ← reads phenotype.service.json files
+      health.ts            ← health endpoint polling
+  public/
+  astro.config.mjs
+  tailwind.config.ts
+  package.json
+```
+
+**Key architecture decisions:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Framework | Astro 6 | Islands architecture, static shell + dynamic islands |
+| UI components | shadcn/ui + Tailwind v4 | Bleeding-edge, no CSS-in-JS overhead |
+| MF runtime | `@module-federation/vite` | Works with Vite-based remotes (heliosApp, AgilePlus) |
+| Auth sharing | HttpOnly cookie on `.phenotype.local` | Works across subdomains, secure |
+| BFF | Go Echo @ port 9010 | Thin gateway for health aggregation |
+| Docs | VitePress + git submodules | Each repo's VitePress site aggregated |
+| Port | 9000 | Canonical Hub allocation |
+
+### 3.2 Module Federation Remote Map
+
+```
+Hub (port 9000)
+  ├── heliosApp remote    → http://localhost:3000/remoteEntry.js
+  │     exposed: ./Editor, ./Terminal, ./FileTree
+  ├── AgilePlus remote    → http://localhost:4000/remoteEntry.js
+  │     exposed: ./Dashboard, ./IssueBoard, ./Roadmap
+  ├── TraceRTM remote     → http://localhost:9096/remoteEntry.js
+  │     exposed: ./TraceMatrix, ./FRTracker
+  └── Byteport remote     → http://localhost:8000/remoteEntry.js
+        exposed: ./DeployDashboard, ./ProjectCards
+```
+
+### 3.3 Service Discovery Flow
+
+```
+Build time:
+  Hub reads /repos/*/phenotype.service.json
+  → generates nav, cards, remote URLs
+
+Runtime:
+  Hub polls /health on each service every 30s
+  → updates status badges (green/yellow/red)
+  → lazy-loads MF remotes only when navigated to
+```
+
+### 3.4 New Repo: phenotype-hub
+
+**Location:** `/Users/kooshapari/CodeProjects/Phenotype/repos/apps/hub`
+
+**Initialization:**
+```bash
+# 1. Scaffold Astro 6
+pnpm create astro@latest hub --template minimal --typescript strict --no-git
+
+# 2. Add integrations
+pnpm astro add react tailwind
+pnpm add @module-federation/vite shadcn-ui @radix-ui/react-*
+
+# 3. Configure
+# astro.config.mjs: output = 'server', adapter = node
+# tailwind.config.ts: v4 config
+```
+
+### 3.5 Task Breakdown
+
+```
+P3.1  Create phenotype-hub repo scaffold (Astro 6)
+      Predecessors: P1.5
+
+P3.2  Configure Module Federation remotes (vite plugin)
+      Predecessors: P3.1
+
+P3.3  Build AppCard + health polling infrastructure
+      Predecessors: P3.1
+
+P3.4  Build global Shell layout (nav, sidebar, dark mode)
+      Predecessors: P3.1
+
+P3.5  Integrate AgilePlus as first MF remote
+      Predecessors: P3.2, P3.4
+
+P3.6  Integrate heliosApp as second MF remote
+      Predecessors: P3.2, P3.4
+
+P3.7  Integrate TraceRTM + Byteport as remotes
+      Predecessors: P3.2, P3.4
+
+P3.8  Go Echo BFF @ port 9010 (health aggregation API)
+      Predecessors: P3.3
+
+P3.9  VitePress docs aggregation
+      Predecessors: P3.1
+
+P3.10 Add phenotype-hub to process-compose.shared.yml
+      Predecessors: P3.1, P1.2
+
+P3.11 E2E smoke test: hub loads, all remotes render
+      Predecessors: P3.5, P3.6, P3.7
+```
+
+---
+
+## Phase 4: Byteport Rearchitecture
+
+### 4.1 Current Stack Audit
+
+**Location:** `/Users/kooshapari/CodeProjects/archive/Rust/webApp/byte_port`
+
+| Component | Current | Replace With | Priority |
+|-----------|---------|-------------|----------|
+| LLM provider | AWS Bedrock + OpenAI API | Ollama + Bifrost | HIGH |
+| Auth | WorkOS (paid SaaS) | Casdoor (self-hosted) | HIGH |
+| CDN/tunnel | Cloudflare tunnel | Traefik reverse proxy | MEDIUM |
+| Object storage | S3 | SeaweedFS | MEDIUM |
+| Serverless | AWS Lambda | OpenFaaS | LOW |
+| Frontend | Next.js 15 + Radix UI | Keep as-is | NONE |
+| Database | PostgreSQL | Keep, use shared instance | NONE |
+
+### 4.2 Ollama + Bifrost Integration
+
+```
+Current flow:
+  Byteport → AWS Bedrock API / OpenAI API
+
+New flow:
+  Byteport → Bifrost (port 8080) → Ollama (port 11434)
+                                  → HuggingFace (fallback)
+                                  → Any other local provider
+```
+
+**Bifrost config additions:**
+```yaml
+# bifrost.config.yaml additions
+providers:
+  - name: ollama
+    base_url: http://localhost:11434
+    models:
+      - mistral
+      - llama3.2
+      - qwen2.5-coder
+  - name: minimax
+    # MiniMax M2.7 via Ollama adapter
+    model_alias: minimax-m2-7
+```
+
+**Go backend changes:**
+- Remove `github.com/aws/aws-sdk-go-v2/service/bedrockruntime`
+- Add `phenotype-bifrost-client` (wraps Bifrost HTTP API)
+- Remove `github.com/sashabaranov/go-openai`
+- Add Ollama health check to startup sequence
+
+### 4.3 Casdoor Auth Replacement
+
+**Casdoor** (Go, Apache 2.0, 12K+ stars) provides:
+- OAuth2 / OIDC server
+- Social login (GitHub, Google, etc.)
+- LDAP, SAML, SCIM support
+- Web UI for user management
+- SDK: `casdoor-go-sdk`
+
+**Migration path:**
+1. Deploy Casdoor locally (Docker or binary) on port 8888
+2. Configure Casdoor with Byteport as OAuth2 client
+3. Replace WorkOS SDK calls with `casdoor-go-sdk`
+4. Migrate existing users (if any) via Casdoor import
+5. Remove WorkOS env vars from config
+
+### 4.4 Traefik Reverse Proxy
+
+Replaces Cloudflare tunnel for local development and self-hosted deployments.
+
+```yaml
+# traefik.yml
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@phenotype.local
+      storage: /acme.json
+      httpChallenge:
+        entryPoint: web
+```
+
+### 4.5 SeaweedFS Object Storage
+
+Replaces S3 for file/asset storage.
+
+```bash
+# Start SeaweedFS master + volume
+weed master -port=9333 &
+weed volume -port=8080 -mserver=localhost:9333 &
+# Expose S3-compatible API
+weed s3 -port=8333 -filer=localhost:8888
+```
+
+Go backend: swap `aws-sdk-go-v2/s3` for `aws-sdk-go-v2/s3` pointed at `localhost:8333` (SeaweedFS is S3-compatible — minimal code change).
+
+### 4.6 Portfolio Bit Rewire
+
+**Problem:** Current portfolio descriptions are LLM-generated (paid API calls, stale content).
+
+**Solution:** Static metadata pipeline:
+```
+Each project's README.md
+  → Frontmatter parser extracts: name, description, tech stack, status
+  → Byteport builds project cards from static data
+  → Optional: Ollama-powered local generation (no API cost)
+    - Triggered only on first-time import of new project
+    - Cached in PostgreSQL, never regenerated unless README changes
+```
+
+### 4.7 Task Breakdown
+
+```
+P4.1  Audit byte_port codebase: identify all AWS/OpenAI call sites
+      Predecessors: P1.2
+
+P4.2  Integrate Bifrost client into Go backend
+      Predecessors: P4.1
+
+P4.3  Remove AWS Bedrock + OpenAI deps from go.mod
+      Predecessors: P4.2
+
+P4.4  Deploy Casdoor locally, configure OAuth2 client
+      Predecessors: P4.1
+
+P4.5  Replace WorkOS SDK with casdoor-go-sdk
+      Predecessors: P4.4
+
+P4.6  Add Traefik config, remove Cloudflare tunnel deps
+      Predecessors: P4.1
+
+P4.7  Configure SeaweedFS, update S3 endpoint to localhost
+      Predecessors: P4.1
+
+P4.8  Portfolio: replace LLM API calls with README parser + Ollama cache
+      Predecessors: P4.2
+
+P4.9  Add phenotype.service.json to Byteport
+      Predecessors: P1.5, P4.6
+
+P4.10 Smoke test: Byteport starts, auth works, file upload works
+      Predecessors: P4.3, P4.5, P4.6, P4.7
+
+P4.11 Add Byteport to process-compose.shared.yml
+      Predecessors: P4.10, P1.2
+```
+
+---
+
+## Phase 5: Frontend Consolidation
+
+### 5.1 Current Frontend Inventory
+
+| Repo | Framework | Port | Status | Action |
+|------|-----------|------|--------|--------|
+| heliosApp | SolidJS + Bun | 3000 | Active, healthy | Keep; expose MF remote |
+| heliosApp-colab | SolidJS (collab) | 3100 | Active | Keep; same workspace |
+| AgilePlus | React/Next.js | 4000 | Active | Keep; expose MF remote |
+| TraceRTM | React | 9096 | Active | Absorb into AgilePlus as module |
+| Byteport | Next.js 15 | 8000 | Rearchitecting | Keep; expose MF remote |
+| phenotype-hub | Astro 6 | 9000 | New (Phase 3) | Aggregator portal |
+
+### 5.2 TraceRTM → AgilePlus Module Migration
+
+TraceRTM is a requirement tracing tool with natural affinity to AgilePlus (project management). Rather than maintaining a separate repo and port, migrate TraceRTM as an embedded module.
+
+**Migration approach:**
+1. Add `packages/tracertm/` to AgilePlus monorepo
+2. Move TraceRTM React components to `packages/tracertm/src/`
+3. TraceRTM gets its own route in AgilePlus: `/trace`
+4. TraceRTM API routes merged into AgilePlus backend
+5. TraceRTM repo kept read-only for 60 days, then archived
+6. Hub MF remote updated: TraceRTM remote → AgilePlus `/trace` route
+
+### 5.3 Auth Token Sharing
+
+All frontends share session via `.phenotype.local` cookie domain:
+
+```
+Cookie: phenotype_session=<JWT>
+Domain: .phenotype.local
+HttpOnly: true
+SameSite: Lax
+```
+
+`/etc/hosts` setup required:
+```
+127.0.0.1  heliosapp.phenotype.local
+127.0.0.1  agileplus.phenotype.local
+127.0.0.1  byteport.phenotype.local
+127.0.0.1  hub.phenotype.local
+```
+
+Casdoor issues the JWT; each service validates it via JWKS endpoint.
+
+### 5.4 Task Breakdown
+
+```
+P5.1  Add MF remote config to heliosApp (expose ./Editor, ./Terminal)
+      Predecessors: P3.2
+
+P5.2  Add MF remote config to AgilePlus
+      Predecessors: P3.2
+
+P5.3  Add MF remote config to Byteport
+      Predecessors: P4.10, P3.2
+
+P5.4  Migrate TraceRTM components to AgilePlus packages/tracertm/
+      Predecessors: P3.7
+
+P5.5  Update Hub MF remotes to use AgilePlus /trace for TraceRTM
+      Predecessors: P5.2, P5.4
+
+P5.6  Configure /etc/hosts and Casdoor cookie domain
+      Predecessors: P4.4
+
+P5.7  Integration test: Hub loads all MF remotes, auth flows work
+      Predecessors: P5.1, P5.2, P5.3, P5.5, P5.6
+```
+
+---
+
+## Phase 6: Enterprise Repo Graph Cleanup
+
+### 6.1 Local Structure Audit
+
+**Directories requiring investigation:**
+
+| Path | Suspected Purpose | Action |
+|------|------------------|--------|
+| `/repos/both/` | Unclear | Investigate; if obsolete, archive to `.archive/` |
+| `/repos/harbor-test/` | Test/scratch repo | Archive |
+| `/repos/benchmark/` + `/repos/benchmarks/` | Duplicate benchmark repos | Consolidate into one |
+| `/repos/cli/` + `/repos/heliosCLI/` | Possible duplicate | Verify; keep heliosCLI, archive `cli/` |
+| `/repos/lib/` + `/repos/libs/` | Duplicate library dirs | Consolidate into `libs/` |
+| `/repos/pkg/` + `/repos/packages/` | Duplicate package dirs | Consolidate into `packages/` |
+
+**Standard canonical repo structure:**
+
+```
+repos/
+  apps/           ← deployable applications (heliosApp, byteport, hub)
+  libs/           ← shared libraries
+  tools/          ← developer tooling (heliosCLI, dep-guard, forge)
+  services/       ← backend services
+  infrastructure/ ← shared infra config (process-compose, traefik)
+  docs/           ← cross-repo documentation
+  .archive/       ← deprecated repos (read-only)
+```
+
+### 6.2 GitHub Repository Governance
+
+**Every active repo MUST have:**
+
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Agent instructions, stack notes |
+| `AGENTS.md` | Agent persona and delegation config |
+| `README.md` | Human overview, quick start |
+| `.github/workflows/ci.yml` | CI (lint + test) |
+| `phenotype.service.json` | Service registry entry |
+
+**Archived/deprecated repos:**
+```markdown
+<!-- Add to README.md top -->
+> **DEPRECATED**: This repository is archived.
+> Successor: [phenotype-hub](https://github.com/KooshaPari/phenotype-hub)
+> Archived: 2026-Q1
+```
+
+**GitHub org settings:**
+- Pin: heliosApp, AgilePlus, phenotype-hub, heliosCLI, Byteport
+- Topics: `phenotype`, `self-hosted`, `ai-tooling`, `hexagonal`
+- All active repos: branch protection on `main` (require PR, require linear history)
+
+### 6.3 Task Breakdown
+
+```
+P6.1  Audit local repos/ structure, produce report
+      Predecessors: P5.7
+
+P6.2  Archive obsolete directories: both/, harbor-test/, cli/
+      Predecessors: P6.1
+
+P6.3  Consolidate benchmark/ + benchmarks/
+      Predecessors: P6.1
+
+P6.4  Consolidate lib/ + libs/, pkg/ + packages/
+      Predecessors: P6.1
+
+P6.5  Add CLAUDE.md + AGENTS.md to any repos missing them
+      Predecessors: P6.1
+
+P6.6  Add phenotype.service.json to all remaining active repos
+      Predecessors: P6.1, P1.5
+
+P6.7  Configure GitHub branch protection on all active repos
+      Predecessors: P6.5
+
+P6.8  Update GitHub org: pin repos, add topics
+      Predecessors: P6.7
+
+P6.9  Final audit: verify repo graph matches target structure
+      Predecessors: P6.2, P6.3, P6.4, P6.5, P6.6, P6.7, P6.8
+```
+
+---
+
+## Full DAG Summary
+
+```
+Phase 0 Tasks:
+  P0.1 → P0.2, P0.3, P0.4, P0.5
+  P0.2, P0.3, P0.4, P0.5 → P0.6
+
+Phase 1 Tasks:
+  P0.6 → P1.1
+  P1.1 → P1.2, P1.3, P1.5
+  P1.2, P1.3 → P1.4
+  P1.5 → P1.6
+  P1.2, P1.3, P1.4, P1.5, P1.6 → P1.7
+
+Phase 2 Tasks (parallel with Phase 3, 4):
+  P1.6 → P2.1
+  P2.1 → P2.6
+  P0.3 → P2.3
+  P0.4 → P2.4
+  P0.2 → P2.5
+  P1.6 → P2.2
+  P2.2, P2.3, P2.4, P2.5, P2.6 → P2.7
+
+Phase 3 Tasks (parallel with Phase 2, 4):
+  P1.5 → P3.1
+  P3.1 → P3.2, P3.3, P3.4, P3.9
+  P3.2, P3.4 → P3.5, P3.6, P3.7
+  P3.3 → P3.8
+  P3.1, P1.2 → P3.10
+  P3.5, P3.6, P3.7 → P3.11
+
+Phase 4 Tasks (parallel with Phase 2, 3):
+  P1.2 → P4.1
+  P4.1 → P4.2, P4.4, P4.6, P4.7, P4.8
+  P4.2 → P4.3
+  P4.4 → P4.5
+  P1.5, P4.6 → P4.9
+  P4.3, P4.5, P4.6, P4.7 → P4.10
+  P4.10, P1.2 → P4.11
+
+Phase 5 Tasks:
+  P3.2 → P5.1, P5.2
+  P4.10, P3.2 → P5.3
+  P3.7 → P5.4
+  P5.2, P5.4 → P5.5
+  P4.4 → P5.6
+  P5.1, P5.2, P5.3, P5.5, P5.6 → P5.7
+
+Phase 6 Tasks:
+  P5.7 → P6.1
+  P6.1 → P6.2, P6.3, P6.4, P6.5, P6.6
+  P1.5 → P6.6
+  P6.5 → P6.7
+  P6.7 → P6.8
+  P6.2, P6.3, P6.4, P6.5, P6.6, P6.7, P6.8 → P6.9
+```
+
+---
+
+## Success Criteria
+
+### Phase 0
+- [ ] All canonical repos on `main` branch
+- [ ] `git status --short` shows clean or only `.gitignore`d files
+- [ ] All repos can `git pull --rebase origin main` without conflicts
+
+### Phase 1
+- [ ] `infrastructure/process-compose.shared.yml` exists and starts postgres, NATS, Dragonfly
+- [ ] `port-registry.json` documents all canonical port assignments
+- [ ] Zero port conflicts detected across running services
+- [ ] All repos have `phenotype.service.json`
+
+### Phase 2
+- [ ] LOC reduced by ≥20% from baseline (measured by `tokei`)
+- [ ] Zero identified v1 code paths remain
+- [ ] No cross-repo duplication blocks >50 LOC (per `jscpd`)
+- [ ] All hand-rolled HTTP clients replaced with wrapped libraries
+
+### Phase 3
+- [ ] `phenotype-hub` repo exists at `repos/apps/hub`
+- [ ] Hub site live on port 9000
+- [ ] AgilePlus, heliosApp, TraceRTM load as MF remotes in Hub
+- [ ] Health polling shows live status for all services
+
+### Phase 4
+- [ ] Byteport starts with zero AWS API calls
+- [ ] LLM calls route through Bifrost → Ollama
+- [ ] Auth works via Casdoor (no WorkOS)
+- [ ] File upload/download works via SeaweedFS (no S3)
+
+### Phase 5
+- [ ] All apps expose Module Federation remotes
+- [ ] TraceRTM absorbed into AgilePlus as `/trace` module
+- [ ] Single sign-on works across Hub + AgilePlus + heliosApp + Byteport
+
+### Phase 6
+- [ ] All obsolete/duplicate directories archived or consolidated
+- [ ] Every active repo has CLAUDE.md, AGENTS.md, CI workflow
+- [ ] GitHub org: repos pinned, topics set, branch protection active
+- [ ] Canonical `repos/` matches target directory structure
+
+---
+
+## Appendix A: Key Library Versions (Bleeding-Edge)
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| Astro | 6.x | Hub portal framework |
+| `@module-federation/vite` | latest | MF runtime |
+| shadcn/ui | latest | Hub UI components |
+| Tailwind CSS | v4.x | Styling |
+| Casdoor | latest | Self-hosted auth |
+| SeaweedFS | 3.x | S3-compatible object storage |
+| Traefik | v3.x | Reverse proxy |
+| OpenFaaS | 0.x | Serverless functions |
+| `backon` | 1.x | Retry logic (Rust) |
+| `reqwest` | 0.12.x | HTTP client (Rust) |
+| process-compose | 1.x | Service orchestration |
+
+---
+
+## Appendix B: Environment Variables Template
+
+```bash
+# .env.phenotype (root-level, gitignored)
+# Shared by all services via process-compose env injection
+
+# Database
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=phenotype
+POSTGRES_USER=phenotype
+POSTGRES_PASSWORD=<generated>
+
+# NATS
+NATS_URL=nats://localhost:4222
+
+# Dragonfly/Redis
+REDIS_URL=redis://localhost:6379
+
+# Temporal
+TEMPORAL_HOST=localhost:7233
+
+# Ollama
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Bifrost
+BIFROST_BASE_URL=http://localhost:8080
+
+# Casdoor
+CASDOOR_ENDPOINT=http://localhost:8888
+CASDOOR_CLIENT_ID=<generated>
+CASDOOR_CLIENT_SECRET=<generated>
+CASDOOR_ORG=phenotype
+CASDOOR_APP=phenotype-platform
+
+# SeaweedFS
+SEAWEEDFS_S3_ENDPOINT=http://localhost:8333
+SEAWEEDFS_ACCESS_KEY=<generated>
+SEAWEEDFS_SECRET_KEY=<generated>
+```
+
+---
+
+## Appendix C: Process-Compose Shared Services (Full Config)
+
+See `/Users/kooshapari/CodeProjects/Phenotype/repos/infrastructure/process-compose.shared.yml` for the full configuration. Key design principles:
+
+1. **Idempotent start**: each process checks if already running before starting
+2. **Readiness probes**: hub and dependent services wait for probes before starting
+3. **Log aggregation**: all logs to `/tmp/phenotype-logs/<service>.log`
+4. **Graceful shutdown**: SIGTERM → 10s → SIGKILL
+5. **Restart policy**: `on_failure` with max 3 retries (not `always` — prevents runaway loops)
+
+---
+
+*Document generated: 2026-03-27*
+*Maintained by: Phenotype platform agents*
+*Next review: After Phase 0 completion*

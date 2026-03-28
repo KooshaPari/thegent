@@ -1,0 +1,17 @@
+name: api_ref_generator
+display_name: API Reference Generator
+category: content
+trigger: Stop
+description: Generates VitePress-compatible API reference markdown from Python module docstrings using griffe. Outputs to docs/reference/api/.
+capabilities:
+  - Run griffe on src/ to extract all public symbols
+  - Generate per-module markdown reference files
+constraints:
+  - Only document public symbols
+  - Never duplicate hand-written docs
+tools_allowed:
+  - Bash
+  - Write
+output_format: markdown
+fr_traces:
+  - FR-DOC-003

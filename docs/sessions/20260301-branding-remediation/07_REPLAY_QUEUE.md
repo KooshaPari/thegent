@@ -1,0 +1,62 @@
+# Replay Queue: heliosCLI -> helios-cli
+
+## Inputs
+
+- Source: `heliosCLI` `origin/main` @ `356fefc6f321ddf70134487090c3447e9e6a14e6`
+- Destination: `helios-cli` `origin/main` @ `48ef70b63762ed51356146f8181635f904627933`
+- Computation method: `git cherry -v dst-main src-main` with cherry-equivalence filtering, ordered oldest -> newest.
+
+## Queue (17 commits)
+
+1. `1a068c13682f92bf164155324f315476ae0a9436` | 2026-02-27 | fix(ci): use PR head SHA instead of HEAD for merge commit detection (#272)
+2. `0d5df29c4aae7c214b6f966adf5510d1508ccb81` | 2026-02-27 | docs: unify VitePress IA categories and index pipeline (#274)
+3. `41a38429e4def9156bcb73573cf77c54092ab5e6` | 2026-02-27 | Replay: release framework (phenotype config, gatekeeper, branding) (#275)
+4. `8ee05378ba8b817981442f9bb5215b6006a9c28d` | 2026-02-28 | docs+core: tui renderer optimization spec and related core updates (#279)
+5. `8b7996155d954f484faba6ca4eb2ff3a2b00157f` | 2026-02-28 | feat(cli): add standardized task surface wrapper (#280)
+6. `e0861c9f4be96462050adcfb4546f29069d0d138` | 2026-02-28 | feat(policy): reusable policy-gate composite action (#290)
+7. `16ddc56cda69c32480ea3249ecfd00c17f7471a2` | 2026-02-28 | ci: add automated alert-to-issue sync workflow (#292)
+8. `08e05968fba93107f8b067301be8427865d8c19c` | 2026-02-28 | docs: add upstream research for feature mining action plans (#293)
+9. `32b2e7d8e1821cfad8ddd9951cbbc4311edfeba9` | 2026-02-28 | chore: fix CodeRabbit config schema values (#297)
+10. `19cb2c9530eafc3563d74992d26f622c27ad2daf` | 2026-02-28 | docs(lane-l7): preserve local audit and greenfield artifacts (#288)
+11. `0bb570438c891af6cfcb8182b1b0ffe77567e91b` | 2026-02-28 | ci: pin phenotypeActions workflow refs to immutable SHA (#296)
+12. `c39527cd47b29fe6b5828c7cd892530f73f15fe7` | 2026-02-28 | docs(lane-l6): retain audit assets and reference docs (#287)
+13. `bf1c4edd586382813ed46f870a061194cca67b31` | 2026-02-28 | feat(lane-l3): realtime audio tui picker and snapshots (#286)
+14. `18e1c2626be2d8f69385c2bdeffced10b90cb679` | 2026-02-28 | feat(lane-l4): core runtime and turn context surface (#285)
+15. `a069934e85193156c348a37e021c885f11a5f3b6` | 2026-02-28 | feat(lane-l2): memory mode and state runtime (#284)
+16. `d690ec2a328814b7376b4a40535fb6bf8284f7d0` | 2026-02-28 | feat(lane-l1): realtime protocol and stream parser (#283)
+17. `356fefc6f321ddf70134487090c3447e9e6a14e6` | 2026-02-28 | feat(loader): animated ascii logo to HELIOS startup morph (#276)
+
+## Replay Commands
+
+```bash
+cd /Users/kooshapari/CodeProjects/Phenotype/repos/helios-cli
+git checkout -b replay/helioscli-main-20260301 origin/main
+
+git cherry-pick \
+  1a068c13682f92bf164155324f315476ae0a9436 \
+  0d5df29c4aae7c214b6f966adf5510d1508ccb81 \
+  41a38429e4def9156bcb73573cf77c54092ab5e6 \
+  8ee05378ba8b817981442f9bb5215b6006a9c28d \
+  8b7996155d954f484faba6ca4eb2ff3a2b00157f \
+  e0861c9f4be96462050adcfb4546f29069d0d138 \
+  16ddc56cda69c32480ea3249ecfd00c17f7471a2 \
+  08e05968fba93107f8b067301be8427865d8c19c \
+  32b2e7d8e1821cfad8ddd9951cbbc4311edfeba9 \
+  19cb2c9530eafc3563d74992d26f622c27ad2daf \
+  0bb570438c891af6cfcb8182b1b0ffe77567e91b \
+  c39527cd47b29fe6b5828c7cd892530f73f15fe7 \
+  bf1c4edd586382813ed46f870a061194cca67b31 \
+  18e1c2626be2d8f69385c2bdeffced10b90cb679 \
+  a069934e85193156c348a37e021c885f11a5f3b6 \
+  d690ec2a328814b7376b4a40535fb6bf8284f7d0 \
+  356fefc6f321ddf70134487090c3447e9e6a14e6
+```
+
+## Conflict Risk Heuristic
+
+- High: `codex-rs`, `docs`, `.github`
+- Low: `scripts`, `AGENTS.md`
+
+## Environment Limitation
+
+- GitHub DNS fetch was unavailable during computation; queue is based on local `origin/main` refs.

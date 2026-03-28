@@ -1,0 +1,73 @@
+# Rust CLI Value Assessment: `libs.tech/rust/cli-libraries` (2026)
+
+Generated: 2026-02-26  
+Scope: Assessment of entries listed on the Rust CLI page and mapped to five domains: operations, search, networking, developer tooling, and UX.
+
+## Scoring
+- **Operational value**: expected production impact for teams using the crate in CLI-heavy workflows
+- **Operational risk**: maintenance + correctness + security risk from adoption
+- **Fit**: direct applicability to operational tooling (high/medium/low)
+
+## Entry assessment (all 15 entries currently shown on page)
+
+| Library | Primary domain | Operational value | Operational risk | Fit | Rationale |
+|---|---|---:|---:|---|---|
+| [`atuinsh/atuin`](https://github.com/atuinsh/atuin) | UX / Ops | 5 | 3 | High | Centralized shell history, sync, and search improves triage and operator speed. High value in distributed ops environments, but it collects command metadata that must be governed for secrets and retention. |
+| [`ratatui/ratatui`](https://github.com/ratatui/ratatui) | Developer tooling / UX | 4 | 2 | Medium-High | Strong primitive library for building polished TUIs that improves operator and developer user experience for terminal tools. Low risk as a UI library, but quality depends on application integration. |
+| [`clap-rs/clap`](https://github.com/clap-rs/clap) | Developer tooling | 5 | 1 | High | Most mature Rust CLI parser with strong ecosystem adoption. Low-friction integration and low runtime risk for argument handling in internal CLIs. |
+| [`bodo-run/yek`](https://github.com/bodo-run/yek) | Developer tooling | 3 | 2 | Medium | Useful for LLM/codebase ingestion workflows; high operational value in AI-assisted operations, but the niche data-serialization focus limits broad fit. |
+| [`skim-rs/skim`](https://github.com/skim-rs/skim) | Search | 4 | 2 | High | High-frequency interaction quality tool for command/file navigation, reducing operator time-to-command. Low complexity and active development improve reliability. |
+| [`ynqa/jnv`](https://github.com/ynqa/jnv) | Search / UX | 3 | 2 | Medium-High | Good for log/JSON-heavy operational workflows. Helps reduce parsing overhead and debugging time; scope is focused to structured text. |
+| [`nukesor/pueue`](https://github.com/nukesor/pueue) | Operations | 4 | 3 | Medium-High | Persistent job queue for shell commands is directly aligned with operator automation and asynchronous execution. Some operational risk from long-running process management semantics. |
+| [`ducaale/xh`](https://github.com/ducaale/xh) | Networking | 4 | 2 | High | A faster HTTP CLI for service probing and scripting; strong fit for incident automation, health checks, and API operations. |
+| [`svenstaro/miniserve`](https://github.com/svenstaro/miniserve) | Networking / Ops | 3 | 3 | Medium | Easy temporary file serving helps operations and debugging, but introduces explicit network exposure if misused. Needs network policy controls. |
+| [`pemistahl/grex`](https://github.com/pemistahl/grex) | Developer tooling | 3 | 1 | Medium | Strong regex productivity gain for engineers; lower direct operational criticality but safe utility tool. |
+| [`vi/websocat`](https://github.com/vi/websocat) | Networking | 4 | 4 | Medium | Valuable for manual/automated WebSocket validation and connectivity debugging; security risk higher due low-level protocol testing behavior in sensitive environments. |
+| [`phiresky/ripgrep-all`](https://github.com/phiresky/ripgrep-all) | Search | 5 | 3 | High | Broad search across binary/doc formats is powerful for incident and compliance investigations. Risk is moderate due dependency breadth and heavier execution profile on large archives. |
+| [`y2z/monolith`](https://github.com/y2z/monolith) | Search / Ops | 3 | 2 | Medium | Useful for web content archiving and reproducibility workflows; less core for day-to-day operations than command/search infrastructure. |
+| [`bootandy/dust`](https://github.com/bootandy/dust) | Ops | 3 | 2 | High | Operationally useful for storage triage, capacity investigation, and cleanup planning with better UX than classic `du`. |
+| [`imsnif/bandwhich`](https://github.com/imsnif/bandwhich) | Networking | 4 | 3 | Medium | Real-time network utilization by process is strong for incident response. Elevated privileges/network visibility requirements raise deployment and platform risk. |
+
+## By-domain notes
+
+### Ops
+- Best picks: `atuin`, `pueue`, `dust`, plus `miniserve` under guarded use.
+- `atuin` and `pueue` directly increase operational throughput; both should receive compliance review if command streams or queue files are persisted.
+
+### Search
+- Best picks: `skim`, `ripgrep-all`, `jnv`.
+- `skim` offers high-frequency usability gains; `ripgrep-all` is high-value but heavier and should be constrained to trusted directories.
+
+### Networking
+- Best picks: `xh`, `websocat`, `bandwhich`, `miniserve`.
+- Treat `websocat` and `bandwhich` as privileged diagnostics tools, not default-installed for all users.
+
+### Developer Tooling
+- Core stack: `clap`, `ratatui`, `grex`, and optionally `yek` for LLM workflows.
+- This domain has the strongest long-term ROI because tools compound across many repos/teams.
+
+### UX
+- `ratatui` and `skim` materially improve operator and developer ergonomics.
+- `atuin` improves command discoverability for teams but may need strict retention and redaction policies.
+
+## Source quality signals used (as observed on libs.tech)
+- All repositories were reviewed from the `libs.tech` Rust CLI list with last-commit recency, star counts, and short description context.
+- GitHub links are included per entry for each linked project.
+
+## Sources
+- https://libs.tech/rust/cli-libraries
+- https://github.com/atuinsh/atuin
+- https://github.com/ratatui/ratatui
+- https://github.com/clap-rs/clap
+- https://github.com/bodo-run/yek
+- https://github.com/skim-rs/skim
+- https://github.com/ynqa/jnv
+- https://github.com/nukesor/pueue
+- https://github.com/ducaale/xh
+- https://github.com/svenstaro/miniserve
+- https://github.com/pemistahl/grex
+- https://github.com/vi/websocat
+- https://github.com/phiresky/ripgrep-all
+- https://github.com/y2z/monolith
+- https://github.com/bootandy/dust
+- https://github.com/imsnif/bandwhich

@@ -1,0 +1,260 @@
+# HeliosCLI Session UX Implementation Plan (from Lane F)
+
+## Phase Stack
+1. Add `Shift+Tab` scope cycle in resume picker (`Project -> All -> Favorites`).
+2. Extend thread list protocol with scope/search mode fields.
+3. Build BM25 index over turn text (local codex home index store).
+4. Add optional RAG rerank path behind explicit mode toggle.
+5. Add cheapest-model labeling/summarization worker with budget controls.
+
+## Acceptance Criteria
+- Scope cycle works without breaking existing `Tab` sort behavior.
+- `Project` mode filters by cwd/workspace roots.
+- BM25 finds sessions by turn-content, not just title.
+- RAG mode is optional and cost-gated.
+- Labels/summaries are persisted and visible in picker list.
+
+## Lane F Research Excerpt
+
+### Research Doc
+# Lane F Research v2: heliosCLI resume/thread search surfaces
+
+## Scope completed
+1. Inspected thread list protocol and resume picker scope/search surfaces.
+2. Designed `Shift+Tab` scope cycle (`Project -> All -> Favorites`).
+3. Designed BM25-first search with optional RAG rerank over chat turns.
+4. Designed cheapest-model labeling/summarization pipeline.
+
+## Current behavior (as implemented)
+
+### Thread list protocol (`thread/list`)
+- `ThreadListParams` supports: `cursor`, `limit`, `sortKey`, `modelProviders`, `sourceKinds`, `archived`, `cwd`, `searchTerm`.
+- `searchTerm` is substring match on thread `title` only.
+- State DB filtering is currently `instr(title, ?) > 0` (case-sensitive behavior in SQLite default collation).
+- `sourceKinds` omitted/empty defaults to interactive sources (`cli`, `vscode`) via `compute_source_filters`.
+- `modelProviders` omitted currently resolves to current configured provider in app-server path.
+
+### Resume picker scope/search surfaces
+- Resume/fork picker currently has one scope toggle only: `--all`.
+- Without `--all`, picker applies a local cwd equality filter (`Project`-like behavior).
+- Search in picker is client-side over loaded rows (`preview` and cached `thread_name`, case-insensitive).
+- Picker does not pass `searchTerm` to backend (`RolloutRecorder::list_threads(..., search_term=None)`).
+- Picker progressively scans pages until a match appears or scan cap is reached.
+- `Tab` toggles sort key (`CreatedAt`/`UpdatedAt`).
+- `Shift+Tab` / `BackTab` is currently unused in picker.
+- No favorites concept exists in current thread schema/protocol/picker.
+
+### Storage/index constraints relevant to search
+- `threads` table stores metadata (`title`, `first_user_message`, `cwd`, etc.) but no turn-text search index.
+- No `fts5` virtual table exists for thread/turn retrieval.
+- Existing memory pipeline already does cheap model summarization and stores stage-1 outputs (`raw_memory`, `rollout_summary`) with job leasing and retries.
+
+## Design: Shift+Tab scope cycle (`Project -> All -> Favorites`)
+
+## UX contract
+- Keep `Tab` behavior unchanged: sort toggle.
+- Add `Shift+Tab` (`KeyCode::BackTab`) to cycle scope:
+  - `Project`: current cwd only (default resume behavior today).
+  - `All`: any cwd.
+  - `Favorites`: only favorited threads (cross-cwd).
+- Header adds `Scope: <Project|All|Favorites>` near `Sort:`.
+- Hint line adds `Shift+Tab to cycle scope`.
+
+## Behavioral details
+- Scope change triggers full reload (same as sort toggle): reset pagination, clear loaded rows, fetch from page 1.
+- Query text remains (do not erase search intent), but results recompute under new scope.
+- `Project` maps to `cwd=<current_dir>`.
+- `All` maps to no cwd filter.
+- `Favorites` maps to `favoritesOnly=true` (new backend field).
+
+## Failure/edge handling
+- If cwd unavailable, `Project` degrades to `All` with visible label `(cwd unavailable)`.
+- If no favorites yet, show empty-state guidance: `No favorites yet. Press <favorite key> in picker.`
+
+## Design: BM25-first with optional RAG over chat turns
+
+## Retrieval pipeline
+1. **Candidate recall (cheap, deterministic)**
+   - Query SQLite FTS5 index over normalized turn text + thread title/name.
+   - Rank with BM25 only.
+   - Return top `N` candidates quickly.
+2. **Optional semantic rerank (feature-flagged)**
+   - If enabled, embed query + top BM25 snippets and rerank semantically.
+   - Use RAG only on BM25 candidate set (never full-corpus scan).
+3. **Final merge/scoring**
+   - Blend lexical + semantic score with configurable weights.
+   - Keep deterministic fallback to BM25 when semantic path fails.
+
+## Why BM25-first
+- Lowest cost and fastest startup.
+- Works offline with current SQLite path.
+- Deterministic, easy to debug, no model/network dependency for baseline.
+
+## Turn indexing model
+- Add materialized per-turn search docs:
+  - `thread_id`, `turn_id`, `role`, `text`, `created_at`, `updated_at`.
+- Add FTS5 virtual table referencing docs for BM25.
+- Incremental index updates on new turns and rollback/fork mutations.
+
+## Optional RAG mode
+- Triggered by explicit request (`search.mode=bm25_rag`) or config default.
+- Uses a cheap embedding model and only reranks top lexical candidates.
+- Never blocks base results: lexical response returns even if rerank times out.
+
+## Design: cheapest-model labeling/summarization pipeline
+
+## Goal
+Generate and keep fresh thread labels/snippets for picker and retrieval without expensive model usage.
+
+## Proposed pipeline
+1. Reuse existing job/lease pattern from memories phase-1.
+2. New per-thread labeling job (idle-thread gated, bounded startup batch).
+3. Default model: cheapest configured small model (align with `gpt-5.1-codex-mini` style defaults).
+4. Input: thread metadata + bounded recent turns (token-capped).
+5. Output JSON:
+   - `label` (short title)
+   - `summary_1l` (single-line)
+   - `keywords[]`
+   - `salient_turn_snippets[]`
+   - optional `favorite_suggestion_score` (advisory only)
+6. Persist with `source_updated_at` watermark to avoid recomputing unchanged threads.
+
+## Operational controls
+- Concurrency cap (small, e.g., 4-8).
+- Retry/backoff via existing jobs table semantics.
+- Hard token/input cap per thread.
+- Secret redaction before persistence (same pattern as memory pipeline).
+
+## Expected outcome
+- Better picker relevance without expensive online inference.
+- Search snippets available immediately for BM25 results.
+- Clear upgrade path to optional semantic rerank.
+
+## Cross-Project Reuse Opportunities
+- Reuse `jobs` lease/retry/watermark machinery from memories pipelines instead of inventing new scheduler logic.
+- Reuse stage-style model execution wrappers (token accounting, redaction, structured JSON output checks).
+- Reuse in other Phenotype CLIs that need local conversation history search and low-cost labeling.
+
+
+### API Delta Doc
+# Lane F API Delta v2: thread scope/search + favorites + labeling
+
+## Objectives
+- Add first-class scope control for resume picker (`Project/All/Favorites`).
+- Add BM25-first turn-aware search with optional RAG rerank.
+- Add minimal favorites primitives.
+- Add low-cost labeling metadata for fast picker/search UX.
+
+## 1) `thread/list` request delta (additive)
+
+## New/updated params
+- `scope?: "project" | "all" | "favorites"`
+  - `project` => cwd constrained (explicitly provided or inferred server-side from request context)
+  - `all` => no cwd filter
+  - `favorites` => favorited threads only
+- `favoritesOnly?: boolean` (back-compat alias; if true, equivalent to `scope="favorites"`)
+- `search?: {
+    query: string,
+    mode?: "title_substring" | "bm25" | "bm25_rag",
+    fields?: Array<"title" | "thread_name" | "turns" | "cwd" | "git_branch">,
+    limitCandidates?: number,
+    rerank?: boolean
+  }`
+- Keep existing `searchTerm` for compatibility; map to `search.query` + `mode=title_substring`.
+
+## Semantics precedence
+1. If `search` present, use it.
+2. Else if `searchTerm` present, legacy behavior.
+3. Else no search filtering.
+
+## 2) `thread/list` response delta (additive)
+
+## Thread-level fields
+- `favorite?: boolean`
+- `searchMatch?: {
+    score: number,
+    lexicalScore?: number,
+    semanticScore?: number,
+    matchedFields: string[],
+    snippets?: Array<{ turnId?: string, text: string }>
+  }`
+- `label?: string` (cheap-model title)
+- `summary1l?: string`
+- `keywords?: string[]`
+
+## Response metadata
+- `searchInfo?: {
+    mode: "title_substring" | "bm25" | "bm25_rag",
+    lexicalOnly: boolean,
+    rerankApplied: boolean,
+    scanned: number,
+    candidates: number
+  }`
+
+## 3) Favorites API additions
+
+## Option A (minimal explicit methods)
+- `thread/favorite/set { threadId }`
+- `thread/favorite/unset { threadId }`
+
+## Option B (single mutation)
+- `thread/favorite/update { threadId, favorite: boolean }`
+
+Recommended: Option B.
+
+## Storage change
+- Add `threads.favorite INTEGER NOT NULL DEFAULT 0`.
+- Index: `idx_threads_favorite_updated_at(favorite, updated_at DESC, id DESC)`.
+
+## 4) Search index API/runtime additions
+
+## Internal tables
+- `thread_turn_docs(...)` (materialized turn text docs)
+- `thread_turn_fts` (FTS5 virtual table)
+
+## Optional admin/runtime method
+- `thread/search/reindex { threadId?: string }` for repair/backfill.
+
+## Query execution plan
+- `title_substring`: current cheap legacy path.
+- `bm25`: FTS5 + BM25 ranking only.
+- `bm25_rag`: BM25 candidate recall + optional semantic rerank.
+
+## 5) Labeling/summarization metadata pipeline
+
+## Config additions
+- `memories.thread_label_model?: string` (default cheapest small model)
+- `memories.thread_label_max_threads_per_startup?: number`
+- `memories.thread_label_min_idle_hours?: number`
+
+## Persistence additions
+- `thread_labels` table:
+  - `thread_id PK`
+  - `source_updated_at`
+  - `label`
+  - `summary_1l`
+  - `keywords_json`
+  - `snippets_json`
+  - `model`
+  - `updated_at`
+
+## Update strategy
+- Recompute only when `threads.updated_at` advances.
+- Join labels into `thread/list` response when available.
+
+## 6) Backward compatibility and rollout
+
+## Compatibility
+- Preserve `searchTerm` behavior initially.
+- All new fields optional/additive.
+
+## Rollout phases
+1. Add favorites column + scope plumbing (`project/all/favorites`) with existing substring search.
+2. Add BM25 tables and `search.mode=bm25`.
+3. Add optional rerank path (`bm25_rag`) behind feature flag.
+4. Add cheapest-model labeling table + background jobs; join labels into list.
+
+## 7) Open implementation notes
+- Current README says empty/unset `modelProviders` includes all providers, but app-server currently defaults omitted providers to current provider; align docs+runtime in the same rollout.
+- Current `searchTerm` behavior is title-only; BM25 path should include turn text and thread names for expected picker search relevance.
+

@@ -1,0 +1,18 @@
+name: property_tester
+display_name: Property-Based Tester
+category: testers
+trigger: PostToolUse:Write
+description: Generates Hypothesis property-based tests for any new function. Finds edge cases humans miss by generating hundreds of random inputs.
+capabilities:
+  - Generate @given/@settings tests from function signatures
+  - Detect boundary values, overflow, empty collections, None inputs
+constraints:
+  - Never modify source files
+  - Only write to tests/ directory
+tools_allowed:
+  - Write
+  - Read
+  - Bash
+output_format: pytest_tests
+fr_traces:
+  - FR-QA-001

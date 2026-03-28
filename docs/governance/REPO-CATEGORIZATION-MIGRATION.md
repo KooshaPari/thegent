@@ -1,0 +1,471 @@
+# Repository Categorization Migration Plan
+
+**Status:** Draft
+**Created:** 2026-03-26
+**Reference:** ADR-001-REPOSITORY-ORGANIZATION.md
+
+## Executive Summary
+
+This document outlines a comprehensive migration plan to reorganize the `repos/` directory according to ADR-001's categorized namespace structure. Our audit identified **~100+ repositories** requiring reorganization, categorized as follows:
+
+| Category | Count | Status |
+|----------|-------|--------|
+| Legacy `-wtrees` violations | 7 | Immediate action required |
+| Apps needing categorization | 15+ | High priority |
+| Libraries needing categorization | 12+ | Medium priority |
+| Infrastructure repos | 5+ | Medium priority |
+| Governance/Planning repos | 3+ | Low priority |
+| Hexagonal architecture templates | 9 | Low priority |
+
+---
+
+## 1. Legacy `-wtrees` Violations (CRITICAL)
+
+Per ADR-001 Section 4 (Worktree Governance), all legacy `*-wtrees` folders must be migrated to `worktrees/<project>/`.
+
+### Violations Identified
+
+| Current Location | Target Location | Priority |
+|-----------------|-----------------|----------|
+| `AgilePlus-wtrees/` | `worktrees/AgilePlus/` | HIGH |
+| `bifrost-extensions-wtrees/` | `worktrees/bifrost-extensions/` | HIGH |
+| `civ-wtrees/` | `worktrees/civ/` | HIGH |
+| `heliosApp-wtrees/` | `worktrees/heliosApp/` | HIGH |
+| `phenodocs-wtrees/` | `worktrees/phenodocs/` | HIGH |
+| `phenotype-go-kit-wtrees/` | `worktrees/phenotype-go-kit/` | HIGH |
+| `trace-wtrees/` | `worktrees/trace/` | HIGH |
+
+### Migration Steps
+
+```bash
+# 1. Verify worktrees parent directory exists
+ls -la worktrees/
+
+# 2. For each violation, execute:
+#    a. Clone canonical repo if not present
+#    b. Create worktree with proper branch naming
+#    c. Remove legacy -wtrees folder
+
+# Example for AgilePlus:
+cd worktrees
+git worktree add AggressivePlus/main ../AgilePlus
+git worktree remove ../AgilePlus-wtrees
+
+# 3. Update any references in CI/CD or documentation
+# 4. Commit changes
+```
+
+---
+
+## 2. Repositories Needing Re-categorization
+
+### 2.1 CLI Applications → `apps/cli/`
+
+| Current Location | Proposed Location | Purpose |
+|-----------------|-------------------|---------|
+| `heliosCLI/` | `apps/cli/helios` | CLI application |
+| `phench/` | `apps/cli/phench` | CLI tool |
+| `phenotype-cli-core/` | `apps/cli/phenotype-cli-core` | CLI framework |
+| `phenotype-cli-extensions/` | `apps/cli/phenotype-cli-extensions` | CLI extensions |
+| `trash-cli/` | `apps/cli/trash` | CLI tool |
+
+### 2.2 Web/Desktop Applications → `apps/web/` or `apps/desktop/`
+
+| Current Location | Proposed Location | Purpose |
+|-----------------|-------------------|---------|
+| `heliosApp/` | `apps/web/helios` | Web application |
+| `phenodocs/` | `apps/web/phenodocs` | Documentation app |
+| `phenotype-docs-engine/` | `apps/web/phenotype-docs-engine` | Docs engine |
+
+### 2.3 Microservices → `apps/services/`
+
+| Current Location | Proposed Location | Purpose |
+|-----------------|-------------------|---------|
+| `phenotype-research-engine/` | `apps/services/phenotype-research` | Research service |
+| `phenotype-task-engine/` | `apps/services/phenotype-task` | Task service |
+| `phenotype-design/` | `apps/services/phenotype-design` | Design service |
+
+### 2.4 Libraries → `libs/`
+
+| Current Location | Proposed Location | Type | Language |
+|-----------------|-------------------|------|----------|
+| `agentops-policy-federation/` | `libs/go/agentops-policy-federation` | Library | Go |
+| `bloom/` | `libs/typescript/bloom` | Library | TypeScript |
+| `craft/` | `libs/typescript/craft` | Library | TypeScript |
+| `flux/` | `libs/typescript/flux` | Library | TypeScript |
+| `guard/` | `libs/rust/guard` | Library | Rust |
+| `model/` | `libs/typescript/model` | Library | TypeScript |
+| `portkey/` | `libs/python/portkey` | Library | Python |
+| `prism/` | `libs/typescript/prism` | Library | TypeScript |
+| `quill/` | `libs/typescript/quill` | Library | TypeScript |
+| `relay/` | `libs/typescript/relay` | Library | TypeScript |
+| `seed/` | `libs/typescript/seed` | Library | TypeScript |
+| `ts-hex/` | `libs/typescript/ts-hex` | Library | TypeScript |
+| `kits-workspace/` | `libs/rust/kits` | Workspace | Rust |
+| `phenotype-auth-ts/` | `libs/typescript/phenotype-auth` | Library | TypeScript |
+| `phenotype-cipher/` | `libs/rust/phenotype-cipher` | Library | Rust |
+| `phenotype-logger/` | `libs/rust/phenotype-logger` | Library | Rust |
+| `phenotype-metrics/` | `libs/rust/phenotype-metrics` | Library | Rust |
+| `phenotype-tracing/` | `libs/rust/phenotype-tracing` | Library | Rust |
+| `phenotype-colab-extensions/` | `libs/python/phenotype-colab` | Library | Python |
+| `phenotype-config-ts/` | `libs/typescript/phenotype-config` | Library | TypeScript |
+| `phenotype-dep-guard/` | `libs/rust/phenotype-dep-guard` | Library | Rust |
+| `phenotype-middleware-py/` | `libs/python/phenotype-middleware` | Library | Python |
+| `phenotype-shared/` | `libs/rust/phenotype-shared` | Library | Rust |
+| `phenotype-xdd-lib/` | `libs/rust/phenotype-xdd-lib` | Library | Rust |
+
+### 2.5 Infrastructure → `infrastructure/`
+
+| Current Location | Proposed Location | Purpose |
+|-----------------|-------------------|---------|
+| `api-gateway/` | `infrastructure/api-gateway` | API Gateway |
+| `agent-devops-setups/` | `infrastructure/agent-devops` | DevOps configs |
+| `phenotype-infrakit/` | `infrastructure/phenotype-infrakit` | Infrastructure kit |
+| `phenotype-nexus/` | `infrastructure/phenotype-nexus` | Nexus infrastructure |
+
+### 2.6 Developer Tools → `tooling/`
+
+| Current Location | Proposed Location | Purpose |
+|-----------------|-------------------|---------|
+| `phenotype-skills-clone/` | `tooling/phenotype-skills-clone` | Skills cloning |
+| `phenotype-xdd/` | `tooling/phenotype-xdd` | xDD tooling |
+| `xdtest/` | `tooling/xdtest` | Testing tool |
+| `profiler/` | `tooling/profiler` | Profiling tool |
+
+### 2.7 Governance → `governance/`
+
+| Current Location | Proposed Location | Purpose |
+|-----------------|-------------------|---------|
+| `plans/` | `governance/plans` | Project plans |
+| `simpJobs/` | `governance/simpJobs` | Simple jobs |
+
+### 2.8 Templates → `templates/`
+
+| Current Location | Proposed Location |
+|-----------------|-------------------|
+| `template-commons/` | Already correct |
+| `template-domain-service-api/` | Already correct |
+| `template-domain-webapp/` | Already correct |
+| `template-lang-elixir-hex/` | Already correct |
+| `template-lang-go/` | Already correct |
+| `template-lang-kotlin/` | Already correct |
+| `template-lang-mojo/` | Already correct |
+| `template-lang-python/` | Already correct |
+| `template-lang-rust/` | Already correct |
+| `template-lang-swift/` | Already correct |
+| `template-lang-typescript/` | Already correct |
+| `template-lang-zig/` | Already correct |
+| `template-program-ops/` | Already correct |
+
+---
+
+## 3. Repositories with Unclear Purpose
+
+The following repositories require further investigation to determine appropriate categorization:
+
+| Repository | Notes |
+|------------|-------|
+| `midframe/` | Rust project, no README - needs inspection |
+| `patches/` | Contains patches - may belong in governance/ |
+| `src/` | Top-level source directory - likely obsolete |
+| `tests/` | Test directory - may belong in infrastructure/ or governance/ |
+| `adapters/` | Hexagonal adapter skeleton - needs review |
+| `application/` | Hexagonal application layer skeleton - needs review |
+| `domain/` | Hexagonal domain layer skeleton - needs review |
+| `ports/` | Hexagonal ports skeleton - needs review |
+
+### Recommended Actions
+
+```bash
+# Inspect unclear repos
+ls -la midframe/
+cat midframe/Cargo.toml
+
+ls -la patches/
+cat patches/README.md
+
+# For each, determine:
+# 1. Is it an active project or deprecated?
+# 2. What is its primary purpose?
+# 3. Which category does it belong in?
+```
+
+---
+
+## 4. Duplicate Structure Analysis
+
+The following template repositories exist in BOTH locations - top-level and `libs/`:
+
+| Top-Level | In libs/ |
+|-----------|----------|
+| `hexagon-elixir/` | - |
+| `hexagon-java/` | - |
+| `hexagon-python/` | `libs/hexagonal-py/` |
+| `hexagon-rs/` | `libs/hexagonal-rs/` |
+| `hexagon-rust/` | `libs/hexagonal-rs/` (duplicate) |
+| `hexagon-ts/` | `libs/hexagonal-ts/` |
+| `hexkit/` | `libs/hexagonal-*` (overlap) |
+| `pyhex/` | `libs/python/pyhex` (possible) |
+
+### Recommended Actions
+
+| Top-Level | Action |
+|-----------|--------|
+| `hexagon-rust/` | Archive/remove - duplicate of `libs/hexagonal-rs/` |
+| `hexagon-elixir/` | Move to `templates/` |
+| `hexagon-java/` | Move to `templates/` |
+| `hexkit/` | Merge into `libs/` hexagonal collection |
+| `pyhex/` | Move to `libs/python/` |
+
+---
+
+## 5. Implementation Phases
+
+### Phase 1: Critical - Legacy Worktrees (Week 1)
+
+```bash
+# Script to migrate all -wtrees directories
+#!/bin/bash
+WORKTREES_VIOLATIONS=(
+  "AgilePlus-wtrees:worktrees/AgilePlus"
+  "bifrost-extensions-wtrees:worktrees/bifrost-extensions"
+  "civ-wtrees:worktrees/civ"
+  "heliosApp-wtrees:worktrees/heliosApp"
+  "phenodocs-wtrees:worktrees/phenodocs"
+  "phenotype-go-kit-wtrees:worktrees/phenotype-go-kit"
+  "trace-wtrees:worktrees/trace"
+)
+
+for entry in "${WORKTREES_VIOLATIONS[@]}"; do
+  IFS=':' read -r source target <<< "$entry"
+  if [ -d "$source" ]; then
+    echo "Migrating: $source -> $target"
+    mkdir -p "$target"
+    # Clone/create worktree logic here
+    # rm -rf "$source"
+  fi
+done
+```
+
+### Phase 2: High Priority - CLI Apps (Week 2)
+
+```bash
+# Move CLI applications to apps/cli/
+mv heliosCLI/ apps/cli/helios
+mv phench/ apps/cli/phench
+mv phenotype-cli-core/ apps/cli/phenotype-cli-core
+mv phenotype-cli-extensions/ apps/cli/phenotype-cli-extensions
+mv trash-cli/ apps/cli/trash
+```
+
+### Phase 3: High Priority - Web Apps (Week 3)
+
+```bash
+# Move web applications to apps/web/
+mv heliosApp/ apps/web/helios
+mv phenodocs/ apps/web/phenodocs
+mv phenotype-docs-engine/ apps/web/phenotype-docs-engine
+```
+
+### Phase 4: Medium Priority - Libraries (Week 4-6)
+
+```bash
+# Organize libraries by language
+# TypeScript
+mv bloom/ libs/typescript/bloom
+mv craft/ libs/typescript/craft
+mv flux/ libs/typescript/flux
+mv model/ libs/typescript/model
+mv prism/ libs/typescript/prism
+mv quill/ libs/typescript/quill
+mv relay/ libs/typescript/relay
+mv seed/ libs/typescript/seed
+mv ts-hex/ libs/typescript/ts-hex
+
+# Rust
+mv guard/ libs/rust/guard
+mv kits-workspace/ libs/rust/kits
+
+# Python
+mv portkey/ libs/python/portkey
+
+# Go
+mv agentops-policy-federation/ libs/go/agentops-policy-federation
+```
+
+### Phase 5: Medium Priority - Infrastructure (Week 6-8)
+
+```bash
+mv api-gateway/ infrastructure/api-gateway
+mv agent-devops-setups/ infrastructure/agent-devops
+mv phenotype-infrakit/ infrastructure/phenotype-infrakit
+mv phenotype-nexus/ infrastructure/phenotype-nexus
+```
+
+### Phase 6: Low Priority - Governance & Tooling (Week 8-10)
+
+```bash
+# Governance
+mv plans/ governance/plans
+mv simpJobs/ governance/simpJobs
+
+# Tooling
+mv phenotype-skills-clone/ tooling/phenotype-skills-clone
+mv phenotype-xdd/ tooling/phenotype-xdd
+mv xdtest/ tooling/xdtest
+mv profiler/ tooling/profiler
+```
+
+### Phase 7: Cleanup - Duplicates & Unclear (Week 10-12)
+
+```bash
+# Remove duplicates
+rm -rf hexagon-rust/  # duplicate of libs/hexagonal-rs
+
+# Archive unclear repos
+mv midframe/ .archive/midframe-pending-review/
+mv patches/ .archive/patches-pending-review/
+
+# Consolidate hexagon templates
+mv hexagon-elixir/ templates/lang-elixir-hex/
+mv hexagon-java/ templates/lang-java-hex/
+```
+
+---
+
+## 6. Verification Checklist
+
+After migration, verify:
+
+```bash
+# 1. No -wtrees directories remain
+find . -maxdepth 1 -name "*-wtrees" -type d
+
+# 2. All repos are in valid categories
+for dir in apps cli services web desktop libs infrastructure governance tooling templates; do
+  [ -d "$dir" ] && echo "✓ $dir exists"
+done
+
+# 3. No orphaned top-level repos
+# (Repos that don't fit any category)
+```
+
+---
+
+## 7. Git History Preservation
+
+When moving repositories, preserve git history:
+
+```bash
+# For each move:
+git mv old-location new-location
+git commit -m "chore: migrate to ADR-001 category structure"
+git push
+```
+
+For cross-filesystem moves:
+```bash
+# Clone with history
+git clone --bare old-repo.git
+cd old-repo.git
+git push --mirror new-location.git
+```
+
+---
+
+## 8. Dependencies Update
+
+After migration, update all references:
+
+```bash
+# Update Cargo.toml references
+sed -i 's|heliosCLI/|apps/cli/helios/|g' */Cargo.toml
+
+# Update package.json references
+sed -i 's|"bloom"|"libs/typescript/bloom"|g' */package.json
+
+# Update import statements
+sed -i 's|from "bloom"|from "@phenotype/bloom"|g' */src/**/*.ts
+
+# Update documentation links
+sed -i 's|heliosCLI|apps/cli/helios|g' docs/**/*.md
+```
+
+---
+
+## 9. Rollback Plan
+
+If issues arise:
+
+```bash
+# Using git reflog
+git reflog
+git reset --hard HEAD@{N}  # N = commits back
+
+# Or using git stash
+git stash
+# After fixing issues:
+git stash pop
+```
+
+---
+
+## 10. Communication Plan
+
+- [ ] Announce migration timeline in team channels
+- [ ] Create migration status dashboard
+- [ ] Update onboarding documentation
+- [ ] Update CI/CD configurations
+- [ ] Update any external documentation references
+
+---
+
+## Appendix A: Current State Summary
+
+### Correctly Placed (No Action Needed)
+
+| Category | Repositories |
+|----------|--------------|
+| `apps/` | Placeholder directories (cli/, web/, services/) |
+| `libs/` | 31 libraries (auth-ts, cache-adapter, cipher, etc.) |
+| `infrastructure/` | api-gateway, ansible, kubernetes, service-mesh, terraform |
+| `governance/` | adrs, processes, standards |
+| `templates/` | 13 template repositories |
+
+### Needs Migration
+
+| Category | Count |
+|----------|-------|
+| CLI Apps | 5 |
+| Web Apps | 3 |
+| Services | 3 |
+| Libraries | 24 |
+| Infrastructure | 4 |
+| Governance | 2 |
+| Tooling | 4 |
+| Archives/Review | 8 |
+
+---
+
+## Appendix B: Naming Convention Summary
+
+| Category | Prefix | Example |
+|----------|--------|---------|
+| apps/cli | (none) | `apps/cli/helios` |
+| apps/web | (none) | `apps/web/heliosApp` |
+| apps/services | (none) | `apps/services/research` |
+| libs/rust | (none) | `libs/rust/guard` |
+| libs/typescript | (none) | `libs/typescript/bloom` |
+| libs/python | (none) | `libs/python/portkey` |
+| libs/go | (none) | `libs/go/agentops` |
+| infrastructure | (none) | `infrastructure/api-gateway` |
+| tooling | (none) | `tooling/profiler` |
+| governance | (none) | `governance/plans` |
+
+---
+
+## References
+
+- [ADR-001: Repository Organization](./ADR-001-REPOSITORY-ORGANIZATION.md)
+- [ADR-002: Package Classification Framework](../adrs/0002-package-classification-framework.md)
+- [ADR-0005: Top-Level Directory Structure](../adrs/0005-top-level-directory-structure.md)

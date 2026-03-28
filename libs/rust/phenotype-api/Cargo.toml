@@ -1,0 +1,28 @@
+[package]
+name = "phenotype-api"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype HTTP API library following hexagonal architecture"
+readme = "README.md"
+license = "MIT"
+authors = ["Phenotype"]
+keywords = ["api", "http", "client", "rest", "grpc"]
+categories = ["api", "web"]
+
+[features]
+default = ["reqwest", "retry"]
+reqwest = ["dep:reqwest"]
+retry = ["dep:reqwest"]
+native-tls = ["reqwest?/default", "rustls"]
+rustls = ["reqwest?/rustls-tls"]
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json"], optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+url = "2.5"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros"] }
+wiremock = "0.6"
