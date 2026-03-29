@@ -22,9 +22,11 @@
 
 ## Next steps (Wave A)
 
-1. For each port: list **implementing adapters** under `src/pheno/adapters` and `infra` (ripgrep `implements` / type hints / registration).
-2. Choose **contract artifact** per boundary: start with **MCP** and **database** if external consumers exist.
-3. Extract **DTOs** that cross process boundaries into a small `pheno-contracts` package or OpenAPI/Proto definitions in `Phenotype/repos` template libs.
+**Done (subagent):** see **`PHENOSDK_WAVE_A_RECON_2026-03-29.md`** — MCP + auth.providers + stream are the first three contract targets; many `ports/__all__` modules lack adapter imports yet.
+
+1. Reconcile `pheno.ports.*` vs `application.ports` / `adapter_kit` before extracting database/inference/messaging schemas.
+2. Export FastAPI `openapi.json` from `adapters/api/app.py` into a committed artifact when ready for SDD.
+3. Extract MCP/auth/stream DTOs into a versioned package or Proto/OpenAPI under Phenotype template libs.
 
 ## Command hints
 
