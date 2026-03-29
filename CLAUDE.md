@@ -45,3 +45,20 @@ agileplus validate-encoding --all --fix
 - Workflows: AgilePlus/docs/workflow/
 - Worklog: AgilePlus/.work-audit/worklog.md
 
+## Design System (Impeccable)
+
+Impeccable is installed globally. Design skills and commands are available:
+- Skills: `frontend-design`, `audit`, `critique`, `polish`, `normalize`, `animate`, `arrange`, `typeset`, `colorize`, `bolder`, `quieter`, `distill`, `extract`, `harden`, `optimize`, `overdrive`, `delight`, `onboard`, `adapt`, `clarify`
+- Run `/teach-impeccable` in any project to establish persistent design context
+- Global design context for Phenotype ecosystem: `/Users/kooshapari/CodeProjects/Phenotype/repos/.impeccable.md`
+- CSS baseline (impeccable reset): add to all VitePress `custom.css` and app `globals.css`
+
+```css
+/* impeccable CSS baseline — github.com/pbakaus/impeccable */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+img, video { max-width: 100%; height: auto; }
+input, button, textarea, select { font: inherit; }
+p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+```
+

@@ -115,8 +115,8 @@ class TestWorkerCap:
         assert settings.quality_max_workers == 4
 
     def test_thegent_settings_quality_max_workers_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """QUALITY_MAX_WORKERS env var must override ThegentSettings.quality_max_workers."""
-        monkeypatch.setenv("QUALITY_MAX_WORKERS", "8")
+        """THGENT_QUALITY_MAX_WORKERS env var must override ThegentSettings.quality_max_workers."""
+        monkeypatch.setenv("THGENT_QUALITY_MAX_WORKERS", "8")
         from thegent.config import ThegentSettings
 
         settings = ThegentSettings()
@@ -173,8 +173,8 @@ class TestStepTimeout:
         assert settings.quality_step_timeout_sec == 600
 
     def test_thegent_settings_step_timeout_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """QUALITY_STEP_TIMEOUT_SEC env var must override ThegentSettings.quality_step_timeout_sec."""
-        monkeypatch.setenv("QUALITY_STEP_TIMEOUT_SEC", "120")
+        """THGENT_QUALITY_STEP_TIMEOUT_SEC env var must override ThegentSettings.quality_step_timeout_sec."""
+        monkeypatch.setenv("THGENT_QUALITY_STEP_TIMEOUT_SEC", "120")
         from thegent.config import ThegentSettings
 
         settings = ThegentSettings()
@@ -392,12 +392,12 @@ cleanup_stale_artifacts "$PROJECT_ROOT" "$QUALITY_SHADOW_CLEANUP_HOURS" "$QUALIT
         assert fresh_log.exists(), "Fresh log file must be preserved"
 
     def test_thegent_settings_has_shadow_cleanup_hours_field(self) -> None:
-        """ThegentSettings must expose quality_shadow_cleanup_hours with default 24."""
+        """ThegentSettings must expose quality_shadow_cleanup_hours with default 48."""
         from thegent.config import ThegentSettings
 
         settings = ThegentSettings()
         assert hasattr(settings, "quality_shadow_cleanup_hours")
-        assert settings.quality_shadow_cleanup_hours == 24
+        assert settings.quality_shadow_cleanup_hours == 48
 
     def test_thegent_settings_has_log_retention_days_field(self) -> None:
         """ThegentSettings must expose quality_log_retention_days with default 7."""
@@ -408,16 +408,16 @@ cleanup_stale_artifacts "$PROJECT_ROOT" "$QUALITY_SHADOW_CLEANUP_HOURS" "$QUALIT
         assert settings.quality_log_retention_days == 7
 
     def test_thegent_settings_shadow_cleanup_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """QUALITY_SHADOW_CLEANUP_HOURS env var must override ThegentSettings.quality_shadow_cleanup_hours."""
-        monkeypatch.setenv("QUALITY_SHADOW_CLEANUP_HOURS", "48")
+        """THGENT_QUALITY_SHADOW_MAX_AGE_HOURS env var must override quality_shadow_cleanup_hours."""
+        monkeypatch.setenv("THGENT_QUALITY_SHADOW_MAX_AGE_HOURS", "48")
         from thegent.config import ThegentSettings
 
         settings = ThegentSettings()
         assert settings.quality_shadow_cleanup_hours == 48
 
     def test_thegent_settings_log_retention_env_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """QUALITY_LOG_RETENTION_DAYS env var must override ThegentSettings.quality_log_retention_days."""
-        monkeypatch.setenv("QUALITY_LOG_RETENTION_DAYS", "14")
+        """THGENT_QUALITY_LOG_RETENTION_DAYS env var must override quality_log_retention_days."""
+        monkeypatch.setenv("THGENT_QUALITY_LOG_RETENTION_DAYS", "14")
         from thegent.config import ThegentSettings
 
         settings = ThegentSettings()
