@@ -19,13 +19,27 @@ nexus = { git = "https://github.com/KooshaPari/nexus" }
 ## Usage
 
 ```rust
-use nexus::{Registry, Service};
+use nexus::{Registry, Service, Endpoint};
 
-let registry = Registry::new();
-registry.register(Service::new("user-svc", "localhost:8080")).await?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let registry = Registry::new();
+    registry.register(Service::new("user-svc", Endpoint::new("localhost:8080"))).await?;
 
-let services = registry.discover("user-svc").await?;
-let endpoint = services.next()?; // Load balanced
+    let services = registry.discover("user-svc").await?;
+    println!("Found {} services", services.len());
+    Ok(())
+}
+```
+
+### Health Monitoring
+
+```rust
+use nexus::{HealthMonitor, HealthCheckConfig};
+
+let monitor = HealthMonitor::new();
+monitor.register_service("user-svc".to_string()).await;
+monitor.record_success("user-svc").await;
 ```
 
 ## License
