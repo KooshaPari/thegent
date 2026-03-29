@@ -39,8 +39,10 @@ Specs live under `apps/AgilePlus/kitty-specs/<slug>/` (gitignored in AgilePlus r
 - `PHENOSDK_EXTRACTION_SLICES_2026-03-29.md`
 - `PHENOSDK_PORTS_INVENTORY_2026-03-29.md`
 - `PHENOSDK_WAVE_A_RECON_2026-03-29.md` — subagent ports/adapters/contracts recon
+- `PHENOSDK_OPENAPI_EXPORT_HOWTO_2026-03-29.md` — FastAPI extra + snapshot command
 - `ORPHANS_DEV_CROSSWALK_2026-03-29.md`
 - `data/KOOSHPARI_STALE_TRIAGE_FULL_2026-03-29.tsv`
+- `data/gh_archive_proposed_archive_github.sh` — optional batch archive (review before run)
 
 ## Local manifest (outside monorepo)
 

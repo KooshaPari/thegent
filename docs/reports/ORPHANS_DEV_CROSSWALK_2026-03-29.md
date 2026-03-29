@@ -28,4 +28,6 @@
 
 ## Archive README gaps addressed
 
-See new stubs under `CodeProjects/archive/` for: `dmouse`, `Rust`, `APIAgent`, `Kinfra`, `ProjectManagementPlatform`. Remaining without README: `ai-agents`, `archived` (empty).
+See stubs under `CodeProjects/archive/` for: `dmouse`, `Rust`, `APIAgent`, `Kinfra`, `ProjectManagementPlatform`, **`ai-agents`**. Remaining without README: `archived` (empty dir).
+
+**Batch archive (optional):** `docs/reports/data/gh_archive_proposed_archive_github.sh` (review before run).
