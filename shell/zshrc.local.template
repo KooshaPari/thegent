@@ -59,40 +59,41 @@ fi
 [[ -f "${HOME}/.zshrc.secrets" ]] && source "${HOME}/.zshrc.secrets"
 
 # -----------------------------------------------------------------------------
-# 7. TTY input self-heal (Ghostty/extended key mode desync guard)
+# 7. TTY self-heal: NOT NEEDED with Ghostty natively (Ghostty handles CSI-u)
+# The below is kept for reference only — Ghostty does not emit broken CSI-u
 # -----------------------------------------------------------------------------
-# If a prior app leaves terminal modes in a bad state, common keys can emit
-# raw escape fragments (e.g., ";5u", "^M"). Normalize TTY before each prompt.
-if [[ -o interactive ]]; then
-  _thegent_tty_self_heal() {
-    stty sane 2>/dev/null || true
-    stty intr '^C' quit '^\\' erase '^?' kill '^U' 2>/dev/null || true
-    # Disable keyboard-protocol modes that can leak raw CSI-u fragments.
-    # 1) xterm modifyOtherKeys off
-    [[ -t 1 ]] && printf '\e[>4;0m' || true
-    # 2) kitty keyboard protocol restore/disable
-    [[ -t 1 ]] && printf '\e[<u' || true
-  }
-  autoload -Uz add-zsh-hook
-  add-zsh-hook precmd _thegent_tty_self_heal
 
-  # Ensure terminal modes are normalized around Neovim sessions too.
-  nvim() {
-    stty sane 2>/dev/null || true
-    stty intr '^C' quit '^\\' erase '^?' kill '^U' 2>/dev/null || true
-    [[ -t 1 ]] && printf '\e[>4;0m' || true
-    [[ -t 1 ]] && printf '\e[<u' || true
-    command nvim "$@"
-    stty sane 2>/dev/null || true
-    stty intr '^C' quit '^\\' erase '^?' kill '^U' 2>/dev/null || true
-    [[ -t 1 ]] && printf '\e[>4;0m' || true
-    [[ -t 1 ]] && printf '\e[<u' || true
-  }
+# -----------------------------------------------------------------------------
+# 8. Navigation: zoxide (smarter cd) + fzf keybindings
+# -----------------------------------------------------------------------------
+# zoxide: faster directory jumps (replaces z with zoxide)
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
+
+# fzf keybindings: Ctrl+R history, Ctrl+T files, Alt+C directories
+if command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
 fi
 
 # -----------------------------------------------------------------------------
-# 8. Optional: fd as find for simple cases (macOS find doesn't support -q)
-# Use: alias find='fd_find_safe' or similar if you want fd for trivial find
+# 9. Modern coreutils replacements (eza, bat)
+# -----------------------------------------------------------------------------
+# eza: modern ls with icons and git status
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --icons --git'
+  alias ll='eza -l --icons --git'
+  alias la='eza -la --icons --git'
+  alias lt='eza --tree --level=2 --icons --git'
+fi
+
+# bat: modern cat with syntax highlighting
+if command -v bat >/dev/null 2>&1; then
+  alias cat='bat --style=auto'
+fi
+
+# -----------------------------------------------------------------------------
+# 10. fd as find for simple cases (macOS find doesn't support -q)
 # -----------------------------------------------------------------------------
 # if command -v fd &>/dev/null; then
 #   fd_find_safe() {
