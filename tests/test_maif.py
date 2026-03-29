@@ -22,7 +22,7 @@ def test_artifact_signing_and_verification():
 
     # Initial artifact has no signature
     assert artifact.signature is None
-    assert verify_artifact(artifact, public_key) is False
+    assert verify_artifact(artifact, private_key) is False
 
     # Sign it
     signature = sign_artifact(artifact, private_key)
@@ -30,11 +30,11 @@ def test_artifact_signing_and_verification():
     assert len(signature) > 0
 
     # Verify it
-    assert verify_artifact(artifact, public_key) is True
+    assert verify_artifact(artifact, private_key) is True
 
     # Tamper with payload
     artifact.payload["tool"] = "rm"
-    assert verify_artifact(artifact, public_key) is False
+    assert verify_artifact(artifact, private_key) is False
 
 
 def test_artifact_store():

@@ -19,7 +19,7 @@ dotfiles/
 │   └── importlinter             # Python import linter
 ├── claude/              # Claude development environment
 │   ├── AGENTS.md        # Global agent contract & delegation policy
-│   └── settings.json    # Claude IDE preferences and model settings
+│   └── settings.json    # Claude IDE settings
 ├── INSTALL.sh           # Installation script
 └── README.md            # This file
 ```
@@ -114,7 +114,7 @@ git config --list | grep user
 - **Copied files** (Claude settings): Edit `~/.claude/settings.json`, then manually merge back into `dotfiles/claude/settings.json`
 
 ### Backups
-Before running INSTALL.sh, your existing dotfiles are not deleted. The symlinks will replace them, but you can restore the originals if needed.
+Before running INSTALL.sh, your existing dotfiles are not deleted. The symlinks will replace them, but you can restore the originals from `~/.local/backups/` if needed.
 
 ## Cross-Platform Support
 
@@ -135,7 +135,7 @@ See `~/CodeProjects/Phenotype/CLAUDE.md` for org-wide governance policies.
 
 ## Related Documentation
 
-- **thegent README**: `/README.md` - Agent orchestration framework
+- **thegent README**: `/thegent/README.md` - Agent orchestration framework
 - **Project CLAUDE.md**: `/CLAUDE.md` - Project-specific instructions
-- **Global CLAUDE.md**: `~/.claude/CLAUDE.md` (symlinked from dotfiles/claude/)
+- **Global CLAUDE.md**: `~/.claude/CLAUDE.md` (linked from dotfiles/claude/)
 - **Agent Contract**: `dotfiles/claude/AGENTS.md` - Global agent delegation policy
