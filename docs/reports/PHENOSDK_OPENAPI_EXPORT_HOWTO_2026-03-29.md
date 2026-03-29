@@ -1,27 +1,38 @@
 # phenoSDK — export OpenAPI (Wave A)
 
-Base install of `pheno-sdk` does **not** include **FastAPI**; `create_app()` fails with `ModuleNotFoundError: fastapi` after a minimal `uv sync`.
+## Committed snapshot (this monorepo)
 
-## One-off snapshot (local)
+**`docs/reports/data/phenosdk_openapi_snapshot_2026-03-29.json`** (~41KB), generated from `create_app().openapi()` after worktree fixes.
 
-From `repos/worktrees/phenoSDK/main`:
+## Install
+
+Worktree `pyproject.toml` defines **`pheno-sdk[api]`** (`fastapi`, `orjson`, `uvicorn`); `all` includes `api`.
 
 ```bash
-uv pip install 'fastapi>=0.115.0' 'orjson>=3.9.0'
+cd repos/worktrees/phenoSDK/main
+uv sync --extra api
+```
+
+## Upstream fixes in worktree (push to `KooshaPari/phenoSDK`)
+
+`app.openapi()` failed until **runtime imports** replaced `TYPE_CHECKING`-only imports for:
+
+- `application/dtos/{user,deployment,service,configuration}.py` — `datetime` + domain entities
+- `adapters/api/routes/{users,deployments,services,configurations}.py` — use case classes used in `Annotated[..., Depends]`
+- `adapters/api/dependencies.py` — `Container`
+
+## Regenerate
+
+```bash
+cd repos/worktrees/phenoSDK/main
+uv sync --extra api
+mkdir -p artifacts
 uv run python -c "
 from pheno.adapters.api.app import create_app
 import json
+from pathlib import Path
 app = create_app()
-path = 'artifacts/openapi.json'
-import pathlib
-pathlib.Path('artifacts').mkdir(exist_ok=True)
-pathlib.Path(path).write_text(json.dumps(app.openapi(), indent=2))
-print('wrote', path)
+Path('artifacts/openapi.json').write_text(json.dumps(app.openapi(), indent=2))
 "
+# optional: copy into monorepo docs/reports/data/
 ```
-
-Commit the JSON **only** inside a dedicated phenoSDK branch or a Phenotype `contracts/` package — do not commit `artifacts/` to the monorepo unless policy allows.
-
-## Product fix (upstream phenoSDK)
-
-Add an optional extra, e.g. `api = ["fastapi>=...", "orjson>=..."]`, and document `pip install pheno-sdk[api]` for REST contract generation.
