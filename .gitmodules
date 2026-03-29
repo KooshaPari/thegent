@@ -1,3 +1,6 @@
 [submodule "services/colab"]
 	path = services/colab
 	url = git@github.com:KooshaPari/colab.git
+[submodule "docs/phenodocs"]
+	path = docs/phenodocs
+	url = https://github.com/kooshapari/phenodocs.git
