@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Metric Contracts",
+  "type": "object",
+  "required": [
+    "version",
+    "enforcement",
+    "domains"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "enforcement": {
+      "type": "object",
+      "required": [
+        "require_metrics_report",
+        "metrics_report_path",
+        "fail_closed"
+      ],
+      "properties": {
+        "require_metrics_report": {
+          "type": "boolean"
+        },
+        "metrics_report_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fail_closed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "domains": {
+      "type": "object",
+      "required": [
+        "quality",
+        "security",
+        "reliability",
+        "extensibility",
+        "other"
+      ],
+      "properties": {
+        "quality": {
+          "type": "object",
+          "required": [
+            "max_lint_errors",
+            "max_type_errors",
+            "min_test_pass_rate"
+          ],
+          "properties": {
+            "max_lint_errors": { "type": "number", "minimum": 0 },
+            "max_type_errors": { "type": "number", "minimum": 0 },
+            "min_test_pass_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "security": {
+          "type": "object",
+          "required": [
+            "max_critical_vulns",
+            "max_high_vulns",
+            "max_secrets_detected"
+          ],
+          "properties": {
+            "max_critical_vulns": { "type": "number", "minimum": 0 },
+            "max_high_vulns": { "type": "number", "minimum": 0 },
+            "max_secrets_detected": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "reliability": {
+          "type": "object",
+          "required": [
+            "max_flake_rate",
+            "min_pass_rate"
+          ],
+          "properties": {
+            "max_flake_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+            "min_pass_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "extensibility": {
+          "type": "object",
+          "required": [
+            "max_file_lines",
+            "max_function_lines"
+          ],
+          "properties": {
+            "max_file_lines": { "type": "number", "minimum": 1 },
+            "max_function_lines": { "type": "number", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "other": {
+          "type": "object",
+          "required": [
+            "max_todo_markers"
+          ],
+          "properties": {
+            "max_todo_markers": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

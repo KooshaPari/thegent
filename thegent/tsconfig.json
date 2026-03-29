@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "lib": ["ESNext", "DOM"],
+    "types": ["@playwright/test"]
+  },
+  "references": [
+    { "path": "./docs/.vitepress" }
+  ],
+  "include": [
+    "recordings/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "docs"
+  ]
+}

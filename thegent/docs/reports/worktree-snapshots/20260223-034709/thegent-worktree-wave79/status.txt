@@ -1,0 +1,49 @@
+## codex/wave79-wl007-010-030-031...origin/codex/wave79-wl007-010-030-031 [ahead 2]
+ M .thegent/sessions/circuit_breakers.jsonl
+ M .thegent/sessions/contract_telemetry.jsonl
+ M .thegent/sessions/run_registry.jsonl
+ D cliproxyapi-plusplus/docs/fragemented/.fragmented-candidates.txt
+ D cliproxyapi-plusplus/docs/fragemented/README.md
+ D cliproxyapi-plusplus/docs/fragemented/index.md
+ D cliproxyapi-plusplus/docs/fragemented/merged.md
+ D cliproxyapi-plusplus/docs/fragemented/planning/CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.md
+ D cliproxyapi-plusplus/docs/fragemented/planning/index.md
+ D cliproxyapi-plusplus/docs/planning/CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.csv
+ D cliproxyapi-plusplus/docs/planning/CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json
+ D cliproxyapi-plusplus/docs/planning/CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.md
+ D cliproxyapi-plusplus/docs/planning/GITHUB_PROJECT_IMPORT_CLIPROXYAPI_2000_2026-02-22.csv
+ D docs/reference/autosync_snapshot_20260223T020810526500Z.json
+ D docs/reference/autosync_snapshot_20260223T020810904239Z.json
+ M docs/reference/autosync_status.json
+ M docs/reference/autosync_trend.jsonl
+ M docs/reference/escalation_queue.jsonl
+ M docs/reference/workstream_autosync_cycle_metrics.jsonl
+ M docs/reference/workstream_autosync_failures.json
+ M docs/reference/workstream_autosync_metrics.prom
+ M docs/reference/workstream_incident_snapshots.jsonl
+ M docs/reports/2026-02-23-worklog-wave78-next50.md
+ M docs/research/GOVERNANCE_WP_GAPS_EXPANDED.md
+ M src/thegent/agents/cliproxy_manager.py
+ M src/thegent/execution.py
+ M src/thegent/governance/__init__.py
+ M src/thegent/orchestration/strategies/playbooks.py
+ M src/thegent/protocols/jsonrpc_agent_server.py
+ M tests/protocols/test_jsonrpc_agent_server_contract.py
+?? .thegent/sessions/kooshapari_thegent-worktree-wave79_88739/
+?? .thegent/sessions/teammate_coder-0/20260223T055543Z-coder-0-p88739-bb524205.json
+?? .thegent/sessions/teammate_coder-1/20260223T055553Z-coder-1-p88739-487522d3.json
+?? .thegent/sessions/teammate_coder-2/20260223T055559Z-coder-2-p88739-e0d5a5a0.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055457Z-coder-alpha-p88739-95e06f3f.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055524Z-coder-alpha-p88739-c11525bf.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055537Z-coder-alpha-p88739-852066a7.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055605Z-coder-alpha-p88739-2d20d38c.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055618Z-coder-alpha-p88739-c380c463.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055626Z-coder-alpha-p88739-8e1c4b4f.json
+?? .thegent/sessions/teammate_coder-alpha/20260223T055634Z-coder-alpha-p88739-79ce391e.json
+?? .thegent/sessions/teammate_reviewer-beta/20260223T055516Z-reviewer-beta-p88739-b350259f.json
+?? .thegent/sessions/teammate_reviewer-beta/20260223T055531Z-reviewer-beta-p88739-75d1421f.json
+?? .thegent/sessions/teammate_reviewer-beta/20260223T055611Z-reviewer-beta-p88739-6df39281.json
+?? benchmarks/results/20260223T045449Z-39b7b0a46/
+?? docs/reference/autosync_snapshot_20260223T053838155754Z.json
+?? docs/reference/autosync_snapshot_20260223T053838257516Z.json
+?? tests/test_unit_dlq_manager.py

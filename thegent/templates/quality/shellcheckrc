@@ -1,0 +1,14 @@
+# ShellCheck — Shell linter config (max strictness)
+# Copy to project .shellcheckrc
+
+# Enable all optional checks
+enable=all
+
+# Default shell dialect
+shell=bash
+
+# Treat sourced files as part of the same script
+source-path=SCRIPTDIR
+
+# External sources (don't fail on unresolvable sources)
+external-sources=true

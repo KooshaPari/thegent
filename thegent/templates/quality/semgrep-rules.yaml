@@ -1,0 +1,68 @@
+# Semgrep — Custom security rules for common antipatterns
+# Usage: semgrep --config=~/.claude/templates/quality/semgrep-rules.yaml .
+# Install: pip install semgrep OR brew install semgrep
+rules:
+  - id: no-hardcoded-secrets
+    patterns:
+      - pattern: $KEY = "..."
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: (?i)(password|secret|api_key|api_secret|token|credential|private_key)
+    message: "Hardcoded secret detected in variable '$KEY'. Use environment variables or a secret manager."
+    languages: [python, javascript, typescript, java, go]
+    severity: ERROR
+
+  - id: no-sql-string-format-python
+    patterns:
+      - pattern: |
+          cursor.execute(f"...", ...)
+    message: "SQL query uses f-string interpolation. Use parameterized queries instead."
+    languages: [python]
+    severity: ERROR
+
+  - id: no-shell-injection-python
+    pattern: subprocess.call($CMD, shell=True, ...)
+    message: "Shell=True with variable input enables shell injection. Use shell=False with a list of arguments."
+    languages: [python]
+    severity: ERROR
+
+  - id: no-path-traversal-python
+    pattern: open(os.path.join($BASE, $USER_INPUT), ...)
+    message: "Potential path traversal. Resolve the path and verify it stays within the allowed directory."
+    languages: [python]
+    severity: WARNING
+
+  - id: no-eval-python
+    pattern: eval($X)
+    message: "eval() is dangerous with untrusted input. Use ast.literal_eval() for data or a proper parser."
+    languages: [python]
+    severity: ERROR
+
+  - id: no-md5-sha1-security
+    patterns:
+      - pattern-either:
+          - pattern: hashlib.md5(...)
+          - pattern: hashlib.sha1(...)
+          - pattern: crypto.createHash("md5")
+          - pattern: crypto.createHash("sha1")
+    message: "MD5/SHA1 are cryptographically broken. Use SHA256+ for integrity or bcrypt/argon2 for passwords."
+    languages: [python, javascript, typescript]
+    severity: WARNING
+
+  - id: no-wildcard-cors
+    patterns:
+      - pattern-either:
+          - pattern: "Access-Control-Allow-Origin: *"
+          - pattern: 'cors({"origin": "*"})'
+          - pattern: "AllowOrigins: []string{\"*\"}"
+    message: "Wildcard CORS allows any origin. Use an explicit allowlist in production."
+    languages: [python, javascript, typescript, go]
+    severity: WARNING
+
+  - id: no-bare-except-python
+    pattern: |
+      except:
+          ...
+    message: "Bare except catches all exceptions including SystemExit and KeyboardInterrupt. Catch specific exceptions."
+    languages: [python]
+    severity: WARNING

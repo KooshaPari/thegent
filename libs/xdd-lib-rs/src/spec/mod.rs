@@ -23,7 +23,7 @@
 //! ## Usage
 //!
 //! ```rust
-//! use phenotype_xdd_lib::spec::{Spec, SpecParser};
+//! use xdd_lib_rs::spec::{Spec, SpecParser};
 //!
 //! let spec = SpecParser::parse_yaml(yaml_str)?;
 //! spec.validate()?;

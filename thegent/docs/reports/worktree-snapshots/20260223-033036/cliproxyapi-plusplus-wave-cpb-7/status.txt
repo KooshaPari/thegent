@@ -1,0 +1,17 @@
+## workstream-cpbv2-7
+ M pkg/llmproxy/api/handlers/management/auth_files.go
+ M pkg/llmproxy/api/handlers/management/management_auth_test.go
+ M pkg/llmproxy/auth/kiro/sso_oidc.go
+ M pkg/llmproxy/executor/github_copilot_executor.go
+ M pkg/llmproxy/executor/github_copilot_executor_test.go
+ M pkg/llmproxy/registry/model_registry.go
+ M pkg/llmproxy/runtime/executor/github_copilot_executor.go
+ M pkg/llmproxy/runtime/executor/github_copilot_executor_test.go
+ M sdk/api/handlers/handlers_request_details_test.go
+?? docs/features/architecture/fragemented/
+?? docs/features/providers/fragemented/
+?? docs/fragemented/
+?? docs/planning/reports/fragemented/
+?? docs/planning/reports/issue-wave-gh-next32-lane-7.md
+?? pkg/llmproxy/auth/kiro/sso_oidc_authcode_test.go
+?? pkg/llmproxy/registry/model_registry_provider_alias_test.go

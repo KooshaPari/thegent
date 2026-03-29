@@ -1,0 +1,81 @@
+version: '3'
+
+vars:
+  RUST_PKG: '{{.RUST_PKG | default "."}}'
+  RUST_ALL_FEATURES: '{{.RUST_ALL_FEATURES | default "--all-features"}}'
+
+tasks:
+  build:
+    desc: Build project in debug mode
+    cmds:
+      - cargo build {{.RUST_ALL_FEATURES}}
+
+  build:release:
+    desc: Build project in release mode (optimized)
+    cmds:
+      - cargo build --release {{.RUST_ALL_FEATURES}}
+
+  test:
+    desc: Run all tests
+    cmds:
+      - cargo test {{.RUST_ALL_FEATURES}} --lib --bins
+
+  test:integration:
+    desc: Run integration tests only
+    cmds:
+      - cargo test {{.RUST_ALL_FEATURES}} --test '*'
+
+  test:all:
+    desc: Run all tests (unit + integration + doc)
+    cmds:
+      - cargo test {{.RUST_ALL_FEATURES}} -- --test-threads=1
+
+  test:cov:
+    desc: Run tests with coverage reporting
+    cmds:
+      - cargo tarpaulin --out Html --output-dir coverage {{.RUST_ALL_FEATURES}}
+
+  bench:
+    desc: Run benchmarks (requires criterion)
+    cmds:
+      - cargo bench {{.RUST_ALL_FEATURES}}
+
+  lint:
+    desc: Run clippy linter
+    cmds:
+      - cargo clippy {{.RUST_ALL_FEATURES}} -- -D warnings
+
+  fmt:
+    desc: Format code with rustfmt
+    cmds:
+      - cargo fmt
+
+  fmt:check:
+    desc: Check formatting without modifying
+    cmds:
+      - cargo fmt -- --check
+
+  check:
+    desc: Check for compilation errors (faster than build)
+    cmds:
+      - cargo check {{.RUST_ALL_FEATURES}}
+
+  security:
+    desc: Run security and audit checks
+    cmds:
+      - cargo audit
+      - cargo deny check advisories
+
+  doc:
+    desc: Generate and open documentation
+    cmds:
+      - cargo doc {{.RUST_ALL_FEATURES}} --no-deps --open
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - cargo clean
+
+  quality:
+    desc: Run all quality checks (lint, format check, test, audit)
+    deps: [lint, fmt:check, check, test, security]
