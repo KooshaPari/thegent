@@ -10,11 +10,16 @@ from unittest.mock import MagicMock
 import pytest
 
 # Import path utilities for normalized path handling
-sys.path.insert(0, str(Path(__file__).parent / "scripts"))
-from path_utils import normalize_path, safe_join
+# thegent project root (where conftest.py lives)
+_THGENT_ROOT = Path(__file__).parent.resolve()
 
-# thegent project root (where conftest.py lives) - use normalized path
-_THGENT_ROOT = normalize_path(Path(__file__))
+# Normalize path helper
+def normalize_path(p):
+    return Path(p).resolve()
+
+# Safe join helper
+def safe_join(base, *parts):
+    return base / "/".join(str(p) for p in parts)
 
 # Ensure src/ is on sys.path for imports during test collection
 # This must happen before any test modules are imported

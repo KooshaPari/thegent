@@ -1,3 +1,5 @@
+"""Phench project state runtime control-plane helpers."""
+
 from .service import (
     add_module_to_target,
     add_repo,
@@ -9,6 +11,7 @@ from .service import (
     build_project_execution_matrix,
     build_scan_candidates,
     create_target_snapshot,
+    discover_local_git_repos,
     discover_repos,
     get_env_profile,
     import_repos,
@@ -17,8 +20,8 @@ from .service import (
     list_target_snapshots,
     list_targets,
     load_module_manifest,
+    load_module_repos,
     load_target_lock,
-    lock_target,
     materialize_module_candidate_manifest,
     materialize_target,
     run_env_doctor_for_target,
@@ -32,6 +35,7 @@ from .service import (
     target_status,
     target_timeline,
 )
+from .discovery import discover_local_git_repos, RepoCandidate
 
 __all__ = [
     "add_module_to_target",
@@ -44,6 +48,7 @@ __all__ = [
     "build_project_execution_matrix",
     "build_scan_candidates",
     "create_target_snapshot",
+    "discover_local_git_repos",
     "discover_repos",
     "get_env_profile",
     "import_repos",
@@ -52,10 +57,11 @@ __all__ = [
     "list_target_snapshots",
     "list_targets",
     "load_module_manifest",
+    "load_module_repos",
     "load_target_lock",
-    "lock_target",
     "materialize_module_candidate_manifest",
     "materialize_target",
+    "RepoCandidate",
     "run_env_doctor_for_target",
     "run_target",
     "scan_shared_modules_across_repos",

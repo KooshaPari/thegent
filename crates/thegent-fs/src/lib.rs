@@ -10,14 +10,19 @@
 //!
 //! # Examples
 //!
-//! ```no_run
+//! ```
+//! use std::path::Path;
 //! use thegent_fs::{copy_file, copy_tree, glob_files};
 //!
 //! // Copy a file
-//! copy_file("src.txt", "dst.txt", true).unwrap();
+//! let src = Path::new("src.txt");
+//! let dst = Path::new("dst.txt");
+//! let _ = copy_file(src, dst, true);
 //!
 //! // Copy directory tree
-//! copy_tree("src_dir", "dst_dir", None).unwrap();
+//! let src_dir = Path::new("src_dir");
+//! let dst_dir = Path::new("dst_dir");
+//! let _ = copy_tree(src_dir, dst_dir, None);
 //!
 //! // Find files matching pattern
 //! let files = glob_files("src/**/*.rs").unwrap();

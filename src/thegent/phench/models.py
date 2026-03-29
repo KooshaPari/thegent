@@ -12,8 +12,26 @@ class RepoSelection:
     repo_id: str
     repo_path: str
     selected_ref: str
+    module_name: str | None = None
+    selected_runner: str | None = None
+    selected_command: str | None = None
+    selected_env_profile: str | None = None
     source_worktree_path: str | None = None
     resolved_sha: str | None = None
+    preferred_runner: str | None = None
+    preferred_command: str | None = None
+    preferred_ref: str | None = None
+
+
+@dataclass(slots=True)
+class ModuleManifest:
+    schema_version: int
+    repo_patterns: list[str] = field(default_factory=list)
+    default_ref: str = "HEAD"
+    repo_ref_overrides: dict[str, str] = field(default_factory=dict)
+    repo_runner_overrides: dict[str, str] = field(default_factory=dict)
+    repo_command_overrides: dict[str, str] = field(default_factory=dict)
+    repo_env_profile_overrides: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -22,25 +40,6 @@ class TargetLock:
     target_name: str
     mode: TargetMode
     repos: list[RepoSelection] = field(default_factory=list)
-    lock_hash: str = ""
-    created_at_utc: str = ""
-
-
-@dataclass(slots=True)
-class ProjectSelection:
-    project_name: str
-    project_path: str
-    selected_ref: str
-    source_worktree_path: str | None = None
-    resolved_sha: str | None = None
-
-
-@dataclass(slots=True)
-class ProjectLock:
-    schema_version: int
-    project_name: str
-    description: str = ""
-    targets: list[str] = field(default_factory=list)
     lock_hash: str = ""
     created_at_utc: str = ""
 
@@ -84,18 +83,3 @@ class EnvDoctorReport:
     missing_requirements: list[str] = field(default_factory=list)
     resolved_versions: dict[str, str] = field(default_factory=dict)
     detected_files: list[str] = field(default_factory=list)
-
-
-@dataclass(slots=True)
-class Project:
-    name: str
-    description: str = ""
-    created_at_utc: str = ""
-    updated_at_utc: str = ""
-    metadata: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass(slots=True)
-class ProjectManifest:
-    schema_version: int
-    projects: list[Project] = field(default_factory=list)

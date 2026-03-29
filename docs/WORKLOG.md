@@ -164,5 +164,15 @@ Previous wave logs are stored in `reports/`:
 
 ---
 
-*Last updated: 2026-02-23*
-*Current version: 0.1.0*
+## BytePort Notes (2026-03-29)
+
+- BytePort was restored from archive path `.archive/byteport-stub-20260329` to active path `apps/byteport`.
+- Compared to commit `b8792811e` (initial BytePort scaffold):
+  - commit has docs scaffold files only (`apps/byteport/docs/.vitepress`, localization pages, package.json)
+  - active workspace now contains backend API Go service, integration/shared tests, `.env` artifacts, workspace IDE settings (`.idea`, `.vscode`), and artifacts from npm + python environments (`node_modules`, `.venv`).
+- Status: BytePort active; branch/PR tracking should proceed with actual feature implementation (not archived).
+
+---
+
+*Last updated: 2026-03-29*
+*Current version: 0.1.1*
