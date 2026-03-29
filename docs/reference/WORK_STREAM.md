@@ -1693,15 +1693,13 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | ~~TGNT-P18.2~~ | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
 | ~~rollout-hook-rust-phase2~~ | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
 | docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 |
-| wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 |
-| ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.797259+00:00 |
-| wave70-l1 | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 |
-| wp-16002-async-delegation | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 |
-| ~~TGNT-P16.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.105584+00:00 |
-| wave70-l7 | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 |
-| wave70-l3 | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 |
-| TGNT-P17.1 | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 |
-## COMPLETED (historical reference)
+| ~~docs-skill-examples~~ | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 | closed-2026-03-28 |
+| ~~wp-16001-persona-registry~~ | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 | closed-2026-03-28 |
+| ~~wave70-l1~~ | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 | closed-2026-03-28 |
+| ~~wp-16002-async-delegation~~ | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 | closed-2026-03-28 |
+| ~~wave70-l7~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 | closed-2026-03-28 |
+| ~~wave70-l3~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 | closed-2026-03-28 |
+| ~~TGNT-P17.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 | closed-2026-03-28 |
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.
 
@@ -29083,3 +29081,33 @@ Advance analytics, scorecards, slos, continuous improvement with deterministic b
 Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-520.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+---
+
+## BACKLOG ARCHIVE (2026-03-28)
+
+> **Note**: All items below are P2/P3 analytics/connector/governance/operator initiatives.
+> They have been archived to reduce WORK_STREAM noise. Reference archived items in `docs/archive/WORK_STREAM_BACKLOG_2026-03-28.md` if needed.
+
+### Archived Items Summary
+
+| Range | Count | Areas |
+|-------|-------|-------|
+| WL-301 to WL-340 | 40 | Connector initiatives |
+| WL-341 to WL-380 | 40 | Governance initiatives |
+| WL-381 to WL-420 | 40 | Operator initiatives |
+| WL-421 to WL-460 | 40 | Analytics initiatives |
+| WL-461 to WL-520 | 60 | Analytics/automation initiatives |
+
+**Total Archived**: 200 BACKLOG items
+**Archived Date**: 2026-03-28
+**Archive Reference**: `docs/archive/WORK_STREAM_BACKLOG_2026-03-28.md`
+
+### Active Items (Not Archived)
+
+Only HIGH/CRITICAL priority items with clear dependencies remain in the active WORK_STREAM above.
+
+---
+
+*Last updated: 2026-03-28*
+*Backlog items archived to reduce noise*

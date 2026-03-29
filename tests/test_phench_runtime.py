@@ -1808,7 +1808,7 @@ def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_p
     from typer.testing import CliRunner
 
     phench_cli = _load_phench_cli_app(
-        Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+        Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
     )
 
     payload = {
@@ -1871,7 +1871,7 @@ def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
     from typer.testing import CliRunner
 
     phench_cli = _load_phench_cli_app(
-        Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+        Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
     )
 
     monkeypatch.setattr(
@@ -1915,7 +1915,7 @@ def test_materialize_module_manifest_cli_command(tmp_path: Path, monkeypatch) ->
     from typer.testing import CliRunner
 
     phench_cli = _load_phench_cli_app(
-        Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+        Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
     )
 
     def _fake_materialize_module_candidate_manifest(
@@ -1964,7 +1964,7 @@ def test_materialize_module_manifest_cli_command(tmp_path: Path, monkeypatch) ->
 @pytest.mark.parametrize(
     "cli_path",
     [
-        ("packages/thegent-cli/src/thegent_cli/cli/apps/phench.py", "package"),
+        ("src/thegent/cli/apps/phench.py", "package"),
         ("src/thegent/cli/apps/phench.py", "source"),
     ],
 )
@@ -2022,7 +2022,7 @@ def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(
 @pytest.mark.parametrize(
     ("cli_path", "snippet_flag"),
     [
-        ("packages/thegent-cli/src/thegent_cli/cli/apps/phench.py", "--print-target-snippets"),
+        ("src/thegent/cli/apps/phench.py", "--print-target-snippets"),
         ("src/thegent/cli/apps/phench.py", "--print-target-snippets"),
     ],
 )
@@ -2073,7 +2073,7 @@ def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
 
     from typer.testing import CliRunner
 
-    cli_module_path = Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    cli_module_path = Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
     spec = importlib.util.spec_from_file_location("phench_cli_target_module", cli_module_path)
     if spec is None or spec.loader is None:
         raise RuntimeError("failed to load phench cli module")
