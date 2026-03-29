@@ -371,8 +371,6 @@ class TestCliproxyHTTPClientCacheIntegration:
 
     @pytest.mark.asyncio
     async def test_streaming_request_bypasses_cache(self, tmp_path):
-    @pytest.mark.asyncio
-    async def test_streaming_request_bypasses_cache(self, tmp_path):
         """Streaming requests (stream=True) must never be served from cache.
 
         Verify via the public proxy_request API: a streaming body must never
