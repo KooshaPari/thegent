@@ -13,7 +13,7 @@ Each line in the log completed without the script’s `SKIP/FAIL` branch (see ra
 ## Second batch (5 repos)
 
 **Script:** `docs/reports/data/gh_archive_remaining_stale_proposed.sh`  
-**Log:** `docs/reports/data/gh_archive_run_remaining_2026-03-29.log`  
+**Log:** `docs/reports/data/gh_archive_run_remaining_2026-03-29.txt`  
 **Executed:** 2026-03-28 UTC
 
 `PriceyApp`, `pheno-sdk`, `netweave-final2`, `agslag-dash`, `Byteport-TestZip`
