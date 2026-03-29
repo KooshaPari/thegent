@@ -334,3 +334,12 @@ All ECO features synced to AgilePlus:
 - All legacy folders archived
 - No active non-canonical structures
 
+
+### VitePress docs image lazy-loading plugin: COMPLETE + MERGED (2026-03-28)
+- Fixed VitePress markdown parser error in CROSS_LANGUAGE_ARCHITECTURE_RD.md and worklog-template.md (escaped <>/> in code)
+- Added docs/.vitepress/plugins/image-optimization.ts to set loading="lazy" + decoding="async" on markdown images
+- Added scripts/docs-verify-media.js regression guard script
+- Added docs:verify-media to package.json and GitHub workflows/docs.yml
+- PR #833 merged
+- bun run docs:build → pass, bun run docs:verify-media → pass
+- Evidence: agileplus/evidence_ledger.jsonl entry, PR #833
