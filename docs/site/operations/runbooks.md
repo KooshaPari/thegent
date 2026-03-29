@@ -1,10 +1,3 @@
----
-type: howto
-evidence_bundle: site-operations-runbooks
----
-
-<EvidenceBundle bundle="site-operations-runbooks" title="Evidence Bundle: Operations Runbooks" />
-
 # Runbooks
 
 Use these short runbooks for common operational failures.

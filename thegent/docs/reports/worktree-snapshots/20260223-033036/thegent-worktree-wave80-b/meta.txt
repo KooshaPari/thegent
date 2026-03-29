@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave80-b
-branch=codex/wave80-lane-b-wl007-bench
-head=46b185e165d26afc166716db70ba93b0da6b08e3

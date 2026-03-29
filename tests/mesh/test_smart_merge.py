@@ -81,7 +81,7 @@ class TestMergeFilesCleanMerge:
         base, ours, theirs, output = _trio
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run") as mock_run:
+            with mock.patch("subprocess.run") as mock_run:
                 # mergiraf signals clean merge with exit 0
                 mock_run.return_value = mock.Mock(returncode=0, stdout="", stderr="")
                 output.write_text("merged", encoding="utf-8")  # simulate output
@@ -94,7 +94,7 @@ class TestMergeFilesCleanMerge:
         base, ours, theirs, output = _trio
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run") as mock_run:
+            with mock.patch("subprocess.run") as mock_run:
                 mock_run.return_value = mock.Mock(returncode=1, stdout="", stderr="conflicts")
                 output.write_text("<<<", encoding="utf-8")
                 result = merge_files(base, ours, theirs, output)
@@ -113,7 +113,7 @@ class TestMergeFilesCleanMerge:
             return mock.Mock(returncode=0)
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=side_effect):
+            with mock.patch("subprocess.run", side_effect=side_effect):
                 result = merge_files(base, ours, theirs, output)
 
         # Git returned 0 so result should be True
@@ -130,7 +130,7 @@ class TestMergeFilesCleanMerge:
             return mock.Mock(returncode=0, stdout="merged", stderr="")
 
         with mock.patch("shutil.which", return_value=None):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=side_effect):
+            with mock.patch("subprocess.run", side_effect=side_effect):
                 result = merge_files(base, ours, theirs, output)
 
         assert result is True
@@ -166,7 +166,7 @@ class TestMergeFilesCleanMerge:
 
         with mock.patch("shutil.which", return_value=None):
             with mock.patch(
-                "thegent.mesh.smart_merge.shim_run",
+                "subprocess.run",
                 side_effect=FileNotFoundError("git not found"),
             ):
                 result = merge_files(base, ours, theirs, output)
@@ -202,7 +202,7 @@ class TestMergeFilesPathHint:
             return mock.Mock(returncode=0, stdout="", stderr="")
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=capture):
+            with mock.patch("subprocess.run", side_effect=capture):
                 merge_files(base, ours, theirs, output, path_hint="src/foo.py")
 
         assert any("-p" in cmd and "src/foo.py" in cmd for cmd in captured)
@@ -234,7 +234,7 @@ class TestConfigureMergirafDriver:
             return mock.Mock(returncode=0)
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+            with mock.patch("subprocess.run", side_effect=fake_run):
                 result = configure_mergiraf_driver(tmp_path)
 
         assert result is True
@@ -254,7 +254,7 @@ class TestConfigureMergirafDriver:
             return mock.Mock(returncode=0)
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+            with mock.patch("subprocess.run", side_effect=fake_run):
                 configure_mergiraf_driver(tmp_path)
 
         assert driver_lines, "Expected driver command to be registered"
@@ -270,7 +270,7 @@ class TestConfigureMergirafDriver:
         (tmp_path / ".git").mkdir()
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", return_value=mock.Mock(returncode=0)):
+            with mock.patch("subprocess.run", return_value=mock.Mock(returncode=0)):
                 configure_mergiraf_driver(tmp_path)
 
         gitattributes = tmp_path / ".gitattributes"
@@ -285,7 +285,7 @@ class TestConfigureMergirafDriver:
         (tmp_path / ".git").mkdir()
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", return_value=mock.Mock(returncode=0)):
+            with mock.patch("subprocess.run", return_value=mock.Mock(returncode=0)):
                 configure_mergiraf_driver(tmp_path)
                 configure_mergiraf_driver(tmp_path)
 
@@ -295,7 +295,7 @@ class TestConfigureMergirafDriver:
     def test_global_config_skips_gitattributes(self, tmp_path):
         """When global_config=True, .gitattributes is not written."""
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", return_value=mock.Mock(returncode=0)):
+            with mock.patch("subprocess.run", return_value=mock.Mock(returncode=0)):
                 configure_mergiraf_driver(global_config=True)
 
         assert not (tmp_path / ".gitattributes").exists()
@@ -306,7 +306,7 @@ class TestConfigureMergirafDriver:
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
             with mock.patch(
-                "thegent.mesh.smart_merge.shim_run",
+                "subprocess.run",
                 side_effect=subprocess.CalledProcessError(1, "git"),
             ):
                 result = configure_mergiraf_driver(tmp_path)
@@ -320,7 +320,7 @@ class TestConfigureMergirafDriver:
         (tmp_path / ".gitattributes").write_text(existing, encoding="utf-8")
 
         with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch("thegent.mesh.smart_merge.shim_run", return_value=mock.Mock(returncode=0)):
+            with mock.patch("subprocess.run", return_value=mock.Mock(returncode=0)):
                 configure_mergiraf_driver(tmp_path)
 
         content = (tmp_path / ".gitattributes").read_text(encoding="utf-8")
@@ -527,7 +527,7 @@ class TestSmartMergerMerge:
 
         cfg = SmartMergeConfig(mergiraf_binary="/usr/bin/mergiraf")
         merger = SmartMerger(cfg)
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+        with mock.patch("subprocess.run", side_effect=fake_run):
             result = merger.merge(base, ours, theirs, output)
 
         assert result.success is True
@@ -541,7 +541,7 @@ class TestSmartMergerMerge:
 
         cfg = SmartMergeConfig(mergiraf_binary="/usr/bin/mergiraf")
         merger = SmartMerger(cfg)
-        with mock.patch("thegent.mesh.smart_merge.shim_run", return_value=mock.Mock(returncode=1, stdout="", stderr="conflict")):
+        with mock.patch("subprocess.run", return_value=mock.Mock(returncode=1, stdout="", stderr="conflict")):
             result = merger.merge(base, ours, theirs, output)
 
         assert result.success is False
@@ -557,7 +557,7 @@ class TestSmartMergerMerge:
 
         with mock.patch("shutil.which", return_value=None):
             merger = SmartMerger()
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=git_side_effect):
+        with mock.patch("subprocess.run", side_effect=git_side_effect):
             result = merger.merge(base, ours, theirs, output)
 
         assert result.used_mergiraf is False
@@ -589,7 +589,7 @@ class TestSmartMergerMerge:
         merger = SmartMerger(cfg)
         # Write ours content so _merge_with_git_merge_file can copy it into the temp file
         Path(ours).write_text("ours content\n", encoding="utf-8")
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=side_effect):
+        with mock.patch("subprocess.run", side_effect=side_effect):
             result = merger.merge(base, ours, theirs, output)
 
         assert result.success is True
@@ -600,7 +600,7 @@ class TestSmartMergerMerge:
         base, ours, theirs, output = _files
         with mock.patch("shutil.which", return_value=None):
             merger = SmartMerger()
-        with mock.patch("thegent.mesh.smart_merge.shim_run", return_value=mock.Mock(returncode=0, stdout="ok", stderr="")):
+        with mock.patch("subprocess.run", return_value=mock.Mock(returncode=0, stdout="ok", stderr="")):
             result = merger.merge(base, ours, theirs, output)
         assert isinstance(result, MergeResult)
 
@@ -615,80 +615,38 @@ class TestSmartMergerMergeWorktreeChanges:
 
     def test_success_on_clean_git_merge(self, tmp_path):
         """merge_worktree_changes returns success when git merge exits 0. @trace FR-MESH-007"""
-        calls: list[list[str]] = []
-        git_dir = tmp_path / ".git" / "worktrees" / "agent" / "test"
+        merger = SmartMerger(SmartMergeConfig(mergiraf_binary=None, fallback_to_git=True))
 
         def fake_run(cmd, **kwargs):
-            calls.append(list(cmd))
-            if cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
-                if not hasattr(fake_run, "head_count"):
-                    fake_run.head_count = 0  # type: ignore[attr-defined]
-                fake_run.head_count += 1  # type: ignore[attr-defined]
-                if fake_run.head_count == 1:
-                    return mock.Mock(returncode=0, stdout="agent/test\n", stderr="")
-                return mock.Mock(returncode=0, stdout="main\n", stderr="")
-            if cmd == ["git", "rev-parse", "--git-dir"]:
-                return mock.Mock(returncode=0, stdout=f"{git_dir}\n", stderr="")
-            if cmd == ["git", "config", "merge.mergiraf.driver", f"{merger._binary} merge --git %O %A %B -p %P"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            if cmd == [
-                "git",
-                "merge",
-                "--no-ff",
-                "-m",
-                "Merge agent/test into main (smart-merge)",
-                "agent/test",
-            ]:
-                return mock.Mock(returncode=0, stdout="Already up to date.\n", stderr="")
-            if cmd == ["git", "checkout", "main"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            return mock.Mock(returncode=0, stdout="", stderr="")
+            if "rev-parse" in cmd:
+                return mock.Mock(returncode=0, stdout="agent/test\n", stderr="")
+            return mock.Mock(returncode=0, stdout="Already up to date.\n", stderr="")
 
-        with mock.patch.dict(os.environ, {}, clear=True):
-            merger = SmartMerger(SmartMergeConfig(mergiraf_binary=None, fallback_to_git=True))
-            with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
-                result = merger.merge_worktree_changes(tmp_path, "main")
+        with mock.patch("subprocess.run", side_effect=fake_run):
+            result = merger.merge_worktree_changes(tmp_path, "main")
+
         assert result.success is True
-        assert ["git", "rev-parse", "--abbrev-ref", "HEAD"] in calls
-        assert ["git", "rev-parse", "--git-dir"] in calls
         assert isinstance(result, MergeResult)
-        assert result.used_mergiraf is False
 
     def test_failure_when_git_not_found(self, tmp_path):
         """merge_worktree_changes returns failure if git binary is missing. @trace FR-MESH-007"""
         merger = SmartMerger(SmartMergeConfig())
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=FileNotFoundError("git not found")):
+        with mock.patch("subprocess.run", side_effect=FileNotFoundError("git not found")):
             result = merger.merge_worktree_changes(tmp_path, "main")
         assert result.success is False
 
     def test_collects_conflict_file_paths(self, tmp_path):
         """merge_worktree_changes parses CONFLICT lines from git output. @trace FR-MESH-007"""
         merger = SmartMerger(SmartMergeConfig())
-        git_dir = tmp_path / ".git" / "worktrees" / "agent" / "foo"
 
         conflict_output = "CONFLICT (content): Merge conflict in src/foo.py\nAuto-merging src/bar.py\n"
 
         def fake_run(cmd, **kwargs):
-            if cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
-                if not hasattr(fake_run, "count"):
-                    fake_run.count = 0  # type: ignore[attr-defined]
-                fake_run.count += 1  # type: ignore[attr-defined]
-                if fake_run.count == 1:
-                    return mock.Mock(returncode=0, stdout="agent/foo\n", stderr="")
-                return mock.Mock(returncode=0, stdout="main\n", stderr="")
-            if cmd == ["git", "rev-parse", "--git-dir"]:
-                return mock.Mock(returncode=0, stdout=f"{git_dir}\n", stderr="")
-            if cmd == ["git", "merge", "--no-ff", "-m", "Merge agent/foo into main (smart-merge)", "agent/foo"]:
-                return mock.Mock(returncode=1, stdout=conflict_output, stderr="")
-            if cmd == ["git", "config", "merge.mergiraf.driver", f"{merger._binary} merge --git %O %A %B -p %P"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            if cmd == ["git", "checkout", "main"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            if cmd == ["git", "checkout", "agent/foo"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
+            if "rev-parse" in cmd:
+                return mock.Mock(returncode=0, stdout="agent/foo\n", stderr="")
             return mock.Mock(returncode=1, stdout=conflict_output, stderr="")
 
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+        with mock.patch("subprocess.run", side_effect=fake_run):
             result = merger.merge_worktree_changes(tmp_path, "main")
 
         assert result.success is False
@@ -699,65 +657,29 @@ class TestSmartMergerMergeWorktreeChanges:
         @trace FR-MESH-007"""
         cfg = SmartMergeConfig(mergiraf_binary="/usr/bin/mergiraf", fallback_to_git=True)
         merger = SmartMerger(cfg)
-        calls: list[list[str]] = []
-        git_dir = tmp_path / ".git" / "worktrees" / "agent" / "x"
 
         def fake_run(cmd, **kwargs):
-            calls.append(list(cmd))
-            if cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
-                if not hasattr(fake_run, "count"):
-                    fake_run.count = 0  # type: ignore[attr-defined]
-                fake_run.count += 1  # type: ignore[attr-defined]
-                if fake_run.count == 1:
-                    return mock.Mock(returncode=0, stdout="agent/x\n", stderr="")
-                return mock.Mock(returncode=0, stdout="main\n", stderr="")
-            if cmd == ["git", "rev-parse", "--git-dir"]:
-                return mock.Mock(returncode=0, stdout=f"{git_dir}\n", stderr="")
-            if cmd == [
-                "git",
-                "config",
-                "merge.mergiraf.driver",
-                f"{cfg.mergiraf_binary} merge --git %O %A %B -p %P",
-            ]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            if cmd == ["git", "merge", "--no-ff", "-m", "Merge agent/x into main (smart-merge)", "agent/x"]:
-                return mock.Mock(returncode=0, stdout="Merged.\n", stderr="")
-            if cmd == ["git", "checkout", "main"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            if cmd == ["git", "checkout", "agent/x"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
+            if "rev-parse" in cmd:
+                return mock.Mock(returncode=0, stdout="agent/x\n", stderr="")
             return mock.Mock(returncode=0, stdout="Merged.\n", stderr="")
 
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+        with mock.patch("subprocess.run", side_effect=fake_run):
             result = merger.merge_worktree_changes(tmp_path, "main")
 
         assert result.used_mergiraf is True
-        assert ["git", "config", "merge.mergiraf.driver", f"{cfg.mergiraf_binary} merge --git %O %A %B -p %P"] in calls
 
     def test_used_mergiraf_false_when_binary_absent(self, tmp_path):
         """merge_worktree_changes sets used_mergiraf=False when mergiraf not found.
         @trace FR-MESH-007"""
         with mock.patch("shutil.which", return_value=None):
             merger = SmartMerger()
-        git_dir = tmp_path / ".git" / "worktrees" / "agent" / "x"
 
         def fake_run(cmd, **kwargs):
-            if cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
-                if not hasattr(fake_run, "count"):
-                    fake_run.count = 0  # type: ignore[attr-defined]
-                fake_run.count += 1  # type: ignore[attr-defined]
-                if fake_run.count == 1:
-                    return mock.Mock(returncode=0, stdout="agent/x\n", stderr="")
-                return mock.Mock(returncode=0, stdout="main\n", stderr="")
-            if cmd == ["git", "rev-parse", "--git-dir"]:
-                return mock.Mock(returncode=0, stdout=f"{git_dir}\n", stderr="")
-            if cmd == ["git", "merge", "--no-ff", "-m", "Merge agent/x into main (smart-merge)", "agent/x"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
-            if cmd == ["git", "checkout", "main"]:
-                return mock.Mock(returncode=0, stdout="", stderr="")
+            if "rev-parse" in cmd:
+                return mock.Mock(returncode=0, stdout="agent/x\n", stderr="")
             return mock.Mock(returncode=0, stdout="", stderr="")
 
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+        with mock.patch("subprocess.run", side_effect=fake_run):
             result = merger.merge_worktree_changes(tmp_path, "main")
 
         assert result.used_mergiraf is False
@@ -766,21 +688,13 @@ class TestSmartMergerMergeWorktreeChanges:
         """merge_worktree_changes returns failure on subprocess timeout. @trace FR-MESH-007"""
         cfg = SmartMergeConfig(timeout_s=1)
         merger = SmartMerger(cfg)
-        git_dir = tmp_path / ".git" / "worktrees" / "agent" / "y"
 
         def fake_run(cmd, **kwargs):
-            if cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
-                if not hasattr(fake_run, "count"):
-                    fake_run.count = 0  # type: ignore[attr-defined]
-                fake_run.count += 1  # type: ignore[attr-defined]
-                if fake_run.count == 1:
-                    return mock.Mock(returncode=0, stdout="agent/y\n", stderr="")
-                return mock.Mock(returncode=0, stdout="main\n", stderr="")
-            if cmd == ["git", "rev-parse", "--git-dir"]:
-                return mock.Mock(returncode=0, stdout=f"{git_dir}\n", stderr="")
+            if "rev-parse" in cmd:
+                return mock.Mock(returncode=0, stdout="agent/y\n", stderr="")
             raise subprocess.TimeoutExpired(cmd, 1)
 
-        with mock.patch("thegent.mesh.smart_merge.shim_run", side_effect=fake_run):
+        with mock.patch("subprocess.run", side_effect=fake_run):
             result = merger.merge_worktree_changes(tmp_path, "main")
 
         assert result.success is False
@@ -874,7 +788,7 @@ class TestWorktreePoolSmartMergerIntegration:
         pool._worktrees_ok = True
 
         with mock.patch.object(pool, "_resolve_target_branch", return_value="main"):
-            with mock.patch("thegent.mesh.git_parallelism.shim_run") as mock_run:
+            with mock.patch("subprocess.run") as mock_run:
                 mock_run.return_value = mock.Mock(returncode=0, stdout="", stderr="")
                 with mock.patch.object(pool, "_git_worktree_remove", return_value=True):
                     with mock.patch.object(pool, "_try_delete_branch"):

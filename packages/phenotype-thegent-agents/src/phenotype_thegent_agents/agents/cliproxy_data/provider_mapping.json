@@ -1,4 +1,0 @@
-{
-  "openai_compat_providers": ["minimax", "nim", "glm", "kilo", "zen", "kiro", "zai-cerebras"],
-  "cliproxy_native_providers": ["cursor", "claude", "codex", "gemini", "qwen", "roo", "kilo", "copilot", "antigravity", "iflow", "kiro"]
-}

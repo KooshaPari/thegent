@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus-nextwave2-l5
-branch=nextwave2/lane-5-20260223
-head=e37bbe0189218c3e5ade5764276045973e61830d

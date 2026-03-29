@@ -1,7 +1,5 @@
 # Full-turn delivery (release-grade)
 
-**Short index (stable path in repo):** [`docs/reference/FULL_TURN_DELIVERY.md`](../../reference/FULL_TURN_DELIVERY.md)
-
 **Purpose:** Align automation turns with **shipping**: merges to **`main`** or a **`release/*`** branch, with **traceable GitHub state** and **versioned documentation**.
 
 ## Definition — “full turn” (minimum)

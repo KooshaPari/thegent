@@ -1,3 +1,0 @@
-# Audit Snapshot
-
-This session bundle captures the hexagon-go cleanup pass.

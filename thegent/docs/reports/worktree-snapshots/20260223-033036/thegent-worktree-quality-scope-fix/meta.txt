@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-quality-scope-fix
-branch=codex/quality-scope-fix
-head=a1f2513f123b4f1f795a28898c42d9bea73791cc

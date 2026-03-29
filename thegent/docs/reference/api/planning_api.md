@@ -1,9 +1,0 @@
-# planning API Reference
-
-> **Source**: `src/thegent/planning/__init__.py`
-
-Planning simulation overlays (G-CA-04).
-
-PERT uncertainty, resource contention, continuity risk scoring.
-
----

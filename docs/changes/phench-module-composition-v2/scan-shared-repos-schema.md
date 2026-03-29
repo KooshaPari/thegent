@@ -8,7 +8,6 @@
 - `--repos-root-mode`: `repos` (default) or `worktrees`
 - `--exclude`: repeated exclusions
 - `--min-repos`: minimum repo overlap threshold
-- `--candidates`: include `module_candidates` payload
 - `--omit-candidates`: omit candidate manifest templates for faster scans
 
 ## Safety and Dry-Run Guidance
@@ -34,7 +33,6 @@ Top-level keys are stable for API consumers:
 - `examined_repos`: sorted list of repos that contributed module discoveries
 - `min_repo_count`: minimum overlap value used to classify a module as shared
 - `recommended_modules`: up to 10 module recommendations sorted by descending overlap count
-- `module_candidates`: optional candidate manifest payload (empty list unless `--candidates` is passed and `--omit-candidates` is not used)
 
 `recommended_modules` contains:
 

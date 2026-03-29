@@ -1,8 +1,0 @@
-{
-  "code": "ZIG_BAD_REQUEST",
-  "message": "invalid payload",
-  "stage": "execute",
-  "details": {
-    "field": "request_id"
-  }
-}

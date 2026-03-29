@@ -1,6 +1,0 @@
-# Known Issues
-
-- Cross-repo canary/package pull automation and GitHub branch topology are still only documented, not implemented here.
-- The entity service is intentionally limited to schema-backed workstream tables; custom external entity stores are out of scope.
-- Composite-key operations use a pipe-delimited CLI/MCP identifier format for now.
-- The default pytest path is still blocked by the repository's existing `tach` circular-dependency panic; the new tests pass when that plugin is disabled.

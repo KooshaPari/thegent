@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus-wave-cpb3-3
-branch=workstream-cpbv3-3
-head=a8f9c126a94e76d6cb9e702e55da564fd20c5fec

@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave79
-branch=codex/wave79-wl007-010-030-031
-head=15f52302952e72402d1cceb3f2c639da69b06637

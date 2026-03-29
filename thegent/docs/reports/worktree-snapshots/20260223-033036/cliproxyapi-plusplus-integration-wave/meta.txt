@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus-integration-wave
-branch=wave-gh35-integration
-head=fad61c32ef6d6ebe489593d671fc5186fdc5258a

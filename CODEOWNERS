@@ -1,45 +1,61 @@
-# Phenotype Ecosystem — CODEOWNERS
-# Maps directories to responsible teams/individuals
-# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Code Owners
+# https://help.github.com/articles/about-code-owners/
 
-# Default owner
-*                           @KooshaPari
+# Default owners for everything in the repo
+* @kooshapari
 
-# Frontend applications
-/heliosApp/                 @KooshaPari
-/apps/heliosApp/            @KooshaPari
-/apps/heliosApp-colab/      @KooshaPari
+# Core CLI and main entry points
+/src/thegent/main.py @kooshapari
+/src/thegent/cli/ @kooshapari
 
-# CLI tooling
-/heliosCLI/                 @KooshaPari
+# MCP Server
+/sub-projects/thegent-mcp/ @kooshapari
 
-# Project management
-/AgilePlus/                 @KooshaPari
-/apps/AgilePlus/            @KooshaPari
+# Agent orchestration
+/src/thegent/orchestration/ @kooshapari
+/src/thegent/agents/ @kooshapari
 
-# Backend services
-/cliproxyapi-plusplus/      @KooshaPari
-/phenotype-go-kit/          @KooshaPari
-/phenotype-nexus/           @KooshaPari
+# Governance and policy
+/src/thegent/governance/ @kooshapari
 
-# Rust libraries
-/phenotype-gauge/           @KooshaPari
-/libs/crates/               @KooshaPari
-/libs/gauge/                @KooshaPari
+# Storage and persistence
+/src/thegent/storage/ @kooshapari
 
-# Agent infrastructure
-/agent-wave/                @KooshaPari
-/thegent/                   @KooshaPari
+# TUI components
+/src/thegent/tui/ @kooshapari
 
-# Shared types and utilities
-/phenotype-shared/          @KooshaPari
-/phenotype-xdd/             @KooshaPari
+# Integration with external services
+/src/thegent/integrations/ @kooshapari
 
-# Infrastructure and DevOps
-/infrastructure/            @KooshaPari
-/scripts/                   @KooshaPari
-/.github/                   @KooshaPari
+# Configuration
+/src/thegent/config* @kooshapari
 
-# Governance and documentation
-/docs/                      @KooshaPari
-/governance/                @KooshaPari
+# Rust crates
+/crates/ @kooshapari
+
+# CI/CD
+/.github/workflows/ @kooshapari
+
+# Documentation
+/docs/ @kooshapari
+
+# Tests - same owners as the code they test
+/tests/ @kooshapari
+
+# Scripts
+/scripts/ @kooshapari
+
+# CLIProxyAPI-related code (targeted for migration to cliproxyapi-plusplus)
+/src/thegent/cliproxy_adapter.py @kooshapari
+/src/thegent/cliproxy_*.py @kooshapari
+/src/thegent/*cliproxy*.py @kooshapari
+/src/thegent/utils/routing_impl/ @kooshapari
+
+# Execution and hot paths (priority for Rust migration)
+/src/thegent/execution.py @kooshapari
+/src/thegent/doctor.py @kooshapari
+/src/thegent/infra/ @kooshapari
+
+# Planning and workstream
+/src/thegent/planning/ @kooshapari
+/src/thegent/sync/ @kooshapari

@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-governance-wireup
-branch=codex/governance-wireup
-head=e8ac88ded62cbd09cd7a8d03630fd24e3f65a771

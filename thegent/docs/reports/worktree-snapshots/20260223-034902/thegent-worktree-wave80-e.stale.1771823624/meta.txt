@@ -1,2 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave80-e.stale.1771823624
-exists=yes

@@ -1,3 +1,0 @@
-# Known Issues
-
-This session bundle captures the polyrepo decomposition pass.

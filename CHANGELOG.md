@@ -9,14 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Merged fixes for security guard dead code (#742)
-- Initialized dotagents orchestration setup (#741, #743)
-- Enabled uuid serde features for data persistence (#744)
-- Migrated cache strategy to new architecture (#745)
-- Consolidated pr-679 and pr-680 integrations (#746, #748)
-- Automated PR creation for 6 ahead branches (models, int, pi-008, pedagogy, billing, run extractions)
-- Integration of `thegent-sharecli` packages and sub-projects via automated PR
-- Governance lane bootstrap: merge tmp/split-thegent-governance-preserve with -X ours (#666, resolves #656)
 - Unblock Rust CI (cache, TUI tests, rustfmt) (#590)
 - Wave D Rust lane handoff and known issues update (#589)
 - Modernize Python tooling to 2026 bleeding-edge standards

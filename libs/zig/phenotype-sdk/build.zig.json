@@ -1,6 +1,0 @@
-{
-    "name": "phenotype-sdk",
-    "version": "0.1.0",
-    "build": "build.zig",
-    "dependencies": {}
-}

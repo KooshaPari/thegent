@@ -1,3 +1,0 @@
-# Specifications
-
-This session bundle captures the hexagon-go cleanup pass.

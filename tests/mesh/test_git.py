@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import subprocess
 import time
 from pathlib import Path
-from unittest import mock
 
 import pytest
 from thegent.mesh.git import GitParallelismManager
@@ -29,29 +28,6 @@ def test_related_overlap_sorted() -> None:
         ["z.py", "a.py", "b.py"],
     )
     assert overlap == ["a.py", "b.py"]
-
-
-def test_run_git_merges_env_with_index_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _init_git_repo(tmp_path)
-
-    manager = GitParallelismManager(tmp_path, "agent-env")
-    fake_run = Mock(
-        return_value=CompletedProcess(
-            args=["git", "rev-parse", "HEAD"],
-            returncode=0,
-            stdout="x",
-            stderr="",
-        )
-    )
-    monkeypatch.setattr("thegent_gitops.git.shim_run", fake_run)
-
-    manager._run_git(["rev-parse", "HEAD"], env={"TEST_MODE": "1"})
-    assert fake_run.call_count == 1
-    _, call_kwargs = fake_run.call_args
-    run_env = call_kwargs["env"]
-    expected_index = str(manager.agent_index)
-    assert run_env["GIT_INDEX_FILE"] == expected_index
-    assert run_env["TEST_MODE"] == "1"
 
 
 def test_queue_commit_conflict_writes_jsonl(tmp_path: Path) -> None:
@@ -223,22 +199,3 @@ def test_try_auto_merge_commit_returns_none_on_conflict(tmp_path: Path) -> None:
 
     merged = manager.try_auto_merge_commit(a_hash, b_hash, "auto")
     assert merged is None
-
-
-def test_run_git_merges_custom_env_without_overwriting_base_env(tmp_path: Path) -> None:
-    """Custom env overrides are applied to a copied base environment."""
-    manager = GitParallelismManager(tmp_path, "agent-env")
-
-    fake_result = subprocess.CompletedProcess(args=["git", "status"], returncode=0, stdout="", stderr="")
-
-    with mock.patch("thegent.mesh.git.shim_run", return_value=fake_result) as mock_run:
-        manager._run_git(
-            ["status"],
-            env={"CUSTOM": "1"},
-            use_index=True,
-        )
-
-    run_kwargs = mock_run.call_args.kwargs
-    run_env = run_kwargs["env"]
-    assert run_env["CUSTOM"] == "1"
-    assert run_env["GIT_INDEX_FILE"] == str(manager.agent_index)

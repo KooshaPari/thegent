@@ -1,9 +1,0 @@
-# CODEOWNERS
-
-# Default owner for everything
-* @KooshaPari
-
-# Hexagonal Architecture patterns
-src/domain/ @KooshaPari
-src/application/ @KooshaPari
-src/infrastructure/ @KooshaPari
