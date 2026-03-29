@@ -114,3 +114,9 @@ __pycache__/
 .github/copilot-instructions.md
 .claudeignore
 .llmignore
+
+# Archives
+.archive/
+archive/
+bloom-wt/
+craft-wt/
