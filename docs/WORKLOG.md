@@ -30,6 +30,20 @@ All waves complete. All work items completed. Ready for new work.
 | Item | Status | Evidence |
 |------|--------|----------|
 | WL-001: OpenRouter WebSocket Auth Fix | ✅ | `cliproxy_adapter.py:1156` - `extract_websocket_forward_headers` |
+
+### Wave 84 - Complete (2026-03-28)
+| Item | Status | Evidence |
+|------|--------|----------|
+| Stub package audit | ✅ | 13 stubs identified and removed |
+| phenotype-forge removal | ✅ | Empty stub - task runners exist |
+| phenotype-thegent-* removal (11) | ✅ | Orphaned placeholders - no active plans |
+| libs/cli-framework removal | ✅ | Empty stub - no references |
+| libs/config-core removal | ✅ | Empty stub - no references |
+| libs/evaluation removal | ✅ | Empty stub - no references |
+| packages/README.md regeneration | ✅ | Reflects actual state |
+| Build/test script cleanup | ✅ | phenotype-forge refs removed |
+| LICENSE files added (7) | ✅ | All phenotype-* packages now licensed |
+| Documentation updated | ✅ | HEXAGONAL-AUDIT, WORKLOG, etc. |
 | WL-002: OpenRouter Provider Registration | ✅ | `provider_types.py:19` - `openrouter` in `API_KEY_PROVIDERS` |
 | WL-003: OpenRouter LiteLLM Config | ✅ | `litellm_router.py` - OpenRouter configured |
 | WL-004: OpenRouter Model Mappings | ✅ | `harness_model_mapping.py` - `CANONICAL_TO_OPENROUTER` complete |
