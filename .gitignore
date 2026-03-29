@@ -124,6 +124,7 @@ apps/
 libs/
 packages/
 services/*
+!services/colab
 !services/colab/
 colab-temp/
 phenotype-gauge-wtrees/
@@ -149,5 +150,5 @@ vibe-kanban-wtrees/
 colab-wtrees/
 devenv-abstraction/
 forgecode-wtrees/
-tokenledger/
 trace-wtrees/
+!tokenledger/
