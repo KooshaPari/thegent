@@ -1,9 +1,5 @@
-"""STUB MODULE - thegent.agents.routing_contracts
+"""Shared routing contracts used by dex/clode entrypoints."""
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
-
-# Stub implementation - functionality not available
-__all__ = []
+GEMINI_FLASH_MODEL = "gemini-3-flash"
+# gemini-3-flash is served by OpenCode Zen (api.opencode.ai), not Google Gemini
+GEMINI_FLASH_PROVIDER = "zen"
