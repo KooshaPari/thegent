@@ -31,6 +31,17 @@ Substituting manifest- or env-bound values **after** linting authored Markdown m
 
 Formal methods toolchains (TLA+, Alloy, etc.) are optional. For **prose-adjacent** specs, a **predicate naming convention** (`HasCredential(x)`, `ModelId(session) = ModelRef::…`) is enough to keep requirements grep-stable and to align tests with doc language. Escalate to real logic languages when you need machine-checked proofs, not for routine runbooks.
 
+## Operational check: catalog vs `ModelRef::MINIMAX_M27_HS`
+
+After CLIProxy (and adapter, if used) is up, confirm the OpenAI-compatible **`GET /v1/models`** payload includes `minimax-m2.7-highspeed` (or your org’s override):
+
+```bash
+uv run python scripts/phenotype_cliproxy_models_check.py
+# or: uv run python -m thegent.phenotype.cliproxy_models_check
+```
+
+Implementation: `src/thegent/phenotype/cliproxy_models_check.py` (tests: `tests/unit/test_phenotype_cliproxy_models_check.py`). Uses `CLIPROXY_BASE_URL` (default `http://127.0.0.1:8317/v1`), optional `CLIPROXY_MODELS_BEARER` / `OPENAI_API_KEY`, and `--expect` for extra ids.
+
 ## Cross-links
 
 - Canonical vocabulary policy: [`docs/reference/CANONICAL_INVARIANT_PROSE.md`](../reference/CANONICAL_INVARIANT_PROSE.md)
