@@ -26,6 +26,7 @@ class RepoSelection:
 @dataclass(slots=True)
 class ModuleManifest:
     schema_version: int
+    repo_ids: list[str] = field(default_factory=list)
     repo_patterns: list[str] = field(default_factory=list)
     default_ref: str = "HEAD"
     repo_ref_overrides: dict[str, str] = field(default_factory=dict)

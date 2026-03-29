@@ -9,7 +9,26 @@ from unittest.mock import MagicMock
 # sys.path[0], which causes scripts/research_engine.py to shadow src/research_engine/.
 # Pre-loading the correct package here locks it into sys.modules before any path
 # mutation can intercept it.
-_src = str(Path(__file__).parent.parent / "src")
+_thegent_repo = Path(__file__).resolve().parent.parent
+_src = str(_thegent_repo / "src")
+# Monorepo: if ``repos/src`` is on sys.path, it provides a shadow ``thegent`` package
+# that breaks phench tests. Prefer this checkout's ``src`` only.
+_repos_root = _thegent_repo.parent
+_monorepo_shadow_src = _repos_root / "src"
+if _monorepo_shadow_src.is_dir() and (_monorepo_shadow_src / "thegent").exists():
+    _shadow_resolved = _monorepo_shadow_src.resolve()
+    sys.path[:] = [p for p in sys.path if Path(p).resolve() != _shadow_resolved]
+    _shadow_pkg = (_monorepo_shadow_src / "thegent").resolve()
+    for _name in list(sys.modules):
+        _mod = sys.modules[_name]
+        _mf = getattr(_mod, "__file__", None)
+        if not _mf:
+            continue
+        try:
+            if Path(_mf).resolve().is_relative_to(_shadow_pkg):
+                sys.modules.pop(_name, None)
+        except (OSError, ValueError):
+            continue
 if _src not in sys.path:
     sys.path.insert(0, _src)
 

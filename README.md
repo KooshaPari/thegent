@@ -1,320 +1,320 @@
-![Build Status](https://github.com/Phenotype-Enterprise/thegent/actions/workflows/quality-gate.yml/badge.svg)
-![Security Audit](https://github.com/Phenotype-Enterprise/thegent/actions/workflows/security-guard.yml/badge.svg)
-![Policy Compliance](https://github.com/Phenotype-Enterprise/thegent/actions/workflows/policy-gate.yml/badge.svg)
+![CI](https://github.com/KooshaPari/thegent/actions/workflows/ci.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/)
 
 # thegent
 
-[![PyPI version](https://badge.fury.io/py/thegent.svg)](https://badge.fury.io/py/thegent)
-[![Rust](https://img.shields.io/badge/built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+**Phenotype dotfiles manager, platform bootstrap tool, and polyglot development hub.**
 
-**CLI and framework for agent orchestration, governance, and lifecycle management.**
-
-`thegent` is a CLI and framework for managing AI agent workflows, droids, and multi-agent swarms. It follows a library-first design and uses Rust extensions for performance-sensitive paths.
+thegent is the single entry point for bootstrapping developer machines, managing AI agent
+workflows, orchestrating multi-agent swarms, and enforcing governance across the Phenotype
+ecosystem. It combines a Python CLI with Rust performance extensions and ships project
+templates for 10+ language stacks.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Key Features](#-key-features)
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Usage](#-usage)
-- [Performance at Scale](#-performance-at-scale)
-- [Governance & Policy](#-governance--policy)
-- [Security & Hardening](#-security--hardening)
-- [Documentation](#-documentation)
-- [Docs Deploy](#-docs-deploy)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## ✨ Key Features
-
-- ⚡ **Performance**: Rust-backed tool detection and PATH resolution (<1ms) with 10-100x speedup over shell baselines.
-- 🔒 **Agent Governance**: Built-in policy enforcement, cost caps, and automated quality gates.
-- 🌍 **Multi-Provider Routing**: Routing across Claude, Gemini, OpenAI, and custom local proxies.
-- 🛠️ **Unified Work Stream**: Single source of truth for task management across multiple agents and projects.
-- 📦 **MCP Native**: Full support for Model Context Protocol (MCP) servers and resources.
-- 🔄 **Continuous Autonomy**: Background execution and session management via `thegent run agent "Task" --loop`.
-- 🔍 **Deep Research Protocol**: Multi-source investigation workflows (Reddit, Google, GitHub).
+- [Architecture](#architecture)
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Directory Structure](#directory-structure)
+- [Rust Crates](#rust-crates)
+- [CLI Commands](#cli-commands)
+- [Dotfiles and System Bootstrap](#dotfiles-and-system-bootstrap)
+- [Templates](#templates)
+- [Performance](#performance)
+- [Development](#development)
+- [License](#license)
 
 ---
 
-## 🚀 Quick Start
+## Architecture
 
-### 1. Install (One Command)
+```mermaid
+graph TB
+    subgraph User
+        CLI[thegent CLI<br/>Python + Typer]
+        SHIMS[Shim Wrappers<br/>clode / dex / roid / droid]
+    end
 
-**macOS / Linux:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/kooshapari/thegent/main/scripts/bootstrap.sh | sh -s -- install
+    subgraph Core["Core (Python)"]
+        ORCH[Agent Orchestrator]
+        GOV[Governance & Policy]
+        ROUTER[Provider Router<br/>Claude / Gemini / OpenAI]
+        MCP[MCP Server]
+        SYNC[Workstream Autosync<br/>GitHub Projects + Linear]
+    end
+
+    subgraph Rust["Rust Crates (crates/)"]
+        PARSER[thegent-parser]
+        DISCOVERY[thegent-discovery]
+        GIT[thegent-git]
+        CACHE[thegent-cache]
+        CRYPTO[thegent-crypto]
+        FS[thegent-fs]
+        HOOKS[thegent-hooks]
+        TUI[thegent-tui]
+        METRICS[thegent-metrics]
+        MEMORY[thegent-memory]
+    end
+
+    subgraph Assets["Dotfiles & Templates"]
+        DOTFILES[dotfiles/<br/>shell, git, claude, tools]
+        TEMPLATES[templates/<br/>python, ts, rust, go, ...]
+        SHELL[shell/<br/>zsh integration, starship]
+    end
+
+    CLI --> ORCH
+    CLI --> GOV
+    SHIMS --> CLI
+    ORCH --> ROUTER
+    ORCH --> MCP
+    ORCH --> SYNC
+    CLI --> DISCOVERY
+    CLI --> PARSER
+    ORCH --> GIT
+    ORCH --> CACHE
+    GOV --> CRYPTO
+    CLI --> FS
+    CLI --> HOOKS
+    CLI --> TUI
+    ORCH --> METRICS
+    ORCH --> MEMORY
+    CLI --> DOTFILES
+    CLI --> TEMPLATES
+    CLI --> SHELL
 ```
 
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/kooshapari/thegent/main/scripts/install.ps1 | iex
-```
+---
 
-### 2. Configure & Verify
+## Key Features
+
+- **Platform Bootstrap** -- Set up any macOS, Linux, or WSL system with a single command. Shell configs, git settings, tool installations, and project scaffolding.
+- **Agent Orchestration** -- Run, monitor, and govern AI agents with built-in cost caps, quality gates, and audit trails.
+- **Multi-Provider Routing** -- Route across Claude, Gemini, OpenAI, and custom proxies with automatic failover.
+- **Rust Performance Layer** -- Tool detection in <1ms, PATH resolution in <0.5ms, 10-100x over shell baselines.
+- **MCP Native** -- Full Model Context Protocol support for servers and resources.
+- **Project Templates** -- Scaffolding for Python, TypeScript, Rust, Go, Ruby, Java, C++, PHP, Bash, and Zig projects with linters, formatters, and CI pre-configured.
+- **Governance & Policy** -- Centralized policy enforcement, HITL gates, cost control, and release supply chain controls.
+- **Workstream Sync** -- Bidirectional sync between `WORK_STREAM.md`, GitHub Projects, and Linear.
+
+---
+
+## Quick Start
+
 ```bash
-thegent install -t all --scope both --full   # Bootstrap user/system assets + provider setup
-thegent doctor   # Verify environment health
-```
+# Clone and install
+git clone https://github.com/KooshaPari/thegent
+cd thegent
+uv sync --all-extras
 
-Project onboarding commands:
+# Bootstrap your system
+thegent install -t all --scope both --full
+thegent doctor
 
-```bash
-thegent scaffold greenfield ./new-project --profile cli_tool
-thegent scaffold brownfield ./existing-project
-thegent scaffold ag-dd ./existing-project
-thegent scaffold none ./existing-project
-```
-
-### 3. Run Your First Agent
-```bash
+# Run your first agent
 thegent run free "Analyze the current directory structure"
 ```
 
----
+For Windows:
 
-## 📦 Installation
-
-### Prerequisites
-- Python 3.12+
-- Rust (required for building performance-sensitive extensions)
-- Homebrew (recommended for system dependencies)
-
-### For Developers (From Source)
-```bash
-git clone https://github.com/kooshapari/thegent
-cd thegent
-pip install -e .
-thegent install -t all --scope both --setup
-thegent install-shims
-thegent setup --hooks
-```
-
-### Worktree Governance (Primary-main Flow)
-
-thegent bootstrap and shell/dotfile management support a worktree-first governance model:
-
-- Keep your primary checkout on `main`.
-- Do branch development in dedicated worktrees.
-- Merge/cherry-pick branch worktree commits back into `main`.
-
-When bootstrap runs inside a git repository, it can write a marker file:
-
-- `.thegent-primary-main` (policy marker)
-
-Interactive shells get a helper function through managed zsh config:
-
-```bash
-thg_new_worktree <domain> <scale> <change-anchor> [start-point]
-```
-
-This helper refuses to branch from a dirty/non-main primary checkout.
-
-CLI alternative:
-
-```bash
-thegent worktree new <domain> <scale> <change-anchor> [start-point]
-thegent worktree state <change-anchor> <new-state>
-thegent worktree list
-thegent worktree prune [--dry-run]
-thegent worktree check
-thegent help worktree
-thegent help git
-```
-
-### Toolchain Setup
-
-`thegent` uses explicit setup/install surface controls (for runtime assets, shims, hooks, and profiles).  
-`--system-deps`, `--verify-mise`, and `--uninstall-mise-hooks` are legacy references and are not
-part of the current parser surface.
-
-For mise/toolchain setup, use one of:
-
-```bash
-# Use the project-standard bootstrap/install flow first.
-thegent install -t all --scope both --setup
-
-# Then manage mise with your preferred shell/toolchain installer separately.
-brew install mise
-echo 'eval "$(mise activate zsh)"' >> ~/.zshenv
+```powershell
+irm https://raw.githubusercontent.com/KooshaPari/thegent/main/scripts/install.ps1 | iex
 ```
 
 ---
 
-## 🛠️ Usage
+## Directory Structure
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/thegent/` | Python source -- 100+ modules: agents, CLI, routing, governance, MCP, research |
+| `crates/` | Rust workspace -- 28 crates for performance-critical paths |
+| `cli/` | CLI command definitions (Python/Typer) |
+| `agents/` | Agent persona definitions and registry |
+| `templates/` | Project scaffolding templates (Python, TS, Rust, Go, Ruby, Java, C++, PHP, Bash, Zig) |
+| `dotfiles/` | Shell configs, git settings, Claude configs, tool installations |
+| `shell/` | Zsh integration, starship prompt, profile templates |
+| `config/` | Runtime configuration and environment schemas |
+| `contracts/` | Agent contracts and interface definitions |
+| `governance/` | Policy modules and enforcement rules |
+| `docs/` | VitePress docsite, guides, research, references |
+| `hooks/` | Git hooks and quality gate scripts |
+| `scripts/` | Bootstrap and utility scripts |
+| `tools/` | Development tooling |
+| `apps/` | Standalone applications (byteport) |
+| `web/` | Web interface components |
+| `mobile/` | Mobile automation support |
+| `specs/` | Specification documents |
+| `tests/` | Test suite (pytest) |
+
+---
+
+## Rust Crates
+
+All crates live under `crates/` in a Cargo workspace. They use `gix` (gitoxide) for pure-Rust git operations.
+
+| Crate | Purpose |
+|-------|---------|
+| `thegent-parser` | Fast parsing for configs, manifests, and agent output |
+| `thegent-discovery` | Tool and environment discovery (<1ms) |
+| `thegent-git` | Git operations via gix (gitoxide) |
+| `thegent-crypto` | Cryptographic utilities for secret management |
+| `thegent-fs` | High-performance filesystem operations |
+| `thegent-hooks` | Git hook execution engine |
+| `thegent-memory` | Agent memory and context persistence |
+| `thegent-metrics` | Telemetry and performance metrics collection |
+| `thegent-cache` | Caching layer for tool detection and configs |
+| `thegent-docs` | Documentation generation utilities |
+| `thegent-jsonl` | JSONL streaming for audit logs |
+| `thegent-offload` | Background task offloading |
+| `thegent-policy` | Policy evaluation engine |
+| `thegent-router` | Request routing and load balancing |
+| `thegent-maif` | MAIF (Multi-Agent Interaction Framework) support |
+| `thegent-shims` | CLI wrapper shims (clode, dex, roid, droid) |
+| `thegent-shm` | Shared memory for inter-process communication |
+| `thegent-subprocess` | Subprocess management and monitoring |
+| `thegent-tui` | Terminal UI compositor |
+| `thegent-utils` | Shared utility functions |
+| `thegent-wasm-tools` | WASM/Extism plugin support |
+| `thegent-zmx` | ZMX message exchange protocol |
+| `thegent-zmx-interop` | ZMX interop bridge |
+| `thegent-resources` | Resource management and allocation |
+| `thegent-tool-detect` | Tool detection and PATH resolution |
+| `thegent-watcher` | File watcher (excluded from default build) |
+| `thegent-path-resolve` | Fast PATH resolution (<0.5ms) |
+| `harness-native` | Native test harness |
+
+---
+
+## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `thegent run free <prompt>` | Execute a task in the foreground with the free agent. |
-| `thegent run free <prompt> --skill <name>` | Execute with selected skill instructions (repeat `--skill` to stack). |
-| `thegent run agent <prompt> --bg` | Start a background agent session. |
-| `thegent ps` | List active and historical agent sessions. |
-| `thegent skill list` | List discovered skills available for `--skill` selection. |
-| `thegent skill select <name>` | Validate a skill and print exact `--skill` usage for run flows. |
-| `thegent plan next` | Find the next actionable item from project plans and specs. |
-| `thegent run agent <prompt> --loop` | Continuously process work items from the unified work stream. |
-| `thegent doctor` | Verify environment health and fix performance bottlenecks. |
-| `thegent registry list` | List registered personas. |
-| `thegent registry recommend <intent>` | Recommend a persona for a task or role. |
-| `thegent registry doctor` | Validate registry health and routing metadata. |
-| `thegent govern approve <run-id>` | Approve a HITL gate. |
-| `thegent govern reject <run-id>` | Reject a HITL gate. |
-| `thegent govern vet <run-id>` | Vet a run before promotion. |
-| `thegent worktree new <domain> <scale> <change-anchor> [start-point]` | Create a structured worktree. |
-| `thegent worktree state <change-anchor> <new-state>` | Update structured worktree state. |
-| `thegent worktree list` | List structured worktrees. |
-| `thegent worktree prune [--dry-run]` | Prune structured worktrees. |
-| `thegent worktree check` | Validate structured worktree governance. |
-| `thegent sync autopilot` | Automatic bi-directional sync: `WORK_STREAM.md` <-> GitHub Projects <-> Linear. |
+| `thegent install -t all --scope both --full` | Bootstrap system with all assets |
+| `thegent doctor` | Verify environment health |
+| `thegent run free <prompt>` | Execute a task with the free agent |
+| `thegent run agent <prompt> --bg` | Start a background agent session |
+| `thegent run agent <prompt> --loop` | Continuously process work items |
+| `thegent ps` | List active and historical agent sessions |
+| `thegent skill list` | List discovered skills |
+| `thegent plan next` | Find the next actionable work item |
+| `thegent govern approve/reject <run-id>` | HITL gate management |
+| `thegent worktree new <domain> <scale> <anchor>` | Create a structured worktree |
+| `thegent sync autopilot` | Bidirectional workstream sync |
+| `thegent scaffold greenfield ./project --profile cli_tool` | Scaffold a new project |
+| `thegent scaffold brownfield ./project` | Onboard an existing project |
 
-Harness wrappers (`dex`, `clode`, `roid`, `droid`) route through `thegent-shims`.
-Use `--native` to bypass wrapper-injected defaults/proxy routing and call the underlying native CLI directly.
+---
 
-Skill UX examples:
+## Dotfiles and System Bootstrap
+
+thegent serves as the central dotfiles manager for the Phenotype ecosystem. The `dotfiles/` directory contains:
+
+- **Shell** -- Zsh configs, profile templates, starship prompt configuration
+- **Git** -- Global git config, ignore patterns, hook templates
+- **Claude** -- Claude Code configuration and agent instructions
+- **Tools** -- Tool installation manifests and verification scripts
+
+Bootstrap a fresh system:
 
 ```bash
-thegent skill list
-thegent skill select thegent-skills
-thegent run agent "run with selected skill" --skill thegent-skills
+# Install thegent
+curl -fsSL https://raw.githubusercontent.com/KooshaPari/thegent/main/scripts/bootstrap.sh | sh -s -- install
+
+# Full system bootstrap (shell, git, tools, project templates)
+thegent install -t all --scope both --full
+
+# Verify everything
+thegent doctor
 ```
 
-Unknown skill handling is explicit and non-silent:
+Worktree governance is built in:
 
 ```bash
-thegent skill select missing-skill
-# Skill not found: missing-skill
-```
-
-### Workstream Autosync (GitHub Projects + Linear)
-
-Enable fully automatic reflections so agents can stay unaware of board plumbing:
-
-```text
-THGENT_WORKSTREAM_AUTOSYNC_ENABLED=1
-THGENT_WORKSTREAM_AUTOSYNC_INTERVAL_SEC=60
-
-THGENT_GH_PROJECT_SYNC_ENABLED=1
-THGENT_GH_PROJECT_OWNER=<org-or-user>
-THGENT_GH_PROJECT_NUMBER=<project-number>
-
-THGENT_LINEAR_SYNC_ENABLED=1
-THGENT_LINEAR_API_KEY=<linear-api-key>
-THGENT_LINEAR_TEAM_ID=<linear-team-id>
-```
-
-Run once:
-
-```text
-thegent sync autopilot --once
-```
-
-Run continuously:
-
-```text
-thegent sync autopilot --interval 60
-```
-
-Task entrypoints:
-
-```text
-task sync:autopilot
-task sync:autopilot:once
+thegent worktree new <domain> <scale> <change-anchor> [start-point]
+thegent worktree list
+thegent worktree check
 ```
 
 ---
 
-## 📊 Performance at Scale
+## Templates
 
-| Operation | Legacy (Shell) | thegent (Rust) | Improvement |
-|-----------|----------------|----------------|-------------|
-| Tool Detection | 60ms | **1ms** | **60x** |
-| PATH Resolution | 20ms | **0.5ms** | **40x** |
-| Process Scanning | 50ms | **0.5ms** | **100x** |
-| Hook Execution | 200ms | **20ms** | **10x** |
+thegent ships project scaffolding templates for:
 
----
+| Stack | Template Path | Includes |
+|-------|--------------|----------|
+| Python | `templates/python/` | pyproject.toml, ruff, pytest, tach |
+| TypeScript | `templates/typescript/` | package.json, oxlint, vitest |
+| Rust | `templates/rust/` | Cargo.toml, clippy, rustfmt |
+| Go | `templates/go/` | go.mod, golangci-lint, gofumpt |
+| Ruby | `templates/ruby/` | Gemfile, rubocop |
+| Java | `templates/java/` | pom.xml, checkstyle, spotbugs |
+| C++ | `templates/cpp/` | CMakeLists.txt, clang-tidy, clang-format |
+| PHP | `templates/php/` | composer.json, phpstan, psalm |
+| Bash | `templates/bash/` | shellcheck, shfmt, bats |
+| Zig | `templates/zig/` | build.zig |
+| VitePress | `templates/vitepress-full/` | Full docsite with custom theme |
 
-## 🛡 Governance & Policy
-
-`thegent` treats AI agency as a governed resource:
-1. **Cost Control**: Define per-session and per-project token/dollar budgets.
-2. **Quality Gates**: Automatic validation of agent outputs against defined specifications.
-3. **Policy Enforcement**: Centralized `governance/` module for enforcing security and ethical constraints.
-4. **Audit Logs**: Full traceability of agent actions, including tool use and thought processes.
-
----
-
-## 🔐 Security & Hardening
-
-**Security controls for agentic operations:**
-- **Minimal Surface**: Core logic isolated in Rust for performance and security.
-- **Stealth Scrapers**: Built-in mechanisms to bypass scraping blocks and protect agent anonymity.
-- **Path Isolation**: Strict control over the execution environment via optimized shims.
-- **Secret Management**: Secure storage for API keys and provider credentials.
+Use `thegent scaffold greenfield ./project --profile <name>` to generate a new project from any template.
 
 ---
 
-## 📚 Documentation
+## Performance
 
-- **[Public Docsite](./docs/site/)** — VitePress-powered public documentation. Run locally with `bun run dev` from `docs/site/`. See [docs/site/README.md](./docs/site/README.md) for full setup instructions.
-- **[Docsets](./docs/docsets/)** — Audience-based documentation tracks.
-  - [Developer (Internal)](./docs/docsets/developer/internal/)
-  - [Developer (External)](./docs/docsets/developer/external/)
-  - [Technical User](./docs/docsets/user/)
-  - [Agent Operator](./docs/docsets/agent/)
-- **[CLIProxyAPI Issue Board](./docs/docset/CLIProxyAPI_ISSUE_BOARD.md)** — 961 tracked GitHub issues from CLIProxyAPI/Plus with thegent solutions.
-- **[Quick Start Guide](./docs/guides/QUICK_START.md)** — Get up and running in 5 minutes.
-- **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
-- **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.
-- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, troubleshooting, and provider integrations.
-- **[Changelog](./CHANGELOG.md)** — Keep-a-Changelog release history with active `Unreleased` section.
-- **[Changelog Process](./docs/guides/CHANGELOG_PROCESS.md)** — How to add, classify, and release changelog entries.
-- **[Changelog Entry Template](./docs/reference/CHANGELOG_ENTRY_TEMPLATE.md)** — Copy/paste template and writing guidance for entries.
-- **[Project Setup Style](./docs/guides/PROJECT_SETUP_STYLE.md)** — Standardized command/process baseline inspired by vercel/ai.
-- **[Domain Mapping Guide](./docs/guides/DOMAIN_MAPPING_GUIDE.md)** — `thegent domain map` advisor mode for domain exposure.
-- **[Release Supply Chain Controls](./docs/governance/RELEASE_SUPPLY_CHAIN_CONTROLS.md)** — SBOM, vulnerability scans, governance attestation, and release provenance artifacts.
-- **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
-- **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
+| Operation | Shell Baseline | thegent (Rust) | Speedup |
+|-----------|---------------|----------------|---------|
+| Tool Detection | 60ms | 1ms | 60x |
+| PATH Resolution | 20ms | 0.5ms | 40x |
+| Process Scanning | 50ms | 0.5ms | 100x |
+| Hook Execution | 200ms | 20ms | 10x |
 
 ---
 
-## 🚢 Docs Deploy
+## Development
 
-Local docs:
+### Prerequisites
+
+- Python 3.13+
+- Rust (stable)
+- [uv](https://docs.astral.sh/uv/) for Python dependency management
+- [Task](https://taskfile.dev/) for running development commands
+
+### Local Development
 
 ```bash
-bun run docs:dev
-bun run docs:build
+# Install Python deps
+uv sync --all-extras
+
+# Run quality checks
+task quality        # tach + vale + ruff
+task quality:full   # + ruff format --check
+
+# Run tests
+uv run pytest tests/
+
+# Build Rust crates
+cd crates && cargo build --workspace
+cargo test --workspace
+cargo clippy --workspace -- -D warnings
 ```
 
-GitHub Pages:
+### Quality Gates
 
-- Workflow: `.github/workflows/docs.yml`
-- URL convention: `https://<owner>.github.io/thegent/`
-
----
-
-## 🤝 Contributing
-
-We welcome community contributions! Please see our **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
-- Development environment setup (using `uv`).
-- Test suite execution (`task test`).
-- Coding standards and PR process.
+| Tool | Scope | Command |
+|------|-------|---------|
+| Ruff | Python lint + format | `task ruff` / `task ruff:format` |
+| Tach | Module boundaries | `task tach` |
+| Vale | Prose quality | `task vale` |
+| Cargo clippy | Rust lint | `cargo clippy --workspace` |
+| Cargo test | Rust tests | `cargo test --workspace` |
+| pytest | Python tests | `uv run pytest tests/` |
 
 ---
 
-## 📜 License
+## License
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
-
----
-
-<p align="center">
-  Built with ❤️ by the community
-</p>
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
