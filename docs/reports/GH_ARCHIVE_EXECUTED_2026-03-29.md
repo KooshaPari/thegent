@@ -10,7 +10,16 @@
 
 Each line in the log completed without the script’s `SKIP/FAIL` branch (see raw log for `gh` stderr if any).
 
+## Second batch (5 repos)
+
+**Script:** `docs/reports/data/gh_archive_remaining_stale_proposed.sh`  
+**Log:** `docs/reports/data/gh_archive_run_remaining_2026-03-29.log`  
+**Executed:** 2026-03-28 UTC
+
+`PriceyApp`, `pheno-sdk`, `netweave-final2`, `agslag-dash`, `Byteport-TestZip`
+
+After this batch, org inventory and `KOOSHPARI_REPOS_STALE_BUCKETS.tsv` were regenerated from `gh repo list`.
+
 ## Follow-up
 
-- Re-export org inventory: `gh repo list KooshaPari --limit 1000 …` and regenerate stale buckets.
 - **Unarchive** via GitHub UI or `gh repo unarchive <name>` if any repo was archived by mistake.
