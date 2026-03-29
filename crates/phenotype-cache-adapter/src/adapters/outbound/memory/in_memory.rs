@@ -28,9 +28,7 @@ where
 {
     pub fn new(capacity: usize) -> Self {
         Self {
-            cache: RwLock::new(LruCache::new(
-                NonZeroUsize::new(capacity.max(1)).unwrap(),
-            )),
+            cache: RwLock::new(LruCache::new(NonZeroUsize::new(capacity.max(1)).unwrap())),
         }
     }
 

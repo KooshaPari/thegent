@@ -11,10 +11,10 @@ mod evaluator;
 mod policy;
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 pub mod python;
-mod slo;
-mod trust;
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 pub mod python;
+mod slo;
+mod trust;
 
 pub use compliance::ComplianceChecker;
 pub use cost_enforcer::CostEnforcer;

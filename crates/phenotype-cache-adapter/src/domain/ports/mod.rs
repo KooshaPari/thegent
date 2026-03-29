@@ -11,4 +11,4 @@ pub mod inbound;
 pub mod outbound;
 
 pub use inbound::CacheService;
-pub use outbound::{MetricsCollector, EntryStore};
+pub use outbound::{EntryStore, MetricsCollector};
