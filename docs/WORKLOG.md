@@ -26,6 +26,17 @@ All waves complete. All work items completed. Ready for new work.
 
 ## Wave History
 
+### Wave 83 - Complete (2026-03-28)
+| Item | Status | Evidence |
+|------|--------|----------|
+| WL-001: OpenRouter WebSocket Auth Fix | ✅ | `cliproxy_adapter.py:1156` - `extract_websocket_forward_headers` |
+| WL-002: OpenRouter Provider Registration | ✅ | `provider_types.py:19` - `openrouter` in `API_KEY_PROVIDERS` |
+| WL-003: OpenRouter LiteLLM Config | ✅ | `litellm_router.py` - OpenRouter configured |
+| WL-004: OpenRouter Model Mappings | ✅ | `harness_model_mapping.py` - `CANONICAL_TO_OPENROUTER` complete |
+| WL-005: OpenRouter SSE Parse Fix | ✅ | `cliproxy_adapter.py:1181` - SSE comment lines skipped |
+| WL-006: Quality Gate Scanner Bounds | ✅ | `task.py:96` - `quality_gates` field defined |
+| WL-007: Rust Quality-Gate Binary | ✅ | `crates/target/debug/quality-gate` binary exists |
+
 ### Wave 82 - Complete (2026-03-28)
 | Item | Status |
 |------|--------|
