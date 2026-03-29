@@ -37,6 +37,7 @@ class ModuleManifest:
     repo_env_profile_overrides: dict[str, str] = field(default_factory=dict)
 
 
+
 @dataclass(slots=True)
 class TargetLock:
     schema_version: int

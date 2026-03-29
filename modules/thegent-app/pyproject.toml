@@ -2,12 +2,7 @@
 name = "thegent-module-app"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "thegent-cli",
-]
-
-[tool.uv.sources]
-thegent-cli = { workspace = true }
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]

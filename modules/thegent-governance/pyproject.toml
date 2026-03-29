@@ -2,12 +2,7 @@
 name = "thegent-module-governance"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "thegent-audit",
-]
-
-[tool.uv.sources]
-thegent-audit = { workspace = true }
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]

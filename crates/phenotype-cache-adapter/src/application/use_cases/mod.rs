@@ -3,8 +3,8 @@
 //! Use cases encapsulate application-specific business rules
 //! and coordinate between ports.
 
-use crate::domain::ports::CacheService;
 use crate::application::dto::{CacheMetricsDto, CacheResponse};
+use crate::domain::ports::CacheService;
 
 /// Use case: Get value from cache.
 pub struct GetFromCache<K, V, S>

@@ -29,17 +29,17 @@
 //! - `application`: Use cases and DTOs
 //! - `adapters`: Infrastructure implementations
 
-pub mod domain;
-pub mod application;
 pub mod adapters;
+pub mod application;
+pub mod domain;
 
 // Re-export commonly used types for convenience
+pub use adapters::outbound::{AtomicMetricsCollector, InMemoryEntryStore, NoopMetricsCollector};
+pub use application::dto::{BatchResult, CacheMetricsDto, CacheRequest, CacheResponse};
+pub use application::use_cases::{GetCacheMetrics, GetFromCache, InsertIntoCache, RemoveFromCache};
 pub use domain::entities::{CacheConfig, CacheEntry};
-pub use domain::ports::{CacheService, MetricsCollector, EntryStore};
+pub use domain::ports::{CacheService, EntryStore, MetricsCollector};
 pub use domain::services::{CacheConfigBuilder, CacheStatsCalculator, TtlValidator};
-pub use application::dto::{CacheMetricsDto, CacheRequest, CacheResponse, BatchResult};
-pub use application::use_cases::{GetFromCache, InsertIntoCache, RemoveFromCache, GetCacheMetrics};
-pub use adapters::outbound::{InMemoryEntryStore, NoopMetricsCollector, AtomicMetricsCollector};
 
 // ============================================================================
 // Backward-Compatible API (Legacy)
@@ -255,7 +255,9 @@ where
 pub use domain::entities::CacheEntry as DomainCacheEntry;
 
 /// Wrap a domain [`MetricsCollector`] as a legacy [`MetricsHook`].
-pub fn metrics_collector_as_hook<T: MetricsCollector + 'static>(collector: T) -> Arc<dyn MetricsHook> {
+pub fn metrics_collector_as_hook<T: MetricsCollector + 'static>(
+    collector: T,
+) -> Arc<dyn MetricsHook> {
     Arc::new(CollectorAdapter(collector))
 }
 

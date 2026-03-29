@@ -1471,7 +1471,7 @@ def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
 
     from typer.testing import CliRunner
 
-    cli_module_path = Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    cli_module_path = Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
     spec = importlib.util.spec_from_file_location("phench_cli_target_module", cli_module_path)
     if spec is None or spec.loader is None:
         raise RuntimeError("failed to load phench cli module")

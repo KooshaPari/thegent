@@ -2,12 +2,7 @@
 name = "thegent-module-mcp"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "thegent-mcp",
-]
-
-[tool.uv.sources]
-thegent-mcp = { workspace = true }
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]

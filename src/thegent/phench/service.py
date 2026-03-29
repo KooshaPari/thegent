@@ -1475,13 +1475,14 @@ def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[st
     return normalized
 
 
-def load_module_manifest(module: str) -> ModuleManifest:
-    manifest_path = _resolve_module_manifest_path(module)
-    try:
-        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"invalid module manifest for {module}: malformed json") from exc
-
+def load_module_manifest(
+    module_name: str,
+    repos_root: Path | None = None,
+    *,
+    available_repo_ids: list[str] | None = None,
+    _scan: bool = False,
+) -> dict[str, Any]:
+    manifest_path = _resolve_module_manifest_path(module_name)
     if not isinstance(payload, dict):
         raise ValueError(f"invalid module manifest for {module}: payload must be an object")
 
@@ -1527,18 +1528,17 @@ def load_module_manifest(module: str) -> ModuleManifest:
             raise ValueError(f"invalid {key} in manifest: {module}")
         return {str(k): str(v) for k, v in raw.items() if isinstance(k, str) and isinstance(v, str)}
 
-    return ModuleManifest(
-        schema_version=schema_version,
-        repo_patterns=repo_patterns,
-        owners=owners,
-        refresh_cadence=refresh_cadence,
-        default_ref=str(payload.get("default_ref", "HEAD")),
-        repo_ids=repo_ids,
-        repo_ref_overrides=_load_str_dict("repo_ref_overrides"),
-        repo_runner_overrides=_load_str_dict("repo_runner_overrides"),
-        repo_command_overrides=_load_str_dict("repo_command_overrides"),
-        repo_env_profile_overrides=_load_str_dict("repo_env_profile_overrides"),
-    )
+    return {
+        "schema_version": schema_version,
+        "owners": owners,
+        "refresh_cadence": refresh_cadence,
+        "default_ref": str(payload.get("default_ref", "HEAD")),
+        "repo_ids": repo_ids,
+        "repo_ref_overrides": _load_str_dict("repo_ref_overrides"),
+        "repo_runner_overrides": _load_str_dict("repo_runner_overrides"),
+        "repo_command_overrides": _load_str_dict("repo_command_overrides"),
+        "repo_env_profile_overrides": _load_str_dict("repo_env_profile_overrides"),
+    }
 
 
 def load_module_repos(
