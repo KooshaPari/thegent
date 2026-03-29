@@ -1,0 +1,7 @@
+"""Indexer - STUB."""
+from typing import Any, Dict, List
+class Indexer:
+    def __init__(self, *args, **kwargs): pass
+    def index(self, doc, *args, **kwargs): pass
+    def search(self, query, *args, **kwargs) -> List[Dict[str, Any]]: return []
+__all__ = ["Indexer"]
