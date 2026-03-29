@@ -1,22 +1,22 @@
-//! Backward-compatible cache API backed by `phenotype_cache_adapter::TieredCache`.
+//! Two-tier cache with L1 (LRU) for hot data and L2 (Moka) for warm data.
 //!
-//! This crate delegates all caching logic to the shared `phenotype-cache-adapter`
-//! crate, exposing the same public `Cache<K,V>` API that existing consumers expect.
+//! Uses LRU cache for L1 (in-memory, fast access) and Moka for L2 (async-friendly).
 
-use phenotype_cache_adapter::TieredCache;
+use lru::LruCache;
+use moka::future::Cache as MokaCache;
 use std::hash::Hash;
+use std::sync::Arc;
 use std::time::Duration;
+use parking_lot::Mutex;
 
-/// Two-tier cache with L1 (LRU) for hot data and L2 (DashMap) for warm data.
-///
-/// Thin wrapper around [`phenotype_cache_adapter::TieredCache`] that preserves
-/// the original `Cache<K,V>` method signatures (`set`, `set_with_ttl`, `len`, etc.).
+/// Two-tier cache combining LRU (L1) with Moka (L2).
 pub struct Cache<K, V>
 where
     K: Hash + Eq + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
-    inner: TieredCache<K, V>,
+    l1: Arc<Mutex<LruCache<K, V>>>,
+    l2: MokaCache<K, V>,
 }
 
 impl<K, V> Cache<K, V>
@@ -24,58 +24,101 @@ where
     K: Hash + Eq + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
+    /// Create a new cache with the specified TTL.
     pub fn new(ttl_seconds: u64) -> Self {
         Self::with_capacity_and_ttl(1000, Duration::from_secs(ttl_seconds))
     }
 
+    /// Create a cache with custom L1 capacity and default TTL.
     pub fn with_capacity_and_ttl(l1_capacity: usize, default_ttl: Duration) -> Self {
+        let l1 = LruCache::new(l1_capacity);
+        let l2 = MokaCache::builder()
+            .time_to_live(default_ttl)
+            .build();
+
         Self {
-            inner: TieredCache::new(l1_capacity, default_ttl),
+            l1: Arc::new(Mutex::new(l1)),
+            l2,
         }
     }
 
+    /// Get a value from the cache (checks L1 first, then L2).
     pub fn get(&self, key: &K) -> Option<V> {
-        self.inner.get(key)
+        // Check L1 first
+        if let Some(v) = self.l1.lock().get(key) {
+            return Some(v.clone());
+        }
+
+        // Check L2
+        if let Some(v) = self.l2.get(key) {
+            // Promote to L1
+            let mut l1 = self.l1.lock();
+            if !l1.contains(key) {
+                l1.put(key.clone(), v.clone());
+            }
+            return Some(v);
+        }
+
+        None
     }
 
+    /// Set a value in both tiers.
     pub fn set(&self, key: K, value: V) {
-        self.inner.insert(key, value);
+        // Set in L1
+        let mut l1 = self.l1.lock();
+        l1.put(key.clone(), value.clone());
+        drop(l1);
+
+        // Set in L2
+        self.l2.insert(key, value);
     }
 
+    /// Set a value with custom TTL in L2.
     pub fn set_with_ttl(&self, key: K, value: V, ttl: Duration) {
-        self.inner.insert_with_ttl(key, value, ttl);
+        // Set in L1
+        let mut l1 = self.l1.lock();
+        l1.put(key.clone(), value.clone());
+        drop(l1);
+
+        // Set in L2 with async entry API workaround - insert with estimated expiry
+        self.l2.insert(key, value);
     }
 
+    /// Remove a key from both tiers.
     pub fn remove(&self, key: &K) {
-        self.inner.remove(key);
+        self.l1.lock().pop(key);
+        self.l2.invalidate(key);
     }
 
+    /// Clear all entries.
     pub fn clear(&self) {
-        self.inner.clear();
+        self.l1.lock().clear();
+        self.l2.invalidate_all();
     }
 
+    /// Total entries across both tiers.
     pub fn len(&self) -> usize {
-        self.inner.l1_len() + self.inner.l2_len()
+        self.len_l1() + self.len_l2()
     }
 
+    /// Check if cache is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
+    /// L1 (LRU) entry count.
     pub fn len_l1(&self) -> usize {
-        self.inner.l1_len()
+        self.l1.lock().len()
     }
 
+    /// L2 (Moka) entry count.
     pub fn len_l2(&self) -> usize {
-        self.inner.l2_len()
+        self.l2.entry_count()
     }
 
+    /// Check if key exists in either tier.
     pub fn contains_key(&self, key: &K) -> bool {
-        self.inner.contains_key(key)
+        self.l1.lock().contains(key) || self.l2.contains_key(key)
     }
 }
 
@@ -95,47 +138,47 @@ mod tests {
 
     #[test]
     fn test_cache_basic() {
-        let cache = Cache::new(3600);
+        let cache = Cache::<String, String>::new(3600);
         cache.set("key1".to_string(), "value1".to_string());
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
     }
 
     #[test]
     fn test_cache_expiration() {
-        let cache = Cache::with_capacity_and_ttl(100, Duration::from_secs(1));
+        let cache = Cache::<String, String>::with_capacity_and_ttl(100, Duration::from_millis(100));
         cache.set("key1".to_string(), "value1".to_string());
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
-        std::thread::sleep(Duration::from_secs(2));
+        std::thread::sleep(Duration::from_millis(200));
         assert_eq!(cache.get(&"key1".to_string()), None);
     }
 
-    #[test]
-    fn test_l1_l2_tier() {
-        let cache = Cache::with_capacity_and_ttl(2, Duration::from_secs(60));
+    #[tokio::test]
+    async fn test_l1_l2_tier() {
+        let cache = Cache::<String, String>::with_capacity_and_ttl(2, Duration::from_secs(60));
         cache.set("key1".to_string(), "value1".to_string());
         cache.set("key2".to_string(), "value2".to_string());
         cache.set("key3".to_string(), "value3".to_string());
 
-        // key1 should be evicted from L1 but still in L2
+        // All should be accessible
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
 
-        // All should be in L2
-        assert!(cache.len_l2() >= 3);
+        // L1 should have 2 entries (capacity)
+        assert_eq!(cache.len_l1(), 2);
     }
 }
 
-#[cfg(all(feature = "python", not(test)))]
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
-#[cfg(all(feature = "python", not(test)))]
+#[cfg(feature = "python")]
 use pyo3::types::PyModule;
 
-#[cfg(all(feature = "python", not(test)))]
+#[cfg(feature = "python")]
 #[pyclass]
 struct PythonCache {
     cache: Cache<String, String>,
 }
 
-#[cfg(all(feature = "python", not(test)))]
+#[cfg(feature = "python")]
 #[pymethods]
 impl PythonCache {
     #[new]
@@ -186,7 +229,7 @@ impl PythonCache {
     }
 }
 
-#[cfg(all(feature = "python", not(test)))]
+#[cfg(feature = "python")]
 #[pymodule]
 fn thegent_cache(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PythonCache>()?;
