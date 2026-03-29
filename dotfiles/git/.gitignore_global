@@ -1,78 +1,78 @@
-# thegent dotfiles — global gitignore
-# Applies to all git repos on this machine
+# dotfiles/git/.gitignore_global
+# Global gitignore -- applies to all repositories
 
-# ── OS generated ──────────────────────────────────────────────────────────────
+# OS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
 Thumbs.db
-desktop.ini
+ehthumbs.db
+Desktop.ini
 
-# ── Editors ───────────────────────────────────────────────────────────────────
+# Editor
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
 .idea/
-*.swp
-*.swo
-*~
-.netrwhist
-*.orig
+*.iml
+*.iws
+*.ipr
 
-# Note: .cursor/ is intentionally NOT ignored — cursor rules are project config
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# ── Secrets / credentials ─────────────────────────────────────────────────────
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# Rust
+target/
+Cargo.lock
+# (include Cargo.lock for executables, exclude for libraries)
+
+# Go
+vendor/
+
+# Secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.secrets
+*.secret
+secrets.yml
+credentials.json
 *.pem
 *.key
 *.p12
 *.pfx
 id_rsa
 id_ed25519
-*.secret
-*_secret
-secrets.yml
-secrets.yaml
-credentials.json
-service-account*.json
 
-# ── Node ──────────────────────────────────────────────────────────────────────
-node_modules/
-.npm/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnp.*
-.yarn/cache
-.yarn/unplugged
-
-# ── Python ────────────────────────────────────────────────────────────────────
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-dist/
-build/
-.venv/
-venv/
-.mypy_cache/
-.ruff_cache/
-.pytest_cache/
-htmlcov/
-.coverage
-
-# ── Rust ──────────────────────────────────────────────────────────────────────
-target/
-Cargo.lock          # only ignore in libraries, not binaries — project-level override
-
-# ── Go ────────────────────────────────────────────────────────────────────────
-vendor/
-*.test
-
-# ── Build artifacts ───────────────────────────────────────────────────────────
+# Build artifacts
 dist/
 build/
 out/
@@ -83,12 +83,12 @@ out/
 *.dll
 *.exe
 
-# ── Logs ──────────────────────────────────────────────────────────────────────
+# Logs
 *.log
 logs/
+npm-debug.log*
 
-# ── Misc tooling ─────────────────────────────────────────────────────────────
-.mise/
-.direnv/
-.task/
-.pre-commit.log
+# Temp
+*.tmp
+*.temp
+.cache/
