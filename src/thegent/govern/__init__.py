@@ -1,9 +1,4 @@
-"""STUB MODULE - thegent.govern
+"""thegent.govern — Vetter governance layer package.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+# @trace WL-090
 """
-
-# Stub implementation - functionality not available
-__all__ = []
