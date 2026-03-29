@@ -454,7 +454,7 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {"Content-Type": "application/json"}
 
-        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o"))
+        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o")).encode()
 
         with (
             patch(
@@ -462,12 +462,14 @@ class TestOR18NativeResponsesForwarding:
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-test-key"}),
-            patch("httpx.AsyncClient") as mock_client_cls,
+            patch(
+                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client"
+            ) as mock_get_client,
         ):
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
-            mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-            mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=None)
+            mock_get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_get_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
             from starlette.applications import Starlette
             from starlette.routing import Route
