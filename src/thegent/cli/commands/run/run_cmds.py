@@ -71,6 +71,12 @@ def run_cmd(
         "--skill",
         help="Activate skill instructions by name (repeatable) (WL-101).",
     ),
+    no_cache: bool = typer.Option(
+        False,
+        "--no-cache",
+        help="Bypass the LLM response cache; always hit the backend (FR-CACHE-002).",
+        is_flag=True,
+    ),
 ) -> None:
     """Run an agent or droid with the given prompt. Model-first: agent=None, model set."""
     if isinstance(shadow, OptionInfo):
@@ -91,6 +97,14 @@ def run_cmd(
         reasoning = None
     if isinstance(skills, OptionInfo):
         skills = None
+    if isinstance(no_cache, OptionInfo):
+        no_cache = False
+
+    # Apply --no-cache: replace the module-level default ResponseCache with a
+    # disabled instance so that CliproxyHTTPClient picks it up automatically.
+    if no_cache:
+        from thegent.cache.response_cache import configure_default_cache
+        configure_default_cache(enabled=False)
 
     from thegent.cli.commands.impl import run_impl
     from thegent.models import ModelCatalog, resolve_route
