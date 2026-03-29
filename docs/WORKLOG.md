@@ -8,28 +8,58 @@ Active work tracking for **thegent** project.
 
 ## Current Sprint
 
-### Wave 72 - In Progress
+### Wave 80 - In Progress
 
-| Item | Status | Owner | ETA |
-|------|--------|-------|-----|
-| Documentation audit & alignment | 🟢 Complete | Agent | 2026-02-23 |
-| ADR-005/006/007 documentation | 🟢 Complete | Agent | 2026-02-23 |
-| FR Tracker expansion (13→95 FRs) | 🟢 Complete | Agent | 2026-02-23 |
-| User Stories (US-E1-E5) documentation | 🟢 Complete | Agent | 2026-02-23 |
-| CHANGELOG versioning (v0.1.0) | 🟢 Complete | Agent | 2026-02-23 |
-| pyproject.toml version addition | 🟢 Complete | Agent | 2026-02-23 |
-| Docs consolidation (.llms/docs→docs/) | 🟡 In Progress | Agent | 2026-02-23 |
+| Item | Status | Owner |
+|------|--------|-------|
+| BytePort completion | 🔴 Pending | - |
+| Feature parity verification | 🟡 Ready | - |
 
-### Wave 71 - Completed (2026-02-22)
+### Wave 79 - Complete (2026-03-29)
 
 | Item | Status |
 |------|--------|
 | Documentation consolidation | ✅ |
 | GitHub Pages deployment fix | ✅ |
 
+### Wave 79 - Complete (2026-03-29)
+
+| Item | Status |
+|------|--------|
+| Comprehensive audit complete | ✅ |
+| Local unmerged states verified | ✅ |
+| Remote unmerged states verified | ✅ |
+| Quality run (1371 tests) | ✅ |
+| ECO work packages shipped | ✅ |
+| Governance artifacts updated | ✅ |
+
 ---
 
 ## Completed Work
+
+### Wave 78 (2026-03-28)
+
+| Item | Status |
+|------|--------|
+| PR audit complete | ✅ |
+| Branch consolidation | ✅ |
+| Non-canonical folders archived | ✅ |
+
+### Wave 77 (2026-03-28)
+
+| Item | Status |
+|------|--------|
+| Eco work packages defined | ✅ |
+| AgilePlus specs created | ✅ |
+
+### Wave 76 (2026-03-28)
+
+| Item | Status |
+|------|--------|
+| Repository catalog updated | ✅ |
+| ADR governance complete | ✅ |
+
+---
 
 ### Wave 70 (2026-02-22)
 
