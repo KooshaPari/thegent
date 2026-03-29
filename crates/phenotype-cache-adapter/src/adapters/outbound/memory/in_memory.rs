@@ -48,6 +48,10 @@ where
         self.cache.read().len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.cache.read().is_empty()
+    }
+
     pub fn clear(&self) {
         self.cache.write().clear();
     }
@@ -91,6 +95,10 @@ where
 
     pub fn len(&self) -> usize {
         self.map.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
     }
 
     pub fn clear(&self) {
