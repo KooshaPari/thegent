@@ -454,6 +454,15 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {"Content-Type": "application/json"}
 
+<<<<<<< Updated upstream
+=======
+        # Create mock client instance BEFORE patching
+        mock_client_instance = MagicMock()
+        mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
+        mock_client_instance.post.return_value = mock_httpx_resp
+        mock_client_instance.is_closed = False
+
+>>>>>>> Stashed changes
         body = json.dumps(_make_responses_body(model="openrouter/gpt-4o"))
 
         with (
@@ -462,6 +471,7 @@ class TestOR18NativeResponsesForwarding:
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-test-key"}),
+<<<<<<< Updated upstream
             patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
             # Reset the module-level _http_client to ensure fresh client
@@ -473,6 +483,14 @@ class TestOR18NativeResponsesForwarding:
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
             mock_get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
             mock_get_client.return_value.__aexit__ = AsyncMock(return_value=None)
+=======
+            patch(
+                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client",
+                return_value=mock_client_instance,
+            ),
+        ):
+
+>>>>>>> Stashed changes
             from starlette.applications import Starlette
             from starlette.routing import Route
 
@@ -502,7 +520,16 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {}
 
-        body = _make_responses_body(model="openrouter/claude-opus-4-6")
+<<<<<<< Updated upstream
+=======
+        # Create mock client instance BEFORE patching
+        mock_client_instance = MagicMock()
+        mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
+        mock_client_instance.post.return_value = mock_httpx_resp
+        mock_client_instance.is_closed = False
+
+>>>>>>> Stashed changes
+        body = json.dumps(_make_responses_body(model="openrouter/claude-opus-4-6"))
 
         with (
             patch(
@@ -510,12 +537,20 @@ class TestOR18NativeResponsesForwarding:
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-real-key"}),
+<<<<<<< Updated upstream
             patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
-            mock_client_instance = MagicMock()
+            mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
-            # _get_http_client returns the client directly (not a context manager)
-            mock_get_client.return_value = mock_client_instance
+            mock_get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
+            mock_get_client.return_value.__aexit__ = AsyncMock(return_value=None)
+=======
+            patch(
+                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client",
+                return_value=mock_client_instance,
+            ),
+        ):
+>>>>>>> Stashed changes
 
             from starlette.applications import Starlette
             from starlette.routing import Route
@@ -530,25 +565,41 @@ class TestOR18NativeResponsesForwarding:
         assert sent_headers.get("X-Title") == "thegent"
 
     @pytest.mark.asyncio
-    async def test_native_forwarding_includes_forward_headers(self) -> None:
-        """Whitelisted headers (x-session-id) must be forwarded in the native path."""
+    @pytest.mark.asyncio
+    async def test_native_forwarding_respects_streaming_preference(self) -> None:
+        """When the provider returns streaming, the handler should NOT attempt SSE transformation."""
+        from starlette.applications import Starlette
+        from starlette.routing import Route
         from starlette.testclient import TestClient
 
         from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_router = MagicMock()
-        mock_httpx_resp = MagicMock()
-        mock_httpx_resp.content = b'{"status":"ok"}'
-        mock_httpx_resp.status_code = 200
-        mock_httpx_resp.headers = {}
+        mock_router.model_alias_map = {"openrouter/xyz": "anthropic/claude-3-5-sonnet"}
 
+<<<<<<< Updated upstream
         body = json.dumps(_make_responses_body(model="openrouter/gpt-4o"))
+=======
+        mock_httpx_resp = MagicMock()
+        mock_httpx_resp.content = b"event: message\ndata: hello"
+        mock_httpx_resp.status_code = 200
+        mock_httpx_resp.headers = {"content-type": "text/event-stream"}
+
+        # Create mock client instance BEFORE patching
+        mock_client_instance = MagicMock()
+        mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
+        mock_client_instance.post.return_value = mock_httpx_resp
+        mock_client_instance.is_closed = False
+
+        body = json.dumps(_make_responses_body(model="openrouter/xyz", stream=True))
+>>>>>>> Stashed changes
 
         with (
             patch(
                 "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
+<<<<<<< Updated upstream
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-key"}),
             patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
@@ -560,6 +611,13 @@ class TestOR18NativeResponsesForwarding:
             from starlette.applications import Starlette
             from starlette.routing import Route
 
+=======
+            patch(
+                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client",
+                return_value=mock_client_instance,
+            ),
+        ):
+>>>>>>> Stashed changes
             app = Starlette(routes=[Route("/v1/responses", handle_responses_request, methods=["POST"])])
             client = TestClient(app, raise_server_exceptions=False)
             client.post(
