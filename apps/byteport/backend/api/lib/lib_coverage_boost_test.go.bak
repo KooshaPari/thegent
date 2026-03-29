@@ -1,0 +1,628 @@
+package lib
+
+import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/byteport/api/models"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/zalando/go-keyring"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
+
+// Additional tests to boost coverage for crypto functions
+func TestEncryptPassEdgeCases(t *testing.T) {
+	tests := []string{
+		"",                    // empty password
+		" ",                   // single space
+		"\t\n\r",              // whitespace chars
+		"a",                   // single char
+		"🔐🗝️",                // unicode
+		strings.Repeat("x", 1000), // very long password
+	}
+
+	for _, password := range tests {
+		t.Run(fmt.Sprintf("password-len-%d", len(password)), func(t *testing.T) {
+			hash := EncryptPass(password)
+			assert.NotEmpty(t, hash)
+			assert.True(t, strings.HasPrefix(hash, "$argon2id$"))
+
+			// Verify the hash validates correctly
+			isValid := ValidatePass(password, hash)
+			assert.True(t, isValid)
+		})
+	}
+}
+
+func TestValidatePassValidCases(t *testing.T) {
+	// Test successful validation cases only
+	validHash := EncryptPass("test123")
+	assert.True(t, ValidatePass("test123", validHash))
+	assert.False(t, ValidatePass("Test123", validHash)) // case sensitive
+	assert.False(t, ValidatePass("wrong", validHash))
+	assert.False(t, ValidatePass("", validHash)) // empty password
+
+	// Test edge cases with valid hashes
+	emptyPassHash := EncryptPass("")
+	assert.True(t, ValidatePass("", emptyPassHash))
+	assert.False(t, ValidatePass("not-empty", emptyPassHash))
+
+	// Test unicode passwords
+	unicodeHash := EncryptPass("🔐🗝️")
+	assert.True(t, ValidatePass("🔐🗝️", unicodeHash))
+	assert.False(t, ValidatePass("wrong", unicodeHash))
+}
+
+// Test the underlying comparePasswordAndHash function directly to test error paths
+func TestComparePasswordAndHashErrorPaths(t *testing.T) {
+	// Test with empty hash - this will return error instead of fatal
+	match, err := comparePasswordAndHash("password", "")
+	assert.Error(t, err)
+	assert.False(t, match)
+	assert.Equal(t, ErrInvalidHash, err)
+
+	// Test with invalid hash format
+	match, err = comparePasswordAndHash("password", "invalid-hash")
+	assert.Error(t, err)
+	assert.False(t, match)
+	assert.Equal(t, ErrInvalidHash, err)
+
+	// Test with malformed argon2 hash
+	match, err = comparePasswordAndHash("password", "$argon2id$invalid")
+	assert.Error(t, err)
+	assert.False(t, match)
+}
+
+// Additional tests for auth functions to boost coverage
+func TestInitAuthSystemSuccessPath(t *testing.T) {
+	// Test that InitAuthSystem works correctly multiple times
+	err := InitAuthSystem()
+	assert.NoError(t, err)
+
+	// Should be idempotent - calling again should not fail
+	err = InitAuthSystem()
+	assert.NoError(t, err)
+
+	// Verify all keys exist
+	_, err = keyring.Get(tokenKeyService, keyringUser)
+	assert.NoError(t, err)
+	
+	_, err = keyring.Get(secretsKeyService, keyringUser)
+	assert.NoError(t, err)
+	
+	_, err = keyring.Get(serviceKeyService, keyringUser)
+	assert.NoError(t, err)
+}
+
+func TestGenerateTokenErrorPaths(t *testing.T) {
+	// Clean up keyring first
+	keyring.Delete(tokenKeyService, keyringUser)
+	
+	// Test without initialized auth system
+	user := models.User{
+		UUID:  "test-user",
+		Email: "test@example.com",
+	}
+
+	// This should work because GenerateToken calls getSymmetricKey which creates key if needed
+	token, err := GenerateToken(user)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, token)
+
+	// Test with user having empty UUID
+	emptyUUIDUser := models.User{
+		UUID:  "",
+		Email: "test@example.com",
+	}
+
+	token, err = GenerateToken(emptyUUIDUser)
+	assert.NoError(t, err) // Should still work
+	assert.NotEmpty(t, token)
+
+	// Test with user having empty email
+	emptyEmailUser := models.User{
+		UUID:  "test-user",
+		Email: "",
+	}
+
+	token, err = GenerateToken(emptyEmailUser)
+	assert.NoError(t, err) // Should still work
+	assert.NotEmpty(t, token)
+}
+
+func TestGenerateNVMSTokenErrorPaths(t *testing.T) {
+	// Test with empty project UUID
+	emptyProject := models.Project{
+		UUID: "",
+		User: models.User{
+			UUID: "user-123",
+		},
+	}
+
+	token, err := GenerateNVMSToken(emptyProject)
+	assert.NoError(t, err) // Should still work
+	assert.NotEmpty(t, token)
+
+	// Test with empty user UUID
+	emptyUserProject := models.Project{
+		UUID: "project-123",
+		User: models.User{
+			UUID: "",
+		},
+	}
+
+	token, err = GenerateNVMSToken(emptyUserProject)
+	assert.NoError(t, err) // Should still work
+	assert.NotEmpty(t, token)
+}
+
+func TestAuthenticateRequestDatabaseErrors(t *testing.T) {
+	// Setup test database
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+	models.DB = db
+
+	// Create table but don't insert any users
+	err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
+		uuid TEXT PRIMARY KEY,
+		name TEXT,
+		email TEXT UNIQUE,
+		password TEXT,
+		aws_access_key_id TEXT DEFAULT '',
+		aws_secret_access_key TEXT DEFAULT '',
+		llm_provider TEXT DEFAULT '',
+		llm_providers TEXT DEFAULT '{}',
+		portfolio_root_endpoint TEXT DEFAULT '',
+		portfolio_api_key TEXT DEFAULT '',
+		created_at DATETIME,
+		updated_at DATETIME
+	)`).Error
+	require.NoError(t, err)
+
+	// Initialize auth system
+	err = InitAuthSystem()
+	require.NoError(t, err)
+
+	// Generate token for non-existent user
+	user := models.User{
+		UUID:  "non-existent-user",
+		Email: "nonexistent@example.com",
+	}
+
+	token, err := GenerateToken(user)
+	require.NoError(t, err)
+
+	// Try to authenticate - should fail because user doesn't exist in database
+	authenticatedUser, err := AuthenticateRequest(token)
+	assert.Error(t, err)
+	assert.Nil(t, authenticatedUser)
+	assert.Contains(t, err.Error(), "record not found")
+
+	// Test with malformed token that causes parsing errors
+	authenticatedUser, err = AuthenticateRequest("malformed.token.here")
+	assert.Error(t, err)
+	assert.Nil(t, authenticatedUser)
+
+	// Test with empty token
+	authenticatedUser, err = AuthenticateRequest("")
+	assert.Error(t, err)
+	assert.Nil(t, authenticatedUser)
+}
+
+func TestValidateTokenKeyringFailures(t *testing.T) {
+	// Clean up keyring
+	keyring.Delete(tokenKeyService, keyringUser)
+
+	// Test validation without keyring setup (should fail)
+	valid, token, err := ValidateToken("any-token")
+	assert.Error(t, err)
+	assert.False(t, valid)
+	assert.Nil(t, token)
+
+	// Setup minimal key
+	err = ensureKeyExists(tokenKeyService, keyringUser)
+	require.NoError(t, err)
+
+	// Test with various invalid token formats
+	invalidTokens := []string{
+		"not.a.token",
+		"v4.local.invalid",
+		"",
+		" ",
+		"Bearer token",
+		"random-string-123",
+	}
+
+	for _, invalidToken := range invalidTokens {
+		t.Run(fmt.Sprintf("invalid-token-%s", invalidToken), func(t *testing.T) {
+			valid, token, err := ValidateToken(invalidToken)
+			assert.Error(t, err)
+			assert.False(t, valid)
+			assert.Nil(t, token)
+		})
+	}
+}
+
+func TestValidateServiceTokenFailures(t *testing.T) {
+	// Similar tests for service token validation
+	keyring.Delete(serviceKeyService, keyringUser)
+
+	// Test validation without keyring setup
+	valid, token, err := ValidateServiceToken("any-service-token")
+	assert.Error(t, err)
+	assert.False(t, valid)
+	assert.Nil(t, token)
+
+	// Setup minimal key
+	err = ensureKeyExists(serviceKeyService, keyringUser)
+	require.NoError(t, err)
+
+	// Test with invalid service tokens
+	invalidTokens := []string{
+		"not.a.service.token",
+		"v4.local.invalid",
+		"",
+		" ",
+		"malformed-service-token",
+	}
+
+	for _, invalidToken := range invalidTokens {
+		t.Run(fmt.Sprintf("invalid-service-token-%s", invalidToken), func(t *testing.T) {
+			valid, token, err := ValidateServiceToken(invalidToken)
+			assert.Error(t, err)
+			assert.False(t, valid)
+			assert.Nil(t, token)
+		})
+	}
+}
+
+func TestAuthMiddlewareEdgeCases(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	// Setup database and user for valid token tests
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+	models.DB = db
+
+	err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
+		uuid TEXT PRIMARY KEY,
+		name TEXT,
+		email TEXT UNIQUE,
+		password TEXT,
+		aws_access_key_id TEXT DEFAULT '',
+		aws_secret_access_key TEXT DEFAULT '',
+		llm_provider TEXT DEFAULT '',
+		llm_providers TEXT DEFAULT '{}',
+		portfolio_root_endpoint TEXT DEFAULT '',
+		portfolio_api_key TEXT DEFAULT '',
+		created_at DATETIME,
+		updated_at DATETIME
+	)`).Error
+	require.NoError(t, err)
+
+	// Insert test user
+	err = db.Exec(`INSERT INTO users (uuid, name, email, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		"test-user-123", "Test User", "test@example.com", "hashed-password", time.Now(), time.Now()).Error
+	require.NoError(t, err)
+
+	// Initialize auth
+	err = InitAuthSystem()
+	require.NoError(t, err)
+
+	user := models.User{
+		UUID:  "test-user-123",
+		Email: "test@example.com",
+	}
+
+	validToken, err := GenerateToken(user)
+	require.NoError(t, err)
+
+	router := gin.New()
+	router.Use(AuthMiddleware())
+	router.GET("/test", func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if exists {
+			c.JSON(http.StatusOK, gin.H{"user": user, "message": "authenticated"})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"message": "no user context"})
+		}
+	})
+
+	tests := []struct {
+		name           string
+		method         string
+		cookieValue    string
+		headerValue    string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "HEAD request should pass without auth",
+			method:         "HEAD",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "token in Authorization header",
+			method:         "GET",
+			headerValue:    "Bearer " + validToken,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "authenticated",
+		},
+		{
+			name:           "token in cookie without Bearer",
+			method:         "GET",
+			cookieValue:    validToken,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "authenticated",
+		},
+		{
+			name:           "token in cookie with Bearer prefix",
+			method:         "GET",
+			cookieValue:    "Bearer " + validToken,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "authenticated",
+		},
+		{
+			name:           "empty Authorization header",
+			method:         "GET",
+			headerValue:    "",
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Authorization header missing",
+		},
+		{
+			name:           "invalid Bearer token format",
+			method:         "GET",
+			headerValue:    "NotBearer " + validToken,
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Authorization header missing",
+		},
+		{
+			name:           "Bearer without token",
+			method:         "GET",
+			headerValue:    "Bearer",
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Invalid or expired token",
+		},
+		{
+			name:           "Bearer with empty token",
+			method:         "GET",
+			headerValue:    "Bearer ",
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Invalid or expired token",
+		},
+		{
+			name:           "token for non-existent user",
+			method:         "GET",
+			headerValue:    "Bearer " + func() string {
+				fakeUser := models.User{UUID: "fake-user", Email: "fake@example.com"}
+				token, _ := GenerateToken(fakeUser)
+				return token
+			}(),
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Invalid or expired token",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(tt.method, "/test", nil)
+
+			if tt.headerValue != "" {
+				req.Header.Set("Authorization", tt.headerValue)
+			}
+			if tt.cookieValue != "" {
+				req.AddCookie(&http.Cookie{
+					Name:  "authToken",
+					Value: tt.cookieValue,
+				})
+			}
+
+			router.ServeHTTP(w, req)
+			assert.Equal(t, tt.expectedStatus, w.Code)
+			if tt.expectedBody != "" {
+				assert.Contains(t, w.Body.String(), tt.expectedBody)
+			}
+		})
+	}
+}
+
+// Tests for apilink functions to boost coverage
+func TestValidatePortfolioAPIResponseCodes(t *testing.T) {
+	statusCodes := []int{
+		http.StatusOK,           // 200
+		http.StatusCreated,      // 201
+		http.StatusAccepted,     // 202
+		http.StatusNoContent,    // 204
+		http.StatusBadRequest,   // 400
+		http.StatusUnauthorized, // 401
+		http.StatusForbidden,    // 403
+		http.StatusNotFound,     // 404
+		http.StatusMethodNotAllowed, // 405
+		http.StatusInternalServerError, // 500
+		http.StatusBadGateway,         // 502
+		http.StatusServiceUnavailable, // 503
+		http.StatusGatewayTimeout,     // 504
+	}
+
+	for _, statusCode := range statusCodes {
+		t.Run(fmt.Sprintf("status-%d", statusCode), func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(statusCode)
+				w.Write([]byte(fmt.Sprintf(`{"status": %d}`, statusCode)))
+			}))
+			defer server.Close()
+
+			err := ValidatePortfolioAPI(server.URL, "test-key")
+
+			if statusCode >= 200 && statusCode < 300 {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), fmt.Sprintf("Status code: %d", statusCode))
+			}
+		})
+	}
+}
+
+func TestValidateOpenAICredentialsStatusCodes(t *testing.T) {
+	// Test with known invalid key that will trigger real API error responses
+	invalidKeys := []string{
+		"sk-invalid123",
+		"",
+		"not-a-key",
+		"sk-" + strings.Repeat("x", 48), // proper format but invalid
+	}
+
+	for _, key := range invalidKeys {
+		t.Run(fmt.Sprintf("invalid-key-%s", key), func(t *testing.T) {
+			err := ValidateOpenAICredentials(key)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), "invalid OpenAI API Key")
+		})
+	}
+}
+
+func TestValidateAWSCredentialsEdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		accessKey string
+		secretKey string
+		expectErr bool
+	}{
+		{"whitespace access key", "   ", "secret", true},
+		{"whitespace secret key", "access", "   ", true},
+		{"tab characters", "\t", "\t", true},
+		{"newline characters", "\n", "\n", true},
+		{"very short keys", "a", "b", true},
+		{"long valid format", strings.Repeat("AKIA", 5), strings.Repeat("abcd", 10), true}, // Still invalid, but format-wise longer
+		{"mixed case", "AKIAmixed", "secretMIXED", true},
+		{"numbers only", "123456789", "987654321", true},
+		{"special chars", "AKIA!@#$%", "secret!@#$%", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateAWSCredentials(tt.accessKey, tt.secretKey)
+			if tt.expectErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "invalid AWS credentials")
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Tests for crypto edge cases
+func TestGenerateRandomBytesEdgeCases(t *testing.T) {
+	sizes := []uint32{0, 1, 7, 15, 16, 31, 32, 63, 64, 127, 128, 255, 256, 1023, 1024}
+
+	for _, size := range sizes {
+		t.Run(fmt.Sprintf("size-%d", size), func(t *testing.T) {
+			bytes, err := generateRandomBytes(size)
+			assert.NoError(t, err)
+			assert.Equal(t, int(size), len(bytes))
+
+			if size > 0 {
+				// Test that multiple calls produce different results
+				bytes2, err := generateRandomBytes(size)
+				assert.NoError(t, err)
+				// Only check if not equal for sizes > 1 to avoid flakiness
+				if size > 1 {
+					assert.NotEqual(t, bytes, bytes2)
+				}
+			}
+		})
+	}
+}
+
+func TestComparePasswordAndHashEdgeCases(t *testing.T) {
+	// Generate a valid hash first
+	params := &params{
+		memory:      64 * 1024,
+		iterations:  3,
+		parallelism: 2,
+		saltLength:  16,
+		keyLength:   32,
+	}
+
+	hash, err := generateFromPassword("testpassword", params)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		password string
+		hash     string
+		expected bool
+		expectErr bool
+	}{
+		{"correct password", "testpassword", hash, true, false},
+		{"wrong password", "wrongpassword", hash, false, false},
+		{"empty password", "", hash, false, false},
+		{"unicode password", "🔐testpassword", hash, false, false},
+		{"empty hash", "testpassword", "", false, true},
+		{"invalid hash format", "testpassword", "invalid", false, true},
+		{"malformed hash", "testpassword", "$argon2id$invalid", false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			match, err := comparePasswordAndHash(tt.password, tt.hash)
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, match)
+			}
+		})
+	}
+}
+
+func TestEnsureKeyExistsErrorScenarios(t *testing.T) {
+	// Test with various service/user combinations
+	services := []string{
+		"test-service-123",
+		"", // empty service
+		" ", // space
+		"service with spaces",
+		"service/with/slashes",
+	}
+
+	users := []string{
+		"test-user-123",
+		"", // empty user
+		" ", // space
+		"user@domain.com",
+	}
+
+	for _, service := range services {
+		for _, user := range users {
+			t.Run(fmt.Sprintf("service-%s-user-%s", service, user), func(t *testing.T) {
+				// Clean up first
+				keyring.Delete(service, user)
+
+				err := ensureKeyExists(service, user)
+				// Function should be robust and handle edge cases
+				assert.NoError(t, err)
+
+				// Verify key was created (if service and user are valid)
+				if service != "" && user != "" {
+					key, err := keyring.Get(service, user)
+					assert.NoError(t, err)
+					assert.NotEmpty(t, key)
+				}
+
+				// Clean up
+				keyring.Delete(service, user)
+			})
+		}
+	}
+}

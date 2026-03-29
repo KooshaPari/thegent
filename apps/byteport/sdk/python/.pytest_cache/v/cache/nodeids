@@ -1,0 +1,5 @@
+[
+  "tests/test_local.py::test_import_kinfra_missing_raises_helpful_error",
+  "tests/test_local.py::test_start_local_tunnel_respects_provided_port",
+  "tests/test_local.py::test_start_local_tunnel_uses_stubbed_kinfra"
+]
