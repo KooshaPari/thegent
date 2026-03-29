@@ -18,7 +18,6 @@ fn is_inside_git_worktree(git_bin: &std::path::Path) -> bool {
         .output()
     {
         Ok(output) => output.status.success() && output.stdout == b"true\n",
-        Ok(_) => false,
         Err(_) => false,
     }
 }
@@ -40,7 +39,9 @@ fn is_worktree_clean(git_bin: &std::path::Path) -> Option<bool> {
     }
 }
 
-fn run_checkout(args: &[String]) -> ExitCode {
+/// Run checkout - exposed for potential library use
+#[allow(dead_code)]
+pub fn run_checkout(args: &[String]) -> ExitCode {
     let git_path = match resolve_binary("git") {
         Some(path) => path,
         None => {
