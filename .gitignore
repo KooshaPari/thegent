@@ -138,3 +138,7 @@ colab/
 archive/
 trace/
 crates/phenotype-cache-adapter/
+.agileplus/
+kitty-specs/
+styles/
+tokenledger/
