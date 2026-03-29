@@ -50,3 +50,10 @@ target/
 **/node_modules/*
 backend/api/.gomodcache/
 backend/api/.gocache/
+
+# Environment files - never commit secrets
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/**/.env
