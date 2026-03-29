@@ -1,0 +1,21 @@
+# Documentation Expansion TODO
+
+Last updated: 2026-02-22
+
+## Claimed Items
+
+### DOCEXP-001 — `docs/research/SESSION_RESEARCH_COMPLETE.md`
+- Status: **IN PROGRESS**
+- Owner: **Codex agent (this session)**
+- Next actions:
+  - Build concise section skeleton for session-level synthesis.
+  - Add TODO placeholders mapped to concrete source files.
+  - Keep links practical/minimal for fast downstream fill-in.
+
+### DOCEXP-002 — `docs/research/CONVERSATION_DUMP_2026-02-16_COMPLETE.md`
+- Status: **IN PROGRESS**
+- Owner: **Codex agent (this session)**
+- Next actions:
+  - Build concise section skeleton for 2026-02-16 dump completion.
+  - Add TODO placeholders mapped to concrete source files.
+  - Cross-link to upstream dump and related 2026-02-16 artifacts.

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/pyrightconfig.schema.json",
+  "include": [
+    "src",
+    "tests"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    "**/.venv",
+    "**/venv",
+    "**/env",
+    "**/.env",
+    "**/site-packages",
+    "**/dist",
+    "**/build",
+    "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/.coverage",
+    "**/htmlcov",
+    "**/.tox",
+    "**/.worktrees",
+    "**/docs-dist",
+    "**/.git",
+    "**/migrations",
+    "**/__generated__",
+    "**/generated",
+    "**/.next",
+    "**/out",
+    "**/target",
+    "**/.idea",
+    "**/.vscode",
+    "**/.cursor"
+  ],
+  "ignore": [
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/site-packages/**",
+    "**/.worktrees/**"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": false,
+  "reportMissingImports": true,
+  "reportMissingModuleSource": false,
+  "reportUnusedImport": true,
+  "reportUnusedClass": true,
+  "reportUnusedFunction": true,
+  "reportUnusedVariable": true,
+  "reportDuplicateImport": true,
+  "reportWildcardImportFromLibrary": false,
+  "pythonVersion": "3.12",
+  "pythonPlatform": "All",
+  "executionEnvironments": [
+    {
+      "root": "src",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "All",
+      "extraPaths": []
+    },
+    {
+      "root": "tests",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "All",
+      "extraPaths": ["src"]
+    }
+  ],
+  "stubPath": "typings",
+  "venvPath": ".",
+  "venv": ".venv",
+  "defineConstant": {
+    "DEBUG": false
+  }
+}

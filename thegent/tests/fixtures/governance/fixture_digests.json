@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "changelog": [
+    {
+      "version": 1,
+      "date": "2026-02-21",
+      "note": "Initial signed digest manifest for governance fixtures."
+    },
+    {
+      "version": 2,
+      "date": "2026-02-20",
+      "note": "Canonical ordering + digest regeneration for governance fixture pipeline"
+    }
+  ],
+  "signature_method": "sha256(joined file:sha256 lines sorted by file path, '\\n'-delimited, no trailing newline)",
+  "files": [
+    {
+      "path": "replay/green_stable.jsonl",
+      "sha256": "1847a3b407cd5fec284d27571478e3894ede9c8ea0b838f8ba059532dc84a71f"
+    },
+    {
+      "path": "replay/red_interrupt.jsonl",
+      "sha256": "7c4e0149b0b8c924f17f9b1a2a3bb8b7f185ec0ee097d9e606e3db27eb290edf"
+    },
+    {
+      "path": "replay/yellow_recovery.jsonl",
+      "sha256": "2a320772d5fc6888eaf5a6c48f521565df7a0924177cf6ddaf715860607c9ea4"
+    },
+    {
+      "path": "spiral_selector_contract_snapshot.json",
+      "sha256": "e0ab0408518b74a966205934251bd5c3f55b8d8b6cbd3049c43eb849d30c5900"
+    },
+    {
+      "path": "spiral_trend_replay_manifest.json",
+      "sha256": "69cedaf2822f4f59ef4c03bd48a3da8e10d6d39673eb1b507fbdc6845f321a58"
+    }
+  ],
+  "signed_digest": "bdfbd4cd756eb8fd071cd1f0db49a2aeaa740ff5ab2eb6c1de07eaef07d3720a"
+}

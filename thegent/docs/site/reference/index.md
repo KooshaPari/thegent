@@ -1,0 +1,10 @@
+# Reference
+
+Reference material for routing behavior, configuration keys, and operational defaults.
+
+## Reference Pages
+
+- [Routing](./routing)
+- [Configuration](./configuration)
+
+Use the [Guide](/guide/) for step-by-step setup and usage.

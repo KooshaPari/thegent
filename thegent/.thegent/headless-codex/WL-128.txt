@@ -1,0 +1,22 @@
+# WL-128 Gap Report (local fallback)
+
+## Duplicate surfaces
+- Watcher stack duplicated across `src/thegent/infra/fast_file_watcher.py`, `src/thegent/governance/triggers.py`, and two `WatcherDaemon` implementations (`src/thegent/native/watcher_daemon.py`, `src/thegent/sitback/watchdog.py`).
+- Native parser loader duplicated in `src/thegent/output_parser.py` and `src/thegent/contracts/parser.py` (`_get_native_parser` logic).
+- Lint/test task aliases duplicate canonical paths in `Taskfile.yml` (multiple wrappers around same lint/test calls).
+
+## Removal order
+1. Route trigger watchers to `FastFileWatcher`; converge to one daemon implementation.
+2. Extract shared native parser loader module and import it from both parser surfaces.
+3. Remove redundant Taskfile aliases after CI/docs references are updated.
+
+## Risks
+- Watcher timing/lifecycle regressions in background loops.
+- Native parser fallback behavior changes if loader contract drifts.
+- CI/docs break if alias removals happen before call-site updates.
+
+## Validation commands
+- `uv run pytest tests/native/test_watcher_daemon.py`
+- `uv run pytest tests/test_unit_output_parser.py tests/test_unit_contracts_parser.py`
+- `task lint:python`
+- `task test`

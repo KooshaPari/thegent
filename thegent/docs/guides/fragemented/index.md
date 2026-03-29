@@ -1,0 +1,20 @@
+# Fragmented Index
+
+## Source Files (2026)
+
+- DEVELOPER_QUICKSTART.md
+- INTEGRATING_AGENT_IDENTITY_WITH_SWARM_CONTROLLER.md
+- MODERNIZATION_IMPLEMENTATION_GUIDE.md
+- PHASE_6_MEMORY_MIGRATION_GUIDE.md
+- RESILIENCE_IMPLEMENTATION_QUICKSTART.md
+- SWARM_CONTROLLER_README.md
+- SWARM_CONTROLLER_USAGE.md
+- SWARM_INTEGRATION_GUIDE.md
+- data-migration.md
+- dependency-updates.md
+- frontend-development.md
+- legacy-alternatives.md
+- legacy-migration.md
+- migration-overview.md
+- setup-guide.md
+- swarm-controller.md

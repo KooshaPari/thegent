@@ -1,0 +1,41 @@
+# Design Doc: Agent-Accelerated Production Readiness Optimization
+
+**Date:** 2026-02-18
+**Status:** Approved
+**Topic:** Holistic optimization of the "Production Packaging, Polish & Optimization Audit + Plan"
+
+## 1. Executive Summary
+This design transforms the 5-week "Production Packaging" roadmap into a compressed, parallelized execution model driven by specialized agent batches. It prioritizes cross-platform runtime parity (Windows/macOS/Linux) and automated distribution while consolidating all tasks into the project's canonical `WORK_STREAM.md`.
+
+## 2. Architecture & Approach
+We transition from a sequential weekly phase model to **4 Execution Bundles** that leverage the "Subagent Swarm" pattern.
+
+### 2.1 Execution Bundles
+| Bundle | Component | Optimization Strategy |
+|--------|-----------|-----------------------|
+| **A: Runtime Foundation** | Platform detection, path resolution, repo-dependency removal | Parallel execution across 3 OS-specific subagents. |
+| **B: Distribution & CI** | PyPI, Homebrew, Winget, Nix, CI/CD pipelines | Template-driven configuration; automated wheel/shim builds. |
+| **C: Quality & UX** | Error handling, progress indicators, security audit | Standardized remediation hint framework; OPA policy updates. |
+| **D: Knowledge** | Docs, tests, migration guides | Auto-generation from research docs using the "Extension Summary" metadata. |
+
+## 3. Performance & CI/CD Targets
+- **Startup Latency:** <100ms on all platforms (using lazy imports and `thegent-hooks` Rust binary).
+- **Release Automation:** Tag-driven (`v*`) multi-arch builds for wheels and native installers (MSI, PKG, DEB/RPM).
+- **Windows Parity:** Native PowerShell completion and `AppData` path compliance.
+
+## 4. Implementation Details
+### 4.1 Work Stream Consolidation
+- All 30+ items from `docs/research/PRODUCTION_PACKAGING_POLISH_OPTIMIZATION_AUDIT_AND_PLAN.md` §15 will be injected into `WORK_STREAM.md`.
+- Tasks will be tagged with `PROD-READY` for easy tracking.
+
+### 4.2 Error Handling Hierarchy
+- Implementation of a platform-aware `ThegentError` base class with `remediation_hint` property to provide actionable fixes (e.g., "Run `brew install ...` on macOS").
+
+## 5. Success Metrics
+- **Installation:** Successful `pip install` and `brew install` on clean environments.
+- **Portability:** CLI runs correctly outside the git repository on all supported OS.
+- **Speed:** Startup time benchmarked and recorded in `PRODUCTION_PACKAGING_POLISH_OPTIMIZATION_AUDIT_AND_PLAN.md`.
+
+## 6. Next Steps
+1. Invoke `writing-plans` skill to create a detailed implementation plan.
+2. Execute Bundle A (Foundation) via subagent swarm.

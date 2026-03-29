@@ -1,0 +1,26 @@
+{
+  "bundles": {
+    "example-skill-pack": {
+      "items": [
+        {
+          "source": "github:example-org/example-repo//skills/security-pack?ref=v1.2.3",
+          "target": "{home}/.factory/skills/security-pack",
+          "mode": "editable",
+          "pin": "v1.2.3",
+          "checksum": "sha256:replace-with-real-checksum"
+        }
+      ]
+    },
+    "example-hook-archive": {
+      "items": [
+        {
+          "source": "https://example.com/hooks/hook-pack-1.0.0.tar.gz",
+          "target": "{home}/.factory/hooks/third-party/hook-pack-1.0.0.tar.gz",
+          "mode": "smart",
+          "pin": "1.0.0",
+          "checksum": "sha256:replace-with-real-checksum"
+        }
+      ]
+    }
+  }
+}

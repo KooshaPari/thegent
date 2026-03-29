@@ -1,0 +1,38 @@
+[
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-22T13:24:24.174128+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-22T13:25:54.027340+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-22T13:26:33.536073+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-22T13:29:04.027471+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  }
+]

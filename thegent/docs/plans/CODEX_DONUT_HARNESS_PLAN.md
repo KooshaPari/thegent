@@ -1,0 +1,668 @@
+# Agent Orchestration Harness: Multi-Platform (Extreme-Depth Plan)
+
+**Purpose:** Build a unified agent harness for **Claude Code**, **Codex**, **Cursor-agent**, **Factory droid**, and **Augment Code** — full feature parity: queue, re-prompt, Lifecycle loop, session lifecycle, **agents/teammates**, **rules system**, and **all modes (interactive + headless)**. Optimized for all platforms.
+
+**Context:** Claude Code has 15 hooks, agent teams, subagents, headless; Codex has notify only; Cursor has rules (.cursor/rules), skills; Factory droid has droid exec; Augment has auggie CLI, Context Engine MCP. The harness unifies shared components (queue, harvest, rules sync) and adds platform-specific adapters.
+
+**References:**
+- [MULTI_PLATFORM_PARITY_MASTER_PLAN.md](./MULTI_PLATFORM_PARITY_MASTER_PLAN.md) — complete matrix, achieve/supercede plan
+- [MULTI_PLATFORM_DEEP_DIVE.md](../research/MULTI_PLATFORM_DEEP_DIVE.md) — schemas, configs, transcript formats
+- [CLAUDE_CODE_FEATURE_PARITY_AUDIT.md](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md) — full feature audit
+- [CODEX_HOOKS_AND_EXTENSION_OPTIONS.md](../research/CODEX_HOOKS_AND_EXTENSION_OPTIONS.md)
+- [USER_QUEUE_TUI_AND_AGENT_POLL.md](../research/USER_QUEUE_TUI_AND_AGENT_POLL.md)
+- [CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md](../research/CLAUDE_CODE_QUEUE_PENDING_BLOCKING.md)
+- Codex repo: https://github.com/openai/codex
+
+---
+
+## 0. Unified Architecture (Claude Code + Codex)
+
+### 0.1 Shared Components (Agent-Agnostic)
+
+| Component | Purpose | Used By |
+|-----------|---------|---------|
+| **Queue storage** | `.thegent/prompt_queue.jsonl` (project) or `~/.thegent/prompt_queue.jsonl` (global) | Claude Code, Codex, MCP tools |
+| **Queue MCP tools** | thegent_queue_list, claim, done, add, edit, release, extend_lease | Both (via MCP) |
+| **Queue TUI** | `thegent queue tui` — add/edit/list in separate terminal | Both |
+| **Harvest logic** | harvest-idea-seeds.sh, harvest-pending-queue.sh | Both |
+| **Handoff output** | `docs/research/pending-handoff.md` or `.thegent/next-session-prompts.md` | Both |
+| **Escalation** | `thegent govern escalate` for $block | Both |
+
+### 0.2 Agent-Specific Adapters
+
+| Agent | Prompt Intercept | Session Stop | Per-Turn |
+|-------|------------------|--------------|----------|
+| **Claude Code** | UserPromptSubmit → prompt-submit-guard | Stop → harvest-pending-queue | — |
+| **Codex** | run_impl preprocessor (exec); wrapper exit (interactive) | Wrapper exit → harvest | notify → codex-notify |
+
+### 0.3 Claude Code Current State (Already Implemented)
+
+| Hook | Script | Status |
+|------|--------|--------|
+| **UserPromptSubmit** | `prompt-submit-guard.sh` | ✓ $defer, $pending, $block, $idea |
+| **Stop** | `harvest-pending-queue.sh` | ✓ Flushes queue to handoff |
+| **Stop** | `harvest-idea-seeds-stop.sh` | ✓ Runs harvest-idea-seeds |
+| **SessionStart** | — | ⏳ Optional: inject handoff summary |
+
+**Queue path today:** `~/.claude/pending-queue.jsonl` or `PROJECT_DIR/.claude/pending-queue.jsonl`. Unification task: migrate to `.thegent/prompt_queue.jsonl` for single source of truth (see Phase 1.6).
+
+### 0.4 Unified Flow (Both Agents)
+
+```
+$defer / $pending  →  Append to queue  →  Block prompt (Claude) or don't pipe (Codex exec)
+$block            →  Escalation queue  →  Block until resolve
+$idea             →  idea-seeds (Claude) or harvest buffer (Codex)
+On Stop/Exit       →  harvest-pending-queue  →  handoff file
+```
+
+### 0.5 Interactive + Headless (Both Agents)
+
+All features must work in **both** modes:
+
+| Mode | Claude Code | Codex | thegent Entry |
+|------|-------------|-------|---------------|
+| **Interactive** | `claude` | `codex` | `thegent codex`, `thegent dex`, `thegent clode` |
+| **Headless** | `claude -p "prompt"` | `codex exec -` | `thegent run -M codex "prompt"`, `thegent run -M claude "prompt"` |
+
+**Parity requirement:** Queue, harvest, $defer/$block, escalation, MCP tools, and (where applicable) agent teams must function in both modes.
+
+### 0.6 Full Feature Parity (All Platforms)
+
+See [CLAUDE_CODE_FEATURE_PARITY_AUDIT.md](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md) for the complete matrix. Summary:
+
+| Feature | Claude Code | Codex + Harness | Cursor | Factory Droid | Augment |
+|---------|-------------|-----------------|--------|---------------|---------|
+| **Hooks** | 15 native | Wrapper + notify | Harvest from transcripts | — | — |
+| **Agent teams** | Native | thegent team | — | Droid as teammate | Intent |
+| **Queue** | UserPromptSubmit + Stop | run_impl + wrapper | Harvest $defer | run_impl | run_impl |
+| **Rules** | CLAUDE.md, skills | .codex/skills | .cursor/rules | .factory/droids | — |
+| **Unified rules** | — | **thegent rules sync** → all platforms | | | |
+
+### 0.7 Platform Coverage
+
+| Platform | Interactive | Headless | Rules | thegent Entry |
+|----------|-------------|----------|-------|---------------|
+| **Claude Code** | claude | claude -p | CLAUDE.md | thegent clode, run -M claude |
+| **Codex** | codex | codex exec - | .codex/skills | thegent codex, run -M codex |
+| **Cursor-agent** | Composer | cursor-agent CLI | .cursor/rules | run -M cursor-agent |
+| **Factory droid** | — | droid exec | .factory/droids | run -M droid:name |
+| **Augment** | auggie | auggie --print | — | run -M augment |
+
+---
+
+## 1. Codex Internals (Audit Summary)
+
+### 1.1 Hook System (codex-rs/hooks)
+
+| Hook | When Fires | Config | Payload | thegent Use |
+|------|------------|--------|---------|-------------|
+| **AfterAgent** | Agent finishes turn (no follow-up needed) | `notify` in config.toml | `AgentTurnComplete`: thread_id, turn_id, cwd, input_messages, last_assistant_message | Per-turn harvest, queue flush trigger |
+| **AfterToolUse** | After every tool call | **Not configurable** — after_tool_use always empty | turn_id, call_id, tool_name, tool_input, executed, success, duration_ms, output_preview | Would need patch to enable |
+
+**Config mapping:** `config.toml` → `notify = ["cmd", "arg1"]` → `HooksConfig.legacy_notify_argv` → `notify_hook` (spawns command with JSON as last arg).
+
+**Notify payload (AfterAgent):**
+```json
+{
+  "type": "agent-turn-complete",
+  "thread-id": "uuid",
+  "turn-id": "turn-1",
+  "cwd": "/path/to/project",
+  "input-messages": ["user prompt"],
+  "last-assistant-message": "assistant response"
+}
+```
+
+**Session end:** `session_log::log_session_end()` writes `{"kind":"session_end"}` to log file. **No hook fires.** Session end is not a hook event in Codex.
+
+### 1.2 Codex Entry Points
+
+| Mode | Entry | Prompt Source | thegent Control |
+|------|-------|---------------|-----------------|
+| **Interactive TUI** | `codex` (no args) or `codex --model X` | User types in Codex TUI | None — Codex owns TUI |
+| **exec (non-interactive)** | `codex exec -` | stdin | **Full** — we pipe prompt |
+| **dex (thegent)** | `thegent dex` → `subprocess.run([codex])` | Interactive TUI | None — we spawn, don't intercept |
+
+### 1.3 thegent Codex Integration Today
+
+| Path | Flow |
+|------|------|
+| **dex_main** | `_run_codex_interactive()` → subprocess.run([codex, --model, ...]) — interactive, no prompt control |
+| **codex_proxy** | `codex exec - --skip-git-repo-check` — prompt piped to stdin |
+| **direct_agents** | `codex exec -` for codex agent |
+
+---
+
+## 2. Donut Architecture (All Platforms)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  SHARED LAYER (platform-agnostic)                                                                      │
+│  • Queue: .thegent/prompt_queue.jsonl                                                                  │
+│  • Harvest: harvest-pending-queue.sh, harvest-idea-seeds.sh                                            │
+│  • Rules: thegent rules sync → .cursor/rules, CLAUDE.md, .codex/skills                                 │
+│  • MCP tools: thegent_queue_*, thegent_run, thegent_bg, thegent_team_*                                 │
+│  • TUI: thegent queue tui                                                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  CLAUDE CODE    │  CODEX         │  CURSOR         │  FACTORY DROID   │  AUGMENT                       │
+│  prompt-submit  │  wrapper+notify│  harvest from   │  droid exec      │  auggie --print                │
+│  harvest Stop   │  run_impl      │  transcripts    │  run_impl        │  Context Engine MCP            │
+│  claude -p      │  codex exec -  │  cursor-agent   │  droid:name      │  run -M augment                │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. External Harness (Detailed)
+
+### 3.1 Exec Mode (Full Control)
+
+**Current:** `thegent run -M codex "prompt"` → `codex exec -` with prompt on stdin.
+
+**Enhancement:** Wrapper already owns prompt. Add:
+- **$defer** / **$pending** detection in prompt → queue instead of sending
+- **$block** detection → block until resolved (via CLI or TUI)
+- **$idea** → save to idea-seeds (already in prompt-submit-guard for Claude)
+
+**Implementation:** `codex_proxy.py` or `run_impl` path: before piping to `codex exec`, parse prompt for flags. If $defer: append to queue, return "Queued. N pending." If $block: write to escalation, wait for resolution (poll file or timeout).
+
+**Session boundaries (exec):** Exec sessions are single-turn. "Session stop" = process exit. Wrapper can run `harvest-pending-queue.sh` logic on subprocess exit.
+
+### 3.2 Interactive Mode (TUI)
+
+**Challenge:** Codex TUI owns stdin. We cannot intercept prompts without replacing the TUI.
+
+**Options:**
+
+| Option | Approach | Effort | Parity |
+|--------|----------|--------|--------|
+| **A. Wrapper + exit hook** | `thegent dex` spawns codex; on exit, run harvest/flush. No prompt control. | Low | Partial (stop only) |
+| **B. Custom TUI** | Build our TUI that sends prompts to Codex via exec or API. Replace `codex` with `thegent codex-tui`. | High | Full |
+| **C. Codex SDK** | Use Codex TypeScript SDK; we own the event loop, can intercept. | Medium | Full |
+| **D. Process wrapper** | Pty wrapper: we sit between user and Codex, parse keystrokes. | Very High | Full |
+
+**Recommendation:** Start with **A** (exit hook). Add **C** (SDK) if we need full parity for interactive. **B** is a long-term product.
+
+### 3.3 External Harness Components
+
+| Component | Purpose | Entry |
+|-----------|---------|-------|
+| **thegent codex** | Wrapper for `codex`; spawns codex, runs on-exit hook | `thegent codex` or shim `codex` → `thegent codex --wrap` |
+| **on-exit hook** | `harvest-idea-seeds.sh`, `harvest-pending-queue.sh`, flush queue | Called when codex process exits |
+| **Session start** | Load handoff from `.thegent/next-session-prompts.md`; inject as first prompt | Before spawning codex; for exec: prepend to stdin |
+| **Prompt preprocessor** | Parse $defer, $block, $idea before piping to exec | In codex_proxy / run_impl |
+
+### 3.4 Exec Flow (Enhanced)
+
+```
+User: thegent run -M codex "Add tests $defer"
+  → run_impl detects $defer
+  → Append to .thegent/prompt_queue.jsonl
+  → Return "Queued. 3 pending." (no codex spawn)
+
+User: thegent run -M codex "Fix bug in auth.py"
+  → No flag: pipe to codex exec -
+  → On exit: harvest-pending-queue.sh (or equivalent)
+```
+
+### 3.5 Interactive Flow (Phase 1)
+
+```
+User: thegent codex  (or dex max)
+  → Spawn codex subprocess
+  → On exit: run harvest-idea-seeds-stop.sh, harvest-pending-queue.sh
+  → No prompt interception (Codex TUI owns input)
+```
+
+---
+
+## 4. Internal Harness (Detailed)
+
+### 4.1 notify Hook
+
+**Config:** Add to `~/.codex/config.toml` or project `.codex/config.toml`:
+```toml
+notify = ["thegent", "codex-notify"]
+```
+
+**Implementation:** `thegent codex-notify` — CLI subcommand that:
+1. Reads JSON from argv (last arg)
+2. Parses `type` = "agent-turn-complete"
+3. Extracts: thread_id, turn_id, cwd, input_messages, last_assistant_message
+4. Actions:
+   - Append to harvest buffer (for $idea in input_messages)
+   - Trigger queue flush (if last turn before session end — we don't know session end from notify)
+   - Write to `run_registry.jsonl` or equivalent for turn completion
+
+**Limitation:** AfterAgent fires per turn, not per session. We don't get "session end" from notify. We can:
+- Use last AfterAgent before process exit as proxy (wrapper knows when codex exits)
+- Or: run harvest on wrapper exit regardless of notify
+
+### 4.2 MCP Integration
+
+**Existing:** thegent serve; Codex connects via `~/.codex/mcp.json`. Tools: thegent_run, thegent_bg, thegent_queue_*, etc.
+
+**Queue tools (to implement):** thegent_queue_list, thegent_queue_claim, thegent_queue_done, thegent_queue_release, thegent_queue_add, thegent_queue_edit, thegent_queue_extend_lease.
+
+**Skill:** `.codex/skills/thegent-queue/SKILL.md` — instructions to check queue between tasks.
+
+### 4.3 AfterToolUse (Future)
+
+**Current:** Codex has AfterToolUse hook infrastructure but **no config** to populate it. `after_tool_use` is always `Vec::new()`.
+
+**To enable:** Patch Codex config to add `notify_after_tool_use` or similar. Or fork and add. Low priority — AfterAgent is sufficient for turn-level harvest.
+
+---
+
+## 5. Lifecycle Loop Integration
+
+**Current:** `thegent_loop` runs worker + checker; `thegent_loop_takeover` injects next prompt.
+
+**Codex:** Loop can run inside Codex (Codex calls thegent_run or thegent_loop). Session hooks add:
+- Harvest on stop: when user exits Codex mid-loop, we harvest on wrapper exit
+- Queue: agent can check thegent_queue_list between loop iterations
+
+**Gap:** No session-boundary "flush" from inside Codex. Wrapper exit hook handles it.
+
+---
+
+## 5a. Agent Teams / Teammates Parity (Codex)
+
+**Goal:** Provide Claude Code–style agent teams for Codex. See [CLAUDE_CODE_FEATURE_PARITY_AUDIT.md §3](../research/CLAUDE_CODE_FEATURE_PARITY_AUDIT.md#3-thegent-team-wrapper-agent-teams-parity).
+
+**Architecture:**
+- **Lead:** `thegent codex` (interactive) or a coordinator process
+- **Teammates:** N × `codex exec -` processes, each with task prompt
+- **Shared task list:** `.thegent/teams/{team_id}/tasks/` (JSONL or JSON)
+- **Messaging:** Lead → teammate via file or MCP; teammate → lead via stdout capture
+
+**MCP tools (for lead):**
+- `thegent_team_create` — create team, spawn teammates
+- `thegent_team_task_list` — list tasks (pending, in-progress, done)
+- `thegent_team_task_assign` — assign task to teammate
+- `thegent_team_task_claim` — teammate self-claims
+- `thegent_team_task_done` — mark complete
+- `thegent_team_message` — send to one teammate
+- `thegent_team_broadcast` — send to all
+- `thegent_team_shutdown` — graceful shutdown teammate
+
+**Display modes:**
+- **In-process:** Single terminal; Shift+Up/Down to select teammate (TUI)
+- **Split panes:** tmux or iTerm2; each teammate in own pane
+
+**TeammateIdle parity:** Wrapper polls teammate stdout; when idle, optionally run hook script (exit 2 → inject feedback prompt to keep working).
+
+**TaskCompleted parity:** When teammate marks task done, run TaskCompleted hook (exit 2 → block, send feedback).
+
+**Interactive + headless:** Team can run with lead interactive and teammates headless (codex exec), or all headless for CI/automation.
+
+---
+
+## 6. Implementation Phases
+
+### Phase 1: Shared Foundation + Claude Code Hardening (Low Effort)
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 1.1 | Implement queue storage module: `.thegent/prompt_queue.jsonl` read/write | Both | Small |
+| 1.2 | **Claude Code:** Migrate prompt-submit-guard to write to `.thegent/prompt_queue.jsonl` (was `.claude/pending-queue.jsonl`) | Claude | Small |
+| 1.3 | **Claude Code:** Migrate harvest-pending-queue to read from `.thegent/prompt_queue.jsonl` | Claude | Small |
+| 1.4 | Implement `thegent codex-notify` — parse JSON, append to harvest buffer | Codex | Small |
+| 1.5 | Add `notify = ["thegent", "codex-notify"]` to install_to_codex / mcp_manage | Codex | Small |
+| 1.6 | Create `.codex/skills/thegent-queue/SKILL.md` | Codex | Small |
+| 1.7 | Implement queue MCP tools (list, claim, done, add, edit, release, extend_lease) | Both | Medium |
+
+### Phase 2: Codex Exec + Claude Code SessionStart (Medium Effort)
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 2.1 | **Codex exec:** Prompt preprocessor in run_impl: detect $defer, $block before piping to codex exec | Codex | Small |
+| 2.2 | **Codex exec:** $defer → append to queue, return without spawning | Codex | Small |
+| 2.3 | **Codex exec:** $block → escalation, block until resolved | Codex | Medium |
+| 2.4 | **Codex exec:** On exit: run harvest-pending-queue logic | Codex | Small |
+| 2.5 | **Codex exec:** Session start: load handoff, prepend to exec stdin | Codex | Small |
+| 2.6 | **Claude Code:** SessionStart hook: inject "N pending from last session" (optional) | Claude | Small |
+
+### Phase 3: External Harness — Interactive (Medium Effort)
+
+| Task | Description | Effort |
+|------|-------------|--------|
+| 3.1 | `thegent codex` wrapper: spawn codex, on exit run harvest | Small |
+| 3.2 | Shim `codex` → `thegent codex --wrap` (optional, install step) | Small |
+| 3.3 | Integrate harvest-idea-seeds-stop.sh, harvest-pending-queue.sh into exit | Small |
+
+### Phase 4: Queue TUI (Medium Effort) — Both Agents
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 4.1 | `thegent queue tui` — Textual TUI for add/edit/list | Both | Medium |
+| 4.2 | CLI: `thegent queue add|list|edit|release|status` | Both | Small |
+| 4.3 | Multi-agent locking: claimed_by, lease_expires_at, atomic claim | Both | Medium |
+
+### Phase 5: Codex SDK / Custom TUI (High Effort, Optional)
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 5.1 | Evaluate Codex TypeScript SDK for event-loop ownership | Codex | Medium |
+| 5.2 | Custom TUI that sends prompts via SDK — full UserPromptSubmit parity | Codex | High |
+
+### Phase 6: Agent Teams (Codex) — Both Interactive + Headless
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 6.1 | Implement shared task list: `.thegent/teams/{id}/tasks/` storage | Both | Medium |
+| 6.2 | MCP tools: thegent_team_create, task_list, task_assign, task_claim, task_done | Both | Medium |
+| 6.3 | `thegent team create` — spawn lead + N teammates (codex exec) | Codex | Medium |
+| 6.4 | thegent_team_message, thegent_team_broadcast, thegent_team_shutdown | Both | Small |
+| 6.5 | Display: in-process TUI (Shift+Up/Down) or tmux split panes | Codex | Medium |
+| 6.6 | TeammateIdle: poll teammate stdout, run hook on idle | Codex | Medium |
+| 6.7 | TaskCompleted hook: exit 2 blocks completion, sends feedback | Both | Small |
+| 6.8 | Headless team: lead + teammates all via codex exec for CI | Codex | Small |
+
+### Phase 7: Full Hook Parity (Codex)
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 7.1 | SessionStart: wrapper injects handoff before first prompt | Codex | Small |
+| 7.2 | PreToolUse: requires Codex SDK or custom TUI (Phase 5) | Codex | High |
+| 7.3 | SubagentStart/Stop: thegent_run exit = SubagentStop | Both | Small |
+| 7.4 | TeammateIdle, TaskCompleted: Phase 6 | Both | — |
+
+### Phase 8: Claude Code Headless Parity
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 8.1 | `thegent run -M claude "prompt"` — use `claude -p` when available | Claude | Small |
+| 8.2 | --continue, --resume for Claude headless (if supported) | Claude | Small |
+| 8.3 | --output-format json, --allowedTools passthrough | Claude | Small |
+
+### Phase 9: Unified Rules Sync (Cursor + All Platforms)
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 9.1 | Define canonical rules format: `.thegent/rules/` or `.cursor/rules/` as source | Both | Medium |
+| 9.2 | `thegent rules sync` — sync to .cursor/rules/, CLAUDE.md, .codex/skills | All | Medium |
+| 9.3 | Rule mapping: .mdc → CLAUDE.md section; .mdc → Codex skill | All | Small |
+| 9.4 | .cursorrules → rules sync (legacy support) | Cursor | Small |
+
+### Phase 10: Cursor-Agent Integration
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 10.1 | `thegent run -M cursor-agent "prompt"` — cursor-agent CLI headless | Cursor | Small |
+| 10.2 | Harvest: extend $defer/$pending/$idea to Cursor transcripts | Cursor | Small |
+| 10.3 | cursor-api runner: ensure queue, harvest on run | Cursor | Small |
+
+### Phase 11: Factory Droid Augmentation
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 11.1 | `thegent run -M droid:worker "prompt"` — $defer/$block preprocessor | Droid | Small |
+| 11.2 | On droid exit: harvest-pending-queue | Droid | Small |
+| 11.3 | Droid as teammate: thegent team can spawn droids | Droid | Medium |
+| 11.4 | Droid + rules: inject .thegent rules into droid prompt | Droid | Small |
+
+### Phase 12: Augment Code Integration
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 12.1 | `thegent run -M augment "prompt"` — auggie --print when available | Augment | Small |
+| 12.2 | Add Context Engine MCP to thegent mcp install (cursor, codex) | Augment | Small |
+| 12.3 | Document augment in agent registry | Augment | Small |
+
+### Phase 13: OpenCode Integration
+
+| Task | Description | Agent | Effort |
+|------|-------------|-------|--------|
+| 13.1 | `thegent run -M opencode "prompt"` — oc when available | OpenCode | Small |
+| 13.2 | Document opencode in agent registry | OpenCode | Small |
+| 13.3 | Zen: do NOT integrate (per ZEN_INTEGRATION.md) | — | — |
+
+---
+
+## 7. File Layout
+
+```
+thegent/
+├── src/thegent/
+│   ├── codex_notify.py      # thegent codex-notify (Codex notify handler)
+│   ├── queue/
+│   │   ├── __init__.py
+│   │   ├── storage.py       # .thegent/prompt_queue.jsonl (unified)
+│   │   ├── locking.py       # atomic claim, lease
+│   │   └── cli.py           # queue add, list, edit, release
+│   ├── team/                # Phase 6: Agent teams
+│   │   ├── __init__.py
+│   │   ├── storage.py       # .thegent/teams/{id}/tasks/
+│   │   ├── coordinator.py   # Lead logic, spawn teammates
+│   │   └── cli.py           # thegent team create|list|message|shutdown
+│   ├── rules/               # Phase 9: Unified rules sync
+│   │   ├── __init__.py
+│   │   ├── sync.py          # Sync to .cursor/rules, CLAUDE.md, .codex/skills
+│   │   └── cli.py           # thegent rules sync
+│   ├── mcp_server.py        # + queue tools, + team tools (all platforms)
+│   └── dex_main.py          # + thegent codex wrapper (spawn + exit hook)
+├── .codex/skills/thegent-queue/
+│   └── SKILL.md
+├── .codex/skills/thegent-team/   # Phase 6
+│   └── SKILL.md
+├── .cursor/rules/           # Cursor rules (synced from .thegent/rules or canonical)
+├── .factory/droids/         # Factory droids (existing)
+├── hooks/
+│   ├── prompt-submit-guard.sh     # Claude Code: UserPromptSubmit (migrate to .thegent)
+│   └── harvest-pending-queue.sh   # All: Stop hook (migrate to .thegent)
+└── docs/
+    ├── research/
+    │   └── CLAUDE_CODE_FEATURE_PARITY_AUDIT.md  # Cursor, droid, Augment
+    └── plans/
+        └── CODEX_DONUT_HARNESS_PLAN.md  # this file
+```
+
+**Queue path unification:** Phase 1 migrates from `~/.claude/pending-queue.jsonl` and `PROJECT_DIR/.claude/pending-queue.jsonl` to `~/.thegent/prompt_queue.jsonl` and `PROJECT_DIR/.thegent/prompt_queue.jsonl`. Backward compat: on first run, if `.claude/pending-queue.jsonl` exists and `.thegent/prompt_queue.jsonl` is empty, migrate entries.
+
+---
+
+## 8. Config Injection
+
+**thegent mcp install codex** (or `codex` client) should:
+1. Add thegent to `~/.codex/mcp.json` (existing)
+2. Add `notify = ["thegent", "codex-notify"]` to `~/.codex/config.toml` (merge, don't overwrite)
+
+**Config merge:** Read existing config.toml, add/update `notify` if not present. Preserve other keys.
+
+---
+
+## 9. Dependencies
+
+| Phase | Deps |
+|-------|-----|
+| 1 | None |
+| 2 | Prompt parsing in cli_impl |
+| 3 | subprocess exit callback |
+| 4 | Textual (for TUI) — already in pyproject? |
+| 5 | Codex SDK (npm package) |
+
+---
+
+## 10. Testing Strategy
+
+| Component | Agent | Test |
+|-----------|-------|------|
+| prompt-submit-guard $defer | Claude | Unit: invoke hook with $defer stdin; assert queue append, exit 1 |
+| prompt-submit-guard $block | Claude | Unit: invoke hook with $block stdin; assert escalation, exit 1 |
+| harvest-pending-queue | Both | Unit: temp queue file → run hook → assert handoff written, queue cleared |
+| codex-notify | Codex | Unit: parse AgentTurnComplete JSON |
+| Queue storage | Both | Unit: append, read, claim, release |
+| queue tools | Both | Integration: MCP call with mock session |
+| Wrapper exit | Codex | Integration: spawn codex, kill, assert harvest runs |
+| $defer in run_impl | Codex | Unit: run_impl with $defer prompt → no spawn, queue append |
+
+---
+
+## 11. Risks and Mitigations
+
+| Risk | Mitigation |
+|------|------------|
+| Codex changes notify payload | Version check; graceful fallback |
+| Config.toml overwrite | Merge, don't replace |
+| notify script blocks | Fire-and-forget; Codex spawns async |
+| Queue file corruption | Append-only, atomic writes, lock file |
+
+---
+
+## 12. Success Criteria
+
+### Claude Code
+- [ ] UserPromptSubmit: $defer/$pending queues, $block escalates, $idea saves
+- [ ] Stop: harvest-pending-queue flushes to handoff
+- [ ] Queue path: unified `.thegent/prompt_queue.jsonl` (Phase 1 migration)
+- [ ] Queue tools: agent can list, claim, done via MCP
+- [ ] Queue TUI: user can add/edit/list in separate terminal
+- [ ] Headless: `thegent run -M claude "prompt"` uses `claude -p` (Phase 8)
+
+### Codex
+- [ ] Interactive: on exit, harvest runs (idea-seeds, pending queue)
+- [ ] Headless: `thegent run -M codex "prompt"` — $defer, $block, harvest on exit
+- [ ] Exec: $defer queues, $block escalates (run_impl preprocessor)
+- [ ] notify hook: thegent receives AfterAgent JSON
+- [ ] Queue tools: agent can list, claim, done via MCP
+- [ ] Queue TUI: same as Claude Code
+- [ ] Agent teams: `thegent team create` spawns lead + teammates (Phase 6)
+
+### Cursor-Agent
+- [ ] `thegent run -M cursor-agent "prompt"` headless (Phase 10)
+- [ ] Harvest: $defer/$pending/$idea from Cursor transcripts
+- [ ] Rules sync: `thegent rules sync` → .cursor/rules (Phase 9)
+
+### Factory Droid
+- [ ] `thegent run -M droid:name "prompt"` — $defer/$block, harvest on exit (Phase 11)
+- [ ] Droid as teammate in agent teams
+- [ ] Rules injected into droid prompt
+
+### Augment Code
+- [ ] `thegent run -M augment "prompt"` — auggie --print (Phase 12)
+- [ ] Context Engine MCP in thegent mcp install
+
+### OpenCode
+- [ ] `thegent run -M opencode "prompt"` — oc (Phase 13)
+- [ ] OpenCode in agent registry; Zen NOT integrated
+
+### Shared
+- [ ] Single queue storage for all platforms
+- [ ] Unified rules: `thegent rules sync` → Cursor, Claude, Codex
+- [ ] Lifecycle: loop can check queue between iterations
+- [ ] All features available both interactively and headlessly (where applicable)
+
+---
+
+## 13. Appendix A: Codex Hook Dispatch Points
+
+```
+AfterAgent:  codex-rs/core/src/codex.rs ~4536
+            After turn completes (no needs_follow_up)
+
+AfterToolUse: codex-rs/core/src/tools/registry.rs ~347
+             After each tool invocation (executed or skipped)
+```
+
+**Session end:** `codex-rs/tui/src/lib.rs` — `session_log::log_session_end()` called on exit. No hook. Wrapper must detect process exit.
+
+---
+
+## 14. Appendix B: Implementation Deep Dive
+
+See [MULTI_PLATFORM_DEEP_DIVE.md](../research/MULTI_PLATFORM_DEEP_DIVE.md) for full schemas. Key implementation details:
+
+### Queue Storage Schema
+
+```json
+{"ts":"ISO8601","prompt":"...","project":"/path","claimed_by":null,"lease_expires_at":null}
+```
+
+**Paths:** `PROJECT_DIR/.thegent/prompt_queue.jsonl` (project) or `~/.thegent/prompt_queue.jsonl` (global). Migration: read `.claude/pending-queue.jsonl`, write to `.thegent/prompt_queue.jsonl`, clear source.
+
+### codex-notify Input (argv[-1])
+
+```json
+{"type":"agent-turn-complete","thread-id":"uuid","turn-id":"turn-1","cwd":"/path","input-messages":["..."],"last-assistant-message":"..."}
+```
+
+### Harvest Paths
+
+| Source | Path | Key field |
+|--------|------|-----------|
+| Claude | ~/.claude/history.jsonl | display |
+| Codex | ~/.codex/history.jsonl | text |
+| Cursor | ~/.cursor/projects/Users-*/agent-transcripts/*.jsonl | message.content[].text |
+
+### Rules Sync: .mdc → Targets
+
+| Target | Output |
+|--------|--------|
+| Cursor | .cursor/rules/{name}.mdc (copy) |
+| Claude | CLAUDE.md ## Rules section, or .claude/skills/{name}/SKILL.md |
+| Codex | .codex/skills/{name}/SKILL.md |
+
+### Team Task Schema
+
+```json
+{"id":"task-1","title":"...","status":"pending|in_progress|done","claimed_by":null,"dependencies":[]}
+```
+
+**Path:** `.thegent/teams/{team_id}/tasks.jsonl` or `tasks/{task_id}.json`
+
+### Droid Frontmatter (Full)
+
+```yaml
+name: worker
+description: "..."
+tools: [Read, Grep, Glob, Create, Edit, Execute, Todo, WebSearch, FetchUrl]  # or all, read-only, write, execute
+version: v1
+model: inherit
+```
+
+### run_impl Preprocessor (Phase 2)
+
+**Location:** `cli_impl.run_impl` or `codex_proxy` before `subprocess.run([codex, exec, -])`
+
+**Logic:**
+1. If prompt contains `$defer` or `$pending`: strip flag, append to queue, return "Queued. N pending." (exit 0, no spawn)
+2. If prompt contains `$block`: call `thegent govern escalate add`, return block message (exit 1, no spawn)
+3. Else: pipe prompt to codex exec
+
+---
+
+## 15. Appendix C: Phase Dependencies (DAG)
+
+```
+Phase 1 (Foundation) ─┬─► Phase 2 (Exec preprocessor)
+                       ├─► Phase 3 (Interactive wrapper)
+                       ├─► Phase 4 (Queue TUI)
+                       └─► Phase 7.1 (SessionStart inject)
+
+Phase 2 ───────────────► Phase 6 (Agent teams) [run_impl used by team spawn]
+Phase 4 ───────────────► Phase 6 [TUI for team task list]
+Phase 6 ───────────────► Phase 7.4 (TeammateIdle, TaskCompleted)
+
+Phase 9 (Rules sync) ───► Phase 10 (Cursor), Phase 11 (Droid)
+Phase 10, 11, 12 ──────► Independent (Cursor, Droid, Augment)
+```
+
+---
+
+## 16. Appendix D: Quick Reference for Implementers
+
+| Need | File / Command |
+|------|----------------|
+| Queue schema | `.thegent/prompt_queue.jsonl` — JSONL, ts, prompt, project, claimed_by, lease_expires_at |
+| codex-notify | `thegent codex-notify` — argv[-1] = JSON |
+| run preprocessor | `cli_impl.run_impl` or `codex_proxy` — before `subprocess.run([codex, exec, -])` |
+| Harvest paths | Claude: ~/.claude/history.jsonl; Codex: ~/.codex/history.jsonl; Cursor: ~/.cursor/projects/*/agent-transcripts/*.jsonl |
+| Rules sync | `thegent rules sync` → .cursor/rules, CLAUDE.md, .codex/skills |
+| Team storage | `.thegent/teams/{id}/tasks.jsonl` |
+| Droid resolve | ~/.local/bin/droid, ~/.factory/bin/droid |
+| Agent registry | `src/thegent/agents/registry.py` — get_runner(mode) |
+| MCP tools | 30+ tools; see MULTI_PLATFORM_DEEP_DIVE Part XXVI |
+| MCP resources | 20+ thegent:// URIs; Part XXVII |
+| MCP transport | STDIO (Claude Code), HTTP :3847 (Cursor, Codex) |
+| EventStore | FASTMCP_EVENT_STORE_URL → Redis for distributed |

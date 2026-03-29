@@ -1,0 +1,10 @@
+https://github.com/browser-use/browser-use
+https://github.com/pathintegral-institute/mcpm.sh
+https://github.com/sdi2200262/agentic-project-management
+https://github.com/searxng/searxng
+https://github.com/getzep/graphiti
+https://github.com/OthersideAI/self-operating-computer
+https://github.com/humanlayer/humanlayer
+https://github.com/maximhq/bifrost
+https://github.com/benbasha/Claude-Autopilot
+https://github.com/bar181/openai-agents

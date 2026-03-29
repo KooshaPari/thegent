@@ -1,0 +1,92 @@
+{
+  "version": "1.0.0",
+  "dimensions": {
+    "test_coverage": {
+      "weight": 0.20,
+      "target": 80,
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "scan_tool": "pytest --cov",
+      "priority_class": "critical"
+    },
+    "lint_violations": {
+      "weight": 0.15,
+      "target": 0,
+      "unit": "count",
+      "direction": "lower_is_better",
+      "scan_tool": "ruff check",
+      "priority_class": "critical"
+    },
+    "complexity_index": {
+      "weight": 0.15,
+      "target": 10,
+      "unit": "cyclomatic_avg",
+      "direction": "lower_is_better",
+      "scan_tool": "radon cc -a",
+      "priority_class": "medium"
+    },
+    "security_findings": {
+      "weight": 0.15,
+      "target": 0,
+      "unit": "count",
+      "direction": "lower_is_better",
+      "scan_tool": "security-pipeline",
+      "priority_class": "critical"
+    },
+    "spec_traceability": {
+      "weight": 0.10,
+      "target": 80,
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "scan_tool": "grep FR- tests/",
+      "priority_class": "medium"
+    },
+    "doc_organization": {
+      "weight": 0.10,
+      "target": 100,
+      "unit": "percent",
+      "direction": "higher_is_better",
+      "scan_tool": "structure_audit",
+      "priority_class": "low"
+    },
+    "freshness": {
+      "weight": 0.10,
+      "target": 0,
+      "unit": "stale_items",
+      "direction": "lower_is_better",
+      "scan_tool": "find -mtime +7",
+      "priority_class": "low"
+    },
+    "agent_health": {
+      "weight": 0.05,
+      "target": 0,
+      "unit": "open_breakers",
+      "direction": "lower_is_better",
+      "scan_tool": "circuit_breakers.jsonl",
+      "priority_class": "critical"
+    }
+  },
+  "bands": {
+    "excellent": {"min": 90, "label": "Excellent"},
+    "healthy": {"min": 70, "label": "Healthy"},
+    "warning": {"min": 40, "label": "Warning"},
+    "critical": {"min": 0, "label": "Critical"}
+  },
+  "budget": {
+    "daily_agent_calls": 20,
+    "tiers": {
+      "normal": {"max_utilization_pct": 50, "description": "All agent types available"},
+      "cautious": {"max_utilization_pct": 80, "description": "Prefer cheaper/faster agents"},
+      "restricted": {"max_utilization_pct": 95, "description": "Only essential tasks"},
+      "halted": {"max_utilization_pct": 100, "description": "No new agent spawns"}
+    }
+  },
+  "cycle": {
+    "interval_s": 300,
+    "max_rerolls_per_task": 2,
+    "max_tasks_per_cycle": 10,
+    "cooldown_after_failure_s": 60,
+    "health_threshold": 90,
+    "debounce_s": 30
+  }
+}

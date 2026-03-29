@@ -1,0 +1,53 @@
+# Thegent Moduleization Quick Runbook
+
+## Purpose
+
+Drive a controlled moduleization candidate flow from repository discovery through target bootstrap.
+
+## Steps
+
+1. **Scan repositories** with conservative exclude list and overlap threshold:
+
+```bash
+thegent phench scan-shared-repos --repos-root /path/to/Phenotype/repos --repos-root-mode repos --min-repos 2 --candidates
+```
+
+2. **Pick a shared module** from `recommended_modules` or filtered `module_candidates`.
+
+3. **Preview manifest write** for the target module:
+
+```bash
+thegent phench materialize-module-manifest \
+  --module <module> \
+  --repos-root /path/to/Phenotype/repos \
+  --repo <repo-a> \
+  --repo <repo-b> \
+  --min-count 2 \
+  --dry-run
+```
+
+4. **Persist manifest + bootstrap target**:
+
+```bash
+thegent phench materialize-module-manifest \
+  --module <module> \
+  --repos-root /path/to/Phenotype/repos \
+  --repo <repo-a> \
+  --repo <repo-b> \
+  --min-count 2 \
+  --print-snippets
+```
+
+5. **Execute printed snippets** to create and populate stack target.
+
+## Module selection tips
+
+- Prefer modules with high `repo_count` and low candidate conflict risk.
+- Keep `--repo` pinning in sync with policy boundaries (e.g., skip non-production repos).
+- Do not rely on implicit matches in sensitive repos; always inspect candidate output first.
+
+## Safety notes
+
+- Treat the manifest path list as the immutable canonical source for generated module IDs.
+- Use `--dry-run` for any candidate path generation outside known CI-safe directories.
+- Re-run scan with explicit `--exclude` values if candidate overlap unexpectedly captures excluded repos.

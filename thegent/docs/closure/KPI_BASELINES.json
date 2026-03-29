@@ -1,0 +1,77 @@
+{
+  "program": "thegent-orchestration-optimization",
+  "generated_at": "2026-02-15T00:00:00Z",
+  "version": "phase6-v1",
+  "traffic_kpis": {
+    "throughput": {
+      "target": 1.0,
+      "baseline": null,
+      "warning": 0.8,
+      "critical": 0.6,
+      "window": "5m"
+    },
+    "routing_accuracy": {
+      "target": 0.95,
+      "baseline": null,
+      "warning": 0.9,
+      "critical": 0.85
+    },
+    "accuracy": {
+      "target": 0.9,
+      "baseline": null,
+      "warning": 0.85,
+      "critical": 0.8
+    },
+    "freshness_p95_seconds": {
+      "target": 30,
+      "baseline": null,
+      "warning": 60,
+      "critical": 120
+    },
+    "fallback_rate": {
+      "target": 0.05,
+      "baseline": null,
+      "warning": 0.1,
+      "critical": 0.15
+    },
+    "interruption_per_hour": {
+      "target": 5,
+      "baseline": null,
+      "warning": 10,
+      "critical": 20
+    },
+    "cost_per_success": {
+      "target": null,
+      "baseline": null,
+      "warning": null,
+      "critical": null,
+      "notes": "Populate from cost telemetry after 7-day warmup"
+    },
+    "knowledge_retention": {
+      "target": 0.8,
+      "baseline": null,
+      "warning": 0.6,
+      "critical": 0.4
+    },
+    "rollback_success_rate": {
+      "target": 0.99,
+      "baseline": null,
+      "warning": 0.95,
+      "critical": 0.90
+    }
+  },
+  "alerts": {
+    "owner_by_team": {
+      "throughput": "reliability",
+      "routing_accuracy": "governance",
+      "accuracy": "operations",
+      "freshness_p95_seconds": "ops-observability",
+      "fallback_rate": "governance",
+      "interruption_per_hour": "operations",
+      "cost_per_success": "finance",
+      "knowledge_retention": "reliability",
+      "rollback_success_rate": "reliability"
+    }
+  },
+  "notes": "Replace null baselines and finalize critical thresholds after 7-day post-launch burn-in."
+}

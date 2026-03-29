@@ -1,0 +1,47 @@
+# run API Reference
+
+> **Source**: `src/thegent/cli/apps/run.py`
+
+Logical stream: Agent Execution and Lifecycle.
+
+---
+
+## run_agent
+
+```python
+run_agent(prompt: str, agent: Any, model: Any, bg: bool, loop: bool, cd: Any, timeout: int, full: bool, owner: Any, run_id: Any, task_id: Any, lane: str, routing: Any, failover: bool, contract_version: Any, domain: Any, speculative: bool, idempotency_token: Any, remote: bool)
+```
+
+---
+
+## run_history
+
+```python
+run_history(limit: int, format: str)
+```
+
+---
+
+## run_logs
+
+```python
+run_logs(session_id: Any, follow: bool)
+```
+
+---
+
+## run_ps
+
+```python
+run_ps(all_sessions: bool, owner: Any, format: str, include_contract: bool)
+```
+
+---
+
+## run_stop
+
+```python
+run_stop(session_id: Any)
+```
+
+---

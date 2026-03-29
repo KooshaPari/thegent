@@ -1475,14 +1475,13 @@ def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[st
     return normalized
 
 
-def load_module_manifest(
-    module_name: str,
-    repos_root: Path | None = None,
-    *,
-    available_repo_ids: list[str] | None = None,
-    _scan: bool = False,
-) -> dict[str, Any]:
-    manifest_path = _resolve_module_manifest_path(module_name)
+def load_module_manifest(module: str, *, available_repo_ids: list[str] | None = None) -> dict[str, Any]:
+    manifest_path = _resolve_module_manifest_path(module)
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid module manifest for {module}: malformed json") from exc
+
     if not isinstance(payload, dict):
         raise ValueError(f"invalid module manifest for {module}: payload must be an object")
 
@@ -1534,6 +1533,7 @@ def load_module_manifest(
         "refresh_cadence": refresh_cadence,
         "default_ref": str(payload.get("default_ref", "HEAD")),
         "repo_ids": repo_ids,
+        "repo_patterns": repo_patterns,
         "repo_ref_overrides": _load_str_dict("repo_ref_overrides"),
         "repo_runner_overrides": _load_str_dict("repo_runner_overrides"),
         "repo_command_overrides": _load_str_dict("repo_command_overrides"),
@@ -1546,7 +1546,7 @@ def load_module_repos(
     *,
     available_repo_ids: list[str] | None = None,
 ) -> list[str]:
-    return load_module_manifest(module, available_repo_ids=available_repo_ids)["repo_ids"]
+    return load_module_manifest(module)["repo_ids"]
 
 
 def run_target(

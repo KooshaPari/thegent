@@ -1,0 +1,141 @@
+{
+  "project_name": "crun-docs",
+  "version": "1.0.0",
+  "created_at": "2026-02-18T01:26:40.950817",
+  "overview": "# CRUN - Infrastructure Orchestration Platform",
+  "objectives": [],
+  "success_metrics": [],
+  "stakeholders": [],
+  "target_users": [],
+  "functional_requirements": [
+    {
+      "id": "crun-docs-feat-0",
+      "title": "AI-Powered Planning",
+      "description": "Intelligent infrastructure blueprint generation",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "crun-docs-feat-1",
+      "title": "Interactive TUI Dashboard",
+      "description": "Real-time infrastructure monitoring",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "crun-docs-feat-2",
+      "title": "Comprehensive Orchestration",
+      "description": "Container and cloud resource management",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "crun-docs-feat-3",
+      "title": "Advanced Analytics",
+      "description": "Performance monitoring and cost optimization",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    }
+  ],
+  "non_functional_requirements": [],
+  "features": [
+    {
+      "id": "crun-docs-feat-0",
+      "title": "AI-Powered Planning",
+      "description": "Intelligent infrastructure blueprint generation",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "crun-docs-feat-1",
+      "title": "Interactive TUI Dashboard",
+      "description": "Real-time infrastructure monitoring",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "crun-docs-feat-2",
+      "title": "Comprehensive Orchestration",
+      "description": "Container and cloud resource management",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "crun-docs-feat-3",
+      "title": "Advanced Analytics",
+      "description": "Performance monitoring and cost optimization",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    }
+  ],
+  "feature_priorities": {},
+  "architecture_overview": "Architecture details to be documented.",
+  "technical_requirements": [
+    "Use aws",
+    "Use azure",
+    "Use gcp",
+    "Use kubernetes",
+    "Use redis",
+    "Use python",
+    "Use postgresql",
+    "Use docker"
+  ],
+  "integration_points": [
+    {
+      "name": "Integration with cd",
+      "description": "Integration point with cd project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with crun",
+      "description": "Integration point with crun project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with --no-zuban",
+      "description": "Integration point with --no-zuban project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with themselves",
+      "description": "Integration point with themselves project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with configuration",
+      "description": "Integration point with configuration project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with with",
+      "description": "Integration point with with project",
+      "type": "project_integration"
+    }
+  ],
+  "phases": [],
+  "milestones": [],
+  "dependencies": [],
+  "blockers": [],
+  "related_projects": [
+    "cd",
+    "crun",
+    "--no-zuban",
+    "themselves",
+    "configuration",
+    "with"
+  ],
+  "shared_features": [
+    "Advanced Analytics",
+    "AI-Powered Planning",
+    "Interactive TUI Dashboard",
+    "Comprehensive Orchestration"
+  ]
+}

@@ -1,0 +1,22 @@
+[core_boundary]
+root = "thegent.core"
+owned_by = "runtime-core"
+
+[core_boundary.zones]
+core = "thegent.core"
+queue = "thegent.queue"
+agents = "thegent.agents"
+config = "thegent.config"
+
+[core_boundary.allow]
+imports = [
+  "thegent.core",
+  "thegent.queue",
+  "thegent.agents",
+  "thegent.config",
+]
+
+[core_boundary.block]
+imports = [
+  "thegent",
+]

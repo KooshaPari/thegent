@@ -1,0 +1,52 @@
+# WL-124 Monolith Split Plan: `src/thegent/cli/commands/cli.py`
+
+## Status
+
+Blocked by `WL-121`. This is implementation-ready sequencing for post-boundary execution.
+
+## Goal
+
+Split command registration and wiring from `cli.py` into domain modules without changing command behavior.
+
+## Target Module Layout
+
+1. `src/thegent/cli/commands/domains/govern.py`
+2. `src/thegent/cli/commands/domains/plan.py`
+3. `src/thegent/cli/commands/domains/run.py`
+4. `src/thegent/cli/commands/domains/system.py`
+5. `src/thegent/cli/commands/domains/mcp.py`
+6. `src/thegent/cli/commands/cli.py` (thin composition shell)
+
+## Sequenced Slices
+
+1. Extract pure command option declarations first.
+2. Move command handlers by domain behind the same Click/Typer signatures.
+3. Keep old imports as temporary pass-through shims for one slice.
+4. Delete pass-through shims after parity tests are green.
+
+## Compatibility Guardrails
+
+1. No command name changes.
+2. No option/flag semantic changes.
+3. No output format changes for existing commands.
+
+## Validation Commands
+
+1. `thegent --help`
+2. `thegent plan --help`
+3. `thegent run --help`
+4. `pytest -q tests/e2e/test_plan_commands.py`
+5. `pytest -q tests/test_unit_main_commands.py`
+
+## Done Criteria
+
+1. `cli.py` reduced to thin assembly code.
+2. Command domains are separated into dedicated files.
+3. Existing CLI parity tests pass unchanged.
+
+## Wave-2 Dependency-Unblock Slice (2026-02-21)
+
+1. Added baseline collector `scripts/collect_wl_monolith_baselines.py` covering `WL-124/125/126` in one deterministic run.
+2. Captured current `cli.py` shape metrics (line count, top-level function count, command decorator inventory) to anchor extraction checkpoints.
+3. Unblock command for future splits:
+   - `python scripts/collect_wl_monolith_baselines.py --format json --out .thegent/agent-batch/wave2-monolith-baseline.json`

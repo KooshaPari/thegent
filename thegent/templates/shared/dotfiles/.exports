@@ -1,0 +1,7 @@
+# Exports
+export EDITOR=vim
+export VISUAL=vim
+export PAGER=less
+export LESS=-R
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad

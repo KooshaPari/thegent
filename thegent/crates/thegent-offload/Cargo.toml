@@ -1,0 +1,32 @@
+[package]
+name = "thegent-offload"
+version = "0.1.0"
+edition = "2021"
+authors = ["kooshapari"]
+description = "Distributed compute offload for thegent using Cloudflare Tunnel"
+
+[dependencies]
+axum = { version = "0.7.5", features = ["macros"] }
+tokio = { version = "1.38.0", features = ["full"] }
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.120"
+reqwest = { version = "0.12.5", features = ["json", "stream"] }
+anyhow = "1.0.86"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+git2 = "0.20.4"
+tempfile = "3.10.1"
+uuid = { version = "1.10.0", features = ["v4"] }
+chrono = { version = "0.4.38", features = ["serde"] }
+futures = "0.3.30"
+tower-http = { version = "0.5.2", features = ["cors", "trace", "auth"] }
+clap = { version = "4.5.11", features = ["derive"] }
+which = "6.0.2"
+gethostname = "0.4.3"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "thegent-offload"
+path = "src/main.rs"

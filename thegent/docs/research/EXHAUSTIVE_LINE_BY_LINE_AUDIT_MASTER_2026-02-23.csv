@@ -1,0 +1,116 @@
+item,type,batch,verdict,confidence,notes,owner,stars,last_updated,license,archived,priority_score
+https://github.com/ruvnet,profile,ruvnet,reference,0.70,Org-level signal only,,,,,,52
+https://github.com/ruvnet/ruvnet,repo,ruvnet,reference,0.55,Included in scope; limited direct evidence depth,ruvnet,103,2026-02-21T11:14:46Z,,false,54
+https://github.com/ruvnet/claude-flow,repo,ruvnet,pilot,0.82,Flagship with high activity but stability/claim-validation risk,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,87
+https://github.com/ruvnet/claude-flow/releases,release_surface,ruvnet,pilot,0.76,High cadence; potential churn risk,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,87
+https://github.com/ruvnet/claude-flow/issues,issue_surface,ruvnet,pilot,0.78,Active issue traffic and reliability signals,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,87
+https://github.com/ruvnet/claude-flow/pulls,pr_surface,ruvnet,reference,0.65,PR volume is signal not proof,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,60
+https://github.com/ruvnet/claude-flow/discussions,discussion_surface,ruvnet,reference,0.66,Community signal only,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,61
+https://github.com/ruvnet/claude-flow/actions,ci_surface,ruvnet,reference,0.63,Workflow presence not equal quality,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,60
+https://github.com/ruvnet/claude-flow/wiki,docs_surface,ruvnet,reference,0.58,Doc breadth not fully validated,ruvnet,14366,2026-02-23T09:58:46Z,MIT,false,60
+https://github.com/ruvnet/agentic-flow,repo,ruvnet,reference,0.60,Adjacent ecosystem signal,ruvnet,446,2026-02-23T05:53:04Z,,false,55
+https://github.com/ruvnet/agentic-security,repo,ruvnet,reference,0.57,Adjacent ecosystem signal,ruvnet,24,2026-02-07T16:48:47Z,MIT,false,53
+https://www.npmjs.com/package/claude-flow,package,ruvnet,pilot,0.69,Package cadence visible,,,,,,77
+https://socket.dev/npm/package/claude-flow,supply_chain_surface,ruvnet,pilot,0.68,Third-party risk signal,,,,,,77
+https://claudecodemarketplace.com/marketplace/ruvnet-claude-flow,marketplace,ruvnet,reference,0.55,Distribution signal only,,,,,,50
+https://lobehub.com/skills/ruvnet-claude-flow-hive-mind-advanced,marketplace,ruvnet,reference,0.54,Listing signal only,,,,,,50
+https://repositorystats.com/ruvnet/claude-code-flow,stats_surface,ruvnet,reference,0.51,Third-party stats only,,,,,,50
+https://www.reddit.com/r/ClaudeAI/comments/1m14re7,public_post,ruvnet,avoid,0.45,Anecdotal signal only,,,,,,14
+https://www.reddit.com/r/ClaudeCode/comments/1qjyi64/security_supply_chain_vulnerability_in_claudeflow/,public_post,ruvnet,reference,0.56,Security allegation signal; requires verification,,,,,,51
+https://www.linkedin.com/posts/reuvencohen_claude-flow-now-with-sparc-npx-claude-flow-activity-7338622190424080385-f-0M,public_post,ruvnet,avoid,0.42,Marketing signal only,,,,,,14
+https://github.com/bar181,profile,bar181,reference,0.65,Hub only,,,,,,52
+https://github.com/bar181/fastapi-agents,repo,bar181,pilot,0.77,Best practical candidate in bar181 set,bar181,9,2025-09-10T13:08:14Z,MIT,false,78
+https://github.com/bar181/openai-agents,repo,bar181,pilot,0.74,Useful reference/pilot candidate,bar181,4,2025-04-19T08:32:33Z,Apache-2.0,false,77
+https://github.com/bar181/ai-toolkit,repo,bar181,pilot,0.67,UI utility with governance risk,bar181,3,2026-01-16T17:54:23Z,,false,77
+https://github.com/bar181/aisp-open-core,repo,bar181,reference,0.63,Concept/spec-heavy,bar181,119,2026-02-22T13:38:17Z,NOASSERTION,false,55
+https://github.com/bar181/savant-ai-results,repo,bar181,reference,0.59,Claims-heavy; reproducibility unclear,bar181,12,2026-01-13T19:08:52Z,,false,51
+https://github.com/bar181/agentic-professor,repo,bar181,reference,0.57,Methodology-heavy,bar181,14,2026-02-05T16:33:26Z,NOASSERTION,false,53
+https://gist.github.com/bar181,gist_hub,bar181,reference,0.60,Gist surface not runtime proof,,,,,,51
+https://www.linkedin.com/in/bradaross/,public_profile,bar181,reference,0.50,Public signal only,,,,,,50
+https://www.linkedin.com/posts/bradaross_github-bar181aisp-open-core-aisp-ai-activity-7416537832824942592-92KC,public_post,bar181,reference,0.48,Marketing/public narrative,,,,,,50
+https://www.npmjs.com/package/aisp-converter,package,bar181,pilot,0.58,Needs supply-chain checks,,,,,,76
+https://www.npmjs.com/package/aisp-validator,package,bar181,pilot,0.58,Needs supply-chain checks,,,,,,76
+https://crates.io/crates/aisp,package,bar181,pilot,0.57,Needs supply-chain checks,,,,,,76
+https://github.com/errata-ai/vale,repo,batch1,adopt,0.95,Top docs governance pick,errata-ai,5251,2026-02-23T10:15:11Z,MIT,false,100
+https://github.com/doorstop-dev/doorstop,repo,batch1,adopt,0.88,Strong requirements management fit,doorstop-dev,585,2026-02-23T09:20:50Z,NOASSERTION,false,100
+https://github.com/ory/kratos,repo,batch1,adopt,0.86,Adopt with architecture fit,ory,13457,2026-02-23T10:26:09Z,Apache-2.0,false,100
+https://github.com/nats-io/nats-server,repo,batch1,adopt,0.90,Strong infra baseline,nats-io,19197,2026-02-23T06:52:18Z,Apache-2.0,false,100
+https://github.com/pocketbase/pocketbase,repo,batch1,pilot,0.80,Good backend option,pocketbase,56305,2026-02-23T09:58:11Z,MIT,false,90
+https://github.com/searxng/searxng,repo,batch1,pilot,0.79,Useful self-hosted search layer,searxng,25248,2026-02-23T10:14:24Z,AGPL-3.0,false,87
+https://github.com/anomalyco/opencode,repo,batch1,pilot,0.82,High potential high volatility,anomalyco,108860,2026-02-23T10:43:24Z,MIT,false,90
+https://github.com/steveyegge/beads,repo,batch1,pilot,0.81,Interesting memory layer,steveyegge,17013,2026-02-23T10:41:54Z,MIT,false,87
+https://github.com/obra/superpowers,repo,batch1,pilot,0.78,Method/framework pilot only,obra,58680,2026-02-23T10:39:36Z,MIT,false,90
+https://github.com/stravu/crystal,repo,batch1,pilot,0.76,Parallel worktree tool; pilot,stravu,2938,2026-02-23T02:06:06Z,MIT,false,84
+https://github.com/BloopAI/vibe-kanban,repo,batch1,pilot,0.80,Good workflow augmentation candidate,BloopAI,21646,2026-02-23T10:18:55Z,Apache-2.0,false,87
+https://github.com/VectifyAI/PageIndex,repo,batch1,pilot,0.74,Requires benchmark validation,VectifyAI,16330,2026-02-23T10:38:13Z,MIT,false,86
+https://github.com/chunkhound/chunkhound,repo,batch1,pilot,0.81,Local code intelligence candidate,chunkhound,1053,2026-02-23T07:26:56Z,MIT,false,84
+https://github.com/bgauryy/octocode-mcp,repo,batch1,pilot,0.83,Strong MCP code context candidate,bgauryy,732,2026-02-23T09:34:44Z,MIT,false,82
+https://github.com/Fission-AI/AgilePlus,repo,batch1,reference,0.86,High conceptual overlap; avoid lock-in,Fission-AI,25187,2026-02-23T10:44:30Z,MIT,false,63
+https://github.com/ComposioHQ/awesome-claude-skills,list,batch1,reference,0.70,Discovery source only,ComposioHQ,36839,2026-02-23T10:43:51Z,,false,61
+https://github.com/testthedocs/awesome-docs,list,batch1,reference,0.73,Discovery source only,testthedocs,844,2026-02-23T10:14:01Z,NOASSERTION,false,56
+https://github.com/awesome-selfhosted/awesome-selfhosted,list,batch1,reference,0.74,Discovery source only,awesome-selfhosted,274678,2026-02-23T10:28:18Z,NOASSERTION,false,64
+https://github.com/vinta/awesome-python,list,batch1,reference,0.73,Discovery source only,vinta,284183,2026-02-23T10:40:54Z,NOASSERTION,false,64
+https://github.com/avelino/awesome-go,list,batch1,reference,0.73,Discovery source only,avelino,165808,2026-02-23T10:16:54Z,MIT,false,64
+https://github.com/browser-use/browser-use,repo,batch2,adopt,0.91,Top computer-use candidate,browser-use,78781,2026-02-23T10:18:49Z,MIT,false,100
+https://github.com/browserbase/stagehand,repo,batch2,adopt,0.89,Top browser automation framework,browserbase,21207,2026-02-23T10:23:38Z,MIT,false,100
+https://github.com/block/goose,repo,batch2,adopt,0.88,Strong agent runtime candidate,block,30960,2026-02-23T10:36:35Z,Apache-2.0,false,100
+https://github.com/mem0ai/mem0,repo,batch2,adopt,0.90,Top memory layer candidate,mem0ai,47827,2026-02-23T10:11:54Z,Apache-2.0,false,100
+https://github.com/aurelio-labs/semantic-router,repo,batch2,adopt,0.86,Intent routing baseline,aurelio-labs,3299,2026-02-23T01:34:26Z,MIT,false,100
+https://github.com/Portkey-AI/gateway,repo,batch2,adopt,0.87,Gateway baseline,Portkey-AI,10682,2026-02-23T10:06:04Z,MIT,false,100
+https://github.com/pathintegral-institute/mcpm.sh,repo,batch2,adopt,0.88,MCP manager baseline,pathintegral-institute,893,2026-02-22T13:35:40Z,MIT,false,100
+https://github.com/f/mcptools,repo,batch2,adopt,0.88,MCP operations CLI baseline,f,1493,2026-02-22T14:45:21Z,MIT,false,100
+https://github.com/isaacphi/mcp-language-server,repo,batch2,adopt,0.87,Code-intelligence MCP baseline,isaacphi,1451,2026-02-21T04:13:58Z,BSD-3-Clause,false,100
+https://github.com/eyaltoledano/claude-task-master,repo,batch2,pilot,0.79,Task system candidate with coupling risk,eyaltoledano,25573,2026-02-23T09:57:50Z,NOASSERTION,false,87
+https://github.com/humanlayer/humanlayer,repo,batch2,pilot,0.78,Human-in-loop augmentation candidate,humanlayer,9438,2026-02-23T10:42:57Z,NOASSERTION,false,84
+https://github.com/trycua/cua,repo,batch2,pilot,0.76,Computer-use infra pilot,trycua,12654,2026-02-23T10:16:19Z,MIT,false,87
+https://github.com/microsoft/OmniParser,repo,batch2,pilot,0.74,Vision parser pilot,microsoft,24388,2026-02-23T10:20:44Z,CC-BY-4.0,false,86
+https://github.com/OthersideAI/self-operating-computer,repo,batch2,pilot,0.70,Older stack; pilot only,OthersideAI,10156,2026-02-21T21:31:38Z,MIT,false,86
+https://github.com/topoteretes/cognee,repo,batch2,pilot,0.77,Alt memory engine pilot,topoteretes,12478,2026-02-23T09:29:21Z,Apache-2.0,false,87
+https://github.com/getzep/graphiti,repo,batch2,pilot,0.79,Graph memory pilot,getzep,23016,2026-02-23T10:37:16Z,Apache-2.0,false,87
+https://github.com/maximhq/bifrost,repo,batch2,pilot,0.73,Gateway claims require local validation,maximhq,2489,2026-02-23T10:23:19Z,Apache-2.0,false,83
+https://github.com/LMCache/LMCache,repo,batch2,pilot,0.77,Perf cache layer pilot,LMCache,6918,2026-02-23T08:10:14Z,Apache-2.0,false,84
+https://github.com/zilliztech/claude-context,repo,batch2,pilot,0.78,Context MCP pilot with vector ops overhead,zilliztech,5402,2026-02-23T08:34:36Z,MIT,false,84
+https://github.com/exo-explore/exo,repo,batch2,pilot,0.76,Local model infra pilot,exo-explore,41711,2026-02-23T10:09:06Z,Apache-2.0,false,87
+https://github.com/microsoft/BitNet,repo,batch2,pilot,0.72,Research-to-prod gap,microsoft,28565,2026-02-23T08:55:46Z,MIT,false,86
+https://github.com/danielmiessler/Fabric,repo,batch2,pilot,0.75,Framework pilot,danielmiessler,39254,2026-02-23T10:23:38Z,MIT,false,86
+https://github.com/vanna-ai/vanna,repo,batch2,pilot,0.76,Text-to-SQL pilot,vanna-ai,22725,2026-02-23T08:09:58Z,MIT,false,87
+https://github.com/SensAI-PT/RAGMeUp,repo,batch2,pilot,0.68,RAG framework pilot,SensAI-PT,671,2026-02-23T08:01:05Z,Apache-2.0,false,81
+https://github.com/VectifyAI/PageIndex,repo,batch2,pilot,0.74,Retrieval pilot with benchmark gate,VectifyAI,16330,2026-02-23T10:38:13Z,MIT,false,86
+https://github.com/NevaMind-AI/memU,repo,batch2,watchlist,0.62,License clarity concern,NevaMind-AI,9851,2026-02-23T10:45:27Z,NOASSERTION,false,42
+https://github.com/SomeOddCodeGuy/WilmerAI,repo,batch2,watchlist,0.64,GPL constraints + maturity risk,SomeOddCodeGuy,804,2026-02-16T12:50:48Z,GPL-3.0,false,40
+https://github.com/unclecode/tool4ai,repo,batch2,watchlist,0.52,Very early stage,unclecode,19,2025-10-16T08:03:04Z,Apache-2.0,false,35
+https://github.com/Not-Diamond/awesome-ai-model-routing,list,batch2,watchlist,0.60,List only not runtime,Not-Diamond,187,2026-02-15T18:14:15Z,Apache-2.0,false,40
+https://github.com/mcp-router/mcp-router,repo,batch2,watchlist,0.61,License constraints for many orgs,mcp-router,1756,2026-02-23T10:05:59Z,NOASSERTION,false,42
+https://github.com/ragieai/dynamic-fastmcp,repo,batch2,watchlist,0.58,License clarity concern,ragieai,44,2026-02-04T17:46:19Z,,false,38
+https://github.com/sitbon/magg,repo,batch2,watchlist,0.59,Aggregator blast-radius risk,sitbon,130,2026-02-21T16:32:09Z,AGPL-3.0,false,40
+https://github.com/OpenLinkSoftware/mcp-sqlalchemy-server,repo,batch2,watchlist,0.57,ODBC/ops complexity,OpenLinkSoftware,23,2026-02-13T01:54:16Z,MIT,false,38
+https://github.com/iai-group/nordlys,repo,batch2,watchlist,0.53,Stale/low signal for this use case,iai-group,31,2026-01-25T21:56:17Z,NOASSERTION,false,37
+https://github.com/Nordlys-Labs/nordlys,repo,batch2,watchlist,0.59,Ambiguous trajectory,Nordlys-Labs,97,2026-02-14T19:50:40Z,NOASSERTION,false,38
+https://github.com/upstash/context7,repo,batch3,adopt,0.91,Top code-context MCP utility,upstash,46568,2026-02-23T10:10:58Z,MIT,false,100
+https://github.com/mcp-use/mcp-use,repo,batch3,adopt,0.89,Strong MCP fullstack framework,mcp-use,9258,2026-02-23T10:23:41Z,MIT,false,100
+https://github.com/evalstate/fast-agent,repo,batch3,adopt,0.84,Prompt/test workflow candidate,evalstate,3683,2026-02-23T09:03:22Z,Apache-2.0,false,100
+https://github.com/sdi2200262/agentic-project-management,repo,batch3,adopt,0.85,Best PM/orchestration backbone in set,sdi2200262,2036,2026-02-23T07:22:09Z,NOASSERTION,false,100
+https://github.com/superagent-ai/vibekit,repo,batch3,adopt,0.86,Sandbox/redaction/observability core,superagent-ai,1721,2026-02-23T00:53:09Z,MIT,false,100
+https://github.com/testdriverai/testdriverai,repo,batch3,pilot,0.82,QA computer-use SDK pilot,testdriverai,215,2026-02-23T00:51:16Z,,false,82
+https://github.com/bytedance/UI-TARS-desktop,repo,batch3,pilot,0.82,Broad computer-use stack pilot,bytedance,28157,2026-02-23T10:16:16Z,Apache-2.0,false,87
+https://github.com/opactorai/Claudable,repo,batch3,pilot,0.79,Builder UX layer candidate,opactorai,3746,2026-02-22T18:53:44Z,MIT,false,84
+https://github.com/vanzan01/claude-code-sub-agent-collective,repo,batch3,pilot,0.72,Experimental collective framework,vanzan01,513,2026-02-18T22:02:43Z,MIT,false,81
+https://github.com/Helmi/claude-simone,repo,batch3,pilot,0.71,Transitioning framework; pilot only,Helmi,545,2026-02-18T08:03:41Z,MIT,false,81
+https://github.com/benbasha/Claude-Autopilot,repo,batch3,pilot,0.66,Automation value but unattended risk,benbasha,212,2026-02-22T11:51:41Z,MIT,false,81
+https://github.com/moonshinelabs-ai/skipper-tool,repo,batch3,pilot,0.65,Narrow computer-use utility,moonshinelabs-ai,28,2026-02-19T15:54:00Z,,false,80
+https://github.com/GongRzhe/Quickchart-MCP-Server,repo,batch3,pilot,0.67,Useful niche MCP utility,GongRzhe,159,2026-01-15T10:42:20Z,MIT,false,77
+https://github.com/GongRzhe/Office-Visio-MCP-Server,repo,batch3,pilot,0.62,Niche Windows/COM dependency,GongRzhe,41,2026-02-20T19:43:25Z,MIT,false,80
+https://github.com/GongRzhe/Human-In-the-Loop-MCP-Server,repo,batch3,pilot,0.70,HITL gate utility,GongRzhe,144,2026-02-21T22:03:32Z,MIT,false,81
+https://github.com/GongRzhe/ACP-MCP-Server,repo,batch3,watchlist,0.55,Protocol naming ambiguity,GongRzhe,19,2026-02-17T05:34:12Z,MIT,false,40
+https://github.com/textcortex/claude-code-sandbox,repo,batch3,avoid,0.90,Archived,textcortex,299,2026-02-22T20:04:40Z,,true,0
+https://github.com/mediar-ai/MCP-server-client-computer-use-ai-sdk,repo,batch3,avoid,0.70,High-privilege control and unclear posture,mediar-ai,192,2026-02-21T09:27:55Z,,false,21
+https://github.com/zed-industries/zed,repo,residual,reference,0.86,Excellent editor not control-plane dependency,zed-industries,75817,2026-02-23T10:24:37Z,NOASSERTION,false,66
+https://github.com/ChrisRoyse/Pheromind,repo,residual,ignore,0.62,Low fit signal to current stack,ChrisRoyse,380,2026-02-02T04:14:03Z,,false,13
+https://github.com/jehna/humanify,repo,residual,reference,0.78,Niche utility only,jehna,3122,2026-02-20T23:49:34Z,MIT,false,59
+https://github.com/cvs-health/testaro,repo,residual,pilot,0.78,Accessibility lane candidate,cvs-health,50,2026-01-21T16:00:46Z,MIT,false,78
+https://github.com/cvs-health/mcbizmod,repo,residual,ignore,0.90,Not aligned with target stack,cvs-health,9,2025-08-15T14:57:00Z,Apache-2.0,false,14
+https://github.com/langchain-ai/deep-agents-ui,repo,residual,pilot,0.80,Agent UX pilot candidate,langchain-ai,1398,2026-02-22T13:15:20Z,MIT,false,84
+https://github.com/chunkhound/chunkhound,repo,residual,pilot,0.81,Code intelligence pilot candidate,chunkhound,1053,2026-02-23T07:26:56Z,MIT,false,84
+https://github.com/KooshaPari/Frostify,repo,residual,reference,0.74,Personal project reference only,KooshaPari,57,2026-02-22T17:59:39Z,,false,56
+https://github.com/KooshaPari?tab=repositories&q=odin,repo_group,residual,ignore,0.91,Portfolio/learning repos not current stack inputs,,,,,,14
+http://linkedin.com/in/kooshapari/,public_profile,residual,reference,0.50,Signal only not engineering evidence,,,,,,50

@@ -1,0 +1,12 @@
+# Next 15 Items - Batch 5
+
+**Date**: 2026-02-19
+**Status**: 📋 Planning Complete
+
+## Items
+
+1. **heliosShield-bridge-fix** (P1) - Fix heliosShield bridge and tests
+2. **impl-os-user-adapter** (P1) - OS-level user creation adapter (Linux/macOS/Win)
+3. **wire-maif-agent-runner** (P1) - Wire MAIF artifacts into AgentRunner/ExecutionEngine
+4. **bkm-11-governance-scanner** (P2) - Native governance scanner (obfuscated triggers, Rust built)
+5. **borrow-thegent-mcp-tools** (P2) - Port thegent MCP tools to other projects

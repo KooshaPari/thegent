@@ -1,0 +1,38 @@
+# Workspace Configurations for thegent Sub-project Split
+# Phase 1: Infrastructure (P1.2)
+
+workspaces:
+  thegent-cli:
+    root: cli/
+    description: CLI entry point and command handlers
+    dependencies:
+      - thegent-agents
+    exports:
+      - cli
+      - commands
+      - config
+    
+  thegent-agents:
+    root: agents/
+    description: Agent execution engine and task management
+    dependencies:
+      - thegent-mcp
+    exports:
+      - agents
+      - tasks
+      - execution
+    
+  thegent-mcp:
+    root: mcp/
+    description: MCP server and tool providers
+    dependencies: []
+    exports:
+      - mcp
+      - tools
+      - providers
+
+# Shared modules (read-only access)
+shared:
+  - src/shared
+  - src/thegent/governance
+  - config/

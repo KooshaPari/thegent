@@ -29,7 +29,7 @@
 //! ## Usage
 //!
 //! ```rust
-//! use phenotype_xdd_lib::contract::{Contract, ContractVerifier};
+//! use xdd_lib_rs::contract::{Contract, ContractVerifier};
 //!
 //! // Define a contract
 //! trait StoragePort {

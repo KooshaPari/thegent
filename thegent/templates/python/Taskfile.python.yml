@@ -1,0 +1,62 @@
+version: '3'
+
+vars:
+  PYTHON_SRC: '{{.PYTHON_SRC | default "src"}}'
+  PYTHON_TESTS: '{{.PYTHON_TESTS | default "tests"}}'
+
+tasks:
+  lint:
+    desc: Run ruff linter
+    cmds:
+      - uv run ruff check {{.PYTHON_SRC}} {{.PYTHON_TESTS}}
+
+  lint:fix:
+    desc: Run ruff linter with auto-fix
+    cmds:
+      - uv run ruff check --fix {{.PYTHON_SRC}} {{.PYTHON_TESTS}}
+
+  format:
+    desc: Format code with ruff
+    cmds:
+      - uv run ruff format {{.PYTHON_SRC}} {{.PYTHON_TESTS}}
+
+  format:check:
+    desc: Check formatting without modifying
+    cmds:
+      - uv run ruff format --check {{.PYTHON_SRC}} {{.PYTHON_TESTS}}
+
+  typecheck:
+    desc: Run type checker
+    cmds:
+      - uv run ty check {{.PYTHON_SRC}}
+
+  test:
+    desc: Run tests
+    cmds:
+      - uv run pytest {{.PYTHON_TESTS}}
+
+  test:cov:
+    desc: Run tests with coverage
+    cmds:
+      - uv run pytest --cov={{.PYTHON_SRC}} --cov-report=term-missing {{.PYTHON_TESTS}}
+
+  security:
+    desc: Run security checks
+    cmds:
+      - uv run ruff check --select S {{.PYTHON_SRC}}
+      - uv run pip-audit
+
+  dead-code:
+    desc: Check for dead code
+    cmds:
+      - uv run vulture {{.PYTHON_SRC}} --min-confidence 80
+
+  complexity:
+    desc: Check code complexity
+    cmds:
+      - uv run radon cc {{.PYTHON_SRC}} --min C --show-complexity
+      - uv run radon mi {{.PYTHON_SRC}} --min B
+
+  all:
+    desc: Run all Python quality checks
+    deps: [lint, format:check, typecheck, test:cov, security]

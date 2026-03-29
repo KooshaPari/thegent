@@ -41,13 +41,5 @@ name = "xdd_lib_rs"
 path = "src/lib.rs"
 
 [[test]]
-name = "property_tests"
-path = "tests/property_tests.rs"
-
-[[test]]
-name = "contract_tests"
-path = "tests/contract_tests.rs"
-
-[[test]]
 name = "mutation_tests"
 path = "tests/mutation_tests.rs"

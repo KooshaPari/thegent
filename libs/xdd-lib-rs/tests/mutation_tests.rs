@@ -4,7 +4,7 @@
 //!
 //! These tests verify the mutation tracking functionality.
 
-use phenotype_xdd_lib::mutation::{
+use xdd_lib_rs::mutation::{
     MutationTracker, MutationKind, MutationStatus, CoverageReport,
 };
 

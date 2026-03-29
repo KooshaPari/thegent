@@ -1,0 +1,29 @@
+<DONE>
+# Phase2 Wave3 Lane1 Manual Repo Deep-Read Report
+
+Source scope: `docs/research/PHASE2_WAVE3_LANE_1.txt`  
+Assessment date: 2026-02-23
+
+| repo | strategy_summary | implementation_shape | utility_assessment | reproducible_build (yes/no/unknown + reason) | tests_status (pass/fail/unknown + reason) | security_policies (yes/no/unknown + reason) | release_hygiene (strong/moderate/weak + reason) | rollback_path (clear/partial/unclear + reason) | risk_flags | verdict(adopt/pilot/watch/avoid) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| https://github.com/ruvnet/agentic-flow | Full agent orchestration framework with self-learning/agent routing + MCP integration. | Large monorepo, Node/TS-centric, many subpackages, extensive workflows and test trees, active commit flow. | High leverage if you need end-to-end agent platform, but operational complexity is high. | yes - `package-lock.json` present and scripted setup in repo. | unknown - extensive tests/workflows exist but no local test run in this lane. | partial - many security docs/tests exist, but no root `SECURITY.md` policy file found. | strong - many tags (v2.x), release docs/changelogs, active maintenance cadence. | clear - rich tag history and release notes provide practical revert anchors. | high complexity surface; broad dependency graph; potential onboarding/ops cost. | pilot |
+| https://github.com/GongRzhe/Quickchart-MCP-Server | MCP server specialized for chart generation/rendering workflows. | Small Node package with Dockerfile and focused tool surface. | Useful as a narrow visualization MCP capability with low integration overhead. | yes - `package-lock.json` provides deterministic npm resolution. | unknown - no test suite/test commands surfaced in repo read. | no - no explicit security policy files found. | weak - no tags/releases/workflows detected in deep-read snapshot. | unclear - no tagged releases/changelog trail for reliable rollback points. | low governance signals; test visibility gap; release management immaturity. | watch |
+| https://github.com/unclecode/tool4ai | Library-first tool graph/router engine for function-calling workflows. | Python package (`setup.py`), clear tests tree (unit/integration/perf/functional), lightweight structure. | Strong reusable library candidate for dependency-graph/tool-routing capabilities. | no - no lockfile (`requirements.txt` only), so env resolution may drift. | unknown - substantial tests exist but not executed in this lane. | no - no `SECURITY.md`/security policy files found. | moderate - mature test structure but no visible tags/releases/workflows. | partial - tests can reduce rollback risk, but no formal releases/tags. | maintainer activity appears older; packaging modernity gap (`setup.py`-centric). | pilot |
+| https://github.com/GongRzhe/ACP-MCP-Server | MCP bridge/server around ACP runtime with multi-transport support. | Python CLI/server with Docker + compose, PyPI-oriented quickstart. | Practical if you already standardize on ACP and need MCP transport bridging. | no - no lockfile; dependency pinning/reproducibility not strong from repo state. | unknown - test deps in `pyproject.toml` but no visible tests directory in snapshot. | no - no explicit security policy file found. | weak - no tags/releases/workflows found despite active-ish commits. | unclear - lacks tagged release/version rollback anchors. | governance/test evidence mismatch; release controls underdefined. | avoid |
+| https://github.com/bar181/savant-ai-results | Research/demo repo for cognitive agent concept and paper-style results. | Minimal JS repo with README-heavy presentation and little engineering scaffolding. | Low immediate production utility; better treated as concept/reference material. | no - no lockfile observed; build reproducibility not demonstrated. | unknown - no test suite surfaced. | no - no security policy surfaced. | weak - no tags/releases/workflows; appears documentation-centric. | unclear - no formal release or rollback artifacts. | prototype-level governance; unclear maintenance depth; execution confidence low. | avoid |
+
+## Top 2 picks
+
+1. **agentic-flow** - best release hygiene and the most complete engineering system; recommended as a **controlled pilot** due to complexity.
+2. **tool4ai** - best reusable library shape with meaningful tests; recommended as a **library pilot** with reproducibility hardening first.
+
+## Top 2 avoids
+
+1. **savant-ai-results** - research/prototype posture with minimal production controls.
+2. **ACP-MCP-Server** - useful idea, but governance/test/release evidence is currently too weak for adoption.
+
+## Notes on evidence method
+
+- Manual deep-read performed from shallow local clones of each target repo.
+- Signals used: README/install docs, file topology, lockfiles, workflows, tests tree, security-policy files, tags/release artifacts.
+- `tests_status` is marked `unknown` unless tests were executed in-lane.

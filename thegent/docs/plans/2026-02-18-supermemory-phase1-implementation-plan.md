@@ -1,0 +1,413 @@
+# Supermemory Phase 1 Implementation Plan (2026-02-18)
+
+**Status**: ACTIVE | **Session**: 20260218T102837Z-claude-p75303-ba4065db
+
+---
+
+## Executive Summary
+
+Phase 1 focuses on **authentication + client SDK** setup for Supermemory.ai integration. This is a **3-day effort** spanning three work packages:
+
+- **P1.1**: Supermemory Client (Rust SDK) — 4-5 days | 40-50 commits
+- **P1.2**: L1/L2 Cache Infrastructure (Python) — 3-4 days | 20-30 commits
+- **P1.3**: Basic Configuration & Setup — 2-3 days | 10-15 commits
+
+**Goal**: Establish authentication, basic client connectivity, and local cache infrastructure so agents can read/write to Supermemory by end of Phase 1.
+
+---
+
+## High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ thegent Agent (Orchestrator / Gardener / Incorporator)                  │
+└────────────────────┬────────────────────────────────────────────────────┘
+                     │
+         ┌───────────┴───────────┐
+         ▼                       ▼
+    ┌─────────────┐      ┌──────────────────┐
+    │ L1 Context  │      │ L2 Cache (Redis) │
+    │ (window)    │      │ or FileCache     │
+    └─────────────┘      └────────┬─────────┘
+                                  │
+                     ┌────────────┴─────────────┐
+                     ▼                          ▼
+              ┌────────────────┐       ┌──────────────────┐
+              │ Supermemory    │       │ Local JSONL      │
+              │ Client (Rust)  │       │ Fallback         │
+              └────────┬───────┘       └──────────────────┘
+                       │
+         ┌─────────────┴──────────────┐
+         ▼                            ▼
+    ┌──────────────────┐      ┌──────────────────┐
+    │ L3: Conversations│      │ L4: Documents    │
+    │ (Memory Graph)   │      │ (Archival)       │
+    └──────────────────┘      └──────────────────┘
+```
+
+---
+
+## Phase 1 Breakdown
+
+### P1.1: Supermemory Client (Rust) — 4-5 days
+
+**Deliverable**: A production-ready Rust client library (`crates/supermemory-rs`) that:
+- Authenticates to Supermemory.ai using API key (sm_...)
+- Manages sessions and projects
+- Reads/writes conversations and documents
+- Handles retries, timeouts, and errors
+
+**Subtasks**:
+1. **P1.1.1**: Scaffold Rust project structure
+   - Create `crates/supermemory-rs/` with Cargo.toml
+   - Add dependencies: reqwest, serde, tokio, thiserror
+   - Define error types and response models
+
+2. **P1.1.2**: Authentication module
+   - Implement `Auth` struct (API key validation)
+   - Create config loader (from `~/.sm/config` or `SM_API_KEY`)
+   - Add project scoping header `x-sm-project`
+
+3. **P1.1.3**: Core API client
+   - Implement `SupermemoryClient` with base HTTP handling
+   - Add request/response serialization (serde)
+   - Implement retry logic with tenacity pattern
+
+4. **P1.1.4**: Conversations API
+   - Implement `ConversationAPI` for reading/writing conversations
+   - Create models: `Conversation`, `Message`, `Metadata`
+   - Add continuity packet mapping
+
+5. **P1.1.5**: Documents API
+   - Implement `DocumentAPI` for archival storage
+   - Create models: `Document`, `Artifact`
+   - Add MAIF artifact signature tracking
+
+6. **P1.1.6**: Testing & documentation
+   - Unit tests for auth, serialization, error handling
+   - Integration tests (mock server or dev instance)
+   - API documentation with examples
+
+**Key Files**:
+```
+crates/supermemory-rs/
+├── Cargo.toml
+├── src/
+│   ├── lib.rs (public API)
+│   ├── auth.rs (Authentication)
+│   ├── client.rs (HTTP client)
+│   ├── api/
+│   │   ├── conversations.rs
+│   │   ├── documents.rs
+│   │   └── mod.rs
+│   ├── models/
+│   │   ├── conversation.rs
+│   │   ├── document.rs
+│   │   └── mod.rs
+│   └── error.rs (Error types)
+├── tests/
+│   ├── auth_tests.rs
+│   ├── client_tests.rs
+│   └── integration_tests.rs
+└── examples/
+    └── basic_usage.rs
+```
+
+---
+
+### P1.2: L1/L2 Cache Infrastructure (Python) — 3-4 days
+
+**Deliverable**: Python cache layer with Redis backend + FileCache fallback
+
+**Subtasks**:
+1. **P1.2.1**: Cache interface
+   - Create `src/thegent/memory/cache_provider.py` (abstract base)
+   - Define `get()`, `set()`, `evict()`, `flush()` methods
+   - Support TTL and eviction policies
+
+2. **P1.2.2**: Redis backend
+   - Implement `RedisProvider` in `src/thegent/memory/redis_provider.py`
+   - Add connection pooling and cluster support
+   - Implement health checks
+
+3. **P1.2.3**: FileCache fallback
+   - Implement `FileCacheProvider` in `src/thegent/memory/file_cache_provider.py`
+   - Use JSONL for fast append + index for random access
+   - Support rotation and cleanup
+
+4. **P1.2.4**: Context management
+   - Implement `ContextManager` in `src/thegent/memory/context_manager.py`
+   - Handle L1 (window), L2 (cache), and fallback to L3
+   - Add continuity packet support
+
+5. **P1.2.5**: Testing & benchmarks
+   - Unit tests for all providers
+   - Benchmarks: throughput, latency, memory usage
+   - Failure scenario tests
+
+**Key Files**:
+```
+src/thegent/memory/
+├── __init__.py
+├── cache_provider.py (ABC)
+├── redis_provider.py (Redis impl)
+├── file_cache_provider.py (FileCache impl)
+├── context_manager.py (L1/L2 orchestration)
+├── models/
+│   ├── continuity_packet.py
+│   └── cache_item.py
+├── tests/
+│   ├── test_cache_provider.py
+│   ├── test_redis_provider.py
+│   ├── test_file_cache_provider.py
+│   └── test_context_manager.py
+└── benchmarks/
+    └── cache_benchmarks.py
+```
+
+---
+
+### P1.3: Basic Configuration & Setup — 2-3 days
+
+**Deliverable**: Configuration system + CLI commands for initialization
+
+**Subtasks**:
+1. **P1.3.1**: Configuration system
+   - Create `config/supermemory_config.yaml` template
+   - Implement `SupermemoryConfig` in `src/thegent/config/supermemory.py`
+   - Support environment variable overrides
+
+2. **P1.3.2**: Authentication CLI
+   - Add `thegent login supermemory` command
+   - Implement OAuth flow (if applicable)
+   - Store credentials securely in `~/.sm/config`
+
+3. **P1.3.3**: Integration with MCP server
+   - Add Supermemory MCP tools to `config/mcp_servers.json`
+   - Register client in FastMCP
+   - Document tool availability
+
+4. **P1.3.4**: Documentation
+   - Write setup guide: `docs/guides/SUPERMEMORY_SETUP.md`
+   - Add troubleshooting section
+   - Include configuration reference
+
+5. **P1.3.5**: Health checks
+   - Implement `thegent doctor` checks for Supermemory connectivity
+   - Add diagnostics for auth failures, network issues
+   - Create recovery procedures
+
+**Key Files**:
+```
+config/
+├── supermemory_config.yaml
+└── mcp_servers.json (updated)
+
+src/thegent/config/
+├── supermemory.py
+
+src/thegent/cli/commands/
+├── login.py (thegent login supermemory)
+└── doctor.py (updated for SM checks)
+
+docs/guides/
+└── SUPERMEMORY_SETUP.md
+```
+
+---
+
+## Execution Strategy
+
+### Recommended Order (Critical Path)
+
+1. **Start P1.1.1-P1.1.3** (auth + client scaffold) — **Day 1**
+   - Foundation needed for all other work
+   - Small + self-contained scope
+   - Blocks P1.1.4+ but doesn't block P1.2/P1.3
+
+2. **Parallel P1.2.1-P1.2.2** (cache interface + Redis) — **Day 1-2**
+   - Can start once auth design is clear
+   - Independent of P1.1.4-6
+
+3. **Complete P1.1.4-P1.1.6** (Conversations/Documents APIs + tests) — **Day 2**
+   - Depends on P1.1.1-3
+
+4. **Complete P1.2.3-P1.2.5** (FileCache + tests/benchmarks) — **Day 2-3**
+   - Depends on P1.2.1-2
+
+5. **Start P1.3.1-P1.3.2** (config + CLI) — **Day 3**
+   - Can start anytime; doesn't block P1.1-P1.2
+
+6. **Complete P1.3.3-P1.3.5** (MCP integration + docs) — **Day 3**
+   - Final integration step
+
+### Parallel Tracks
+
+| Track | Lead | Day 1 | Day 2 | Day 3 |
+|-------|------|-------|-------|-------|
+| **Rust Client** | — | P1.1.1-3 | P1.1.4-6 | Integration |
+| **Python Cache** | — | P1.2.1-2 | P1.2.3-5 | Integration |
+| **Config/CLI** | — | — | P1.3.1 | P1.3.2-5 |
+
+---
+
+## High-Impact Early Wins (Today)
+
+Given your **~130 tool calls** budget, here are the **highest-impact tasks** to complete in this session:
+
+### Option A1: Planning Only (Recommended Now)
+- ✅ Write Phase 1 plan (this document)
+- ✅ Create work items in WORK_STREAM
+- Create task breakdown in Taskfile
+- Estimate effort per subtask
+
+**Effort**: ~15-20 tool calls | **Result**: Clear, executable plan for all 3 team members
+
+### Option A2: Planning + Quick Wins
+- Complete planning (Option A1)
+- **Quick Win 1**: Scaffold `crates/supermemory-rs/` with Cargo.toml + dependencies
+  - Creates project structure for Rust work
+  - Effort: ~5 tool calls
+
+- **Quick Win 2**: Write `src/thegent/memory/cache_provider.py` (abstract base class)
+  - Defines cache interface for Python work
+  - Effort: ~3 tool calls
+
+- **Quick Win 3**: Start `docs/guides/SUPERMEMORY_SETUP.md` (outline)
+  - Sets documentation direction
+  - Effort: ~2 tool calls
+
+**Total Effort**: ~25-30 tool calls | **Result**: Plan + 3 concrete starting points
+
+---
+
+## Work Stream Integration
+
+### Add to BACKLOG (WORK_STREAM.md)
+
+```markdown
+| impl-supermemory-p1.1 | Supermemory Client (Rust SDK) | WP-5001-SM | P1 | — |
+| impl-supermemory-p1.2 | L1/L2 Cache Infrastructure (Python) | WP-5001-SM | P1 | impl-supermemory-p1.1 |
+| impl-supermemory-p1.3 | Config & Setup | WP-5001-SM | P1 | impl-supermemory-p1.2 |
+```
+
+### Claim (CLAIMED section)
+
+Each agent picks up work:
+- **Agent A** (Rust-capable): Claims `impl-supermemory-p1.1`
+- **Agent B** (Python): Claims `impl-supermemory-p1.2`
+- **Agent C** (Documentation): Claims `impl-supermemory-p1.3`
+
+---
+
+## Success Criteria
+
+By **end of Phase 1** (3 days):
+
+1. **P1.1 Complete**:
+   - ✅ Rust client compiles and passes tests
+   - ✅ `thegent_supermemory::Client` is public API
+   - ✅ Examples run successfully
+
+2. **P1.2 Complete**:
+   - ✅ Cache providers (Redis + FileCache) pass tests
+   - ✅ Context manager orchestrates L1/L2/fallback
+   - ✅ Benchmarks show acceptable throughput (>1000 ops/sec for cache)
+
+3. **P1.3 Complete**:
+   - ✅ `thegent login supermemory` works end-to-end
+   - ✅ MCP tools registered and callable
+   - ✅ Docs guide covers setup, troubleshooting, configuration
+
+4. **Integration**:
+   - ✅ All tests pass
+   - ✅ Quality gates green (lint, coverage, security)
+   - ✅ Ready for Phase 2 (Graph memory + semantic search)
+
+---
+
+## Dependencies & Blockers
+
+### External Dependencies
+- Supermemory.ai MCP server (`https://mcp.supermemory.ai/mcp`)
+- API key provisioning (user must have account)
+- OAuth provider (if OAuth is selected)
+
+### Internal Dependencies
+| Package | Needed For | Current Status |
+|---------|-----------|-----------------|
+| `tenacity` | Retry logic (P1.1.3) | Present in pyproject.toml |
+| `reqwest` | HTTP client (P1.1.1) | Will add to Cargo.toml |
+| `tokio` | Async runtime (P1.1.1) | Will add to Cargo.toml |
+| `redis-rs` | Redis client (P1.2.2) | Will add to Cargo.toml |
+| `serde` | Serialization (P1.1.1) | Will add to Cargo.toml |
+
+### No Known Blockers
+- Project structure exists (`crates/`, `src/thegent/memory/`)
+- Dependencies can be added without version conflicts
+- No competing work in supermemory integration
+
+---
+
+## Testing Strategy (Phase 1)
+
+### Unit Tests
+- Auth: key validation, config loading
+- Client: request serialization, error handling
+- Cache: TTL, eviction, persistence
+- Models: serde roundtrip
+
+### Integration Tests (with mock server)
+- Client → mock Supermemory API
+- Cache → Redis/FileCache roundtrip
+- Config → CLI commands
+
+### Manual Testing
+- `thegent login supermemory` with real credentials
+- `thegent doctor` checks Supermemory connectivity
+- MCP tools appear in tool list
+
+---
+
+## Risk Mitigation
+
+| Risk | Impact | Mitigation |
+|------|--------|-----------|
+| Supermemory API changes | High | Review current docs before P1.1.4 |
+| Auth complexity (OAuth) | Medium | Start with API key; OAuth is optional |
+| Redis unavailability | Low | FileCache fallback is always available |
+| Rust ecosystem churn | Low | Pin specific versions in Cargo.lock |
+| Python cache perf | Medium | Benchmark early (P1.2.5), optimize if needed |
+
+---
+
+## Next Actions (If Continuing This Session)
+
+### If Choosing Option A1 (Planning Only)
+- [ ] Move this plan to docs/plans/
+- [ ] Add work items to WORK_STREAM.md
+- [ ] Create task breakdown in Taskfile.yml
+- [ ] End session — ready for agent dispatch
+
+### If Choosing Option A2 (Planning + Quick Wins)
+- [ ] Complete planning
+- [ ] Scaffold Rust project
+- [ ] Create Python cache interface
+- [ ] Start documentation outline
+- [ ] Claim work items in WORK_STREAM
+- [ ] End session — agents can start immediately
+
+---
+
+## References
+
+- Plan: [2026-02-16-supermemory-integration-plan.md](./2026-02-16-supermemory-integration-plan.md)
+- Arch: [ARCHITECTURE_LAYERS.md](../reference/ARCHITECTURE_LAYERS.md)
+- Memory: [CONTEXT_MANAGEMENT_DEPTH.md](../reference/CONTEXT_MANAGEMENT_DEPTH.md)
+- Workstream: [WORK_STREAM.md](../reference/WORK_STREAM.md)
+
+---
+
+**Session**: 20260218T102837Z-claude-p75303-ba4065db
+**Created**: 2026-02-18T10:28:37Z
+**Author**: Claude Code (Haiku 4.5)

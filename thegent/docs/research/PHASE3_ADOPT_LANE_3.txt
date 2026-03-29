@@ -1,0 +1,4 @@
+https://github.com/Nordlys-Labs/nordlys
+https://github.com/getzep/graphiti
+https://github.com/pocketbase/pocketbase
+https://github.com/upstash/context7
