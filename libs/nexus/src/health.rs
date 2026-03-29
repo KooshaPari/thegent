@@ -5,20 +5,15 @@ use std::time::Duration;
 use tokio::sync::RwLock;
 
 /// Health status of a service
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum HealthStatus {
     /// Service is healthy
     Healthy,
     /// Service is unhealthy
     Unhealthy,
     /// Health check is pending
+    #[default]
     Pending,
-}
-
-impl Default for HealthStatus {
-    fn default() -> Self {
-        Self::Pending
-    }
 }
 
 /// Health check configuration

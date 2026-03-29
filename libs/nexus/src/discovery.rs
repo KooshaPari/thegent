@@ -1,6 +1,6 @@
 //! Service discovery module
 
-use std::hash::{Hash, Hasher};
+use std::hash::BuildHasher;
 use crate::{Registry, Service, NexusError};
 
 /// Discovery strategies for load balancing
@@ -37,10 +37,7 @@ impl Discovery {
             Strategy::RoundRobin => Ok(services.into_iter().next()),
             Strategy::Random => {
                 use std::collections::hash_map::RandomState;
-                use std::hash::BuildHasher;
-                let mut hasher = RandomState::new().build_hasher();
-                name.hash(&mut hasher);
-                let idx = (hasher.finish() as usize) % services.len();
+                let idx = (RandomState::new().hash_one(name) as usize) % services.len();
                 Ok(services.into_iter().nth(idx))
             }
             Strategy::ConsistentHash => Ok(services.into_iter().next()),
