@@ -1,3 +1,11 @@
 [env]
 PYO3_PYTHON = "/Users/kooshapari/.local/share/mise/installs/python/3.12.12/bin/python3"
 DYLD_LIBRARY_PATH = "/Users/kooshapari/.local/share/mise/installs/python/3.12.12/lib"
+
+# Link Python library for cdylib crates (pyo3 extension-module mode on macOS)
+# Without this, linker cannot find libpython symbols for thegent-parser.
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-L/Users/kooshapari/.local/share/mise/installs/python/3.12.12/lib", "-C", "link-arg=-lpython3.12"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-L/Users/kooshapari/.local/share/mise/installs/python/3.12.12/lib", "-C", "link-arg=-lpython3.12"]

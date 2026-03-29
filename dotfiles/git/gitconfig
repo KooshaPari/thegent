@@ -1,0 +1,56 @@
+[http]
+	postBuffer = 524288000
+[user]
+	name = Claude Code
+	email = claude@anthropic.com
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[core]
+	excludesFile = /Users/kooshapari/.gitignore
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[merge "mergiraf"]
+	name = mergiraf
+	driver = /usr/bin/mergiraf merge --git %O %A %B -p %P
+[credential]
+	helper = cache --timeout=3600
+[init]
+	defaultBranch = main
+[branch]
+	autosetupmerge = always
+	autosetuprebase = never
+[push]
+	default = current
+[alias]
+	sync-upstream = "!f() { git fetch upstream && git merge --ff-only upstream/main || git merge --no-ff upstream/main; }; f"
+	sync-origin = "!f() { git fetch origin && git merge --ff-only origin/main || git merge --no-ff origin/main; }; f"
+	pr-stack = "!f() { gh pr list --state open --json number,title --jq \".[] | \\\"#\\(.number) \\(.title)\\\"\" | head -20; }; f"
+	pr-chain = "!f() { gh pr view --json dependsOn,number,title --jq \"if .dependsOn then .dependsOn[] | \\\"blocked-by #\\(.number)\\\" else \\\"base\\\" end\"; }; f"
+	wt-new = "!f() { name=\"${1}\"; base=\"${2:-main}\"; dir=\"worktrees/$(basename $(pwd))/$name\"; git worktree add \"$dir\" -b \"$name\" \"$base\"; }; f"
+	wt-list = worktree list
+	wt-prune = worktree prune
+	lhist = log --oneline --graph --all --decorate
+	ff-check = "!f() { git merge-base --is-ancestor \"$1\" \"$2\" && echo \"YES\" || echo \"NO\"; }; f"
+	s = status --short
+	l = log --oneline -10
+	bclean = "!f() { git branch --merged main | grep -v \"^[ *]\" | xargs -r git branch -d; }; f"
+	bforce = "!f() { git branch -D \"$1\"; }; f"
+	d = diff
+	dc = diff --cached
+	dw = diff --word-diff
+	br-clean = "!f() { git branch --merged main | grep -v \"main\" | xargs -r git branch -d; }; f"
+	commit-nv = commit --no-verify
+[pull]
+	rebase = false
+	ff = only
+[merge]
+	ff = false
+[url "https://x-access-token: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@github.com/"]
+	insteadOf = ssh://git@github.com/

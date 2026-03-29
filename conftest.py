@@ -35,6 +35,11 @@ _SRC_PATH_STR = str(_SRC_PATH)
 if _SRC_PATH_STR not in sys.path:
     sys.path.insert(0, _SRC_PATH_STR)
 
+# Also add scripts/ to sys.path for scripts imports
+_SCRIPTS_PATH = str(_THGENT_ROOT / "scripts")
+if _SCRIPTS_PATH not in sys.path:
+    sys.path.insert(0, _SCRIPTS_PATH)
+
 
 _GUARDRAIL_EXCLUDE_SEGMENTS = {
     "templates",
