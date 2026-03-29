@@ -91,6 +91,23 @@ impl ServiceHealth {
 }
 
 /// Health monitor for managing service health checks
+///
+/// # Example
+///
+/// ```ignore
+/// # async fn example() {
+/// use nexus::{HealthMonitor, HealthStatus};
+///
+/// let monitor = HealthMonitor::new();
+/// monitor.register_service("api".to_string()).await;
+///
+/// monitor.record_success("api").await;
+/// monitor.record_success("api").await;
+///
+/// let status = monitor.get_health("api").await;
+/// assert_eq!(status, Some(HealthStatus::Healthy));
+/// # }
+/// ```
 pub struct HealthMonitor {
     services: Arc<RwLock<Vec<ServiceHealth>>>,
     config: HealthCheckConfig,

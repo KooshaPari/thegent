@@ -6,6 +6,21 @@ use tokio::sync::RwLock;
 use crate::{Service, NexusError};
 
 /// Service registry for managing service registrations
+///
+/// # Example
+///
+/// ```ignore
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// use nexus::{Registry, Service, Endpoint};
+///
+/// let registry = Registry::new();
+/// registry.register(Service::new("api", Endpoint::new("localhost:8080"))).await?;
+///
+/// let services = registry.discover("api").await?;
+/// assert_eq!(services.len(), 1);
+/// # Ok(())
+/// # }
+/// ```
 pub struct Registry {
     services: Arc<RwLock<HashMap<String, Vec<Service>>>>,
 }
