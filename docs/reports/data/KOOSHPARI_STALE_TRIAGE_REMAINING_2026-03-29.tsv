@@ -1,19 +1,19 @@
 repo	bucket	last_push	proposed_action	rationale	status
 aizen	stale_90d_1y	2025-11-25	unknown_needs_review	Scope unclear from name; scan README	proposed
-PriceyApp	stale_90d_1y	2025-10-17	archive_github	Personal/side app; inactive	proposed
-pheno-sdk	stale_90d_1y	2025-10-15	archive_github	Legacy empty/shell vs phenoSDK canonical	proposed
+PriceyApp	stale_90d_1y	2025-10-17	archive_github	Personal/side app; inactive	executed_archive_2026-03-28
+pheno-sdk	stale_90d_1y	2025-10-15	archive_github	Legacy empty/shell vs phenoSDK canonical	executed_archive_2026-03-28
 mcp-language-server	stale_90d_1y	2025-10-01	unknown_needs_review	Compare to active MCP / phenoSDK mcp	proposed
 KodeVibe	stale_90d_1y	2025-07-07	unknown_needs_review	Relate to KodeVibe-Go if any	proposed
 agslag-new	stale_90d_1y	2025-05-24	delete_candidate	Duplicate agslag lineage after pick-one	proposed
-netweave-final2	stale_90d_1y	2025-05-01	archive_github	Redundant final variant; netweave-final already archived	proposed
+netweave-final2	stale_90d_1y	2025-05-01	archive_github	Redundant final variant; netweave-final already archived	executed_archive_2026-03-28
 localbase	stale_90d_1y	2025-04-30	unknown_needs_review	Compare to archived localbase* family	proposed
 agslag-docs	stale_90d_1y	2025-04-17	merge_into_monorepo	Attach docs to chosen agslag root	proposed
 agslag	stale_90d_1y	2025-04-15	revive	Candidate primary agslag if product returns	proposed
-agslag-dash	stale_90d_1y	2025-04-13	archive_github	Dashboard fork; fold or drop	proposed
+agslag-dash	stale_90d_1y	2025-04-13	archive_github	Dashboard fork; fold or drop	executed_archive_2026-03-28
 agslagtmp-2	stale_90d_1y	2025-04-13	delete_candidate	Explicit temp	proposed
 agslag-tmp	stale_90d_1y	2025-04-13	delete_candidate	Explicit temp	proposed
 v0-agslag-project	stale_90d_1y	2025-04-12	delete_candidate	v0 scaffold	proposed
 model-conductor-hub	stale_90d_1y	2025-04-12	unknown_needs_review	ML/orchestration value unclear	proposed
 NetWeave	stale_90d_1y	2025-04-05	unknown_needs_review	Canonical brand vs archived netweave-final*	proposed
 delete-o-matic-for-linkedin	stale_1y_2y	2025-01-20	unknown_needs_review	Third-party automation ethics/TOS	proposed
-Byteport-TestZip	stale_1y_2y	2024-12-07	archive_github	Test artifact repo	proposed
+Byteport-TestZip	stale_1y_2y	2024-12-07	archive_github	Test artifact repo	executed_archive_2026-03-28
