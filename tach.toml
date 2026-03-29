@@ -1,17 +1,13 @@
-# Tach Configuration — Architecture Enforcement
+# Tach — module boundaries
 # https://github.com/tach-org/tach
+#
+# The runtime tree under src/ is currently a single first-party package (`thegent`).
+# Finer-grained hex layers were modeled as separate tach modules, but the codebase
+# still contains import cycles across those conceptual layers. Splitting boundaries
+# again is deferred to the hex extraction program; see:
+#   docs/governance/TACH_MONOLITH_BOUNDARY.md
 
-source_roots = [
-  "src",
-  "packages/thegent-sdk/src",
-  "packages/thegent-mcp/src",
-  "packages/thegent-agents/src",
-  "modules/thegent-app/src",
-  "modules/thegent-mcp/src",
-  "modules/thegent-control-plane/src",
-  "modules/thegent-execution/src",
-  "modules/thegent-governance/src",
-]
+source_roots = [ "src",]
 
 exclude = [
   "**/__pycache__",
@@ -31,138 +27,6 @@ root_module = "ignore"
 unused_ignore_directives = "error"
 require_ignore_directive_reasons = "error"
 
-# ============================================================================
-# LAYER 0: Shared (no internal dependencies)
-# ============================================================================
-
 [[modules]]
-path = "thegent.config"
-depends_on = []
-
-[[modules]]
-path = "thegent.exit_codes"
-depends_on = []
-
-[[modules]]
-path = "thegent.output_parser"
-depends_on = ["thegent.contracts", "thegent.config"]
-
-[[modules]]
-path = "thegent.contracts"
-depends_on = ["thegent.output_parser", "thegent.config"]
-
-[[modules]]
-path = "thegent.observability"
-depends_on = ["thegent.config"]
-
-# ============================================================================
-# HEXAGONAL ARCHITECTURE LAYERS
-# ============================================================================
-# These layers enforce the hexagonal/clean architecture pattern:
-# - Layer 0: Domain (pure business logic, no internal dependencies)
-# - Layer 0.5: Ports (interfaces/contracts, depends only on domain)
-# - Layer 1: Use Cases (orchestration, depends on domain + ports)
-# - Layer 2: Adapters (external integrations, depends on domain + ports + use_cases)
-# - Layer 3: Everything else (utilities, config, CLI, etc., can depend on anything)
-# ============================================================================
-
-# Layer 0: Domain (no internal dependencies allowed)
-[[modules]]
-path = "thegent.domain"
-depends_on = []
-
-# Layer 0.5: Ports (interfaces/contracts for domain)
-[[modules]]
-path = "thegent.ports"
-depends_on = ["thegent.domain"]
-
-# Layer 1: Use Cases (application business rules, orchestration)
-[[modules]]
-path = "thegent.use_cases"
-depends_on = ["thegent.domain", "thegent.ports"]
-
-# Layer 2: Adapters (external implementations, infrastructure)
-[[modules]]
-path = "thegent.adapters"
-depends_on = ["thegent.domain", "thegent.ports", "thegent.use_cases"]
-
-# ============================================================================
-# LAYER 1: Models & Core Infrastructure
-# ============================================================================
-
-[[modules]]
-path = "thegent.models"
-depends_on = ["thegent.config", "thegent.agents", "thegent.routing"]
-
-# ============================================================================
-# LAYER 2: Execution & Routing
-# ============================================================================
-
-[[modules]]
-path = "thegent.execution"
-depends_on = [ "thegent.contracts", "thegent.cli", "thegent.config"]
-
-[[modules]]
-path = "thegent.routing"
-depends_on = [ "thegent.execution", "thegent.config", "thegent.contracts", "thegent.models"]
-
-# ============================================================================
-# LAYER 3: Existing monolith modules (kept during transition)
-# ============================================================================
-
-[[modules]]
-path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.routing"]
-
-[[modules]]
-path = "thegent.operations"
-depends_on = []
-
-[[modules]]
-path = "thegent.orchestration_modes"
-depends_on = []
-
-[[modules]]
-path = "thegent.planning"
-depends_on = ["thegent.routing", "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
-
-[[modules]]
-path = "thegent.cli"
-depends_on = [
-    "thegent.config",
-    "thegent.contracts",
-    "thegent.models",
-    "thegent.execution",
-    "thegent.agents",
-    "thegent.operations",
-    "thegent.orchestration_modes",
-    "thegent.planning",
-    "thegent.exit_codes",
-    "thegent.routing",
-    "thegent.output_parser",
-    "thegent.observability",
-]
-
-[[modules]]
-path = "thegent.mcp_server"
-depends_on = []
-
-[[modules]]
-path = "thegent.main"
-depends_on = ["thegent.cli"]
-
-# ============================================================================
-# LAYER 4: Sub-Projects (independent, communicate via MCP)
-# ============================================================================
-
-[[modules]]
-path = "thegent_cli"
-depends_on = []
-
-[[modules]]
-path = "thegent_agents"
-depends_on = []
-
-[[modules]]
-path = "thegent_mcp"
+path = "thegent"
 depends_on = []
