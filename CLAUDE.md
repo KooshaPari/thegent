@@ -45,6 +45,38 @@ agileplus validate-encoding --all --fix
 - Workflows: AgilePlus/docs/workflow/
 - Worklog: AgilePlus/.work-audit/worklog.md
 
+## Worklogs (All Projects)
+
+All agents MUST write worklogs for research, decisions, and significant findings:
+
+- **Location:** `/Users/kooshapari/CodeProjects/Phenotype/repos/worklogs/`
+- **Index:** `worklogs/README.md`
+- **Aggregation:** `./worklogs/aggregate.sh [project|priority|category|all]`
+- **Onboarding:** `worklogs/AGENT_ONBOARDING.md`
+
+### Worklog Categories
+
+| Category | File | Purpose |
+|----------|------|---------|
+| ARCHITECTURE | `worklogs/ARCHITECTURE.md` | ADRs, library extraction |
+| DUPLICATION | `worklogs/DUPLICATION.md` | Cross-project duplication |
+| DEPENDENCIES | `worklogs/DEPENDENCIES.md` | External deps, forks, modernization |
+| INTEGRATION | `worklogs/INTEGRATION.md` | External integrations |
+| PERFORMANCE | `worklogs/PERFORMANCE.md` | Optimization, benchmarking |
+| RESEARCH | `worklogs/RESEARCH.md` | Starred repo analysis |
+| GOVERNANCE | `worklogs/GOVERNANCE.md` | Policy, evidence, quality gates |
+
+### When to Write Worklogs
+
+Write for: research completions, decisions made, issues found (duplication, performance), work completions, or planning (fork candidates, migration plans).
+
+### Project Tags
+
+- `[AgilePlus]` - AgilePlus Rust monorepo
+- `[thegent]` - TheGent dotfiles manager
+- `[heliosCLI]` - HeliosCLI framework
+- `[cross-repo]` - Cross-repo work
+
 ## Design System (Impeccable)
 
 Impeccable is installed globally. Design skills and commands are available:
