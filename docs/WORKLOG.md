@@ -8,12 +8,16 @@ Active work tracking for **thegent** project.
 
 ## Current Sprint
 
-### Wave 80 - In Progress
+### Wave 81 - Complete (2026-03-28)
 
-| Item | Status | Owner |
+| Item | Status | Notes |
 |------|--------|-------|
-| BytePort completion | 🔴 Pending | - |
-| Feature parity verification | 🟡 Ready | - |
+| Full ecosystem audit | ✅ Complete | Local/remote clean |
+| ECO status verification | ✅ Complete | All shipped |
+| BytePort assessment | ✅ Archived | Empty stub - no implementation |
+| Feature parity | ✅ N/A | All WL items reviewed |
+
+### Wave 80 - Complete (2026-03-29)
 
 ### Wave 79 - Complete (2026-03-29)
 
