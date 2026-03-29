@@ -76,7 +76,6 @@ from thegent.governance.vetter import (
 )
 
 __all__ += [
-__all__ += [
     # Vetter core types (FR-VET-090) and WL-097 code checks
     "RuffVetterCheck",
     "TestPassVetterCheck",

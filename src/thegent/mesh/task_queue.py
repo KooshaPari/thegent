@@ -229,6 +229,6 @@ class MaildirQueue:
             try:
                 data = json.loads(entry.read_text(encoding="utf-8"))
                 results.append(data)
-            except ((FileNotFoundError, json.JSONDecodeError) as exc):
+            except (FileNotFoundError, json.JSONDecodeError) as exc:
                 _log.debug("skipping %s: %s", entry, exc)
         return results
