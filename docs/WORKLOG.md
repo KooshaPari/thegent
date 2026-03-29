@@ -343,3 +343,12 @@ All ECO features synced to AgilePlus:
 - PR #833 merged
 - bun run docs:build → pass, bun run docs:verify-media → pass
 - Evidence: agileplus/evidence_ledger.jsonl entry, PR #833
+
+### cliproxy auth/SDK merge cleanup: COMPLETE (2026-03-28)
+- Resolved pkg/llmproxy/config, sdk/config, thinking/provider, registry, CLI merge artifacts
+- Normalized all token storage to embedded BaseTokenStorage shape (Claude, Kilo, Gemini, Codex, Copilot, Qwen, iFlow, Kimi, Kiro)
+- Fixed SDK duplicate definitions: removed sdk/cliproxy/auth/manager_ops.go, trimmed sdk/cliproxy/auth/conductor.go
+- Adjusted MarkResult transient-error cooldown policy (only when alternative selectable auth exists)
+- go test ./pkg/llmproxy/auth/... ./pkg/llmproxy/logging ./sdk/auth ./sdk/cliproxy/auth → pass
+- cliproxy worktree (session-carry-forward-20260326) fully clean
+- Evidence: agileplus/evidence_ledger.jsonl entry
