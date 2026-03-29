@@ -447,14 +447,14 @@ class TestOR18NativeResponsesForwarding:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock()
 
-        fake_response_content = json.dumps({"id": "r-native", "object": "response", "status": "completed"}).encode()
+        fake_response_content = json.dumps({"id": "r-native", "object": "response", "status": "completed"})
 
         mock_httpx_resp = MagicMock()
         mock_httpx_resp.content = fake_response_content
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {"Content-Type": "application/json"}
 
-        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o")).encode()
+        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o"))
 
         with (
             patch(
@@ -466,11 +466,14 @@ class TestOR18NativeResponsesForwarding:
                 "thegent.utils.routing_impl.litellm_responses_handler._get_http_client"
             ) as mock_get_client,
         ):
+            # Reset the module-level _http_client to ensure fresh client
+            import thegent.utils.routing_impl.litellm_responses_handler as handler
+            handler._http_client = None
+            
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
             mock_get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
             mock_get_client.return_value.__aexit__ = AsyncMock(return_value=None)
-
             from starlette.applications import Starlette
             from starlette.routing import Route
 
@@ -500,7 +503,7 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {}
 
-        body = json.dumps(_make_responses_body(model="openrouter/claude-opus-4-6")).encode()
+        body = json.dumps(_make_responses_body(model="openrouter/claude-opus-4-6"))
 
         with (
             patch(
@@ -542,7 +545,7 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {}
 
-        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o")).encode()
+        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o"))
 
         with (
             patch(

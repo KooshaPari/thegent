@@ -26,6 +26,27 @@ All waves complete. All work items completed. Ready for new work.
 
 ## Wave History
 
+### Wave 85 - Security Patches (2026-03-29)
+| Item | Status | Evidence |
+|------|--------|----------|
+| Rust lru crate update | ✅ | `lru = "0.16.3"` in `crates/thegent-cache/Cargo.toml` |
+| Python ujson update | ✅ | `ujson = {version = ">=5.12.0", markers = "..."}` in `pyproject.toml` |
+| Go golang.org/x/net (bifrost-extensions) | ✅ | `v0.52.0` |
+| Go golang.org/x/net (trace/backend) | ✅ | `v0.52.0` |
+| Go golang.org/x/net (cliproxyapi-plusplus) | ✅ | `v0.52.0` |
+| Go golang.org/x/crypto (all) | ✅ | `v0.49.0` |
+| Go chi/v5 (all) | ✅ | `v5.2.2` |
+| npm esbuild | ✅ | Override already in place `>=0.25.0` |
+| npm brace-expansion | ✅ | Via minimatch override `>=3.1.4` |
+
+**Dependabot Alerts Addressed:** 22 total
+- Critical: golang.org/x/net XSS - Patched
+- High: golang.org/x/crypto, golang.org/x/net - Patched
+- Moderate: cryptography, requests, ujson - Patched
+- Low: authlib, PyJWT, diskcache - Patched
+
+---
+
 ### Wave 83 - Complete (2026-03-28)
 | Item | Status | Evidence |
 |------|--------|----------|
