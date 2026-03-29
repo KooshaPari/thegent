@@ -18,7 +18,7 @@ Specs live under `apps/AgilePlus/kitty-specs/<slug>/` (gitignored in AgilePlus r
 | Item | Detail |
 |------|--------|
 | **GitHub (active)** | `KooshaPari/phenoSDK` — `main`, last push **2026-02-23** |
-| **GitHub (legacy)** | `KooshaPari/pheno-sdk` — empty remote; **`phenoSDK` is canonical** |
+| **GitHub (legacy)** | `KooshaPari/pheno-sdk` — **archived** on GitHub; **`phenoSDK` is canonical** |
 | **Local clone** | `repos/worktrees/phenoSDK/main` |
 
 ## Scale (phenoSDK)
