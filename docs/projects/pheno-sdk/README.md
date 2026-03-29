@@ -1,7 +1,10 @@
 # Pheno SDK Documentation
 
 **Project:** Pheno SDK - Comprehensive SDK for Agent Development  
-**Main Directory:** `/pheno-sdk`  
+**Canonical source (GitHub):** [KooshaPari/phenoSDK](https://github.com/KooshaPari/phenoSDK) (`main`)  
+**Local audit clone (worktree):** `repos/worktrees/phenoSDK/main` (shallow clone; re-run `git fetch` as needed)  
+**Legacy empty remote:** `KooshaPari/pheno-sdk` currently has **no commits** — do not expect a matching folder under `CodeProjects`.  
+**This directory:** documentation index only (not the monolith source tree).  
 **Status:** Active Development
 
 ## Quick Links
