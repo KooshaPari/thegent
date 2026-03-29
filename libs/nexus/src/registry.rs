@@ -47,3 +47,33 @@ impl Default for Registry {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_registry_register_and_discover() {
+        let registry = Registry::new();
+        let service = Service::new("test-svc", crate::Endpoint::new("localhost:8080"));
+        registry.register(service).await.unwrap();
+        let discovered = registry.discover("test-svc").await.unwrap();
+        assert_eq!(discovered.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_registry_deregister() {
+        let registry = Registry::new();
+        registry.register(Service::new("test-svc", crate::Endpoint::new("localhost:8080"))).await.unwrap();
+        registry.deregister("test-svc", "localhost:8080").await.unwrap();
+        let discovered = registry.discover("test-svc").await.unwrap();
+        assert!(discovered.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_registry_discover_nonexistent() {
+        let registry = Registry::new();
+        let discovered = registry.discover("nonexistent").await.unwrap();
+        assert!(discovered.is_empty());
+    }
+}

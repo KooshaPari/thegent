@@ -47,3 +47,25 @@ impl Discovery {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_discovery_round_robin() {
+        let registry = Registry::new();
+        registry.register(Service::new("test-svc", crate::Endpoint::new("localhost:8080"))).await.unwrap();
+        let discovery = Discovery::new(registry, Strategy::RoundRobin);
+        let result = discovery.next("test-svc").await.unwrap();
+        assert!(result.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_discovery_not_found() {
+        let registry = Registry::new();
+        let discovery = Discovery::new(registry, Strategy::RoundRobin);
+        let result = discovery.next("nonexistent").await.unwrap();
+        assert!(result.is_none());
+    }
+}

@@ -52,3 +52,20 @@ impl Service {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_endpoint_creation() {
+        let endpoint = Endpoint::new("localhost:8080");
+        assert_eq!(endpoint.addr, "localhost:8080");
+    }
+
+    #[test]
+    fn test_service_creation() {
+        let service = Service::new("user-svc", Endpoint::new("localhost:8080"));
+        assert_eq!(service.name, "user-svc");
+    }
+}
