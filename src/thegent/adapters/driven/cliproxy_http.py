@@ -7,6 +7,7 @@ Handles:
 - Response transformation
 - Error handling and retries
 - OpenRouter-specific logic
+- LLM response caching (FR-CACHE-002)
 """
 
 import asyncio
@@ -18,13 +19,58 @@ import orjson as json
 
 _log = logging.getLogger(__name__)
 
+# Completion paths that are eligible for response caching.
+_CACHEABLE_PATHS: frozenset[str] = frozenset({
+    "/v1/chat/completions",
+    "/v1/completions",
+    "/v1/responses",
+})
+
+
+def _is_cacheable_request(method: str, path: str, body: bytes) -> bool:
+    """Return True when the request is a non-streaming completion POST."""
+    if method.upper() != "POST":
+        return False
+    base_path = path.split("?", maxsplit=1)[0].rstrip("/")
+    if base_path not in _CACHEABLE_PATHS:
+        return False
+    # Streaming responses cannot be replayed from cache.
+    try:
+        payload = json.loads(body) if body else {}
+        return not payload.get("stream", False)
+    except (json.JSONDecodeError, ValueError):
+        return False
+
 
 class CliproxyHTTPClient:
-    """HTTP client for cliproxy backend communication."""
+    """HTTP client for cliproxy backend communication.
 
-    def __init__(self, backend_url: str, timeout: float = 120.0):
+    Args:
+        backend_url:    URL of the cliproxy backend.
+        timeout:        Request timeout in seconds.
+        response_cache: Optional :class:`~thegent.cache.ResponseCache`
+                        instance.  Pass ``None`` (default) to use the
+                        module-level default cache, or pass a cache
+                        constructed with ``enabled=False`` to disable
+                        caching entirely (equivalent to ``--no-cache``).
+    """
+
+    def __init__(
+        self,
+        backend_url: str,
+        timeout: float = 120.0,
+        response_cache: "Any | None" = None,
+    ) -> None:
         self.backend_url = backend_url.rstrip("/")
         self.timeout = timeout
+        self._response_cache = response_cache  # None = lazy-load default
+
+    def _cache(self) -> "Any":
+        """Return the active ResponseCache (lazy-initialised on first use)."""
+        if self._response_cache is None:
+            from thegent.cache.response_cache import get_default_cache
+            self._response_cache = get_default_cache()
+        return self._response_cache
 
     async def proxy_request(
         self,
@@ -36,11 +82,45 @@ class CliproxyHTTPClient:
     ) -> tuple[int, bytes, dict[str, str]]:
         """Proxy non-streaming HTTP request.
 
+        For eligible completion endpoints the response is served from
+        the :class:`~thegent.cache.ResponseCache` when available,
+        avoiding a round-trip to the LLM backend.  Cache is keyed on
+        the full canonical request body so only byte-identical requests
+        are matched.
+
         Returns (status_code, response_body, response_headers).
         """
         headers = headers or {}
         url = self._build_url(request_path, query_string)
+        cache = self._cache()
 
+        # ------------------------------------------------------------------
+        # Cache read (only for eligible non-streaming completions)
+        # ------------------------------------------------------------------
+        cache_key: str | None = None
+        if _is_cacheable_request(request_method, request_path, body):
+            try:
+                payload: dict[str, Any] = json.loads(body) if body else {}
+                cache_key = cache.make_key(
+                    model=str(payload.get("model", "")),
+                    messages=list(payload.get("messages", [])),
+                    temperature=float(payload.get("temperature", 1.0)),
+                    extra={
+                        k: payload[k]
+                        for k in ("max_tokens", "system", "top_p")
+                        if k in payload
+                    },
+                )
+                cached = cache.get(cache_key)
+                if cached is not None:
+                    cached_body = json.dumps(cached)
+                    return 200, cached_body, {"Content-Type": "application/json", "X-Cache": "HIT"}
+            except Exception as exc:  # pragma: no cover — defensive
+                _log.debug("Response cache lookup failed (ignored): %s", exc)
+
+        # ------------------------------------------------------------------
+        # Upstream request
+        # ------------------------------------------------------------------
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 resp = await client.request(
@@ -51,6 +131,18 @@ class CliproxyHTTPClient:
                 )
 
             filtered_headers = dict(resp.headers)
+
+            # ----------------------------------------------------------------
+            # Cache write (only on successful 200 responses)
+            # ----------------------------------------------------------------
+            if cache_key is not None and resp.status_code == 200:
+                try:
+                    response_dict = json.loads(resp.content)
+                    cache.set(cache_key, response_dict)
+                    filtered_headers["X-Cache"] = "MISS"
+                except Exception as exc:  # pragma: no cover — defensive
+                    _log.debug("Response cache store failed (ignored): %s", exc)
+
             return resp.status_code, resp.content, filtered_headers
 
         except (httpx.ConnectError, httpx.ConnectTimeout) as e:
