@@ -22,6 +22,24 @@ from thegent.governance.scoring import (
     ProviderScore,
     ProviderScorer,
 )
+from thegent.governance.compliance_reports import ComplianceReporter
+from thegent.governance.federated_policy import FederatedPolicyEngine, PolicyRule, PolicyScope
+from thegent.governance.override_events import (
+    OverrideActivatedEvent,
+    OverrideEventEmitter,
+    OverrideExpiredEvent,
+    OverrideExpiryMonitor,
+)
+from thegent.governance.vetter import (
+    RuffVetterCheck,
+    TestPassVetterCheck,
+    VetterCheck,
+    VetterCheckResult,
+    VetterOutcome,
+    VetterPolicy,
+    VetterResult,
+    VetterSeverity,
+)
 
 __all__ = [
     # Phase 2.1: Provider Scoring System (WP-5003)
@@ -43,40 +61,18 @@ __all__ = [
     "ProviderType",
     "get_metrics_collector",
     "initialize_metrics_collector",
-]
-
-from thegent.governance.compliance_reports import ComplianceReporter
-from thegent.governance.federated_policy import FederatedPolicyEngine, PolicyRule, PolicyScope
-from thegent.governance.override_events import (
-    OverrideActivatedEvent,
-    OverrideEventEmitter,
-    OverrideExpiredEvent,
-    OverrideExpiryMonitor,
-)
-
-__all__.append("ComplianceReporter")
-__all__ += ["FederatedPolicyEngine", "PolicyRule", "PolicyScope"]
-__all__ += [
-    # Override expiry event emission (research-governance-override-events)
+    # Compliance
+    "ComplianceReporter",
+    # Federated policy
+    "FederatedPolicyEngine",
+    "PolicyRule",
+    "PolicyScope",
+    # Override events
     "OverrideActivatedEvent",
     "OverrideEventEmitter",
     "OverrideExpiredEvent",
     "OverrideExpiryMonitor",
-]
-
-from thegent.governance.vetter import (
-    RuffVetterCheck,
-    TestPassVetterCheck,
-    VetterCheck,
-    VetterCheckResult,
-    VetterOutcome,
-    VetterPolicy,
-    VetterResult,
-    VetterSeverity,
-)
-
-__all__ += [
-    # Vetter core types (FR-VET-090) and WL-097 code checks
+    # Vetter
     "RuffVetterCheck",
     "TestPassVetterCheck",
     "VetterCheck",
