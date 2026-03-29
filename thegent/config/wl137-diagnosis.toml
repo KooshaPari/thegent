@@ -1,0 +1,54 @@
+[defaults]
+line_threshold_high = 500
+line_threshold_critical = 1000
+top_files_limit = 10
+loc_delta_alert = 2000
+hotspot_delta_alert = 3
+
+[[targets]]
+name = "thegent"
+path = "."
+exclude_dirs = [
+  ".git",
+  ".venv",
+  ".venv-cpython",
+  ".venv-cpython_314",
+  ".venv-pypy",
+  ".pytest_cache",
+  ".mypy_cache",
+  ".ruff_cache",
+  ".ty_cache",
+  ".basedpyright_cache",
+  ".shadow",
+  ".shadow-*",
+  ".worktrees",
+  "node_modules",
+  "target",
+  "target-maif",
+  ".vitepress",
+  "docs-dist",
+  "dist",
+  "artifacts",
+  "logs",
+  "recordings",
+  "playwright-report",
+  "test-results",
+]
+
+[[targets]]
+name = "trace"
+path = "~/kush/trace"
+exclude_dirs = [
+  ".git",
+  ".venv",
+  ".pytest_cache",
+  ".mypy_cache",
+  ".ruff_cache",
+  ".next",
+  ".vitepress",
+  "node_modules",
+  "docs-dist",
+  "dist",
+  "build",
+  "coverage",
+]

@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-02-22T11:39:50Z",
+  "steps": {
+    "instruction-architecture": 0,
+    "quality": 201
+  },
+  "step_details": {
+    "instruction-architecture": {
+      "code": 0,
+      "duration": 0.37729795900122554
+    },
+    "quality": {
+      "code": 201,
+      "duration": 150.88132991600105
+    }
+  },
+  "failed_steps": [
+    "quality"
+  ],
+  "ok": false
+}

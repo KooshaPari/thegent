@@ -30,12 +30,12 @@ use anyhow::Result;
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::prelude::*;
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]
-use pyo3::pymodule;
-use serde_json::Value;
-#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::prelude::*;
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::pymodule;
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
+use pyo3::pymodule;
+use serde_json::Value;
 
 // ---------------------------------------------------------------------------
 // Core streaming iterator

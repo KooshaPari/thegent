@@ -1,44 +1,48 @@
-# thegent managed — bash config
-# For use on servers/WSL where zsh is not available
-# Local overrides: ~/.bashrc.local
+# dotfiles/shell/.bashrc
+# Phenotype/thegent canonical bash configuration
+# Install: ln -sf "$DOTFILES_DIR/shell/.bashrc" ~/.bashrc
 
-# Non-interactive shell: exit early
+# Skip for non-interactive shells
 [[ $- != *i* ]] && return
 
-# ── Path setup ────────────────────────────────────────────────────────────────
-export PATH="${HOME}/.local/bin:${HOME}/bin:${PATH}"
+# --- XDG Base Directory ---
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
-# Homebrew (Apple Silicon)
-[[ -f /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
-
-# mise
-if command -v mise >/dev/null 2>&1; then
-  eval "$(mise activate bash)"
-fi
-
-# bun
-if [[ -d "${HOME}/.bun" ]]; then
-  export BUN_INSTALL="${HOME}/.bun"
-  export PATH="${BUN_INSTALL}/bin:${PATH}"
-fi
-
-# ── History ───────────────────────────────────────────────────────────────────
-HISTSIZE=50000
-HISTFILESIZE=50000
-HISTCONTROL=ignoreboth
+# --- History ---
+export HISTFILE="${XDG_DATA_HOME}/bash/history"
+mkdir -p "$(dirname "$HISTFILE")"
+export HISTSIZE=50000
+export HISTFILESIZE=50000
+export HISTCONTROL=ignoredups:erasedups
 shopt -s histappend
 
-# ── Prompt ────────────────────────────────────────────────────────────────────
-if command -v starship >/dev/null 2>&1; then
-  eval "$(starship init bash 2>/dev/null)"
+# --- Path ---
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
+# --- mise (polyglot version manager) ---
+if command -v mise &>/dev/null; then
+  eval "$(mise activate bash 2>/dev/null)" || true
+elif [[ -x "$HOME/.local/bin/mise" ]]; then
+  eval "$("$HOME/.local/bin/mise" activate bash 2>/dev/null)" || true
 fi
 
-# ── Aliases ───────────────────────────────────────────────────────────────────
-[[ -f "${HOME}/.aliases.sh" ]] && source "${HOME}/.aliases.sh"
+# --- Dotfiles location ---
+export DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 
-# ── Tools ─────────────────────────────────────────────────────────────────────
-command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
-command -v direnv >/dev/null 2>&1 && eval "$(direnv hook bash)"
+# --- Load Aliases ---
+[[ -f "$DOTFILES_DIR/shell/aliases.sh" ]] && source "$DOTFILES_DIR/shell/aliases.sh"
 
-# ── Local overrides ───────────────────────────────────────────────────────────
-[[ -f "${HOME}/.bashrc.local" ]] && source "${HOME}/.bashrc.local"
+# --- fzf ---
+if command -v fzf &>/dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+  export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+  eval "$(fzf --bash 2>/dev/null)" || true
+fi
+
+# --- Local overrides (never commit this file) ---
+[[ -f "$HOME/.bashrc.local" ]] && source "$HOME/.bashrc.local"
+[[ -f "$HOME/.bashrc.secrets" ]] && source "$HOME/.bashrc.secrets"

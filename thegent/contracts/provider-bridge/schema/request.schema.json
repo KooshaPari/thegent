@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kush/contracts/provider-bridge/request.schema.json",
+  "title": "ExecutionRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bridge_schema_version",
+    "request_id",
+    "run_id",
+    "harness_profile",
+    "metaprovider_id",
+    "lane_id",
+    "intent",
+    "provider_intent",
+    "governance",
+    "inputs",
+    "stream"
+  ],
+  "properties": {
+    "bridge_schema_version": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 4
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 4
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "harness_profile": {
+      "type": "string",
+      "enum": ["codex", "claude", "droid", "antigma", "codex_alt"]
+    },
+    "metaprovider_id": {
+      "type": "string",
+      "enum": ["agentapi", "cliproxy"]
+    },
+    "lane_id": {
+      "type": "string",
+      "enum": ["litellm_donut", "bifrost", "native"]
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user_id", "org_id", "project_id", "roles"],
+      "properties": {
+        "user_id": { "type": "string" },
+        "org_id": { "type": "string" },
+        "project_id": { "type": "string" },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "task_type", "latency_tier", "quality_tier"],
+      "properties": {
+        "capability": {
+          "type": "string",
+          "enum": ["chat_completion", "embeddings", "rerank", "tool_execution"]
+        },
+        "task_type": { "type": "string" },
+        "latency_tier": { "type": "string", "enum": ["interactive", "batch"] },
+        "quality_tier": { "type": "string", "enum": ["low", "medium", "high"] }
+      }
+    },
+    "provider_intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class_order", "allow_models", "deny_models"],
+      "properties": {
+        "class_order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["local_inference", "cloud_direct", "cloud_aggregator", "account_api", "internal_custom"]
+          },
+          "minItems": 1
+        },
+        "allow_models": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "deny_models": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["budget_usd_max", "max_fallbacks"],
+      "properties": {
+        "budget_usd_max": { "type": "number", "minimum": 0 },
+        "max_fallbacks": { "type": "integer", "minimum": 0 },
+        "retry_policy": { "type": "string", "enum": ["none", "standard", "aggressive"] },
+        "rate_policy_id": { "type": "string" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["messages", "tools", "tool_choice"],
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "content"],
+            "properties": {
+              "role": { "type": "string", "enum": ["system", "user", "assistant", "tool"] },
+              "content": { "type": "string" }
+            }
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "description", "schema"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "schema": { "type": "object" }
+            }
+          }
+        },
+        "tool_choice": { "type": "string", "enum": ["none", "auto", "required"] }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "env_scope": { "type": "string", "enum": ["none", "user", "project", "org"] },
+        "skills": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "mcp_servers": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "stream": { "type": "boolean" }
+  }
+}
+

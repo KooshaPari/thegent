@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kush/contracts/provider-bridge/metaprovider-request.schema.json",
+  "title": "MetaproviderRequest",
+  "allOf": [
+    { "$ref": "request.schema.json" },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metaprovider_meta"],
+      "properties": {
+        "metaprovider_meta": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inheritance_level", "parent_request_id"],
+          "properties": {
+            "inheritance_level": {
+              "type": "string",
+              "enum": ["base", "metaprovider", "lane", "provider"]
+            },
+            "parent_request_id": { "type": "string" }
+          }
+        }
+      }
+    }
+  ]
+}
+

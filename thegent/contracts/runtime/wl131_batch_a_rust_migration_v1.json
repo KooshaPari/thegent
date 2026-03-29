@@ -1,0 +1,37 @@
+{
+  "artifact_id": "wl131.batch_a_parser_helper_migration.v1",
+  "version": "1.0.0",
+  "updated_utc": "2026-02-21T00:00:00Z",
+  "owner": "agent-b",
+  "rust_surface": "crates/thegent-parser",
+  "python_shim_surface": "src/thegent/execution_jsonl_parsers.py",
+  "items": [
+    {
+      "function": "parse_checkpoint_by_id",
+      "status": "migrated",
+      "rust_symbol": "parse_checkpoint_by_id",
+      "shim_behavior": "native-preferred via thegent_parser; python parser retained for parity window",
+      "parity_test_ref": "tests/test_execution_jsonl_parsers.py::test_parse_checkpoint_by_id_uses_native_when_available"
+    },
+    {
+      "function": "parse_dlq_item",
+      "status": "migrated",
+      "rust_symbol": "parse_dlq_item",
+      "shim_behavior": "native-preferred via thegent_parser; python parser retained for parity window",
+      "parity_test_ref": "tests/test_execution_jsonl_parsers.py::test_parse_dlq_item_uses_native_when_available"
+    },
+    {
+      "function": "parse_jsonl_file",
+      "status": "already_migrated",
+      "rust_symbol": "parse_jsonl_file",
+      "shim_behavior": "available through thegent_parser extension",
+      "parity_test_ref": "tests/test_unit_contracts_parser.py"
+    }
+  ],
+  "promotion_gate": {
+    "required": [
+      "native-path-unit-tests-green",
+      "contract-parser-suite-green"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+principles:
+  - id: P1-SAFETY
+    description: Prevent destructive actions or data loss.
+  - id: P2-PRIVACY
+    description: Prevent leakage of secrets or sensitive data.
+  - id: P3-QUALITY
+    description: Ensure high quality code and documentation.

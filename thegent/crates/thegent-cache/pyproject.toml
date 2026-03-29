@@ -1,0 +1,10 @@
+[build-system]
+requires = ["maturin"]
+build-backend = "maturin"
+
+[project]
+name = "thegent_cache_rs"
+version = "0.1.0"
+description = "Advanced two-tier caching layer with LRU + DashMap"
+requires-python = ">=3.12"
+dependencies = []

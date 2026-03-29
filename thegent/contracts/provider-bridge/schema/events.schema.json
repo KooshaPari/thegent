@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kush/contracts/provider-bridge/events.schema.json",
+  "title": "ExecutionEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_type", "request_id", "run_id", "attempt_id", "ts", "payload"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": ["chunk", "tool_call", "tool_result", "route_change", "error", "done"]
+    },
+    "request_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "attempt_id": { "type": "string" },
+    "route_id": { "type": "string" },
+    "tool_call_id": { "type": "string" },
+    "ts": { "type": "string", "format": "date-time" },
+    "payload": { "type": "object" }
+  }
+}
+

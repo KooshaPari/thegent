@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "safety",
+    "diff_size"
+  ],
+  "fail_fast": false,
+  "on_fail": "reject",
+  "escalation_lane": "standard",
+  "escalate_on": [],
+  "thresholds": {},
+  "max_revision_rounds": 3,
+  "bypass_checks": []
+}

@@ -1,0 +1,61 @@
+{
+  "fixture_id": "deterministic_score_v1",
+  "kernel_id": "score.rank.v1",
+  "description": "Deterministic input/output pairs for the Mojo score.rank.v1 kernel smoke check",
+  "cases": [
+    {
+      "case_id": "basic-two-candidates",
+      "input": {
+        "request_id": "req-001",
+        "candidates": [
+          {"id": "provider-a", "cost": 0.1, "latency": 0.2, "quality": 0.9},
+          {"id": "provider-b", "cost": 0.3, "latency": 0.1, "quality": 0.7}
+        ],
+        "weights": {"cost": 0.35, "latency": 0.25, "quality": 0.4}
+      },
+      "expected_output": {
+        "request_id": "req-001",
+        "ranked": [
+          {"id": "provider-a", "rank": 1},
+          {"id": "provider-b", "rank": 2}
+        ]
+      }
+    },
+    {
+      "case_id": "single-candidate",
+      "input": {
+        "request_id": "req-002",
+        "candidates": [
+          {"id": "only-provider", "cost": 0.5, "latency": 0.5, "quality": 0.5}
+        ],
+        "weights": {"cost": 0.35, "latency": 0.25, "quality": 0.4}
+      },
+      "expected_output": {
+        "request_id": "req-002",
+        "ranked": [
+          {"id": "only-provider", "rank": 1}
+        ]
+      }
+    },
+    {
+      "case_id": "three-candidates-quality-weighted",
+      "input": {
+        "request_id": "req-003",
+        "candidates": [
+          {"id": "cheap-slow", "cost": 0.05, "latency": 0.9, "quality": 0.6},
+          {"id": "fast-expensive", "cost": 0.8, "latency": 0.05, "quality": 0.8},
+          {"id": "balanced", "cost": 0.4, "latency": 0.4, "quality": 0.85}
+        ],
+        "weights": {"cost": 0.2, "latency": 0.2, "quality": 0.6}
+      },
+      "expected_output": {
+        "request_id": "req-003",
+        "ranked": [
+          {"id": "balanced", "rank": 1},
+          {"id": "fast-expensive", "rank": 2},
+          {"id": "cheap-slow", "rank": 3}
+        ]
+      }
+    }
+  ]
+}

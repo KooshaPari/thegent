@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kush/contracts/provider-bridge/route-candidate.schema.json",
+  "title": "RouteCandidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "route_id",
+    "provider_id",
+    "subprovider_id",
+    "provider_class",
+    "model",
+    "priority",
+    "constraints"
+  ],
+  "properties": {
+    "route_id": { "type": "string" },
+    "provider_id": { "type": "string" },
+    "subprovider_id": { "type": "string" },
+    "provider_class": {
+      "type": "string",
+      "enum": ["local_inference", "cloud_direct", "cloud_aggregator", "account_api", "internal_custom"]
+    },
+    "model": { "type": "string" },
+    "priority": { "type": "integer", "minimum": 0 },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supports_tools", "supports_stream"],
+      "properties": {
+        "requires_region": { "type": "string" },
+        "max_cost_per_1k_tokens": { "type": "number", "minimum": 0 },
+        "supports_tools": { "type": "boolean" },
+        "supports_stream": { "type": "boolean" }
+      }
+    }
+  }
+}
+

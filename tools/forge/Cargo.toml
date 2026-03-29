@@ -1,0 +1,35 @@
+[package]
+name = "forge"
+version = "0.1.0"
+edition = "2021"
+description = "CLI task runner with parallel execution and hot reload"
+license = "MIT"
+repository = "https://github.com/phenotype-dev/forge"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full", "sync", "rt-multi-thread"] }
+clap = { version = "4.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+notify = "6.0"
+toml = "0.8"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+futures = "0.3"
+parking_lot = "0.12"
+anyhow = "1.0"
+num_cpus = "1.16"
+tokio-stream = "0.1"
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_cmd = "2.0"
+predicates = "3.0"
+
+[[bin]]
+name = "forge"
+path = "src/main.rs"
+
+[lib]
+name = "forge"
+path = "src/lib.rs"

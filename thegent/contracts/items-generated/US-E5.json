@@ -1,0 +1,23 @@
+{
+  "id": "US-E5",
+  "title": "50-Agent Coordination",
+  "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/docs/plans/PRD.md",
+  "status": "pending",
+  "as_a": "scalability engineer",
+  "i_want_to": "coordinate 50+ agents without worktrees",
+  "so_that": "scaling doesn't require external infrastructure",
+  "acceptance_criteria": [
+    "Research isolation mechanisms (APFS, containers, FUSE)",
+    "Prototype best approach",
+    "Implement session-scoped isolation",
+    "Test with 50+ agents"
+  ],
+  "progress": {
+    "research_isolation": "pending",
+    "prototype": "pending",
+    "implement_isolation": "pending",
+    "test_50_agents": "pending"
+  },
+  "open_questions": [],
+  "decisions": []
+}

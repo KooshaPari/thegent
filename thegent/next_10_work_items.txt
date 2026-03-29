@@ -1,0 +1,12 @@
+research-library-http|Replace urllib with httpx (7+ files)|P1|✅ Complete
+vitepress-playwright-setup|Set up Playwright for browser recordings|P1|✅ Complete
+docgen-sticky-nav|Implement sticky sidebar and header|P1|✅ Complete
+docgen-algolia-search|Integrate Algolia search with suggestions|P1|✅ Complete (env vars needed)
+docgen-content-tabs|Create content tabs component|P1|✅ Complete (ContentTabs.vue exists)
+docgen-api-typescript|Create TypeScript/JavaScript API generator|P1|✅ Complete (existing)
+docgen-performance-code-split|Optimize code splitting for faster loads|P1|✅ Complete (VitePress handles)
+docgen-performance-images|Image optimization (WebP/AVIF; lazy loading pending)|P1|⚠️ Partial
+docgen-edit-links|Add edit-on-GitHub links|P1|✅ Complete (configured)
+docgen-link-checker|Automated link checking|P1|✅ Complete (scripts exists)
+lane-b-open-items-artifact-repair|Restore missing OPEN_ITEMS validation artifact path and record factual lane status|P0|✅ Complete (2026-02-23)
+lane-b-harness-parity-contracts|Validate and fix anen/antigma/fanta shim alias parity + hook YAML threshold regression coverage|P0|✅ Complete (2026-02-23)

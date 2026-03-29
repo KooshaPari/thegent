@@ -1,0 +1,31 @@
+{
+  "lane_selection": {
+    "defaults_by_harness": {
+      "codex": "litellm_donut",
+      "claude": "bifrost",
+      "droid": "bifrost",
+      "antigma": "bifrost",
+      "codex_alt": "litellm_donut"
+    },
+    "overrides": [
+      {
+        "when": {
+          "org_id": "org_enterprise_a"
+        },
+        "force_lane": "bifrost"
+      },
+      {
+        "when": {
+          "project_id": "proj_legacy_tools"
+        },
+        "force_lane": "litellm_donut"
+      }
+    ],
+    "fallback_between_lanes": {
+      "enabled": true,
+      "order": ["bifrost", "litellm_donut"],
+      "max_cross_lane_fallbacks": 1
+    }
+  }
+}
+

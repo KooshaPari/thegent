@@ -1,0 +1,8 @@
+# Fix agent DAG: checker -> fix command template.
+version: 1
+
+fix_jobs:
+  py-lint:
+    checker: ruff
+    command: "uv run ruff check --fix ."
+    deps: []

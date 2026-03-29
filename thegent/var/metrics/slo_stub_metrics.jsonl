@@ -1,0 +1,1 @@
+{"emitter": "wl135-slo-stub", "lane": "fast-lane", "metric_name": "cli_help_p95_ms", "status": "pass", "threshold": 250.0, "timestamp_unix": 1771651261.719315, "value": 211.0}

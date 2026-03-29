@@ -1475,7 +1475,7 @@ def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[st
     return normalized
 
 
-def load_module_manifest(module: str) -> ModuleManifest:
+def load_module_manifest(module: str, *, available_repo_ids: list[str] | None = None) -> dict[str, Any]:
     manifest_path = _resolve_module_manifest_path(module)
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -1527,18 +1527,18 @@ def load_module_manifest(module: str) -> ModuleManifest:
             raise ValueError(f"invalid {key} in manifest: {module}")
         return {str(k): str(v) for k, v in raw.items() if isinstance(k, str) and isinstance(v, str)}
 
-    return ModuleManifest(
-        schema_version=schema_version,
-        repo_patterns=repo_patterns,
-        owners=owners,
-        refresh_cadence=refresh_cadence,
-        default_ref=str(payload.get("default_ref", "HEAD")),
-        repo_ids=repo_ids,
-        repo_ref_overrides=_load_str_dict("repo_ref_overrides"),
-        repo_runner_overrides=_load_str_dict("repo_runner_overrides"),
-        repo_command_overrides=_load_str_dict("repo_command_overrides"),
-        repo_env_profile_overrides=_load_str_dict("repo_env_profile_overrides"),
-    )
+    return {
+        "schema_version": schema_version,
+        "owners": owners,
+        "refresh_cadence": refresh_cadence,
+        "default_ref": str(payload.get("default_ref", "HEAD")),
+        "repo_ids": repo_ids,
+        "repo_patterns": repo_patterns,
+        "repo_ref_overrides": _load_str_dict("repo_ref_overrides"),
+        "repo_runner_overrides": _load_str_dict("repo_runner_overrides"),
+        "repo_command_overrides": _load_str_dict("repo_command_overrides"),
+        "repo_env_profile_overrides": _load_str_dict("repo_env_profile_overrides"),
+    }
 
 
 def load_module_repos(
@@ -1546,7 +1546,7 @@ def load_module_repos(
     *,
     available_repo_ids: list[str] | None = None,
 ) -> list[str]:
-    return load_module_manifest(module, available_repo_ids=available_repo_ids)["repo_ids"]
+    return load_module_manifest(module)["repo_ids"]
 
 
 def run_target(
