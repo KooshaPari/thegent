@@ -21,6 +21,7 @@ from thegent.phench.service import (
     import_repos,
     list_targets,
     list_target_snapshots,
+    load_module_manifest,
     lock_target,
     materialize_target,
     show_target_snapshot,
