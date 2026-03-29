@@ -10,7 +10,7 @@ When **zero data retention (ZDR)** is enabled on provider harnesses, org policy 
 
 | Token | Meaning | Resolved by |
 |-------|---------|-------------|
-| `CredentialRef::MINIMAX_BYOK` | MiniMax bring-your-own key used for Anthropic- and OpenAI-compatible endpoints | Factory `custom_models` / env `MINIMAX_API_KEY` / sops |
+| `CredentialRef::MINIMAX_BYOK` | MiniMax bring-your-own key used for Anthropic- and OpenAI-compatible endpoints | Factory `custom_models` / env `MINIMAX_API_KEY` / SOPS |
 | `CredentialRef::CLIPROXY_DUMMY` | Placeholder key when CLIProxy authenticates upstream | literal `dummy-not-used` where applicable |
 | `ModelRef::MINIMAX_M27_HS` | Default high-speed MiniMax model id | `minimax-m2.7-highspeed` unless catalog differs |
 | `EndpointRef::MINIMAX_ANTHROPIC` | Anthropic-compatible base URL | `https://api.minimax.io/anthropic` |

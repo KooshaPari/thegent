@@ -40,7 +40,24 @@ uv run python scripts/phenotype_cliproxy_models_check.py
 # or: uv run python -m thegent.phenotype.cliproxy_models_check
 ```
 
-Implementation: `src/thegent/phenotype/cliproxy_models_check.py` (tests: `tests/unit/test_phenotype_cliproxy_models_check.py`). Uses `CLIPROXY_BASE_URL` (default `http://127.0.0.1:8317/v1`), optional `CLIPROXY_MODELS_BEARER` / `OPENAI_API_KEY`, and `--expect` for extra ids.
+Implementation: `src/thegent/phenotype/cliproxy_models_check.py` (tests: `tests/unit/test_phenotype_cliproxy_models_check.py`). Uses `CLIPROXY_BASE_URL` (default `http://127.0.0.1:8317/v1`), optional `CLIPROXY_MODELS_BEARER` / `OPENAI_API_KEY`, repeatable `--expect` for required ids, and optional `CLIPROXY_EXTRA_EXPECT` (comma-separated ids appended after CLI defaults / `--expect`).
+
+### Catalog match mode (`exact` vs `substring`)
+
+Default is **exact**: each expected string must equal some catalog `id`. Use **substring** when the proxy returns prefixed or composite ids (for example `openrouter/minimax-m2.7-highspeed`) but you still want to assert the stable `ModelRef` fragment. Set mode with `--match exact|substring` or `CLIPROXY_MODELS_MATCH` (the flag overrides for that process). **Substring** matches if the expected string appears anywhere inside a catalog id (see unit test `test_run_check_substring_match`).
+
+Example (env-only, substring):
+
+```bash
+CLIPROXY_MODELS_MATCH=substring uv run python scripts/phenotype_cliproxy_models_check.py
+# or: CLIPROXY_MODELS_MATCH=substring uv run python -m thegent.phenotype.cliproxy_models_check
+```
+
+Extra ids without repeating `--expect`: `CLIPROXY_EXTRA_EXPECT=model-a,model-b`.
+
+## Repo automation (Task)
+
+From the repository root: `task quality` runs **Tach**, **Vale** on the invariant doc set, **Ruff** (`src/` + `tests/`), and the **phenotype CLIProxy** unit tests. `task quality:full` adds `ruff format --check`. `task vale` and `task tach` run those steps alone. See root `Taskfile.yml` and [`CLAUDE.md`](../../CLAUDE.md).
 
 ## Cross-links
 

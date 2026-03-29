@@ -22,6 +22,14 @@ All work MUST be tracked in AgilePlus:
 - Canonical repository tracks main only
 - Return to main for merge/integration checkpoints
 
+## Local quality (Task)
+
+From this repository root:
+
+- `task quality` — Tach boundaries, Vale on invariant Markdown, Ruff (`src/` + `tests/`), phenotype CLIProxy model-check unit tests.
+- `task quality:full` — same plus `ruff format --check`.
+- `task vale:install` — install Vale via Homebrew when missing (macOS).
+
 ## UTF-8 Encoding
 
 All markdown files must use UTF-8. Validate with:
