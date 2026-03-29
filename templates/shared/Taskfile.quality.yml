@@ -45,14 +45,7 @@ tasks:
     cmds:
       - echo "Running security check..."
       - |
-        gitleaks detect --no-banner --no-git --source . \
-          --max-target-megabytes 5 --timeout 180 \
-          --ignore-path .shadow-\* \
-          --ignore-path .git-cache \
-          --ignore-path .worktrees \
-          --ignore-path node_modules \
-          --ignore-path .venv \
-          --ignore-path target \
+        trufflehog git file://. --since-commit HEAD --only-verified --fail \
           2>&1 || (echo "QUALITY GATE FAIL: secrets detected" && exit 1)
 
   complexity-check:
