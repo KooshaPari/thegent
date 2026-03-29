@@ -7,7 +7,6 @@ from typing import Any
 
 from thegent.config import ThegentSettings
 from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
-from thegent.agents.cliproxy_manager import _ensure_config
 from thegent.provider_model_manager_cliproxy import (
     remove_openai_compat_entry,
     upsert_openai_compat_entry,
@@ -115,6 +114,7 @@ def add_provider(
 
     # Add API key to CLIProxy config if provided
     if api_key:
+        from thegent.agents.cliproxy_manager import _ensure_config
         settings = ThegentSettings()
         config_path = _ensure_config(settings)
         config = load_yaml(config_path)
@@ -200,6 +200,7 @@ def update_provider(
 
     # Update API key if provided
     if api_key:
+        from thegent.agents.cliproxy_manager import _ensure_config
         settings = ThegentSettings()
         config_path = _ensure_config(settings)
         config = load_yaml(config_path)
@@ -244,6 +245,7 @@ def delete_provider(name: str, remove_credentials: bool = True) -> tuple[bool, s
 
     # Remove from CLIProxy config if requested
     if remove_credentials:
+        from thegent.agents.cliproxy_manager import _ensure_config
         settings = ThegentSettings()
         config_path = _ensure_config(settings)
         config = load_yaml(config_path)

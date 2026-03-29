@@ -10,6 +10,7 @@ from thegent.cli.commands.run.run_cmds import (
     bg_cmd,
     run_cmd,
     run_diff_cmd,
+    retry_cmd,
 )
 
 # Loop commands
@@ -22,7 +23,6 @@ from thegent.cli.commands.run.run_cmds_loop import (
 # Advanced run commands
 from thegent.cli.commands.run.run_cmds_advanced import (
     replay_cmd,
-    retry_cmd,
     deep_research_cmd,
     trace_replay_cmd,
     takeover_cmd,
@@ -30,21 +30,23 @@ from thegent.cli.commands.run.run_cmds_advanced import (
 )
 
 # DAG run commands
+# DAG run commands
 from thegent.cli.commands.run.cli_dag_run_cmds import (
     dag_run_cmd,
-    dag_status_cmd,
     dag_sync_cmd,
+    dag_reconcile_cmd,
+)
+from thegent.cli.commands.run.cli_dag_run_sync_recover import (
     dag_update_cmd,
     dag_cancel_cmd,
-    dag_rollback_cmd,
+    dag_status_cmd,
     dag_ready_cmd,
     dag_recover_cmd,
-    dag_reconcile_cmd,
+    dag_rollback_cmd,
     dag_checkpoint_cmd,
     dag_checkpoints_cmd,
     dag_probe_cmd,
 )
-
 
 __all__ = [
     # Core run

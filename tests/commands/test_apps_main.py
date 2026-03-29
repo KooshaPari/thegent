@@ -776,14 +776,14 @@ def test_phench_target_add_repo_routes_policy_fields_to_service() -> None:
     assert result.exit_code == 0
     mock_add_repo.assert_called_once_with(
         "alpha",
-        repo_path="/tmp/repo",
-        selected_ref="main",
+        "/tmp/repo",
+        "main",
+        family=None,
         repo_id="repo",
         worktree_path="/tmp/worktree",
         preferred_runner="task",
         preferred_command="hello",
         preferred_ref="feature",
-        family=None,
     )
 
 

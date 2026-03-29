@@ -1414,15 +1414,22 @@ def test_run_target_uses_module_overrides(tmp_path: Path, monkeypatch) -> None:
     set_env_profile("module-run", "ci", {"FROM_PROFILE": "1"})
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, *, family=None: type("R", (), {
+            "doctor_status": "pass",
+            "missing_requirements": [],
+            "resolved_versions": {},
+            "detected_files": [],
+            "repo_ref_overrides": {},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "env_profile_overrides": {},
+        })(),
     )
     monkeypatch.setattr(
-        "thegent.phench.service.build_catalog",
-        lambda target, repo_id=None: RunnerCatalog(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, checkout_path=None, *, family=None: RunnerCatalog(
             target_name=target,
-            runners_detected=["task"],
-            commands=[RunnerCommand("task", "hello", "task hello", "Taskfile.yml")],
-            default_command="task hello",
+            commands=[RunnerCommand(runner="task", name="hello", description="task hello", source_file="Taskfile.yml", required_files=[])],
         ),
     )
 

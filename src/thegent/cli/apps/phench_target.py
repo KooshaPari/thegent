@@ -19,6 +19,7 @@ TargetAddRepo = Callable[..., Any]
 TargetSetRepoRef = Callable[..., Any]
 TargetLock = Callable[..., Any]
 TargetMaterialize = Callable[[str, str | None], Any]
+ListTargetSnapshots = Callable[..., Any]
 
 
 def register_target_commands(
@@ -31,6 +32,7 @@ def register_target_commands(
     set_repo_ref_fn: TargetSetRepoRef,
     lock_target_fn: TargetLock,
     materialize_target_fn: TargetMaterialize,
+    list_target_snapshots_fn: ListTargetSnapshots = None,
 ) -> None:
     @target_app.command("init", help="Create a new target in Phenotype/projects.")
     def target_init_cmd(
@@ -257,6 +259,31 @@ def register_target_commands(
                     "lock_hash": lock.lock_hash,
                 }
             ).decode()
+        )
+
+    @target_app.command("add-module", help="Add module-selected repos to a target.")
+    def target_add_module_cmd(
+        name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+        module: str = typer.Option(..., "--module", help="Module name under Phenotype/projects/modules."),
+        selected_ref: str | None = typer.Option(None, "--ref", help="Override selected ref for all module repos."),
+        exclude: list[str] = typer.Option([], "--exclude", help="Exact repo IDs to exclude (no glob patterns)."),
+    ) -> None:
+        from thegent.phench import add_module_to_target
+        lock = add_module_to_target(
+            name,
+            module_name=module,
+            selected_ref=selected_ref,
+            exclude_repos={v.strip() for v in exclude if v.strip()},
+            family=family,
+        )
+        console.print_json(
+            json.dumps({
+                "target": lock.target_name,
+                "module": module,
+                "repos": [r.repo_id for r in lock.repos if r.module_name == module],
+                "lock_hash": lock.lock_hash,
+            }).decode()
         )
 
     @target_app.command("lock", help="Resolve selected refs to immutable SHAs.")
