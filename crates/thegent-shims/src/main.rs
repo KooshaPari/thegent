@@ -282,8 +282,9 @@ fn run_git_checkout(args: &[String]) -> ExitCode {
         .arg("--is-inside-work-tree")
         .output()
     {
-        Ok(output) => output.status.success()
-            && String::from_utf8_lossy(&output.stdout).trim() == "true",
+        Ok(output) => {
+            output.status.success() && String::from_utf8_lossy(&output.stdout).trim() == "true"
+        }
         Err(e) => {
             eprintln!("thegent-git-checkout: failed to check git worktree: {}", e);
             return ExitCode::from(1);
@@ -320,9 +321,7 @@ fn run_git_checkout(args: &[String]) -> ExitCode {
 
             if has_uncommitted {
                 eprintln!("thegent-git-checkout: blocked checkout on dirty working tree.");
-                eprintln!(
-                    "Please commit/stage/reset/discard changes before retrying."
-                );
+                eprintln!("Please commit/stage/reset/discard changes before retrying.");
                 eprintln!("Uncommitted changes:");
                 eprintln!("{}", status_text.trim_end());
                 return ExitCode::from(1);
