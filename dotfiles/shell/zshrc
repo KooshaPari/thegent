@@ -1,0 +1,204 @@
+# thegent managed user shell profile
+# Comprehensive, optimal shell configuration (canonical)
+
+# Load zsh-autosuggestions immediately (forge doctor needs it before interactive check)
+[[ -f "${HOME}/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
+    source "${HOME}/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+
+# Early exit for non-interactive shells
+# (syntax-highlighting and all interactive features are below this line)
+[[ $- != *i* ]] && return
+
+# Source base configs (system environment, core utilities, safeguards)
+# NOTE: Do NOT source ~/.zshenv here — zsh loads it automatically before .zshrc
+[[ -f "$HOME/.zsh_bundle.zsh" ]] && source "$HOME/.zsh_bundle.zsh"
+[[ -f "$HOME/.zsh_safeguards.zsh" ]] && source "$HOME/.zsh_safeguards.zsh"
+[[ -f "$HOME/.zsh_worktree_governance.zsh" ]] && source "$HOME/.zsh_worktree_governance.zsh"
+
+# Completions — run immediately so compdef is available for forge zsh plugin
+# Use -C (skip security check) if dump is <24h old; full check once per day
+autoload -Uz compinit add-zsh-hook
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+    compinit -d "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
+else
+    compinit -C -d "${ZDOTDIR:-$HOME}/.zcompdump" 2>/dev/null
+fi
+
+# Use Bun if available (fastest JS runtime)
+if command -v bun >/dev/null 2>&1; then
+    export USE_BUN_TOOLS=1
+fi
+
+# Prompt: starship loads immediately (owns PS1/left prompt)
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh 2>/dev/null)"
+else
+    PS1='%n@%m %1~ %# '
+fi
+
+# Load user customizations (never overwritten by thegent)
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# thegent notifications
+export THGENT_NOTIFY_ENABLE=1
+export THGENT_NOTIFY_VOICE_MODE=all
+export THGENT_NOTIFY_VOICE_NAME="Siri"
+export THGENT_NOTIFY_COOLDOWN_SEC=8
+
+# Alias pre-commit to prek
+alias pre-commit='prek'
+
+# >>> forge initialize >>>
+# !! Contents within this block are managed by 'forge zsh setup' !!
+# !! Do not edit manually - changes will be overwritten !!
+#
+# Local patch (2026-03-29): (1) precmd no longer kills reused PIDs blindly — see
+# _ferge_safe_kill_rprompt_worker. (2) Default async rprompt is OFF: a background worker runs
+# `forge zsh rprompt` on every precmd while you may run `forge` in the foreground; Forge can
+# treat that as a competing instance and SIGKILL one side (exit 137, `zsh: killed forge`).
+# Opt in with FORGE_ENABLE_ZSH_RPROMPT_ASYNC=1 if you want live-updating rprompt and rarely run
+# the forge CLI in the same shell.
+#
+# Antinomy (Code) CLI is the default `forge`: ~/.zshenv puts ~/.local/bin before Homebrew so
+# `forge` resolves here. Foundry’s binary stays on PATH later; use `fforge` or `foundry-forge`.
+# Override Antinomy location: ANTINOMY_FORGE_BIN or FORGE_BIN.
+
+_FORGE_BIN="${ANTINOMY_FORGE_BIN:-${FORGE_BIN:-${HOME}/.local/bin/forge}}"
+
+# Load forge shell plugin (commands, completions, keybindings) if not already loaded
+if [[ -z "$_FORGE_PLUGIN_LOADED" ]] && [[ -x "$_FORGE_BIN" ]]; then
+    eval "$("$_FORGE_BIN" zsh plugin 2>/dev/null)"
+fi
+
+# Forge RPROMPT — async cached to avoid blocking each prompt render
+# forge zsh rprompt takes ~1s; we run it in background and read cached value instantly.
+_FERGE_RPROMPT_CACHE_FILE="${TMPDIR:-/tmp}/.forge_rprompt_${USER}"
+_FERGE_RPROMPT_PID=""
+
+# Wraps %B%F{N}...%f%b zsh prompt escapes in %{...}% (required for
+# RPROMPT) and strips all OSC terminal control sequences (e.g. \e]10;rgb:...)
+# that forge emits.  Inline Python handles the OSC stripping (zsh ${//}
+# can't strip \e] sequences because } in the replacement would close the
+# parameter expansion).
+_wrap_rprompt_escapes() {
+    printf '%s' "$1" \
+        | python3 -c '
+import sys, re
+data = sys.stdin.buffer.read().decode("utf-8", errors="replace")
+# Strip OSC sequences: \e]CODE;params\a  or  \e]CODE;params\e\\
+# OSC 10 = cursor fg, 11 = cursor bg, 4 = SGR bg, 1xx = other.
+data = re.sub(r"\x1b\][0-9]+;[^\x07\x1b]*(?:\x07|\x1b\\\x1b?)", "", data)
+# Also strip raw literal backslash-e sequences that may appear in output.
+data = re.sub(r"\\\\[eE]\\\\]10;", "", data)
+sys.stdout.write(data)
+' \
+        | sed -E \
+            -e 's/%F\{([^}]+)\}/%{%F{\1}%}/g' \
+            -e 's/%K\{([^}]+)\}/%{%K{\1}%}/g' \
+            -e 's/%B/%{%B%}/g' \
+            -e 's/%b/%{%b%}/g' \
+            -e 's/%U/%{%U%}/g' \
+            -e 's/%u/%{%u%}/g' \
+            -e 's/%S/%{%S%}/g' \
+            -e 's/%s/%{%s%}/g' \
+            -e 's/%f/%{%f%}/g' \
+            -e 's/%k/%{%k%}/g'
+}
+
+# Only reap our rprompt worker (zsh), never a PID reused by forge or another binary.
+_ferge_safe_kill_rprompt_worker() {
+    local pid=$1
+    [[ -z "$pid" ]] && return
+    kill -0 "$pid" 2>/dev/null || return
+    local comm
+    comm=$(ps -p "$pid" -o comm= 2>/dev/null | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') || return
+    case "$comm" in
+        zsh|-zsh|*/zsh) kill "$pid" 2>/dev/null || true ;;
+        *) ;;
+    esac
+}
+
+_ferge_rprompt_run_worker() {
+    local result wrapped
+    result=$("$_FORGE_BIN" zsh rprompt 2>/dev/null)
+    wrapped=$(_wrap_rprompt_escapes "$result")
+    printf '%s\n' "$wrapped" >| "$_FERGE_RPROMPT_CACHE_FILE"
+    kill -USR1 $$ 2>/dev/null
+}
+
+_ferge_rprompt_read_cache() {
+    if [[ -f "$_FERGE_RPROMPT_CACHE_FILE" ]]; then
+        # Cache now contains %{%B%}... style escapes ready for RPROMPT+PROMPT_SUBST.
+        # No further processing needed.
+        _FERGE_RPROMPT_CACHE=$(< "$_FERGE_RPROMPT_CACHE_FILE")
+    fi
+}
+
+# precmd: use cached value immediately, fire async update for next render (async mode only)
+_ferge_rprompt_precmd() {
+    _ferge_rprompt_read_cache
+    RPROMPT="$_FERGE_RPROMPT_CACHE"
+    [[ -x "$_FORGE_BIN" ]] || return
+    _ferge_safe_kill_rprompt_worker "$_FERGE_RPROMPT_PID"
+    _ferge_rprompt_run_worker &
+    _FERGE_RPROMPT_PID=$!
+}
+
+_FERGE_RPROMPT_CACHE=""
+_FERGE_RPROMPT_PID=""
+
+setopt PROMPT_SUBST
+
+if [[ "${FORGE_DISABLE_ZSH_RPROMPT:-0}" == "1" ]]; then
+    RPROMPT=""
+elif [[ "${FORGE_ENABLE_ZSH_RPROMPT_ASYNC:-0}" == "1" ]]; then
+    # On SIGUSR1: read new cache value and redraw prompt
+    TRAPUSR1() {
+        _ferge_rprompt_read_cache
+        RPROMPT="$_FERGE_RPROMPT_CACHE"
+        zle && zle reset-prompt 2>/dev/null
+    }
+    add-zsh-hook precmd _ferge_rprompt_precmd
+else
+    # Default: one-shot rprompt at startup — no background `forge zsh rprompt` vs CLI `forge`.
+    if [[ -x "$_FORGE_BIN" ]]; then
+        _ferge_rs_one=$("$_FORGE_BIN" zsh rprompt 2>/dev/null)
+        RPROMPT="$(_wrap_rprompt_escapes "$_ferge_rs_one")"
+        unset _ferge_rs_one
+    else
+        RPROMPT=""
+    fi
+fi
+
+# Editor for editing prompts (set during setup)
+export FORGE_EDITOR="nvim"
+
+# Foundry (Solidity): explicit entrypoints so `forge` can stay Antinomy on PATH.
+_f_foundry=""
+for _f in /opt/homebrew/bin/forge /usr/local/bin/forge; do
+    [[ -x "$_f" ]] && _f_foundry="$_f" && break
+done
+[[ -n "$_f_foundry" ]] && alias fforge="$_f_foundry" && alias foundry-forge="$_f_foundry"
+unset _f _f_foundry
+
+# <<< forge initialize <<<
+
+# #region agent log (debug 8990b0 — NDJSON: repos/.cursor/debug-8990b0.log)
+[[ -f "/Users/kooshapari/CodeProjects/Phenotype/repos/.cursor/zsh_forge_instrument.zsh" ]] && \
+    source "/Users/kooshapari/CodeProjects/Phenotype/repos/.cursor/zsh_forge_instrument.zsh"
+# #endregion
+
+# Deferred heavy plugins — load after first prompt renders (invisible to user)
+_load_plugins_deferred() {
+    add-zsh-hook -d precmd _load_plugins_deferred
+    # fzf-tab: tab-completion with fzf
+    [[ -f "${HOME}/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]] && \
+        source "${HOME}/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
+    # syntax-highlighting: MUST be last plugin loaded
+    if [[ -f "${HOME}/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]]; then
+        source "${HOME}/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+    elif [[ -f "${HOME}/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+        source "${HOME}/.oh-my-zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+    fi
+}
+add-zsh-hook precmd _load_plugins_deferred

@@ -502,7 +502,7 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {}
 
-        body = json.dumps(_make_responses_body(model="openrouter/claude-opus-4-6"))
+        body = _make_responses_body(model="openrouter/claude-opus-4-6")
 
         with (
             patch(
@@ -512,10 +512,10 @@ class TestOR18NativeResponsesForwarding:
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-real-key"}),
             patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
-            mock_client_instance = AsyncMock()
+            mock_client_instance = MagicMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
-            mock_get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-            mock_get_client.return_value.__aexit__ = AsyncMock(return_value=None)
+            # _get_http_client returns the client directly (not a context manager)
+            mock_get_client.return_value = mock_client_instance
 
             from starlette.applications import Starlette
             from starlette.routing import Route

@@ -1,0 +1,337 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "QA_POLICY_FAIL_CLOSED": "true",
+    "QA_POLICY_TEST_FAIL_CLOSED": "true",
+    "QA_QUALITY_GATE_FAIL_CLOSED": "true",
+    "QA_SUPPLY_CHAIN_FAIL_CLOSED": "true",
+    "QA_TIER_FAIL_CLOSED": "true",
+    "QA_AGENT_CLAIM_FAIL_CLOSED": "true",
+    "QA_ONCHAIN_ENABLED": "true"
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__software-planning-mcp__start_planning",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:rich.readthedocs.io)",
+      "WebFetch(domain:textual.textualize.io)",
+      "mcp__server-sequential-thinking__sequentialthinking",
+      "WebFetch(domain:www.textualize.io)",
+      "mcp__software-planning-mcp__save_plan",
+      "Bash(grep -E \"\\.py$\")",
+      "Bash(find:*)",
+      "Bash(git -C /Users/kooshapari/temp-PRODVERCEL/485/kush/atoms_mcp-old log --since=\"2024-10-01\" --name-only --pretty=format:)",
+      "Bash(grep:*)",
+      "Bash(thegent-git-checkout:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm .git/index.lock)",
+      "mcp__cursor-agent__cursor_agent_chat",
+      "mcp__cursor-agent__cursor_agent_analyze_files",
+      "mcp__cursor-agent__cursor_agent_search_repo",
+      "mcp__cursor-agent__cursor_agent_edit_file",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:www.archgw.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:notdiamond.ai)",
+      "WebFetch(domain:docs.notdiamond.ai)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.themoonlight.io)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:www.unify.ai)",
+      "WebFetch(domain:www.aurelio.ai)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:onagents.org)",
+      "WebFetch(domain:www.confluent.io)",
+      "WebFetch(domain:openrouter.ai)",
+      "WebFetch(domain:withmartian.com)",
+      "WebFetch(domain:developers.redhat.com)",
+      "WebFetch(domain:www.deepchecks.com)",
+      "WebFetch(domain:thenewstack.io)",
+      "WebFetch(domain:earthly.dev)",
+      "WebFetch(domain:seanfalconer.medium.com)",
+      "WebFetch(domain:news.ycombinator.com)",
+      "WebFetch(domain:lmsys.org)",
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "WebFetch(domain:aws.amazon.com)",
+      "WebFetch(domain:qdrant.tech)",
+      "Bash(awk:*)",
+      "Bash(git log:*)",
+      "Bash(tree:*)",
+      "Bash(while read dir)",
+      "Bash(done)",
+      "Bash(for dir in /Users/kooshapari/temp-PRODVERCEL/485/kush/zen-mcp-server/src/application/tools/*/)",
+      "Bash(ls:*)",
+      "Bash(test:*)",
+      "Bash(for dir in agents ai code_analysis communication core deployment lsp methodology misc pm qa security universal workflows)",
+      "Bash(xargs:*)",
+      "Bash(cat:*)",
+      "Bash(for file in /Users/kooshapari/temp-PRODVERCEL/485/kush/zen-mcp-server/src/application/tools/pm/*.py)",
+      "WebFetch(domain:console.groq.com)",
+      "WebFetch(domain:microsoft.github.io)",
+      "Bash(ty check atoms-mcp-prod)",
+      "Bash(zuban check .)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "mcp__fetch__fetch",
+      "WebFetch(domain:plantuml.com)",
+      "Bash(git -C /Users/kooshapari/temp-PRODVERCEL/485/kush/atoms-mcp-prod status)",
+      "Bash(git config --file .gitmodules --name-only --get-regexp path)",
+      "Bash(git submodule status)",
+      "Bash(python3 -m py_compile /Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/core/*.py /Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/shared/*.py /Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/interfaces/*.py)",
+      "Bash(python3 -c \"\nfrom crun.core import (\n    AppState, StateManager, Observable,\n    ProjectStatus, CheckType,\n    CodeQualityOrchestrator,\n    InterfaceFactory, InterfaceMode,\n    NavigationController, NavigationTarget, NavigationState\n)\nfrom crun.shared import AppSignals\nfrom crun.interfaces.base import IInterface, IPresenter, IViewAdapter\n\nprint(''✅ All imports successful'')\nprint(f''✅ AppState fields: {len(AppState.__dataclass_fields__)}'')\nprint(f''✅ ProjectStatus values: {len(ProjectStatus)}'')\nprint(f''✅ CheckType values: {len(CheckType)}'')\nprint(f''✅ InterfaceMode values: {len(InterfaceMode)}'')\nprint(f''✅ NavigationState values: {len(NavigationState)}'')\nprint(f''✅ NavigationTarget values: {len(NavigationTarget)}'')\nprint(f''✅ AppSignals defined'')\nprint(f''✅ Interface contracts available'')\n\")",
+      "Bash(python3 -m py_compile /Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/gui/interface.py /Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/tui/interface.py /Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/cli/interface.py)",
+      "Bash(python3 -m mypy . --ignore-missing-imports --no-error-summary)",
+      "Bash(python3 -m mypy src/pheno --ignore-missing-imports --no-error-summary)",
+      "Bash(thegent list-models)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(python cli.py lint check)",
+      "Bash(python cli.py test run --scope unit)",
+      "Bash(python cli.py test run)",
+      "Bash(git status)",
+      "__POLICY_CONTRACT_MANAGED_START__",
+      "Bash(source .venv/bin/activate)",
+      "Bash(python cli.py lint check)",
+      "Bash(python cli.py test run --scope unit)",
+      "Bash(python cli.py test run)",
+      "__POLICY_CONTRACT_MANAGED_END__"
+    ],
+    "deny": [
+      "Bash(rm -r:*)",
+      "Bash(rm -rf:*)",
+      "Bash(git rm:*)",
+      "Bash(rm -R:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod:*)",
+      "Bash(chown:*)",
+      "Bash(chgrp:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(git clean --force:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git branch --delete:*)",
+      "Bash(mv * /dev/null:*)",
+      "Bash(unlink:*)",
+      "Bash(shred:*)",
+      "Bash(rmdir:*)",
+      "Bash(truncate:*)",
+      "Bash(chattr:*)",
+      "Bash(find * -delete:*)",
+      "Bash(xargs rm:*)",
+      "Bash(dd:*)",
+      "Bash(rm -rf .venv)",
+      "__POLICY_CONTRACT_MANAGED_START__",
+      "Bash(git commit --amend)",
+      "__POLICY_CONTRACT_MANAGED_END__"
+    ],
+    "ask": [
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(git clean:*)",
+      "Bash(git stash:*)",
+      "Bash(git commit --amend:*)",
+      "Bash(git commit --no-verify:*)",
+      "Bash(git commit -n:*)",
+      "Bash(git push --no-verify:*)",
+      "Bash(git revert:*)",
+      "Bash(mv:*)",
+      "Bash(python cli.py test run --scope integration)",
+      "Bash(rm:*)",
+      "__POLICY_CONTRACT_MANAGED_START__",
+      "Bash(docs/sessions/*/01_RESEARCH.md)",
+      "__POLICY_CONTRACT_MANAGED_END__"
+    ],
+    "defaultMode": "default"
+  },
+  "model": "sonnet",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" sessionstart"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" pretool"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" pretool"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/claude_pretool_guard.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/claude_pretool_guard.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" posttool"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" posttool"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" stop"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" sessionend"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" subagentstart"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" taskcompleted"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" subagentstop"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" promptsubmit"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/bin/hook-dispatcher\" precompact"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "cc-status"
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-code-plugins": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "greptile@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "serena@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true,
+    "kotlin-lsp@claude-plugins-official": true,
+    "circleback@claude-plugins-official": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "feedbackSurveyState": {
+    "lastShownTime": 1754070362442
+  },
+  "effortLevel": "low",
+  "policyRuntime": {
+    "managedBy": "agentops-policy-federation",
+    "manifest": "/Users/kooshapari/CodeProjects/Phenotype/repos/agentops-policy-federation/scripts/runtime/claude_runtime_manifest.json",
+    "hooks": {
+      "pretool": "\"$HOME/.claude/bin/claude_pretool_guard.sh\""
+    },
+    "wrappers": {
+      "exec": "/Users/kooshapari/.claude/bin/claude_exec_guard.sh",
+      "write_check": "/Users/kooshapari/.claude/bin/claude_write_guard.sh",
+      "network_check": "/Users/kooshapari/.claude/bin/claude_network_guard.sh",
+      "pretool_hook": "/Users/kooshapari/.claude/bin/claude_pretool_guard.sh"
+    }
+  }
+}
