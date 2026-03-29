@@ -1,9 +1,9 @@
-"""STUB MODULE - thegent.cost
+"""Cost management and optimization."""
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+from thegent.cost.budget_alerts import BudgetAlertSystem
+from thegent.cost.cost_quality_optimization import CostQualityOptimizer
 
-# Stub implementation - functionality not available
-__all__ = []
+__all__ = [
+    "BudgetAlertSystem",
+    "CostQualityOptimizer",
+]

@@ -11,8 +11,7 @@ from unittest.mock import MagicMock
 # mutation can intercept it.
 _thegent_repo = Path(__file__).resolve().parent.parent
 _src = str(_thegent_repo / "src")
-# Monorepo: if ``repos/src`` is on sys.path, it provides a shadow ``thegent`` package
-# that breaks phench tests. Prefer this checkout's ``src`` only.
+# Monorepo: ``repos/src/thegent`` shadows this checkout if ``repos/src`` is on sys.path.
 _repos_root = _thegent_repo.parent
 _monorepo_shadow_src = _repos_root / "src"
 if _monorepo_shadow_src.is_dir() and (_monorepo_shadow_src / "thegent").exists():
