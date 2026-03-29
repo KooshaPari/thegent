@@ -1,0 +1,227 @@
+# Copier configuration for project initialization
+# Usage: copier copy thegent/templates/initialize-project ./my-new-project
+
+_templates_suffix: ""
+
+project_name:
+    type: str
+    default: my-project
+    help: Project slug for directories and package names (kebab-case)
+    validator: >-
+        {% if not project_name %}
+        project_name is required.
+        {% elif project_name != project_name|lower %}
+        project_name must be lowercase.
+        {% elif " " in project_name %}
+        project_name cannot include spaces.
+        {% endif %}
+
+project_description:
+    type: str
+    default: A new project
+    help: One-line product statement used in README and CLAUDE.md
+
+project_type:
+    type: str
+    default: service_api
+    help: Product shape that drives DX, AX, UX defaults
+    choices:
+        - cli_tool
+        - service_api
+        - event_worker
+        - web_app
+        - library_sdk
+
+language:
+    type: str
+    default: python
+    help: Primary implementation language
+    choices:
+        - python
+        - typescript
+        - go
+        - bash
+
+runtime_profile:
+    type: str
+    default: balanced
+    help: Runtime priority for latency, throughput, cost, and resilience
+    choices:
+        - low_latency
+        - throughput
+        - balanced
+        - cost_optimized
+        - offline_first
+    validator: >-
+        {% if project_type == "event_worker" and runtime_profile == "low_latency" %}
+        event_worker usually favors throughput or balanced over low_latency.
+        {% elif project_type == "library_sdk" and runtime_profile == "offline_first" %}
+        library_sdk should use balanced or cost_optimized runtime profile.
+        {% endif %}
+
+governance_mode:
+    type: str
+    default: standard
+    help: Review and policy strictness for delivery
+    choices:
+        - solo
+        - standard
+        - strict
+
+author:
+    type: str
+    default: ""
+    help: Primary owner or team name
+    when: "{{ governance_mode != 'solo' }}"
+
+observability_stack:
+    type: str
+    default: otel_prometheus
+    help: Telemetry stack for detection, diagnosis, and incident response
+    choices:
+        - minimal_logs
+        - otel_prometheus
+        - datadog
+        - sentry_first
+
+interfaces:
+    type: str
+    multiselect: true
+    default:
+        - http_api
+        - docs
+    help: Public interfaces shipped to users or integrators
+    choices:
+        - cli
+        - http_api
+        - web_ui
+        - events
+        - sdk
+        - docs
+    validator: >-
+        {% if interfaces|length == 0 %}
+        Choose at least one interface.
+        {% elif project_type == "cli_tool" and "cli" not in interfaces %}
+        project_type=cli_tool requires the cli interface.
+        {% elif project_type == "service_api" and "http_api" not in interfaces %}
+        project_type=service_api requires the http_api interface.
+        {% elif project_type == "web_app" and "web_ui" not in interfaces %}
+        project_type=web_app requires the web_ui interface.
+        {% elif project_type == "event_worker" and "events" not in interfaces %}
+        project_type=event_worker requires the events interface.
+        {% elif project_type == "library_sdk" and "sdk" not in interfaces %}
+        project_type=library_sdk requires the sdk interface.
+        {% endif %}
+
+deployment_target:
+    type: str
+    default: container_platform
+    help: Primary runtime destination
+    choices:
+        - local_only
+        - container_platform
+        - serverless
+        - edge
+        - package_registry
+        - on_prem
+    validator: >-
+        {% if project_type == "library_sdk" and deployment_target not in ["package_registry", "local_only"] %}
+        library_sdk should target package_registry or local_only.
+        {% elif project_type in ["service_api", "web_app", "event_worker"] and deployment_target == "package_registry" %}
+        package_registry is for distributable libraries, not deployed services.
+        {% endif %}
+
+quality_profile:
+    type: str
+    default: strict
+    help: Default quality gate intensity
+    choices:
+        - fast_iterate
+        - strict
+        - critical
+    validator: >-
+        {% if governance_mode == "strict" and quality_profile == "fast_iterate" %}
+        strict governance requires strict or critical quality profile.
+        {% elif project_type in ["service_api", "web_app"] and runtime_profile == "low_latency" and quality_profile == "fast_iterate" %}
+        low-latency user-facing systems should not use fast_iterate quality profile.
+        {% endif %}
+
+questionnaire_summary_hints:
+    type: str
+    multiselect: true
+    default:
+        - primary_user_flow
+        - biggest_risk
+    help: Extra prompts to include in generated questionnaire summary notes
+    choices:
+        - primary_user_flow
+        - biggest_risk
+        - rollback_plan
+        - cost_guardrails
+        - onboarding
+    validator: >-
+        {% if questionnaire_summary_hints|length == 0 %}
+        Pick at least one summary hint.
+        {% elif quality_profile == "critical" and "rollback_plan" not in questionnaire_summary_hints %}
+        critical quality_profile requires rollback_plan summary hint.
+        {% endif %}
+
+include_docs:
+    type: bool
+    default: true
+    help: Include VitePress docsite
+
+include_ci:
+    type: bool
+    default: true
+    help: Include GitHub Actions CI workflow
+
+include_act:
+    type: bool
+    default: true
+    help: Include local GitHub Actions emulation helpers (act)
+
+include_qa_tools:
+    type: bool
+    default: true
+    help: Include lightweight quality-engineering task presets and local QA bootstrap
+
+include_pm_tools:
+    type: bool
+    default: true
+    help: Include basic PM tooling and governance task presets
+
+include_docker:
+    type: bool
+    default: false
+    help: Include Docker setup
+    when: "{{ deployment_target in ['container_platform', 'on_prem'] }}"
+
+include_hooks:
+    type: bool
+    default: true
+    help: Include pre-commit hooks
+
+include_factory:
+    type: bool
+    default: true
+    help: Include Factory/Droid agent configs (.factory/)
+    when: "{{ include_factory }}"
+
+include_codex:
+    type: bool
+    default: true
+    help: Include Codex CLI configs (.codex/)
+    when: "{{ include_codex }}"
+
+include_claude:
+    type: bool
+    default: true
+    help: Include Claude Code configs (.claude/)
+    when: "{{ include_claude }}"
+
+include_cursor:
+    type: bool
+    default: false
+    help: Include Cursor agent configs (.cursor/)
+    when: "{{ include_cursor }}"

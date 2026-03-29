@@ -1,0 +1,55 @@
+# Go depguard rules — domain layer isolation
+# Use within golangci.yml linters-settings.depguard section
+#
+# Example integration in .golangci.yml:
+#   linters-settings:
+#     depguard:
+#       rules: <contents of this file>
+#
+rules:
+  main:
+    # Domain layer cannot import infrastructure
+    deny:
+      - pkg: "database/sql"
+        desc: "Use repository interfaces from domain layer"
+      - pkg: "net/http"
+        desc: "Use service interfaces, not direct HTTP"
+      - pkg: "os"
+        desc: "Use config interfaces, not direct OS access"
+    files:
+      - "**/domain/**"
+      - "**/entities/**"
+
+  no-deprecated:
+    deny:
+      - pkg: "io/ioutil"
+        desc: "Deprecated in Go 1.16, use io and os packages"
+      - pkg: "github.com/pkg/errors"
+        desc: "Use fmt.Errorf with %w for error wrapping"
+
+  no-test-in-production:
+    deny:
+      - pkg: "testing"
+        desc: "Do not import testing package in production code"
+      - pkg: "github.com/stretchr/testify"
+        desc: "Do not import testify in production code"
+    files:
+      - "!**/*_test.go"
+      - "!**/test/**"
+      - "!**/testutil/**"
+
+  enforce-stdlib:
+    deny:
+      - pkg: "github.com/satori/go.uuid"
+        desc: "Use github.com/google/uuid instead"
+      - pkg: "github.com/gofrs/uuid"
+        desc: "Use github.com/google/uuid instead"
+
+  no-unsafe:
+    deny:
+      - pkg: "unsafe"
+        desc: "Unsafe package prohibited without explicit approval"
+      - pkg: "reflect"
+        desc: "Reflect package discouraged; use generics or interfaces"
+    files:
+      - "!**/internal/unsafe/**"

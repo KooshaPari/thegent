@@ -1,0 +1,23 @@
+{
+  "suite": "python-benchmark-suite-v1",
+  "benchmarks": [
+    {
+      "label": "coerce_issue_types_list",
+      "iterations": 100000,
+      "elapsed_seconds": 0.09,
+      "avg_microseconds": 0.9
+    },
+    {
+      "label": "cache_elicitation_key",
+      "iterations": 100000,
+      "elapsed_seconds": 0.13,
+      "avg_microseconds": 1.3
+    },
+    {
+      "label": "get_server_meta_impl",
+      "iterations": 10000,
+      "elapsed_seconds": 0.45,
+      "avg_microseconds": 45.0
+    }
+  ]
+}

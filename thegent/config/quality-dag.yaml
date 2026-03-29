@@ -1,0 +1,61 @@
+version: 1
+steps:
+  instruction-architecture:
+    deps: []
+    command: task quality:instruction-architecture
+    display: Instruction architecture contracts
+  py-lint:
+    deps: [instruction-architecture]
+    command: task py:lint
+    display: Python lint
+  py-type:
+    deps: [instruction-architecture]
+    command: task py:typecheck
+    display: Python typecheck
+  py-test:
+    deps: [py-lint, py-type]
+    command: task py:test
+    display: Python test
+  py-security:
+    deps: [instruction-architecture]
+    command: task py:security
+    display: Python security checks
+  rust-lang:
+    deps: [instruction-architecture]
+    command: task quality:rust:ci
+    display: Rust gate (fmt/check/test/clippy)
+  go-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:go:lane
+    display: Go gate
+  ts-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:ts:lane
+    display: TypeScript gate
+  zig-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:zig:lane
+    display: Zig gate
+  mojo-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:mojo:lane
+    display: Mojo gate
+  runtime-contracts:
+    deps: [instruction-architecture]
+    command: task quality:runtime-contracts
+    display: Runtime contract gate (zig + mojo)
+  quality:
+    deps:
+      - instruction-architecture
+      - py-lint
+      - py-type
+      - py-test
+      - py-security
+      - go-lang
+      - ts-lang
+      - zig-lang
+      - mojo-lang
+      - rust-lang
+      - runtime-contracts
+    command: task quality
+    display: Canonical umbrella quality suite

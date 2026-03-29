@@ -1,0 +1,35 @@
+{
+  "deprecated_aliases": [
+    "quality-a",
+    "quality-a-r",
+    "quality-a-h",
+    "quality-a-d",
+    "quality-a-d-h",
+    "quality-fix",
+    "quality-fix-d",
+    "quality-fix-a",
+    "quality-fix-a-d",
+    "quality-fix-a-h",
+    "quality-fix-a-d-h"
+  ],
+  "replacement_suggestions": {
+    "quality-a": "quality",
+    "quality-a-r": "quality:dag:hard",
+    "quality-a-h": "quality:dag:hard",
+    "quality-a-d": "quality:fix:runner",
+    "quality-a-d-h": "quality:fix:runner",
+    "quality-fix": "quality:fix:runner",
+    "quality-fix-d": "quality:fix:runner",
+    "quality-fix-a": "quality:fix:runner",
+    "quality-fix-a-d": "quality:fix:runner",
+    "quality-fix-a-h": "quality:fix:runner",
+    "quality-fix-a-d-h": "quality:fix:runner"
+  },
+  "canonical_commands": [
+    "quality",
+    "quality:dag",
+    "quality:dag:soft",
+    "quality:dag:hard",
+    "quality:fix:runner"
+  ]
+}

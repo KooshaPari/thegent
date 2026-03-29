@@ -7,7 +7,6 @@ Traces to: FR-CACHE-002
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -372,30 +371,125 @@ class TestCliproxyHTTPClientCacheIntegration:
 
     @pytest.mark.asyncio
     async def test_streaming_request_bypasses_cache(self, tmp_path):
-        """Streaming requests (stream=True) must never be served from cache."""
-        from thegent.adapters.driven.cliproxy_http import (
-            CliproxyHTTPClient,
-            _is_cacheable_request,
-        )
+        """Streaming requests (stream=True) must never be served from cache.
+
+        Verify via the public proxy_request API: a streaming body must never
+        produce an X-Cache: HIT header even when the same key was previously
+        stored, because streaming responses are not cache-eligible.
+        """
+        from thegent.adapters.driven.cliproxy_http import CliproxyHTTPClient
+        from thegent.cache.response_cache import ResponseCache
         import orjson
 
+        rc = ResponseCache(cache_dir=str(tmp_path / "stream_cache"))
         body_stream = orjson.dumps(
             {"model": "gpt-4o", "messages": SAMPLE_MESSAGES, "stream": True}
         )
-        assert _is_cacheable_request("POST", "/v1/chat/completions", body_stream) is False
+
+        # Seed the cache with a non-streaming key so the cache has data, then
+        # confirm the streaming request bypasses it.
+        key = rc.make_key(model="gpt-4o", messages=SAMPLE_MESSAGES, temperature=0.0)
+        rc.set(key, SAMPLE_RESPONSE)
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = orjson.dumps(SAMPLE_RESPONSE)
+        mock_resp.headers = {"Content-Type": "application/json"}
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.request = AsyncMock(return_value=mock_resp)
+
+        client = CliproxyHTTPClient(
+            backend_url="http://localhost:9999",
+            response_cache=rc,
+        )
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            _status, _body, headers = await client.proxy_request(
+                "POST",
+                "/v1/chat/completions",
+                body=body_stream,
+            )
+
+        # A streaming request must ALWAYS hit the backend (never return HIT).
+        mock_client.request.assert_called_once()
+        assert headers.get("X-Cache") != "HIT"
 
     @pytest.mark.asyncio
     async def test_get_request_bypasses_cache(self, tmp_path):
-        """Non-POST requests must never be cached."""
-        from thegent.adapters.driven.cliproxy_http import _is_cacheable_request
+        """Non-POST requests must never be cached.
 
-        assert _is_cacheable_request("GET", "/v1/chat/completions", b"") is False
+        Verify via the public proxy_request API: a GET request must always
+        reach the backend and must never return X-Cache: HIT.
+        """
+        from thegent.adapters.driven.cliproxy_http import CliproxyHTTPClient
+        from thegent.cache.response_cache import ResponseCache
+        import orjson
+
+        rc = ResponseCache(cache_dir=str(tmp_path / "get_cache"))
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = orjson.dumps({"object": "list", "data": []})
+        mock_resp.headers = {"Content-Type": "application/json"}
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.request = AsyncMock(return_value=mock_resp)
+
+        client = CliproxyHTTPClient(
+            backend_url="http://localhost:9999",
+            response_cache=rc,
+        )
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            _status, _body, headers = await client.proxy_request(
+                "GET",
+                "/v1/chat/completions",
+                body=b"",
+            )
+
+        mock_client.request.assert_called_once()
+        assert headers.get("X-Cache") != "HIT"
 
     @pytest.mark.asyncio
     async def test_non_completion_path_bypasses_cache(self, tmp_path):
-        """Non-completion paths must never be cached."""
-        from thegent.adapters.driven.cliproxy_http import _is_cacheable_request
+        """Non-completion paths must never be cached.
+
+        Verify via the public proxy_request API: a POST to /v1/models must
+        always hit the backend and never return X-Cache: HIT.
+        """
+        from thegent.adapters.driven.cliproxy_http import CliproxyHTTPClient
+        from thegent.cache.response_cache import ResponseCache
         import orjson
 
+        rc = ResponseCache(cache_dir=str(tmp_path / "models_cache"))
         body = orjson.dumps({"model": "gpt-4o"})
-        assert _is_cacheable_request("POST", "/v1/models", body) is False
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.content = orjson.dumps({"object": "list", "data": []})
+        mock_resp.headers = {"Content-Type": "application/json"}
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.request = AsyncMock(return_value=mock_resp)
+
+        client = CliproxyHTTPClient(
+            backend_url="http://localhost:9999",
+            response_cache=rc,
+        )
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            _status, _body, headers = await client.proxy_request(
+                "POST",
+                "/v1/models",
+                body=body,
+            )
+
+        mock_client.request.assert_called_once()
+        assert headers.get("X-Cache") != "HIT"

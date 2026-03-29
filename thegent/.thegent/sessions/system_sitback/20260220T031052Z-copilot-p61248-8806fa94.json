@@ -1,0 +1,43 @@
+{
+  "agent": "copilot",
+  "command": [
+    "/Users/kooshapari/.local/share/uv/tools/thegent/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "-d",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "-m",
+    "write",
+    "-t",
+    "90",
+    "--full",
+    "--contract-version",
+    "csm-v1",
+    "--run-id",
+    "run_4aca2ec4",
+    "thegent sitback",
+    "copilot"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 61248,
+  "launcher_ppid": 61229,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "system:sitback",
+  "paths": {
+    "in": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/system_sitback/20260220T031052Z-copilot-p61248-8806fa94.in",
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/system_sitback/20260220T031052Z-copilot-p61248-8806fa94.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/system_sitback/20260220T031052Z-copilot-p61248-8806fa94.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/system_sitback/20260220T031052Z-copilot-p61248-8806fa94.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/system_sitback/20260220T031052Z-copilot-p61248-8806fa94.stdout.log"
+  },
+  "pid": 61312,
+  "prompt": "thegent sitback",
+  "session_id": "20260220T031052Z-copilot-p61248-8806fa94",
+  "started_at_utc": "2026-02-20T03:10:52.316579+00:00",
+  "status": "running",
+  "timeout_hint_s": 90,
+  "version": 1
+}

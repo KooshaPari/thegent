@@ -1,0 +1,5 @@
+https://github.com/zed-industries/zed
+https://github.com/bar181/aisp-open-core
+https://github.com/NevaMind-AI/memU
+https://github.com/ragieai/dynamic-fastmcp
+https://github.com/mediar-ai/MCP-server-client-computer-use-ai-sdk

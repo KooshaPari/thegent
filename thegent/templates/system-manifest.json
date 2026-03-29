@@ -1,0 +1,1447 @@
+{
+  "$schema": "https://schema.thegent.dev/system-manifest/v1",
+  "version": "1.0.0",
+  "name": "thegent-system",
+  "description": "Comprehensive system configuration manifest - Nix-like declarative system management",
+  "targets": {
+    "harnesses": {
+      "claude-code": {
+        "config_paths": [
+          "~/.claude"
+        ],
+        "files": {
+          "skills": "~/.claude/skills",
+          "hooks": "~/.claude/hooks",
+          "commands": "~/.claude/commands"
+        }
+      },
+      "claude-desktop": {
+        "config_paths": [
+          "~/.config/Claude",
+          "~/Library/Application Support/Claude"
+        ],
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "cursor": {
+        "config_paths": [
+          "~/.cursor"
+        ],
+        "files": {
+          "skills": "~/.cursor/skills-cursor"
+        }
+      },
+      "codex": {
+        "config_paths": [
+          "~/.codex",
+          "~/.config/codex"
+        ],
+        "files": {
+          "mcp": "~/.codex/mcp.json"
+        }
+      },
+      "droid": {
+        "config_paths": [
+          "~/.factory"
+        ],
+        "description": "Factory Droid"
+      },
+      "ante": {
+        "config_paths": [
+          "~/.ante"
+        ],
+        "description": "Ante CLI"
+      },
+      "helios": {
+        "config_paths": [
+          "~/.helios"
+        ],
+        "description": "Helios harness"
+      }
+    },
+    "shells": {
+      "zsh": {
+        "config_files": [
+          "~/.zshenv",
+          "~/.zshrc",
+          "~/.zsh_bundle.zsh",
+          "~/.zsh_safeguards.zsh",
+          "~/.zsh_optimization.zsh",
+          "~/.zsh_advanced.zsh",
+          "~/.zsh_worktree_governance.zsh"
+        ],
+        "source": "thegent/shell"
+      },
+      "bash": {
+        "config_files": [
+          "~/.bashrc",
+          "~/.bash_profile"
+        ],
+        "source": "thegent/templates/bash"
+      },
+      "fish": {
+        "config_files": [
+          "~/.config/fish"
+        ],
+        "source": "thegent/templates/fish"
+      },
+      "powershell": {
+        "config_files": [
+          "~/.config/powershell"
+        ],
+        "source": "thegent/shell"
+      }
+    },
+    "tools": {
+      "git": {
+        "config_files": [
+          "~/.gitconfig",
+          "~/.config/git"
+        ],
+        "source": "thegent/templates/shared/git"
+      },
+      "gh": {
+        "config_files": [
+          "~/.config/gh"
+        ],
+        "source": "thegent/templates/shared/gh"
+      },
+      "direnv": {
+        "config_files": [
+          "~/.envrc",
+          "~/.config/direnv"
+        ],
+        "source": "thegent/templates/shared/direnv"
+      },
+      "atuin": {
+        "config_files": [
+          "~/.config/atuin"
+        ],
+        "source": "thegent/templates/shared/atuin"
+      },
+      "starship": {
+        "config_files": [
+          "~/.config/starship.toml"
+        ],
+        "source": "thegent/shell/starship"
+      },
+      "karabiner": {
+        "config_files": [
+          "~/.config/karabiner"
+        ],
+        "source": "thegent/templates/shared/karabiner",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "mise": {
+        "config_files": [
+          "~/.config/mise"
+        ],
+        "source": "thegent/templates/shared/mise"
+      },
+      "tmux": {
+        "config_files": [
+          "~/.tmux.conf",
+          "~/.config/tmux"
+        ],
+        "source": "thegent/templates/shared/tmux"
+      },
+      "ghostty": {
+        "config_files": [
+          "~/.config/ghostty"
+        ],
+        "source": "thegent/templates/shared/ghostty",
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "alacritty": {
+        "config_files": [
+          "~/.config/alacritty"
+        ],
+        "source": "thegent/templates/shared/alacritty"
+      },
+      "wezterm": {
+        "config_files": [
+          "~/.config/wezterm"
+        ],
+        "source": "thegent/templates/shared/wezterm"
+      },
+      "vscode": {
+        "config_files": [
+          "~/.config/Code/User",
+          "~/Library/Application Support/Code/User"
+        ],
+        "source": "thegent/templates/ide/vscode"
+      },
+      "vim": {
+        "config_files": [
+          "~/.vimrc",
+          "~/.vim"
+        ],
+        "source": "thegent/templates/shared/vim"
+      },
+      "ssh": {
+        "config_files": [
+          "~/.ssh"
+        ],
+        "source": "thegent/templates/shared/ssh",
+        "sensitive": true
+      },
+      "gpg": {
+        "config_files": [
+          "~/.gnupg"
+        ],
+        "source": "thegent/templates/shared/gpg",
+        "sensitive": true
+      },
+      "docker": {
+        "config_files": [
+          "~/.docker"
+        ],
+        "source": "thegent/templates/shared/docker",
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "podman": {
+        "config_files": [
+          "~/.config/containers"
+        ],
+        "source": "thegent/templates/shared/podman",
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "postgres": {
+        "config_files": [
+          "~/.psqlrc",
+          "~/.config/pg"
+        ],
+        "source": "thegent/templates/shared/postgres"
+      },
+      "mysql": {
+        "config_files": [
+          "~/.my.cnf"
+        ],
+        "source": "thegent/templates/shared/mysql"
+      },
+      "redis": {
+        "config_files": [
+          "~/.redisrc"
+        ],
+        "source": "thegent/templates/shared/redis"
+      },
+      "neovim": {
+        "config_files": [
+          "~/.config/nvim"
+        ],
+        "source": "thegent/templates/shared/neovim"
+      },
+      "kitty": {
+        "config_files": [
+          "~/.config/kitty"
+        ],
+        "source": "thegent/templates/shared/kitty",
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "iterm2": {
+        "config_files": [
+          "~/Library/Application Support/iTerm2"
+        ],
+        "source": "thegent/templates/shared/iterm2",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      " hammerspoon": {
+        "config_files": [
+          "~/.hammerspoon"
+        ],
+        "source": "thegent/templates/shared/hammerspoon",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "raycast": {
+        "config_files": [
+          "~/.config/raycast"
+        ],
+        "source": "thegent/templates/shared/raycast",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "alfred": {
+        "config_files": [
+          "~/Library/Application Support/Alfred"
+        ],
+        "source": "thegent/templates/shared/alfred",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "skhd": {
+        "config_files": [
+          "~/.config/skhd"
+        ],
+        "source": "thegent/templates/shared/skhd",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "yabai": {
+        "config_files": [
+          "~/.config/yabai"
+        ],
+        "source": "thegent/templates/shared/yabai",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "rectangle": {
+        "config_files": [
+          "~/Library/Application Support/Rectangle"
+        ],
+        "source": "thegent/templates/shared/rectangle",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "synthesia": {
+        "config_files": [
+          "~/.config/synthesia"
+        ],
+        "source": "thegent/templates/shared/synthesia"
+      },
+      "gcloud": {
+        "config_files": [
+          "~/.config/gcloud"
+        ],
+        "source": "thegent/templates/shared/gcloud"
+      },
+      "aws": {
+        "config_files": [
+          "~/.aws"
+        ],
+        "source": "thegent/templates/shared/aws"
+      },
+      "azure": {
+        "config_files": [
+          "~/.azure"
+        ],
+        "source": "thegent/templates/shared/azure"
+      },
+      "terraform": {
+        "config_files": [
+          "~/.terraformrc",
+          "~/.config/terraform"
+        ],
+        "source": "thegent/templates/shared/terraform"
+      },
+      "ansible": {
+        "config_files": [
+          "~/.ansible.cfg",
+          "~/.config/ansible"
+        ],
+        "source": "thegent/templates/shared/ansible"
+      },
+      "kubectl": {
+        "config_files": [
+          "~/.kube"
+        ],
+        "source": "thegent/templates/shared/kubectl"
+      },
+      "helm": {
+        "config_files": [
+          "~/.config/helm"
+        ],
+        "source": "thegent/templates/shared/helm"
+      },
+      "vault": {
+        "config_files": [
+          "~/.vault"
+        ],
+        "source": "thegent/templates/shared/vault",
+        "sensitive": true
+      },
+      "1password": {
+        "config_files": [
+          "~/Library/Application Support/1Password"
+        ],
+        "source": "thegent/templates/shared/1password",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "bitwarden": {
+        "config_files": [
+          "~/.config/bitwarden"
+        ],
+        "source": "thegent/templates/shared/bitwarden"
+      },
+      "sops": {
+        "config_files": [
+          "~/.config/sops"
+        ],
+        "source": "thegent/templates/shared/sops"
+      },
+      "age": {
+        "config_files": [
+          "~/.config/age"
+        ],
+        "source": "thegent/templates/shared/age"
+      },
+      "pass": {
+        "config_files": [
+          "~/.password-store"
+        ],
+        "source": "thegent/templates/shared/pass",
+        "sensitive": true
+      },
+      "eza": {
+        "config_files": [
+          "~/.config/eza"
+        ],
+        "source": "thegent/templates/shared/eza"
+      },
+      "bat": {
+        "config_files": [
+          "~/.config/bat"
+        ],
+        "source": "thegent/templates/shared/bat"
+      },
+      "fd": {
+        "config_files": [
+          "~/.config/fd"
+        ],
+        "source": "thegent/templates/shared/fd"
+      },
+      "ripgrep": {
+        "config_files": [
+          "~/.config/ripgrep"
+        ],
+        "source": "thegent/templates/shared/ripgrep"
+      },
+      "fzf": {
+        "config_files": [
+          "~/.fzf"
+        ],
+        "source": "thegent/templates/shared/fzf"
+      },
+      "zoxide": {
+        "config_files": [
+          "~/.config/zoxide"
+        ],
+        "source": "thegent/templates/shared/zoxide"
+      },
+      "tldr": {
+        "config_files": [
+          "~/.config/tldr"
+        ],
+        "source": "thegent/templates/shared/tldr"
+      },
+      "batect": {
+        "config_files": [
+          "~/.batect"
+        ],
+        "source": "thegent/templates/shared/batect"
+      },
+      "devbox": {
+        "config_files": [
+          "~/.devbox"
+        ],
+        "source": "thegent/templates/shared/devbox"
+      },
+      "asdf": {
+        "config_files": [
+          "~/.tool-versions",
+          "~/.config/asdf"
+        ],
+        "source": "thegent/templates/shared/asdf"
+      },
+      "uv": {
+        "config_files": [
+          "~/.config/uv"
+        ],
+        "source": "thegent/templates/shared/uv"
+      },
+      "poetry": {
+        "config_files": [
+          "~/.config/pypoetry"
+        ],
+        "source": "thegent/templates/shared/poetry"
+      },
+      "pipenv": {
+        "config_files": [
+          "~/.config/pipenv"
+        ],
+        "source": "thegent/templates/shared/pipenv"
+      },
+      " rye": {
+        "config_files": [
+          "~/.rye"
+        ],
+        "source": "thegent/templates/shared/rye"
+      },
+      "bun": {
+        "config_files": [
+          "~/.config/bun"
+        ],
+        "source": "thegent/templates/shared/bun"
+      },
+      "pnpm": {
+        "config_files": [
+          "~/.config/pnpm"
+        ],
+        "source": "thegent/templates/shared/pnpm"
+      },
+      "yarn": {
+        "config_files": [
+          "~/.yarnrc",
+          "~/.config/yarn"
+        ],
+        "source": "thegent/templates/shared/yarn"
+      },
+      "npm": {
+        "config_files": [
+          "~/.npmrc"
+        ],
+        "source": "thegent/templates/shared/npm"
+      },
+      "go": {
+        "config_files": [
+          "~/.config/go"
+        ],
+        "source": "thegent/templates/shared/go"
+      },
+      "rust": {
+        "config_files": [
+          "~/.config/rust"
+        ],
+        "source": "thegent/templates/shared/rust"
+      },
+      "java": {
+        "config_files": [
+          "~/.config/java"
+        ],
+        "source": "thegent/templates/shared/java"
+      },
+      "gradle": {
+        "config_files": [
+          "~/.gradle"
+        ],
+        "source": "thegent/templates/shared/gradle"
+      },
+      "maven": {
+        "config_files": [
+          "~/.m2"
+        ],
+        "source": "thegent/templates/shared/maven"
+      },
+      "cmake": {
+        "config_files": [
+          "~/.cmake"
+        ],
+        "source": "thegent/templates/shared/cmake"
+      },
+      "ccls": {
+        "config_files": [
+          "~/.config/ccls"
+        ],
+        "source": "thegent/templates/shared/ccls"
+      },
+      "clangd": {
+        "config_files": [
+          "~/.config/clangd"
+        ],
+        "source": "thegent/templates/shared/clangd"
+      },
+      "rust_analyzer": {
+        "config_files": [
+          "~/.config/rust-analyzer"
+        ],
+        "source": "thegent/templates/shared/rust-analyzer"
+      },
+      "pyright": {
+        "config_files": [
+          "~/.config/pyright"
+        ],
+        "source": "thegent/templates/shared/pyright"
+      },
+      "mypy": {
+        "config_files": [
+          "~/.config/mypy"
+        ],
+        "source": "thegent/templates/shared/mypy"
+      },
+      "ruff": {
+        "config_files": [
+          "~/.config/ruff"
+        ],
+        "source": "thegent/templates/shared/ruff"
+      },
+      "prettier": {
+        "config_files": [
+          "~/.config/prettier"
+        ],
+        "source": "thegent/templates/shared/prettier"
+      },
+      "eslint": {
+        "config_files": [
+          "~/.config/eslint"
+        ],
+        "source": "thegent/templates/shared/eslint"
+      },
+      "typescript": {
+        "config_files": [
+          "~/.config/typescript"
+        ],
+        "source": "thegent/templates/shared/typescript"
+      },
+      "deno": {
+        "config_files": [
+          "~/.config/deno"
+        ],
+        "source": "thegent/templates/shared/deno"
+      },
+      "lazygit": {
+        "config_files": [
+          "~/.config/lazygit"
+        ],
+        "source": "thegent/templates/shared/lazygit"
+      },
+      "lazydocker": {
+        "config_files": [
+          "~/.config/lazydocker"
+        ],
+        "source": "thegent/templates/shared/lazydocker"
+      },
+      "btop": {
+        "config_files": [
+          "~/.config/btop"
+        ],
+        "source": "thegent/templates/shared/btop"
+      },
+      "htop": {
+        "config_files": [
+          "~/.config/htop"
+        ],
+        "source": "thegent/templates/shared/htop"
+      },
+      "bottom": {
+        "config_files": [
+          "~/.config/bottom"
+        ],
+        "source": "thegent/templates/shared/bottom"
+      },
+      "glances": {
+        "config_files": [
+          "~/.config/glances"
+        ],
+        "source": "thegent/templates/shared/glances"
+      },
+      "duf": {
+        "config_files": [
+          "~/.config/duf"
+        ],
+        "source": "thegent/templates/shared/duf"
+      },
+      "dust": {
+        "config_files": [
+          "~/.config/dust"
+        ],
+        "source": "thegent/templates/shared/dust"
+      },
+      "du": {
+        "config_files": [
+          "~/.config/du"
+        ],
+        "source": "thegent/templates/shared/du"
+      },
+      "ncdu": {
+        "config_files": [
+          "~/.config/ncdu"
+        ],
+        "source": "thegent/templates/shared/ncdu"
+      },
+      "httpie": {
+        "config_files": [
+          "~/.config/httpie"
+        ],
+        "source": "thegent/templates/shared/httpie"
+      },
+      "curlie": {
+        "config_files": [
+          "~/.config/curlie"
+        ],
+        "source": "thegent/templates/shared/curlie"
+      },
+      "yq": {
+        "config_files": [
+          "~/.config/yq"
+        ],
+        "source": "thegent/templates/shared/yq"
+      },
+      "jq": {
+        "config_files": [
+          "~/.config/jq"
+        ],
+        "source": "thegent/templates/shared/jq"
+      },
+      "dasel": {
+        "config_files": [
+          "~/.config/dasel"
+        ],
+        "source": "thegent/templates/shared/dasel"
+      },
+      "pop": {
+        "config_files": [
+          "~/.config/pop"
+        ],
+        "source": "thegent/templates/shared/pop"
+      },
+      "sd": {
+        "config_files": [
+          "~/.config/sd"
+        ],
+        "source": "thegent/templates/shared/sd"
+      },
+      "ffd": {
+        "config_files": [
+          "~/.config/ffd"
+        ],
+        "source": "thegent/templates/shared/ffd"
+      },
+      "xcp": {
+        "config_files": [
+          "~/.config/xcp"
+        ],
+        "source": "thegent/templates/shared/xcp"
+      },
+      "teax": {
+        "config_files": [
+          "~/.config/teax"
+        ],
+        "source": "thegent/templates/shared/teax"
+      },
+      "act": {
+        "config_files": [
+          "~/.config/act"
+        ],
+        "source": "thegent/templates/shared/act"
+      },
+      "nektos": {
+        "config_files": [
+          "~/.config/nektos"
+        ],
+        "source": "thegent/templates/shared/nektos"
+      },
+      "devcontainer": {
+        "config_files": [
+          "~/.devcontainer"
+        ],
+        "source": "thegent/templates/shared/devcontainer"
+      },
+      "devpod": {
+        "config_files": [
+          "~/.config/devpod"
+        ],
+        "source": "thegent/templates/shared/devpod"
+      },
+      "gitpod": {
+        "config_files": [
+          "~/.gitpod"
+        ],
+        "source": "thegent/templates/shared/gitpod"
+      },
+      "codespaces": {
+        "config_files": [
+          "~/.config/codespaces"
+        ],
+        "source": "thegent/templates/shared/codespaces"
+      },
+      "copilot": {
+        "config_files": [
+          "~/.config/copilot"
+        ],
+        "source": "thegent/templates/shared/copilot"
+      },
+      "github": {
+        "config_files": [
+          "~/.config/github"
+        ],
+        "source": "thegent/templates/shared/github"
+      },
+      "gitlab": {
+        "config_files": [
+          "~/.config/gitlab"
+        ],
+        "source": "thegent/templates/shared/gitlab"
+      },
+      "bitbucket": {
+        "config_files": [
+          "~/.config/bitbucket"
+        ],
+        "source": "thegent/templates/shared/bitbucket"
+      },
+      "jira": {
+        "config_files": [
+          "~/.config/jira"
+        ],
+        "source": "thegent/templates/shared/jira"
+      },
+      "linear": {
+        "config_files": [
+          "~/.config/linear"
+        ],
+        "source": "thegent/templates/shared/linear"
+      },
+      "notion": {
+        "config_files": [
+          "~/.config/notion"
+        ],
+        "source": "thegent/templates/shared/notion"
+      },
+      "slack": {
+        "config_files": [
+          "~/.config/slack"
+        ],
+        "source": "thegent/templates/shared/slack"
+      },
+      "discord": {
+        "config_files": [
+          "~/.config/discord"
+        ],
+        "source": "thegent/templates/shared/discord"
+      },
+      "spotify": {
+        "config_files": [
+          "~/.config/spotify"
+        ],
+        "source": "thegent/templates/shared/spotify"
+      },
+      "obsidian": {
+        "config_files": [
+          "~/.obsidian",
+          "~/Library/Application Support/obsidian"
+        ],
+        "source": "thegent/templates/shared/obsidian"
+      },
+      "logseq": {
+        "config_files": [
+          "~/.logseq"
+        ],
+        "source": "thegent/templates/shared/logseq"
+      },
+      "roam": {
+        "config_files": [
+          "~/.roam"
+        ],
+        "source": "thegent/templates/shared/roam"
+      },
+      "zettlr": {
+        "config_files": [
+          "~/.config/zettlr"
+        ],
+        "source": "thegent/templates/shared/zettlr"
+      },
+      "typora": {
+        "config_files": [
+          "~/.config/typora"
+        ],
+        "source": "thegent/templates/shared/typora"
+      },
+      "notepadpp": {
+        "config_files": [
+          "~/.config/notepadpp"
+        ],
+        "source": "thegent/templates/shared/notepadpp"
+      },
+      "sublime": {
+        "config_files": [
+          "~/.config/sublime-text"
+        ],
+        "source": "thegent/templates/shared/sublime"
+      },
+      "atom": {
+        "config_files": [
+          "~/.atom"
+        ],
+        "source": "thegent/templates/shared/atom"
+      },
+      "emacs": {
+        "config_files": [
+          "~/.emacs.d"
+        ],
+        "source": "thegent/templates/shared/emacs"
+      },
+      "doom": {
+        "config_files": [
+          "~/.doom.d"
+        ],
+        "source": "thegent/templates/shared/doom"
+      },
+      "spacevim": {
+        "config_files": [
+          "~/.spacevim"
+        ],
+        "source": "thegent/templates/shared/spacevim"
+      },
+      "lapce": {
+        "config_files": [
+          "~/.config/lapce"
+        ],
+        "source": "thegent/templates/shared/lapce"
+      },
+      "zed": {
+        "config_files": [
+          "~/.config/zed"
+        ],
+        "source": "thegent/templates/shared/zed"
+      },
+      "iono": {
+        "config_files": [
+          "~/.config/ion"
+        ],
+        "source": "thegent/templates/shared/ion"
+      },
+      " helix": {
+        "config_files": [
+          "~/.config/helix"
+        ],
+        "source": "thegent/templates/shared/helix"
+      }
+    },
+    "runtimes": {
+      "python": {
+        "install_method": "pyenv",
+        "config_files": [
+          "~/.python-version",
+          "~/.config/pyenv"
+        ]
+      },
+      "node": {
+        "install_method": "nvm",
+        "config_files": [
+          "~/.nvm"
+        ]
+      },
+      "go": {
+        "install_method": "mise",
+        "config_files": [
+          "~/.go"
+        ]
+      },
+      "rust": {
+        "install_method": "rustup",
+        "config_files": [
+          "~/.cargo"
+        ]
+      },
+      "ruby": {
+        "install_method": "rbenv",
+        "config_files": [
+          "~/.rbenv"
+        ]
+      },
+      "java": {
+        "install_method": "mise",
+        "config_files": [
+          "~/.jdk"
+        ]
+      },
+      "bun": {
+        "install_method": "direct",
+        "config_files": [
+          "~/.bun"
+        ]
+      },
+      "deno": {
+        "install_method": "direct",
+        "config_files": [
+          "~/.deno"
+        ]
+      },
+      "pnpm": {
+        "install_method": "npm",
+        "config_files": [
+          "~/.pnpmrc"
+        ]
+      },
+      "yarn": {
+        "install_method": "npm",
+        "config_files": [
+          "~/.yarnrc"
+        ]
+      }
+    },
+    "dotfiles": {
+      "home": {
+        "config_files": [
+          "~/.aliases",
+          "~/.functions",
+          "~/.exports",
+          "~/.path",
+          "~/.extra"
+        ],
+        "source": "thegent/templates/shared/dotfiles"
+      },
+      "editor": {
+        "config_files": [
+          "~/.editorconfig",
+          "~/.ideavimrc",
+          "~/.vrapperrc"
+        ],
+        "source": "thegent/templates/shared/editor"
+      },
+      "terminal": {
+        "config_files": [
+          "~/.terminfo",
+          "~/.termcap"
+        ],
+        "source": "thegent/templates/shared/terminal"
+      },
+      "mail": {
+        "config_files": [
+          "~/.muttrc",
+          "~/.mailrc"
+        ],
+        "source": "thegent/templates/shared/mail"
+      },
+      "calendar": {
+        "config_files": [
+          "~/.calcurse"
+        ],
+        "source": "thegent/templates/shared/calendar"
+      },
+      "passwords": {
+        "config_files": [
+          "~/.pwsaferc"
+        ],
+        "source": "thegent/templates/shared/passwords",
+        "sensitive": true
+      },
+      "media": {
+        "config_files": [
+          "~/.mpv",
+          "~/.config/mplayer"
+        ],
+        "source": "thegent/templates/shared/media"
+      },
+      "fonts": {
+        "config_files": [
+          "~/.config/fontconfig"
+        ],
+        "source": "thegent/templates/shared/fonts"
+      },
+      "x": {
+        "config_files": [
+          "~/.Xresources",
+          "~/.xinitrc",
+          "~/.xprofile"
+        ],
+        "source": "thegent/templates/shared/x",
+        "platforms": [
+          "linux"
+        ]
+      },
+      "wayland": {
+        "config_files": [
+          "~/.config/sway",
+          "~/.config/waybar"
+        ],
+        "source": "thegent/templates/shared/wayland",
+        "platforms": [
+          "linux"
+        ]
+      },
+      "systemd": {
+        "config_files": [
+          "~/.config/systemd"
+        ],
+        "source": "thegent/templates/shared/systemd",
+        "platforms": [
+          "linux"
+        ]
+      }
+    },
+    "apps": {
+      "arc": {
+        "config_files": [
+          "~/Library/Application Support/Arc"
+        ],
+        "source": "thegent/templates/shared/apps/arc",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "brave": {
+        "config_files": [
+          "~/Library/Application Support/BraveSoftware"
+        ],
+        "source": "thegent/templates/shared/apps/brave",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "raycast": {
+        "config_files": [
+          "~/.config/raycast"
+        ],
+        "source": "thegent/templates/shared/apps/raycast",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "alfred": {
+        "config_files": [
+          "~/Library/Application Support/Alfred"
+        ],
+        "source": "thegent/templates/shared/apps/alfred",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "hammerspoon": {
+        "config_files": [
+          "~/.hammerspoon"
+        ],
+        "source": "thegent/templates/shared/apps/hammerspoon",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "karabiner": {
+        "config_files": [
+          "~/.config/karabiner"
+        ],
+        "source": "thegent/templates/shared/apps/karabiner",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "rectangle": {
+        "config_files": [
+          "~/Library/Application Support/Rectangle"
+        ],
+        "source": "thegent/templates/shared/apps/rectangle",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "obsidian": {
+        "config_files": [
+          "~/.obsidian"
+        ],
+        "source": "thegent/templates/shared/apps/obsidian",
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "typora": {
+        "config_files": [
+          "~/Library/Application Support/Typora"
+        ],
+        "source": "thegent/templates/shared/apps/typora",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "notion": {
+        "config_files": [
+          "~/Library/Application Support/Notion"
+        ],
+        "source": "thegent/templates/shared/apps/notion",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "slack": {
+        "config_files": [
+          "~/Library/Application Support/Slack"
+        ],
+        "source": "thegent/templates/shared/apps/slack",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "discord": {
+        "config_files": [
+          "~/Library/Application Support/Discord"
+        ],
+        "source": "thegent/templates/shared/apps/discord",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "spotify": {
+        "config_files": [
+          "~/Library/Application Support/Spotify"
+        ],
+        "source": "thegent/templates/shared/apps/spotify",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "1password": {
+        "config_files": [
+          "~/Library/Application Support/1Password 8"
+        ],
+        "source": "thegent/templates/shared/apps/1password",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "dropbox": {
+        "config_files": [
+          "~/Library/Application Support/Dropbox"
+        ],
+        "source": "thegent/templates/shared/apps/dropbox",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "istatmenus": {
+        "config_files": [
+          "~/Library/Application Support/iStat Menus"
+        ],
+        "source": "thegent/templates/shared/apps/istatmenus",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "bartender": {
+        "config_files": [
+          "~/Library/Application Support/Bartender"
+        ],
+        "source": "thegent/templates/shared/apps/bartender",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "bettertouchtool": {
+        "config_files": [
+          "~/Library/Application Support/BetterTouchTool"
+        ],
+        "source": "thegent/templates/shared/apps/bettertouchtool",
+        "platforms": [
+          "darwin"
+        ]
+      }
+    },
+    "services": {
+      "docker": {
+        "config_files": [
+          "~/.docker/config.json"
+        ],
+        "source": "thegent/templates/shared/services/docker"
+      },
+      "postgresql": {
+        "config_files": [
+          "~/.psqlrc"
+        ],
+        "source": "thegent/templates/shared/services/postgresql"
+      },
+      "mysql": {
+        "config_files": [
+          "~/.my.cnf"
+        ],
+        "source": "thegent/templates/shared/services/mysql"
+      },
+      "redis": {
+        "config_files": [
+          "~/.redisrc"
+        ],
+        "source": "thegent/templates/shared/services/redis"
+      },
+      "nginx": {
+        "config_files": [
+          "~/.nginx"
+        ],
+        "source": "thegent/templates/shared/services/nginx"
+      },
+      "systemd": {
+        "config_files": [
+          "~/.config/systemd/user"
+        ],
+        "source": "thegent/templates/shared/services/systemd",
+        "platforms": [
+          "linux"
+        ]
+      },
+      "launchd": {
+        "config_files": [
+          "~/Library/LaunchAgents"
+        ],
+        "source": "thegent/templates/shared/services/launchd",
+        "platforms": [
+          "darwin"
+        ]
+      }
+    }
+  },
+  "bundles": {
+    "core": {
+      "description": "Core shell and harness configurations",
+      "includes": [
+        "shells.zsh",
+        "harnesses.claude-code",
+        "harnesses.codex",
+        "harnesses.droid"
+      ]
+    },
+    "dev": {
+      "description": "Development tools and runtimes",
+      "includes": [
+        "tools.git",
+        "tools.gh",
+        "tools.direnv",
+        "runtimes.python",
+        "runtimes.node",
+        "runtimes.rust"
+      ]
+    },
+    "terminal": {
+      "description": "Terminal emulator configurations",
+      "includes": [
+        "tools.ghostty",
+        "tools.wezterm",
+        "tools.alacritty",
+        "tools.tmux",
+        "tools.starship"
+      ]
+    },
+    "productivity": {
+      "description": "Productivity apps",
+      "includes": [
+        "tools.obsidian",
+        "tools.logseq",
+        "tools.typora",
+        "tools.alfred",
+        "tools.raycast",
+        "tools.raycast"
+      ]
+    },
+    "security": {
+      "description": "Security and secrets",
+      "includes": [
+        "tools.ssh",
+        "tools.gpg",
+        "tools.vault",
+        "tools.sops",
+        "tools.age",
+        "tools.pass",
+        "tools.bitwarden"
+      ]
+    },
+    "all": {
+      "description": "Everything",
+      "includes": [
+        "core",
+        "dev",
+        "terminal",
+        "productivity",
+        "dotfiles.home",
+        "tools.docker",
+        "tools.postgres",
+        "tools.redis",
+        "tools.neovim",
+        "tools.kitty",
+        "tools.lazygit"
+      ]
+    },
+    "dotfiles": {
+      "description": "All dotfiles",
+      "includes": [
+        "dotfiles.home",
+        "dotfiles.editor",
+        "dotfiles.terminal"
+      ]
+    },
+    "devcontainer": {
+      "description": "Dev environment configs",
+      "includes": [
+        "tools.docker",
+        "tools.kubernetes",
+        "tools.terraform",
+        "tools.ansible",
+        "tools.devcontainer",
+        "tools.devpod"
+      ]
+    },
+    "editor": {
+      "description": "Editor configurations",
+      "includes": [
+        "tools.vscode",
+        "tools.neovim",
+        "tools.vim",
+        "tools.sublime",
+        "tools.atom",
+        "tools.emacs",
+        "tools.zed",
+        "tools.helix"
+      ]
+    },
+    "apps": {
+      "description": "macOS app configurations",
+      "includes": [
+        "apps.raycast",
+        "apps.alfred",
+        "apps.hammerspoon",
+        "apps.karabiner",
+        "apps.rectangle",
+        "apps.obsidian"
+      ]
+    },
+    "services": {
+      "description": "Service configurations",
+      "includes": [
+        "services.docker",
+        "services.postgresql",
+        "services.redis",
+        "services.systemd"
+      ]
+    },
+    "complete": {
+      "description": "Everything - complete system",
+      "includes": [
+        "core",
+        "dev",
+        "terminal",
+        "productivity",
+        "security",
+        "apps",
+        "services",
+        "dotfiles"
+      ]
+    }
+  },
+  "install_scripts": {
+    "pre_install": [
+      "thegent/scripts/pre-install-checks.sh"
+    ],
+    "post_install": [
+      "thegent/scripts/post-install-setup.sh"
+    ],
+    "verify": [
+      "thegent/scripts/verify-install.sh"
+    ]
+  },
+  "defaults": {
+    "auto_detect": true,
+    "backup_before_install": true,
+    "symlink_preference": true,
+    "verbose": false
+  }
+}

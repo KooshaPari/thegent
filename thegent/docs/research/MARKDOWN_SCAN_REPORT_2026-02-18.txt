@@ -1,0 +1,692 @@
+Scanning kush...
+  Found 7 .md files
+Scanning kooshapari...
+  Found 0 .md files
+Scanning temp-PRODVERCEL...
+  Found 48628 .md files
+
+================================================================================
+MARKDOWN FILE SCAN REPORT
+Generated: 2026-02-18 00:10:00
+================================================================================
+
+SUMMARY BY MONTH:
+--------------------------------------------------------------------------------
+2026-02:   3571 files total
+       [kush           ]      5 files
+       [temp-PRODVERCEL]   3566 files
+2026-01:   7174 files total
+       [temp-PRODVERCEL]   7174 files
+2025-12:   6961 files total
+       [kush           ]      2 files
+       [temp-PRODVERCEL]   6959 files
+2025-11:   8077 files total
+       [temp-PRODVERCEL]   8077 files
+2025-10:   5713 files total
+       [temp-PRODVERCEL]   5713 files
+2025-09:    528 files total
+       [temp-PRODVERCEL]    528 files
+2025-08:   2195 files total
+       [temp-PRODVERCEL]   2195 files
+2025-07:   2792 files total
+       [temp-PRODVERCEL]   2792 files
+2025-06:    705 files total
+       [temp-PRODVERCEL]    705 files
+2025-05:    120 files total
+       [temp-PRODVERCEL]    120 files
+2025-04:  10662 files total
+       [temp-PRODVERCEL]  10662 files
+
+================================================================================
+DETAILS BY MONTH (showing first 50 per location)
+================================================================================
+
+
+## 2026-02
+--------------------------------------------------------------------------------
+Total: 3571 files
+
+### [kush] (5 files)
+  kush/trace/CLAUDE.md
+  kush/trace/docs/QUALITY_GATES.md
+  kush/trace/docs/guides/anti-patterns.md
+  kush/trace/docs/guides/index.md
+  kush/trace/docs/index.md
+
+### [temp-PRODVERCEL] (3566 files)
+  temp-PRODVERCEL/485/API/docs/sessions/20250131-argis-cli-architecture/ARGIS_PRODUCT_SPECIFICATION.md
+  temp-PRODVERCEL/485/kush/AGENTS.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/.github/ISSUE_TEMPLATE/bug_report.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/README.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/README_CN.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-access.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-access_CN.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-advanced.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-advanced_CN.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-usage.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-usage_CN.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-watcher.md
+  temp-PRODVERCEL/485/kush/CLIProxyAPIPlus-fork/docs/sdk-watcher_CN.md
+  temp-PRODVERCEL/485/kush/agentapi/.claude/playbooks/dispute-resolution.md
+  temp-PRODVERCEL/485/kush/agentapi/test/characterization/README.md
+  temp-PRODVERCEL/485/kush/claude-squad/.claude/playbooks/dispute-resolution.md
+  temp-PRODVERCEL/485/kush/claude-squad/test/characterization/README.md
+  temp-PRODVERCEL/485/kush/docs/MAINTENANCE_RUNBOOK.md
+  temp-PRODVERCEL/485/kush/docs/NATS_EVENT_MESH_SPEC.md
+  temp-PRODVERCEL/485/kush/docs/NEO4J_GRAPH_SPEC.md
+  temp-PRODVERCEL/485/kush/docs/QUALITY-RUNNER-IMPROVEMENT-PLAN.md
+  temp-PRODVERCEL/485/kush/docs/RESUME_CONTEXT.md
+  temp-PRODVERCEL/485/kush/docs/ULTRA_PARITY_EXPANDED_PLAN.md
+  temp-PRODVERCEL/485/kush/docs/ULTRA_PARITY_PRD.md
+  temp-PRODVERCEL/485/kush/docs/ZSH_MCP_SERVER_SPEC.md
+  temp-PRODVERCEL/485/kush/docs/guides/DEVELOPER_QUICKSTART.md
+  temp-PRODVERCEL/485/kush/docs/guides/MODERNIZATION_IMPLEMENTATION_GUIDE.md
+  temp-PRODVERCEL/485/kush/docs/reports/INITIATIVE_COMPLETION_SUMMARY.md
+  temp-PRODVERCEL/485/kush/docs/research/CURSOR_AGENT_RECOVERY_2026-02-16.md
+  temp-PRODVERCEL/485/kush/docs/research/PROMPTS_LAST_12H.md
+  temp-PRODVERCEL/485/kush/jobhunter/CLAUDE.md
+  temp-PRODVERCEL/485/kush/kagentop/.claude/playbooks/dispute-resolution.md
+  temp-PRODVERCEL/485/kush/kagentop/test/characterization/README.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/alignment/kb-002.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/alignment/kb-003.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/alignment/kb-004.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/alignment/kb-005.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/alignment/kb-006.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-013.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-014.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-015.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-016.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-017.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-018.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-019.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/analysis/kb-020.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/optimization/kb-007.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/optimization/kb-008.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/optimization/kb-009.md
+  temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/4sgm/technical/kb-010.md
+  ... and 3516 more files
+
+
+## 2026-01
+--------------------------------------------------------------------------------
+Total: 7174 files
+
+### [temp-PRODVERCEL] (7174 files)
+  temp-PRODVERCEL/355/NetWeave/AGENTS.md
+  temp-PRODVERCEL/355/NetWeave/API_OPTIMIZATION_CHECKLIST.md
+  temp-PRODVERCEL/355/NetWeave/API_OPTIMIZATION_COMPLETION_REPORT.md
+  temp-PRODVERCEL/355/NetWeave/ARCHITECTURE_OVERVIEW.md
+  temp-PRODVERCEL/355/NetWeave/AUDIT_EXECUTIVE_SUMMARY.md
+  temp-PRODVERCEL/355/NetWeave/AUDIT_START_HERE.md
+  temp-PRODVERCEL/355/NetWeave/Backend/CODE_QUALITY_AUDIT_REPORT.md
+  temp-PRODVERCEL/355/NetWeave/Backend/COMPILATION_ERRORS_FIX.md
+  temp-PRODVERCEL/355/NetWeave/Backend/CRITICAL_FIXES.md
+  temp-PRODVERCEL/355/NetWeave/Backend/EVENT_DRIVEN_ARCHITECTURE.md
+  temp-PRODVERCEL/355/NetWeave/Backend/INDEX-EVENT-DRIVEN.md
+  temp-PRODVERCEL/355/NetWeave/Backend/NATS_SETUP.md
+  temp-PRODVERCEL/355/NetWeave/Backend/NATS_TESTING_COMPLETE.md
+  temp-PRODVERCEL/355/NetWeave/Backend/NATS_TESTING_SETUP.md
+  temp-PRODVERCEL/355/NetWeave/Backend/QUICK_START_EVENTS.md
+  temp-PRODVERCEL/355/NetWeave/Backend/README.md
+  temp-PRODVERCEL/355/NetWeave/Backend/README_AUDIT.md
+  temp-PRODVERCEL/355/NetWeave/Backend/README_TEST_IMPROVEMENTS.md
+  temp-PRODVERCEL/355/NetWeave/Backend/TEST_ARTIFACTS.md
+  temp-PRODVERCEL/355/NetWeave/Backend/TEST_COVERAGE_IMPROVEMENTS.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-ARCHITECTURE-DIAGRAMS.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-COMPLETION-SUMMARY.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-HEXAGONAL-ARCHITECTURE.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-IMPLEMENTATION-CHECKLIST.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-INDEX.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-QUICK-REFERENCE.md
+  temp-PRODVERCEL/355/NetWeave/Backend/WS-012-README.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/api/TEST_DOCUMENTATION.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/api/handlers/TESTING_GUIDE.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/api/handlers/TEST_SUMMARY.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/BENCHMARKS_README.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/BINARY_PROTOCOL.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/BINARY_PROTOCOL_INDEX.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/BINARY_PROTOCOL_QUICK_REF.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/CELLULAR_AUTOMATON.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/CELLULAR_AUTOMATON_QUICK_START.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/INDEX.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/README_BINARY_PROTOCOL.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/ecs/WORKER_POOL.md
+  temp-PRODVERCEL/355/NetWeave/Backend/internal/services/TEST_DOCUMENTATION.md
+  temp-PRODVERCEL/355/NetWeave/CACHING_ARCHITECTURE_GUIDE.md
+  temp-PRODVERCEL/355/NetWeave/CACHING_QUICK_REFERENCE.md
+  temp-PRODVERCEL/355/NetWeave/CLAUDE.md
+  temp-PRODVERCEL/355/NetWeave/CONTRIBUTING.md
+  temp-PRODVERCEL/355/NetWeave/CRITICAL_TEST_ISSUES.md
+  temp-PRODVERCEL/355/NetWeave/DOCUMENTATION_IMPROVEMENTS_SUMMARY.md
+  temp-PRODVERCEL/355/NetWeave/FRONTEND_API_OPTIMIZATION_SUMMARY.md
+  temp-PRODVERCEL/355/NetWeave/FRONTEND_SKIPPED_TESTS_SUMMARY.md
+  temp-PRODVERCEL/355/NetWeave/Fend/BACKEND_CONNECTION_AUDIT.md
+  temp-PRODVERCEL/355/NetWeave/Fend/CANVAS_MANAGER_TEST_CHANGES.md
+  ... and 7124 more files
+
+
+## 2025-12
+--------------------------------------------------------------------------------
+Total: 6961 files
+
+### [kush] (2 files)
+  kush/trace/docs/guides/AGENT_ORCHESTRATION_SNIPPET.md
+  kush/trace/docs/guides/EXTERNAL_AGENTS.md
+
+### [temp-PRODVERCEL] (6959 files)
+  temp-PRODVERCEL/472/P2/COMPLETE_MAPPING_SUMMARY.md
+  temp-PRODVERCEL/472/P2/DEBATE_CODE_EXAMPLES.md
+  temp-PRODVERCEL/472/P2/DEBATE_DOCUMENTATION_INDEX.md
+  temp-PRODVERCEL/472/P2/DEBATE_PRESENTATION_NOTES.md
+  temp-PRODVERCEL/472/P2/INDEX.md
+  temp-PRODVERCEL/472/P2/MULTI_AGENT_DEBATE_WALKTHROUGH.md
+  temp-PRODVERCEL/472/P2/START_HERE.md
+  temp-PRODVERCEL/472/P2/TIMING_TO_ASSIGNMENT_MAPPING.md
+  temp-PRODVERCEL/485/API/.pytest_cache/README.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20250115-file-decomposition-plan.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20250207-routing-panel-cleanup/01_RESEARCH.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20250215-models-ui/01_RESEARCH.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20250216-local-models-sync/01_RESEARCH.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20250216-models-runtime-cards/01_RESEARCH.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-adapter-redesign/00_SESSION_OVERVIEW.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-adapter-redesign/01_COMPLETION_REPORT.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-adapter-redesign/02_QUICK_REFERENCE.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-adapter-redesign/FILES_MANIFEST.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-adapter-redesign/IMPLEMENTATION_CHECKLIST.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-adapter-redesign/INDEX.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-argisroute-rebrand-model-management/00_SESSION_OVERVIEW.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-argisroute-rebrand-model-management/02_IMPLEMENTATION_PLAN.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-model-pipeline/MODEL_PIPELINE_GUIDE.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-model-pipeline/PIPELINE_FEATURES.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-model-pipeline/PIPELINE_INTEGRATION.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-model-pipeline/PIPELINE_README.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/00_SESSION_OVERVIEW.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/01_TOOLING_ASSESSMENT.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/02_DECOMPOSITION_PLAN.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/03_COMPLETION_STATUS.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/04_FINAL_REPORT.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/05_FILE_STRUCTURE_CHANGES.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251210-swift-lint-audit/README.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251211-argisroute-enhanced-models/00_SESSION_OVERVIEW.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251211-argisroute-enhanced-models/01_RESEARCH.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251211-node-graph-enhancements/REFACTORING_AND_LIBRARIES.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251212-migration-strategy/ARCHITECTURE_CLARIFIED.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251212-migration-strategy/CORRECTED_STRATEGY.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251212-migration-strategy/MAKE_VS_BUY_FINAL.md
+  temp-PRODVERCEL/485/API/argisagent/docs/sessions/20251212-migration-strategy/MERGE_ANALYSIS.md
+  temp-PRODVERCEL/485/API/docs-site/README.md
+  temp-PRODVERCEL/485/API/docs-site/SETUP_STATUS.md
+  temp-PRODVERCEL/485/API/docs/CLIENT_HOST_CONFIG.md
+  temp-PRODVERCEL/485/API/docs/CLI_COMMAND_PLAN.md
+  temp-PRODVERCEL/485/API/docs/DEPLOYMENT_GUIDE.md
+  temp-PRODVERCEL/485/API/docs/DEPLOYMENT_NATIVE_IAC.md
+  temp-PRODVERCEL/485/API/docs/FOLDER_RESPONSIBILITIES.md
+  temp-PRODVERCEL/485/API/docs/INSTALLATION_END_USER_GUIDE.md
+  temp-PRODVERCEL/485/API/docs/INTEROPERABILITY_GUIDE.md
+  temp-PRODVERCEL/485/API/docs/VISUAL_ARCHITECTURE.md
+  ... and 6909 more files
+
+
+## 2025-11
+--------------------------------------------------------------------------------
+Total: 8077 files
+
+### [temp-PRODVERCEL] (8077 files)
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmb-bmad-builder.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmgd-game-architect.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmgd-game-designer.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmgd-game-dev.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmgd-game-scrum-master.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-analyst.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-architect.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-dev.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-pm.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-sm.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-tea.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-tech-writer.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/bmm-ux-designer.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-README.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-brainstorming-coach.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-creative-problem-solver.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-design-thinking-coach.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-innovation-strategist.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-presentation-master.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/cis-storyteller.md
+  temp-PRODVERCEL/.augment/commands/bmad/agents/core-bmad-master.md
+  temp-PRODVERCEL/.augment/commands/bmad/tasks/core-advanced-elicitation.md
+  temp-PRODVERCEL/.augment/commands/bmad/tasks/core-index-docs.md
+  temp-PRODVERCEL/.augment/commands/bmad/tools/core-shard-doc.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-audit-workflow.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-convert-legacy.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-create-agent.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-create-module.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-create-workflow.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-edit-agent.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-edit-module.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-edit-workflow.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmb-module-brief.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-brainstorm-game.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-code-review.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-correct-course.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-create-story.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-dev-story.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-epic-tech-context.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-game-architecture.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-game-brief.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-gdd.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-narrative.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-retrospective.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-sprint-planning.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-story-context.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-story-done.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmgd-story-ready.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmm-architecture.md
+  temp-PRODVERCEL/.augment/commands/bmad/workflows/bmm-brainstorm-project.md
+  ... and 8027 more files
+
+
+## 2025-10
+--------------------------------------------------------------------------------
+Total: 5713 files
+
+### [temp-PRODVERCEL] (5713 files)
+  temp-PRODVERCEL/475/m12/COMPLETION_SUMMARY.md
+  temp-PRODVERCEL/475/m12/EXECUTION_TEST_REPORT.md
+  temp-PRODVERCEL/475/m12/VALIDATION_REPORT.md
+  temp-PRODVERCEL/475/m12/doc.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/debugpy/_vendored/pydevd/pydevd_plugins/extensions/README.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/httpcore-1.0.9.dist-info/licenses/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/httpx-0.28.1.dist-info/licenses/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/idna-3.11.dist-info/licenses/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/jupyter_server/i18n/README.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/markdown-3.9.dist-info/licenses/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/nbconvert/templates/README.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/nbconvert/templates/skeleton/README.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/numpy/random/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/pip-25.2.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/pyzmq-27.1.0.dist-info/licenses/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/scipy/fft/_pocketfft/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/sklearn/externals/array_api_compat/README.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/sklearn/externals/array_api_extra/README.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/soupsieve-2.8.dist-info/licenses/LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/werkzeug/debug/shared/ICON_LICENSE.md
+  temp-PRODVERCEL/475/m12/venv/lib/python3.12/site-packages/zmq/backend/cffi/README.md
+  temp-PRODVERCEL/475/u2l1/.pytest_cache/README.md
+  temp-PRODVERCEL/475/u2l1/README.md
+  temp-PRODVERCEL/475/u2l1/TEST_RESULTS.md
+  temp-PRODVERCEL/485/CLIProxyAPI/docs/phases/PHASE_1_COMPLETE.md
+  temp-PRODVERCEL/485/COMPREHENSIVE_KINFRA_PHENO_MIGRATION.md
+  temp-PRODVERCEL/485/KINFRA_MIGRATION_PROPOSAL.md
+  temp-PRODVERCEL/485/PROJECT_REORGANIZATION_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/CLEANUP_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/COMPLETE_CI_CD_SETUP.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/COMPLETE_INFRASTRUCTURE_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/CONSOLIDATION_COMPLETE.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/CORRECTED_SCHEMA_IMPLEMENTATION.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/DEPLOYMENT_CHECKLIST.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/DEPLOYMENT_UPDATE_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/FAST_HTTP_CLIENT_MIGRATION.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/FINAL_ARCHITECTURE_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/FINAL_MIGRATION_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/FINAL_SCHEMA_IMPLEMENTATION.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/FINAL_SUMMARY.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/FIXES_COMPLETED.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/IMMEDIATE_ACTIONS.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/INFRASTRUCTURE_SETUP_COMPLETE.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/LEGACY_CODE_CLEANUP.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/MIGRATION_COMPLETE.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/README_FIXES.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/SCHEMA_ALIGNMENT_COMPLETE.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/SCHEMA_ALIGNMENT_FINAL.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/SCHEMA_CORRECTIONS_NEEDED.md
+  temp-PRODVERCEL/485/archive/arc-2/session_docs/SCHEMA_IMPLEMENTATION_SUMMARY.md
+  ... and 5663 more files
+
+
+## 2025-09
+--------------------------------------------------------------------------------
+Total: 528 files
+
+### [temp-PRODVERCEL] (528 files)
+  temp-PRODVERCEL/472/P1/Archive 2/README.md
+  temp-PRODVERCEL/472/P1/README.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926094401.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926102338.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926104631.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926133406.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926133424.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926133651.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926135605.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926135630.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926135634.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926135646.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926135856.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926140018.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926140033.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250926140034.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927110052.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927123037.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927123107.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927123244.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927123638.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927123708.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_FINAL_20250927140738.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_SUBMISSION_20250927121620.md
+  temp-PRODVERCEL/472/P1/archive/.history/PROJECT_REPORT_SUBMISSION_20250927121813.md
+  temp-PRODVERCEL/472/P1/archive/DATA_COLLECTION_ANALYSIS.md
+  temp-PRODVERCEL/472/P1/archive/FINAL_REPORT_DRAFT.md
+  temp-PRODVERCEL/472/P1/archive/FINAL_SUBMISSION_CHECKLIST.md
+  temp-PRODVERCEL/472/P1/archive/FINAL_SUBMISSION_CHECKLIST_DETAILED.md
+  temp-PRODVERCEL/472/P1/archive/GEPHI_EXECUTION_GUIDE.md
+  temp-PRODVERCEL/472/P1/archive/GEPHI_QUICK_START.md
+  temp-PRODVERCEL/472/P1/archive/GEPHI_STEP_BY_STEP_DETAILED.md
+  temp-PRODVERCEL/472/P1/archive/GEPHI_VISUALIZATION_GUIDE.md
+  temp-PRODVERCEL/472/P1/archive/IMMEDIATE_NEXT_STEPS.md
+  temp-PRODVERCEL/472/P1/archive/NETWORK_ANALYSIS_RESULTS.md
+  temp-PRODVERCEL/472/P1/archive/PROJECT_REPORT_FINAL.md
+  temp-PRODVERCEL/472/P1/archive/PROJECT_REPORT_SUBMISSION.md
+  temp-PRODVERCEL/472/P1/archive/README.md
+  temp-PRODVERCEL/472/P1/archive/REPORT_TEMPLATE.md
+  temp-PRODVERCEL/472/P1/archive/SUBMISSION_PACKAGE_FINAL.md
+  temp-PRODVERCEL/472/P1/archive/SUBMISSION_PACKAGE_GUIDE.md
+  temp-PRODVERCEL/472/P1/archive/assignment.md
+  temp-PRODVERCEL/472/P1/archive/deliverables.md
+  temp-PRODVERCEL/475/u1l1/lab_env/lib/python3.12/site-packages/numpy/random/LICENSE.md
+  temp-PRODVERCEL/475/u1l1/lab_env/lib/python3.12/site-packages/scipy/fft/_pocketfft/LICENSE.md
+  temp-PRODVERCEL/475/u1l1/lab_env/lib/python3.12/site-packages/sklearn/externals/array_api_compat/README.md
+  temp-PRODVERCEL/475/u1l1/lab_env/lib/python3.12/site-packages/sklearn/externals/array_api_extra/README.md
+  temp-PRODVERCEL/485/KVCM/dump/COMPREHENSIVE_VALIDATION_TESTING_PLAN.md
+  temp-PRODVERCEL/485/KVCM/dump/ENTERPRISE_ERROR_FRAMEWORK_SUMMARY.md
+  temp-PRODVERCEL/485/KVCM/dump/EXECUTION_SUMMARY.md
+  ... and 478 more files
+
+
+## 2025-08
+--------------------------------------------------------------------------------
+Total: 2195 files
+
+### [temp-PRODVERCEL] (2195 files)
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/OAUTH_PKCE_20250802233128.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/OAUTH_PKCE_20250803121503.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/OAUTH_PKCE_20250803121532.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250802210554.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250802225017.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250802232048.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250802233158.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250802233209.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250802233231.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250803143159.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250803143216.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250803145034.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/README_20250803145055.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/docs/README_20250803122336.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/.history/atoms-mcp/docs/README_20250803141225.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/TESTING.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/atoms-mcp-server/README.md
+  temp-PRODVERCEL/485/KVCM/demo/atoms.tech/src/components/custom/LandingPage/doc.md
+  temp-PRODVERCEL/485/archive/ke/rust/README.md
+  temp-PRODVERCEL/485/archive/ke/rust/SNIPPETS.md
+  temp-PRODVERCEL/485/archive/ke/rust/docs/api/rust-api.md
+  temp-PRODVERCEL/485/archive/ke/rust/go/README.md
+  temp-PRODVERCEL/485/archive/ke/rust/python/README.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626181605.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626181641.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626181651.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626181659.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626181709.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626182013.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626182022.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_PROJECT_PLAN_20250626182037.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_QUICK_REFERENCE_20250626181737.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_QUICK_REFERENCE_20250626182032.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_QUICK_REFERENCE_20250626182037.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_QUICK_REFERENCE_20250626182220.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/ATOMSBOT_V2_QUICK_REFERENCE_20250626190602.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/DISCORD_PM_SYSTEM_COMPREHENSIVE_PLAN_20250626223446.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/DISCORD_PM_SYSTEM_COMPREHENSIVE_PLAN_20250626223530.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/README_20250626095413.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/README_20250626115102.md
+  temp-PRODVERCEL/485/clean/atomsbot/.history/README_20250626115120.md
+  temp-PRODVERCEL/485/clean/atomsbot/100_PERCENT_COVERAGE_ACHIEVEMENT_REPORT.md
+  temp-PRODVERCEL/485/clean/atomsbot/ACTIONBUTTONMANAGER_TEST_FIXES.md
+  temp-PRODVERCEL/485/clean/atomsbot/COMPREHENSIVE_FINAL_COVERAGE_REPORT.md
+  temp-PRODVERCEL/485/clean/atomsbot/COMPREHENSIVE_TEST_COVERAGE_ANALYSIS.md
+  temp-PRODVERCEL/485/clean/atomsbot/COMPREHENSIVE_TEST_COVERAGE_REPORT.md
+  temp-PRODVERCEL/485/clean/atomsbot/COMPREHENSIVE_VALIDATION_REPORT.md
+  temp-PRODVERCEL/485/clean/atomsbot/DISCORD_BOT_SMART_EMBEDS_OVERHAUL_PLAN.md
+  temp-PRODVERCEL/485/clean/atomsbot/FINAL_COVERAGE_COMPLETION_REPORT.md
+  temp-PRODVERCEL/485/clean/atomsbot/FINAL_TEST_SUITE_VALIDATION_REPORT.md
+  ... and 2145 more files
+
+
+## 2025-07
+--------------------------------------------------------------------------------
+Total: 2792 files
+
+### [temp-PRODVERCEL] (2792 files)
+  temp-PRODVERCEL/485/KVCM/GDK/CHANGELOG.md
+  temp-PRODVERCEL/485/KVCM/GDK/ENTERPRISE.md
+  temp-PRODVERCEL/485/KVCM/GDK/INSTALL.md
+  temp-PRODVERCEL/485/KVCM/GDK/README.md
+  temp-PRODVERCEL/485/KVCM/GDK/SECURITY.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/analyzer.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/architect.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/batch-executor.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/coder.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/debugger.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/designer.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/documenter.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/innovator.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/memory-manager.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/optimizer.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/orchestrator.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/researcher.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/reviewer.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/sparc-modes.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/swarm-coordinator.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/tdd.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/tester.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/sparc/workflow-manager.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/analysis.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/development.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/examples.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/maintenance.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/optimization.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/research.md
+  temp-PRODVERCEL/485/KVCM/KDE/.claude/commands/swarm/testing.md
+  temp-PRODVERCEL/485/KVCM/KDE/CLAUDE.md
+  temp-PRODVERCEL/485/KVCM/KDE/coordination.md
+  temp-PRODVERCEL/485/KVCM/KDE/memory-bank.md
+  temp-PRODVERCEL/485/KVCM/KDE/memory/agents/README.md
+  temp-PRODVERCEL/485/KVCM/KDE/memory/sessions/README.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/sparc/coder.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/sparc/orchestrator.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/sparc/researcher.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/analysis.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/development.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/examples.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/maintenance.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/optimization.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/research.md
+  temp-PRODVERCEL/485/KVCM/Kwality/.claude/commands/swarm/testing.md
+  temp-PRODVERCEL/485/KVCM/Kwality/ARCHITECTURE.md
+  temp-PRODVERCEL/485/KVCM/Kwality/CLAUDE.md
+  temp-PRODVERCEL/485/KVCM/Kwality/PRODUCTION-READINESS-SUMMARY.md
+  temp-PRODVERCEL/485/KVCM/Kwality/README.md
+  temp-PRODVERCEL/485/KVCM/Kwality/demo-ai-service/README.md
+  ... and 2742 more files
+
+
+## 2025-06
+--------------------------------------------------------------------------------
+Total: 705 files
+
+### [temp-PRODVERCEL] (705 files)
+  temp-PRODVERCEL/445/.history/a3/assignment_20250607181804.md
+  temp-PRODVERCEL/445/.history/a3/assignment_20250607181808.md
+  temp-PRODVERCEL/445/.history/a3/doc_20250607175219.md
+  temp-PRODVERCEL/445/.history/a3/doc_20250607175233.md
+  temp-PRODVERCEL/445/.history/a3/requiredServiceList_20250607181940.md
+  temp-PRODVERCEL/445/.history/a3/requiredServiceList_20250607181958.md
+  temp-PRODVERCEL/445/.history/a4/doc_20250607182250.md
+  temp-PRODVERCEL/445/.history/a4/doc_20250607182253.md
+  temp-PRODVERCEL/445/.history/a4/doc_20250607182255.md
+  temp-PRODVERCEL/445/.history/a4/doc_20250607190743.md
+  temp-PRODVERCEL/445/a1/packages/Newtonsoft.Json.13.0.3/LICENSE.md
+  temp-PRODVERCEL/445/a1/packages/Newtonsoft.Json.13.0.3/README.md
+  temp-PRODVERCEL/445/a3/ProjectManagementPlatform/Documentation/ServiceDirectory.md
+  temp-PRODVERCEL/445/a3/ProjectManagementPlatform/README.md
+  temp-PRODVERCEL/445/a3/assignment.md
+  temp-PRODVERCEL/445/a3/doc.md
+  temp-PRODVERCEL/445/a3/requiredServiceList.md
+  temp-PRODVERCEL/445/a4/README.md
+  temp-PRODVERCEL/445/a4/doc.md
+  temp-PRODVERCEL/485/KVCM/pr-slash/atoms.tech/DEMO_SETUP.md
+  temp-PRODVERCEL/485/KVCM/pr-slash/atoms.tech/README.md
+  temp-PRODVERCEL/485/KVCM/pr-slash/atoms.tech/SLASH_COMMANDS_README.md
+  temp-PRODVERCEL/485/KVCM/pr-slash/atoms.tech/docs/excalidraw-gallery.md
+  temp-PRODVERCEL/485/KVCM/pr-slash/atoms.tech/src/components/custom/BlockCanvas/docs/TableStateManagement.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629115851.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629115938.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120353.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120422.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120442.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120456.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120520.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120532.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120541.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629120859.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121450.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121504.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121513.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121525.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121540.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121555.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121738.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121754.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121813.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121826.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121840.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629121903.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629122024.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629122027.md
+  temp-PRODVERCEL/APIAgent/.history/Sprint_Status_Report_Jan17_Jun29_2025_20250629122028.md
+  temp-PRODVERCEL/APIAgent/ARCHITECTURE_REFACTOR.md
+  ... and 655 more files
+
+
+## 2025-05
+--------------------------------------------------------------------------------
+Total: 120 files
+
+### [temp-PRODVERCEL] (120 files)
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520145030.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520151320.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155133.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155146.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155204.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155222.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155232.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155242.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155253.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155304.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155315.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155327.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155339.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155357.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155409.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250520155423.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521131646.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521131714.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521151434.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521151459.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521151540.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521151557.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521151612.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521151635.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/.history/~/motion-mcp-clone/README_20250521195018.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/README.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/~/motion-mcp-clone/DOCKER.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/~/motion-mcp-clone/MCP_CONFIGURATION.md
+  temp-PRODVERCEL/can-2/mcp-canvas-lms/~/motion-mcp-clone/README.md
+  temp-PRODVERCEL/claude-api/.history/README_20250502182604.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505192544.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505192601.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505193052.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505193104.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505193121.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505201313.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505201325.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505215626.md
+  temp-PRODVERCEL/claude-api/.history/README_20250505215649.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/DECOMPILE-MCP-GUIDE_20250502181220.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/DECOMPILE-MCP-GUIDE_20250505182002.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/DECOMPILE-MCP-GUIDE_20250505182100.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/DECOMPILE-MCP-GUIDE_20250505182112.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/DECOMPILE-MCP-GUIDE_20250505182123.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/MCP-guide_20250502180713.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/MCP-guide_20250502180716.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/MCP-guide_20250502180717.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/README-LLM-INTEGRATION_20250502180412.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/README-LLM-INTEGRATION_20250502181040.md
+  temp-PRODVERCEL/claude-api/.history/decompile-mcp/README-LLM-INTEGRATION_20250502181051.md
+  ... and 70 more files
+
+
+## 2025-04
+--------------------------------------------------------------------------------
+Total: 10662 files
+
+### [temp-PRODVERCEL] (10662 files)
+  temp-PRODVERCEL/330-2/p4/cse330-public/README.md
+  temp-PRODVERCEL/330/p5/cse330-public/README.md
+  temp-PRODVERCEL/340-Proj3/.history/plan_20250416131150.md
+  temp-PRODVERCEL/340-Proj3/.history/plan_20250416131153.md
+  temp-PRODVERCEL/340-Proj3/.history/plan_20250416131159.md
+  temp-PRODVERCEL/340-Proj3/.history/plan_20250416131843.md
+  temp-PRODVERCEL/340-Proj3/.history/plan_20250416133233.md
+  temp-PRODVERCEL/340-Proj3/plan.md
+  temp-PRODVERCEL/dmouse/.history/agent-dashboard/README_20250412231312.md
+  temp-PRODVERCEL/dmouse/.history/agent-dashboard/README_20250412231315.md
+  temp-PRODVERCEL/dmouse/.history/agent-dashboard/README_20250412231317.md
+  temp-PRODVERCEL/dmouse/.history/agent-dashboard/README_20250413015150.md
+  temp-PRODVERCEL/dmouse/.history/agent-dashboard/README_20250413034607.md
+  temp-PRODVERCEL/dmouse/.history/agslag-mvp/README_20250413175052.md
+  temp-PRODVERCEL/dmouse/.history/agslag-mvp/README_20250413175949.md
+  temp-PRODVERCEL/dmouse/agent-dashboard/README.md
+  temp-PRODVERCEL/dmouse/agslag-mvp/README.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/communication-protocol_20250404170440.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/communication-protocol_20250404173133.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/conflict-resolution-process_20250404170647.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/conflict-resolution-process_20250404173350.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/knowledge-transfer-protocols_20250404170755.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/knowledge-transfer-protocols_20250404172250.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/problem-solving-framework_20250404170552.md
+  temp-PRODVERCEL/dmouse/agslag/.history/@/mcp_official-2/prompt-engineering/core-framework/problem-solving-framework_20250404173219.md
+  temp-PRODVERCEL/dmouse/agslag/.history/ARCHITECTURE_20250407171000.md
+  temp-PRODVERCEL/dmouse/agslag/.history/ARCHITECTURE_20250407171006.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/documentation_work_plan_20250402193003.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/documentation_work_plan_20250402193006.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/documentation_work_plan_20250402193016.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402192357.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402192409.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402214302.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402214305.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402214309.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402223252.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402223309.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/progress_evaluation_report_20250402223311.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/project_initialization_plan_20250402184920.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation Plan for Large Scale Agent Development/project_initialization_plan_20250402184932.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Cross-Agent Server Implementation in AGS_20250407234907.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Cross-Agent Server Implementation in AGS_20250407234909.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Cross-Agent Server Implementation in AGS_20250407235238.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Detailed_Re-implementing_Oblix_Report_20250408161907.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Detailed_Re-implementing_Oblix_Report_20250408161916.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Detailed_Re-implementing_Oblix_Report_20250408161925.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Detailed_Re-implementing_Oblix_Report_20250408161934.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Documentation_Organization_Plan_20250409024652.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Documentation_Organization_Plan_20250409024656.md
+  temp-PRODVERCEL/dmouse/agslag/.history/Documentation/Documentation_Organization_Plan_20250409024658.md
+  ... and 10612 more files
+

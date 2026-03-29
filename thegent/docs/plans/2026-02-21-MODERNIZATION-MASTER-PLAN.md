@@ -1,0 +1,286 @@
+# Modernization Master Plan (2026-02-21)
+
+## Purpose
+
+Unify prior audit findings, dependency recommendations, and runtime modularization strategy into one execution plan that aggressively reduces Python LOC while preserving behavior and reliability.
+
+## Canonical Current-State Verdict
+
+1. Core migration succeeded for major library-first surfaces (HTTP, retry, cache, watchers).
+2. Modernization is incomplete for current HEAD due to remaining legacy/debt surfaces, duplicate gate paths, and unresolved runtime modularization.
+3. Python LOC is structurally too high for target product shape and must be reduced through runtime partitioning, not only style-level refactors.
+
+## Evidence Consolidation
+
+Primary source sets:
+- `docs/reports/2026-02-21-LIBRARY-REAUDIT-AND-CODEBASE-ATLAS.md`
+- `docs/governance/POLYGLOT_GOVERNANCE_PARITY_AUDIT_2026-02-20.md`
+- `docs/plans/2026-02-20-MOJO-ZIG-STACK-AUDIT-AND-OPTIMIZATION-PLAN.md`
+- `docs/reference/WORK_STREAM.md`
+- `docs/reports/WORK_AUDIT_2026-02-20.md`
+- `docs/governance/NEXT_50_TASKS_COMPLETION_BATCH_2026-02-20.md`
+- `docs/AUDIT_MODERNIZATION_PLAN.md`
+
+## Executed Checkpoints (Wave-2 / Wave-3, 2026-02-21)
+
+Concrete modernization-adjacent checkpoints already executed and validated:
+
+1. Wave-2 checkpoint: benchmark persistence primitives (WL-115).
+- Landed: `src/thegent/bench/models.py`, `src/thegent/bench/store.py`, `src/thegent/bench/__init__.py`.
+- Validation snapshot: `tests/test_wl115_bench_models.py`, `tests/test_wl115_bench_store.py` passed in focused WL wave run.
+
+2. Wave-2 checkpoint: transcript + grounding extraction hardening (WL-116/WL-119).
+- Landed: `src/thegent/agents/audio_inputs.py` (`.srt` ingestion), `src/thegent/routing/grounding.py` (structured metadata extraction), `src/thegent/cli/commands/impl.py` (structured-first grounding resolution).
+- Validation snapshot: `tests/test_wl116_audio_inputs.py` and `tests/test_wl119_grounding_sources.py` passed in focused WL wave run.
+
+3. Wave-2 checkpoint: local Ollama runtime route normalization (WL-118).
+- Landed: `src/thegent/routing/provider_types.py`, `src/thegent/models/catalog.py`, `src/thegent/routing/litellm_router.py`.
+- Validation snapshot: `tests/test_wl118_ollama_routing.py`, `tests/test_unit_provider_types.py` passed in focused WL wave run.
+
+4. Wave-3 checkpoint: CLI bench run surface and persisted-row path (WL-115).
+- Landed: `src/thegent/bench/runner.py`, `src/thegent/cli/apps/bench.py`, `src/thegent/cli/apps/main.py`.
+- Validation snapshot: `tests/test_wl115_bench_cli.py` passed in focused WL wave run.
+
+5. Wave-3 checkpoint: runtime doctor diagnostics for local provider reliability (WL-118).
+- Landed: `src/thegent/doctor.py` with binary presence + daemon/model diagnostics and remediation hints.
+- Validation snapshot: `tests/test_wl118_ollama_doctor_slice.py` passed in focused WL wave run.
+
+6. Wave-3 checkpoint: grounding-source persistence in run finish logs (WL-119).
+- Landed: `src/thegent/cli/commands/impl.py` + `src/thegent/execution.py` register_end metadata flow.
+- Validation snapshot: `tests/test_wl119_grounding_sources.py` passed in focused WL wave run.
+
+7. Wave-4 checkpoint: bench compare CLI and persisted comparison flow (WL-115).
+- Landed: `src/thegent/cli/apps/bench.py` compare command path with persisted-harness delta output.
+- Validation snapshot: `tests/test_wl115_bench_cli.py` passed in focused WL wave run.
+
+8. Wave-4 checkpoint: run-event metadata capture for transcript + grounding (WL-116/WL-119).
+- Landed: `src/thegent/cli/commands/impl.py` run end-event enrichment path and structured-first source resolution.
+- Validation snapshot: `tests/test_wl116_audio_inputs.py`, `tests/test_wl119_grounding_sources.py` passed in focused WL wave run.
+
+9. Wave-5 checkpoint: JSON compare output and human-facing renderers (WL-115/WL-119).
+- Landed: `src/thegent/cli/apps/bench.py` (`--output-format json`) and `src/thegent/cli/commands/cli.py` grounding/transcript summary renderers.
+- Validation snapshot: `tests/test_wl115_bench_cli.py`, `tests/test_wl119_run_cli_output.py` passed in focused WL wave run.
+
+10. Wave-5 checkpoint: operator remediation and modernization checkpoint tracking (WL-118/WL-120).
+- Landed: `docs/guides/PROVIDER_SETUP_GUIDE.md` Ollama doctor remediation section + this modernization plan checkpoint table.
+- Validation snapshot: `tests/test_wl118_ollama_doctor_slice.py` plus wave-5 agent checkpoint report review.
+
+### Current Checkpoint Table (as of 2026-02-21)
+
+| WL Item | Checkpoint | Current State | Evidence |
+|---|---|---|---|
+| WL-115 | Bench persistence + compare output surfaces | In progress (wave-13 rich compare table now surfaces explicit winner margin row for quick operator scan) | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| WL-116 | Transcript ingestion and run summary metadata | In progress (wave-13 transcript summary now labels zero-char payloads as `empty transcript` when source metadata is valid) | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| WL-118 | Ollama doctor diagnostics + operator remediation docs | In progress (wave-13 actionable hints now include deterministic `[n/3]` index tags for checkpoint/readback clarity) | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| WL-119 | Grounding extraction + human-facing source visibility | In progress (wave-13 grounding URL normalization collapses default root trailing-slash variants for cleaner dedupe) | `src/thegent/routing/grounding.py`, `tests/test_wl119_grounding_sources.py` |
+| WL-120 | Master-plan checkpointing for modernization tracking | In progress (wave-13 checkpoint rows added in this plan) | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+
+### Wave-4/5/6/7/8/9/10/11/12/13 Checkpoint Rows (updated in wave-13)
+
+| Wave | WL Item | Checkpoint Row | Evidence |
+|---|---|---|---|
+| Wave-4 | WL-115 | Bench compare command path + persisted-harness delta output | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-4 | WL-116 | Transcript metadata propagation through run output/event pipeline | `src/thegent/cli/commands/impl.py`, `tests/test_wl116_audio_inputs.py` |
+| Wave-4 | WL-118 | Ollama alias/route normalization hardening | `src/thegent/routing/provider_types.py`, `tests/test_wl118_ollama_routing.py` |
+| Wave-4 | WL-119 | Grounding source persistence in run finish metadata | `src/thegent/cli/commands/impl.py`, `tests/test_wl119_grounding_sources.py` |
+| Wave-5 | WL-115 | `bench compare --output-format json` + rich compare renderer | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-5 | WL-116 | Transcript length/source summary surfaced in run output | `src/thegent/cli/commands/impl.py`, `tests/test_wl116_audio_inputs.py` |
+| Wave-5 | WL-118 | Doctor remediation runbook for local Ollama statuses | `docs/guides/PROVIDER_SETUP_GUIDE.md` |
+| Wave-5 | WL-119 | Human-facing grounding source summary lines in CLI output | `src/thegent/cli/commands/cli.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-5 | WL-120 | Modernization master-plan checkpoint table activation | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-6 | WL-115 | `bench run --output-format json` coverage for CI payload contract | `tests/test_wl115_bench_cli.py` |
+| Wave-6 | WL-116 | Structured output metadata docs for transcript/source fields | `docs/plans/WL-116-AGENT-C-AUDIO-PASSTHROUGH-PLAN.md` |
+| Wave-6 | WL-118 | Ollama doctor severity classification for runtime outcomes | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-6 | WL-119 | Grounding URL normalization helper + dedupe coverage | `src/thegent/routing/grounding.py`, `tests/test_wl119_grounding_sources.py` |
+| Wave-6 | WL-120 | Wave-4/5 checkpoint row expansion in modernization plan | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-7 | WL-115 | Bench CLI contract alignment for `--output-format` and explicit baseline/candidate harness flags | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-7 | WL-116 | UTF-8 BOM-safe transcript ingestion for text/SRT audio inputs | `src/thegent/agents/audio_inputs.py`, `tests/test_wl116_audio_inputs.py` |
+| Wave-7 | WL-118 | Doctor table surfaces severity column for operator triage | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-7 | WL-119 | Grounding payload extraction recognizes `*Url/*Uri/*Link` keys | `src/thegent/routing/grounding.py`, `tests/test_wl119_grounding_sources.py` |
+| Wave-7 | WL-120 | Master checkpoint ledger expanded through wave-7 rows | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-8 | WL-116 | Transcript summary output improves readability with singular/plural source labels | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-8 | WL-118 | Doctor output includes compact status/severity summary and top actionable hints | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-8 | WL-119 | Grounding summary output includes shown/total count and normalized domain rollup | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-8 | WL-120 | Modernization checkpoint ledger extended with wave-8 usability slices | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-9 | WL-115 | Bench output-format normalization adds case/whitespace handling with strict unknown-format rejection | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-9 | WL-116 | Transcript summary output adds grouped char counts and rejects negative metadata payloads | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-9 | WL-118 | Doctor actionable hints are deduplicated using normalized whitespace/casing to reduce repeated guidance | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-9 | WL-119 | Grounding source output de-duplicates repeated URLs while preserving display order | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-9 | WL-120 | Modernization checkpoint ledger extended with wave-9 normalization/usability slices | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-10 | WL-115 | Bench compare accepts mixed-case persisted harness labels via normalized selector matching | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-10 | WL-116 | Transcript summary output uses singular/plural character grammar (`1 char` / `N chars`) | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-10 | WL-118 | Doctor actionable-hint dedupe also collapses trailing punctuation variants | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-10 | WL-119 | Grounding source output de-duplicates case/punctuation URL variants after normalization | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-10 | WL-120 | Modernization checkpoint ledger extended with wave-10 usability/output slices | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-11 | WL-115 | Bench compare rejects same-harness baseline/candidate selections after normalization | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-11 | WL-116 | Transcript summary output adds per-file average chars for multi-file transcript inputs | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-11 | WL-118 | Doctor actionable hints are emitted in stable sorted order after dedupe normalization | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-11 | WL-119 | Grounding domain rollup collapses `www.` and bare-host variants into one domain bucket | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-11 | WL-120 | Modernization checkpoint ledger extended with wave-11 usability/output/checkpoint slices | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-12 | WL-115 | Bench compare JSON output includes winner-margin fields (seconds + percent) | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-12 | WL-116 | Transcript summary output drops invalid zero-source metadata rows | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-12 | WL-118 | Doctor actionable-hints section now includes overflow count for hidden hints beyond top-3 | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-12 | WL-119 | Grounding URL normalization removes default ports (`:80`/`:443`) for stable dedupe | `src/thegent/routing/grounding.py`, `tests/test_wl119_grounding_sources.py` |
+| Wave-12 | WL-120 | Modernization checkpoint ledger extended with wave-12 usability/output/checkpoint slices | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+| Wave-13 | WL-115 | Bench rich compare table now includes explicit winner-margin row (`sec` and `%`) | `src/thegent/cli/apps/bench.py`, `tests/test_wl115_bench_cli.py` |
+| Wave-13 | WL-116 | Transcript summary now renders `empty transcript` wording for valid zero-char metadata | `src/thegent/cli/commands/run_output_helpers.py`, `tests/test_wl119_run_cli_output.py` |
+| Wave-13 | WL-118 | Doctor actionable-hints output includes deterministic `[index/total-shown]` labels | `src/thegent/doctor.py`, `tests/test_wl118_ollama_doctor_slice.py` |
+| Wave-13 | WL-119 | Grounding URL normalization removes root-only trailing slash to improve dedupe consistency | `src/thegent/routing/grounding.py`, `tests/test_wl119_grounding_sources.py` |
+| Wave-13 | WL-120 | Modernization checkpoint ledger extended with wave-13 usability/output/checkpoint slices | `docs/plans/2026-02-21-MODERNIZATION-MASTER-PLAN.md` |
+
+## Problem Statement
+
+Python is absorbing too many responsibilities in one runtime:
+- CLI command surface
+- orchestration and policy glue
+- MCP server wiring
+- infra adapters
+- large compatibility/debt footprints
+- oversized tests in same repository surface
+
+This prevents maintainable scale and makes true quality gates expensive.
+
+## Target Architecture
+
+Split into explicit runtime roles:
+
+1. Python frontmatter (thin)
+- CLI ergonomics, workflow orchestration, user-facing command composition.
+- Strictly no heavy compute kernels or hot-path scanners.
+
+2. Rust backmatter (primary)
+- Governance scanners, policy evaluation, git-intensive operations, parsing, fast gates, high-frequency loops.
+- Single canonical binaries/libs consumed by Python; no duplicate script path.
+
+3. Zig sidecar (specialized)
+- ABI-stable low-level primitives where memory/layout control matters.
+- Optional path behind contract tests and benchmark gates; no business-rule sprawl.
+
+4. Mojo kernels (numeric/heuristic acceleration)
+- Deterministic scoring/ranking kernels with explicit JSON contract.
+- Promoted only where benchmark thresholds are met and reproducible.
+
+## Runtime Modularization Matrix (WL-130 Slice)
+
+> Machine-readable contract: `contracts/runtime/runtime-modularization-matrix.json`
+
+| Workload | Current Surface | Target Runtime | Priority | Benchmark Gate | Rollback Strategy | Owner |
+|---|---|---|---|---|---|---|
+| CLI command dispatch and composition | Python monolith (`cli.py`, `impl.py`) | Python frontmatter + Rust helpers | P0 | No regression in command parity tests | Keep legacy path behind same command contract until parity is green | Runtime Core |
+| Policy/gate evaluation and scanners | Mixed Python + shell | Rust backmatter (`thegent-hooks`) | P0 | <= baseline p95 gate latency; identical policy outcomes | Fallback to existing hook pipeline if Rust gate fails | Governance |
+| MCP transport/tool registry wiring | Python monolith (`mcp/server.py`) | Python thin transport + extracted Rust utilities | P1 | MCP contract tests and e2e tool parity | Retain previous server module routing until split lanes pass | Platform |
+| Low-level memory/layout primitives | Zig POC interop | Zig ABI contract (`thegent-zmx-interop`) | P2 | ABI contract tests + compile checks | Keep subprocess bridge default when ABI lane fails | Runtime Infra |
+| Deterministic scoring/ranking kernels | Placeholder Python/Mojo bridge | Mojo kernel contracts | P2 | Deterministic output fixtures + perf deltas | Route calls back to Python implementation on kernel failure | ML Runtime |
+
+## LOC Reduction Strategy (No Regression)
+
+1. Define core boundary
+- Establish `thegent-core` surface (runtime + essential command set).
+- Move non-core areas (legacy commands, research/dev utilities, bulky helpers) out of core path.
+
+2. Enforce decomposition gates
+- Hard gate <=500 lines/file for changed files first, then full-repo enforcement by phase.
+- Mandatory module split for >800-line files in core runtime.
+
+3. Extract monolith hotspots
+- Priority targets:
+  - `src/thegent/cli/commands/cli.py`
+  - `src/thegent/cli/commands/impl.py`
+  - `src/thegent/mcp/server.py`
+
+4. Runtime migration by contract
+- For each extraction, preserve behavior via:
+  - fixture parity tests
+  - snapshot/contract tests
+  - perf budget checks (latency + memory)
+  - fail-closed gates in CI
+
+5. Test topology rebalance
+- Split test suites into:
+  - core-contract tests
+  - adapter integration tests
+  - long-tail compatibility tests
+- Keep heavy test harnesses out of default fast lanes.
+
+## Dependency Modernization Strategy
+
+1. Remove remaining legacy Rust deps and obsolete compatibility crates where replacements already approved.
+2. Collapse duplicate Python tooling stacks where overlapping checks are redundant.
+3. Promote documented security/supply-chain tooling into actual CI execution paths (SBOM, provenance, vulnerability scan).
+4. Keep one canonical quality DAG path; remove alias/deprecated gate paths after parity validation.
+
+## Consolidated Recommendation Inventory (From Prior Audits)
+
+1. Rust dependency cleanup: remove `lazy_static` holdouts and align with approved modern replacements.
+2. Python tooling simplification: reduce overlapping checker stacks and duplicate lint paths.
+3. Governance lane parity: fully wire max-lines and language lane gates into default CI path.
+4. Supply-chain enforcement: keep release attestation + SBOM generation as mandatory release outputs.
+5. Security scanner breadth: ensure vulnerability and artifact checks cover both Python and Rust deliverables.
+6. Runtime modularization execution: promote Rust backmatter for hot paths; avoid growing Python glue layers.
+7. Zig promotion discipline: keep Zig focused on low-level primitives behind ABI contracts and benchmarks.
+8. Mojo promotion discipline: only move deterministic kernels with measurable wins and stable contracts.
+9. Docs/report hygiene: replace stale “complete” flags with dated re-audit snapshots after major feature batches.
+10. Work-stream governance: keep modernization items dependency-ordered with explicit blockers and acceptance criteria.
+
+## Phased WBS (DAG-Ready)
+
+### Phase A: Baseline and Contracts
+- A1: Freeze baseline metrics (LOC/code split, startup latency, gate durations, failure rates).
+- A2: Define `thegent-core` boundary and package map.
+- A3: Add regression contracts for top monoliths.
+
+### Phase B: Governance Gate Consolidation
+- B1: Make max-lines gate canonical in CI + pre-commit.
+- B2: Retire duplicate/deprecated quality aliases.
+- B3: Ensure governance + security + supply-chain outputs publish in one report artifact.
+
+### Phase C: Monolith Decomposition
+- C1: Split `cli.py` into command-domain modules.
+- C2: Split `impl.py` by feature domains and shared service layer.
+- C3: Split `mcp/server.py` by transport/auth/tools/router boundaries.
+
+### Phase D: Runtime Modularization
+- D1: Migrate high-ROI Python hot paths to Rust backmatter modules.
+- D2: Promote Zig interop from POC to tested ABI component where justified.
+- D3: Promote Mojo kernels for deterministic scoring/ranking workloads where benchmarks pass.
+
+### Phase E: Test and CI Rebalance
+- E1: Partition tests by runtime tier and execution cost.
+- E2: Wire strict fast lane + nightly deep lane.
+- E3: Add no-regression release gates (functional + perf + supply-chain).
+
+## Dependency Graph
+
+- A1 -> A2 -> A3
+- A3 -> B1
+- B1 -> B2 -> B3
+- A3 -> C1, C2, C3
+- C1 -> D1
+- C2 -> D1
+- C3 -> D1
+- D1 -> D2, D3
+- B3, D2, D3 -> E1
+- E1 -> E2 -> E3
+
+## Acceptance Criteria
+
+1. Core Python code lines reduced by >=55% from baseline without feature regression.
+2. Top 3 monolith files removed; each replaced by modular packages with <=500-line policy.
+3. Rust/Zig/Mojo runtime lanes have contract tests and CI gating.
+4. One canonical quality/governance pipeline path; deprecated aliases removed.
+5. Release pipeline emits SBOM + provenance + vulnerability summary artifacts.
+
+## Risks and Controls
+
+1. Risk: behavioral drift during decomposition.
+- Control: snapshot + contract tests before/after each extraction.
+
+2. Risk: runtime split increases ops complexity.
+- Control: runtime doctor checks and fail-fast diagnostics per lane.
+
+3. Risk: “temporary” fallback code becomes permanent.
+- Control: explicit sunset tasks with deadlines and CI checks for fallback patterns.
+
+## Execution Rule
+
+This plan supersedes scattered “complete” snapshots for modernization scope and remains canonical until replaced by a newer dated master plan.

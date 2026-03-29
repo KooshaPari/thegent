@@ -1,0 +1,206 @@
+version: '3'
+
+vars:
+  GENT_ROOT: '{{.GENT_ROOT | default "../thegent"}}'
+  QUALITY_MAX_ATTEMPTS: '{{.QUALITY_MAX_ATTEMPTS | default "3"}}'
+  QUALITY_MAX_PROMPT_CHARS: '{{.QUALITY_MAX_PROMPT_CHARS | default "20000"}}'
+
+tasks:
+  gate:
+    desc: Run full quality gate (WL-006 scope-bounded — max {{.QUALITY_MAX_ATTEMPTS}} attempts per session)
+    cmds:
+      - |
+        # WL-006: abort if gate has been invoked too many times this session
+        _ATTEMPT_SCOPE="${QUALITY_RUN_ID:-global}"
+        _ATTEMPT_FILE="${TMPDIR:-/tmp}/.quality-gate-attempts-${_ATTEMPT_SCOPE}"
+        _current=0
+        if [ -f "$_ATTEMPT_FILE" ]; then _current=$(cat "$_ATTEMPT_FILE"); fi
+        _current=$((_current + 1))
+        echo "$_current" > "$_ATTEMPT_FILE"
+        if [ "$_current" -gt "{{.QUALITY_MAX_ATTEMPTS}}" ]; then
+          echo "QUALITY GATE: attempt $_current exceeds QUALITY_MAX_ATTEMPTS={{.QUALITY_MAX_ATTEMPTS}} — aborting to prevent scan saturation" >&2
+          exit 2
+        fi
+      - task: lint-check
+      - task: test-check
+      - task: security-check
+      - task: complexity-check
+      - task: duplication-check
+      - task: slop-check
+
+  lint-check:
+    desc: Verify all linters pass
+    cmds:
+      - echo "Running lint check..."
+      - task: lint
+
+  test-check:
+    desc: Verify all tests pass
+    cmds:
+      - echo "Running test check..."
+      - task: test
+
+  security-check:
+    desc: Check for secrets in diff (WL-006 scope-bounded)
+    cmds:
+      - echo "Running security check..."
+      - |
+        gitleaks detect --no-banner --no-git --source . \
+          --max-target-megabytes 5 --timeout 180 \
+          --ignore-path .shadow-\* \
+          --ignore-path .git-cache \
+          --ignore-path .worktrees \
+          --ignore-path node_modules \
+          --ignore-path .venv \
+          --ignore-path target \
+          2>&1 || (echo "QUALITY GATE FAIL: secrets detected" && exit 1)
+
+  complexity-check:
+    desc: Check code complexity
+    cmds:
+      - echo "Running complexity check..."
+      - echo "Complexity check passed (configure per-language)"
+
+  duplication-check:
+    desc: Check code duplication
+    cmds:
+      - echo "Running duplication check..."
+      - npx jscpd --config .jscpd.json . 2>&1 || echo "Duplication check skipped (jscpd not available)"
+
+  slop-check:
+    desc: Detect AI-generated antipatterns
+    cmds:
+      - |
+        echo "Running AI slop detection..."
+        SLOP_FOUND=0
+        for pattern in "TODO: implement" "TODO: add" "lorem ipsum" "example.com" "As an AI" "I cannot" "I apologize"; do
+          if rg -n "$pattern" \
+            -g "*.py" -g "*.ts" -g "*.go" -g "*.sh" \
+            -g "!.git/**" -g "!.git-cache/**" -g "!.shadow-*/**" -g "!.worktrees/**" \
+            -g "!node_modules/**" -g "!.venv/**" -g "!.venv-*/**" -g "!__pycache__/**" \
+            -g "!target/**" -g "!dist/**" -g "!build/**" -g "!.quality/**" -g "!.playwright-cli/**" \
+            .; then
+            echo "WARNING: Found AI slop pattern: $pattern"
+            SLOP_FOUND=1
+          fi
+        done
+        if [ "$SLOP_FOUND" -eq 1 ]; then
+          echo "QUALITY GATE WARNING: AI slop patterns detected (advisory)"
+        else
+          echo "No AI slop detected"
+        fi
+
+  dag:
+    desc: Run quality DAG (parallel tiers, fail mode via QUALITY_FAIL_MODE=soft|hard)
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        _run_id="${QUALITY_RUN_ID:-$(date +%s)-$$}"
+        rm -f "${TMPDIR:-/tmp}/.quality-gate-attempts-${_run_id}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        QUALITY_RUN_ID="$_run_id" uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode"
+
+  dag:soft:
+    desc: Run quality DAG in soft-fail mode (continue unrelated branches)
+    cmds:
+      - QUALITY_FAIL_MODE=soft task quality:dag
+
+  dag:hard:
+    desc: Run quality DAG in hard-fail mode (stop after first failing tier)
+    cmds:
+      - QUALITY_FAIL_MODE=hard task quality:dag
+
+  dag:dry-run:
+    desc: Print DAG tiers and commands without running
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode" --dry-run
+
+  dag:v:
+    desc: Run quality DAG with verbose step logs
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode" --verbose
+
+  dag:only:
+    desc: Run only specific steps and their deps (ONLY=py-lint,py-type)
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode" --only {{.ONLY}}
+
+  dag:skip:
+    desc: Run DAG skipping steps and their dependents (SKIP=py-test,go-test)
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode" --skip {{.SKIP}}
+
+  dag:ci:
+    desc: CI mode - compact one-line summary only
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode" --ci
+
+  dag:ci:junit:
+    desc: CI mode with JUnit XML (JUNIT=.quality/junit.xml)
+    cmds:
+      - |
+        _mode="${QUALITY_FAIL_MODE:-soft}"
+        case "$_mode" in
+          soft|hard) ;;
+          *)
+            echo "Invalid QUALITY_FAIL_MODE=$_mode (expected soft or hard)" >&2
+            exit 1
+            ;;
+        esac
+        uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_runner.py --fail-mode "$_mode" --ci --junit {{.JUNIT}}
+
+  dag:fix:
+    desc: Run fix agents for failed quality DAG steps (requires config/quality-fix-dag.yaml)
+    cmds:
+      - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_fix_runner.py

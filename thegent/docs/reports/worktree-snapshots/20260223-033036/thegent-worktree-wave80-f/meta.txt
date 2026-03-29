@@ -1,0 +1,3 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave80-f
+branch=codex/wave80-lane-f-workstream-update
+head=abe4b8c48cc1146df249838fb500ba391442075c

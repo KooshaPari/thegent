@@ -1,0 +1,98 @@
+{
+  "version": "1.0.0",
+  "kernel": "score_rank_v1",
+  "description": "Deterministic test cases for the Mojo calculate_provider_score kernel. Formula: score = floor((0.4*quality + 0.35*cost + 0.25*latency) * 1000) / 1000, bounded [0.0, 1.0].",
+  "wl_trace": "WL-133 B90-W2-D5",
+  "cases": [
+    {
+      "case_id": "det_001",
+      "description": "F1: all-ones — all inputs at maximum",
+      "input": {
+        "cost_score": 1.0,
+        "quality_score": 1.0,
+        "latency_score": 1.0
+      },
+      "expected_output": {
+        "score": 1.0,
+        "success": true
+      }
+    },
+    {
+      "case_id": "det_002",
+      "description": "F2: all-zeros — all inputs at minimum",
+      "input": {
+        "cost_score": 0.0,
+        "quality_score": 0.0,
+        "latency_score": 0.0
+      },
+      "expected_output": {
+        "score": 0.0,
+        "success": true
+      }
+    },
+    {
+      "case_id": "det_003",
+      "description": "F3: mid — typical values with known floor result",
+      "input": {
+        "cost_score": 0.8,
+        "quality_score": 0.9,
+        "latency_score": 0.7
+      },
+      "expected_output": {
+        "score": 0.815,
+        "success": true
+      }
+    },
+    {
+      "case_id": "det_004",
+      "description": "F4: rounding-floor — repeating decimals, verify floor-not-round",
+      "input": {
+        "cost_score": 0.3333,
+        "quality_score": 0.6666,
+        "latency_score": 0.9999
+      },
+      "expected_output": {
+        "score": 0.633,
+        "success": true
+      }
+    },
+    {
+      "case_id": "det_005",
+      "description": "F5: upper-bound clamp — values > 1.0 must be bounded to 1.0",
+      "input": {
+        "cost_score": 1.2,
+        "quality_score": 1.2,
+        "latency_score": 1.2
+      },
+      "expected_output": {
+        "score": 1.0,
+        "success": true
+      }
+    },
+    {
+      "case_id": "det_006",
+      "description": "F6: lower-bound clamp — negative cost score must be bounded to 0.0",
+      "input": {
+        "cost_score": -0.5,
+        "quality_score": 0.2,
+        "latency_score": 0.1
+      },
+      "expected_output": {
+        "score": 0.0,
+        "success": true
+      }
+    },
+    {
+      "case_id": "det_007",
+      "description": "F7: contract-missing — omitting quality_score must raise ValueError",
+      "input": {
+        "cost_score": 0.5,
+        "latency_score": 0.5
+      },
+      "expected_output": {
+        "error": "ValueError",
+        "success": false
+      }
+    }
+  ]
+}

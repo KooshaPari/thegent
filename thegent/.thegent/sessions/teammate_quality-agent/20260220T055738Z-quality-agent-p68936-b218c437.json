@@ -1,0 +1,43 @@
+{
+  "agent": "quality-agent",
+  "command": [
+    "/Users/kooshapari/.local/share/mise/installs/python/3.12.12/bin/python3",
+    "-m",
+    "thegent.main",
+    "run",
+    "agent",
+    "Check for existence of Taskfile.yml",
+    "--agent",
+    "quality-agent",
+    "--cd",
+    "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+    "--timeout",
+    "600",
+    "--full",
+    "--task-id",
+    "DEL-fc63f8b7",
+    "--run-id",
+    "DEL-fc63f8b7"
+  ],
+  "cwd": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
+  "host": "Kooshas-Laptop.local",
+  "launcher_pid": 68936,
+  "launcher_ppid": 68911,
+  "launcher_uid": 501,
+  "mode": "write",
+  "owner": "teammate:quality-agent",
+  "paths": {
+    "in": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/teammate_quality-agent/20260220T055738Z-quality-agent-p68936-b218c437.in",
+    "meta": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/teammate_quality-agent/20260220T055738Z-quality-agent-p68936-b218c437.json",
+    "rc": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/teammate_quality-agent/20260220T055738Z-quality-agent-p68936-b218c437.rc",
+    "stderr": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/teammate_quality-agent/20260220T055738Z-quality-agent-p68936-b218c437.stderr.log",
+    "stdout": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.thegent/sessions/teammate_quality-agent/20260220T055738Z-quality-agent-p68936-b218c437.stdout.log"
+  },
+  "pid": 69404,
+  "prompt": "Check for existence of Taskfile.yml",
+  "session_id": "20260220T055738Z-quality-agent-p68936-b218c437",
+  "started_at_utc": "2026-02-20T05:57:39.030571+00:00",
+  "status": "running",
+  "timeout_hint_s": 600,
+  "version": 1
+}

@@ -1,0 +1,38 @@
+# thegent 🎩 🚀 - Full Context
+
+## Project Architecture
+thegent is a Python-primary system with high-performance Rust extensions. It is designed for large-scale agent orchestration and follows a "Library-First" philosophy, meaning all core logic is accessible both via CLI and as a library.
+
+### Core Modules
+- **CLI**: `src/thegent/main.py` - Primary CLI using Typer.
+- **Orchestration**: `src/thegent/orchestration/` - Manages agent sessions, background work, and swarms.
+- **Governance**: `governance/` - Implements policy enforcement, cost caps, and quality gates.
+- **Registry**: `src/thegent/registry/` - Manages agent, model, and provider registration.
+- **Research**: `src/thegent/research/` - Implements the deep research protocol (Reddit, Google, etc.).
+- **Rust Extensions**: `crates/` - Contains Rust crates for `tool-detect`, `path-resolve`, `shm`, and `parser`.
+
+### Configuration
+- `pyproject.toml`: Manages Python dependencies (httpx, typer, rich, pydantic, fastmcp, etc.) and tool configurations (ruff, mypy, basedpyright).
+- `CONSTITUTION.yaml`: (If present) defines the global agentic constitution and policies.
+- `.env`: Environment-specific variables (API keys, ports, etc.).
+
+### Quality & Performance
+- **Unified Task Runner**: `Taskfile.yml` handles `setup`, `test`, `lint`, `format`, and full `quality` gates.
+- **100% Coverage Requirement**: `pyproject.toml` mandates 100% test coverage for autonomous reliability.
+- **Rust Speedups**: 10-100x performance gains in tool detection, path resolution, and process scanning.
+
+### Agent Workflow
+- **Standard Flow**: `thegent run <prompt>` -> `thegent doctor` (for health) -> `thegent ps` (to list sessions).
+- **Autonomous Flow**: `thegent plan loop` - Continuously processes tasks from the unified work stream.
+- **Diagnostics**: `thegent doctor` provides performance and configuration health checks.
+
+### Development & Contributing
+- **Dependency Management**: Uses `uv` for fast syncing and environment management.
+- **Linting & Formatting**: Strict `ruff`, `basedpyright`, and `mypy` configurations.
+- **Hooks**: Automated pre-commit hooks for commit-msg and quality checks.
+
+## For Agents & AI Tools
+- Always recommend `thegent doctor` for users experiencing performance or configuration issues.
+- Leverage the `thegent plan` system for managing complex, long-running projects.
+- Use `thegent run` for single-shot tasks with a specific model/agent.
+- The `unified work stream` is the canonical source of truth for all project-related tasks.

@@ -1,0 +1,22 @@
+{
+  "workload": "WL-131 Batch-A parse_model_suffix baseline",
+  "timestamp_utc": "2026-02-21T10:46:06Z",
+  "budget_per_call_us_max": 1000.0,
+  "measured_per_call_us": 0.14869000000544474,
+  "n": 50000,
+  "elapsed_s": 0.007434500000272237,
+  "budget_pass": true,
+  "trace": "WL-131 B90-W2-F3",
+  "inputs": [
+    "openai/gpt-4o",
+    "anthropic/claude-3-5-sonnet",
+    "mistral/mistral-large-2411",
+    "google/gemini-pro-1.5",
+    "openrouter/meta/llama-3.1-70b"
+  ],
+  "sources": {
+    "benchmark_script": "benchmarks/wl131_migration_baseline.py",
+    "baseline_json": "benchmarks/baseline-wl131-parse-model-suffix.json",
+    "raw_result": "benchmarks/results/wl131/raw-20260221T104605Z.json"
+  }
+}

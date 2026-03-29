@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "arguments-have-descriptions": "error",
+    "defined-types-are-used": "error",
+    "deprecations-have-a-reason": "error",
+    "descriptions-are-capitalized": "error",
+    "enum-values-all-caps": "error",
+    "enum-values-have-descriptions": "error",
+    "fields-are-camel-cased": "error",
+    "fields-have-descriptions": "error",
+    "input-object-fields-sorted-alphabetically": "warn",
+    "input-object-values-are-camel-cased": "error",
+    "input-object-values-have-descriptions": "error",
+    "relay-connection-types-spec": "warn",
+    "relay-page-info-spec": "warn",
+    "type-fields-sorted-alphabetically": "warn",
+    "types-are-capitalized": "error",
+    "types-have-descriptions": "error"
+  }
+}

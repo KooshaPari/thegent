@@ -1,0 +1,9 @@
+# Clippy — Rust linter config (max strictness)
+# Add to Cargo.toml or clippy.toml
+# Run: cargo clippy -- -D warnings -W clippy::pedantic -W clippy::nursery
+
+msrv = "1.75.0"
+cognitive-complexity-threshold = 15
+too-many-arguments-threshold = 7
+type-complexity-threshold = 250
+single-char-binding-names-threshold = 4

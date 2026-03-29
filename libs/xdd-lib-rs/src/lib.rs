@@ -40,7 +40,7 @@
 //! ## Example
 //!
 //! ```rust
-//! use phenotype_xdd_lib::property::strategies::valid_uuid;
+//! use xdd_lib_rs::property::strategies::valid_uuid;
 //!
 //! proptest::prop_assert!(valid_uuid("550e8400-e29b-41d4-a716-446655440000").is_ok());
 //! ```

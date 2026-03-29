@@ -1,0 +1,82 @@
+# UX/AX Design Audit & Modernization Plan
+
+> **Status**: 🟢 **DRAFT** | **Date**: 2026-02-20
+> **Scope**: CLI Intuition, MCP Tool Design, Agent-to-Agent Interfaces (AgInterFace)
+
+---
+
+## 1. Executive Summary
+
+Current CLI interactions in `thegent` are technically sound but suffer from **verbosity friction** and **conceptual misalignment**. Specifically, service management (`control-plane serve`) is exposed as a low-level primitive rather than a high-level orchestration action.
+
+This plan proposes moving towards a **"Single Entry Point"** UX where `thegent up` handles the complex stack, while simplifying command structures for both humans and agents (AX).
+
+---
+
+## 2. CLI Audit: Friction Points
+
+| Command | Friction | Local Principle | Proposed Fix |
+|---------|----------|-----------------|--------------|
+| `thegent control-plane serve --port 3848` | **Low-level leak**: Port management should be implicit. | *Progressive Disclosure* | `thegent cp up` (implicit config) |
+| `thegent control-plane status` | **Verbosity**: 21 characters for a health check. | *Reduce Verbosity* | `thegent cp status` |
+| `thegent orchestrate run` | **Nesting**: Nested groups increase cognitive load. | *Flat is Better* | `thegent run` (already exists, but maintain consistency) |
+| `thegent teammates status` | **Discovery**: Unclear if it's local or global. | *Discovery* | `thegent swarm status` |
+
+---
+
+## 3. AgInterFace (Agent Interface) Design Principles
+
+Agents do not "see" icons or colors; they see **semantics** and **schemas**.
+
+### 3.1 Semantic Precision (The "LLM Hinting" Pattern)
+Tools should include keywords that align with LLM training data:
+- **Good**: "Deterministic list of sessions."
+- **Better**: "Returns a 4-tuple of (id, status, owner, started_at). Idempotent."
+
+### 3.2 Actionable Error Envelopes
+Errors must be **self-correcting**:
+- ❌ `Error: 401 Unauthorized`
+- ✅ `Error: Unauthorized. Action: Run 'thegent login <provider>' to restore credentials.`
+
+### 3.3 Batching & Round-trip Reduction
+Reduce the "Chain of Thought" length by allowing multi-resource queries.
+- `thegent_inspect(run_ids=["id1", "id2"])` instead of two calls.
+
+---
+
+## 4. Implementation Plan
+
+### Phase 1: High-Level Orchestration (`thegent up`)
+- [ ] Create `thegent up` command: Starts `process-compose.yaml` (CP + MCP + Proxy).
+- [ ] Create `thegent down` command: Stops the stack.
+- [ ] Create `thegent ps` (top-level): Unified view of services and agent runs.
+
+### Phase 2: Command Aliases (The "Shortcuts" Phase)
+- [ ] `cp` -> `control-plane`
+- [ ] `tm` -> `teammates`
+- [ ] `gov` -> `govern`
+
+### Phase 3: MCP UX Hardening
+- [ ] **Annotations**: Wire `TOOL_ICONS` when FastMCP supports them.
+- [ ] **Elicitation**: Use `context.elicit` for missing parameters instead of failing.
+- [ ] **Progress**: Use `context.report_progress` for long-running agent tasks.
+
+### Phase 4: Intelligent Defaults
+- [ ] `control-plane serve` should auto-detect `THGENT_CONTROL_PLANE_PORT` or find free port.
+- [ ] Update documentation to prioritize `up` over `serve`.
+
+---
+
+## 5. Success Metrics
+
+- **Round-trip count**: Number of tool calls required for common tasks (e.g., "start a task and watch logs") should decrease by 30%.
+- **Agent Success Rate**: Reduction in "Unknown Command" or "Invalid Flag" errors in agent transcripts.
+- **Cognitive Load**: Character count reduction for primary workflows.
+
+---
+
+## 6. References
+
+- [DX_UX_AX_CONTINUOUS_IMPROVEMENT_SYSTEM.md](../research/DX_UX_AX_CONTINUOUS_IMPROVEMENT_SYSTEM.md)
+- [PERFORMANCE_AND_QOL_MANIFEST_2026.md](../research/PERFORMANCE_AND_QOL_MANIFEST_2026.md)
+- [FASTMCP_ICONS_UX_HINTS.md](../guides/FASTMCP_ICONS_UX_HINTS.md)

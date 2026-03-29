@@ -1,0 +1,23 @@
+{
+  "id": "US-E3",
+  "title": "Atomic File Operations",
+  "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/docs/plans/PRD.md",
+  "status": "pending",
+  "as_a": "concurrent agent coordinator",
+  "i_want_to": "safely write to shared files",
+  "so_that": "no data corruption occurs under concurrency",
+  "acceptance_criteria": [
+    "Implement flock-based atomic writes",
+    "Convert qa-state.json writes to atomic operations",
+    "Convert session-changes.log appends to atomic operations",
+    "Test with 50+ concurrent agents"
+  ],
+  "progress": {
+    "flock_atomic_writes": "pending",
+    "qa_state_atomic": "pending",
+    "session_changes_atomic": "pending",
+    "test_concurrent_50": "pending"
+  },
+  "open_questions": [],
+  "decisions": []
+}

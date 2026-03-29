@@ -1,0 +1,12 @@
+# GitHub CLI configuration
+# Run: gh auth login to authenticate
+
+# Default protocol for git operations
+git_protocol: https
+
+# Editor used for composing commits
+editor: vim
+
+# GHE instance (uncomment if using GitHub Enterprise)
+# api_url: https://github.example.com/api/v3
+# web_url: https://github.example.com

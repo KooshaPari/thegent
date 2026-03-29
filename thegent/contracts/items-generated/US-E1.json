@@ -1,0 +1,21 @@
+{
+  "id": "US-E1",
+  "title": "Diagnose Timeout Failures",
+  "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/docs/plans/PRD.md",
+  "status": "in_progress",
+  "as_a": "platform engineer",
+  "i_want_to": "understand all git commands without timeouts",
+  "so_that": "I can eliminate timeout failures systematically",
+  "acceptance_criteria": [
+    "Audit all git commands in hooks/lib/common.sh",
+    "Identify timeout risks in test-maturity.sh, task-completion-verifier.sh",
+    "Document timeout scenarios (idle 180s, absolute 600s)"
+  ],
+  "progress": {
+    "audit_git_commands": "complete",
+    "identify_timeout_risks": "complete",
+    "document_timeout_scenarios": "complete"
+  },
+  "open_questions": [],
+  "decisions": []
+}

@@ -1,0 +1,134 @@
+# golangci-lint — Go linter config (strict, 50+ linters — trace-level)
+# Copy to project .golangci.yml
+
+run:
+  timeout: 5m
+  issues-exit-code: 1
+
+linters:
+  enable:
+    # Phase 1-3: basic correctness and safety
+    - bodyclose
+    - contextcheck
+    - cyclop
+    - dupl
+    - depguard
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gci
+    - gochecknoinits
+    - gocheckcompilerdirectives
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gofmt
+    - goimports
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - grouper
+    - ineffassign
+    - lll
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - stylecheck
+    - tenv
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    # Phase 4: style enforcement
+    - paralleltest
+    # Phase 5: strict naming and maintainability
+    - varnamelen
+    - tagliatelle
+    # Phase 6: extreme strictness
+    - exhaustruct
+    - exptostd
+    - usestdlibvars
+    - sloglint
+    - testifylint
+    - godox
+    - asciicheck
+
+linters-settings:
+  cyclop:
+    max-complexity: 10
+  funlen:
+    lines: 60
+    statements: 40
+  gocognit:
+    min-complexity: 15
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+  lll:
+    line-length: 120
+  nestif:
+    min-complexity: 4
+  varnamelen:
+    min-name-length: 2
+  maintidx:
+    under: 20
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-use-default: false

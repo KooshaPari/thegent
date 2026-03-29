@@ -1,0 +1,26 @@
+# Strict Perl::Critic configuration — severity 1 (harsh)
+severity = 1
+verbose = %f:%l:%c: [%s] %m (%e)\n
+color = 1
+theme =
+
+# Perl Best Practices
+[CodeLayout::RequireTidyCode]
+perltidyrc = perltidyrc
+
+[InputOutput::RequireCheckedSyscalls]
+functions = :builtins
+exclude_functions = print say
+
+[Modules::RequireVersionVar]
+severity = 3
+
+[Documentation::RequirePodSections]
+lib_sections = NAME | SYNOPSIS | DESCRIPTION | AUTHOR
+script_sections = NAME | SYNOPSIS | DESCRIPTION | AUTHOR
+
+[RegularExpressions::RequireExtendedFormatting]
+minimum_regex_length_to_complain_about = 10
+
+[ValuesAndExpressions::ProhibitMagicNumbers]
+allowed_values = -1 0 1 2

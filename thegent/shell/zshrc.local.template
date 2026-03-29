@@ -1,0 +1,105 @@
+# ~/.zshrc.local — Your custom zsh plugins (thegent never overwrites this)
+# Copy: cp thegent/shell/zshrc.local.template ~/.zshrc.local
+# See: docs/guides/SHELL_ZSH_PLUGIN_SETUP.md
+
+# -----------------------------------------------------------------------------
+# 1. Node version manager: fnm (fast) or mise (polyglot)
+# -----------------------------------------------------------------------------
+# Option A: fnm (Node only)
+# [[ -n "$(command -v fnm 2>/dev/null)" ]] && eval "$(fnm env --use-on-cd --shell zsh)"
+
+# Option B: mise (Node, Python, Go, etc.)
+if command -v mise &>/dev/null; then
+  eval "$(mise activate zsh 2>/dev/null)" || true
+elif [[ -x "$HOME/.local/bin/mise" ]]; then
+  eval "$("$HOME/.local/bin/mise" activate zsh 2>/dev/null)" || true
+fi
+
+# -----------------------------------------------------------------------------
+# 2. Completions + fzf-tab (load in this order)
+# -----------------------------------------------------------------------------
+autoload -U compinit
+compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump-$ZSH_VERSION"
+
+# fzf-tab: replace default completion menu with fzf (requires fzf installed)
+if [[ -f "${HOME}/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]]; then
+  source "${HOME}/.zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
+fi
+
+# -----------------------------------------------------------------------------
+# 3. zsh-autosuggestions (optional)
+# -----------------------------------------------------------------------------
+if [[ -f "${HOME}/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+  source "${HOME}/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+
+# -----------------------------------------------------------------------------
+# 4. fast-syntax-highlighting (optional, load last)
+# -----------------------------------------------------------------------------
+if [[ -f "${HOME}/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh" ]]; then
+  source "${HOME}/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
+fi
+
+# -----------------------------------------------------------------------------
+# 5. Prompt: starship or powerlevel10k
+# -----------------------------------------------------------------------------
+# Option A: starship (cross-shell)
+# if command -v starship &>/dev/null; then
+#   eval "$(starship init zsh)"
+# fi
+
+# Option B: powerlevel10k
+if [[ -f "${HOME}/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+  source "${HOME}/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme"
+fi
+
+# -----------------------------------------------------------------------------
+# 6. Secrets (create ~/.zshrc.secrets manually, never commit)
+# -----------------------------------------------------------------------------
+[[ -f "${HOME}/.zshrc.secrets" ]] && source "${HOME}/.zshrc.secrets"
+
+# -----------------------------------------------------------------------------
+# 7. TTY input self-heal (Ghostty/extended key mode desync guard)
+# -----------------------------------------------------------------------------
+# If a prior app leaves terminal modes in a bad state, common keys can emit
+# raw escape fragments (e.g., ";5u", "^M"). Normalize TTY before each prompt.
+if [[ -o interactive ]]; then
+  _thegent_tty_self_heal() {
+    stty sane 2>/dev/null || true
+    stty intr '^C' quit '^\\' erase '^?' kill '^U' 2>/dev/null || true
+    # Disable keyboard-protocol modes that can leak raw CSI-u fragments.
+    # 1) xterm modifyOtherKeys off
+    [[ -t 1 ]] && printf '\e[>4;0m' || true
+    # 2) kitty keyboard protocol restore/disable
+    [[ -t 1 ]] && printf '\e[<u' || true
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook precmd _thegent_tty_self_heal
+
+  # Ensure terminal modes are normalized around Neovim sessions too.
+  nvim() {
+    stty sane 2>/dev/null || true
+    stty intr '^C' quit '^\\' erase '^?' kill '^U' 2>/dev/null || true
+    [[ -t 1 ]] && printf '\e[>4;0m' || true
+    [[ -t 1 ]] && printf '\e[<u' || true
+    command nvim "$@"
+    stty sane 2>/dev/null || true
+    stty intr '^C' quit '^\\' erase '^?' kill '^U' 2>/dev/null || true
+    [[ -t 1 ]] && printf '\e[>4;0m' || true
+    [[ -t 1 ]] && printf '\e[<u' || true
+  }
+fi
+
+# -----------------------------------------------------------------------------
+# 8. Optional: fd as find for simple cases (macOS find doesn't support -q)
+# Use: alias find='fd_find_safe' or similar if you want fd for trivial find
+# -----------------------------------------------------------------------------
+# if command -v fd &>/dev/null; then
+#   fd_find_safe() {
+#     if [[ $# -le 2 && -e "${1:-.}" ]]; then
+#       fd . "${1:-.}"
+#     else
+#       command find "$@"
+#     fi
+#   }
+# fi

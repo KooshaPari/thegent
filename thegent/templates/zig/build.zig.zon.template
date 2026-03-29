@@ -1,0 +1,18 @@
+.{
+    .name = "{{ project_name }}",
+    .version = "0.1.0",
+    .minimum_zig_version = "0.14.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src/",
+        "tests/",
+    },
+    // Dependencies (if using a package manager like zigmod or aquila)
+    // .dependencies = .{
+    //     .example = .{
+    //         .url = "https://github.com/example/repo/archive/main.tar.gz",
+    //         .hash = "1220...",
+    //     },
+    // },
+}

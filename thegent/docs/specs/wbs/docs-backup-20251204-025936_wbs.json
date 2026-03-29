@@ -1,0 +1,180 @@
+{
+  "project": "docs-backup-20251204-025936",
+  "wbs_elements": 89,
+  "tree": {
+    "docs-backup-20251204-025936-wbs-5": {
+      "id": "docs-backup-20251204-025936-wbs-5",
+      "name": "CLI docs (CLI_*.md)",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "docs-backup-20251204-025936-wbs-5.": {
+          "id": "docs-backup-20251204-025936-wbs-5.",
+          "name": "Why Upstash + Hatchet?",
+          "description": "**Problem**: Simple jobs (Upstash) vs complex workflows (Hatchet).\n\n**Solution**: Use both for different use cases.\n\n**Benefit**:\n- Right tool for job complexity\n- Cost efficiency (Upstash free tier)\n- No redundancy (NATS for pub/sub, not workflows)\n\n---\n\n## Gap Analysis Summary\n\n### Fully Implemented \u2705\n- PostgreSQL schema (core tables)\n- Neo4j multi-tenant client\n- NATS async jobs\n- Plugin architecture\n- agentapi/CLIProxyAPI wrappers\n- VoyageAI embeddings plugin\n- Cost engine (basic)\n- vibepr",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-5.1": {
+          "id": "docs-backup-20251204-025936-wbs-5.1",
+          "name": "Scope System Architecture",
+          "description": "**Research Output**: `/tmp/` contains complete DSL scope implementation (1,900+ lines)\n\n**5 Scope Levels with Persistence**:\n\n| Scope | Lifetime | Storage | Use Case | Example |\n|-------|----------|---------|----------|---------|\n| **BLOCK** | Function execution | Memory only | Temporary calculations | Loop counter, temp result |\n| **TOOL_CALL** | Single tool invocation | Memory only | Tool state | HTTP response cache |\n| **PROMPT_CHAIN** | Multi-turn conversation | Redis (session-scoped) | Conversation context | Message history |\n| **SESSION** | Entire CLI session | SQLite/Supabase | Working state | User prefs, workspace config |\n| **GLOBAL** | Cross-session | Supabase (permanent) | Shared utilities | API keys, common functions |\n| **PERMANENT** | Forever | Supabase + FS | Canonical DSL extensions | User-defined tools |\n\n**Implementation Pattern**:\n```python\nfrom dsl_scope import get_dsl_scope_system, ScopeLevel\n\ndsl = get_dsl_scope_system()\n\n# Scoped variable operations\nasync with dsl.session_context(\"user_session_123\"):\n    # Set in session scope\n    await dsl.set(\"user_id\", \"user_42\", ScopeLevel.SESSION)\n\n    # Set in prompt chain scope\n    async with dsl.prompt_chain_context(\"chat_001\", turn=1):\n        await dsl.set(\"messages\", [], ScopeLevel.PROMPT_CHAIN)\n\n        # Auto-lookup across hierarchy\n        user = await dsl.get(\"user_id\")  # Finds in session scope\n        messages = await dsl.get(\"messages\")  # Finds in prompt_chain scope\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-5.2": {
+          "id": "docs-backup-20251204-025936-wbs-5.2",
+          "name": "Background Task Management",
+          "description": "**Syntax**: Shell-like `bg`/`await` pattern\n\n```python\n# Create background task\nasync def long_running_analysis():\n    await asyncio.sleep(10)\n    return {\"result\": \"analysis complete\"}\n\ntask_id = await dsl.create_background_task(long_running_analysis)\nawait dsl.run_background_task(task_id)\n\n# Continue other work while task runs\nawait dsl.set(\"status\", \"processing\", ScopeLevel.PROMPT_CHAIN)\n\n# Later, retrieve result\nresult = await dsl.get_task_result(task_id)\n\n# Suspend/resume (Ctrl+Z equivalent)\nawait dsl.suspend_task(task_id)  # Pause\nawait dsl.resume_task(task_id)   # Continue\n```\n\n**Implementation Details**:\n- Uses `asyncio.create_task()` with strong references\n- Task lifecycle: PENDING \u2192 RUNNING \u2192 COMPLETED/FAILED/CANCELLED\n- State preservation on suspend (for resumption)\n- Automatic cleanup on session end",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-5.3": {
+          "id": "docs-backup-20251204-025936-wbs-5.3",
+          "name": "Type System with Generified Types",
+          "description": "**Tool Primitives as First-Class Types**:\n\n```python\nfrom typing import Protocol, TypeVar, Generic\n\nT_Input = TypeVar('T_Input', bound='Serializable')\nT_Output = TypeVar('T_Output', bound='Serializable')\n\nclass ToolProtocol(Protocol[T_Input, T_Output]):\n    \"\"\"Generic protocol for typed tools.\"\"\"\n    async def execute(self, input: T_Input) -> T_Output: ...\n    @property\n    def input_type(self) -> type[T_Input]: ...\n    @property\n    def output_type(self) -> type[T_Output]: ...\n\n# Tool composition with type safety\ntool_a: ToolProtocol[str, dict]\ntool_b: ToolProtocol[dict, list]\n\n# Composition validates types at compile time\ncomposed = tool_a >> tool_b  # OK: dict connects them\n```\n\n**Contracts**:\n```python\nfrom pydantic import BaseModel, Field\n\nclass InputContract(BaseModel):\n    \"\"\"Define expected input structure.\"\"\"\n    fields: dict[str, FieldSchema]\n    min_fields: int = 0\n    max_fields: int | None = None\n\n# Validate at runtime\nvalidator = ContractValidator()\nvalid, errors = validator.validate(data, contract)\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-5.4": {
+          "id": "docs-backup-20251204-025936-wbs-5.4",
+          "name": "DSL Extension CRUD",
+          "description": "**Storage Architecture**:\n```\nExtensions Database:\n\u251c\u2500 SQLite: Metadata (name, scope, version, created_at, source_hash)\n\u251c\u2500 Filesystem: Source code (.dsl_extensions/{scope}/{name}_v{version}.py)\n\u2514\u2500 Redis: Runtime cache (loaded modules for fast access)\n```\n\n**Natural CRUD API**:\n```python\n# CREATE\n@scope.permanent\nasync def my_custom_tool(arg: str) -> dict:\n    \"\"\"User-defined tool becomes part of DSL.\"\"\"\n    return {\"processed\": arg.upper()}\n\n# Or programmatically\nawait dsl.define(\n    name=\"fetch_and_parse\",\n    scope=ScopeLevel.PROJECT,\n    implementation=\"\"\"\nasync def fetch_and_parse(url: str) -> dict:\n    data = await http.get(url)\n    return json.parse(data)\n    \"\"\"\n)\n\n# READ\nextensions = await dsl.find(\"fetch*\")  # Fuzzy search\ninfo = await dsl.info(\"fetch_and_parse\")  # Get details\n\n# UPDATE\nawait dsl.update(\"fetch_and_parse\", new_implementation)  # Auto-version\n\n# DELETE\nawait dsl.delete(\"fetch_and_parse\", soft=True)  # Mark inactive\nawait dsl.delete(\"fetch_and_parse\", soft=False)  # Hard delete with audit\n```\n\n**Security** (Defense in Depth):\n1. **AST Validation**: Parse code, reject dangerous constructs (exec, eval, import)\n2. **Restricted Builtins**: Safe subset only (no open, __import__, etc.)\n3. **Namespace Isolation**: Extensions can't access internal state\n4. **Container Sandboxing**: Run in limited Docker container (CPU/memory/network caps)\n5. **Audit Logging**: All CRUD operations logged with timestamp/user/scope\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "docs-backup-20251204-025936-wbs-3": {
+      "id": "docs-backup-20251204-025936-wbs-3",
+      "name": "Architecture docs (ARCHITECTURE_*, CLEAN_*, EXTENSION_*)",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "docs-backup-20251204-025936-wbs-3.": {
+          "id": "docs-backup-20251204-025936-wbs-3.",
+          "name": "Why Byzantine Ensemble Router?",
+          "description": "**Problem**: Single router can fail or be gamed.\n\n**Solution**: 6 diverse routers, weighted voting, min 4/6 consensus.\n\n**Benefit**:\n- Fault tolerance (2 Byzantine failures)\n- Diverse strategies (learned + heuristic)\n- Explainable decisions",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-3.1": {
+          "id": "docs-backup-20251204-025936-wbs-3.1",
+          "name": "Bi-Directional GraphQL Schema (Complete)",
+          "description": "**Location**: `/tmp/complete_bifrost_schema.graphql` (from research agent)\n\n**Key Subscriptions** (Bifrost \u2192 SmartCP PUSH):\n```graphql\ntype Subscription {\n  # Core push notifications\n  toolListUpdated(sessionId: ID!): ToolListUpdate!\n  promptChainInstruction(sessionId: ID!): InstructionUpdate!\n  realTimeRecommendation(sessionId: ID!): RecommendationPush!\n\n  # Configuration and context\n  configUpdate(sessionId: ID!): ConfigUpdate!\n  sessionContextUpdate(sessionId: ID!): ContextUpdate!\n\n  # Analytics and insights\n  analyticsInsight(sessionId: ID!): AnalyticsInsight!\n\n  # System health\n  urgentAlert(sessionId: ID!): Alert!\n  healthStatus: HealthUpdate!\n}\n```\n\n**Key Queries** (SmartCP \u2192 Bifrost PULL):\n```graphql\ntype Query {\n  recommendTools(context: ToolContext!): ToolRecommendation!\n  getToolDefinitions(names: [String!]!): [ToolDefinition!]!\n  getPromptChainInstructions(sessionId: ID!): [Instruction!]!\n  getSessionContext(sessionId: ID!): SessionContext!\n  queryAnalytics(query: AnalyticsQuery!): AnalyticsResult!\n  searchSimilarPrompts(prompt: String!, limit: Int): [SimilarPrompt!]!\n  health: HealthStatus!\n}\n```\n\n**Key Mutations** (SmartCP \u2192 Bifrost):\n```graphql\ntype Mutation {\n  createSession(context: SessionContext!): Session!\n  updateSessionContext(sessionId: ID!, updates: ContextUpdates!): SessionContext!\n  reportExecution(result: ExecutionResult!): ExecutionAck!\n  submitFeedback(feedback: FeedbackInput!): Success!\n  endSession(sessionId: ID!): Success!\n}\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-3.2": {
+          "id": "docs-backup-20251204-025936-wbs-3.2",
+          "name": "WebSocket vs SSE",
+          "description": "**Recommendation**: **Hybrid approach**\n- **WebSocket**: For interactive subscriptions (tool updates, recommendations)\n- **SSE**: For one-way streams (Claude completion streaming)\n\n**Rationale**:\n- WebSocket provides bi-directional communication needed for GraphQL subscriptions\n- SSE simpler for streaming LLM completions (HTTP/2 multiplexing)\n- Both well-supported in modern browsers/clients\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-3.3": {
+          "id": "docs-backup-20251204-025936-wbs-3.3",
+          "name": "Streaming DAG Execution",
+          "description": "Don't wait for full plan - execute as plan streams:\n\n```python\nclass StreamingDAGExecutor:\n    \"\"\"Execute DAG tasks as they're planned, not after.\"\"\"\n\n    async def stream_execute(\n        self,\n        plan_stream: AsyncGenerator[str, None],\n    ) -> AsyncGenerator[str, None]:\n        \"\"\"Execute tasks as they appear in the plan stream.\"\"\"\n\n        pending_tasks = []\n        running_tasks = {}\n        completed = {}\n\n        async for chunk in plan_stream:\n            # Parse any new tasks from the chunk\n            new_tasks = self._parse_tasks(chunk)\n\n            for task in new_tasks:\n                # Check if dependencies are met\n                if all(dep in completed for dep in task.dependencies):\n                    # Start execution immediately\n                    running_tasks[task.id] = asyncio.create_task(\n                        self._execute_task(task, completed)\n                    )\n                else:\n                    pending_tasks.append(task)\n\n            # Check for completed tasks\n            for task_id, future in list(running_tasks.items()):\n                if future.done():\n                    result = await future\n                    completed[task_id] = result\n                    del running_tasks[task_id]\n\n                    yield f\"Completed: {task_id}\\n\"\n\n                    # Check if any pending tasks can now run\n                    for pending in pending_tasks[:]:\n                        if all(d in completed for d in pending.dependencies):\n                            pending_tasks.remove(pending)\n                            running_tasks[pending.id] = asyncio.create_task(\n                                self._execute_task(pending, completed)\n                            )\n```\n\n---\n\n## Part 4: Target Architecture (Sub-5s Response)",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-3.4": {
+          "id": "docs-backup-20251204-025936-wbs-3.4",
+          "name": "Resource Limits",
+          "description": "#### Pattern: Memory and CPU Constraints\n\n```go\n// Go side resource management\ncmd := exec.CommandContext(ctx, \"python\", \"-m\", \"python_plugin\")\n\n// Memory limit\ncmd.SysProcAttr = &syscall.SysProcAttr{\n    CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,\n}\n\n// On Unix, use setrlimit\nif runtime.GOOS != \"windows\" {\n    // Set max memory to 2GB\n    cmd.SysProcAttr = &syscall.SysProcAttr{\n        Pdeathsig: syscall.SIGTERM,\n    }\n    \n    // Python command with memory limit\n    cmd = exec.CommandContext(ctx,\n        \"sh\", \"-c\",\n        fmt.Sprintf(\n            \"ulimit -v 2097152 && exec python -m python_plugin\",\n        ),\n    )\n}\n```\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "docs-backup-20251204-025936-wbs-13": {
+      "id": "docs-backup-20251204-025936-wbs-13",
+      "name": "other docs",
+      "description": "### Proposed Structure\n```\nbifrost-extensions/\n\u251c\u2500\u2500 README.md (main entry)\n\u251c\u2500\u2500 /docs/\n\u2502   \u251c\u2500\u2500 README.md (index)\n\u2502   \u251c\u2500\u2500 /architecture/\n\u2502   \u2502   \u251c\u2500\u2500 PRINCIPLES.md\n\u2502   \u2502   \u251c\u2500\u2500 EXTENSION_LAYER.md\n\u2502   \u2502   \u2514\u2500\u2500 CLEAN_LAYER.md\n\u2502   \u251c\u2500\u2500 /cli/\n\u2502   \u2502   \u251c\u2500\u2500 README.md\n\u2502   \u2502   \u251c\u2500\u2500 ARCHITECTURE.md\n\u2502   \u2502   \u251c\u2500\u2500 GUIDE.md\n\u2502   \u2502   \u251c\u2500\u2500 QUICK_REFERENCE.md\n\u2502   \u2502   \u2514\u2500\u2500 INTEGRATION.md\n\u2502   \u251c\u2500\u2500 /deployment/\n\u2502   \u2502   \u251c\u2500\u2500 README.md\n\u2502   \u2502   \u251c\u2500\u2500 SERVERLESS.md\n\u2502   \u2502   \u251c\u2500\u2500 QUICK_START.md\n\u2502   \u2502   \u2514\u2500\u2500 COMPARISON.md\n\u2502   \u251c\u2500\u2500 /evalua",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "docs-backup-20251204-025936-wbs-13.": {
+          "id": "docs-backup-20251204-025936-wbs-13.",
+          "name": "Traffic Analytics Storage",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-13.1": {
+          "id": "docs-backup-20251204-025936-wbs-13.1",
+          "name": "Storage Strategy",
+          "description": "**Hybrid TimescaleDB + ClickHouse + Neo4j**:\n\n| Layer | Technology | Purpose | Retention |\n|-------|-----------|---------|-----------|\n| **Hot Tier** | TimescaleDB (SSD) | Real-time queries, recent data | 30 days |\n| **Warm Tier** | TimescaleDB (HDD) | Historical queries | 180 days |\n| **Cold Tier** | S3 + Parquet | Archival, compliance | 2 years |\n| **Analytics** | ClickHouse | OLAP, complex aggregations | 90 days |\n| **Similarity** | Neo4j + pgvector | Semantic search, recommendations | Permanent |",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-13.2": {
+          "id": "docs-backup-20251204-025936-wbs-13.2",
+          "name": "Schema Design",
+          "description": "**Complete Schema**: See `/tmp/` research output\n\n**Core Table** (TimescaleDB hypertable):\n```sql\nCREATE TABLE proxy_traffic (\n    id UUID PRIMARY KEY,\n    timestamp TIMESTAMPTZ NOT NULL,\n\n    -- Scope hierarchy\n    iteration_id UUID,\n    prompt_chain_id UUID,\n    session_id UUID NOT NULL,\n    session_phase TEXT,  -- plan, docwrite, impl, review\n    project_id UUID,     -- Inferred from content\n    workspace_id UUID NOT NULL,\n    user_id UUID,\n\n    -- Request details\n    request_type TEXT,\n    model_used TEXT,\n    prompt_text TEXT,\n    response_text TEXT,\n\n    -- Metrics\n    request_tokens INT,\n    response_tokens INT,\n    total_tokens INT,\n    latency_ms INT,\n    cost_cents NUMERIC(12, 4),\n    success BOOLEAN,\n\n    -- Embeddings for similarity\n    prompt_embedding vector(1536),\n    response_embedding vector(1536),\n\n    -- Metadata\n    request_metadata JSONB,\n    response_metadata JSONB\n);\n\n-- Convert to hypertable\nSELECT create_hypertable('proxy_traffic', 'timestamp');\n\n-- Compression (98% reduction)\nSELECT add_compression_policy('proxy_traffic', INTERVAL '3 days');\n```\n\n**Continuous Aggregates** (automatic rollups):\n```sql\n-- Hourly aggregation\nCREATE MATERIALIZED VIEW proxy_traffic_hourly\nWITH (timescaledb.continuous)\nAS SELECT\n    TIME_BUCKET('1 hour', timestamp) as hour,\n    workspace_id, model_used, session_phase,\n    COUNT(*) as request_count,\n    AVG(latency_ms) as avg_latency,\n    SUM(total_tokens) as total_tokens,\n    SUM(cost_cents) as total_cost\nFROM proxy_traffic\nGROUP BY 1, 2, 3, 4;\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "docs-backup-20251204-025936-wbs-13.3": {
+          "id": "docs-backup-20251204-025936-wbs-13.3",
+          "name": "Project Inference Pipeline",
+          "description": "**NLP Pipeline** (from research):\n```python\nclass ProjectInferenceEngine:\n    \"\"\"Infer project context from chat content.\"\"\"\n\n    async def infer(self, messages: list[dict]) -> dict:\n        \"\"\"Extract project context with confidence.\"\"\"\n        # Named Entity Recognition\n        entities = await self.ner.extract(messages)\n        # \u2192 Project names, file paths, frameworks, languages\n\n        # Classification\n        domain = await self.classifier.classify(messages)\n        # \u2192 web, ML, data, mobile, backend, etc.\n\n        # Confidence scoring\n        confidence = self._calculate_confidence(entities, domain)\n        # \u2192 Explicit: 1.0, file paths: 0.8-0.9, framework: 0.6-0.8\n\n        return {\n            \"project_id\": self._resolve_project(entities),\n            \"tech_stack\": entities[\"frameworks\"] + entities[\"languages\"],\n            \"domain\": domain,\n            \"confidence\": confidence\n        }\n```\n\n**Performance**: <50ms first inference, <5ms cached, <2MB memory per session\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    }
+  },
+  "total_estimated_hours": 0
+}

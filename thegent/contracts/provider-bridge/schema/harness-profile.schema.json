@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kush/contracts/provider-bridge/harness-profile.schema.json",
+  "title": "HarnessProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["harness_profile", "defaults", "policy_overrides", "tool_policy"],
+  "properties": {
+    "harness_profile": {
+      "type": "string",
+      "enum": ["codex", "claude", "droid", "antigma", "codex_alt"]
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent_capability", "latency_tier", "quality_tier"],
+      "properties": {
+        "intent_capability": {
+          "type": "string",
+          "enum": ["chat_completion", "embeddings", "rerank", "tool_execution"]
+        },
+        "latency_tier": { "type": "string", "enum": ["interactive", "batch"] },
+        "quality_tier": { "type": "string", "enum": ["low", "medium", "high"] }
+      }
+    },
+    "policy_overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_fallbacks", "budget_usd_max"],
+      "properties": {
+        "max_fallbacks": { "type": "integer", "minimum": 0 },
+        "budget_usd_max": { "type": "number", "minimum": 0 }
+      }
+    },
+    "tool_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_tool_sets", "requires_confirmation_for"],
+      "properties": {
+        "allowed_tool_sets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "requires_confirmation_for": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+

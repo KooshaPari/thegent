@@ -1,0 +1,5 @@
+https://github.com/KooshaPari/Frostify
+https://github.com/bar181/agentic-professor
+https://github.com/sitbon/magg
+https://github.com/iai-group/nordlys
+https://github.com/textcortex/claude-code-sandbox

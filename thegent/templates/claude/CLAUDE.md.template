@@ -1,0 +1,175 @@
+# CLAUDE.md - {{project_name}}
+
+{{project_description}}
+
+---
+
+## Questionnaire Snapshot
+
+| Field | Selected |
+|---|---|
+| `project_type` | `{{ project_type | default("service_api") }}` |
+| `runtime_profile` | `{{ runtime_profile | default("balanced") }}` |
+| `governance_mode` | `{{ governance_mode | default("standard") }}` |
+| `observability_stack` | `{{ observability_stack | default("otel_prometheus") }}` |
+| `deployment_target` | `{{ deployment_target | default("container_platform") }}` |
+| `quality_profile` | `{{ quality_profile | default("strict") }}` |
+
+Interfaces: `{{ interfaces | default("docs") }}`
+
+Summary hints: `{{ questionnaire_summary_hints | default("primary_user_flow,biggest_risk") }}`
+
+---
+
+## DX / AX / UX Baseline
+
+### DX
+- Keep local edit-to-feedback loops fast and reproducible.
+- Expose one canonical command path for lint, test, and build.
+- Fail loudly; do not hide degraded behavior.
+
+### AX
+- Agents own end-to-end delivery: edit, verify, and report evidence.
+- Prefer small, reversible patches with explicit validation.
+- Use reviewable plans for risky or cross-module changes.
+
+### UX
+- Every interface must define success and failure behavior.
+- Error output must explain what failed and the next action.
+- Documentation is a product surface and must stay operational.
+
+---
+
+## Project-Type Focus
+
+{% if project_type | default("service_api") == "cli_tool" -%}
+- Focus: deterministic commands, stable flags, and script-safe output.
+{% elif project_type | default("service_api") == "service_api" -%}
+- Focus: contract stability, idempotency, SLOs, and safe rollout.
+{% elif project_type | default("service_api") == "event_worker" -%}
+- Focus: queue safety, replay behavior, and backpressure handling.
+{% elif project_type | default("service_api") == "web_app" -%}
+- Focus: route-level state handling, latency, and release confidence.
+{% elif project_type | default("service_api") == "library_sdk" -%}
+- Focus: API compatibility, typed examples, and migration notes.
+{% endif -%}
+
+---
+
+## Development Philosophy
+
+### Extend, Never Duplicate
+- NEVER create a v2 file. Refactor the original.
+- NEVER create a new class if an existing one can be made generic.
+- NEVER create custom implementations when an OSS library exists.
+- Before writing ANY new code: search the codebase for existing patterns.
+
+### Primitives First
+- Build generic building blocks before application logic.
+- A provider interface + registry is better than N isolated classes.
+- Template strings > hardcoded messages. Config-driven > code-driven.
+
+### Research Before Implementing
+- Check project deps ({{dependency_file}}) for existing libraries.
+- Search {{package_search}} before writing custom code.
+- For non-trivial algorithms: check GitHub for 80%+ implementations to fork/adapt.
+
+---
+
+## Library Preferences (DO NOT REINVENT)
+
+| Need | Use | NOT |
+|------|-----|-----|
+| Retry/resilience | tenacity | Custom retry loops |
+| HTTP client | httpx | Custom wrappers |
+| Logging | structlog | print() or logging.getLogger |
+| Config | pydantic-settings | Manual env parsing |
+| CLI | typer | argparse |
+| Validation | pydantic | Manual if/else |
+| Rate limiting | tenacity + asyncio.Semaphore | Custom rate limiter class |
+
+---
+
+## Code Quality Non-Negotiables
+
+- Zero new lint suppressions without inline justification
+- All new code must pass: {{lint_command}}, type checker, tests
+- Max function: 40 lines. Max cognitive complexity: 15.
+- No placeholder TODOs in committed code
+- {{additional_quality_rules}}
+
+---
+
+## Project Structure
+
+```
+{{project_root}}/
+├── src/                    # Source code
+├── tests/                  # Test files
+├── docs/                   # Documentation
+│   └── .vitepress/         # VitePress docsite
+├── hooks/                  # Pre-commit hooks
+├── scripts/                # Utility scripts
+├── Taskfile.yml            # Build automation
+└── CLAUDE.md               # This file
+```
+
+---
+
+## Domain-Specific Patterns
+
+### What {{project_name}} Is
+
+{{project_description}}
+
+### Key Interfaces
+
+| Port | Responsibility | Location |
+|------|---------------|----------|
+{{key_interfaces}}
+
+### Provider Registry Pattern
+
+{{provider_registry_pattern}}
+
+### Common Anti-Patterns to Avoid
+
+{{common_antipatterns}}
+
+### Where to Add New Functionality
+
+| Want to add... | Put it in... |
+|----------------|-------------|
+{{add_functionality_table}}
+
+---
+
+## Build Commands
+
+```bash
+{{build_commands}}
+```
+
+---
+
+## Testing
+
+```bash
+{{test_commands}}
+```
+
+---
+
+## Quality Gates
+
+Run before committing:
+
+```bash
+{{quality_gate_command}}
+```
+
+---
+
+## Additional Resources
+
+- {{additional_docs}}

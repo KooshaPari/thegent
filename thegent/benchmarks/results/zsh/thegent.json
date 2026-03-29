@@ -1,0 +1,12 @@
+{
+  "results": [
+    {
+      "command": "ZDOTDIR=/Users/kooshapari/CodeProjects/Phenotype/repos/thegent/shell zsh -i -c exit",
+      "mean": 2.0438432167011342,
+      "stddev": 0.006643742299487171,
+      "min": 2.0371895839998615,
+      "max": 2.058358958001918,
+      "median": 2.0420448955010215
+    }
+  ]
+}

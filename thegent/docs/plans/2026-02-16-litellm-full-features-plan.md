@@ -1,0 +1,778 @@
+# Full LiteLLM Feature Integration Plan
+
+**Date**: 2026-02-16
+**Status**: Implementation Plan
+**Architecture**: LiteLLM Router OVER Proxy, Donut-Aligned
+
+## Goal
+
+Fully leverage all LiteLLM Router features while integrating with the Donut Architecture shared layer (queue, harvest, MCP tools, agent teams).
+
+## Current State
+
+Basic LiteLLM integration complete:
+- `src/thegent/routing/litellm_router.py` - Basic Router wrapper
+- `src/thegent/routing/provider_types.py` - ExecutionPath enum
+- `src/thegent/agents/codex_proxy.py` - `_execute_litellm_api()` method
+- `src/thegent/config.py` - Basic LiteLLM settings
+
+## Missing Features
+
+| Feature | LiteLLM Support | Current State | Priority |
+|---------|-----------------|---------------|----------|
+| **Caching** | Redis, in-memory, caching groups | ❌ Not implemented | P0 |
+| **Streaming** | Stream=True, async streaming | ❌ Not implemented | P0 |
+| **Fallback/Cooldowns** | cooldown_time, fallbacks | ❌ Not implemented | P0 |
+| **Cost Tracking** | cost per request, budget tracking | ❌ Not implemented | P1 |
+| **Latency-based routing** | latency-based routing | ❌ Not implemented | P1 |
+| **Traffic Mirroring** | traffic mirroring for testing | ❌ Not implemented | P2 |
+| **Alerting** | Slack, webhook, email | ❌ Not implemented | P2 |
+| **Context Window** | Pre-call validation | ❌ Not implemented | P1 |
+| **Usage-based routing** | Redis-backed usage tracking | ❌ Not implemented | P2 |
+| **Model Aliasing** | model_alias support | ⚠️ Partial | P1 |
+| **Custom routing** | Custom routing function | ❌ Not implemented | P2 |
+
+## Donut Architecture Alignment
+
+### Shared Layer Integration
+
+| Component | Integration Point | Status |
+|-----------|-------------------|--------|
+| **Queue** | Router reads model preference from queue metadata | ❌ TODO |
+| **Harvest** | LiteLLM cost/latency data harvested on Stop | ❌ TODO |
+| **MCP Tools** | `thegent_routing_*` tools for routing control | ❌ TODO |
+| **Agent Teams** | Router shared across teammates | ⚠️ Partial |
+| **TUI** | Routing dashboard in sitback | ❌ TODO |
+
+---
+
+## Implementation Tasks
+
+### Task 1: Enhanced LiteLLM Router Configuration
+
+**Files:**
+- Modify: `src/thegent/routing/litellm_router.py`
+- Modify: `src/thegent/config.py`
+- Test: `tests/test_unit_litellm_router.py`
+
+**Step 1: Add caching configuration**
+
+```python
+# src/thegent/routing/litellm_router.py
+
+def get_litellm_router(
+    policy: str = "latency-based-routing",
+    enable_cache: bool = True,
+    cache_type: str = "redis",  # "redis" | "in-memory"
+    redis_url: str | None = None,
+) -> Router:
+    """Get configured LiteLLM Router with full feature support."""
+    model_list = build_litellm_model_list()
+
+    router_kwargs = {
+        "model_list": model_list,
+        "routing_strategy": policy,
+        "num_retries": 3,
+        "timeout": 300,
+        "retry_after": 5,
+        # Cooldown configuration
+        "cooldown_time": 60,  # 60s cooldown on failure
+        # Fallback configuration
+        "fallbacks": _build_fallbacks(),
+    }
+
+    # Caching
+    if enable_cache:
+        if cache_type == "redis" and redis_url:
+            router_kwargs["cache"] = {
+                "type": "redis",
+                "url": redis_url,
+            }
+        else:
+            router_kwargs["cache"] = {
+                "type": "in-memory",
+                "max_size": 1000,
+            }
+
+    return Router(**router_kwargs)
+
+
+def _build_fallbacks() -> list[dict]:
+    """Build fallback configuration for model redundancy."""
+    return [
+        {
+            "kimi-k2.5": ["deepseek-v3.2", "glm-5"],
+        },
+        {
+            "deepseek-v3.2": ["glm-5", "qwen3-coder"],
+        },
+        {
+            "glm-5": ["deepseek-v3.2", "qwen3-coder"],
+        },
+    ]
+```
+
+**Step 2: Add config settings**
+
+```python
+# src/thegent/config.py
+
+class ThegentSettings(BaseSettings):
+    # ... existing fields ...
+
+    # LiteLLM Enhanced Settings
+    litellm_enable_cache: bool = Field(default=True, description="Enable LiteLLM caching")
+    litellm_cache_type: str = Field(default="in-memory", description="Cache type: in-memory or redis")
+    litellm_redis_url: str | None = Field(default=None, description="Redis URL for distributed cache")
+    litellm_cooldown_time: int = Field(default=60, ge=10, le=600, description="Cooldown time in seconds")
+    litellm_enable_streaming: bool = Field(default=True, description="Enable streaming responses")
+    litellm_enable_cost_tracking: bool = Field(default=True, description="Enable cost tracking")
+    litellm_cost_budget: float | None = Field(default=None, ge=0, description="Daily cost budget in USD")
+    litellm_alert_webhook: str | None = Field(default=None, description="Webhook URL for alerts")
+    litellm_latency_based_routing: bool = Field(default=True, description="Use latency-based routing")
+```
+
+### Task 2: Streaming Support
+
+**Files:**
+- Modify: `src/thegent/agents/codex_proxy.py`
+- Test: `tests/test_unit_codex_proxy_routing.py`
+
+**Step 1: Add streaming to _execute_litellm_api**
+
+```python
+# src/thegent/agents/codex_proxy.py
+
+def _execute_litellm_api(
+    self,
+    prompt: str,
+    cwd: Path | None,
+    mode: str,
+    timeout: int,
+    provider: str,
+    model: str,
+    stream: bool = True,
+    on_chunk: Callable[[str], None] | None = None,
+) -> RunResult:
+    """Execute via LiteLLM direct API with streaming support."""
+    try:
+        from litellm import completion
+    except ImportError as e:
+        return RunResult(exit_code=1, stdout="", stderr=f"litellm not installed: {e}", timed_out=False)
+
+    model_string = f"{provider}/{model}"
+    api_key = os.environ.get(self._get_api_key_env(provider))
+
+    if not api_key:
+        return RunResult(exit_code=1, stdout="", stderr=f"API key not found for {provider}", timed_out=False)
+
+    try:
+        if stream and on_chunk:
+            # Streaming mode
+            response = completion(
+                model=model_string,
+                messages=[{"role": "user", "content": prompt}],
+                api_key=api_key,
+                timeout=timeout,
+                stream=True,
+            )
+            content_parts = []
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    chunk_content = chunk.choices[0].delta.content
+                    content_parts.append(chunk_content)
+                    on_chunk(chunk_content)
+            content = "".join(content_parts)
+        else:
+            # Non-streaming mode
+            response = completion(
+                model=model_string,
+                messages=[{"role": "user", "content": prompt}],
+                api_key=api_key,
+                timeout=timeout,
+            )
+            content = response.choices[0].message.content
+
+        return RunResult(exit_code=0, stdout=content or "", stderr="", timed_out=False)
+
+    except Exception as e:
+        return self._handle_litellm_error(e, provider, model)
+```
+
+### Task 3: Cost Tracking Integration
+
+**Files:**
+- Create: `src/thegent/routing/cost_tracker.py`
+- Modify: `src/thegent/agents/codex_proxy.py`
+- Test: `tests/test_unit_cost_tracker.py`
+
+**Step 1: Create cost tracker module**
+
+```python
+# src/thegent/routing/cost_tracker.py
+
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+@dataclass
+class CostEntry:
+    """Single cost tracking entry."""
+    timestamp: str
+    provider: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+    latency_ms: float
+    session_id: str | None = None
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "timestamp": self.timestamp,
+            "provider": self.provider,
+            "model": self.model,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "cost_usd": self.cost_usd,
+            "latency_ms": self.latency_ms,
+            "session_id": self.session_id,
+        }
+
+
+class CostTracker:
+    """Track LLM costs across sessions."""
+
+    def __init__(self, log_path: Path | None = None, daily_budget: float | None = None):
+        self.log_path = log_path or Path.home() / ".thegent" / "costs.jsonl"
+        self.daily_budget = daily_budget
+        self._entries: list[CostEntry] = []
+        self._daily_spend: float = 0.0
+
+    def track(
+        self,
+        provider: str,
+        model: str,
+        usage: dict[str, int],
+        cost: float,
+        latency_ms: float,
+        session_id: str | None = None,
+    ) -> CostEntry:
+        """Track a single LLM call cost."""
+        entry = CostEntry(
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            provider=provider,
+            model=model,
+            input_tokens=usage.get("prompt_tokens", 0),
+            output_tokens=usage.get("completion_tokens", 0),
+            cost_usd=cost,
+            latency_ms=latency_ms,
+            session_id=session_id,
+        )
+
+        self._entries.append(entry)
+        self._daily_spend += cost
+
+        # Append to log file
+        self._append_to_log(entry)
+
+        # Check budget
+        if self.daily_budget and self._daily_spend > self.daily_budget:
+            logger.warning(f"Daily budget exceeded: ${self._daily_spend:.2f} / ${self.daily_budget:.2f}")
+
+        return entry
+
+    def _append_to_log(self, entry: CostEntry) -> None:
+        """Append entry to JSONL log file."""
+        self.log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.log_path, "a") as f:
+            f.write(json.dumps(entry.to_json()) + "\n")
+
+    def get_daily_spend(self) -> float:
+        """Get today's total spend."""
+        return self._daily_spend
+
+    def is_over_budget(self) -> bool:
+        """Check if daily budget is exceeded."""
+        return self.daily_budget is not None and self._daily_spend > self.daily_budget
+
+    def get_stats(self) -> dict[str, Any]:
+        """Get cost statistics."""
+        total_tokens = sum(e.input_tokens + e.output_tokens for e in self._entries)
+        avg_latency = sum(e.latency_ms for e in self._entries) / len(self._entries) if self._entries else 0
+
+        return {
+            "total_calls": len(self._entries),
+            "total_cost_usd": sum(e.cost_usd for e in self._entries),
+            "daily_spend_usd": self._daily_spend,
+            "total_tokens": total_tokens,
+            "avg_latency_ms": avg_latency,
+            "budget_remaining": (self.daily_budget - self._daily_spend) if self.daily_budget else None,
+        }
+
+
+# Global tracker instance
+_tracker: CostTracker | None = None
+
+def get_cost_tracker() -> CostTracker:
+    """Get global cost tracker instance."""
+    global _tracker
+    if _tracker is None:
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+        _tracker = CostTracker(daily_budget=settings.litellm_cost_budget)
+    return _tracker
+```
+
+**Step 2: Wire cost tracking into execution**
+
+```python
+# src/thegent/agents/codex_proxy.py
+
+def _execute_litellm_api(...) -> RunResult:
+    # ... existing code ...
+
+    start_time = time.monotonic()
+    response = completion(...)
+    latency_ms = (time.monotonic() - start_time) * 1000
+
+    # Track cost
+    if hasattr(response, "usage") and self._settings.litellm_enable_cost_tracking:
+        from thegent.routing.cost_tracker import get_cost_tracker
+        tracker = get_cost_tracker()
+        tracker.track(
+            provider=provider,
+            model=model,
+            usage={"prompt_tokens": response.usage.prompt_tokens, "completion_tokens": response.usage.completion_tokens},
+            cost=getattr(response, "_hidden_params", {}).get("response_cost", 0),
+            latency_ms=latency_ms,
+            session_id=run_id,
+        )
+```
+
+### Task 4: Donut Architecture Integration
+
+**Files:**
+- Create: `src/thegent/routing/donut_adapter.py`
+- Modify: `src/thegent/mcp_server.py`
+- Test: `tests/test_unit_donut_adapter.py`
+
+**Step 1: Create Donut adapter for shared layer**
+
+```python
+# src/thegent/routing/donut_adapter.py
+
+"""Donut Architecture adapter for LiteLLM routing.
+
+Integrates with shared layer components:
+- Queue: Read model preferences from queue metadata
+- Harvest: Export cost/latency data on Stop
+- MCP Tools: Expose routing control tools
+- Agent Teams: Share router across teammates
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+from thegent.routing.litellm_router import get_litellm_router
+from thegent.routing.cost_tracker import CostTracker, get_cost_tracker
+
+logger = logging.getLogger(__name__)
+
+
+class RoutingDonutAdapter:
+    """Adapter between LiteLLM routing and Donut Architecture shared layer."""
+
+    def __init__(
+        self,
+        queue_path: Path | None = None,
+        harvest_path: Path | None = None,
+    ):
+        self.queue_path = queue_path or Path.home() / ".thegent" / "prompt_queue.jsonl"
+        self.harvest_path = harvest_path or Path.home() / ".thegent" / "routing_harvest.jsonl"
+        self._router = None
+        self._tracker = None
+
+    def get_router(self, policy: str = "latency-based-routing"):
+        """Get or create shared router instance."""
+        if self._router is None:
+            from thegent.config import ThegentSettings
+            settings = ThegentSettings()
+            self._router = get_litellm_router(
+                policy=policy,
+                enable_cache=settings.litellm_enable_cache,
+                cache_type=settings.litellm_cache_type,
+                redis_url=settings.litellm_redis_url,
+            )
+        return self._router
+
+    def read_model_preference_from_queue(self) -> str | None:
+        """Read model preference from next queue item.
+
+        Queue items may have a 'preferred_model' field.
+        """
+        if not self.queue_path.exists():
+            return None
+
+        with open(self.queue_path) as f:
+            for line in f:
+                item = json.loads(line.strip())
+                if not item.get("claimed_by"):
+                    return item.get("preferred_model")
+        return None
+
+    def harvest_on_stop(self) -> dict[str, Any]:
+        """Export routing data for harvest on session stop.
+
+        Called by harvest-pending-queue.sh equivalent.
+        """
+        tracker = get_cost_tracker()
+        stats = tracker.get_stats()
+
+        harvest_entry = {
+            "type": "routing_harvest",
+            "stats": stats,
+        }
+
+        # Append to harvest file
+        self.harvest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.harvest_path, "a") as f:
+            f.write(json.dumps(harvest_entry) + "\n")
+
+        return harvest_entry
+
+    def get_team_router_config(self) -> dict[str, Any]:
+        """Get router config for sharing across agent team.
+
+        Teammates can instantiate the same router config.
+        """
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+
+        return {
+            "policy": settings.litellm_routing_policy,
+            "enable_cache": settings.litellm_enable_cache,
+            "cache_type": settings.litellm_cache_type,
+            "cooldown_time": settings.litellm_cooldown_time,
+            "daily_budget": settings.litellm_cost_budget,
+        }
+```
+
+**Step 2: Add MCP tools for routing control**
+
+```python
+# Add to src/thegent/mcp_server.py
+
+@mcp.tool()
+async def thegent_routing_stats() -> dict[str, Any]:
+    """Get routing statistics including costs and latency."""
+    from thegent.routing.cost_tracker import get_cost_tracker
+    tracker = get_cost_tracker()
+    return tracker.get_stats()
+
+
+@mcp.tool()
+async def thegent_routing_budget_check() -> dict[str, bool]:
+    """Check if daily budget is exceeded."""
+    from thegent.routing.cost_tracker import get_cost_tracker
+    tracker = get_cost_tracker()
+    return {
+        "over_budget": tracker.is_over_budget(),
+        "daily_spend": tracker.get_daily_spend(),
+    }
+
+
+@mcp.tool()
+async def thegent_routing_harvest() -> dict[str, Any]:
+    """Harvest routing data for session handoff."""
+    from thegent.routing.donut_adapter import RoutingDonutAdapter
+    adapter = RoutingDonutAdapter()
+    return adapter.harvest_on_stop()
+```
+
+### Task 5: Latency-Based Routing with Redis
+
+**Files:**
+- Modify: `src/thegent/routing/litellm_router.py`
+- Modify: `src/thegent/config.py`
+
+**Step 1: Configure latency-based routing**
+
+```python
+# src/thegent/routing/litellm_router.py
+
+def get_litellm_router(
+    policy: str = "latency-based-routing",
+    enable_cache: bool = True,
+    cache_type: str = "in-memory",
+    redis_url: str | None = None,
+    latency_threshold_ms: float = 500.0,
+) -> Router:
+    """Get configured LiteLLM Router with latency-based routing."""
+    model_list = build_litellm_model_list()
+
+    router_kwargs = {
+        "model_list": model_list,
+        "routing_strategy": policy,  # "latency-based-routing"
+        "num_retries": 3,
+        "timeout": 300,
+        "retry_after": 5,
+        "cooldown_time": 60,
+        # Latency threshold for routing decisions
+        "lowest_latency_buffer": 0.1,  # 10% buffer for latency comparison
+        "fallbacks": _build_fallbacks(),
+    }
+
+    # Redis for distributed state (latency tracking, usage tracking)
+    if cache_type == "redis" and redis_url:
+        router_kwargs.update({
+            "cache": {"type": "redis", "url": redis_url},
+            "routing_strategy_args": {
+                "redis_url": redis_url,
+                "latency_window": 300,  # 5 min window
+            },
+        })
+
+    return Router(**router_kwargs)
+```
+
+### Task 6: Context Window Validation
+
+**Files:**
+- Modify: `src/thegent/routing/litellm_router.py`
+- Test: `tests/test_unit_litellm_router.py`
+
+**Step 1: Add pre-call validation**
+
+```python
+# src/thegent/routing/litellm_router.py
+
+# Model context windows (input token limits)
+MODEL_CONTEXT_WINDOWS: dict[str, int] = {
+    "kimi-k2.5": 128000,
+    "deepseek-v3.2": 128000,
+    "glm-5": 128000,
+    "gemini-3-flash": 1000000,
+    "claude-opus-4.6": 200000,
+    "claude-sonnet-4.5": 200000,
+    "llama-nemotron-ultra": 128000,
+    "qwen3-coder": 128000,
+    "minimax-m2.5": 32000,
+}
+
+
+def validate_context_window(model: str, estimated_tokens: int) -> tuple[bool, str]:
+    """Validate that prompt fits within model's context window.
+
+    Returns:
+        (is_valid, error_message)
+    """
+    max_tokens = MODEL_CONTEXT_WINDOWS.get(model)
+    if max_tokens is None:
+        return True, ""  # Unknown model, allow
+
+    # Reserve 20% for output
+    available_input = int(max_tokens * 0.8)
+
+    if estimated_tokens > available_input:
+        return False, f"Prompt ({estimated_tokens} tokens) exceeds model {model} context window ({available_input} available)"
+
+    return True, ""
+
+
+def select_model_for_context(
+    preferred_model: str,
+    estimated_tokens: int,
+    fallback_chain: list[str],
+) -> str:
+    """Select a model that can handle the context size.
+
+    Falls back through chain if preferred model can't fit.
+    """
+    is_valid, _ = validate_context_window(preferred_model, estimated_tokens)
+    if is_valid:
+        return preferred_model
+
+    for fallback_model in fallback_chain:
+        is_valid, _ = validate_context_window(fallback_model, estimated_tokens)
+        if is_valid:
+            logger.info(f"Falling back to {fallback_model} for context window")
+            return fallback_model
+
+    # Last resort: find largest context model
+    largest_model = max(MODEL_CONTEXT_WINDOWS.items(), key=lambda x: x[1])[0]
+    logger.warning(f"Using largest context model {largest_model} for {estimated_tokens} tokens")
+    return largest_model
+```
+
+### Task 7: Alerting Integration
+
+**Files:**
+- Create: `src/thegent/routing/alerting.py`
+- Modify: `src/thegent/config.py`
+
+**Step 1: Create alerting module**
+
+```python
+# src/thegent/routing/alerting.py
+
+from __future__ import annotations
+
+import json
+import logging
+import urllib.request
+from dataclasses import dataclass
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Alert:
+    """Routing alert."""
+    alert_type: str  # "budget_exceeded", "high_latency", "provider_error"
+    severity: str    # "warning", "critical"
+    message: str
+    data: dict[str, Any]
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "alert_type": self.alert_type,
+            "severity": self.severity,
+            "message": self.message,
+            "data": self.data,
+        }
+
+
+class AlertManager:
+    """Manage routing alerts."""
+
+    def __init__(self, webhook_url: str | None = None):
+        self.webhook_url = webhook_url
+
+    def send_alert(self, alert: Alert) -> bool:
+        """Send alert to configured webhook."""
+        if not self.webhook_url:
+            logger.warning(f"No webhook configured, would send alert: {alert.message}")
+            return False
+
+        try:
+            data = json.dumps(alert.to_json()).encode("utf-8")
+            req = urllib.request.Request(
+                self.webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                return response.status == 200
+        except Exception as e:
+            logger.error(f"Failed to send alert: {e}")
+            return False
+
+    def alert_budget_exceeded(self, daily_spend: float, budget: float) -> None:
+        """Alert when daily budget is exceeded."""
+        alert = Alert(
+            alert_type="budget_exceeded",
+            severity="critical",
+            message=f"Daily budget exceeded: ${daily_spend:.2f} / ${budget:.2f}",
+            data={"daily_spend": daily_spend, "budget": budget},
+        )
+        self.send_alert(alert)
+
+    def alert_high_latency(self, model: str, latency_ms: float, threshold_ms: float) -> None:
+        """Alert when latency is too high."""
+        alert = Alert(
+            alert_type="high_latency",
+            severity="warning",
+            message=f"High latency on {model}: {latency_ms:.0f}ms (threshold: {threshold_ms:.0f}ms)",
+            data={"model": model, "latency_ms": latency_ms, "threshold_ms": threshold_ms},
+        )
+        self.send_alert(alert)
+
+    def alert_provider_error(self, provider: str, error: str, model: str) -> None:
+        """Alert on provider errors."""
+        alert = Alert(
+            alert_type="provider_error",
+            severity="warning",
+            message=f"Provider {provider} error on {model}: {error}",
+            data={"provider": provider, "error": error, "model": model},
+        )
+        self.send_alert(alert)
+
+
+# Global alert manager
+_alert_manager: AlertManager | None = None
+
+def get_alert_manager() -> AlertManager:
+    """Get global alert manager instance."""
+    global _alert_manager
+    if _alert_manager is None:
+        from thegent.config import ThegentSettings
+        settings = ThegentSettings()
+        _alert_manager = AlertManager(webhook_url=settings.litellm_alert_webhook)
+    return _alert_manager
+```
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+- `test_unit_litellm_router.py` - Router configuration, fallbacks, caching
+- `test_unit_cost_tracker.py` - Cost tracking, budget checks
+- `test_unit_donut_adapter.py` - Queue integration, harvest
+- `test_unit_alerting.py` - Alert delivery, webhook calls
+
+### Integration Tests
+- `test_integration_routing_flow.py` - Full flow with all features enabled
+- `test_integration_streaming.py` - Streaming responses
+- `test_integration_redis_cache.py` - Distributed caching
+
+---
+
+## Success Criteria
+
+- [ ] Caching enabled (Redis or in-memory)
+- [ ] Streaming responses working
+- [ ] Fallback chains configured with cooldowns
+- [ ] Cost tracking with daily budget alerts
+- [ ] Latency-based routing operational
+- [ ] Context window validation before calls
+- [ ] Alerting integration for budget/errors
+- [ ] Donut Architecture integration:
+  - [ ] Queue preference reading
+  - [ ] Harvest on stop
+  - [ ] MCP tools for routing control
+  - [ ] Team router config sharing
+
+---
+
+## Commits
+
+1. `feat: enhance LiteLLM router with caching, fallbacks, cooldowns`
+2. `feat: add streaming support to LiteLLM execution`
+3. `feat: implement cost tracking with budget alerts`
+4. `feat: add Donut Architecture adapter for routing`
+5. `feat: add context window validation`
+6. `feat: add latency-based routing support`
+7. `feat: add alerting integration`
+8. `feat: add routing MCP tools`
+9. `test: add comprehensive tests for all features`
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

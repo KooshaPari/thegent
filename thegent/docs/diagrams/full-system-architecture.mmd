@@ -1,0 +1,73 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1E293B', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0F172A', 'lineColor': '#64748B', 'secondaryColor': '#475569', 'tertiaryColor': '#94A3B8'}}}%%
+flowchart TB
+    subgraph Users["Users & AI Agents"]
+        Browser["🌐 Web Browser"]
+        AIAgents["🤖 AI Agents<br/>Claude, Cursor"]
+    end
+
+    subgraph Frontend["Frontend: atoms.tech"]
+        direction TB
+        NextJS["Next.js 16<br/>React 19 + TypeScript"]
+        UI["Shadcn/Radix UI<br/>Tailwind CSS"]
+        State["Zustand + React Query<br/>tRPC 11.7"]
+    end
+
+    subgraph Backend["Backend: atomsAgent"]
+        direction TB
+        FastAPI["FastAPI 0.121.3<br/>OpenAI-Compatible API"]
+        ClaudeClient["Claude Client<br/>Vertex AI Integration"]
+        PromptOrch["Prompt Orchestrator<br/>4-Level Hierarchy"]
+        MCPMgmt["MCP Management<br/>Server Registry"]
+    end
+
+    subgraph MCPServer["MCP Server: atoms-mcp-prod"]
+        direction TB
+        FastMCP["FastMCP 2.13.1<br/>MCP Protocol"]
+        Tools["5 Consolidated Tools<br/>workspace/entity/relation/workflow/query"]
+        HybridSearch["Hybrid Search<br/>FTS + Semantic"]
+    end
+
+    subgraph SharedServices["Shared External Services"]
+        Supabase[("Supabase<br/>PostgreSQL + RLS<br/>Storage + Realtime")]
+        WorkOS["WorkOS AuthKit<br/>SSO/SAML/JWT"]
+        Upstash[("Upstash Redis<br/>Caching + Rate Limiting")]
+        VertexAI["Google Vertex AI<br/>Claude Models<br/>Embeddings + OCR"]
+    end
+
+    %% User connections
+    Browser --> Frontend
+    AIAgents --> MCPServer
+    AIAgents --> Backend
+
+    %% Frontend connections
+    Frontend --> Backend
+    Frontend --> Supabase
+    Frontend --> WorkOS
+    Frontend --> Upstash
+
+    %% Backend connections
+    Backend --> Supabase
+    Backend --> WorkOS
+    Backend --> Upstash
+    Backend --> VertexAI
+    Backend --> MCPServer
+
+    %% MCP Server connections
+    MCPServer --> Supabase
+    MCPServer --> WorkOS
+    MCPServer --> Upstash
+    MCPServer --> VertexAI
+
+    classDef frontend fill:#4F46E5,stroke:#3730A3,color:#fff
+    classDef backend fill:#059669,stroke:#047857,color:#fff
+    classDef mcp fill:#DC2626,stroke:#B91C1C,color:#fff
+    classDef external fill:#0891B2,stroke:#0E7490,color:#fff
+    classDef database fill:#F59E0B,stroke:#D97706,color:#fff
+    classDef users fill:#7C3AED,stroke:#6D28D9,color:#fff
+
+    class Browser,AIAgents users
+    class NextJS,UI,State,Frontend frontend
+    class FastAPI,ClaudeClient,PromptOrch,MCPMgmt,Backend backend
+    class FastMCP,Tools,HybridSearch,MCPServer mcp
+    class WorkOS,VertexAI external
+    class Supabase,Upstash database

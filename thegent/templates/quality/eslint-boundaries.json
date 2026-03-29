@@ -1,0 +1,31 @@
+{
+  "settings": {
+    "boundaries/include": ["src/**/*"],
+    "boundaries/elements": [
+      { "type": "app", "pattern": "src/app/**/*" },
+      { "type": "pages", "pattern": "src/pages/**/*" },
+      { "type": "features", "pattern": "src/features/**/*" },
+      { "type": "shared", "pattern": "src/shared/**/*" },
+      { "type": "entities", "pattern": "src/entities/**/*" },
+      { "type": "widgets", "pattern": "src/widgets/**/*" }
+    ]
+  },
+  "rules": {
+    "boundaries/element-types": [
+      "error",
+      {
+        "default": "disallow",
+        "rules": [
+          { "from": "app", "allow": ["pages", "features", "shared", "widgets", "entities"] },
+          { "from": "pages", "allow": ["features", "shared", "widgets", "entities"] },
+          { "from": "features", "allow": ["shared", "entities"] },
+          { "from": "widgets", "allow": ["shared", "entities"] },
+          { "from": "entities", "allow": ["shared"] },
+          { "from": "shared", "allow": ["shared"] }
+        ]
+      }
+    ],
+    "boundaries/no-unknown": ["error"],
+    "boundaries/no-unknown-files": ["error"]
+  }
+}

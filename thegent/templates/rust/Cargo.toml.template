@@ -1,0 +1,66 @@
+[package]
+# Basic package metadata
+name = "{{ project_name | replace('-', '_') }}"
+version = "0.1.0"
+edition = "2021"
+authors = [{% if author %}"{{ author }}"{% endif %}]
+description = "{{ project_description }}"
+license = "MIT"
+repository = "https://github.com/your-org/{{ project_name }}"
+keywords = ["rust", "agent", "thegent"]
+categories = ["command-line-utilities"]
+
+[workspace]
+# Uncomment to define workspace members
+# members = [
+#   "crates/core",
+#   "crates/cli",
+#   "crates/lib",
+# ]
+resolver = "2"
+
+[dependencies]
+# Core runtime dependencies - add as needed
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# HTTP client (library-first policy)
+reqwest = { version = "0.11", features = ["json"] }
+
+# CLI framework
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
+# Testing and quality assurance
+criterion = "0.5"        # Benchmarking
+proptest = "1"           # Property-based testing
+tempfile = "3"           # Temporary files for tests
+mockito = "1"            # HTTP mocking
+tokio-test = "0.4"       # Async test utilities
+
+[profile.release]
+# Production optimizations: fast runtime, small binary
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+# Development: fast compile times, slower runtime
+opt-level = 0
+debug = true
+
+[profile.test]
+# Test profile: balance between compile speed and test speed
+opt-level = 1
+
+[profile.bench]
+# Benchmark profile: same as release
+opt-level = 3
+lto = true
+codegen-units = 1

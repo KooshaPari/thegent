@@ -1,0 +1,26 @@
+# Hypothesis (Python property-based testing) configuration
+[hypothesis]
+max_examples = 200
+database_backend = "directory"
+stateful_step_count = 50
+deadline = 500  # ms per test
+suppress_health_check = []
+derandomize = false
+print_blob = true
+report_multiple_bugs = true
+
+[hypothesis.settings]
+# Phase configuration
+phases = ["explicit", "reuse", "generate", "shrink"]
+
+[hypothesis.profiles.ci]
+max_examples = 1000
+deadline = 2000
+
+[hypothesis.profiles.dev]
+max_examples = 50
+deadline = 500
+
+[hypothesis.profiles.debug]
+max_examples = 10
+deadline = false

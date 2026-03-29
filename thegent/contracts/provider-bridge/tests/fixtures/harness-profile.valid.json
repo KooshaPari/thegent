@@ -1,0 +1,17 @@
+{
+  "harness_profile": "codex",
+  "defaults": {
+    "intent_capability": "chat_completion",
+    "latency_tier": "interactive",
+    "quality_tier": "high"
+  },
+  "policy_overrides": {
+    "max_fallbacks": 2,
+    "budget_usd_max": 3.0
+  },
+  "tool_policy": {
+    "allowed_tool_sets": ["core", "repo"],
+    "requires_confirmation_for": ["shell_write"]
+  }
+}
+

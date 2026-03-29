@@ -1,0 +1,90 @@
+{
+  "$schema": "./contracts/schema.json",
+  "health_targets": "contracts/health-targets.json",
+  "garden_state": {
+    "version": "1.0.0",
+    "last_scan_utc": null,
+    "hunger_states": [
+      {
+        "type": "test_coverage",
+        "threshold": 80,
+        "current": null,
+        "priority": "critical",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "lint_violations",
+        "threshold": 0,
+        "current": null,
+        "priority": "critical",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "doc_disorganization",
+        "threshold": 0,
+        "current": null,
+        "priority": "high",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "fragmented_research",
+        "threshold": 0,
+        "current": null,
+        "priority": "high",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "missing_specs",
+        "threshold": 0,
+        "current": null,
+        "priority": "medium",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "technical_debt",
+        "threshold": 10,
+        "current": null,
+        "priority": "medium",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "stale_items",
+        "threshold_days": 7,
+        "current": null,
+        "priority": "low",
+        "last_triggered_utc": null
+      },
+      {
+        "type": "agent_failure",
+        "threshold": 0,
+        "current": null,
+        "priority": "critical",
+        "last_triggered_utc": null
+      }
+    ],
+    "stream_status": {
+      "intake_count": 0,
+      "breadth_count": 0,
+      "depth_count": 0,
+      "devil_advocate_count": 0,
+      "synthesis_count": 0,
+      "formalizing_count": 0,
+      "approved_count": 0,
+      "implementing_count": 0,
+      "verifying_count": 0,
+      "archived_count": 0
+    }
+  },
+  "event_types": [
+    "idea:new",
+    "research:complete",
+    "spec:approved",
+    "implementation:complete",
+    "review:passed",
+    "deployment:ready",
+    "hunger:detected",
+    "task:started",
+    "task:completed",
+    "task:failed"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "route_id": "route_1",
+  "provider_id": "openai",
+  "subprovider_id": "acct_a",
+  "provider_class": "cloud_direct",
+  "model": "gpt-5",
+  "priority": 100,
+  "constraints": {
+    "requires_region": "us",
+    "max_cost_per_1k_tokens": 0.05,
+    "supports_tools": true,
+    "supports_stream": true
+  }
+}
+

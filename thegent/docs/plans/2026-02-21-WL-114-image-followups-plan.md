@@ -1,0 +1,17 @@
+# WL-114 Follow-up Plan (Post-Slice)
+
+## Completed Slice
+- `--image` CLI plumbing to `run_impl`.
+- Input validation for local image files (png/jpg/jpeg/webp/gif) and HTTPS URLs.
+- Codex-backed command forwarding (`--image ...`) in direct codex + codex proxy runners.
+
+## Remaining Work
+1. Background run support:
+- plumb image inputs through `bg_cmd` / `bg_impl`.
+2. Non-codex provider paths:
+- add explicit Claude content-block injection path when/if using direct Claude transport.
+3. Capability checks:
+- model-level vision capability validation instead of agent-level coarse gating.
+
+## Validation Targets
+- `pytest -q tests/test_wl114_image_flags.py tests/test_wl114_bg_image.py`

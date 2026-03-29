@@ -1,0 +1,693 @@
+{
+  "project": "crun",
+  "wbs_elements": 97,
+  "tree": {
+    "crun-wbs-21": {
+      "id": "crun-wbs-21",
+      "name": "tests passing! \u2705",
+      "description": "## Files Created\n\nAll source files in: `/Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/planning/tui/`\n\n- `wbs_panel.py` - Interactive tree\n- `task_detail.py` - Task details\n- `metrics_panel.py` - Project metrics\n- `app.py` - Main TUI\n\n## Next Steps",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "crun-wbs-14": {
+      "id": "crun-wbs-14",
+      "name": "tests requiring full widget mounting (future work)",
+      "description": "- All core functionality verified\n\n**To Run**:\n```bash\ncd /Users/kooshapari/temp-PRODVERCEL/485/kush/crun\npytest crun/tests/test_planning_tui.py -v\n```\n\n---\n\n## Documentation\n\n### 1. Component README\n**File**: `/Users/kooshapari/temp-PRODVERCEL/485/kush/crun/crun/planning/tui/README.md`\n\n**Contents**:\n- Installation instructions\n- Usage examples\n- Keyboard shortcuts reference\n- Layout diagrams\n- Component architecture\n- Data flow diagrams\n- Development guide\n- Troubleshooting\n\n### 2. Implementa",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-14.": {
+          "id": "crun-wbs-14.",
+          "name": "**`crun/planning/visualization/charts.py`** (486 lines) - Visualization library",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-18": {
+      "id": "crun-wbs-18",
+      "name": "tasks across 3 levels",
+      "description": "- Multiple dependencies\n- Various statuses\n- PERT estimates for all tasks\n- Critical path demonstration\n\n**Usage**:\n```bash\npython demo_planning_tui.py\n```\n\n## Dependencies Added\n\nUpdated `requirements.txt`:\n```txt\nnetworkx>=3.0      # Graph algorithms for CPM\npyyaml>=6.0        # YAML frontmatter parsing\npydantic>=2.0      # Data validation (already used)\nPyGithub>=2.1.0    # For future GitHub integration\npython-dotenv>=1.0.0  # Environment variables\n```\n\nExisting dependencies used:\n- `textual",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-18.": {
+          "id": "crun-wbs-18.",
+          "name": "**`crun/planning/watchers/file_watcher.py`** (450 lines) - File system monitoring",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-9": {
+      "id": "crun-wbs-9",
+      "name": "production-ready templates (3 PRD + 3 WBS + 1 PERT + 2 config)",
+      "description": "- Multiple planning methodologies (Agile, Waterfall, Hybrid)\n- AI-assisted document generation\n- Interactive TUI for visualization and tracking\n- GitHub issue integration\n- Automated validation and reporting\n\n## Canonical Interfaces\n\nThe planning stack is delivered through one canonical interface per modality:\n\n- **CLI (Typer + Rich):** `crun plan <command>` drives all planning automation from the terminal.\n- **GUI (PyQt6):** `python -m crun plan-gui` launches the planning desktop app for teams",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-9.": {
+          "id": "crun-wbs-9.",
+          "name": "**CLI Support** - Easy automation and scripting",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-9.1": {
+          "id": "crun-wbs-9.1",
+          "name": "Small Project (10 Tasks)",
+          "description": "**Project:** Internal Tool for Log Analysis\n\n```bash\n# Generate plan\ncrun unified generate \"Log Analyzer\" \\\n  \"CLI tool to parse and analyze application logs\" \\\n  --complexity low \\\n  --timeline 1_month \\\n  --team-size 2\n\n# View generated plan\ncrun unified status .planning/projects/log-analyzer/log-analyzer-plan.md\n```\n\n**Output Preview:**\n```\n\ud83d\udcca Plan Summary:\n  \u2022 Project: Log Analyzer\n  \u2022 Tasks: 10\n  \u2022 Estimated Hours: 120\n  \u2022 Duration: 3.0 weeks\n  \u2022 Risk Level: Low\n  \u2022 Critical Path: 6 tasks\n\nTasks:\n  1.0 Log Analyzer Project\n    1.1 Project Setup (8h)\n      1.1.1 Repository Setup (2h)\n      1.1.2 Development Environment (4h)\n      1.1.3 CI/CD Pipeline (2h)\n    1.2 Core Development (80h)\n      1.2.1 Log Parser (20h)\n      1.2.2 Analysis Engine (30h)\n      1.2.3 Output Formatter (15h)\n      1.2.4 CLI Interface (15h)\n    1.3 Testing & Documentation (32h)\n      1.3.1 Unit Tests (16h)\n      1.3.2 Integration Tests (8h)\n      1.3.3 Documentation (8h)\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-9.2": {
+          "id": "crun-wbs-9.2",
+          "name": "Medium Project (50 Tasks)",
+          "description": "**Project:** E-Commerce Platform\n\n```bash\n# Use interactive mode for detailed planning\ncrun unified agent create \"E-Commerce Platform\" \\\n  \"Multi-vendor marketplace with payments\" \\\n  --interactive \\\n  --complexity medium \\\n  --timeline 6_months \\\n  --team-size 8\n```\n\n**Interactive Session:**\n```\n\ud83d\udcda Technology Stack & Frameworks\n---------------------------------\nWhat programming languages will be used?\nChoices: 1,2,5  # Python, JavaScript, Rust\n\nWhat Python frameworks/libraries?\nChoices: 1,4,5  # FastAPI, asyncio, pytest\n\nWhat databases will be used?\nChoices: 1,5,8  # PostgreSQL, Redis, Supabase\n\n\ud83d\udd27 Existing Code & Integrations\n--------------------------------\nDo you have existing code to integrate? (y/n): y\nWhat existing code/components?\nChoices: 6  # API Endpoints\n\n\u26a1 Performance Requirements\n---------------------------\nWhat is the target response time?\nChoice: 3  # < 500ms\n\nWhat is the target throughput?\nChoice: 3  # < 10,000 req/s\n\n\ud83d\udd12 Security Requirements\n------------------------\nWhat authentication requirements?\nChoices: 2,3,4  # OAuth 2.0, JWT, API Keys\n\n\ud83e\uddea Testing Requirements\n----------------------\nWhat types of testing are required?\nChoices: 1,2,3,4  # Unit, Integration, E2E, Performance\n\nWhat test coverage is required?\nChoice: 3  # > 95%\n```\n\n**Generated Plan Structure:**\n```\n1.0 E-Commerce Platform (2400h total)\n  1.1 Foundation & Architecture (320h)\n    1.1.1 Project Setup (40h)\n    1.1.2 Database Design (80h)\n    1.1.3 API Architecture (120h)\n    1.1.4 CI/CD Pipeline (80h)\n\n  1.2 Core Services (800h)\n    1.2.1 User Service (160h)\n      1.2.1.1 Authentication (40h)\n      1.2.1.2 Authorization (40h)\n      1.2.1.3 User Profiles (40h)\n      1.2.1.4 User Management (40h)\n    1.2.2 Product Service (240h)\n      [... subtasks ...]\n    1.2.3 Order Service (240h)\n    1.2.4 Payment Service (160h)\n\n  1.3 Frontend (480h)\n    1.3.1 Vendor Dashboard (160h)\n    1.3.2 Customer Portal (240h)\n    1.3.3 Admin Panel (80h)\n\n  1.4 Integration & Testing (480h)\n    1.4.1 API Integration Tests (160h)\n    1.4.2 E2E Tests (160h)\n    1.4.3 Performance Tests (80h)\n    1.4.4 Security Tests (80h)\n\n  1.5 Deployment & Documentation (320h)\n    1.5.1 Infrastructure Setup (120h)\n    1.5.2 Deployment Automation (80h)\n    1.5.3 Monitoring Setup (40h)\n    1.5.4 Documentation (80h)\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-9.3": {
+          "id": "crun-wbs-9.3",
+          "name": "Large Project (200+ Tasks)",
+          "description": "**Project:** Mobile Gaming Platform (Pokemon Go Clone)\n\n```bash\n# Generate comprehensive plan\ncrun unified generate \"Pokemon Go Clone\" \\\n  \"Location-based AR game with Pokemon collection, battles, and social features\" \\\n  --complexity enterprise \\\n  --timeline 1_year \\\n  --team-size 25 \\\n  --budget 2000000 \\\n  --target-audience \"Mobile gamers aged 13-35\"\n```\n\n**Plan Metrics:**\n```\n\ud83d\udcca Plan Summary:\n  \u2022 Project: Pokemon Go Clone\n  \u2022 Total Tasks: 247\n  \u2022 Total Estimated Hours: 18,400\n  \u2022 Duration: 52.0 weeks (1 year)\n  \u2022 Confidence Interval (95%): 48-58 weeks\n  \u2022 Risk Level: High\n  \u2022 Critical Path: 42 tasks\n  \u2022 High-Risk Tasks: 18 tasks\n  \u2022 Team Size: 25 developers\n  \u2022 Peak Resource Usage: 22 concurrent\n```\n\n**High-Level Structure:**\n```\n1.0 Pokemon Go Clone Project\n  1.1 Foundation (1200h - Weeks 1-6)\n  1.2 Backend Services (3600h - Weeks 7-20)\n  1.3 Mobile Client (4800h - Weeks 7-30)\n  1.4 Game Features (4200h - Weeks 14-38)\n  1.5 AR & Map Integration (2400h - Weeks 18-38)\n  1.6 Testing & QA (1600h - Weeks 30-48)\n  1.7 Deployment & Operations (800h - Weeks 44-52)\n```\n\n**Critical Path:**\n```\n1.1.2 Core Architecture Design (80h)\n  \u2193\n1.2.1 Location Service API (240h)\n  \u2193\n1.3.1 Map Integration (320h)\n  \u2193\n1.4.2 Pokemon Spawn System (400h)\n  \u2193\n1.4.4 Capture Mechanics (320h)\n  \u2193\n1.5.1 AR View Implementation (480h)\n  \u2193\n1.6.2 Integration Testing (320h)\n  \u2193\n1.7.1 Production Deployment (160h)\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-9.4": {
+          "id": "crun-wbs-9.4",
+          "name": "Example Inputs for Each Mode",
+          "description": "#### Interactive Mode Input Example\n\n**Terminal Session:**\n```bash\n$ crun unified agent create \"API Gateway\" \"Microservices gateway\" --interactive\n\n\ud83d\udd0d Interactive Planning Session\n==================================================\n\n\ud83d\udcda Technology Stack & Frameworks\n---------------------------------\n\nWhat programming languages will be used?\n  1. Python\n  2. JavaScript/TypeScript\n  3. Go\n  4. Rust\n  5. Java\n  6. C#\n  7. Other\nEnter choice numbers separated by commas: 3\n\nWhat message queues/messaging systems?\n  1. NATS\n  2. RabbitMQ\n  3. Kafka\n  4. Redis Pub/Sub\n  5. None\nChoices: 1\n\nWhat deployment targets?\n  1. Kubernetes\n  2. Docker\n  3. AWS Lambda\n  4. Systemd\n  5. Other\nChoices: 1,2\n\n[... continues with more questions ...]\n```\n\n#### Markdown File Mode Input Example\n\n**File: `api-gateway-requirements.md`**\n```markdown\n# API Gateway - Project Requirements\n\n## Overview\nBuild a high-performance API gateway for microservices architecture supporting\nrate limiting, authentication, request routing, and observability.\n\n## Technology Stack\n- **Language:** Go\n- **Messaging:** NATS\n- **Deployment:** Kubernetes + Docker\n- **Database:** PostgreSQL for config, Redis for cache\n- **Monitoring:** Prometheus + Grafana\n\n## Requirements\n\n### Functional Requirements\n- **REQ-001:** HTTP/HTTPS request routing\n  - Must support path-based routing\n  - Must support header-based routing\n  - Must support weighted routing for canary deployments\n\n- **REQ-002:** Authentication & Authorization\n  - Support JWT tokens\n  - Support API keys\n  - Support OAuth 2.0\n  - Role-based access control\n\n### Non-Functional Requirements\n- **Performance:** < 5ms added latency\n- **Throughput:** 10,000 requests/second\n- **Availability:** 99.9% uptime\n- **Scalability:** Horizontal scaling\n\n## Architecture\n- Reverse proxy with Envoy\n- Control plane with custom Go service\n- Configuration stored in PostgreSQL\n- Rate limiting with Redis\n\n## Deployment\n- Primary: Kubernetes\n- Container: Docker\n- CI/CD: GitHub Actions\n```\n\n**Command:**\n```bash\ncrun unified generate-from-file api-gateway-requirements.md \\\n  --output api-gateway-plan.md\n```\n\n#### JSON Mode Input Example\n\n**File: `mobile-app-requirements.json`**\n```json\n{\n  \"project_name\": \"Fitness Tracking App\",\n  \"description\": \"Mobile app for fitness tracking with AI coaching\",\n  \"complexity\": \"high\",\n  \"timeline\": \"9_months\",\n  \"team_size\": 12,\n  \"budget\": 800000,\n  \"target_audience\": \"Health-conscious individuals aged 25-45\",\n\n  \"tech_stack\": {\n    \"languages\": [\"TypeScript\", \"Python\", \"Swift\", \"Kotlin\"],\n    \"frameworks\": [\"React Native\", \"FastAPI\", \"TensorFlow\"],\n    \"databases\": [\"PostgreSQL\", \"MongoDB\", \"Redis\"],\n    \"deployment\": [\"AWS Lambda\", \"Kubernetes\", \"Docker\"],\n    \"cloud\": [\"AWS\"]\n  },\n\n  \"requirements\": [\n    {\n      \"id\": \"REQ-001\",\n      \"title\": \"Activity Tracking\",\n      \"description\": \"Track walking, running, cycling activities using GPS\",\n      \"category\": \"Core Features\",\n      \"priority\": 1,\n      \"acceptance_criteria\": [\n        \"Accurately track GPS coordinates\",\n        \"Calculate distance, pace, elevation\",\n        \"Save activities to user profile\"\n      ]\n    },\n    {\n      \"id\": \"REQ-002\",\n      \"title\": \"AI Coaching\",\n      \"description\": \"Provide personalized workout recommendations\",\n      \"category\": \"AI Features\",\n      \"priority\": 2,\n      \"acceptance_criteria\": [\n        \"Analyze user fitness data\",\n        \"Generate personalized plans\",\n        \"Adapt based on progress\"\n      ]\n    }\n  ],\n\n  \"performance_requirements\": {\n    \"response_time\": \"< 200ms\",\n    \"battery_usage\": \"< 5% per hour of tracking\",\n    \"offline_support\": true\n  },\n\n  \"security_requirements\": [\n    \"End-to-end encryption for health data\",\n    \"HIPAA compliance for US users\",\n    \"Two-factor authentication\"\n  ]\n}\n```\n\n**Command:**\n```bash\ncrun unified generate-from-json mobile-app-requirements.json \\\n  --output fitness-app-plan.md\n```\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-394": {
+      "id": "crun-wbs-394",
+      "name": "tests gave confidence",
+      "description": "- Caught regressions early\n- **Result**: Fearless refactoring\n\n\ud83c\udfaf **Configuration Flexibility Matters**\n- File + Env + CLI = max flexibility\n- Priority chain prevents conflicts\n- **Result**: Works in any environment\n\n---\n\n## \ud83d\udcda Documentation Index\n\n### User Documentation\n- `/README.md` - Main project README\n- `/crun/README.md` - Code quality module README\n- `/crun/planning/*/README.md` - Planning submodule READMEs\n- `QUICK_START.md` - Getting started guide\n- `CLI_REFERENCE.md` - Command reference",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "crun-wbs-3": {
+      "id": "crun-wbs-3",
+      "name": "output formats (console, JSON, HTML)",
+      "description": "- Baseline comparison and regression detection\n- CLI integration with existing planning module\n- Comprehensive documentation and examples\n- Complete test suite\n- CI/CD ready with proper exit codes\n\nThe suite provides immediate value for:\n- Performance regression detection\n- Optimization guidance\n- Capacity planning\n- CI/CD integration\n- Development feedback\n\nAll files are in place and ready for use with:\n```bash\ncrun plan benchmark\n```",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-3.": {
+          "id": "crun-wbs-3.",
+          "name": "Reference Tasks in Commits",
+          "description": "```bash\ngit commit -m \"fixes #1.1.1: Complete React project setup\n\n- Initialized Vite with TypeScript\n- Configured ESLint and Prettier\n- Set up Jest and React Testing Library\n- Added CI workflow\n\nActual time: 7.5h (estimate: 6.33h)\n\"\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-3.1": {
+          "id": "crun-wbs-3.1",
+          "name": "Auto-generated Plan Strengths",
+          "description": "\u2705 **Machine-Readable YAML Frontmatter**:\n- Full ISO8601 timestamps with microseconds (excellent for audit trails)\n- Structured metadata for tool parsing\n- Version control friendly\n- Example:\n  ```yaml\n  created: '2025-10-24T01:38:49.339694'\n  updated: '2025-10-24T01:38:49.339695'\n  ```\n\n\u2705 **Consistent Task Formatting**:\n- Every task has same structure (effort, owner, tags)\n- PERT estimates (O:M:P) present for all tasks\n- Priority emojis consistent (\u2b50\u2b50\u2b50\u2b50\u2b50)\n- Easy to parse programmatically\n\n\u2705 **YAML-First Design**:\n- Metadata can be consumed by tools\n- Critical path as list (`- '34'`)\n- Success metrics as structured data\n- Good for automation\n\n\u2705 **Fast Generation**:\n- Auto-generated in seconds\n- Can iterate quickly\n- No manual effort required",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-3.2": {
+          "id": "crun-wbs-3.2",
+          "name": "Handwritten Plan Strengths",
+          "description": "\u2705 **Narrative Excellence**:\n- Executive summary for stakeholders\n- Problem statement with user impact\n- 3 detailed user personas (Sarah, Marcus, Alex)\n- Tells a story, not just lists tasks\n\n\u2705 **Comprehensive Coverage**:\n- 85 tasks vs 42 (102% more)\n- Non-functional requirements (performance, reliability, security)\n- Risk register with mitigation strategies\n- Technology stack documented\n- Glossary of terms\n\n\u2705 **Production-Ready Detail**:\n- File paths with LOC estimates per task\n- Specific acceptance criteria (6-7 per task)\n- Week-by-week staffing plan\n- Role-specific budget ($88K total with contingency)\n- Dependencies tracked\n\n\u2705 **Hierarchical Organization**:\n- 8 logical phases (Quick Wins \u2192 Database \u2192 Cache/Queue \u2192 Storage/Network \u2192 Compute \u2192 CLI/TUI \u2192 K8s \u2192 Systemd/Lambda \u2192 Docs)\n- Tasks grouped by function\n- Phase summaries with totals\n- Easy to navigate\n\n\u2705 **Risk Management**:\n- High-risk tasks flagged (Kafka, K8s Security)\n- Risk register with probability/impact/mitigation\n- Specific mitigation strategies per risk\n- Contingency buffer (20%)\n\n\u2705 **Execution Clarity**:\n- Agent assignments per phase\n- Detailed validation gates\n- Integration points (GitHub, CI/CD, monitoring)\n- Week-by-week timeline\n\n\u2705 **Professional Appendix**:\n- Technology stack (languages, frameworks, libraries)\n- Success metrics (code, performance, quality)\n- Risk register\n- Dependencies (external services)\n- Glossary of terms\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {
+            "crun-wbs-3.2.3": {
+              "id": "crun-wbs-3.2.3",
+              "name": "Application Deployment (19.00h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            }
+          }
+        },
+        "crun-wbs-3.3": {
+          "id": "crun-wbs-3.3",
+          "name": "JSON Structured Mode",
+          "description": "**Description:** Provide structured requirements as JSON for programmatic generation.\n\n**When to Use:**\n- Integrating with other tools and systems\n- Batch plan generation\n- API-driven workflows\n- When requirements come from another system\n\n**Usage:**\n```bash\n# Create JSON requirements\ncat > requirements.json << 'EOF'\n{\n  \"project_name\": \"E-commerce Platform\",\n  \"description\": \"Multi-vendor marketplace\",\n  \"complexity\": \"high\",\n  \"timeline\": \"1_year\",\n  \"team_size\": 15,\n  \"tech_stack\": {\n    \"languages\": [\"Python\", \"TypeScript\"],\n    \"databases\": [\"PostgreSQL\", \"Redis\"],\n    \"deployment\": [\"Kubernetes\"]\n  },\n  \"requirements\": [\n    {\n      \"id\": \"REQ-001\",\n      \"title\": \"User Authentication\",\n      \"category\": \"Security\"\n    }\n  ]\n}\nEOF\n\n# Generate plan from JSON\ncrun unified generate-from-json requirements.json --output plan.md\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-3.4": {
+          "id": "crun-wbs-3.4",
+          "name": "Mixed Mode",
+          "description": "**Description:** Combine multiple input methods for maximum flexibility.\n\n**When to Use:**\n- Start with file/JSON, then refine interactively\n- Use templates as base, customize through CLI\n- Pre-fill common fields, ask specific questions only\n\n**Usage:**\n```bash\n# Start with template, add interactive refinement\ncrun unified generate \"My Project\" \"Description\" \\\n  --template web-app-template.md \\\n  --interactive \\\n  --focus-areas \"deployment,testing\"\n```\n\n### Mode Comparison Table\n\n| Mode | Speed | Flexibility | Detail | Best For |\n|------|-------|-------------|---------|----------|\n| **Interactive Q&A** | Slow (30-60 min) | High | Very High | Complex projects |\n| **Markdown File** | Fast (5 min) | Medium | High | Documented requirements |\n| **JSON Structured** | Very Fast (1 min) | Low | Medium | Automated workflows |\n| **Mixed Mode** | Medium (15-30 min) | Very High | High | Hybrid approaches |\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-42": {
+      "id": "crun-wbs-42",
+      "name": "phases with 1 task each (flat structure)",
+      "description": "- Example: \"Phase 4: Implement MySQL Resource\" (single task, no sub-tasks)\n\n**Handwritten**:",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "crun-wbs-8": {
+      "id": "crun-wbs-8",
+      "name": "logical phases (Quick Wins \u2192 Database \u2192 Cache/Queue \u2192 Storage/Network \u2192 Compute \u2192 CLI/TUI \u2192 K8s \u2192 Systemd/Lambda \u2192 Docs)",
+      "description": "- Tasks grouped by function\n- Phase summaries with totals\n- Easy to navigate\n\n\u2705 **Risk Management**:\n- High-risk tasks flagged (Kafka, K8s Security)\n- Risk register with probability/impact/mitigation\n- Specific mitigation strategies per risk\n- Contingency buffer (20%)\n\n\u2705 **Execution Clarity**:\n- Agent assignments per phase\n- Detailed validation gates\n- Integration points (GitHub, CI/CD, monitoring)\n- Week-by-week timeline\n\n\u2705 **Professional Appendix**:\n- Technology stack (languages, frameworks, libraries)\n- Success metrics (code, performance, quality)\n- Risk register\n- Dependencies (external services)\n- Glossary of terms\n\n---\n\n## 4. Gaps Analysis\n\n### 4.1 What's Missing from Auto-generated\n\n\u274c **Critical Narrative Elements**:\n1. Executive Summary (no stakeholder context)\n2. User personas (no empathy for users)\n3. Non-functional requirements (performance, security, etc.)\n4. Problem \u2192 Impact flow (lists implementation, not problems)\n\n\u274c **Essential Planning Components**:\n1. Risk register with mitigation strategies\n2. Technology stack documentation\n3. Week-by-week resource leveling\n4. Role-specific budget breakdown\n5. Glossary of terms\n6. Dependencies (external services)\n\n\u274c **Execution Details**:\n1. Agent assignments (which agent does what)\n2. Validation gate specifics (what exactly is checked)\n3. Integration point details (how GitHub automation works)\n4. File paths and LOC estimates per task\n5. Specific mitigation for high-risk tasks\n\n\u274c **Quality Issues**:\n1. **BUG**: Project ID has redundant suffix (`-infrastructure-infrastructure`)\n2. **BUG**: Team size = 0 developers (impossible)\n3. Tautological acceptance criteria (\"Implement X\" \u2192 \"Implement X\")\n4. Generic risk factors (no specifics)\n5. Flat 42-phase structure (should be 8 phases with grouped tasks)\n\n\u274c **Documentation Gaps**:\n1. No appendix section\n2. No quick reference for stakeholders\n3. No visual dependency graph\n4. No success metrics table\n5. No technology choices explained\n\n**Impact**: Auto-generated plan is **not production-ready**. It's a skeleton that requires 80% more work to be executable.\n\n### 4.2 What's Missing from Handwritten\n\n\u274c **Tool Integration**:\n1. Timestamps lack precision (date only, no time)\n2. YAML metadata less structured (harder for tools to parse)\n3. No machine-readable status tracking\n4. Critical path in prose (not list for tooling)\n\n\u274c **Minor Gaps**:\n1. No auto-update timestamp mechanism\n2. Integration section less detailed than could be\n3. Could benefit from JSON schema for validation\n\n**Impact**: Handwritten plan is **production-ready** but could benefit from better tool integration for tracking.\n\n### 4.3 Redundancies\n\n#### In Auto-generated:\n1. **Tautological Requirements**:\n   - Requirement: \"Implement MySQL Resource\"\n   - Description: \"Implement MySQL Resource\"\n   - Acceptance Criteria: \"Implement Implement MySQL Resource\"\n   - Repetitive and unhelpful\n\n2. **Flat Phase Structure**:\n   - 42 phases with 1 task each\n   - Should be ~8 phases with grouped tasks\n   - Creates unnecessary nesting\n\n3. **Generic Content**:\n   - Many tasks have identical acceptance criteria\n   - Copy-paste errors (\"Implement Implement...\")\n   - Missing customization per resource type\n\n#### In Handwritten:\n1. **Minimal Redundancy**:\n   - Some overlap between PRD goals and WBS phase objectives (acceptable)\n   - Technology stack appears in appendix and task descriptions (acceptable for clarity)\n\n**Winner**: Handwritten has minimal, intentional redundancy\n\n---\n\n## 5. Recommendations\n\n### 5.1 Best Elements to Combine\n\n**From Auto-generated, Keep**:\n1. \u2705 Precise ISO8601 timestamps (microsecond precision)\n2. \u2705 Structured YAML frontmatter for tool parsing\n3. \u2705 Consistent task formatting (effort, owner, tags)\n4. \u2705 PERT estimates (O:M:P) for all tasks\n\n**From Handwritten, Keep**:\n1. \u2705 Executive summary + user personas\n2. \u2705 Non-functional requirements (NFRs)\n3. \u2705 Hierarchical WBS (8 phases, not 42)\n4. \u2705 File paths + LOC estimates per task\n5. \u2705 Specific acceptance criteria (6-7 per task)\n6. \u2705 Risk register with mitigation strategies\n7. \u2705 Week-by-week resource leveling\n8. \u2705 Role-specific budget breakdown\n9. \u2705 Agent assignments per phase\n10. \u2705 Technology stack + glossary in appendix\n\n**Ideal Hybrid**: Auto-generated's YAML + Handwritten's content\n\n### 5.2 Template Improvements Needed\n\n#### For Auto-generation System:\n\n**High Priority Fixes**:\n1. \ud83d\udd34 **Fix tautological acceptance criteria** (currently: \"Implement X\" \u2192 \"Implement X\")\n   - Use LLM to generate specific, testable criteria based on task context\n   - Example: \"MySQL Resource\" \u2192 \"Connection pool with min/max size\", \"Health check via SELECT 1\", etc.\n\n2. \ud83d\udd34 **Fix team size calculation** (currently: 0 developers)\n   - Calculate peak/average from task assignments\n   - Example: If 3 tasks run in parallel, peak = 3 devs\n\n3. \ud83d\udd34 **Fix project ID redundancy** (`-infrastructure-infrastructure`)\n   - Validate no duplicate suffixes in ID generation\n\n4. \ud83d\udd34 **Improve WBS hierarchy** (currently: 42 flat phases)\n   - Detect task groupings (database resources, cache resources, etc.)\n   - Create 8-10 logical phases\n   - Nest tasks within phases\n\n**Medium Priority Enhancements**:\n1. \ud83d\udfe1 **Add user personas** (currently: missing)\n   - Template: \"Application Developer\", \"DevOps Engineer\", \"SDK Contributor\"\n   - Include needs/pains/goals for each\n\n2. \ud83d\udfe1 **Add NFRs** (currently: missing)\n   - Template: Performance, Reliability, Maintainability, Security\n   - Generate from keywords in problem statement\n\n3. \ud83d\udfe1 **Add risk register** (currently: generic factors)\n   - Extract high-risk tasks from WBS (complexity > 20h, security tags, etc.)\n   - Generate mitigation strategies based on task type\n\n4. \ud83d\udfe1 **Add file paths + LOC estimates** (currently: missing)\n   - Use heuristics: resource = 300 LOC, test = 400 LOC, docs = 250 LOC\n   - Path templates: `pheno/infra/resources/{name}.py`\n\n5. \ud83d\udfe1 **Add technology stack** (currently: missing)\n   - Extract from task descriptions (e.g., \"MySQL resource with aiomysql\")\n   - Group into Languages, Frameworks, Libraries, Tools\n\n**Low Priority Enhancements**:\n1. \ud83d\udfe2 **Add executive summary** (currently: missing)\n   - Template: Current State \u2192 Target State \u2192 Impact\n\n2. \ud83d\udfe2 **Add glossary** (currently: missing)\n   - Extract technical terms from document\n   - Generate definitions from context\n\n3. \ud83d\udfe2 **Add visual dependency graph** (currently: single ID)\n   - ASCII art or Mermaid diagram\n   - Show phase-level flow\n\n### 5.3 Interactive Collection Requirements\n\n#### Missing Information That Requires Human Input:\n\n**Project Context** (can't auto-generate):\n1. \u2753 **User personas** (needs domain knowledge)\n   - Who are the primary users?\n   - What are their pain points?\n   - What are their goals?\n\n2. \u2753 **Risk tolerance** (business decision)\n   - What's acceptable downtime?\n   - What's the budget limit?\n   - What's the deadline flexibility?\n\n3. \u2753 **Technology constraints** (organizational policy)\n   - Required frameworks/libraries?\n   - Prohibited technologies?\n   - Compliance requirements (SOC2, HIPAA, etc.)?\n\n4. \u2753 **Team composition** (organizational)\n   - How many backend/frontend/devops/qa/docs?\n   - What are their skill levels?\n   - What are their rates?\n\n**Execution Preferences** (can't auto-generate):\n1. \u2753 **Validation gates** (team process)\n   - What must be reviewed?\n   - Who approves each gate?\n   - What are the criteria?\n\n2. \u2753 **Integration points** (tooling)\n   - Which PM tools? (GitHub, Jira, Asana, Notion)\n   - Which CI/CD? (GitHub Actions, CircleCI, Jenkins)\n   - Which monitoring? (Datadog, Sentry, PagerDuty)\n\n3. \u2753 **Agent assignments** (team structure)\n   - Which agents/devs handle which phases?\n   - What are the agent capabilities?\n   - Any skill constraints?\n\n**Implementation Details** (can partly auto-generate):\n1. \u2753 **File paths** (can use heuristics, but may need project structure)\n2. \u2753 **LOC estimates** (can use heuristics, but may need historical data)\n3. \u2753 **Technology choices** (can suggest, but needs approval)\n   - Which MySQL client? (aiomysql vs asyncmy)\n   - Which K8s tool? (Hikaru vs pykube-ng)\n\n#### Recommended Interactive Collection Flow:\n\n**Phase 1: Project Context** (5 min):\n```\n1. Who are the primary users? (free text or select from common personas)\n2. What's the budget range? ($50K / $100K / $200K / Custom)\n3. What's the deadline? (3 months / 6 months / 9 months / Flexible)\n4. Any technology constraints? (free text)\n```\n\n**Phase 2: Team Composition** (3 min):\n```\n1. How many developers? (1-5 / 6-10 / 11+ / Auto-calculate)\n2. What are their roles? (Backend / Frontend / DevOps / QA / Docs)\n3. What are their rates? (Use defaults / Custom per role)\n4. What are their skill levels? (Junior / Mid / Senior)\n```\n\n**Phase 3: Execution Preferences** (3 min):\n```\n1. Which PM tool? (GitHub / Jira / Asana / Notion / None)\n2. Which CI/CD? (GitHub Actions / CircleCI / Jenkins / Other)\n3. Review gates? (Code Review / QA / Security / All / Custom)\n4. Agent assignments? (Auto-assign / Manual)\n```\n\n**Phase 4: Risk Tolerance** (2 min):\n```\n1. Risk appetite? (Conservative / Moderate / Aggressive)\n2. Acceptable downtime? (Zero / <1% / <5% / Flexible)\n3. Contingency buffer? (10% / 20% / 30% / Custom)\n```\n\n**Total Time**: ~15 minutes (acceptable for quality plan)\n\n#### Auto-generation Strategy:\n\n**High Confidence (Auto-generate)**:\n- WBS tasks (from requirements)\n- PERT estimates (from task complexity)\n- Critical path (from dependencies)\n- Technology stack (from task descriptions)\n- File paths (from heuristics)\n- LOC estimates (from heuristics)\n- Risk register (from high-complexity tasks)\n- Budget estimate (from hours + rates)\n\n**Medium Confidence (Generate + Confirm)**:\n- User personas (generate template, let user edit)\n- Technology choices (suggest, let user approve)\n- Agent assignments (suggest, let user adjust)\n- Risk mitigation (suggest, let user customize)\n\n**Low Confidence (Require Input)**:\n- Organization-specific policies\n- Team composition\n- Deadlines and budget limits\n- Review gate criteria\n- Integration point details\n\n---\n\n## 6. Detailed Comparison Table\n\n| Dimension | Auto-generated | Handwritten | Winner |\n|-----------|---------------|-------------|---------|\n| **Structure** | | | |\n| YAML Frontmatter | Precise timestamps, structured | Less precise, but complete config | Tie |\n| Section Organization | 3 sections (PRD, WBS, PERT) | 5 sections (PRD, WBS, PERT, Agent, Appendix) | Handwritten |\n| Level of Detail | 42 tasks, 728h | 85 tasks, 880h | Handwritten |\n| **PRD** | | | |\n| Problem Statement | Run-on sentence, lists implementation | Structured pain points \u2192 impacts | Handwritten |\n| Goals | Generic list | SMART goals with priorities | Handwritten |\n| Success Metrics | YAML (not human-readable) | Table with measurement methods | Handwritten |\n| Target Audience | One sentence | 3 detailed personas | Handwritten |\n| Functional Requirements | Tautological, flat | Hierarchical (FR1\u2192FR1.1), detailed | Handwritten |\n| Non-Functional Requirements | Missing | Comprehensive (4 categories) | Handwritten |\n| **WBS** | | | |\n| Task Structure | 42 flat phases (1 task each) | 8 hierarchical phases (3-7 tasks each) | Handwritten |\n| Task Detail | Minimal (no files, generic AC) | Detailed (files, LOC, 6-7 AC) | Handwritten |\n| Phase Summaries | Missing | Present (totals, by priority/owner) | Handwritten |\n| **PERT** | | | |\n| Critical Path | Single task ID (`'34'`) | Visual ASCII flow + task names | Handwritten |\n| Risk Analysis | Generic factors | Risk register + mitigation | Handwritten |\n| Resource Leveling | BUG: 0 developers | Week-by-week staffing plan | Handwritten |\n| Budget | Single rate, no breakdown | Role-specific rates + contingency | Handwritten |\n| **Agent Execution** | | | |\n| Configuration | YAML only, generic | Detailed narrative + assignments | Handwritten |\n| Validation Gates | Generic list | Specific criteria per gate | Handwritten |\n| Integration Points | All null/empty | Concrete automation steps | Handwritten |\n| **Appendix** | Missing | Comprehensive (tech stack, glossary, etc.) | Handwritten |\n| **Overall Quality** | Skeleton (20% complete) | Production-ready (100% complete) | Handwritten |\n\n**Score**: Auto-generated 3/18 | Handwritten 15/18 | Tie 0/18\n\n---\n\n## 7. Conclusion\n\n### Summary\n\nThe **handwritten plan is 5x more comprehensive and production-ready** than the auto-generated plan:\n\n**Handwritten Advantages**:",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-8.": {
+          "id": "crun-wbs-8.",
+          "name": "**CLI Design**: Intuitive command structure",
+          "description": "## Dependencies\n\n**No new external dependencies required!**\n\nAll functionality implemented using:\n- Standard library (datetime, json, csv, io)\n- Existing project dependencies (pydantic, rich)\n\nOptional enhancements could use:\n- `plotext` for better terminal charts\n- `jinja2` for HTML templates (currently uses string formatting)\n\n## Usage Examples\n\n### Programmatic API\n```python\nfrom crun.planning.reports import (\n    BurndownChart,\n    VarianceAnalyzer,\n    RiskRegister,\n    ProjectDashboard,\n)\n\n# Load WBS\nwbs = WBSDocument.model_validate_json(wbs_json)\n\n# Burndown\nburndown = BurndownChart(wbs)\nprint(burndown.plot_burndown())\n\n# Variance\nanalyzer = VarianceAnalyzer(wbs, budget=50000)\nmetrics = analyzer.calculate_all_metrics()\nprint(f\"SPI: {metrics.schedule_performance_index:.3f}\")\n\n# Risks\nrisk_register = RiskRegister(wbs)\nrisk_register.identify_risks()\ntop_risks = risk_register.prioritize_risks()[:5]\n\n# Dashboard\ndashboard = ProjectDashboard(wbs, budget=50000, planned_duration_days=90)\nprint(dashboard.generate_dashboard())\n\n# Export\nfrom crun.planning.reports.exporters import export_report\nexport_report(\n    dashboard.get_metrics_dict(),\n    format=\"html\",\n    title=\"Project Status\",\n    output_file=\"dashboard.html\"\n)\n```\n\n### CLI Integration\n```bash\n# Quick status check\ncrun plan report dashboard\n\n# Detailed analysis\ncrun plan report variance --budget 50000 --planned-duration 90\n\n# Export for sharing\ncrun plan report dashboard --format html --export status.html\ncrun plan report risks --format markdown --export risks.md\ncrun plan report variance --format json --export metrics.json --budget 50000\n```\n\n## Future Enhancements\n\n### Phase 4 Possibilities",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-8.1": {
+          "id": "crun-wbs-8.1",
+          "name": "Common Errors and Solutions",
+          "description": "#### Error: \"Failed to load plan\"\n\n**Cause:** File format invalid or corrupted\n\n**Solutions:**\n```bash\n# Validate file format\ncrun unified validate my-plan.md\n\n# Check YAML frontmatter syntax\nhead -n 50 my-plan.md\n\n# Try repairing the file\ncrun unified repair my-plan.md --output fixed-plan.md\n\n# Convert from backup\ncrun unified convert backup.json --format unified --output my-plan.md\n```\n\n#### Error: \"Circular dependency detected\"\n\n**Cause:** Tasks form a dependency loop (A\u2192B\u2192C\u2192A)\n\n**Solutions:**\n```bash\n# Visualize dependencies\ncrun unified graph my-plan.md --format dot --output deps.dot\ndot -Tpng deps.dot -o deps.png\n\n# Find circular dependencies\ncrun unified analyze dependencies my-plan.md --find-cycles\n\n# Auto-fix (attempts to break cycles)\ncrun unified fix my-plan.md --fix-circular-deps --output fixed-plan.md\n\n# Manual fix: Remove one dependency from the cycle\ncrun unified task edit my-plan.md 1.2.3 --remove-dependency 1.1.1\n```\n\n#### Error: \"Task referenced in requirement doesn't exist\"\n\n**Cause:** PRD requirement links to non-existent WBS task\n\n**Solutions:**\n```bash\n# Find broken references\ncrun unified analyze consistency my-plan.md --check-references\n\n# Remove broken references\ncrun unified fix my-plan.md --remove-broken-refs\n\n# Add missing tasks\ncrun unified task add my-plan.md --id 2.1.5 --name \"Missing Task\"\n\n# Update requirement to reference existing task\ncrun unified requirement edit my-plan.md REQ-001 \\\n  --update-tasks \"1.2.1,1.2.2\" # Remove 2.1.5\n```\n\n#### Error: \"Invalid PERT estimates\"\n\n**Cause:** Optimistic > Most Likely or Most Likely > Pessimistic\n\n**Solutions:**\n```bash\n# Find invalid estimates\ncrun unified analyze estimates my-plan.md --find-invalid\n\n# Auto-fix (adjusts to valid ranges)\ncrun unified fix my-plan.md --fix-estimates\n\n# Manual fix\ncrun unified task edit my-plan.md 1.2.3 \\\n  --optimistic 8 --likely 12 --pessimistic 20\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-8.2": {
+          "id": "crun-wbs-8.2",
+          "name": "Performance Tips for Large Plans",
+          "description": "**Problem: Plan generation takes too long (> 5 minutes)**\n\n**Solutions:**\n\n```bash\n# Use batch processing mode\ncrun unified generate \"Project\" \"Description\" \\\n  --batch-mode \\\n  --parallel-generation 4\n\n# Skip expensive validations during generation\ncrun unified generate \"Project\" \"Description\" \\\n  --skip-validation \\\n  --validate-after\n\n# Use lighter complexity setting initially\ncrun unified generate \"Project\" \"Description\" \\\n  --complexity medium # Instead of enterprise\n\n# Generate incrementally\ncrun unified generate \"Project\" \"Description\" \\\n  --phases-only # Generate phases first\ncrun unified expand my-plan.md --phase 1 # Expand one phase at a time\n```\n\n**Problem: Loading large plans is slow**\n\n**Solutions:**\n\n```bash\n# Enable caching\nexport CRUN_CACHE_PLANS=1\ncrun unified load my-plan.md # First load (slow)\ncrun unified load my-plan.md # Subsequent loads (fast)\n\n# Use plan database instead of files\ncrun unified db import my-plan.md\ncrun unified db query --plan-id my-project # Fast queries\n\n# Split large plans\ncrun unified split my-plan.md --by-phase --output ./phases/\n```\n\n**Problem: Export takes too long**\n\n**Solutions:**\n\n```bash\n# Use incremental export\ncrun unified export my-plan.md --format github \\\n  --incremental \\\n  --since-last-export\n\n# Export in background\ncrun unified export my-plan.md --format pdf --async\n\n# Use faster formats\ncrun unified export my-plan.md --format json # Fastest\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-8.3": {
+          "id": "crun-wbs-8.3",
+          "name": "Integration with Existing Workflows",
+          "description": "#### GitHub Integration\n\n```bash\n# Setup GitHub integration\ncrun unified integrate github \\\n  --repo owner/repo \\\n  --token $GITHUB_TOKEN \\\n  --plan my-plan.md\n\n# Auto-sync on updates\ncrun unified watch my-plan.md --sync-to github\n\n# Import from GitHub\ncrun unified import github owner/repo \\\n  --project \"My Project\" \\\n  --output my-plan.md\n```\n\n#### Jira Integration\n\n```bash\n# Setup Jira integration\ncrun unified integrate jira \\\n  --server https://company.atlassian.net \\\n  --token $JIRA_TOKEN \\\n  --project KEY \\\n  --plan my-plan.md\n\n# Sync WBS to Jira\ncrun unified export my-plan.md --format jira --sync\n\n# Import from Jira\ncrun unified import jira --project KEY --output my-plan.md\n```\n\n#### CI/CD Integration\n\n```yaml\n# .github/workflows/plan-validation.yml\nname: Validate Plan\non: [pull_request]\njobs:\n  validate:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - uses: actions/setup-python@v4\n        with:\n          python-version: '3.11'\n      - name: Install crun\n        run: pip install -e .\n      - name: Validate plan\n        run: crun unified validate .planning/project-plan.md\n      - name: Check consistency\n        run: crun unified analyze consistency .planning/project-plan.md\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-8.4": {
+          "id": "crun-wbs-8.4",
+          "name": "Migration from Old Formats",
+          "description": "#### Migrate from Separate PRD/WBS/PERT Files\n\n```bash\n# Convert separate files to unified\ncrun unified convert \\\n  --prd prd.md \\\n  --wbs wbs.json \\\n  --pert pert.yaml \\\n  --output unified-plan.md\n\n# Validate after conversion\ncrun unified validate unified-plan.md\n```\n\n#### Migrate from Legacy Templates\n\n```bash\n# Convert old template to new format\ncrun unified migrate legacy-plan.md --output new-plan.md\n\n# Update version\ncrun unified upgrade new-plan.md --to-version 2.0\n```\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-6": {
+      "id": "crun-wbs-6",
+      "name": "specific acceptance criteria",
+      "description": "- File paths with LOC estimates\n- Clear dependencies\n\n**Winner**: Handwritten (3-4x more detail)\n\n#### Phase Summaries\n\n**Auto-generated**: \u274c No phase summaries\n\n**Handwritten**: \u2705 Includes summaries\n```markdown\n**Phase 1 Totals**: 7 tasks, 80 hours, 6 dependencies\n\n**By Priority**:\n- P0 (Critical): 42 tasks, 448 hours\n- P1 (High): 28 tasks, 288 hours\n- P2 (Medium): 15 tasks, 144 hours\n\n**By Owner**:\n- Backend: 45 tasks, 520 hours\n- DevOps: 20 tasks, 240 hours\n- QA: 10 tasks, 80 hours\n- Docs: 8 tasks, 80 hours\n- Frontend: 2 tasks, 40 hours\n```\n\n**Winner**: Handwritten (enables resource planning)\n\n### 2.3 PERT Analysis Depth\n\n#### Critical Path Visualization\n\n**Auto-generated**:\n```yaml\ncritical_path:\n  - '34'\n```\n- Single task ID (no context)\n- No visualization\n- Unhelpful for understanding flow\n\n**Handwritten**:\n```markdown\n**Critical Path Tasks** (42 tasks):\nQuick Wins \u2192 Database Resources \u2192 Cache & Queue \u2192 Storage & Network \u2192\nCompute & Universal \u2192 CLI/TUI \u2192 K8s \u2192 Systemd & Lambda \u2192 Docs\n\n**Critical Path Dependencies**:\n```\n0.1 (Cycle Detection) \u2192 0.2 (Container) \u2192 0.3 (Docs)\n  \u2193\n1.1 (MySQL) \u2192 1.2 (MongoDB) \u2192 1.3 (Supabase) \u2192 ...\n  \u2193\n...\n```\n```\n- Full dependency graph with ASCII art\n- Task names with IDs\n- Phase-level grouping\n- Easy to understand flow\n\n**Winner**: Handwritten (visual, detailed)\n\n#### Risk Analysis\n\n**Auto-generated**:\n```yaml\nrisk_factors:\n  - Integration complexity\n  - External service dependencies\n  - Performance optimization challenges\n  - Security hardening requirements\n```\n- Generic factors\n- No probability, impact, or mitigation\n- Not actionable\n\n**Handwritten**:\n```markdown\n**High-Risk Tasks** (Red):\n1. **2.5 (Kafka Resource)** - Complex API, requires careful testing\n2. **6.3 (K8s Security)** - Security-critical, must be perfect\n\n**Mitigation Strategies**:\n1. **For Kafka**: Start with simple pub/sub, iterate to consumer groups\n2. **For K8s Security**: Use Hikaru validation, test against real clusters\n3. **For Databases**: Use mocks for most tests, real DBs for integration\n4. **For Lambda**: Establish baseline first, optimize incrementally\n\n**Risk Register**:\n| Risk | Probability | Impact | Mitigation |\n|------|-------------|--------|------------|\n| K8s API changes | Low | High | Pin Hikaru version, validate manifests |\n| Lambda cold start targets not met | Medium | Medium | Start with baseline, iterate |\n| Database client library breaking changes | Low | High | Pin versions, test upgrades |\n| Team capacity issues | Medium | High | Cross-train, document patterns |\n| Integration complexity | Medium | Medium | Incremental integration, tests |\n```\n- Specific tasks flagged\n- Detailed mitigation per risk\n- Risk register with probability/impact matrix\n- Actionable\n\n**Winner**: Handwritten (actionable risk management)\n\n#### Resource Leveling\n\n**Auto-generated**:\n```markdown\n### Resource Requirements\n- **Total Effort**: 728 hours\n- **Peak Team Size**: 0 developers\n- **Average Team Size**: 0 developers\n- **Budget Estimate**: $36,392 (based on $50/hour average rate)\n```\n- \u26a0\ufe0f **BUG**: Peak/Average team size = 0 (impossible)\n- Single rate for all roles\n- No week-by-week breakdown\n\n**Handwritten**:\n```markdown\n**Week-by-Week Resource Allocation**:\n| Week | Phase | Tasks | Hours | Team |\n|------|-------|-------|-------|------|\n| 1 | Quick Wins | 3 | 6 | 1 dev |\n| 2-3 | Database 1-3 | 3 | 40 | 2 devs |\n| 4-5 | Database 4-7 | 4 | 40 | 2 devs |\n...\n\n**Peak Resource Usage**: Week 18-22 (3 developers)\n**Average Resource Usage**: 2.3 developers\n\n**Cost Breakdown**:\n| Role | Hours | Rate | Cost |\n|------|-------|------|------|\n| Backend | 520 | $75 | $39,000 |\n| DevOps | 240 | $90 | $21,600 |\n| QA | 80 | $65 | $5,200 |\n| Docs | 80 | $60 | $4,800 |\n| Frontend | 40 | $75 | $3,000 |\n| **Total** | **880** | - | **$73,600** |\n\n**Contingency** (20%): $14,720\n**Total Budget**: **$88,320**\n```\n- Week-by-week staffing plan\n- Role-specific rates\n- Contingency buffer\n- Enables capacity planning\n\n**Winner**: Handwritten (production-ready staffing plan)\n\n### 2.4 Agent Execution Instructions\n\n#### Configuration\n\n**Auto-generated**:\n```yaml\nagent_config:\n  max_parallel_tasks: 3\n  validation_required: true\n  review_gates:\n    - design\n    - implementation\n    - testing\n  handoff_points:\n    - prd_approval\n    - wbs_validation\n    - pert_analysis\n```\n- YAML only (no narrative)\n- Generic gates\n- No agent assignments\n\n**Handwritten**:\n```markdown\n**Parallel Execution**:\n- Max parallel tasks: 8 agents\n- Task batching: Group by phase\n- Dependency resolution: Automatic via PERT\n\n**Agent Assignments**:\n\n**Quick Wins** (1 agent):\n- General-purpose agent for integrations\n\n**Database Resources** (2 agents):\n- Agent 1: MySQL, Neon, TiDB\n- Agent 2: MongoDB, Supabase, PlanetScale\n\n**Cache & Queue** (2 agents):\n- Agent 1: Memcached, InMemory\n- Agent 2: NATS, RabbitMQ, Kafka\n...\n\n**Validation Gates**:\n\n**Code Review Gate** (All tasks):\n- Code review by senior engineer\n- Type checking (mypy strict)\n- Linting (ruff, black)\n- Test coverage \u226595%\n\n**QA Verification Gate** (End of each phase):\n- Integration tests pass\n- Performance benchmarks within targets\n- No regressions in existing functionality\n\n**Handoff Points**:\n1. **WBS Validation** - After phase planning, before implementation\n2. **Implementation Complete** - After all code written, before QA\n3. **QA Complete** - After testing, before docs\n4. **Docs Complete** - After documentation, before release\n```\n- Specific agent assignments per phase\n- Detailed validation criteria\n- Clear handoff definitions\n- Automation instructions\n\n**Winner**: Handwritten (executable)\n\n#### Integration Points\n\n**Auto-generated**:\n```yaml\nintegrations:\n  github: null\n  jira: null\n  asana: null\n  notion: null\n  custom_tools: []\n```\n- All null/empty\n- No configuration\n- Not executable\n\n**Handwritten**:\n```markdown\n**GitHub**:\n- Auto-create issues for each task\n- Link PRs to issues\n- Sync status on PR merge\n\n**CI/CD**:\n- Run tests on every PR\n- Type checking, linting, coverage\n- Deploy docs on merge to main\n\n**Monitoring**:\n- Track task completion rate\n- Alert on blocked tasks\n- Weekly progress reports\n```\n- Concrete GitHub automation steps\n- CI/CD pipeline specified\n- Monitoring strategy\n\n**Winner**: Handwritten (actionable)\n\n---\n\n## 3. Strengths of Each\n\n### 3.1 Auto-generated Plan Strengths\n\n\u2705 **Machine-Readable YAML Frontmatter**:\n- Full ISO8601 timestamps with microseconds (excellent for audit trails)\n- Structured metadata for tool parsing\n- Version control friendly\n- Example:\n  ```yaml\n  created: '2025-10-24T01:38:49.339694'\n  updated: '2025-10-24T01:38:49.339695'\n  ```\n\n\u2705 **Consistent Task Formatting**:\n- Every task has same structure (effort, owner, tags)\n- PERT estimates (O:M:P) present for all tasks\n- Priority emojis consistent (\u2b50\u2b50\u2b50\u2b50\u2b50)\n- Easy to parse programmatically\n\n\u2705 **YAML-First Design**:\n- Metadata can be consumed by tools\n- Critical path as list (`- '34'`)\n- Success metrics as structured data\n- Good for automation\n\n\u2705 **Fast Generation**:\n- Auto-generated in seconds\n- Can iterate quickly\n- No manual effort required\n\n### 3.2 Handwritten Plan Strengths\n\n\u2705 **Narrative Excellence**:\n- Executive summary for stakeholders\n- Problem statement with user impact",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-6.": {
+          "id": "crun-wbs-6.",
+          "name": "**Documentation**: Examples and explanations",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-6.1": {
+          "id": "crun-wbs-6.1",
+          "name": "Draft Saving and Resuming",
+          "description": "**Save Draft During Interactive Session:**\n\n```bash\n# Start interactive session\ncrun unified agent create \"My Project\" \"Description\" --interactive\n\n# During Q&A, press Ctrl+C to save draft\n^C\nSave draft? (y/n): y\nDraft saved to: .planning/drafts/my-project-draft-20241024.json\n\n# Resume later\ncrun unified agent create --resume .planning/drafts/my-project-draft-20241024.json\n```\n\n**Manual Draft Management:**\n\n```bash\n# List all drafts\ncrun unified draft list\n\n# Load specific draft\ncrun unified draft load my-project-draft-20241024.json\n\n# Delete old drafts\ncrun unified draft clean --older-than 30d\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-6.2": {
+          "id": "crun-wbs-6.2",
+          "name": "Going Back to Edit Previous Phases",
+          "description": "**Edit PRD After Generation:**\n\n```bash\n# Load plan\ncrun unified load my-plan.md\n\n# Edit specific section\ncrun unified edit my-plan.md --section prd --interactive\n\n# Edit specific requirement\ncrun unified edit my-plan.md --requirement REQ-AUTH-001\n```\n\n**Edit WBS Structure:**\n\n```bash\n# Add new task\ncrun unified task add my-plan.md \\\n  --id 1.2.5 \\\n  --name \"New Task\" \\\n  --parent 1.2 \\\n  --optimistic 8 --likely 12 --pessimistic 20\n\n# Edit existing task\ncrun unified task edit my-plan.md 1.2.3 \\\n  --name \"Updated Name\" \\\n  --estimates \"8,12,16\"\n\n# Delete task (and rebalance dependencies)\ncrun unified task delete my-plan.md 1.2.3 --rebalance\n```\n\n**Regenerate PERT After WBS Changes:**\n\n```bash\n# Recalculate PERT analysis\ncrun unified pert recalculate my-plan.md\n\n# Update critical path\ncrun unified pert update-critical-path my-plan.md\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-6.3": {
+          "id": "crun-wbs-6.3",
+          "name": "Using AI to Generate Sections",
+          "description": "**AI-Assisted PRD Generation:**\n\n```bash\n# Generate requirements from description\ncrun unified ai generate-requirements my-plan.md \\\n  --description \"Add user authentication with OAuth 2.0\"\n\n# Expand brief requirement into detailed one\ncrun unified ai expand-requirement my-plan.md REQ-AUTH-001\n```\n\n**AI-Assisted Task Breakdown:**\n\n```bash\n# Break down high-level task into subtasks\ncrun unified ai break-down-task my-plan.md 1.2 \\\n  --detail-level high\n\n# Suggest task estimates based on historical data\ncrun unified ai estimate-task my-plan.md 1.2.3 \\\n  --based-on-history \\\n  --similar-tasks \"1.1.5,1.3.2\"\n```\n\n**AI-Assisted Risk Analysis:**\n\n```bash\n# Identify high-risk tasks\ncrun unified ai identify-risks my-plan.md\n\n# Suggest mitigation strategies\ncrun unified ai suggest-mitigations my-plan.md --task 1.2.3\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-6.4": {
+          "id": "crun-wbs-6.4",
+          "name": "Importing from Existing Plans",
+          "description": "**Import from Other Formats:**\n\n```bash\n# Import from GitHub Project\ncrun unified import github owner/repo --project \"Project Name\" --output my-plan.md\n\n# Import from Jira\ncrun unified import jira --project KEY --output my-plan.md\n\n# Import from CSV\ncrun unified import csv tasks.csv --format gantt --output my-plan.md\n\n# Import from Microsoft Project\ncrun unified import msproject project.mpp --output my-plan.md\n```\n\n**Merge Multiple Plans:**\n\n```bash\n# Merge two plans\ncrun unified merge plan1.md plan2.md --output merged-plan.md\n\n# Merge with conflict resolution\ncrun unified merge plan1.md plan2.md \\\n  --on-conflict ask \\\n  --output merged-plan.md\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-6.5": {
+          "id": "crun-wbs-6.5",
+          "name": "Exporting to Different Formats",
+          "description": "**Export Options:**\n\n```bash\n# Export to JSON (machine-readable)\ncrun unified export my-plan.md --format json --output plan.json\n\n# Export to YAML (machine-readable)\ncrun unified export my-plan.md --format yaml --output plan.yaml\n\n# Export to HTML (presentation)\ncrun unified export my-plan.md --format html --output plan.html\n\n# Export to PDF (documentation)\ncrun unified export my-plan.md --format pdf --output plan.pdf\n\n# Export to Markdown (documentation)\ncrun unified export my-plan.md --format markdown --output README.md\n\n# Export Gantt chart\ncrun plan gantt my-plan.md --format mermaid --output gantt.mmd\n\n# Export to external tools\ncrun unified export my-plan.md --format github --repo owner/repo\ncrun unified export my-plan.md --format jira --project KEY\ncrun unified export my-plan.md --format asana --workspace ID\n```\n\n**Custom Export Templates:**\n\n```bash\n# Use custom export template\ncrun unified export my-plan.md \\\n  --template custom-template.jinja2 \\\n  --output custom-output.html\n\n# Create export template\ncrun unified template create export \\\n  --format html \\\n  --base-on default \\\n  --output my-template.jinja2\n```\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-85": {
+      "id": "crun-wbs-85",
+      "name": "tasks vs 42 (102% more coverage)",
+      "description": "- User personas, NFRs, risk register (auto-gen has none)\n- File paths, LOC estimates, week-by-week staffing (auto-gen has none)\n- Hierarchical structure (8 phases vs 42 flat phases)\n- Specific acceptance criteria (6-7 per task vs tautological)\n- Professional appendix (tech stack, glossary, dependencies)\n\n**Auto-generated Advantages**:\n- Precise timestamps (microsecond precision)\n- Consistent YAML structure (easier to parse)\n- Fast generation (seconds vs hours)\n\n### Recommendations for Auto-gene",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "crun-wbs-5": {
+      "id": "crun-wbs-5",
+      "name": "detailed README files",
+      "description": "- Quick start examples\n- Best practices\n- Troubleshooting\n- CLI reference\n- API documentation\n\n## Usage Examples\n\n### Example 1: Initialize New Project\n\n```bash\n# 1. Initialize .planning/ directory\ncrun plan init --project-name \"User Authentication\"\n\n# Output:\n# \u2713 Initialized .planning/ directory at .planning\n# \u2713 Project name: User Authentication\n```\n\n### Example 2: Create PRD from Template\n\n```bash\n# 2. Create PRD using simple template\ncrun plan prd create --name \"User Authentication\" --templa",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-5.": {
+          "id": "crun-wbs-5.",
+          "name": "Adjust schedule based on actual performance",
+          "description": "**Document Owner:** Project Management Office\n**Review Schedule:** Weekly during development\n**Last Updated:** 2025-01-15",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.1": {
+          "id": "crun-wbs-5.1",
+          "name": "Best Elements to Combine",
+          "description": "**From Auto-generated, Keep**:\n1. \u2705 Precise ISO8601 timestamps (microsecond precision)\n2. \u2705 Structured YAML frontmatter for tool parsing\n3. \u2705 Consistent task formatting (effort, owner, tags)\n4. \u2705 PERT estimates (O:M:P) for all tasks\n\n**From Handwritten, Keep**:\n1. \u2705 Executive summary + user personas\n2. \u2705 Non-functional requirements (NFRs)\n3. \u2705 Hierarchical WBS (8 phases, not 42)\n4. \u2705 File paths + LOC estimates per task\n5. \u2705 Specific acceptance criteria (6-7 per task)\n6. \u2705 Risk register with mitigation strategies\n7. \u2705 Week-by-week resource leveling\n8. \u2705 Role-specific budget breakdown\n9. \u2705 Agent assignments per phase\n10. \u2705 Technology stack + glossary in appendix\n\n**Ideal Hybrid**: Auto-generated's YAML + Handwritten's content",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.2": {
+          "id": "crun-wbs-5.2",
+          "name": "Template Improvements Needed",
+          "description": "#### For Auto-generation System:\n\n**High Priority Fixes**:\n1. \ud83d\udd34 **Fix tautological acceptance criteria** (currently: \"Implement X\" \u2192 \"Implement X\")\n   - Use LLM to generate specific, testable criteria based on task context\n   - Example: \"MySQL Resource\" \u2192 \"Connection pool with min/max size\", \"Health check via SELECT 1\", etc.\n\n2. \ud83d\udd34 **Fix team size calculation** (currently: 0 developers)\n   - Calculate peak/average from task assignments\n   - Example: If 3 tasks run in parallel, peak = 3 devs\n\n3. \ud83d\udd34 **Fix project ID redundancy** (`-infrastructure-infrastructure`)\n   - Validate no duplicate suffixes in ID generation\n\n4. \ud83d\udd34 **Improve WBS hierarchy** (currently: 42 flat phases)\n   - Detect task groupings (database resources, cache resources, etc.)\n   - Create 8-10 logical phases\n   - Nest tasks within phases\n\n**Medium Priority Enhancements**:\n1. \ud83d\udfe1 **Add user personas** (currently: missing)\n   - Template: \"Application Developer\", \"DevOps Engineer\", \"SDK Contributor\"\n   - Include needs/pains/goals for each\n\n2. \ud83d\udfe1 **Add NFRs** (currently: missing)\n   - Template: Performance, Reliability, Maintainability, Security\n   - Generate from keywords in problem statement\n\n3. \ud83d\udfe1 **Add risk register** (currently: generic factors)\n   - Extract high-risk tasks from WBS (complexity > 20h, security tags, etc.)\n   - Generate mitigation strategies based on task type\n\n4. \ud83d\udfe1 **Add file paths + LOC estimates** (currently: missing)\n   - Use heuristics: resource = 300 LOC, test = 400 LOC, docs = 250 LOC\n   - Path templates: `pheno/infra/resources/{name}.py`\n\n5. \ud83d\udfe1 **Add technology stack** (currently: missing)\n   - Extract from task descriptions (e.g., \"MySQL resource with aiomysql\")\n   - Group into Languages, Frameworks, Libraries, Tools\n\n**Low Priority Enhancements**:\n1. \ud83d\udfe2 **Add executive summary** (currently: missing)\n   - Template: Current State \u2192 Target State \u2192 Impact\n\n2. \ud83d\udfe2 **Add glossary** (currently: missing)\n   - Extract technical terms from document\n   - Generate definitions from context\n\n3. \ud83d\udfe2 **Add visual dependency graph** (currently: single ID)\n   - ASCII art or Mermaid diagram\n   - Show phase-level flow",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.3": {
+          "id": "crun-wbs-5.3",
+          "name": "Interactive Collection Requirements",
+          "description": "#### Missing Information That Requires Human Input:\n\n**Project Context** (can't auto-generate):\n1. \u2753 **User personas** (needs domain knowledge)\n   - Who are the primary users?\n   - What are their pain points?\n   - What are their goals?\n\n2. \u2753 **Risk tolerance** (business decision)\n   - What's acceptable downtime?\n   - What's the budget limit?\n   - What's the deadline flexibility?\n\n3. \u2753 **Technology constraints** (organizational policy)\n   - Required frameworks/libraries?\n   - Prohibited technologies?\n   - Compliance requirements (SOC2, HIPAA, etc.)?\n\n4. \u2753 **Team composition** (organizational)\n   - How many backend/frontend/devops/qa/docs?\n   - What are their skill levels?\n   - What are their rates?\n\n**Execution Preferences** (can't auto-generate):\n1. \u2753 **Validation gates** (team process)\n   - What must be reviewed?\n   - Who approves each gate?\n   - What are the criteria?\n\n2. \u2753 **Integration points** (tooling)\n   - Which PM tools? (GitHub, Jira, Asana, Notion)\n   - Which CI/CD? (GitHub Actions, CircleCI, Jenkins)\n   - Which monitoring? (Datadog, Sentry, PagerDuty)\n\n3. \u2753 **Agent assignments** (team structure)\n   - Which agents/devs handle which phases?\n   - What are the agent capabilities?\n   - Any skill constraints?\n\n**Implementation Details** (can partly auto-generate):\n1. \u2753 **File paths** (can use heuristics, but may need project structure)\n2. \u2753 **LOC estimates** (can use heuristics, but may need historical data)\n3. \u2753 **Technology choices** (can suggest, but needs approval)\n   - Which MySQL client? (aiomysql vs asyncmy)\n   - Which K8s tool? (Hikaru vs pykube-ng)\n\n#### Recommended Interactive Collection Flow:\n\n**Phase 1: Project Context** (5 min):\n```\n1. Who are the primary users? (free text or select from common personas)\n2. What's the budget range? ($50K / $100K / $200K / Custom)\n3. What's the deadline? (3 months / 6 months / 9 months / Flexible)\n4. Any technology constraints? (free text)\n```\n\n**Phase 2: Team Composition** (3 min):\n```\n1. How many developers? (1-5 / 6-10 / 11+ / Auto-calculate)\n2. What are their roles? (Backend / Frontend / DevOps / QA / Docs)\n3. What are their rates? (Use defaults / Custom per role)\n4. What are their skill levels? (Junior / Mid / Senior)\n```\n\n**Phase 3: Execution Preferences** (3 min):\n```\n1. Which PM tool? (GitHub / Jira / Asana / Notion / None)\n2. Which CI/CD? (GitHub Actions / CircleCI / Jenkins / Other)\n3. Review gates? (Code Review / QA / Security / All / Custom)\n4. Agent assignments? (Auto-assign / Manual)\n```\n\n**Phase 4: Risk Tolerance** (2 min):\n```\n1. Risk appetite? (Conservative / Moderate / Aggressive)\n2. Acceptable downtime? (Zero / <1% / <5% / Flexible)\n3. Contingency buffer? (10% / 20% / 30% / Custom)\n```\n\n**Total Time**: ~15 minutes (acceptable for quality plan)\n\n#### Auto-generation Strategy:\n\n**High Confidence (Auto-generate)**:\n- WBS tasks (from requirements)\n- PERT estimates (from task complexity)\n- Critical path (from dependencies)\n- Technology stack (from task descriptions)\n- File paths (from heuristics)\n- LOC estimates (from heuristics)\n- Risk register (from high-complexity tasks)\n- Budget estimate (from hours + rates)\n\n**Medium Confidence (Generate + Confirm)**:\n- User personas (generate template, let user edit)\n- Technology choices (suggest, let user approve)\n- Agent assignments (suggest, let user adjust)\n- Risk mitigation (suggest, let user customize)\n\n**Low Confidence (Require Input)**:\n- Organization-specific policies\n- Team composition\n- Deadlines and budget limits\n- Review gate criteria\n- Integration point details\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.4": {
+          "id": "crun-wbs-5.4",
+          "name": "PERT Estimate Validation",
+          "description": "| Rule ID | Description | Severity | Example |\n|---------|-------------|----------|---------|\n| **PERT-001** | Optimistic must be positive | Error | \u274c `optimistic: -5` |\n| **PERT-002** | Most likely must be positive | Error | \u274c `most_likely: 0` |\n| **PERT-003** | Pessimistic must be positive | Error | \u274c `pessimistic: -10` |\n| **PERT-004** | Optimistic \u2264 Most Likely | Error | \u274c `optimistic: 10, most_likely: 8` |\n| **PERT-005** | Most Likely \u2264 Pessimistic | Error | \u274c `most_likely: 20, pessimistic: 15` |",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.5": {
+          "id": "crun-wbs-5.5",
+          "name": "PERT Analysis Validation",
+          "description": "| Rule ID | Description | Severity | Example |\n|---------|-------------|----------|---------|\n| **PA-001** | Project duration must be positive | Error | \u274c `project_duration: -5` |\n| **PA-002** | 50% confidence must be positive | Error | \u274c `confidence_50: -10` |\n| **PA-003** | 95% confidence must be positive | Error | \u274c `confidence_95: -20` |\n| **PA-004** | 50% \u2264 95% confidence | Error | \u274c `confidence_50: 100, confidence_95: 80` |\n| **PA-005** | Duration \u2264 95% confidence | Warning | \u26a0\ufe0f `project_duration: 120, confidence_95: 100` |",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.6": {
+          "id": "crun-wbs-5.6",
+          "name": "Cross-Component Consistency",
+          "description": "| Rule ID | Description | Severity | Example |\n|---------|-------------|----------|---------|\n| **CC-001** | PRD requirement task must exist | Error | \u274c Requirement references non-existent WBS task |\n| **CC-002** | Critical path task must exist | Error | \u274c PERT critical path references non-existent task |\n| **CC-003** | High-risk task must exist | Error | \u274c PERT high-risk list references non-existent task |",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-5.7": {
+          "id": "crun-wbs-5.7",
+          "name": "Agent Configuration Validation",
+          "description": "| Rule ID | Description | Severity | Example |\n|---------|-------------|----------|---------|\n| **AC-001** | Max parallel tasks must be positive | Error | \u274c `max_parallel_tasks: 0` |\n| **AC-002** | Max parallel tasks \u2264 10 recommended | Warning | \u26a0\ufe0f `max_parallel_tasks: 15` |\n| **AC-003** | Timeout must be positive | Error | \u274c `timeout_hours: -5` |\n| **AC-004** | Retry attempts must be non-negative | Error | \u274c `retry_attempts: -1` |\n| **AC-005** | Retry attempts \u2264 5 recommended | Warning | \u26a0\ufe0f `retry_attempts: 10` |\n\n### Examples of Valid/Invalid Inputs\n\n#### Valid Task Example\n```yaml\ntasks:\n  \"1.1.1\":\n    id: \"1.1.1\"\n    name: \"Setup Development Environment\"\n    description: \"Install tools, configure IDE, setup repositories\"\n    parent_id: \"1.1\"\n    estimates:\n      optimistic: 4.0\n      most_likely: 8.0\n      pessimistic: 12.0\n    dependencies: []\n    priority: 5\n    status: \"not_started\"\n    progress_percentage: 0.0\n```\n\n#### Invalid Task Examples\n\n**Missing Required Fields:**\n```yaml\ntasks:\n  \"1.1.1\":\n    id: \"1.1.1\"\n    # \u274c ERROR: Missing 'name' field (WBS-003)\n    description: \"Setup environment\"\n```\n\n**Invalid Estimates:**\n```yaml\ntasks:\n  \"1.1.1\":\n    id: \"1.1.1\"\n    name: \"Setup Environment\"\n    estimates:\n      optimistic: 10.0\n      most_likely: 8.0   # \u274c ERROR: Most likely < Optimistic (PERT-004)\n      pessimistic: 12.0\n```\n\n**Invalid Dependencies:**\n```yaml\ntasks:\n  \"1.1.1\":\n    id: \"1.1.1\"\n    name: \"Task A\"\n    dependencies: [\"1.1.2\"]  # \u274c ERROR: Task 1.1.2 doesn't exist (WBS-005)\n```\n\n**Circular Dependency:**\n```yaml\ntasks:\n  \"1.1.1\":\n    dependencies: [\"1.1.2\"]\n  \"1.1.2\":\n    dependencies: [\"1.1.3\"]\n  \"1.1.3\":\n    dependencies: [\"1.1.1\"]  # \u274c ERROR: Circular dependency (WBS-011)\n```\n\n### How to Interpret Error Messages\n\n**Error Message Format:**\n```\n[SEVERITY] Error message\n  Context: {additional details}\n```\n\n**Examples:**\n\n```\n[ERROR] Task 1.1.1 depends on non-existent task 1.1.5\n  Context: {\"task_id\": \"1.1.1\", \"dependency_id\": \"1.1.5\"}\n\nFix: Either remove the dependency or add task 1.1.5 to the WBS\n```\n\n```\n[WARNING] Task 1.2.3 has no duration estimate\n  Context: {\"task_id\": \"1.2.3\"}\n\nFix: Add either 'estimates' (PERT) or 'duration' (fixed) to the task\n```\n\n```\n[ERROR] Requirement REQ-AUTH-001 references non-existent WBS task 2.1.5\n  Context: {\"requirement_id\": \"REQ-AUTH-001\", \"task_id\": \"2.1.5\"}\n\nFix: Either add task 2.1.5 or update the requirement's wbs_tasks list\n```\n\n### Common Validation Failures and Fixes\n\n| Failure | Root Cause | Fix |\n|---------|-----------|-----|\n| **\"Missing required field\"** | Field not provided or null | Add the required field with valid value |\n| **\"Task depends on non-existent task\"** | Typo in task ID or task not yet created | Fix task ID or create the dependency first |\n| **\"Circular dependency detected\"** | Tasks form a dependency loop | Re-structure dependencies to break the cycle |\n| **\"Invalid estimate\"** | Optimistic > Most Likely > Pessimistic violated | Adjust estimates to satisfy O \u2264 M \u2264 P |\n| **\"Total tasks doesn't match\"** | Summary field out of sync | Regenerate plan or manually update summary |\n| **\"Parent task must exist\"** | Parent task not in WBS | Create parent task or update parent_id |\n| **\"Priority out of range\"** | Priority not between 1-5 | Set priority to valid value (1=highest, 5=lowest) |\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-15": {
+      "id": "crun-wbs-15",
+      "name": "standard NFRs (performance, security, scalability)",
+      "description": "- GitHub integration settings\n- Testing configuration\n- CI/CD pipeline stages\n- Monitoring setup\n\n**Pre-fills**:\n- Non-functional requirements\n- Agent configuration\n- Integration settings\n\n### CLI Tool Template\n**Location**: `templates/cli-tool-template.yaml`\n**Features**:\n- Performance requirements (< 1s execution)\n- Cross-platform compatibility\n- Shell completion support\n- Release automation\n- Platform-specific testing\n\n**Pre-fills**:\n- CLI-specific NFRs\n- Distribution settings\n- Testing matr",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-15.": {
+          "id": "crun-wbs-15.",
+          "name": "**`crun/planning/analysis/risk_analysis.py`** (460 lines) - Risk metrics and analysis",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-16": {
+      "id": "crun-wbs-16",
+      "name": "benchmark tests across 3 categories",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-16.": {
+          "id": "crun-wbs-16.",
+          "name": "**`crun/planning/integrations/github_client.py`** (450 lines) - GitHub API integration",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-2": {
+      "id": "crun-wbs-2",
+      "name": "on performance optimization",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-2.": {
+          "id": "crun-wbs-2.",
+          "name": "Use Branch Naming Convention",
+          "description": "```bash\n# Format: task/{task-id}-{description}\ngit checkout -b task/1.1.1-react-setup\ngit checkout -b task/2.3.3-stripe-payment\ngit checkout -b task/3.2.3-deployment\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-2.1": {
+          "id": "crun-wbs-2.1",
+          "name": "PRD Completeness",
+          "description": "#### Problem Statement\n\n**Auto-generated**:\n```\nBuild a solution for: Complete the pheno-SDK infrastructure layer with 18 remaining\nresource types (MySQL, MongoDB, Supabase, Neon, PlanetScale, TiDB, Memcached, InMemory,\nNATS, RabbitMQ, Kafka, S3, Azure Blob, GCS, Local Storage, Tunnel, Proxy, Load Balancer,\nLambda, Generic), CLI/TUI consolidation migrating Click and argparse to Typer...\n```\n- Single run-on sentence (250+ words)\n- Lists implementation details, not problems\n- No user impact described\n\n**Handwritten**:\n```\n**Current Pain Points**:\n1. Incomplete Resource Coverage: Only 3/21 resource types implemented...\n2. Framework Fragmentation: Multiple CLI frameworks cause inconsistent UX...\n3. Deployment Complexity: No standardized way to deploy...\n4. Production Code Idle: 1,410 LOC not integrated...\n\n**Impact**:\n- Developers waste time reimplementing resource management\n- Inconsistent CLI experiences\n- Difficult production deployments\n- Technical debt from duplicate patterns\n```\n- Structured as problems \u2192 impacts\n- User-centric language\n- Clear business case\n\n**Winner**: Handwritten (user-centric, structured)\n\n#### Goals & Success Metrics\n\n**Auto-generated**:\n```yaml\nsuccess_metrics:\n  - Resource Coverage: 100.0 percentage\n  - Test Coverage: 95.0 percentage\n  - Initialization Overhead: 200.0 milliseconds\n  - Production Incidents: 0.0 count\n  - Documentation Coverage: 100.0 percentage\n```\n- Metrics in YAML (not human-readable in document)\n- No baselines or measurement methods\n\n**Handwritten**:\n```markdown\n| Metric | Target | Measurement |\n|--------|--------|-------------|\n| Resource Coverage | 21/21 types (100%) | ResourceType enum |\n| Test Coverage | \u226595% | pytest --cov |\n| Resource Overhead | <200ms startup | Benchmarks |\n| CLI Consistency | 100% Typer | Code audit |\n| Deployment Targets | 3 (K8s, Systemd, Lambda) | Integration tests |\n| Documentation | 100% API coverage | Doc audit |\n```\n- Table format for easy scanning\n- Measurement methods specified\n- Concrete targets (21/21 types, 3 targets)\n\n**Winner**: Handwritten (actionable metrics)\n\n#### Target Audience\n\n**Auto-generated**:\n```\nTarget Audience: Python developers and DevOps engineers\n```\n- Single sentence\n- No personas or use cases\n\n**Handwritten**:\n```markdown\n**User Personas**:\n\n1. **Application Developer** (Sarah)\n   - Needs: Easy resource provisioning, clear API, good examples\n   - Pain: Complex async code, missing resource types\n   - Goal: Build apps quickly without infrastructure headaches\n\n2. **DevOps Engineer** (Marcus)\n   - Needs: Production-ready deployment, monitoring, health checks\n   - Pain: Inconsistent deployment patterns, no K8s support\n   - Goal: Reliable, scalable production deployments\n\n3. **SDK Contributor** (Alex)\n   - Needs: Clear patterns, comprehensive tests, good docs\n   - Pain: Framework fragmentation, unclear architecture\n   - Goal: Extend SDK without breaking existing code\n```\n- 3 detailed personas with needs/pains/goals\n- Drives feature prioritization\n- Empathy for users\n\n**Winner**: Handwritten (actionable personas)\n\n#### Functional Requirements\n\n**Auto-generated**:\n```markdown\n1. **Implement database resources: MySQL, MongoDB, Supabase, Neon, PlanetScale, TiDB**\n   - Implement database resources: MySQL, MongoDB, Supabase, Neon, PlanetScale, TiDB\n   - Acceptance Criteria:\n     - [ ] Implement Implement database resources: MySQL, MongoDB, Supabase, Neon, PlanetScale, TiDB\n```\n- Tautological (title = description = acceptance criteria)\n- No sub-requirements\n- Generic and unhelpful\n\n**Handwritten**:\n```markdown\n#### FR1: Resource Management (P0)\n\n**Requirement**: Implement all 21 resource types with consistent lifecycle management.\n\n**Resource Types**:\n\n**Databases (6 types)** - Priority: High\n- MySQL (FR1.1)\n- MongoDB (FR1.2)\n...\n\n**Acceptance Criteria**:\n- [ ] All resources implement ResourceProvider protocol\n- [ ] Async-only (no blocking I/O)\n- [ ] Health checks with retry logic\n- [ ] Graceful cleanup on shutdown\n- [ ] Connection pooling where applicable\n- [ ] 95%+ test coverage per resource\n- [ ] Example usage in docs\n```\n- Hierarchical structure (FR1 \u2192 FR1.1-1.20)\n- Grouped by category (databases, caches, queues, etc.)\n- Specific, testable acceptance criteria\n- Priority tags\n\n**Winner**: Handwritten (actionable, hierarchical)\n\n#### Non-Functional Requirements\n\n**Auto-generated**: \u274c **Not present**\n\n**Handwritten**: \u2705 **Comprehensive**\n```markdown\n#### NFR1: Performance\n- Resource initialization: <500ms per resource\n- Resource cleanup: <200ms per resource\n- Health check overhead: <50ms per check\n- Cycle detection: <100ms for 1000 nodes\n- CLI startup: <100ms\n\n#### NFR2: Reliability\n- Resource cleanup on crash: 100%\n- Test coverage: \u226595%\n- Zero circular dependency bugs\n- Graceful degradation\n\n#### NFR3: Maintainability\n- Code style: Black, isort, ruff\n- Type hints: 100% (strict mypy)\n- Documentation: 100% public API\n- Examples: 1+ per resource\n\n#### NFR4: Security\n- No secrets in code\n- TLS for all network resources\n- Least privilege for processes\n- Input validation\n```\n\n**Winner**: Handwritten (only one with NFRs)",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {
+            "crun-wbs-2.1.1": {
+              "id": "crun-wbs-2.1.1",
+              "name": "API Setup (10.00h) + 2.1.2 Database (14.00h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            },
+            "crun-wbs-2.1.3": {
+              "id": "crun-wbs-2.1.3",
+              "name": "Authentication (20.67h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            }
+          }
+        },
+        "crun-wbs-2.2": {
+          "id": "crun-wbs-2.2",
+          "name": "WBS Task Breakdown",
+          "description": "#### Task Granularity\n\n**Auto-generated**:\n- 42 phases with 1 task each (flat structure)\n- Example: \"Phase 4: Implement MySQL Resource\" (single task, no sub-tasks)\n\n**Handwritten**:\n- 8 phases with 3-7 tasks each (hierarchical structure)\n- Example: \"Phase 1: Database Resources\" \u2192 7 tasks (MySQL, MongoDB, Supabase, Neon, PlanetScale, TiDB, Testing)\n\n**Winner**: Handwritten (better grouping)\n\n#### Task Detail Quality\n\n**Auto-generated Task Example**:\n```markdown\n- **4** \u2b55 \u2b50\u2b50\u2b50\u2b50\u2b50 \ud83d\udfe1 Implement MySQL Resource\n  - *Effort*: 12h (O:8, M:12, P:18)\n  - *Owner*: backend\n  - *Tags*: resource, database, p0\n```\n- Minimal description\n- No acceptance criteria at task level\n- No file listings\n\n**Handwritten Task Example**:\n```markdown\n- **1.1** \u2b50\u2b50\u2b50 \ud83d\udfe1 **Implement MySQL Resource** (12h)\n  - *Description*: MySQL resource with aiomysql connection pool\n  - *Owner*: backend\n  - *Dependencies*: 0.2\n  - *Tags*: resource, database, p0\n  - *Acceptance Criteria*:\n    - [ ] MySQLResource class implements ResourceProvider\n    - [ ] Connection pool with min/max size config\n    - [ ] Health check via SELECT 1\n    - [ ] Graceful cleanup closes pool\n    - [ ] 50+ tests (unit + integration)\n    - [ ] Example in docs\n  - *Effort*: 12h (O:8, M:12, P:18)\n  - *Files*:\n    - `pheno/infra/resources/mysql.py` (300 LOC)\n    - `tests/infra/resources/test_mysql.py` (400 LOC)\n    - `docs/resources/mysql.md` (250 LOC)\n```\n- Detailed description with technology choice\n- 6 specific acceptance criteria\n- File paths with LOC estimates\n- Clear dependencies\n\n**Winner**: Handwritten (3-4x more detail)\n\n#### Phase Summaries\n\n**Auto-generated**: \u274c No phase summaries\n\n**Handwritten**: \u2705 Includes summaries\n```markdown\n**Phase 1 Totals**: 7 tasks, 80 hours, 6 dependencies\n\n**By Priority**:\n- P0 (Critical): 42 tasks, 448 hours\n- P1 (High): 28 tasks, 288 hours\n- P2 (Medium): 15 tasks, 144 hours\n\n**By Owner**:\n- Backend: 45 tasks, 520 hours\n- DevOps: 20 tasks, 240 hours\n- QA: 10 tasks, 80 hours\n- Docs: 8 tasks, 80 hours\n- Frontend: 2 tasks, 40 hours\n```\n\n**Winner**: Handwritten (enables resource planning)",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-2.3": {
+          "id": "crun-wbs-2.3",
+          "name": "PERT Analysis Depth",
+          "description": "#### Critical Path Visualization\n\n**Auto-generated**:\n```yaml\ncritical_path:\n  - '34'\n```\n- Single task ID (no context)\n- No visualization\n- Unhelpful for understanding flow\n\n**Handwritten**:\n```markdown\n**Critical Path Tasks** (42 tasks):\nQuick Wins \u2192 Database Resources \u2192 Cache & Queue \u2192 Storage & Network \u2192\nCompute & Universal \u2192 CLI/TUI \u2192 K8s \u2192 Systemd & Lambda \u2192 Docs\n\n**Critical Path Dependencies**:\n```\n0.1 (Cycle Detection) \u2192 0.2 (Container) \u2192 0.3 (Docs)\n  \u2193\n1.1 (MySQL) \u2192 1.2 (MongoDB) \u2192 1.3 (Supabase) \u2192 ...\n  \u2193\n...\n```\n```\n- Full dependency graph with ASCII art\n- Task names with IDs\n- Phase-level grouping\n- Easy to understand flow\n\n**Winner**: Handwritten (visual, detailed)\n\n#### Risk Analysis\n\n**Auto-generated**:\n```yaml\nrisk_factors:\n  - Integration complexity\n  - External service dependencies\n  - Performance optimization challenges\n  - Security hardening requirements\n```\n- Generic factors\n- No probability, impact, or mitigation\n- Not actionable\n\n**Handwritten**:\n```markdown\n**High-Risk Tasks** (Red):\n1. **2.5 (Kafka Resource)** - Complex API, requires careful testing\n2. **6.3 (K8s Security)** - Security-critical, must be perfect\n\n**Mitigation Strategies**:\n1. **For Kafka**: Start with simple pub/sub, iterate to consumer groups\n2. **For K8s Security**: Use Hikaru validation, test against real clusters\n3. **For Databases**: Use mocks for most tests, real DBs for integration\n4. **For Lambda**: Establish baseline first, optimize incrementally\n\n**Risk Register**:\n| Risk | Probability | Impact | Mitigation |\n|------|-------------|--------|------------|\n| K8s API changes | Low | High | Pin Hikaru version, validate manifests |\n| Lambda cold start targets not met | Medium | Medium | Start with baseline, iterate |\n| Database client library breaking changes | Low | High | Pin versions, test upgrades |\n| Team capacity issues | Medium | High | Cross-train, document patterns |\n| Integration complexity | Medium | Medium | Incremental integration, tests |\n```\n- Specific tasks flagged\n- Detailed mitigation per risk\n- Risk register with probability/impact matrix\n- Actionable\n\n**Winner**: Handwritten (actionable risk management)\n\n#### Resource Leveling\n\n**Auto-generated**:\n```markdown\n### Resource Requirements\n- **Total Effort**: 728 hours\n- **Peak Team Size**: 0 developers\n- **Average Team Size**: 0 developers\n- **Budget Estimate**: $36,392 (based on $50/hour average rate)\n```\n- \u26a0\ufe0f **BUG**: Peak/Average team size = 0 (impossible)\n- Single rate for all roles\n- No week-by-week breakdown\n\n**Handwritten**:\n```markdown\n**Week-by-Week Resource Allocation**:\n| Week | Phase | Tasks | Hours | Team |\n|------|-------|-------|-------|------|\n| 1 | Quick Wins | 3 | 6 | 1 dev |\n| 2-3 | Database 1-3 | 3 | 40 | 2 devs |\n| 4-5 | Database 4-7 | 4 | 40 | 2 devs |\n...\n\n**Peak Resource Usage**: Week 18-22 (3 developers)\n**Average Resource Usage**: 2.3 developers\n\n**Cost Breakdown**:\n| Role | Hours | Rate | Cost |\n|------|-------|------|------|\n| Backend | 520 | $75 | $39,000 |\n| DevOps | 240 | $90 | $21,600 |\n| QA | 80 | $65 | $5,200 |\n| Docs | 80 | $60 | $4,800 |\n| Frontend | 40 | $75 | $3,000 |\n| **Total** | **880** | - | **$73,600** |\n\n**Contingency** (20%): $14,720\n**Total Budget**: **$88,320**\n```\n- Week-by-week staffing plan\n- Role-specific rates\n- Contingency buffer\n- Enables capacity planning\n\n**Winner**: Handwritten (production-ready staffing plan)",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-2.4": {
+          "id": "crun-wbs-2.4",
+          "name": "Agent Execution Instructions",
+          "description": "#### Configuration\n\n**Auto-generated**:\n```yaml\nagent_config:\n  max_parallel_tasks: 3\n  validation_required: true\n  review_gates:\n    - design\n    - implementation\n    - testing\n  handoff_points:\n    - prd_approval\n    - wbs_validation\n    - pert_analysis\n```\n- YAML only (no narrative)\n- Generic gates\n- No agent assignments\n\n**Handwritten**:\n```markdown\n**Parallel Execution**:\n- Max parallel tasks: 8 agents\n- Task batching: Group by phase\n- Dependency resolution: Automatic via PERT\n\n**Agent Assignments**:\n\n**Quick Wins** (1 agent):\n- General-purpose agent for integrations\n\n**Database Resources** (2 agents):\n- Agent 1: MySQL, Neon, TiDB\n- Agent 2: MongoDB, Supabase, PlanetScale\n\n**Cache & Queue** (2 agents):\n- Agent 1: Memcached, InMemory\n- Agent 2: NATS, RabbitMQ, Kafka\n...\n\n**Validation Gates**:\n\n**Code Review Gate** (All tasks):\n- Code review by senior engineer\n- Type checking (mypy strict)\n- Linting (ruff, black)\n- Test coverage \u226595%\n\n**QA Verification Gate** (End of each phase):\n- Integration tests pass\n- Performance benchmarks within targets\n- No regressions in existing functionality\n\n**Handoff Points**:\n1. **WBS Validation** - After phase planning, before implementation\n2. **Implementation Complete** - After all code written, before QA\n3. **QA Complete** - After testing, before docs\n4. **Docs Complete** - After documentation, before release\n```\n- Specific agent assignments per phase\n- Detailed validation criteria\n- Clear handoff definitions\n- Automation instructions\n\n**Winner**: Handwritten (executable)\n\n#### Integration Points\n\n**Auto-generated**:\n```yaml\nintegrations:\n  github: null\n  jira: null\n  asana: null\n  notion: null\n  custom_tools: []\n```\n- All null/empty\n- No configuration\n- Not executable\n\n**Handwritten**:\n```markdown\n**GitHub**:\n- Auto-create issues for each task\n- Link PRs to issues\n- Sync status on PR merge\n\n**CI/CD**:\n- Run tests on every PR\n- Type checking, linting, coverage\n- Deploy docs on merge to main\n\n**Monitoring**:\n- Track task completion rate\n- Alert on blocked tasks\n- Weekly progress reports\n```\n- Concrete GitHub automation steps\n- CI/CD pipeline specified\n- Monitoring strategy\n\n**Winner**: Handwritten (actionable)\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "crun-wbs-1": {
+      "id": "crun-wbs-1",
+      "name": "on deployment and monitoring",
+      "description": "---\n\n## Contingency Planning\n\n### Schedule Buffers\n\n**Management Reserve:** 2 weeks (16%)\n- For unknown unknowns\n- Executive approval required to use\n\n**Contingency Reserve:** 1 week (8%)\n- For known risks\n- PM can allocate as needed\n\n**Total Buffer:** 3 weeks (25% of critical path)\n\n### Cut Scope Options\n\nIf schedule is at risk, cut these features (in order):\n\n**Priority 3 (Cut First):**\n1. Product reviews (1.5 weeks)\n2. Admin analytics dashboard (1 week)\n3. Advanced search filters (0.5 weeks",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "crun-wbs-1.": {
+          "id": "crun-wbs-1.",
+          "name": "**Data Management**",
+          "description": "- Handle data storage and retrieval\n   - Acceptance Criteria:\n     - [ ] Data is stored securely\n     - [ ] Data retrieval is fast\n     - [ ] Data integrity is maintained\n\n### Non-Functional Requirements\n\n#### Performance\n- Response time < 2 seconds for 95% of requests\n- Support 1000+ concurrent users\n- System availability > 99.9%\n- Database queries complete within 500ms\n\n#### Security\n- All data transmission encrypted (TLS 1.3+)\n- User passwords hashed with bcrypt\n- Input validation on all",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-1.0": {
+          "id": "crun-wbs-1.0",
+          "name": "Complex Project",
+          "description": "1.1 Planning Phase\n    1.1.1 Requirements (8-12-16h)\n    1.1.2 Architecture (16-24-32h) [depends: 1.1.1]\n  1.2 Development Phase\n    1.2.1 Backend (40-60-80h) [depends: 1.1.2]\n    1.2.2 Frontend (40-60-80h) [depends: 1.1.2]\n  1.3 Testing Phase\n    1.3.1 Integration Testing (16-24-40h) [depends: 1.2.1, 1.2.2]\n```\n\n### PERT Estimates\n- **Optimistic**: Best-case scenario (5th percentile)\n- **Most Likely**: Mode of distribution\n- **Pessimistic**: Worst-case scenario (95th percentile)\n- **Expected**: (O + 4M + P) / 6\n\n### Supported Commit Patterns\n- `fixes #1.1` - Mark task completed\n- `closes #2.3` - Mark task completed\n- `working on #1.2` - Mark task in progress\n- `wip #3.1` - Mark task in progress\n- `blocks #4.2` - Add blocking dependency\n- `refs #1.1` - Reference without status change\n\n## Performance Targets\n\n- \u2705 Validation: < 0.5 seconds for complex WBS\n- \u2705 Critical Path: < 0.1 seconds\n- \u2705 Monte Carlo (1000 iterations): < 5 seconds\n- \u2705 Large WBS (100 tasks): < 1 second validation\n\n## Continuous Integration\n\nThese tests are designed to run in CI/CD pipelines:\n\n```yaml\n# Example GitHub Actions workflow\n- name: Run Planning Integration Tests\n  run: |\n    pytest crun/tests/test_planning_integration.py \\\n      -v \\\n      --junitxml=test-results/planning-integration.xml \\\n      --cov=crun.planning \\\n      --cov-report=xml\n```\n\n## Future Enhancements\n\nPotential additions to the test suite:",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "crun-wbs-1.1": {
+          "id": "crun-wbs-1.1",
+          "name": "YAML Frontmatter",
+          "description": "| Aspect | Auto-generated | Handwritten | Winner |\n|--------|---------------|-------------|---------|\n| **Version** | 1.0 | 2.0 | Handwritten |\n| **Project ID** | `pheno-sdk-infrastructure-completion-infrastructure` (redundant suffix) | `pheno-sdk-infrastructure-completion` | Handwritten |\n| **Timestamps** | Full ISO8601 with microseconds | Date only | Auto-generated (precision) |\n| **Status** | `planning` | `ready-to-execute` | Handwritten (clarity) |\n| **Success Metrics** | Generic list (5 items) | Specific targets with units | Handwritten |\n| **Agent Config** | Max 3 parallel tasks | Max 8 parallel tasks | Handwritten |\n| **Integrations** | All null/empty | GitHub with auto_create_issues, testing framework | Handwritten |\n| **PERT Critical Path** | Single task ID (`'34'`) | Descriptive flow | Handwritten |\n\n**Analysis**:\n- Auto-generated has better timestamp precision for audit trails\n- Handwritten has more mature integration configuration\n- Auto-generated project ID has redundant suffix bug\n- Handwritten shows realistic parallel execution capacity (8 vs 3 agents)",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {
+            "crun-wbs-1.1.2": {
+              "id": "crun-wbs-1.1.2",
+              "name": "Design System (18.67h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            },
+            "crun-wbs-1.1.1": {
+              "id": "crun-wbs-1.1.1",
+              "name": "React Setup (6.33h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            }
+          }
+        },
+        "crun-wbs-1.2": {
+          "id": "crun-wbs-1.2",
+          "name": "Section Organization",
+          "description": "#### Auto-generated Structure:\n```\n1. PRD (Problem Statement \u2192 Goals \u2192 Success Metrics \u2192 Target Audience \u2192 Functional Requirements)\n2. WBS (Project Summary \u2192 42 Phases with single task each)\n3. PERT (Critical Path Analysis \u2192 Resource Requirements \u2192 Budget)\n4. Agent Execution Workflow (Configuration only)\n```\n\n#### Handwritten Structure:\n```\n1. PRD (Executive Summary \u2192 Problem Statement \u2192 Goals \u2192 Target Audience \u2192\n        Functional Requirements \u2192 Non-Functional Requirements)\n2. WBS (Project Summary \u2192 8 Phases with 3-7 tasks each \u2192 Summary by Priority/Owner)\n3. PERT (Critical Path \u2192 Risk Analysis \u2192 Resource Leveling \u2192 Budget Estimate)\n4. Agent Execution Workflow (Configuration \u2192 Validation Gates \u2192 Integration Points)\n5. Appendix (Technology Stack \u2192 Success Metrics \u2192 Risk Register \u2192 Dependencies \u2192 Glossary)\n```\n\n**Analysis**:\n- Handwritten adds **Executive Summary** (critical for stakeholders)\n- Handwritten adds **Non-Functional Requirements** (performance, reliability, maintainability, security)\n- Handwritten groups tasks into logical phases (8 phases) vs auto-generated's flat 42 phases\n- Handwritten includes comprehensive appendix (technology stack, risk register, glossary)\n- Auto-generated has no context for external stakeholders\n\n**Winner**: Handwritten (better narrative structure)",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {
+            "crun-wbs-1.2.1": {
+              "id": "crun-wbs-1.2.1",
+              "name": "Location Service API (240h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            }
+          }
+        },
+        "crun-wbs-1.3": {
+          "id": "crun-wbs-1.3",
+          "name": "Level of Detail",
+          "description": "| Component | Auto-generated | Handwritten | Difference |\n|-----------|---------------|-------------|------------|\n| **Total Tasks** | 42 | 85 | +102% |\n| **Total Hours** | 728 | 880 | +21% |\n| **PRD Requirements** | 25 | 85 (25 FR + 20 NFR + 40 sub-reqs) | +240% |\n| **Documentation** | Minimal | Extensive (personas, risk register, glossary) | N/A |\n| **Acceptance Criteria** | Generic checkboxes | Detailed, actionable criteria per task | N/A |\n| **Risk Analysis** | 4 generic factors | Risk register with probability/impact/mitigation | N/A |\n\n**Analysis**:\n- Handwritten is more detailed across all dimensions\n- Auto-generated has flat, repetitive task structure (one phase per task)\n- Handwritten groups tasks into meaningful phases (Quick Wins, Database, Cache/Queue, etc.)\n- Auto-generated acceptance criteria are tautological (\"Implement X\" \u2192 \"Implement X\")\n\n**Winner**: Handwritten (2-3x more detail)\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {
+            "crun-wbs-1.3.1": {
+              "id": "crun-wbs-1.3.1",
+              "name": "Cart UI (14.00h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            },
+            "crun-wbs-1.3.2": {
+              "id": "crun-wbs-1.3.2",
+              "name": "Checkout Flow (25.33h) + 2.3.2 Checkout API (20.00h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            },
+            "crun-wbs-1.3.3": {
+              "id": "crun-wbs-1.3.3",
+              "name": "Payment (Frontend: 17.00h) + 2.3.3 Payment (Backend: 27.00h)",
+              "description": "\u2193",
+              "level": 3,
+              "estimated_hours": null,
+              "deliverables": [],
+              "dependencies": [],
+              "children": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "total_estimated_hours": 0
+}
