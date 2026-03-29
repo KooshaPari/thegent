@@ -1,49 +1,79 @@
 {
-  // Cursor inherits from VS Code settings; add Cursor-specific overrides here
-
-  // ── Cursor AI settings ────────────────────────────────────────────────────
-  "cursor.cpp.enablePartialAccepts": true,
-  "cursor.chat.showSuggestedFiles": true,
-
-  // ── Inherit all VS Code settings ─────────────────────────────────────────
   "editor.fontSize": 13,
-  "editor.fontFamily": "'Monaspace Neon', 'Cascadia Code', 'JetBrains Mono', monospace",
+  "editor.fontFamily": "'Berkeley Mono', 'JetBrains Mono', 'Fira Code', Menlo, monospace",
   "editor.fontLigatures": true,
-  "editor.lineHeight": 1.6,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
   "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.rulers": [100],
+  "editor.wordWrap": "off",
   "editor.minimap.enabled": false,
-  "editor.inlineSuggest.enabled": true,
   "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.inlineSuggest.enabled": true,
+  "editor.suggest.preview": true,
 
-  "terminal.integrated.fontSize": 13,
-  "terminal.integrated.fontFamily": "'Monaspace Neon', monospace",
-  "terminal.integrated.defaultProfile.osx": "zsh",
-
-  "files.autoSave": "onFocusChange",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "files.eol": "\n",
+  "files.exclude": {
+    "**/.git": true,
+    "**/__pycache__": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true,
+    "**/node_modules": true,
+    "**/target": true,
+    "**/.pytest_cache": true
+  },
+
+  "terminal.integrated.fontFamily": "'Berkeley Mono', 'JetBrains Mono', monospace",
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.defaultProfile.osx": "zsh",
 
   "workbench.colorTheme": "GitHub Dark Default",
   "workbench.iconTheme": "material-icon-theme",
-  "workbench.startupEditor": "none",
+  "workbench.sideBar.location": "right",
+  "workbench.panel.defaultLocation": "bottom",
 
-  "git.autofetch": true,
-  "git.confirmSync": false,
-
-  "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
-  "[go]": {
-    "editor.defaultFormatter": "golang.go",
-    "editor.codeActionsOnSave": { "source.organizeImports": "always" }
-  },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "always",
-      "source.fixAll": "always"
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
     }
   },
-  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
-  "[json]": { "editor.defaultFormatter": "biomejs.biome" }
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.formatOnSave": true
+  },
+
+  "python.defaultInterpreterPath": ".venv/bin/python",
+  "python.analysis.autoImportCompletions": true,
+
+  "rust-analyzer.checkOnSave.command": "clippy",
+
+  "go.formatTool": "gofumpt",
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "workspace",
+
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
+  "extensions.ignoreRecommendations": false
 }
