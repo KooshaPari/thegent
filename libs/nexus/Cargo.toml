@@ -9,5 +9,4 @@ repository = "https://github.com/KooshaPari/nexus"
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
-hashconsign = "0.2"
 thiserror = "1.0"
