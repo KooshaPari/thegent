@@ -15,10 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove package-lock.json (use bun/pnpm strictly)
 - `docs/reference/FULL_TURN_DELIVERY.md` — stable pointer for **full-turn** expectations (merge to `main`/`release/*`, `gh` PR URLs, changelog, version, docs); `AGENTS.md` cross-link under Worktree Governance.
 - Session documentation pack for Phenotype local worktree forest governance: blocker matrix, waves A–G (24-item queues), **full-turn delivery** policy (PR/merge to `main`/`release/*`, changelog, `gh` evidence), and PR #549 CI snapshot (`docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/`).
+- Byteport cloud deployment platform (full source + security gitignore + templates) (#872, #873)
+- Complete workspace consolidation with 913-file detached-HEAD work rescue (#865)
+- Benchmark, dotfiles, and engine modules
 
 ### Changed
 
 - `FULL_TURN_DELIVERY.md`: snapshot expanded with PR #550, `mergeStateStatus`, `main` branch CI signal, and **GitHub Actions billing** note (jobs not started until billing/spend limit fixed).
+- Upgrade cryptography to 46.0.6 (CVE-2026-34073) (#861, #862)
+- Wave 84 cleanup and module member export fixes
+
+### Fixed
+
+- Properly export ThegentSettings from config module (#867)
+- Add ImportError handling in cli init, fix test import path (#866)
+- Remove duplicate module_name parameter in test (#869)
+
+### Chore
+
+- Sync local template and test fix commits (#870)
+- Sync local main commits (colab submodule + worktree gitignore) (#864)
+- Archive 200+ BACKLOG items to reduce WORK_STREAM noise (#856)
+- Refresh KooshaPari GitHub inventory timestamps (2026-03-29) (#857, #858)
+- Security patches - update Rust lru and document Go/Python updates (#854)
+- Merge PR #851 for final merge stabilization (#871)
 
 ## [0.1.0] - 2026-02-23
 
