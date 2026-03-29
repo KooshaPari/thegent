@@ -29081,3 +29081,33 @@ Advance analytics, scorecards, slos, continuous improvement with deterministic b
 Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-520.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+---
+
+## BACKLOG ARCHIVE (2026-03-28)
+
+> **Note**: All items below are P2/P3 analytics/connector/governance/operator initiatives.
+> They have been archived to reduce WORK_STREAM noise. Reference archived items in `docs/archive/WORK_STREAM_BACKLOG_2026-03-28.md` if needed.
+
+### Archived Items Summary
+
+| Range | Count | Areas |
+|-------|-------|-------|
+| WL-301 to WL-340 | 40 | Connector initiatives |
+| WL-341 to WL-380 | 40 | Governance initiatives |
+| WL-381 to WL-420 | 40 | Operator initiatives |
+| WL-421 to WL-460 | 40 | Analytics initiatives |
+| WL-461 to WL-520 | 60 | Analytics/automation initiatives |
+
+**Total Archived**: 200 BACKLOG items
+**Archived Date**: 2026-03-28
+**Archive Reference**: `docs/archive/WORK_STREAM_BACKLOG_2026-03-28.md`
+
+### Active Items (Not Archived)
+
+Only HIGH/CRITICAL priority items with clear dependencies remain in the active WORK_STREAM above.
+
+---
+
+*Last updated: 2026-03-28*
+*Backlog items archived to reduce noise*
