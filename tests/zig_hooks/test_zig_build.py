@@ -22,7 +22,7 @@ def _has_zig() -> bool:
     try:
         result = subprocess.run(["zig", "version"], capture_output=True, text=True, timeout=10)
         return result.returncode == 0
-    except FileNotFoundError, subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 

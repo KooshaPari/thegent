@@ -1,6 +1,6 @@
 # External signals: ZDR, mesh VPN, secrets CI (2025–2026)
 
-Curated **primary sources** for patterns aligned with Phenotype harness docs (ZDR posture, Tailscale/Headscale, SOPS/age, GitHub OIDC → Vault, prose linting). DuckDuckGo HTML was **blocked** from this automation environment (anti-bot page); no reliance on unverifiable SEO snippets.
+Curated **primary sources** for patterns aligned with Phenotype harness docs (ZDR posture, Tailscale/headscale, SOPS/age, GitHub OIDC → Vault, prose linting). DuckDuckGo HTML was **blocked** from this automation environment (anti-bot page); no reliance on unverifiable SEO snippets.
 
 ## Zero data retention (ZDR) — vendor-grounded
 
@@ -16,7 +16,7 @@ OpenAI documents **Zero Data Retention** and **Modified Abuse Monitoring** as **
 
 - Source: [Tailscale quickstart](https://tailscale.com/kb/1017/install-linux/) (see page header “Last validated”)
 
-**Headscale** (self-hosted control plane, WireGuard-compatible with Tailscale clients): Active OSS implementation; typical for “no Tailscale SaaS” requirements. Operational cost is yours (VM, upgrades, backups).
+**headscale** (self-hosted control plane, WireGuard-compatible with Tailscale clients): Active OSS implementation; typical for “no Tailscale SaaS” requirements. Operational cost is yours (VM, upgrades, backups).
 
 - Source: [headscale on GitHub](https://github.com/juanfont/headscale)
 
@@ -24,7 +24,7 @@ OpenAI documents **Zero Data Retention** and **Modified Abuse Monitoring** as **
 
 **Mozilla SOPS** (encrypt YAML/JSON/ENV/INI; keys via age, PGP, KMS, Azure KV, **Vault Transit**, etc.): Official README describes **age as recommended over PGP**, `.sops.yaml` creation rules, stdin/stdout for pipelines, and **HashiCorp Vault transit** integration for encryption-at-rest of file keys.
 
-- Source: [getsops/sops README (raw)](https://raw.githubusercontent.com/getsops/sops/master/README.rst)
+- Source: [SOPS README (raw)](https://raw.githubusercontent.com/getsops/sops/master/README.rst)
 
 **GitHub Actions OIDC**: GitHub’s own docs describe exchanging **short-lived** tokens with cloud providers (explicitly naming **HashiCorp Vault** among others), avoiding duplicated long-lived cloud secrets in `GITHUB_SECRET`.
 

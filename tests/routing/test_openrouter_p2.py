@@ -462,14 +462,13 @@ class TestOR18NativeResponsesForwarding:
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-test-key"}),
-            patch(
-                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client"
-            ) as mock_get_client,
+            patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
             # Reset the module-level _http_client to ensure fresh client
             import thegent.utils.routing_impl.litellm_responses_handler as handler
+
             handler._http_client = None
-            
+
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
             mock_get_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
@@ -511,9 +510,7 @@ class TestOR18NativeResponsesForwarding:
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-real-key"}),
-            patch(
-                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client"
-            ) as mock_get_client,
+            patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)
@@ -553,9 +550,7 @@ class TestOR18NativeResponsesForwarding:
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-key"}),
-            patch(
-                "thegent.utils.routing_impl.litellm_responses_handler._get_http_client"
-            ) as mock_get_client,
+            patch("thegent.utils.routing_impl.litellm_responses_handler._get_http_client") as mock_get_client,
         ):
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_httpx_resp)

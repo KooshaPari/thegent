@@ -1807,9 +1807,7 @@ def test_scan_shared_modules_across_repos_recommends_sorted_by_overlap(tmp_path:
 def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_path: Path, monkeypatch) -> None:
     from typer.testing import CliRunner
 
-    phench_cli = _load_phench_cli_app(
-        Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
-    )
+    phench_cli = _load_phench_cli_app(Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py")
 
     payload = {
         "repos_root": str(tmp_path / "Phenotype" / "repos"),
@@ -1870,9 +1868,7 @@ def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_p
 def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
     from typer.testing import CliRunner
 
-    phench_cli = _load_phench_cli_app(
-        Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
-    )
+    phench_cli = _load_phench_cli_app(Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py")
 
     monkeypatch.setattr(
         phench_cli,
@@ -1914,9 +1910,7 @@ def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
 def test_materialize_module_manifest_cli_command(tmp_path: Path, monkeypatch) -> None:
     from typer.testing import CliRunner
 
-    phench_cli = _load_phench_cli_app(
-        Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py"
-    )
+    phench_cli = _load_phench_cli_app(Path(__file__).resolve().parents[1] / "src/thegent/cli/apps/phench.py")
 
     def _fake_materialize_module_candidate_manifest(
         module: str,
@@ -2022,7 +2016,6 @@ def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(
 @pytest.mark.parametrize(
     ("cli_path", "snippet_flag"),
     [
-        ("src/thegent/cli/apps/phench.py", "--print-target-snippets"),
         ("src/thegent/cli/apps/phench.py", "--print-target-snippets"),
     ],
 )

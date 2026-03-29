@@ -12,7 +12,7 @@
 
 ## Optional: shell-only `CredentialRef::MINIMAX_BYOK`
 
-If you do **not** rely on Factory JSON for env exports, supply `MINIMAX_API_KEY` via sops or Vault — see `thegent/scripts/shell/phenotype_minimax_harness.sh`. Factory users can skip this when BYOK is already in `~/.factory` / `repos/.factory`.
+If you do **not** rely on Factory JSON for env exports, supply `MINIMAX_API_KEY` via SOPS or Vault — see `thegent/scripts/shell/phenotype_minimax_harness.sh`. Factory users can skip this when BYOK is already in `~/.factory` / `repos/.factory`.
 
 ## One-command local scaffolding (optional)
 
@@ -43,7 +43,7 @@ MiniMax coding-plan: `https://platform.minimax.io/docs/coding-plan/claude-code`,
 ## Tailnet (AZ ↔ LA)
 
 - Example ACL: `thegent/templates/tailnet/tailscale-acl.hujson.example`
-- **Headscale**: OrbStack VM or WSL2 — see [headscale.net](https://headscale.net).
+- **headscale**: OrbStack VM or WSL2 — see [headscale.net](https://headscale.net).
 
 ## GitHub Actions → Vault (template)
 
@@ -54,7 +54,7 @@ MiniMax coding-plan: `https://platform.minimax.io/docs/coding-plan/claude-code`,
 - [ ] Default session model resolves (`custom:minimax-m2.7-byok-3` in sync with `repos/.factory/settings.json`).
 - [ ] `mclaude` / `mcodex` or Factory session against MiniMax succeeds.
 - [ ] Adapter up; `curl -s http://127.0.0.1:8317/v1/models | head` succeeds.
-- [ ] **Model id invariant:** `uv run python scripts/phenotype_cliproxy_models_check.py` (or `uv run python -m thegent.phenotype.cliproxy_models_check`) exits 0 and reports `ModelRef::MINIMAX_M27_HS` / `minimax-m2.7-highspeed` in the catalog. Override base URL with `CLIPROXY_BASE_URL`; optional bearer via `CLIPROXY_MODELS_BEARER` or `OPENAI_API_KEY`.
+- [ ] **Model id invariant:** `uv run python scripts/phenotype_cliproxy_models_check.py` (or `uv run python -m thegent.phenotype.cliproxy_models_check`) exits 0 and reports `ModelRef::MINIMAX_M27_HS` / `minimax-m2.7-highspeed` in the catalog. Override base URL with `CLIPROXY_BASE_URL`; optional bearer via `CLIPROXY_MODELS_BEARER` or `OPENAI_API_KEY`. If catalog ids are provider-prefixed, use `CLIPROXY_MODELS_MATCH=substring` or `--match substring` (see [`LANGUAGE_INVARIANTS_AND_VALE_2026-03.md`](LANGUAGE_INVARIANTS_AND_VALE_2026-03.md) § operational check).
 - [ ] `vcodex` smoke with Codex CLI.
 
 ## Resource expectations

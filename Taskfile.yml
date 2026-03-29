@@ -1,0 +1,91 @@
+version: '3'
+
+vars:
+  VALE_INVARIANT_DOCS: >-
+    docs/reference/CANONICAL_INVARIANT_PROSE.md
+    docs/research/LANGUAGE_INVARIANTS_AND_VALE_2026-03.md
+    docs/research/EXTERNAL_SIGNALS_ZDR_MESH_SECRETS_2026-03.md
+    docs/research/SECRETS_MINIMAX_CLIPROXY_MESH_RUNBOOK_2026-03-29.md
+    docs/governance/TACH_MONOLITH_BOUNDARY.md
+
+tasks:
+  default:
+    desc: List common tasks
+    cmds:
+      - task --list
+
+  tach:
+    desc: Enforce Tach module boundaries (monolith thegent + forbid cycles between modules)
+    cmds:
+      - uv run tach check
+
+  vale:
+    desc: Vale invariant Markdown (canonical prose, mesh signals, Tach governance)
+    cmds:
+      - vale {{.VALE_INVARIANT_DOCS}}
+
+  vale:install:
+    desc: Install Vale on macOS via Homebrew (no-op if already present)
+    cmds:
+      - command -v vale >/dev/null 2>&1 || brew install vale
+
+  ruff:
+    desc: Ruff lint on src/ and tests/
+    cmds:
+      - uv run ruff check src tests
+
+  ruff:format:
+    desc: Ruff format check (no write)
+    cmds:
+      - uv run ruff format --check src tests
+
+  test:phenotype-cliproxy:
+    desc: Unit tests for CLIProxy /v1/models invariant helper
+    cmds:
+      - uv run pytest tests/unit/test_phenotype_cliproxy_models_check.py -q
+
+  check:cliproxy-models:
+    desc: Live check against local CLIProxy (8317); fails if proxy is down
+    cmds:
+      - uv run python scripts/phenotype_cliproxy_models_check.py
+
+  quality:max-lines:
+    desc: WL-122 polyglot max-lines gate (changed files unless MAX_LINES_SCOPE=all)
+    cmds:
+      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py,src/thegent/execution.py} sh scripts/max-lines-gate.sh
+
+  quality:sitback-contracts:
+    desc: Sitback routing contracts harness (CI wiring; stub until contracts wired)
+    cmds:
+      - 'echo "[stub] quality:sitback-contracts OK"'
+
+  quality:harness-model-contracts:
+    desc: Harness model mapping contracts (CI wiring; stub until contracts wired)
+    cmds:
+      - 'echo "[stub] quality:harness-model-contracts OK"'
+
+  quality:fast:
+    desc: Tach + Vale only (pre-push quick gate)
+    cmds:
+      - task: tach
+      - task: vale
+
+  quality:
+    desc: Max-lines + Tach + Vale + ruff + phenotype cliproxy unit tests
+    cmds:
+      - task: quality:max-lines
+      - task: tach
+      - task: vale
+      - task: ruff
+      - task: test:phenotype-cliproxy
+
+  quality:full:
+    desc: quality + ruff format check
+    cmds:
+      - task: quality
+      - task: ruff:format
+
+  all:
+    desc: Alias for quality (boundaries + docs + lint + focused tests)
+    cmds:
+      - task: quality
