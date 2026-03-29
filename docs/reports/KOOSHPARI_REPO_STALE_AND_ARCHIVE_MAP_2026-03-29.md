@@ -2,18 +2,18 @@
 
 Source export: `docs/reports/data/KOOSHPARI_GITHUB_REPOS_2026-03-29.tsv`  
 Derived buckets: `docs/reports/data/KOOSHPARI_REPOS_STALE_BUCKETS.tsv`  
-**Last refresh:** 2026-03-28 UTC (after second GitHub archive batch; re-export + bucket recompute).
+**Last refresh:** 2026-03-29 UTC (re-export + bucket recompute). **Delta vs prior snapshot:** `vibe-kanban` is **no longer** `isArchived` on GitHub (treat as active intent unless re-archived).
 
 ## Summary counts (non-archived repos only)
 
 | Bucket | Meaning | Count |
 |--------|---------|------:|
-| `active_90d` | Pushed within ~90 days of export | 179 |
+| `active_90d` | Pushed within ~90 days of export | 180 |
 | `stale_90d_1y` | Between ~90 days and 1 year | 12 |
 | `stale_1y_2y` | Between 1 and 2 years | 1 |
 | `stale_over_2y` | Older than ~2 years | 0 |
 
-**GitHub-archived** repos in export: **57** (listed under `archived_github` in the buckets TSV).
+**GitHub-archived** repos in export: **56** (listed under `archived_github` in the buckets TSV).
 
 ## Candidates for triage (no automatic archival)
 
@@ -32,9 +32,9 @@ None in the non-archived set (former coldest repos were archived in batch 1).
 
 **Recommendation:** For each `stale_*` repo, choose one: **archive on GitHub**, **delete** (if duplicate), or **revive** with an AgilePlus feature.
 
-## Already archived on GitHub (57)
+## Already archived on GitHub (56)
 
-Includes both historical archives and the 2026-03-29 batch runs (23 + 5 repos). Full list: `KOOSHPARI_REPOS_STALE_BUCKETS.tsv` filter `archived_github`.
+Includes historical archives and the 2026-03-29 batch runs (23 + 5 repos), minus any later **unarchive** actions. Full list: `KOOSHPARI_REPOS_STALE_BUCKETS.tsv` filter `archived_github`.
 
 ## Decision log (execution)
 
