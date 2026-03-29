@@ -286,7 +286,7 @@
     ],
     "tools": {
       "secrets": [
-        "gitleaks",
+        "trufflehog",
         "regex"
       ],
       "sast": [

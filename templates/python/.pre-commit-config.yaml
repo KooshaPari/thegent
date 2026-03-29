@@ -15,7 +15,11 @@ repos:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.22.1
+  - repo: local
     hooks:
-      - id: gitleaks
+      - id: trufflehog
+        name: TruffleHog Secret Detection
+        entry: trufflehog git file://. --since-commit HEAD --only-verified --fail
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

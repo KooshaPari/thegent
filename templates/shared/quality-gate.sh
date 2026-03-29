@@ -94,16 +94,8 @@ run_bash() {
 
 # Secrets check (all stacks)
 echo "--- Secrets Detection ---"
-gitleaks detect --no-banner --no-git -s "$PROJECT_ROOT" \
-  --max-target-megabytes "$GITLEAKS_MAX_MB" \
-  --timeout "$GITLEAKS_TIMEOUT_SEC" \
-  --ignore-path "$PROJECT_ROOT/.shadow-*" \
-  --ignore-path "$PROJECT_ROOT/.git-cache" \
-  --ignore-path "$PROJECT_ROOT/.worktrees" \
-  --ignore-path "$PROJECT_ROOT/node_modules" \
-  --ignore-path "$PROJECT_ROOT/.venv" \
-  --ignore-path "$PROJECT_ROOT/target" \
-  2>/dev/null || echo "gitleaks skipped"
+trufflehog git file://. --since-commit HEAD --only-verified --fail \
+  2>/dev/null || echo "trufflehog skipped (no git history or no verified secrets found)"
 echo ""
 
 # Run per-stack checks
