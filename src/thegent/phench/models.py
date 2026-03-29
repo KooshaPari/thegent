@@ -29,6 +29,8 @@ class ModuleManifest:
     repo_patterns: list[str] = field(default_factory=list)
     default_ref: str = "HEAD"
     repo_ref_overrides: dict[str, str] = field(default_factory=dict)
+    owners: list[str] = field(default_factory=list)
+    refresh_cadence: str = "never"
     repo_runner_overrides: dict[str, str] = field(default_factory=dict)
     repo_command_overrides: dict[str, str] = field(default_factory=dict)
     repo_env_profile_overrides: dict[str, str] = field(default_factory=dict)

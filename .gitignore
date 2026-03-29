@@ -142,3 +142,7 @@ crates/phenotype-cache-adapter/
 kitty-specs/
 styles/
 tokenledger/
+thegent-wtrees/
+phenotype-gauge-wtrees/
+template-commons/
+vibe-kanban-wtrees/
