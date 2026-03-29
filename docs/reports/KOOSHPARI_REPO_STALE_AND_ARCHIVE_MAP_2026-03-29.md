@@ -40,8 +40,8 @@ Includes superseded work: `agentapi`, `CLIProxyAPI`, `zen`, `heliosHarness`, `Tr
 
 ## Decision log (execution)
 
-Seed triage sheet (proposed actions, not applied on GitHub yet):  
-`docs/reports/data/KOOSHPARI_STALE_TRIAGE_DECISIONS_2026-03-29.tsv`
+- **Coldest 9 repos (seed):** `docs/reports/data/KOOSHPARI_STALE_TRIAGE_DECISIONS_2026-03-29.tsv`
+- **Full stale set (42 rows: 33 + 7 + 2):** `docs/reports/data/KOOSHPARI_STALE_TRIAGE_FULL_2026-03-29.tsv`
 
 ## Regenerate data
 

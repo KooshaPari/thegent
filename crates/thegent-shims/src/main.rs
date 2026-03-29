@@ -267,6 +267,8 @@ fn run_find(args: &[String]) -> ExitCode {
 /// - Block when not in a git worktree: delegate directly
 /// - Block when working tree is dirty
 /// - Delegate to git checkout when clean
+// run_git_checkout is unused but kept for reference
+#[allow(dead_code)]
 fn run_git_checkout(args: &[String]) -> ExitCode {
     let git_path = match resolve_binary("git") {
         Some(path) => path,

@@ -1,0 +1,43 @@
+repo	bucket	last_push	proposed_action	rationale
+vibeproxy	stale_90d_1y	2025-12-01	archive_github	Standalone experiment; no clear org SDK tie-in.
+router-docs	stale_90d_1y	2025-12-01	archive_github	Docs satellite; likely superseded by central docs.
+aizen	stale_90d_1y	2025-11-25	unknown_needs_review	Scope unclear; scan README before action.
+P2	stale_90d_1y	2025-11-25	archive_github	Coursework cluster with 472 repo.
+472-P2-Flame-War	stale_90d_1y	2025-11-25	archive_github	Course deliverable.
+ccusage	stale_90d_1y	2025-10-20	archive_github	Small util; archive unless still used locally.
+PriceyApp	stale_90d_1y	2025-10-17	delete_candidate	Personal app; backup then remove if unused.
+pheno-sdk	stale_90d_1y	2025-10-15	merge_into_monorepo	Canonical code is phenoSDK; empty/legacy remote naming.
+mcp-language-server	stale_90d_1y	2025-10-01	unknown_needs_review	Compare to active MCP stack before archive.
+KDesktopVirt	stale_90d_1y	2025-07-14	archive_github	Desktop virt spike; inactive.
+KVirtualStage	stale_90d_1y	2025-07-13	archive_github	Pairs with KDesktopVirt.
+RIP-Fitness-App	stale_90d_1y	2025-07-10	archive_github	Personal app; no org signal.
+kmobile	stale_90d_1y	2025-07-10	archive_github	Mobile experiment.
+KodeVibe	stale_90d_1y	2025-07-07	unknown_needs_review	Compare to KodeVibe-Go (active).
+CSE445-A4	stale_90d_1y	2025-06-29	archive_github	Course assignment.
+agslag-new	stale_90d_1y	2025-05-24	delete_candidate	Duplicate agslag lineage; pick one root.
+localbase-3	stale_90d_1y	2025-05-10	archive_github	localbase family; reconcile with localbase3 archived.
+localbase-2	stale_90d_1y	2025-05-10	archive_github	Same cluster.
+netweave-final2	stale_90d_1y	2025-05-01	delete_candidate	Duplicate of netweave-final; keep one canonical.
+netweave-final	stale_90d_1y	2025-04-30	archive_github	Candidate NetWeave snapshot vs NetWeave repo.
+localbase	stale_90d_1y	2025-04-30	unknown_needs_review	Compare localbase* vs archived localbase3.
+go-nippon	stale_90d_1y	2025-04-18	archive_github	Scratch Go project.
+agslag-docs	stale_90d_1y	2025-04-17	merge_into_monorepo	Docs with chosen agslag root if revived.
+330p5	stale_90d_1y	2025-04-17	archive_github	Course artifact.
+agslag	stale_90d_1y	2025-04-15	revive	Strongest agslag root if product revives.
+agslag-dash	stale_90d_1y	2025-04-13	delete_candidate	Fold into agslag or drop.
+agslagtmp-2	stale_90d_1y	2025-04-13	delete_candidate	Temp clone.
+agslag-tmp	stale_90d_1y	2025-04-13	delete_candidate	Temp clone.
+v0-agslag-project	stale_90d_1y	2025-04-12	delete_candidate	v0 scaffold superseded.
+model-conductor-hub	stale_90d_1y	2025-04-12	unknown_needs_review	ML/orchestration possible value.
+NetWeave	stale_90d_1y	2025-04-05	unknown_needs_review	Pick canonical vs netweave-final*.
+Frostify	stale_90d_1y	2025-04-05	archive_github	Standalone product name.
+hoohacks	stale_90d_1y	2025-03-30	archive_github	Hackathon lifecycle.
+340-p2	stale_1y_2y	2025-03-12	archive_github	Course phase 2.
+340P1	stale_1y_2y	2025-02-17	archive_github	Course phase 1.
+delete-o-matic-for-linkedin	stale_1y_2y	2025-01-20	unknown_needs_review	Third-party automation; review before delete.
+Byteport-TestZip	stale_1y_2y	2024-12-07	delete_candidate	Test zip artifact.
+odin-dash	stale_1y_2y	2024-12-04	archive_github	Odin curriculum style.
+ssToCal-front	stale_1y_2y	2024-10-12	archive_github	Inactive utility front-end.
+canvasApp	stale_1y_2y	2024-08-26	archive_github	Stale generic app name.
+odin-restaurant	stale_over_2y	2024-01-09	archive_github	Odin exercise pattern.
+Project-Spyn	stale_over_2y	2023-11-28	archive_github	Very old; unrelated to current stack.
