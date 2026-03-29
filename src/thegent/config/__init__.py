@@ -1,9 +1,8 @@
-"""STUB MODULE - thegent.config
+"""thegent.config module.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+This module exports ThegentSettings and related configuration classes.
 """
 
-# Stub implementation - functionality not available
-__all__ = []
+from thegent.config.settings import ThegentSettings
+
+__all__ = ["ThegentSettings"]
