@@ -28,8 +28,8 @@ Specs live under `apps/AgilePlus/kitty-specs/<slug>/` (gitignored in AgilePlus r
 
 ## Data files
 
-- `docs/reports/data/KOOSHPARI_GITHUB_REPOS_2026-03-29.tsv` — org export (249 repos); refreshed **2026-03-28** after archive batch 2
-- `docs/reports/data/KOOSHPARI_REPOS_STALE_BUCKETS.tsv` — staleness buckets (57 `archived_github`, 13 non-archived stale)
+- `docs/reports/data/KOOSHPARI_GITHUB_REPOS_2026-03-29.tsv` — org export (249 repos); refreshed **2026-03-29** UTC
+- `docs/reports/data/KOOSHPARI_REPOS_STALE_BUCKETS.tsv` — staleness buckets (56 `archived_github`, 13 non-archived stale; `vibe-kanban` unarchived since prior snapshot)
 - `docs/reports/data/KOOSHPARI_STALE_TRIAGE_DECISIONS_2026-03-29.tsv` — **proposed** triage for coldest repos
 
 ## Related reports
