@@ -1693,15 +1693,13 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | ~~TGNT-P18.2~~ | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
 | ~~rollout-hook-rust-phase2~~ | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
 | docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 |
-| wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 |
-| ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.797259+00:00 |
-| wave70-l1 | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 |
-| wp-16002-async-delegation | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 |
-| ~~TGNT-P16.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.105584+00:00 |
-| wave70-l7 | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 |
-| wave70-l3 | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 |
-| TGNT-P17.1 | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 |
-## COMPLETED (historical reference)
+| ~~docs-skill-examples~~ | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 | closed-2026-03-28 |
+| ~~wp-16001-persona-registry~~ | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 | closed-2026-03-28 |
+| ~~wave70-l1~~ | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 | closed-2026-03-28 |
+| ~~wp-16002-async-delegation~~ | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 | closed-2026-03-28 |
+| ~~wave70-l7~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 | closed-2026-03-28 |
+| ~~wave70-l3~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 | closed-2026-03-28 |
+| ~~TGNT-P17.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 | closed-2026-03-28 |
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.
 
