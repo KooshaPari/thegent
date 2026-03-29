@@ -1,0 +1,139 @@
+{
+  "project": "kush",
+  "wbs_elements": 41,
+  "tree": {
+    "kush-wbs-27": {
+      "id": "kush-wbs-27",
+      "name": "unit tests for adapters",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "kush-wbs-31": {
+      "id": "kush-wbs-31",
+      "name": "integration tests for orchestration",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "kush-wbs-15": {
+      "id": "kush-wbs-15",
+      "name": "E2E tests for workflows",
+      "description": "## Project Structure\n\n```\nsrc/\n\u251c\u2500\u2500 adapters/              # Generic adapter interfaces\n\u2502   \u251c\u2500\u2500 executor/         # Agent executor adapter\n\u2502   \u251c\u2500\u2500 tools/            # Tool provider adapter\n\u2502   \u2514\u2500\u2500 state/            # State management adapter\n\u251c\u2500\u2500 orchestration/        # Agent coordination\n\u2502   \u251c\u2500\u2500 root-agent.ts     # Root agent orchestrator\n\u2502   \u2514\u2500\u2500 sub-agent.ts      # Sub-agent worker\n\u251c\u2500\u2500 validation/           # Verification & error recovery\n\u2502   \u251c\u2500\u2500 verification-agent.ts\n\u2502   \u2514\u2500\u2500 error-recovery.ts",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "kush-wbs-15.": {
+          "id": "kush-wbs-15.",
+          "name": "**F2** CI summary / JUnit XML \u2014 done",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "kush-wbs-134": {
+      "id": "kush-wbs-134",
+      "name": "Python files",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "kush-wbs-59": {
+      "id": "kush-wbs-59",
+      "name": "Markdown documentation files",
+      "description": "- ~60,615 lines of code (LOC)\n- ~16,244 blank lines\n- ~11,404 comment lines\n- **Total: 88,263 lines**\n\n**Target State:**\n- Reduce to ~40-50 Python files (60-65% reduction)\n- Reduce to ~10-15 essential documentation files (75% reduction)\n- Reduce LOC by 40-50% through deduplication\n- **Target: ~35,000-40,000 total lines**\n- **Zero feature reduction**\n\n## Critical Duplication Areas\n\n### 1. Model Definitions (HIGH PRIORITY)\n\n**Problem:** 5+ model definition files with overlapping classes\n\n**Files",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {}
+    },
+    "kush-wbs-5": {
+      "id": "kush-wbs-5",
+      "name": "microservices developed in parallel",
+      "description": "- Agent pools with auto-scaling\n- Cross-phase dependencies\n- Comprehensive testing strategy\n- Infrastructure as Code\n- Production deployment\n\n## Architecture\n\n### Document Structure\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502     YAML Frontmatter                \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\n\u2502  \u2502 schema_version: \"3.0\"         \u2502  \u2502\n\u2502  \u2502 metadata:                     \u2502  \u2502\n\u2502  \u2502   plan_id: ...               \u2502  \u2502\n\u2502  \u2502   variables: ...             \u2502  \u2502\n\u2502  \u2502 plan:",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "kush-wbs-5.": {
+          "id": "kush-wbs-5.",
+          "name": "**Agent pools** auto-scale within defined limits",
+          "description": "",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "kush-wbs-5.1": {
+          "id": "kush-wbs-5.1",
+          "name": "DAG Config Validation",
+          "description": "```yaml\n# quality-dag.yaml schema (conceptual)\nsteps:\n  <name>:\n    deps: [<name>]      # must reference existing steps\n    command: str        # required\n    display: str        # optional\n    timeout: int       # optional, seconds\n    retries: int       # optional, default 0\n```\n\n**Validation rules:**\n- No cycles (topological sort must consume all nodes)\n- All `deps` must exist in `steps`\n- `command` required, non-empty\n- `timeout` > 0 if present",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "kush-wbs-5.2": {
+          "id": "kush-wbs-5.2",
+          "name": "Fix Runner DAG Ordering",
+          "description": "Current: `for step_name, _ in jobs: run fix_config[step_name]` (arbitrary order)\n\nProposed: `tiers = topological_tiers(fix_config); for tier in tiers: run tier in parallel`",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "kush-wbs-5.3": {
+          "id": "kush-wbs-5.3",
+          "name": "Progress.json Enhancement",
+          "description": "```json\n{\n  \"running\": [\"py-lint\"],\n  \"completed\": {\n    \"naming\": {\"code\": 0, \"duration\": 0.23},\n    \"go-proto\": {\"code\": 0, \"duration\": 1.1}\n  },\n  \"timestamp\": \"2026-02-16T09:00:00Z\"\n}\n```",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "kush-wbs-5.4": {
+          "id": "kush-wbs-5.4",
+          "name": "TUI ROOT Injection",
+          "description": "- QualityRunnerApp: accept `ROOT` via env `QUALITY_ROOT` or `Path.cwd()`\n- quality_runner_tui.py: pass ROOT when invoking app\n- Shared entry point: `python -m quality_runner_tui` with cwd as default ROOT",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        },
+        "kush-wbs-5.5": {
+          "id": "kush-wbs-5.5",
+          "name": "Quality Report from DAG",
+          "description": "- Replace hardcoded SPLIT_STEPS with: `steps.keys()` from quality-dag.yaml\n- Add `suite` or `category` (lint/test) per step in config\n- quality-report.py reads DAG, uses step names as log stems\n\n---",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    }
+  },
+  "total_estimated_hours": 0
+}

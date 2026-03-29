@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/agent-fork-lane-report.schema.json",
+  "title": "Agent Fork Lane Report",
+  "type": "object",
+  "required": [
+    "lane_id",
+    "plan_id",
+    "agent_context_version",
+    "phase",
+    "owner",
+    "objective",
+    "scope",
+    "findings",
+    "proposed_actions",
+    "conflicts",
+    "next_actions",
+    "validation",
+    "generated_at"
+  ],
+  "properties": {
+    "lane_id": {"type": "string", "minLength": 3},
+    "plan_id": {"type": "string", "minLength": 3},
+    "agent_context_version": {"type": "string", "minLength": 1},
+    "phase": {"type": "string", "enum": ["analysis", "execution", "verification", "handoff"]},
+    "owner": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 5},
+    "scope": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "type", "summary", "severity", "evidence", "confidence"],
+        "properties": {
+          "file": {"type": "string", "minLength": 1},
+          "type": {"type": "string", "enum": ["discovery", "decision", "claim", "risk", "patch", "test", "question"]},
+          "summary": {"type": "string", "minLength": 10},
+          "severity": {"type": "string", "enum": ["low", "med", "high", "critical"]},
+          "evidence": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      },
+      "minItems": 1
+    },
+    "proposed_actions": {"type": "array", "items": {"type": "string"}},
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "description", "severity", "recommended_owner"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "type": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "severity": {"type": "string", "enum": ["low", "med", "high", "critical"]},
+          "recommended_owner": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "next_actions": {"type": "array", "items": {"type": "string"}},
+    "validation": {
+      "type": "object",
+      "required": ["commands", "results"],
+      "properties": {
+        "commands": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command", "status", "notes"],
+            "properties": {
+              "command": {"type": "string", "minLength": 1},
+              "status": {"type": "string", "enum": ["pass", "fail", "skip"]},
+              "notes": {"type": "string", "minLength": 1}
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

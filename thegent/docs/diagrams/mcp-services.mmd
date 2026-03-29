@@ -1,0 +1,80 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#DC2626', 'primaryTextColor': '#fff', 'primaryBorderColor': '#B91C1C', 'lineColor': '#EF4444'}}}%%
+flowchart TB
+    subgraph Tools["5 Consolidated Tools"]
+        Workspace["workspace_operation<br/>Context management"]
+        Entity["entity_operation<br/>CRUD + search"]
+        Relation["relationship_operation<br/>Graph links"]
+        Workflow["workflow_execute<br/>Multi-step ops"]
+        Query["data_query<br/>Search + analytics"]
+    end
+
+    subgraph SearchServices["Search Services"]
+        Hybrid["hybrid_search<br/>Keyword + Semantic"]
+        BM25["bm25_search_service<br/>Full-text ranking"]
+        Vector["vector_search<br/>Embedding similarity"]
+        Embed["embedding_vertex<br/>Vertex AI embeddings"]
+    end
+
+    subgraph EntityServices["Entity Services"]
+        Batch["batch_operations<br/>Bulk CRUD"]
+        Temporal["temporal_engine<br/>Version tracking"]
+        Context["context_manager<br/>Workspace state"]
+        Progressive["progressive_embedding<br/>Lazy loading"]
+    end
+
+    subgraph RelationServices["Relationship Services"]
+        RelEngine["relationship_engine<br/>Graph operations"]
+        Impact["impact_analysis_engine<br/>Change analysis"]
+        Compliance["compliance_engine<br/>Verification"]
+    end
+
+    subgraph Infrastructure["Infrastructure"]
+        Adapter["adapters<br/>Supabase queries"]
+        Permission["permission_middleware<br/>RBAC"]
+        RateLimit["distributed_rate_limiter<br/>Throttling"]
+        Concurrency["concurrency_manager<br/>Async safety"]
+        AuthComp["auth_composite<br/>OAuth + Bearer"]
+    end
+
+    subgraph External["External Services"]
+        Supabase[("Supabase<br/>PostgreSQL + RLS")]
+        Vertex["Vertex AI<br/>Embeddings"]
+        Redis[("Upstash Redis<br/>Cache")]
+        WorkOS["WorkOS<br/>Auth"]
+    end
+
+    Query --> Hybrid
+    Hybrid --> BM25
+    Hybrid --> Vector
+    Vector --> Embed
+
+    Entity --> Batch
+    Entity --> Temporal
+    Workspace --> Context
+
+    Relation --> RelEngine
+    RelEngine --> Impact
+    Impact --> Compliance
+
+    SearchServices --> Adapter
+    EntityServices --> Adapter
+    RelationServices --> Adapter
+
+    Adapter --> Supabase
+    Embed --> Vertex
+    RateLimit --> Redis
+    AuthComp --> WorkOS
+
+    classDef tools fill:#7C3AED,stroke:#6D28D9,color:#fff
+    classDef search fill:#0891B2,stroke:#0E7490,color:#fff
+    classDef entity fill:#059669,stroke:#047857,color:#fff
+    classDef relation fill:#DC2626,stroke:#B91C1C,color:#fff
+    classDef infra fill:#6B7280,stroke:#4B5563,color:#fff
+    classDef external fill:#F59E0B,stroke:#D97706,color:#fff
+
+    class Workspace,Entity,Relation,Workflow,Query tools
+    class Hybrid,BM25,Vector,Embed search
+    class Batch,Temporal,Context,Progressive entity
+    class RelEngine,Impact,Compliance relation
+    class Adapter,Permission,RateLimit,Concurrency,AuthComp infra
+    class Supabase,Vertex,Redis,WorkOS external

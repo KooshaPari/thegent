@@ -1,0 +1,645 @@
+{
+  "project_name": "atoms-mcp-oauth",
+  "version": "1.0.0",
+  "created_at": "2026-02-18T01:26:41.184250",
+  "overview": "# Atoms MCP OAuth 2.1 Server",
+  "objectives": [],
+  "success_metrics": [],
+  "stakeholders": [],
+  "target_users": [],
+  "functional_requirements": [
+    {
+      "id": "atoms-mcp-oauth-feat-0",
+      "title": "OAuth 2.1 Compliance",
+      "description": "Implements the latest OAuth 2.1 security standards with mandatory PKCE",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-1",
+      "title": "Zero Environment Variables",
+      "description": "All credentials stored securely in OS keychains",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-2",
+      "title": "Multi-Tenant OAuth",
+      "description": "Supports GitHub, Jira, Slack, and other provider integrations",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-3",
+      "title": "Cross-Platform",
+      "description": "Works on macOS, Windows, and Linux with native credential storage",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-4",
+      "title": "SOC2 Ready",
+      "description": "Comprehensive audit logging and security controls",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-5",
+      "title": "Dual Transport",
+      "description": "Supports both HTTP/SSE and stdio transports",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-6",
+      "title": "Document Management",
+      "description": "- `upload_document` - Upload files to projects",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-7",
+      "title": "AI & Analysis",
+      "description": "- `chat_with_ai` - AI-powered conversations",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-8",
+      "title": "Project Management",
+      "description": "- `list_projects` - View your projects",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-9",
+      "title": "PKCE Required",
+      "description": "All OAuth flows use S256 code challenge",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-10",
+      "title": "Token Binding",
+      "description": "Tokens bound to specific MCP instances",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-11",
+      "title": "Automatic Expiry",
+      "description": "Access tokens expire after 1 hour",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-12",
+      "title": "Rotation on Use",
+      "description": "Refresh tokens rotate on every use",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-13",
+      "title": "Audit Logging",
+      "description": "All operations logged with metadata",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-14",
+      "title": "1. First-Time Setup",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-15",
+      "title": "2. Claude Desktop Configuration",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-16",
+      "title": "3. Available Tools",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-17",
+      "title": "Security Model",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-18",
+      "title": "OAuth 2.1 Flow",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-19",
+      "title": "Prerequisites",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-20",
+      "title": "Building from Source",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-21",
+      "title": "Running Tests",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-22",
+      "title": "OAuth Providers",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-23",
+      "title": "Advanced Settings",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-24",
+      "title": "Common Issues",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-25",
+      "title": "Debug Mode",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-26",
+      "title": "Reporting Security Issues",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-27",
+      "title": "Security Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-28",
+      "title": "Development Workflow",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-29",
+      "title": "No Stored Secrets",
+      "description": "Uses public OAuth clients with PKCE",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-30",
+      "title": "Token Rotation",
+      "description": "Automatic refresh token rotation",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-31",
+      "title": "Secure Storage",
+      "description": "OS-native credential managers",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-32",
+      "title": "Audit Trail",
+      "description": "Every action logged for compliance",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-33",
+      "title": "\"Authentication failed\"",
+      "description": "- Ensure you have access to the Atoms platform",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-34",
+      "title": "\"Token storage failed\"",
+      "description": "- macOS: Grant keychain access when prompted",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-35",
+      "title": "\"OAuth callback timeout\"",
+      "description": "- Check firewall allows localhost:8080",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    }
+  ],
+  "non_functional_requirements": [],
+  "features": [
+    {
+      "id": "atoms-mcp-oauth-feat-0",
+      "title": "OAuth 2.1 Compliance",
+      "description": "Implements the latest OAuth 2.1 security standards with mandatory PKCE",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-1",
+      "title": "Zero Environment Variables",
+      "description": "All credentials stored securely in OS keychains",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-2",
+      "title": "Multi-Tenant OAuth",
+      "description": "Supports GitHub, Jira, Slack, and other provider integrations",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-3",
+      "title": "Cross-Platform",
+      "description": "Works on macOS, Windows, and Linux with native credential storage",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-4",
+      "title": "SOC2 Ready",
+      "description": "Comprehensive audit logging and security controls",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-5",
+      "title": "Dual Transport",
+      "description": "Supports both HTTP/SSE and stdio transports",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-6",
+      "title": "Document Management",
+      "description": "- `upload_document` - Upload files to projects",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-7",
+      "title": "AI & Analysis",
+      "description": "- `chat_with_ai` - AI-powered conversations",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-8",
+      "title": "Project Management",
+      "description": "- `list_projects` - View your projects",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-9",
+      "title": "PKCE Required",
+      "description": "All OAuth flows use S256 code challenge",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-10",
+      "title": "Token Binding",
+      "description": "Tokens bound to specific MCP instances",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-11",
+      "title": "Automatic Expiry",
+      "description": "Access tokens expire after 1 hour",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-12",
+      "title": "Rotation on Use",
+      "description": "Refresh tokens rotate on every use",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-13",
+      "title": "Audit Logging",
+      "description": "All operations logged with metadata",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-14",
+      "title": "1. First-Time Setup",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-15",
+      "title": "2. Claude Desktop Configuration",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-16",
+      "title": "3. Available Tools",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-17",
+      "title": "Security Model",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-18",
+      "title": "OAuth 2.1 Flow",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-19",
+      "title": "Prerequisites",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-20",
+      "title": "Building from Source",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-21",
+      "title": "Running Tests",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-22",
+      "title": "OAuth Providers",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-23",
+      "title": "Advanced Settings",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-24",
+      "title": "Common Issues",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-25",
+      "title": "Debug Mode",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-26",
+      "title": "Reporting Security Issues",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-27",
+      "title": "Security Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-28",
+      "title": "Development Workflow",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-29",
+      "title": "No Stored Secrets",
+      "description": "Uses public OAuth clients with PKCE",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-30",
+      "title": "Token Rotation",
+      "description": "Automatic refresh token rotation",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-31",
+      "title": "Secure Storage",
+      "description": "OS-native credential managers",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-32",
+      "title": "Audit Trail",
+      "description": "Every action logged for compliance",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-33",
+      "title": "\"Authentication failed\"",
+      "description": "- Ensure you have access to the Atoms platform",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-34",
+      "title": "\"Token storage failed\"",
+      "description": "- macOS: Grant keychain access when prompted",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "atoms-mcp-oauth-feat-35",
+      "title": "\"OAuth callback timeout\"",
+      "description": "- Check firewall allows localhost:8080",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    }
+  ],
+  "feature_priorities": {},
+  "architecture_overview": "Architecture details to be documented.",
+  "technical_requirements": [
+    "Use node.js"
+  ],
+  "integration_points": [
+    {
+      "name": "Integration with Management",
+      "description": "Integration point with Management project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with with",
+      "description": "Integration point with with project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with -",
+      "description": "Integration point with - project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with access",
+      "description": "Integration point with access project",
+      "type": "project_integration"
+    }
+  ],
+  "phases": [],
+  "milestones": [],
+  "dependencies": [],
+  "blockers": [],
+  "related_projects": [
+    "Management",
+    "with",
+    "-",
+    "access"
+  ],
+  "shared_features": [
+    "Common Issues",
+    "Debug Mode",
+    "Audit Trail",
+    "Audit Logging",
+    "Prerequisites",
+    "Running Tests",
+    "OAuth Flow",
+    "Development Workflow",
+    "\ud83d\udcf1 Cross-platform",
+    "Security Features",
+    "Analysis:",
+    "3. Project Management",
+    "Claude Desktop Configuration",
+    "Document Management",
+    "Building from Source"
+  ]
+}

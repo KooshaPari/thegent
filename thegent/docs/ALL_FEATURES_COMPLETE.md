@@ -1,0 +1,19 @@
+# All Features Complete - mise Integration (Parity Note)
+
+The command examples in earlier copies refer to parser surfaces that are no longer directly exposed by
+`thegent setup`/`thegent install`.
+
+## Current status
+
+- Installer/runtime bootstrap remains: `thegent install -t all` and `thegent setup`.
+- `--system-deps`, `--nix`, `--verify-mise`, and `thegent uninstall-system-deps` are not part of the active
+  documented CLI surface in this tree.
+- If you see this behavior in scripts, gate it behind environment checks and treat the legacy flags as
+  soft-deprecated.
+
+## What to do now
+
+1. Use `thegent install -t all` and then run `thegent setup` for harness/provider bootstrap.
+2. Keep mise lifecycle in your platform bootstrap (`brew`, `nix`, etc.) and document that in your project
+   install guide.
+3. Treat the old “legacy mise workflow” snippets as historical references only.

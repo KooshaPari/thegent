@@ -1,0 +1,5 @@
+https://github.com/GongRzhe/Quickchart-MCP-Server
+https://github.com/ruvnet/agentic-flow
+https://github.com/bar181/savant-ai-results
+https://github.com/GongRzhe/ACP-MCP-Server
+https://github.com/unclecode/tool4ai

@@ -5,8 +5,9 @@
 use std::collections::{HashMap, HashSet};
 use std::process::Stdio;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
+use futures::StreamExt;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::mpsc;
@@ -160,8 +161,8 @@ async fn execute_task(task: &crate::graph::Task) -> Result<CommandOutput> {
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
 
-    let (stdout_tx, stdout_rx) = mpsc::channel(1000);
-    let (stderr_tx, stderr_rx) = mpsc::channel(1000);
+    let (stdout_tx, stdout_rx) = mpsc::channel::<String>(1000);
+    let (stderr_tx, stderr_rx) = mpsc::channel::<String>(1000);
 
     let stdout_handle = if let Some(stdout) = stdout {
         let mut reader = BufReader::new(stdout).lines();
@@ -195,7 +196,6 @@ async fn execute_task(task: &crate::graph::Task) -> Result<CommandOutput> {
         None
     };
 
-    use futures::StreamExt;
     let mut stdout_stream = tokio_stream::wrappers::ReceiverStream::new(stdout_rx);
     let mut stderr_stream = tokio_stream::wrappers::ReceiverStream::new(stderr_rx);
 

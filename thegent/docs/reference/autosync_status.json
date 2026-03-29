@@ -1,0 +1,62 @@
+{
+  "last_cycle_at": "2026-02-22T13:29:04.011926+00:00",
+  "total_cycles": 1,
+  "last_error": "Emergency stop active; autosync external mutation is paused",
+  "health": "degraded",
+  "runner": {
+    "enabled": true,
+    "is_running": false,
+    "last_sync_time": null,
+    "github_enabled": true,
+    "linear_enabled": false,
+    "last_operation": null,
+    "open_blockers": [],
+    "failure_queue_size": 3,
+    "next_cycle_interval_seconds": 300,
+    "connector_health": [],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "correlation_id": null,
+    "local_orphan_report": {
+      "local_ids": [],
+      "mapped_remote_ids": [],
+      "local_orphan_ids": [],
+      "orphan_count": 0
+    },
+    "ignored_wl_ids": [],
+    "scope_filtered_wl_ids": [],
+    "no_op_summary": null,
+    "trend_sample": null
+  },
+  "open_blockers": [],
+  "failure_queue_size": 3,
+  "checkpoint": null,
+  "connector_health": [],
+  "next_cycle_interval_seconds": 300,
+  "incident_snapshot": {
+    "captured_at": "2026-02-22T13:29:04.010965+00:00",
+    "items_count": 0,
+    "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
+    "connector_health": [],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "last_error": "Emergency stop active; autosync external mutation is paused",
+    "failure_queue_size": 3,
+    "mutation_summary": null
+  },
+  "correlation_id": null,
+  "local_orphan_report": {
+    "local_ids": [],
+    "mapped_remote_ids": [],
+    "local_orphan_ids": [],
+    "orphan_count": 0
+  },
+  "ignored_wl_ids": [],
+  "scope_filtered_wl_ids": [],
+  "no_op_summary": null,
+  "trend_sample": null
+}
