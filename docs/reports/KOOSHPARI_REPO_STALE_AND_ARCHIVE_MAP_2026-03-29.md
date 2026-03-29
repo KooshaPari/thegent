@@ -2,7 +2,7 @@
 
 Source export: `docs/reports/data/KOOSHPARI_GITHUB_REPOS_2026-03-29.tsv`  
 Derived buckets: `docs/reports/data/KOOSHPARI_REPOS_STALE_BUCKETS.tsv`  
-**Last refresh:** 2026-03-29 UTC (re-export + bucket recompute). **Delta vs prior snapshot:** `vibe-kanban` is **no longer** `isArchived` on GitHub (treat as active intent unless re-archived).
+**Last refresh:** 2026-03-29 UTC (~06:27Z re-export; `pushedAt` timestamps updated). Bucket counts unchanged (180 / 12 / 1 / 56). **Prior delta:** `vibe-kanban` is **not** `isArchived` on GitHub vs older exports.
 
 ## Summary counts (non-archived repos only)
 
