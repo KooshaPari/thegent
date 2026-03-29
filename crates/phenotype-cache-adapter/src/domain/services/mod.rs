@@ -4,6 +4,7 @@
 //! or that coordinates multiple entities/ports.
 
 use crate::domain::entities::CacheConfig;
+use std::ops::RangeInclusive;
 
 /// Cache configuration builder for creating valid configurations.
 pub struct CacheConfigBuilder {
@@ -71,7 +72,7 @@ impl TtlValidator {
     /// Validate that TTL is within acceptable bounds.
     pub fn is_valid(ttl_secs: u64) -> bool {
         // Reasonable bounds: 1 second to 30 days
-        ttl_secs >= 1 && ttl_secs <= 2_592_000
+        RangeInclusive::new(1, 2_592_000).contains(&ttl_secs)
     }
 
     /// Normalize TTL to acceptable bounds.
