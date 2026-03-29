@@ -2094,7 +2094,6 @@ def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
                     repo_id="repo-a",
                     repo_path="/tmp/repo-a",
                     selected_ref="HEAD",
-                    module_name=module_name,
                 )
             ],
             lock_hash="abc",
