@@ -1,0 +1,5 @@
+# mise hook (fast alternative to direnv)
+# Auto-installed by thegent
+eval "$(mise activate bash)"
+
+. "$HOME/.local/share/../bin/env"
