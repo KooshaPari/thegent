@@ -1,10 +1,3 @@
----
-type: cli
-evidence_bundle: site-guide-cli-reference
----
-
-<EvidenceBundle bundle="site-guide-cli-reference" title="Evidence Bundle: Guide CLI" />
-
 # CLI Reference
 
 This page covers the core `thegent` commands used in local and CI workflows.

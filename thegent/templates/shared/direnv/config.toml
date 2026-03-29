@@ -1,7 +1,0 @@
-# direnv configuration
-
-# Disable analytics
-export DIRENV_LOG_FORMAT=""
-
-# Load .envrc files automatically
-watch_dir_enabled = true

@@ -1,10 +1,3 @@
----
-type: howto
-evidence_bundle: site-operations-troubleshooting
----
-
-<EvidenceBundle bundle="site-operations-troubleshooting" title="Evidence Bundle: Operations Troubleshooting" />
-
 # Troubleshooting
 
 Use this page when commands fail, sessions hang, or provider routes are unavailable.

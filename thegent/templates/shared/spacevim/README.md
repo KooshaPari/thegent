@@ -1,1 +1,0 @@
-# spacevim config

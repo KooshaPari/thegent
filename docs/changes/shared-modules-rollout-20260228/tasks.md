@@ -100,37 +100,3 @@ Status legend:
 1. Wave 2 starts only after `CA-24` reaches `[done]`.
 2. Lanes `G/H/I/J/K` can execute in parallel after upstream dependencies complete.
 3. Lane `L` is serialized closeout and merge-governance gating.
-
-## Next 24 Tasks (Child-Lane Plan Wave 3)
-
-| Phase | Child Lane | Task ID | [status] | Description | Depends On |
-|---|---|---|---|---|---|
-| M | CM-L1 | CM-01 | [todo] | Publish shared-module adoption matrix with required module contracts and repo host mappings for all target repos. | CL-04 |
-| M | CM-L1 | CM-02 | [todo] | Add machine-readable schema for module contract versions and breaking-change policy in each extracted module. | CM-01 |
-| M | CM-L1 | CM-03 | [todo] | Add contract smoke tests that fail closed when version expectations drift across consumers. | CM-02 |
-| M | CM-L1 | CM-04 | [todo] | Run cross-repo contract sweep for all module consumers and produce evidence package. | CM-03 |
-| N | CN-L2 | CN-01 | [todo] | Add Phenotype/projects workspace scaffold with stable aliasing and per-project execution environment manifest. | CL-04 |
-| N | CN-L2 | CN-02 | [todo] | Add runner config parser for timeline/branch selection and required task target validation. | CN-01 |
-| N | CN-L2 | CN-03 | [todo] | Add non-interactive CLI/TUI invocation contract tests for branch-tree task execution selection. | CN-02 |
-| N | CN-L2 | CN-04 | [todo] | Add regression guard to prevent stale workspace/env leakage between project executions. | CN-03 |
-| O | CO-L3 | CO-01 | [todo] | Add release metadata manifest generator for extracted modules (version, dependencies, owning lane, branch lineage). | CL-04 |
-| O | CO-L3 | CO-02 | [todo] | Add publish/build pipeline checks that validate module package boundaries before host merges. | CO-01 |
-| O | CO-L3 | CO-03 | [todo] | Add verification that no legacy wrappers/fallback flags remain in migrated module import paths. | CO-02 |
-| O | CO-L3 | CO-04 | [todo] | Capture governance-compliant deprecation removal evidence and rollback-proof migration notes. | CO-03 |
-| P | CP-L4 | CP-01 | [todo] | Add queueing strategy for lane tasks across repos keyed by module responsibility and dependency order. | CL-04 |
-| P | CP-L4 | CP-02 | [todo] | Add orchestrator policy to prevent overlapping edits on shared files across waves. | CP-01 |
-| P | CP-L4 | CP-03 | [todo] | Add merge-gate validation for dependency order and branch status in workflow automation. | CP-02 |
-| P | CP-L4 | CP-04 | [todo] | Run governance simulation of a full 4-lane parallel closeout and log conflict outcomes. | CP-03 |
-| Q | CQ-L5 | CQ-01 | [todo] | Add architecture tests enforcing `thegent` app as orchestration-only with strict module boundary assertions. | CL-04 |
-| Q | CQ-L5 | CQ-02 | [todo] | Add static analysis checks for sidecar/bin responsibility separation in control-plane/execution modules. | CQ-01 |
-| Q | CQ-L5 | CQ-03 | [todo] | Add runtime smoke tests that verify responsibility inversion is preserved under sample load. | CQ-02 |
-| Q | CQ-L5 | CQ-04 | [todo] | Document and enforce no-domain-leakage boundary exceptions and remediation workflows. | CQ-03 |
-| R | CR-L6 | CR-01 | [todo] | Capture end-to-end evidence for module-based split between app, MCP, control-plane, execution, and governance. | CQ-04,CL-04 |
-| R | CR-L6 | CR-02 | [todo] | Add final closeout acceptance tests validating all target repos run from selected branches in Phenotype/projects. | CR-01 |
-| R | CR-L6 | CR-03 | [todo] | Publish final phased WBS status ledger with `[status]` and dependency completion evidence. | CR-02 |
-| R | CR-L6 | CR-04 | [todo] | Archive Wave 1/2/3 handoff notes and mark tracker ready for merge handoff. | CR-03 |
-
-### Wave 3 Notes
-1. Wave 3 starts only after `CL-04` reaches `[done]`.
-2. Lanes `M/N/O/P/Q` are parallel and should be executed by responsibility cluster.
-3. Lane `R` is serialized and must capture final closeout evidence only after all execution lanes complete.

@@ -1,10 +1,3 @@
----
-type: reference
-evidence_bundle: site-reference-routing
----
-
-<EvidenceBundle bundle="site-reference-routing" title="Evidence Bundle: Reference Routing" />
-
 # Routing Reference
 
 Routing decides which provider/model executes a task.

@@ -11,8 +11,6 @@ mod evaluator;
 mod policy;
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 pub mod python;
-#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
-pub mod python;
 mod slo;
 mod trust;
 

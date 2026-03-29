@@ -1,1 +1,0 @@
-# teax config

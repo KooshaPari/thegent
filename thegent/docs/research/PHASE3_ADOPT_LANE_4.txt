@@ -1,4 +1,0 @@
-https://github.com/browser-use/browser-use
-https://github.com/jehna/humanify
-https://github.com/searxng/searxng
-https://github.com/zed-industries/zed

@@ -1,5 +1,0 @@
-## wave-gh35-integration
-?? docs/features/architecture/fragemented/
-?? docs/features/providers/fragemented/
-?? docs/fragemented/
-?? docs/planning/reports/fragemented/

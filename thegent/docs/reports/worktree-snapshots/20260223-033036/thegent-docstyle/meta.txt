@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-docstyle
-branch=docstyle/technical-wording-20260223
-head=ad6c23bf168f2e202c99029afa81067f98ddd575

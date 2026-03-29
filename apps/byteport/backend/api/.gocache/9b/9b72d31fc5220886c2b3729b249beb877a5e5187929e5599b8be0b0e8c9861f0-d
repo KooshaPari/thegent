@@ -1,6 +1,0 @@
-./aws.go
-./flyio.go
-./netlify.go
-./railway.go
-./supabase.go
-./vercel.go

@@ -1,3 +1,0 @@
-coordination.md
-security-model.md
-swarm-architecture.md

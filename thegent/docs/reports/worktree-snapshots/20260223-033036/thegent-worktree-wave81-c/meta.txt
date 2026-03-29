@@ -1,3 +1,0 @@
-path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave81-c
-branch=codex/wave81-lane-c-wl325-326
-head=f5f1995248c3f50b20e1c5091307ab28a4fdc18b

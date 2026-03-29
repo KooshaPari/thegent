@@ -1,10 +1,10 @@
-import { withMermaid } from 'vitepress-plugin-mermaid'
+import { defineConfig } from 'vitepress'
 import { crossProjectLinks } from './plugins/cross-project-links'
 
-export default withMermaid({
+export default defineConfig({
   title: '{{PROJECT_NAME}}',
   description: '{{PROJECT_DESCRIPTION}}',
-  appearance: 'dark',
+  appearance: true,
   lastUpdated: true,
 
   themeConfig: {
@@ -22,15 +22,6 @@ export default withMermaid({
     }
   },
 
-  // Mermaid diagram configuration
-  mermaid: {
-    theme: 'dark',
-    themeVariables: {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '13px',
-    },
-  },
-
   vite: {
     build: {
       rollupOptions: {
@@ -38,9 +29,6 @@ export default withMermaid({
           manualChunks: undefined
         }
       }
-    },
-    optimizeDeps: {
-      include: ['mermaid'],
-    },
+    }
   }
 })

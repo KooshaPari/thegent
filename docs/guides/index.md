@@ -7,7 +7,6 @@ Welcome to the thegent guides section.
 - [Installation](/guides/INSTALLATION.md)
 - [Quick Reference](/guides/QUICK_REFERENCE.md)
 - [Dotfile Manager Integration](/guides/DOTFILES_INTEGRATION.md)
-- [Forge — headless agent](/guides/FORGE_HEADLESS.md)
 - [Agent Instructions](/guides/AGENT_INSTRUCTIONS_THEGENT.md)
 - [Anti-Patterns](/guides/anti-patterns.md)
 - [Architecture Enforcement](/guides/architecture-enforcement.md)

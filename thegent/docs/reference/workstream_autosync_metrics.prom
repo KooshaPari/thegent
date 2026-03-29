@@ -1,6 +1,0 @@
-thegent_autosync_cycles_total 1
-thegent_autosync_cycle_outcomes_total{status="success"} 1
-thegent_autosync_cycle_outcomes_total{status="failure"} 0
-thegent_autosync_cycle_duration_seconds_count 1
-thegent_autosync_connector_operations_total 0
-thegent_autosync_cycle_health 1

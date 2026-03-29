@@ -1,3 +1,0 @@
-cli-reference.md
-mcp-protocol.md
-rest-api.md

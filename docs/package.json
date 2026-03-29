@@ -8,7 +8,6 @@
     "docs:preview": "vitepress preview ."
   },
   "devDependencies": {
-    "@phenotype/docs": "^0.1.0",
     "vitepress": "^1.6.4"
   }
 }

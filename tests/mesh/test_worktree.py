@@ -6,7 +6,7 @@ TGNT-P15.3 (worktree cleanup / orphan detection / health monitor).
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import time
 from typing import TYPE_CHECKING
@@ -58,7 +58,7 @@ class TestWorktreeCreation:
         with mock.patch("subprocess.run") as run_mock:
             mgr.create_worktree("a1", "dev")
             run_mock.assert_any_call(
-                ["thegent-git", "worktree", "add", expected_path, "dev"],
+                ["git", "worktree", "add", expected_path, "dev"],
                 cwd=mgr.project_root,
                 check=True,
                 capture_output=True,
@@ -74,7 +74,7 @@ class TestWorktreeCreation:
             mgr.create_worktree("dup", "main")
             # First call should be the remove, then the add
             calls = [c[0][0] for c in run_mock.call_args_list]
-            assert ["thegent-git", "worktree", "remove", "--force", str(worktree_dir)] in calls
+            assert ["git", "worktree", "remove", "--force", str(worktree_dir)] in calls
 
     def test_create_registers_branch(self, tmp_path: Path) -> None:
         """# @trace TGNT-P15.1 — branch is registered after creation."""
@@ -191,7 +191,7 @@ class TestWorktreeCleanup:
         with mock.patch("subprocess.run") as run_mock:
             mgr.remove_worktree("rm1")
             run_mock.assert_any_call(
-                ["thegent-git", "worktree", "remove", "--force", str(worktree_dir)],
+                ["git", "worktree", "remove", "--force", str(worktree_dir)],
                 cwd=mgr.project_root,
                 check=True,
                 capture_output=True,

@@ -1,1 +1,0 @@
-"""Rust bindings integration tests."""
