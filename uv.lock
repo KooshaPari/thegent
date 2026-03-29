@@ -4,28 +4,35 @@ requires-python = ">=3.14"
 
 [manifest]
 members = [
+    "phenotype-dep-guard",
+    "phenotype-docs-engine",
+    "phenotype-evaluation",
+    "phenotype-middleware",
+    "phenotype-research-engine",
+    "phenotype-skills-clone",
+    "phenotype-task-engine",
+    "phenotype-thegent-agents",
+    "phenotype-thegent-agint",
+    "phenotype-thegent-audit",
+    "phenotype-thegent-bench",
+    "phenotype-thegent-cli",
+    "phenotype-thegent-core",
+    "phenotype-thegent-execution",
+    "phenotype-thegent-mcp",
+    "phenotype-thegent-observability",
+    "phenotype-thegent-planning",
+    "phenotype-thegent-platform",
+    "phenotype-thegent-protocols",
+    "phenotype-thegent-routing",
+    "phenotype-thegent-sdk",
+    "phenotype-thegent-skills",
+    "phenotype-thegent-sync",
     "thegent",
-    "thegent-agents",
-    "thegent-agint",
-    "thegent-audit",
-    "thegent-bench",
-    "thegent-cli",
-    "thegent-core",
-    "thegent-execution",
-    "thegent-mcp",
     "thegent-module-app",
     "thegent-module-control-plane",
     "thegent-module-execution",
     "thegent-module-governance",
     "thegent-module-mcp",
-    "thegent-observability",
-    "thegent-planning",
-    "thegent-platform",
-    "thegent-protocols",
-    "thegent-routing",
-    "thegent-sdk",
-    "thegent-skills",
-    "thegent-sync",
 ]
 overrides = [{ name = "hf-xet", marker = "implementation_name == 'pypy'", specifier = "==0.0.0" }]
 
@@ -1713,6 +1720,15 @@ wheels = [
 ]
 
 [[package]]
+name = "packageurl-python"
+version = "0.17.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/d6/3b5a4e3cfaef7a53869a26ceb034d1ff5e5c27c814ce77260a96d50ab7bb/packageurl_python-0.17.6.tar.gz", hash = "sha256:1252ce3a102372ca6f86eb968e16f9014c4ba511c5c37d95a7f023e2ca6e5c25", size = 50618, upload-time = "2025-11-24T15:20:17.998Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/2f/c7277b7615a93f51b5fbc1eacfc1b75e8103370e786fd8ce2abf6e5c04ab/packageurl_python-0.17.6-py3-none-any.whl", hash = "sha256:31a85c2717bc41dd818f3c62908685ff9eebcb68588213745b14a6ee9e7df7c9", size = 36776, upload-time = "2025-11-24T15:20:16.962Z" },
+]
+
+[[package]]
 name = "packaging"
 version = "26.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1749,6 +1765,354 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/44/6a/ef71ca638ee3d34651fe346f449b8194d2d8fe9ce4da36d34f8d39309f6e/persistdict-0.2.14.tar.gz", hash = "sha256:c59a6172de39834f8bb9ea6a13246dd45110723cfbdf11f1dc4a3024cda0e1b5", size = 29318, upload-time = "2025-03-13T13:56:38.756Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e2/01/a876a897bdcb1662ab617f1497578b60293eb40560991e2d28fb96b96677/persistdict-0.2.14-py3-none-any.whl", hash = "sha256:5ead65a1721120dd142d553320af6e8cbc4fc7921c0566799be1fd501d7caa58", size = 23887, upload-time = "2025-03-13T13:56:31.762Z" },
+]
+
+[[package]]
+name = "phenotype-dep-guard"
+version = "0.1.0"
+source = { editable = "packages/phenotype-dep-guard" }
+dependencies = [
+    { name = "click" },
+    { name = "httpx" },
+    { name = "packageurl-python" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "toml" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "click", specifier = ">=8.1.7" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "packageurl-python", specifier = ">=0.11.2" },
+    { name = "pydantic", specifier = ">=2.6.1" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "pyyaml", specifier = ">=6.0.1" },
+    { name = "toml", specifier = ">=0.10.2" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.8.0" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23" },
+    { name = "ruff", specifier = ">=0.3.0" },
+]
+
+[[package]]
+name = "phenotype-docs-engine"
+version = "0.1.0"
+source = { editable = "packages/phenotype-docs-engine" }
+
+[[package]]
+name = "phenotype-evaluation"
+version = "0.1.0"
+source = { editable = "packages/phenotype-evaluation" }
+
+[[package]]
+name = "phenotype-middleware"
+version = "0.1.0"
+source = { editable = "packages/phenotype-middleware-py" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.88.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.6.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "typing-extensions", specifier = ">=4.8.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "phenotype-research-engine"
+version = "0.1.0"
+source = { editable = "packages/phenotype-research-engine" }
+
+[[package]]
+name = "phenotype-skills-clone"
+version = "0.1.0"
+source = { virtual = "packages/phenotype-skills-clone" }
+
+[[package]]
+name = "phenotype-task-engine"
+version = "0.1.0"
+source = { editable = "packages/phenotype-task-engine" }
+
+[[package]]
+name = "phenotype-thegent-agents"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-agents" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "phenotype-thegent-agint"
+source = { editable = "packages/phenotype-thegent-agint" }
+dependencies = [
+    { name = "phenotype-thegent-agents" },
+    { name = "phenotype-thegent-core" },
+    { name = "phenotype-thegent-platform" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-agents", editable = "packages/phenotype-thegent-agents" },
+    { name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" },
+    { name = "phenotype-thegent-platform", editable = "packages/phenotype-thegent-platform" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "typer", specifier = ">=0.16.0" },
+]
+
+[[package]]
+name = "phenotype-thegent-audit"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-audit" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" }]
+
+[[package]]
+name = "phenotype-thegent-bench"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-bench" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+    { name = "phenotype-thegent-execution" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" },
+    { name = "phenotype-thegent-execution", editable = "packages/phenotype-thegent-execution" },
+]
+
+[[package]]
+name = "phenotype-thegent-cli"
+source = { editable = "packages/phenotype-thegent-cli" }
+dependencies = [
+    { name = "phenotype-thegent-agents" },
+    { name = "phenotype-thegent-agint" },
+    { name = "pydantic" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-agents", editable = "packages/phenotype-thegent-agents" },
+    { name = "phenotype-thegent-agint", editable = "packages/phenotype-thegent-agint" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "typer", specifier = ">=0.16.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "phenotype-thegent-core"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-core" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "pydantic-settings", specifier = ">=2.0" },
+]
+
+[[package]]
+name = "phenotype-thegent-execution"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-execution" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" }]
+
+[[package]]
+name = "phenotype-thegent-mcp"
+source = { editable = "packages/phenotype-thegent-mcp" }
+dependencies = [
+    { name = "fastmcp", extra = ["tasks"] },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "starlette" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", extras = ["tasks"], specifier = ">=3.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "starlette", specifier = ">=0.46.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "phenotype-thegent-observability"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-observability" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+    { name = "structlog" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" },
+    { name = "structlog", specifier = ">=24.0" },
+]
+
+[[package]]
+name = "phenotype-thegent-planning"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-planning" }
+dependencies = [
+    { name = "phenotype-thegent-agents" },
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-agents", editable = "packages/phenotype-thegent-agents" },
+    { name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" },
+]
+
+[[package]]
+name = "phenotype-thegent-platform"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-platform" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" }]
+
+[[package]]
+name = "phenotype-thegent-protocols"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-protocols" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" }]
+
+[[package]]
+name = "phenotype-thegent-routing"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-routing" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" }]
+
+[[package]]
+name = "phenotype-thegent-sdk"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-sdk" }
+dependencies = [
+    { name = "httpx" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "httpx", specifier = ">=0.28.1" }]
+
+[[package]]
+name = "phenotype-thegent-skills"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-skills" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" }]
+
+[[package]]
+name = "phenotype-thegent-sync"
+version = "0.1.0"
+source = { editable = "packages/phenotype-thegent-sync" }
+dependencies = [
+    { name = "phenotype-thegent-core" },
+    { name = "phenotype-thegent-execution" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "phenotype-thegent-core", editable = "packages/phenotype-thegent-core" },
+    { name = "phenotype-thegent-execution", editable = "packages/phenotype-thegent-execution" },
 ]
 
 [[package]]
@@ -3107,311 +3471,29 @@ dev = [
 ]
 
 [[package]]
-name = "thegent-agents"
-version = "0.1.0"
-source = { editable = "packages/thegent-agents" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21" },
-    { name = "thegent-core", editable = "packages/thegent-core" },
-]
-provides-extras = ["dev"]
-
-[[package]]
-name = "thegent-agint"
-source = { editable = "packages/thegent-agint" }
-dependencies = [
-    { name = "rich" },
-    { name = "thegent-agents" },
-    { name = "thegent-core" },
-    { name = "thegent-platform" },
-    { name = "typer" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "rich", specifier = ">=13.9.4" },
-    { name = "thegent-agents", editable = "packages/thegent-agents" },
-    { name = "thegent-core", editable = "packages/thegent-core" },
-    { name = "thegent-platform", editable = "packages/thegent-platform" },
-    { name = "typer", specifier = ">=0.16.0" },
-]
-
-[[package]]
-name = "thegent-audit"
-version = "0.1.0"
-source = { editable = "packages/thegent-audit" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-core", editable = "packages/thegent-core" }]
-
-[[package]]
-name = "thegent-bench"
-version = "0.1.0"
-source = { editable = "packages/thegent-bench" }
-dependencies = [
-    { name = "thegent-core" },
-    { name = "thegent-execution" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "thegent-core", editable = "packages/thegent-core" },
-    { name = "thegent-execution", editable = "packages/thegent-execution" },
-]
-
-[[package]]
-name = "thegent-cli"
-source = { editable = "packages/thegent-cli" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "rich" },
-    { name = "thegent-agents" },
-    { name = "thegent-agint" },
-    { name = "typer" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
-    { name = "rich", specifier = ">=13.9.4" },
-    { name = "thegent-agents", editable = "packages/thegent-agents" },
-    { name = "thegent-agint", editable = "packages/thegent-agint" },
-    { name = "typer", specifier = ">=0.16.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
-name = "thegent-core"
-version = "0.1.0"
-source = { editable = "packages/thegent-core" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pydantic", specifier = ">=2.0" },
-    { name = "pydantic-settings", specifier = ">=2.0" },
-]
-
-[[package]]
-name = "thegent-execution"
-version = "0.1.0"
-source = { editable = "packages/thegent-execution" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-core", editable = "packages/thegent-core" }]
-
-[[package]]
-name = "thegent-mcp"
-source = { editable = "packages/thegent-mcp" }
-dependencies = [
-    { name = "fastmcp", extra = ["tasks"] },
-    { name = "httpx" },
-    { name = "pydantic" },
-    { name = "starlette" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp", extras = ["tasks"], specifier = ">=3.0.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
-    { name = "starlette", specifier = ">=0.46.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "thegent-module-app"
 version = "0.1.0"
 source = { editable = "modules/thegent-app" }
-dependencies = [
-    { name = "thegent-cli" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-cli", editable = "packages/thegent-cli" }]
 
 [[package]]
 name = "thegent-module-control-plane"
 version = "0.1.0"
 source = { editable = "modules/thegent-control-plane" }
-dependencies = [
-    { name = "thegent-platform" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-platform", editable = "packages/thegent-platform" }]
 
 [[package]]
 name = "thegent-module-execution"
 version = "0.1.0"
 source = { editable = "modules/thegent-execution" }
-dependencies = [
-    { name = "thegent-execution" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-execution", editable = "packages/thegent-execution" }]
 
 [[package]]
 name = "thegent-module-governance"
 version = "0.1.0"
 source = { editable = "modules/thegent-governance" }
-dependencies = [
-    { name = "thegent-audit" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-audit", editable = "packages/thegent-audit" }]
 
 [[package]]
 name = "thegent-module-mcp"
 version = "0.1.0"
 source = { editable = "modules/thegent-mcp" }
-dependencies = [
-    { name = "thegent-mcp" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-mcp", editable = "packages/thegent-mcp" }]
-
-[[package]]
-name = "thegent-observability"
-version = "0.1.0"
-source = { editable = "packages/thegent-observability" }
-dependencies = [
-    { name = "structlog" },
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "structlog", specifier = ">=24.0" },
-    { name = "thegent-core", editable = "packages/thegent-core" },
-]
-
-[[package]]
-name = "thegent-planning"
-version = "0.1.0"
-source = { editable = "packages/thegent-planning" }
-dependencies = [
-    { name = "thegent-agents" },
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "thegent-agents", editable = "packages/thegent-agents" },
-    { name = "thegent-core", editable = "packages/thegent-core" },
-]
-
-[[package]]
-name = "thegent-platform"
-version = "0.1.0"
-source = { editable = "packages/thegent-platform" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-core", editable = "packages/thegent-core" }]
-
-[[package]]
-name = "thegent-protocols"
-version = "0.1.0"
-source = { editable = "packages/thegent-protocols" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-core", editable = "packages/thegent-core" }]
-
-[[package]]
-name = "thegent-routing"
-version = "0.1.0"
-source = { editable = "packages/thegent-routing" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-core", editable = "packages/thegent-core" }]
-
-[[package]]
-name = "thegent-sdk"
-version = "0.1.0"
-source = { editable = "packages/thegent-sdk" }
-dependencies = [
-    { name = "httpx" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "httpx", specifier = ">=0.28.1" }]
-
-[[package]]
-name = "thegent-skills"
-version = "0.1.0"
-source = { editable = "packages/thegent-skills" }
-dependencies = [
-    { name = "thegent-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "thegent-core", editable = "packages/thegent-core" }]
-
-[[package]]
-name = "thegent-sync"
-version = "0.1.0"
-source = { editable = "packages/thegent-sync" }
-dependencies = [
-    { name = "thegent-core" },
-    { name = "thegent-execution" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "thegent-core", editable = "packages/thegent-core" },
-    { name = "thegent-execution", editable = "packages/thegent-execution" },
-]
 
 [[package]]
 name = "tiktoken"
@@ -3463,6 +3545,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/18/a545c4ea42af3df6effd7d13d250ba77a0a86fb20393143bbb9a92e434d4/tokenizers-0.22.2-cp39-abi3-win32.whl", hash = "sha256:a6bf3f88c554a2b653af81f3204491c818ae2ac6fbc09e76ef4773351292bc92", size = 2502363, upload-time = "2026-01-05T10:45:20.593Z" },
     { url = "https://files.pythonhosted.org/packages/65/71/0670843133a43d43070abeb1949abfdef12a86d490bea9cd9e18e37c5ff7/tokenizers-0.22.2-cp39-abi3-win_amd64.whl", hash = "sha256:c9ea31edff2968b44a88f97d784c2f16dc0729b8b143ed004699ebca91f05c48", size = 2747786, upload-time = "2026-01-05T10:45:18.411Z" },
     { url = "https://files.pythonhosted.org/packages/72/f4/0de46cfa12cdcbcd464cc59fde36912af405696f687e53a091fb432f694c/tokenizers-0.22.2-cp39-abi3-win_arm64.whl", hash = "sha256:9ce725d22864a1e965217204946f830c37876eee3b2ba6fc6255e8e903d5fcbc", size = 2612133, upload-time = "2026-01-05T10:45:17.232Z" },
+]
+
+[[package]]
+name = "toml"
+version = "0.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253, upload-time = "2020-11-01T01:40:22.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588, upload-time = "2020-11-01T01:40:20.672Z" },
 ]
 
 [[package]]
