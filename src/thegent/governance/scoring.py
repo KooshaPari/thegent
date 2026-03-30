@@ -1,233 +1,128 @@
-"""Provider scoring system for economic governance (WP-5003).
+"""
+Provider Scoring System (Task 2.1.1)
 
-Normalizes provider performance metrics (reliability, latency, cost) into
-a composite score (0-10 scale) for routing decisions.
-
-See: docs/changes/research-economic-governance/design.md § 2.1
+Implements provider scoring with reliability, latency, and cost normalization.
+Composite score: 0.4*reliability + 0.2*latency + 0.4*cost
 """
 
-from __future__ import annotations
-
-import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+import math
+from dataclasses import dataclass
 
 
 @dataclass
 class ProviderMetrics:
-    """Measured provider performance metrics.
+    """Provider performance metrics"""
 
-    Attributes:
-        provider_id: Unique provider identifier
-        reliability: Uptime/success rate (0.0-1.0)
-        latency_p99: 99th percentile latency in milliseconds
-        cost_per_1m_tokens: USD cost per million tokens
-        last_updated: Unix timestamp of last metric update
-        sample_size: Number of measurements in this score
-    """
-
-    reliability: float  # 0.0-1.0
+    reliability: float  # 0.0-1.0 (e.g., 0.98 = 98% uptime)
     latency_p99: float  # milliseconds
-    cost_per_1m_tokens: float  # USD
-    provider_id: str = ""
-    last_updated: float = field(default_factory=time.time)
-    sample_size: int = 1000
+    cost_per_1m_tokens: float  # USD per 1 million tokens
 
 
 @dataclass
 class ProviderScore:
-    """Normalized provider performance score.
-
-    All component scores and composite are 0-10 scale.
-
-    Attributes:
-        provider_id: Provider identifier
-        reliability_score: Normalized reliability (0-10)
-        latency_score: Normalized latency; lower latency = higher score (0-10)
-        cost_score: Normalized cost; lower cost = higher score (0-10)
-        composite_score: Weighted average of components (0-10)
-        timestamp: Unix timestamp of score calculation
-    """
+    """Calculated provider score"""
 
     provider_id: str
     reliability_score: float  # 0-10
     latency_score: float  # 0-10
     cost_score: float  # 0-10
     composite_score: float  # 0-10
-    timestamp: float = field(default_factory=time.time)
+
+    def __repr__(self) -> str:
+        return (
+            f"ProviderScore({self.provider_id}, "
+            f"rel={self.reliability_score:.1f}, "
+            f"lat={self.latency_score:.1f}, "
+            f"cost={self.cost_score:.1f}, "
+            f"composite={self.composite_score:.1f})"
+        )
 
 
-class ProviderScorer(ABC):
-    """Abstract base class for provider scoring strategies.
+class DefaultProviderScorer:
+    """Default provider scorer with configurable weights and normalization"""
 
-    Implementers must normalize metrics to 0-10 scale and compute
-    composite scores for routing decisions.
-    """
+    # Normalization baselines
+    LATENCY_P99_BASELINE_MS = 500  # Reference latency for scoring
+    COST_BASELINE_USD = 1.0  # Reference cost for scoring ($1 per 1M tokens)
 
-    @abstractmethod
-    def score(self, metrics: ProviderMetrics) -> ProviderScore:
-        """Compute normalized score from provider metrics.
-
-        Args:
-            metrics: Provider performance metrics
-
-        Returns:
-            Normalized provider score (0-10 scale)
-        """
-
-    @abstractmethod
-    def normalize(self, raw_value: float, metric_type: str) -> float:
-        """Normalize raw metric value to 0-10 scale.
-
-        Args:
-            raw_value: Raw metric value
-            metric_type: Type of metric ("reliability", "latency", or "cost")
-
-        Returns:
-            Normalized score (0-10 scale)
-        """
-
-
-class DefaultProviderScorer(ProviderScorer):
-    """Standard provider scorer with configurable weights.
-
-    Weights (sum to 1.0):
-        - Reliability: 0.4 (40%) — prioritizes uptime
-        - Latency: 0.2 (20%) — response speed
-        - Cost: 0.4 (40%) — economic efficiency
-
-    Normalization baselines:
-        - Baseline latency: 250ms = score 5.0
-        - Baseline cost: $0.15/1M tokens = score 5.0
-
-    Higher baseline = lower score. E.g., latency of 500ms (2× baseline)
-    yields score ~3.3, while latency of 100ms (0.4× baseline) yields ~8.0.
-    """
-
-    # Weight configuration
-    RELIABILITY_WEIGHT = 0.4
-    LATENCY_WEIGHT = 0.2
-    COST_WEIGHT = 0.4
-
-    # Normalization baselines (metric values that correspond to score 5.0)
-    BASELINE_LATENCY_MS = 250.0
-    BASELINE_COST_PER_1M = 0.15
+    # Composite score weights
+    WEIGHT_RELIABILITY = 0.4
+    WEIGHT_LATENCY = 0.2
+    WEIGHT_COST = 0.4
 
     def score(self, provider_id: str, metrics: ProviderMetrics) -> ProviderScore:
-        """Compute composite score from metrics.
-
-        Normalizes each metric to 0-10 scale, then computes weighted average.
+        """
+        Calculate composite provider score.
 
         Args:
-            provider_id: Provider identifier (unused, for API compatibility)
-            metrics: Provider metrics
+            provider_id: Provider identifier (e.g., "gemini-flash")
+            metrics: ProviderMetrics object with reliability, latency, cost
 
         Returns:
-            Provider score with reliability, latency, cost, and composite components
+            ProviderScore with normalized component scores (0-10 each) and composite
+
+        Raises:
+            ValueError: If metrics are out of valid ranges
         """
+        self._validate_metrics(metrics)
+
+        # Normalize each component to 0-10 scale
         reliability_score = self._normalize_reliability(metrics.reliability)
         latency_score = self._normalize_latency(metrics.latency_p99)
         cost_score = self._normalize_cost(metrics.cost_per_1m_tokens)
 
+        # Composite score: weighted sum
         composite = (
-            reliability_score * self.RELIABILITY_WEIGHT
-            + latency_score * self.LATENCY_WEIGHT
-            + cost_score * self.COST_WEIGHT
+            (reliability_score * self.WEIGHT_RELIABILITY)
+            + (latency_score * self.WEIGHT_LATENCY)
+            + (cost_score * self.WEIGHT_COST)
         )
 
         return ProviderScore(
             provider_id=provider_id,
-            reliability_score=reliability_score,
-            latency_score=latency_score,
-            cost_score=cost_score,
-            composite_score=composite,
-            timestamp=time.time(),
+            reliability_score=round(reliability_score, 2),
+            latency_score=round(latency_score, 2),
+            cost_score=round(cost_score, 2),
+            composite_score=round(composite, 2),
         )
 
-    def normalize(self, raw_value: float, metric_type: str) -> float:
-        """Normalize metric to 0-10 scale.
-
-        Args:
-            raw_value: Raw metric value
-            metric_type: "reliability", "latency", or "cost"
-
-        Returns:
-            Normalized score (0-10)
-
-        Raises:
-            ValueError: If metric_type is unknown
-        """
-        metric_type = metric_type.lower()
-        if metric_type == "reliability":
-            return self._normalize_reliability(raw_value)
-        if metric_type == "latency":
-            return self._normalize_latency(raw_value)
-        if metric_type == "cost":
-            return self._normalize_cost(raw_value)
-        raise ValueError(f"Unknown metric type: {metric_type}")
+    def _validate_metrics(self, metrics: ProviderMetrics) -> None:
+        """Validate metric ranges"""
+        if not (0.0 <= metrics.reliability <= 1.0):
+            raise ValueError(f"Reliability must be 0.0-1.0, got {metrics.reliability}")
+        if metrics.latency_p99 < 0:
+            raise ValueError(f"Latency cannot be negative, got {metrics.latency_p99}")
+        if metrics.cost_per_1m_tokens < 0:
+            raise ValueError(f"Cost cannot be negative, got {metrics.cost_per_1m_tokens}")
 
     def _normalize_reliability(self, reliability: float) -> float:
-        """Normalize reliability (0.0-1.0) to 0-10 scale.
-
-        Linear mapping: score = reliability × 10
-
-        Args:
-            reliability: Uptime/success rate (0.0-1.0)
-
-        Returns:
-            Score (0-10), clamped to valid range
         """
-        score = reliability * 10.0
-        return max(0.0, min(10.0, score))
+        Normalize reliability (0.0-1.0) to 0-10 score.
+        Linear: 0.8 uptime → 8.0, 0.99 → 9.9
+        """
+        return reliability * 10.0
 
     def _normalize_latency(self, latency_ms: float) -> float:
-        """Normalize latency (milliseconds) to 0-10 scale.
-
-        Inverse relationship: lower latency = higher score.
-        Uses sigmoid-like curve:
-            score = 10 / (1 + (ratio - 1.0) × 0.5)
-        where ratio = latency / baseline
-
-        Examples:
-            - 250ms (baseline): score 5.0
-            - 100ms (0.4× baseline): score ~8.0
-            - 500ms (2× baseline): score ~3.3
-
-        Args:
-            latency_ms: Latency in milliseconds
-
-        Returns:
-            Score (0-10), clamped to valid range
         """
-        if latency_ms < 0:
-            return 10.0
-
-        ratio = latency_ms / self.BASELINE_LATENCY_MS
-        score = 10.0 / (1.0 + (ratio - 1.0) * 0.5)
-        return max(0.0, min(10.0, score))
-
-    def _normalize_cost(self, cost: float) -> float:
-        """Normalize cost (USD per 1M tokens) to 0-10 scale.
-
-        Inverse relationship: lower cost = higher score.
-        Uses sigmoid-like curve (same as latency):
-            score = 10 / (1 + (ratio - 1.0) × 0.5)
-        where ratio = cost / baseline
-
-        Examples:
-            - $0.15/1M (baseline): score 5.0
-            - $0.06/1M (0.4× baseline): score ~8.0
-            - $0.30/1M (2× baseline): score ~3.3
-
-        Args:
-            cost: Cost in USD per million tokens
-
-        Returns:
-            Score (0-10), clamped to valid range
+        Normalize latency to 0-10 score (inverse relationship).
+        Higher latency = lower score.
+        Uses baseline of 500ms as reference: 500ms = 5.0
+        Formula: score = 10 * exp(-latency / baseline)
         """
-        if cost < 0:
-            return 10.0
+        # Exponential decay: faster latency → higher score
+        # 200ms: ~8.0, 500ms: ~5.0, 1000ms: ~2.0
+        normalized = 10.0 * math.exp(-latency_ms / self.LATENCY_P99_BASELINE_MS)
+        return max(0.1, min(10.0, normalized))  # Clamp to 0.1-10.0
 
-        ratio = cost / self.BASELINE_COST_PER_1M
-        score = 10.0 / (1.0 + (ratio - 1.0) * 0.5)
-        return max(0.0, min(10.0, score))
+    def _normalize_cost(self, cost_usd: float) -> float:
+        """
+        Normalize cost to 0-10 score (inverse relationship).
+        Higher cost = lower score.
+        Uses baseline of $1/1M tokens as reference: $1 = 5.0
+        Formula: score = 10 / (1 + cost / baseline)
+        """
+        # Hyperbolic decay: $0.05 → ~9.3, $1 → 5.0, $10 → ~0.9
+        if cost_usd == 0:
+            return 10.0  # Free tier
+        normalized = 10.0 / (1.0 + cost_usd / self.COST_BASELINE_USD)
+        return max(0.1, min(10.0, normalized))  # Clamp to 0.1-10.0

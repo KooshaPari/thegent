@@ -1,20 +1,16 @@
-"""Package: thegent.phench - Bridge to phench core package."""
+"""Package: thegent.phench - re-exports from local phench implementation."""
 from __future__ import annotations
 
-import sys
-from pathlib import Path
+from . import service
+from . import models
+from . import runner
+from . import store
 
-# Navigate from thegent/phench/__init__.py -> repos/phench/src/phench
-init_path = Path(__file__).resolve()
-repo_root = init_path.parents[5]
-phench_src = repo_root / "phench" / "src"
+# Re-export everything from service, models, runner, store
+from .service import *
+from .models import *
+from .runner import *
+from .store import *
 
-if str(phench_src) not in sys.path:
-    sys.path.insert(0, str(phench_src))
-
-from phench import service
-from phench import models
-
-# Re-export everything from service and models
-globals().update(vars(service))
-globals().update(vars(models))
+# Alias for convenience
+__all__ = list(service.__all__) + list(models.__all__) if hasattr(models, '__all__') else []

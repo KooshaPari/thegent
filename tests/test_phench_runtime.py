@@ -1417,7 +1417,7 @@ def test_run_target_uses_module_overrides(tmp_path: Path, monkeypatch) -> None:
     set_env_profile("module-run", "ci", {"FROM_PROFILE": "1"})
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
     monkeypatch.setattr(
         "thegent.phench.service.build_catalog",
