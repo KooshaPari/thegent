@@ -592,68 +592,9 @@ Queue Operations:
 └── queue status     # Show stats
 ```
 
-### TUI-Based Queue Management
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ thegent queue tui                                       │
-├─────────────────────────────────────────────────────────┤
-│ Queue: 47 pending, 3 running, 12 completed             │
-├─────────────────────────────────────────────────────────┤
-│ ┌────────────────────────────────────────────────────┐  │
-│ │ ID  │ Source  │ Type  │ State │ Age  │ Routing    │  │
-│ ├────────────────────────────────────────────────────┤  │
-│ │ a1  │ claude  │ task  │ run   │ 2m  │ → gemini   │  │
-│ │ b2  │ cursor  │ prompt│ wait  │ 10m │ → claude   │  │
-│ │ c3  │ mcp     │ idea  │ wait  │ 1h  │ → codex    │  │
-│ └────────────────────────────────────────────────────┘  │
-│                                                         │
-│ [p]rocess  [a]nalyze  [e]dit  [l]og  [r]esume  [q]uit   │
-└─────────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## When to Use thegent vs Alternatives
-
-### Decision Matrix
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                 Use THEGENT when you need:                          │
-├──────────────────────────────────────────────────────────────────────┤
-│ ✅ Multiple agents working together (swarms, consensus, delegation) │
-│ ✅ Unified memory across sessions and platforms                      │
-│ ✅ Provider failover (Claude → Gemini → Codex automatically)        │
-│ ✅ Cost optimization (route to cheapest provider)                   │
-│ ✅ Cross-platform rules (.claude.md → all platforms)                │
-│ ✅ Governance automation (Gardener updates specs)                   │
-│ ✅ Self-healing infrastructure                                       │
-└──────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────┐
-│            Use HELIOSCLI when you need:                             │
-├──────────────────────────────────────────────────────────────────────┤
-│ ✅ Local development harness (TUI, batch mode)                       │
-│ ✅ Agent lifecycle management (startup, cleanup)                     │
-│ ✅ Sandboxing and isolation                                          │
-│ ✅ Benchmarking and performance testing                              │
-│ ✅ Single-machine orchestration                                      │
-│ ❌ Multi-machine distributed execution                               │
-│ ❌ Provider failover                                                  │
-└──────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────┐
-│         Use PHENOTYPE-INFRAKIT when you need:                       │
-├──────────────────────────────────────────────────────────────────────┤
-│ ✅ Shared Rust libraries (error handling, config, health checks)    │
-│ ✅ Trait definitions and port interfaces (hexagonal arch)           │
-│ ✅ Policy engine, event sourcing, state machines                    │
-│ ✅ Cross-project shared infrastructure                              │
-│ ❌ Agent orchestration (thegent does this)                           │
-│ ❌ Development harness (heliosCLI does this)                         │
-└──────────────────────────────────────────────────────────────────────┘
-```
 
 ### Comparison Table
 
