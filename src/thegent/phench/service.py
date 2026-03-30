@@ -490,23 +490,35 @@ def add_module_to_target(
         raise ValueError(f"invalid module name: {module_name}")
 
     manifest = load_module_manifest(module_name)
+    manifest_obj = ModuleManifest(
+        schema_version=manifest["schema_version"],
+        repo_patterns=manifest.get("repo_patterns", []),
+        owners=manifest.get("owners", []),
+        refresh_cadence=manifest.get("refresh_cadence", "never"),
+        default_ref=manifest.get("default_ref", "HEAD"),
+        repo_ids=manifest.get("repo_ids", []),
+        repo_ref_overrides=manifest.get("repo_ref_overrides", {}),
+        repo_runner_overrides=manifest.get("repo_runner_overrides", {}),
+        repo_command_overrides=manifest.get("repo_command_overrides", {}),
+        repo_env_profile_overrides=manifest.get("repo_env_profile_overrides", {}),
+    )
     lock = load_target_lock(target, family=family)
 
-    candidates = _select_module_repos(manifest, exclude_repos=exclude_repos)
+    candidates = _select_module_repos(manifest_obj, exclude_repos=exclude_repos)
     if not candidates:
         raise ValueError(f"module {module_name} selected no matching repos")
 
-    fallback_ref = selected_ref or manifest.default_ref
+    fallback_ref = selected_ref or manifest_obj.default_ref
     for candidate in candidates:
         repo_id = _repo_id_from_path(candidate)
         _append_repo_selection(
             lock,
             candidate,
-            selected_ref=manifest.repo_ref_overrides.get(repo_id, fallback_ref),
+            selected_ref=manifest_obj.repo_ref_overrides.get(repo_id, fallback_ref),
             module_name=module_name,
-            selected_runner=manifest.repo_runner_overrides.get(repo_id),
-            selected_command=manifest.repo_command_overrides.get(repo_id),
-            selected_env_profile=manifest.repo_env_profile_overrides.get(repo_id),
+            selected_runner=manifest_obj.repo_runner_overrides.get(repo_id),
+            selected_command=manifest_obj.repo_command_overrides.get(repo_id),
+            selected_env_profile=manifest_obj.repo_env_profile_overrides.get(repo_id),
         )
 
     lock.created_at_utc = utc_now_iso()
