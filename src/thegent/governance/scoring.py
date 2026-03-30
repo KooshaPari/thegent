@@ -26,10 +26,10 @@ class ProviderMetrics:
         sample_size: Number of measurements in this score
     """
 
-    provider_id: str
     reliability: float  # 0.0-1.0
     latency_p99: float  # milliseconds
     cost_per_1m_tokens: float  # USD
+    provider_id: str = ""
     last_updated: float = field(default_factory=time.time)
     sample_size: int = 1000
 
@@ -113,12 +113,13 @@ class DefaultProviderScorer(ProviderScorer):
     BASELINE_LATENCY_MS = 250.0
     BASELINE_COST_PER_1M = 0.15
 
-    def score(self, metrics: ProviderMetrics) -> ProviderScore:
+    def score(self, provider_id: str, metrics: ProviderMetrics) -> ProviderScore:
         """Compute composite score from metrics.
 
         Normalizes each metric to 0-10 scale, then computes weighted average.
 
         Args:
+            provider_id: Provider identifier (unused, for API compatibility)
             metrics: Provider metrics
 
         Returns:

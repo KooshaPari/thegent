@@ -289,8 +289,12 @@ class ProviderMetricsCollector:
     from provider benchmarks and calculating aggregated metrics.
     """
 
-    def __init__(self) -> None:
-        """Initialize the provider metrics collector."""
+    def __init__(self, metrics_store: Any = None) -> None:
+        """Initialize the provider metrics collector.
+
+        Args:
+            metrics_store: Optional metrics store backend (unused in this implementation)
+        """
         self._results: deque[ExecutionResult] = deque(maxlen=10000)
 
     def record(self, result: ExecutionResult) -> None:
