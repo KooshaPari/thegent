@@ -2370,3 +2370,36 @@ def materialize_module_candidate_manifest(
 
 
 
+def list_modules():
+    from thegent.phench.paths import module_manifests_root
+    root = module_manifests_root()
+    if not root.exists():
+        return []
+    return sorted(d.name for d in root.iterdir() if d.is_dir() and (d / "manifest.toml").exists())
+
+def load_module_manifest(module, available_repo_ids=None):
+    from pathlib import Path
+    from thegent.phench.paths import module_manifests_root
+    import json
+    manifest_path = module_manifests_root() / module / "manifest.json"
+    if not manifest_path.exists():
+        raise FileNotFoundError("Module manifest not found: " + module)
+    return json.loads(manifest_path.read_text())
+
+def audit_shared_modules_across_repos(target_name):
+    lock = load_target_lock(target_name)
+    return {"target": target_name, "shared_modules": [], "lock_hash": lock.lock_hash}
+
+def create_target_snapshot(target_name, description=None):
+    from datetime import datetime
+    import uuid
+    lock = load_target_lock(target_name)
+    snapshot_id = "snap-" + datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
+    return {
+        "snapshot_id": snapshot_id,
+        "target": target_name,
+        "lock_hash": lock.lock_hash,
+        "description": description or "",
+        "timestamp": datetime.now().isoformat(),
+    }
+

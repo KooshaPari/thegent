@@ -192,6 +192,12 @@ def _scan_shared_modules_across_repos_dispatch(*args: Any, **kwargs: Any) -> Any
     return scan_shared_modules_across_repos(*args, **kwargs)
 
 
+# Expose build_scan_candidates at module level so tests can monkeypatch it
+def build_scan_candidates(*args: Any, **kwargs: Any) -> Any:
+    """Wrapper for build_scan_candidates - delegates to service function."""
+    return _build_scan_candidates_dispatch(*args, **kwargs)
+
+
 # Register sub-command groups.
 register_target_commands(
     target_app,
@@ -279,7 +285,7 @@ def scan_shared_repos_cmd(
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    sys.stdout.write(json.dumps(state, indent=2) + "\n")
+    sys.stdout.write(json.dumps(state, option=json.OPT_INDENT_2).decode() + "\n")
 
 
 @app.command(
@@ -313,7 +319,7 @@ def materialize_module_manifest_cmd(
         payload["shell_snippets"] = [
             f"thegent phench target add-module {payload['module_name']} --module {payload['module_name']}",
         ]
-    sys.stdout.write(json.dumps(payload, indent=2) + "\n")
+    sys.stdout.write(json.dumps(payload, option=json.OPT_INDENT_2).decode() + "\n")
 
 
 # Alias for CLI entry-point compatibility.
