@@ -136,7 +136,7 @@ class DefaultProviderScorer(ProviderScorer):
         )
 
         return ProviderScore(
-            provider_id=metrics.provider_id,
+            provider_id=provider_id,
             reliability_score=reliability_score,
             latency_score=latency_score,
             cost_score=cost_score,
