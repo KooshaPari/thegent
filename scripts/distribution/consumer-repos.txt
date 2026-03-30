@@ -1,0 +1,12 @@
+# Consumer Repositories Configuration
+#
+# This file lists known consumer repositories that depend on thegent governance.
+# One repository path per line. Paths can be absolute or relative to thegent root.
+#
+# Used by:
+#   - scripts/distribution/validate-sync.sh --all
+#   - Taskfile.distribute.yml distribute:all
+
+../../AgilePlus
+../../phenotype-infrakit
+../../heliosCLI
