@@ -1,5 +1,6 @@
 """Pytest configuration and fixtures for thegent tests."""
 
+import importlib.util
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -7,10 +8,9 @@ from unittest.mock import MagicMock
 # Ensure src/ takes priority over scripts/ and tests/ in sys.path.
 # Some test files (test_path_utils.py, test_batch_file_ops.py) insert scripts/ at
 # sys.path[0], which causes scripts/research_engine.py to shadow src/research_engine/.
-# Pre-loading the correct package here locks it into sys.modules before any path
-# mutation can intercept it.
 _thegent_repo = Path(__file__).resolve().parent.parent
 _src = str(_thegent_repo / "src")
+
 # Monorepo: ``repos/src/thegent`` shadows this checkout if ``repos/src`` is on sys.path.
 _repos_root = _thegent_repo.parent
 _monorepo_shadow_src = _repos_root / "src"
@@ -28,10 +28,14 @@ if _monorepo_shadow_src.is_dir() and (_monorepo_shadow_src / "thegent").exists()
                 sys.modules.pop(_name, None)
         except (OSError, ValueError):
             continue
-if _src not in sys.path:
-    sys.path.insert(0, _src)
 
-import importlib.util  # noqa: E402
+if _src not in sys.path:
+    sys.path.insert(0, str(_src))
+
+# Also add phench/src to sys.path so phench package can be found
+_phench_src = str(_repos_root / "phench" / "src")
+if _phench_src not in sys.path:
+    sys.path.insert(0, _phench_src)
 
 
 def _preload_src_package(name: str) -> None:
