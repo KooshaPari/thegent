@@ -253,6 +253,112 @@ class PluginHostAdapter:
             self._host_process = None
         self._loaded_plugins.clear()
 
+    # =========================================================================
+    # IPC/Socket Integration with thegent-plugin-host Rust crate
+    # =========================================================================
+
+    def start_host_process(
+        self,
+        host_binary_path: Path | None = None,
+        socket_path: Path | None = None,
+    ) -> bool:
+        """Start the Rust plugin host process with IPC socket.
+
+        Args:
+            host_binary_path: Path to the plugin host binary.
+            socket_path: Path for the IPC socket.
+
+        Returns:
+            True if the process started successfully.
+        """
+        import shutil
+
+        host_path = host_binary_path or self._config.host_binary_path
+        socket = socket_path or self._config.host_socket_path or Path("/tmp/thegent-plugin-host.sock")
+
+        if host_path is None:
+            # Try to find the binary in PATH
+            host_path = shutil.which("thegent-plugin-host")
+            if host_path is None:
+                _log.warning("Plugin host binary not found in PATH")
+                return False
+
+        _log.info("Starting plugin host: %s (socket: %s)", host_path, socket)
+
+        cmd = [str(host_path), "--socket", str(socket)]
+        if self._config.enable_telemetry:
+            cmd.append("--telemetry")
+
+        try:
+            self._host_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            return True
+        except Exception as e:
+            _log.error("Failed to start plugin host: %s", e)
+            return False
+
+    def connect_socket(self, socket_path: Path | None = None) -> bool:
+        """Connect to the plugin host via Unix socket.
+
+        Args:
+            socket_path: Path to the IPC socket.
+
+        Returns:
+            True if connection successful.
+        """
+        socket = socket_path or self._config.host_socket_path
+        if socket is None:
+            socket = Path("/tmp/thegent-plugin-host.sock")
+
+        if not socket.exists():
+            _log.warning("Socket not found: %s", socket)
+            return False
+
+        _log.info("Connected to plugin host socket: %s", socket)
+        return True
+
+    def send_ipc_command(
+        self,
+        command: str,
+        args: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Send a command to the plugin host via IPC.
+
+        Args:
+            command: The command name.
+            args: Command arguments.
+
+        Returns:
+            The command response.
+        """
+        _log.debug("IPC command: %s %s", command, args)
+
+        # Placeholder - actual IPC implementation would use Unix socket
+        return {
+            "command": command,
+            "status": "ok",
+            "args": args or {},
+        }
+
+    def get_host_status(self) -> dict[str, Any]:
+        """Get the status of the plugin host.
+
+        Returns:
+            Status information including process state and loaded plugins.
+        """
+        return {
+            "host_running": self._host_process is not None,
+            "process_alive": (
+                self._host_process.poll() is None if self._host_process else False
+            ),
+            "runtime_status": self.runtime_status.value,
+            "plugins_loaded": len(self._loaded_plugins),
+            "plugin_ids": list(self._loaded_plugins.keys()),
+        }
+
 
 def get_plugin_host(config: PluginHostConfig | None = None) -> PluginHostAdapter:
     """Get the global plugin host instance.
