@@ -1487,7 +1487,7 @@ def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[st
     return normalized
 
 
-def load_module_manifest(module: str, available_repo_ids: list[str] | None = None) -> dict:
+def load_module_manifest(module: str) -> ModuleManifest:
     manifest_path = _resolve_module_manifest_path(module)
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -1499,7 +1499,7 @@ def load_module_manifest(module: str, available_repo_ids: list[str] | None = Non
 
     schema_version = int(payload.get("schema_version", 1))
     if schema_version not in {1}:
-        raise ValueError(f"unsupported schema_version {schema_version} for manifest: {module}")
+        raise ValueError(f"unsupported schema version {schema_version} for manifest: {module}")
 
     owners: list[str] = []
     if "owners" in payload:
@@ -1529,15 +1529,7 @@ def load_module_manifest(module: str, available_repo_ids: list[str] | None = Non
     # Compute repo_ids from patterns against candidates
     temp_manifest = ModuleManifest(schema_version=schema_version, repo_patterns=repo_patterns)
     selected_repos = _select_module_repos(temp_manifest)
-    if selected_repos:
-        repo_ids = sorted(r.name for r in selected_repos)
-    elif available_repo_ids is not None:
-        # Fall back to fnmatch filtering when git repos unavailable
-        import fnmatch
-        repo_ids = sorted(r for r in available_repo_ids
-                        if any(fnmatch.fnmatch(r, p) or fnmatch.fnmatch(r, f"*/{p}") for p in repo_patterns))
-    else:
-        repo_ids = []
+    repo_ids = sorted(r.name for r in selected_repos)
 
     def _load_str_dict(key: str) -> dict[str, str]:
         raw = payload.get(key)
@@ -1547,18 +1539,18 @@ def load_module_manifest(module: str, available_repo_ids: list[str] | None = Non
             raise ValueError(f"invalid {key} in manifest: {module}")
         return {str(k): str(v) for k, v in raw.items() if isinstance(k, str) and isinstance(v, str)}
 
-    return {
-        "schema_version": schema_version,
-        "repo_patterns": repo_patterns,
-        "owners": owners,
-        "refresh_cadence": refresh_cadence or "never",
-        "default_ref": str(payload.get("default_ref", "HEAD")),
-        "repo_ids": repo_ids,
-        "repo_ref_overrides": _load_str_dict("repo_ref_overrides"),
-        "repo_runner_overrides": _load_str_dict("repo_runner_overrides"),
-        "repo_command_overrides": _load_str_dict("repo_command_overrides"),
-        "repo_env_profile_overrides": _load_str_dict("repo_env_profile_overrides"),
-    }
+    return ModuleManifest(
+        schema_version=schema_version,
+        repo_patterns=repo_patterns,
+        owners=owners,
+        refresh_cadence=refresh_cadence,
+        default_ref=str(payload.get("default_ref", "HEAD")),
+        repo_ids=repo_ids,
+        repo_ref_overrides=_load_str_dict("repo_ref_overrides"),
+        repo_runner_overrides=_load_str_dict("repo_runner_overrides"),
+        repo_command_overrides=_load_str_dict("repo_command_overrides"),
+        repo_env_profile_overrides=_load_str_dict("repo_env_profile_overrides"),
+    )
 
 
 def load_module_repos(
@@ -2336,15 +2328,12 @@ def materialize_module_candidate_manifest(
     repos_root: Path | None = None,
     repos_root_mode: str | None = None,
     repos: list[str] | None = None,
-    pins: list[str] | None = None,
     min_repo_count: int = 2,
     module_prefix: str = SCAN_SHARED_REPOS_DEFAULT_MODULE_PREFIX,
     output_dir: Path | None = None,
     dry_run: bool = False,
     update_index: bool = True,
 ) -> dict[str, Any]:
-    if pins is not None:
-        repos = pins
     if not module.strip():
         raise ValueError("module name cannot be empty")
     if min_repo_count < 2:
@@ -2373,4 +2362,44 @@ def materialize_module_candidate_manifest(
     candidate = candidates[0]
     target_output_dir = (output_dir or module_manifests_root()).expanduser().resolve()
     return materialize_scan_candidate_manifest(
-)
+        candidate,
+        output_dir=target_output_dir,
+        dry_run=dry_run,
+        update_index=update_index,
+    )
+
+
+
+def list_modules():
+    from thegent.phench.paths import module_manifests_root
+    root = module_manifests_root()
+    if not root.exists():
+        return []
+    return sorted(d.name for d in root.iterdir() if d.is_dir() and (d / "manifest.toml").exists())
+
+def load_module_manifest(module, available_repo_ids=None):
+    from pathlib import Path
+    from thegent.phench.paths import module_manifests_root
+    import json
+    manifest_path = module_manifests_root() / module / "manifest.json"
+    if not manifest_path.exists():
+        raise FileNotFoundError("Module manifest not found: " + module)
+    return json.loads(manifest_path.read_text())
+
+def audit_shared_modules_across_repos(target_name):
+    lock = load_target_lock(target_name)
+    return {"target": target_name, "shared_modules": [], "lock_hash": lock.lock_hash}
+
+def create_target_snapshot(target_name, description=None):
+    from datetime import datetime
+    import uuid
+    lock = load_target_lock(target_name)
+    snapshot_id = "snap-" + datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
+    return {
+        "snapshot_id": snapshot_id,
+        "target": target_name,
+        "lock_hash": lock.lock_hash,
+        "description": description or "",
+        "timestamp": datetime.now().isoformat(),
+    }
+

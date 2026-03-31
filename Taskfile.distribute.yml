@@ -1,0 +1,132 @@
+version: '3'
+
+# Task runner for distribution automation
+# Synchronizes governance files from thegent to consumer repositories
+
+vars:
+  SCRIPT_DIR: scripts/distribution
+  KNOWN_REPOS: |
+    ../../AgilePlus
+    ../../phenotype-infrakit
+    ../../heliosCLI
+
+tasks:
+  default:
+    desc: Show distribution tasks
+    cmds:
+      - task --list
+
+  distribute:all:
+    desc: Distribute governance files to all known consumer repositories
+    summary: |
+      Synchronizes governance files (hooks, pre-commit, Taskfile) to all
+      known consumer repositories. Use --force to overwrite without prompting.
+    cmds:
+      - |
+        for repo in {{.KNOWN_REPOS}}; do
+          if [[ -d "$repo" ]]; then
+            echo "Distributing to: $repo"
+            bash {{.SCRIPT_DIR}}/distribute.sh "$repo" {{.CLI_ARGS}}
+            echo
+          else
+            echo "Repository not found: $repo (skipping)"
+          fi
+        done
+
+  distribute:target:
+    desc: Distribute governance files to a specific repository
+    summary: |
+      Synchronizes governance files to a single target repository.
+      Usage: task distribute:target -- <target-repo-path> [--force]
+    requires:
+      vars:
+        - CLI_ARGS
+    cmds:
+      - bash {{.SCRIPT_DIR}}/distribute.sh {{.CLI_ARGS}}
+
+  distribute:validate:
+    desc: Check governance drift in all known consumer repositories
+    summary: |
+      Scans all known consumer repositories for out-of-date governance files.
+      Reports which repos need updates and how to fix them.
+    cmds:
+      - bash {{.SCRIPT_DIR}}/validate-sync.sh --all --verbose
+
+  distribute:validate:target:
+    desc: Check governance drift in a specific repository
+    summary: |
+      Scans a single repository for out-of-date governance files.
+      Usage: task distribute:validate:target -- <target-repo-path>
+    requires:
+      vars:
+        - CLI_ARGS
+    cmds:
+      - bash {{.SCRIPT_DIR}}/validate-sync.sh {{.CLI_ARGS}} --verbose
+
+  bootstrap:
+    desc: Bootstrap a new project with thegent governance
+    summary: |
+      Initializes a new or existing project with complete governance infrastructure:
+      - VitePress documentation site
+      - Governance hooks and pre-commit configuration
+      - Task runner (Taskfile.yml)
+      - Linters and code quality tools
+      - CLAUDE.md project instructions
+
+      Usage: task bootstrap -- <project-path> [--stack <python|rust|go>]
+    requires:
+      vars:
+        - CLI_ARGS
+    cmds:
+      - bash {{.SCRIPT_DIR}}/bootstrap-project.sh {{.CLI_ARGS}}
+
+  distribute:list:
+    desc: List all known consumer repositories
+    summary: Shows the repositories that will be updated by distribute:all
+    cmds:
+      - |
+        echo "Known consumer repositories:"
+        echo
+        for repo in {{.KNOWN_REPOS}}; do
+          if [[ -d "$repo" ]]; then
+            echo "  ✓ $repo"
+          else
+            echo "  ⚠ $repo (not found)"
+          fi
+        done
+
+  distribute:status:
+    desc: Show distribution status summary
+    summary: |
+      Provides a quick status check of all known repositories and their
+      governance file synchronization status.
+    cmds:
+      - |
+        echo "Distribution Status Summary"
+        echo "=========================================="
+        echo
+        bash {{.SCRIPT_DIR}}/validate-sync.sh --all
+        echo
+        echo "To update out-of-sync repos:"
+        echo "  task distribute:all -- --force"
+
+  distribute:backup:
+    desc: Create backups of all governance files before distribution
+    summary: |
+      Backs up current governance files in all consumer repos before syncing.
+      Useful before running distribute:all with --force.
+    cmds:
+      - |
+        echo "Creating backups in all consumer repositories..."
+        echo
+        for repo in {{.KNOWN_REPOS}}; do
+          if [[ -d "$repo" ]]; then
+            echo "Backing up: $repo"
+            mkdir -p "$repo/.governance-backup-$(date +%Y%m%d_%H%M%S)"
+            cp -r "$repo/hooks" "$repo/.governance-backup-$(date +%Y%m%d_%H%M%S)/" 2>/dev/null || true
+            cp "$repo/.pre-commit-config.yaml" "$repo/.governance-backup-$(date +%Y%m%d_%H%M%S)/" 2>/dev/null || true
+            echo "  ✓ Backup created"
+          fi
+        done
+        echo
+        echo "Backups created (format: .governance-backup-YYYYMMDD_HHMMSS)"

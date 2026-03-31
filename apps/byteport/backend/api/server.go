@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/byteport/api/internal/container"
+	"github.com/byteport/api/internal/middleware"
 	"github.com/byteport/api/lib"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -34,6 +36,10 @@ func NewAPIServer(c *container.Container) *APIServer {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+
+	// Structured logging middleware
+	logger := slog.Default()
+	r.Use(middleware.LoggingMiddleware(logger))
 
 	// API routes
 	v1 := r.Group("/api/v1")

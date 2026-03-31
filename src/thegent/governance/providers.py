@@ -83,6 +83,17 @@ class ProviderRegistry:
         self.scorer = scorer if scorer is not None else DefaultProviderScorer()
 
     @classmethod
+    def __init__(cls, configs: list[ProviderConfig] | None = None) -> None:
+        """Initialize the registry with optional configurations.
+
+        Args:
+            configs: Optional list of provider configurations
+        """
+        if configs:
+            for config in configs:
+                cls._registry[config.provider_id] = config
+
+    @classmethod
     def register(cls, config: ProviderConfig) -> None:
         """Register a provider configuration.
 

@@ -37,6 +37,7 @@ pub struct RouterMetrics {
 }
 
 /// Router configuration.
+/// Router configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RouterConfig {
     /// Risk threshold below which to route to Lifecycle.
@@ -56,9 +57,9 @@ pub struct RouterConfig {
 impl Default for RouterConfig {
     fn default() -> Self {
         Self {
-            low_threshold: 0.35,  // 35% - Lifecycle for low risk
-            high_threshold: 0.65, // 65% - TheGent for high risk
-            hysteresis_band: 0.15,
+            low_threshold: 0.35,
+            high_threshold: 0.65,
+            hysteresis_band: 0.10,
             hysteresis_dwell_s: 300,
             hysteresis_max_dwell_s: 1800,
             hysteresis_override: 0.20,

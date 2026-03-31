@@ -10,7 +10,6 @@ import pytest
 from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
-    audit_shared_modules_across_repos,
     add_module_to_target,
     build_module_manifest_payload,
     build_scan_candidates,
@@ -20,7 +19,6 @@ from thegent.phench.service import (
     discover_repos,
     init_target,
     import_repos,
-    list_modules,
     list_targets,
     list_target_snapshots,
     load_module_manifest,
@@ -36,8 +34,9 @@ from thegent.phench.service import (
     set_env_profile,
     sync_target,
     sync_project_modules_from_repos,
+    list_modules,
+    audit_shared_modules_across_repos,
     create_target_snapshot,
-    bootstrap_target,
 )
 from thegent.phench.models import RepoSelection, RunnerCatalog, RunnerCommand, TargetLock
 from thegent.phench.store import read_dual
@@ -1418,7 +1417,7 @@ def test_run_target_uses_module_overrides(tmp_path: Path, monkeypatch) -> None:
     set_env_profile("module-run", "ci", {"FROM_PROFILE": "1"})
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
     monkeypatch.setattr(
         "thegent.phench.service.build_catalog",
