@@ -65,10 +65,11 @@ class ProviderScorer(ABC):
     """
 
     @abstractmethod
-    def score(self, metrics: ProviderMetrics) -> ProviderScore:
+    def score(self, provider_id: str, metrics: ProviderMetrics) -> ProviderScore:
         """Compute normalized score from provider metrics.
 
         Args:
+            provider_id: Provider identifier
             metrics: Provider performance metrics
 
         Returns:
@@ -113,12 +114,13 @@ class DefaultProviderScorer(ProviderScorer):
     BASELINE_LATENCY_MS = 250.0
     BASELINE_COST_PER_1M = 0.15
 
-    def score(self, metrics: ProviderMetrics) -> ProviderScore:
+    def score(self, provider_id: str, metrics: ProviderMetrics) -> ProviderScore:
         """Compute composite score from metrics.
 
         Normalizes each metric to 0-10 scale, then computes weighted average.
 
         Args:
+            provider_id: Provider identifier
             metrics: Provider metrics
 
         Returns:
@@ -135,7 +137,7 @@ class DefaultProviderScorer(ProviderScorer):
         )
 
         return ProviderScore(
-            provider_id=metrics.provider_id,
+            provider_id=provider_id,
             reliability_score=reliability_score,
             latency_score=latency_score,
             cost_score=cost_score,
