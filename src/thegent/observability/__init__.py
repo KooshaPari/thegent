@@ -1,12 +1,5 @@
-"""Observability module - STUB.
+"""Observability module - telemetry, metrics, and event egress."""
 
-WARNING: Auto-generated stub module.
-"""
+from .egress import EgressEvent, SIEMEgress
 
-__all__ = []
-
-from .async_logger import AsyncLogger, async_log
-from .observability_v2 import ObservabilityV2
-from .prometheus import PrometheusMetrics
-
-__all__ = ["AsyncLogger", "async_log", "ObservabilityV2", "PrometheusMetrics"]
+__all__ = ["EgressEvent", "SIEMEgress"]
