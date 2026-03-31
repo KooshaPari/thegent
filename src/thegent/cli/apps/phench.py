@@ -138,6 +138,10 @@ def _sync_target_dispatch(*args: Any, **kwargs: Any) -> Any:
     return sync_target(*args, **kwargs)
 
 
+def _add_module_to_target_dispatch(*args: Any, **kwargs: Any) -> Any:
+    return _service_attr("add_module_to_target")(*args, **kwargs)
+
+
 def _snapshot_create_dispatch(*args: Any, **kwargs: Any) -> Any:
     return create_target_snapshot(*args, **kwargs)
 
@@ -188,6 +192,8 @@ register_target_commands(
     set_repo_ref_fn=_set_repo_ref_dispatch,
     lock_target_fn=_lock_target_dispatch,
     materialize_target_fn=_materialize_target_dispatch,
+    add_module_to_target_fn=_add_module_to_target_dispatch,
+    sync_target_fn=_sync_target_dispatch,
 )
 register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
 register_env_commands(
@@ -275,7 +281,7 @@ def scan_shared_repos_cmd(
 def materialize_module_manifest_cmd(
     module: str = typer.Option(..., "--module", help="Module name."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Print changes without writing."),
-    print_snippets: bool = typer.Option(False, "--print-snippets", help="Print shell snippets."),
+    print_snippets: bool = typer.Option(False, "--print-snippets", "--print-target-snippets", help="Print shell snippets."),
 ) -> None:
     try:
         payload = materialize_module_candidate_manifest(
