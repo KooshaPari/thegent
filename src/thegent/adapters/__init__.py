@@ -7,6 +7,7 @@ Architecture:
 - adapters.ports: Port interfaces (Protocol definitions)
 - adapters.driven: Outbound adapters (HTTP, cache, metrics)
 - adapters.driving: Inbound adapters (CLI, API handlers)
+- adapters.plugin_host_adapter: WASM plugin host integration
 """
 
 from thegent.adapters.ports import (
@@ -32,6 +33,14 @@ from thegent.adapters.ports import (
     _runtime_registry,
 )
 
+# Plugin Host Adapter - WASM/Extism integration
+from thegent.adapters.plugin_host_adapter import (
+    PluginHostAdapter,
+    PluginHostConfig,
+    LoadedPlugin,
+    get_plugin_host,
+)
+
 __all__ = [
     # Ports
     "HTTPClientPort",
@@ -48,6 +57,11 @@ __all__ = [
     "PluginInterface",
     "DriverPlugin",
     "RouterPlugin",
+    # Plugin Host
+    "PluginHostAdapter",
+    "PluginHostConfig",
+    "LoadedPlugin",
+    "get_plugin_host",
     # Decorators
     "register_driver",
     "register_router",

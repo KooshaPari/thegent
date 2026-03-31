@@ -1,4 +1,12 @@
 # MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
+# DEPRECATED: This module is kept for backward compatibility only.
+# All new development should use the decomposed modules in:
+#   - thegent.adapters.driven.cliproxy_http  # HTTP client
+#   - thegent.adapters.driven.cliproxy_stream  # Streaming logic
+#   - thegent.ports.driven  # Port interfaces
+#   - thegent.use_cases  # Business logic
+#
+# Migration status: PARTIAL (core adapters implemented, use_cases pending)
 """CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
 DEPRECATED: This module is now a thin shim for backward compatibility.
