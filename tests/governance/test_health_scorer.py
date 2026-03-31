@@ -64,8 +64,8 @@ def basic_config() -> dict:
 def config_file(basic_config: dict, tmp_path: Path) -> Path:
     """Create a config file and return its path."""
     config_path = tmp_path / "health-targets.json"
-    with open(config_path, "w") as f:
-        json.dump(basic_config, f)
+    with open(config_path, "wb") as f:
+        f.write(json.dumps(basic_config))
     return config_path
 
 

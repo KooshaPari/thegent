@@ -1,5 +1,5 @@
-"""Observability module - telemetry, metrics, and event egress."""
+"""Observability module - async logging, egress, Prometheus metrics."""
 
-from .egress import EgressEvent, SIEMEgress
+__all__ = ["AsyncObservabilityLogger"]
 
-__all__ = ["EgressEvent", "SIEMEgress"]
+from .async_logger import AsyncObservabilityLogger
