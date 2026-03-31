@@ -13,6 +13,7 @@ from thegent.contracts.adapters import (
     normalize_output,
     register_adapter,
 )
+from thegent.adapters.ports import PLUGIN_HOST, PluginHost, PluginInterface
 from thegent.contracts.csm import CSMStatus
 from thegent.contracts.validation import SemanticValidationError
 
@@ -257,6 +258,52 @@ class TestNormalizeOutput:
         assert result.csm.source_contract == "fallback-plain"
         assert result.confidence < 1.0
 
+
+class DummyPlugin(PluginInterface):
+    def __init__(self):
+        self._initialized = False
+        self._shutdown = False
+
+    @property
+    def name(self) -> str:
+        return "dummy-plugin"
+
+    @property
+    def version(self) -> str:
+        return "0.1.0"
+
+    def initialize(self, config: dict) -> None:
+        self._initialized = True
+
+    def shutdown(self) -> None:
+        self._shutdown = True
+
+
+class TestPluginHost:
+    def test_plugin_host_lifecycle(self) -> None:
+        assert isinstance(PLUGIN_HOST, PluginHost)
+
+        plugin = DummyPlugin()
+
+        PLUGIN_HOST.register_plugin(plugin)
+        assert "dummy-plugin" in PLUGIN_HOST.list_plugins()
+
+        PLUGIN_HOST.load_plugin("dummy-plugin")
+        assert plugin._initialized is True
+
+        loaded_plugin = PLUGIN_HOST.get_plugin("dummy-plugin")
+        assert loaded_plugin is plugin
+
+        PLUGIN_HOST.unload_plugin("dummy-plugin")
+        assert plugin._shutdown is True
+
+        # swap plugin
+        plugin2 = DummyPlugin()
+        PLUGIN_HOST.swap_plugin("dummy-plugin", plugin2)
+        assert PLUGIN_HOST.get_plugin("dummy-plugin") is plugin2
+
+        # cleanup
+        PLUGIN_HOST.unload_plugin("dummy-plugin")
 
 @pytest.mark.unit
 class TestGenericOutputAdapter:
