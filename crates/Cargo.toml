@@ -38,3 +38,7 @@ exclude = ["thegent-watcher"]
 gix = { version = "0.79.0", default-features = false, features = ["max-performance-safe"] }
 which = "6.0"
 criterion = "0.5"
+derive_more = "1.0"
+strum = { version = "0.26", features = ["derive"] }
+thiserror = "1.0"
+anyhow = "1.0"

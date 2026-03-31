@@ -2403,8 +2403,3 @@ def create_target_snapshot(target_name, description=None):
         "timestamp": datetime.now().isoformat(),
     }
 
-def materialize_module_candidate_manifest(module_name, dry_run=False, print_snippets=False):
-    return {"module_name": module_name, "materialized": not dry_run, "dry_run": dry_run}
-
-def sync_project_modules_from_repos(target_name, module_name=None, dry_run=False):
-    return {"synced": True, "target": target_name, "module": module_name, "dry_run": dry_run}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+import sys  # noqa: F401
 from pathlib import Path
 from typing import Any
 
@@ -138,6 +139,10 @@ def _sync_target_dispatch(*args: Any, **kwargs: Any) -> Any:
     return sync_target(*args, **kwargs)
 
 
+def _add_module_to_target_dispatch(*args: Any, **kwargs: Any) -> Any:
+    return _service_attr("add_module_to_target")(*args, **kwargs)
+
+
 def _snapshot_create_dispatch(*args: Any, **kwargs: Any) -> Any:
     return create_target_snapshot(*args, **kwargs)
 
@@ -162,6 +167,10 @@ def _target_status_dispatch(*args: Any, **kwargs: Any) -> Any:
     return target_status(*args, **kwargs)
 
 
+def _add_module_to_target_dispatch(*args: Any, **kwargs: Any) -> Any:
+    return add_module_to_target(*args, **kwargs)
+
+
 def _audit_shared_modules_dispatch(*args: Any, **kwargs: Any) -> Any:
     return audit_shared_modules(*args, **kwargs)
 
@@ -178,6 +187,21 @@ def materialize_module_candidate_manifest(*args: Any, **kwargs: Any) -> Any:
     return _service_attr("materialize_module_candidate_manifest")(*args, **kwargs)
 
 
+# Dispatch wrappers for test monkeypatching - must be AFTER the wrapper functions above
+def _build_scan_candidates_dispatch(*args: Any, **kwargs: Any) -> Any:
+    return build_scan_candidates(*args, **kwargs)
+
+
+def _scan_shared_modules_across_repos_dispatch(*args: Any, **kwargs: Any) -> Any:
+    return scan_shared_modules_across_repos(*args, **kwargs)
+
+
+# Expose build_scan_candidates at module level so tests can monkeypatch it
+def build_scan_candidates(*args: Any, **kwargs: Any) -> Any:
+    """Wrapper for build_scan_candidates - delegates to service function."""
+    return _build_scan_candidates_dispatch(*args, **kwargs)
+
+
 # Register sub-command groups.
 register_target_commands(
     target_app,
@@ -188,6 +212,8 @@ register_target_commands(
     set_repo_ref_fn=_set_repo_ref_dispatch,
     lock_target_fn=_lock_target_dispatch,
     materialize_target_fn=_materialize_target_dispatch,
+    add_module_to_target_fn=_add_module_to_target_dispatch,
+    sync_target_fn=_sync_target_dispatch,
 )
 register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
 register_env_commands(
@@ -236,7 +262,7 @@ register_projects_run(
 def scan_shared_repos_cmd(
     repos_root: str | None = typer.Option(None, "--repos-root", help="Root directory to scan."),
     exclude: list[str] = typer.Option([], "--exclude", help="Repo IDs to exclude; may be repeated."),
-    min_repo_count: int = typer.Option(2, "--min-repo-count", help="Minimum repo count for a shared module."),
+    min_repo_count: int = typer.Option(2, "--min-repo-count", "--min-repos", help="Minimum repo count for a shared module."),
     repos_root_mode: str = typer.Option("auto", "--repos-root-mode", help="Root discovery: auto|projects|phenotype."),
     candidate_name_regex: str | None = typer.Option(None, "--candidate-regex", help="Regex to filter candidate names."),
     candidates: bool = typer.Option(
@@ -254,7 +280,7 @@ def scan_shared_repos_cmd(
         raise typer.BadParameter("Cannot use both --candidates and --omit-candidates.")
 
     try:
-        state = scan_shared_modules_across_repos(
+        state = _scan_shared_modules_across_repos_dispatch(
             repos_root=None if repos_root is None else Path(repos_root),
             exclude_repos={value.strip() for value in exclude if value.strip()},
             min_repo_count=min_repo_count,
@@ -265,7 +291,7 @@ def scan_shared_repos_cmd(
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    console.print_json(json.dumps(state).decode())
+    sys.stdout.write(json.dumps(state, option=json.OPT_INDENT_2).decode() + "\n")
 
 
 @app.command(
@@ -274,12 +300,22 @@ def scan_shared_repos_cmd(
 )
 def materialize_module_manifest_cmd(
     module: str = typer.Option(..., "--module", help="Module name."),
+    repos_root: str | None = typer.Option(None, "--repos-root", help="Root directory for repos."),
+    repos_root_mode: str | None = typer.Option(None, "--repos-root-mode", help="Root mode: auto|projects|phenotype."),
+    repos: list[str] = typer.Option([], "--repo", help="Repo IDs to include; may be repeated."),
+    min_repo_count: int = typer.Option(2, "--min-repo-count", help="Minimum repo count."),
+    output_dir: str | None = typer.Option(None, "--output-dir", help="Output directory for manifest."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Print changes without writing."),
-    print_snippets: bool = typer.Option(False, "--print-snippets", help="Print shell snippets."),
+    print_snippets: bool = typer.Option(False, "--print-snippets", "--print-target-snippets", help="Print shell snippets."),
 ) -> None:
     try:
         payload = materialize_module_candidate_manifest(
-            module_name=module,
+            module=module,
+            repos_root=Path(repos_root) if repos_root else None,
+            repos_root_mode=repos_root_mode,
+            repos=repos if repos else None,
+            min_repo_count=min_repo_count,
+            output_dir=Path(output_dir) if output_dir else None,
             dry_run=dry_run,
         )
     except ValueError as exc:
@@ -289,7 +325,7 @@ def materialize_module_manifest_cmd(
         payload["shell_snippets"] = [
             f"thegent phench target add-module {payload['module_name']} --module {payload['module_name']}",
         ]
-    console.print_json(json.dumps(payload).decode())
+    sys.stdout.write(json.dumps(payload, option=json.OPT_INDENT_2).decode() + "\n")
 
 
 # Alias for CLI entry-point compatibility.

@@ -1433,7 +1433,7 @@ gate_tier_enforcer() {
   fi
   # Security tests
   if [[ -d "$PROJECT_DIR/test/security" ]] || [[ -d "$PROJECT_DIR/tests/security" ]] || \
-     [[ -f "$PROJECT_DIR/.gitleaks.toml" ]] || [[ -f "$PROJECT_DIR/.semgrep.yml" ]] || \
+     [[ -f "$PROJECT_DIR/.trufflehog.yml" ]] || [[ -f "$PROJECT_DIR/.semgrep.yml" ]] || \
      [[ -f "$PROJECT_DIR/bandit.yaml" ]]; then
     detected_types[security]=true
   fi

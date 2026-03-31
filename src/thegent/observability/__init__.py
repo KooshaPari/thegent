@@ -1,12 +1,5 @@
-"""Observability module - STUB.
+"""Observability module - async logging, egress, Prometheus metrics."""
 
-WARNING: Auto-generated stub module.
-"""
+__all__ = ["AsyncObservabilityLogger"]
 
-__all__ = []
-
-from .async_logger import AsyncLogger, async_log
-from .observability_v2 import ObservabilityV2
-from .prometheus import PrometheusMetrics
-
-__all__ = ["AsyncLogger", "async_log", "ObservabilityV2", "PrometheusMetrics"]
+from .async_logger import AsyncObservabilityLogger

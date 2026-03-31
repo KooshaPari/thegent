@@ -1,5 +1,6 @@
 use crate::{ComplianceRule, EvaluationContext, EvaluationResult, PolicyError};
 
+#[derive(Default)]
 pub struct ComplianceChecker;
 
 impl ComplianceChecker {
@@ -46,11 +47,5 @@ impl ComplianceChecker {
             .iter()
             .map(|rule| self.evaluate(rule, context))
             .collect()
-    }
-}
-
-impl Default for ComplianceChecker {
-    fn default() -> Self {
-        Self::new()
     }
 }

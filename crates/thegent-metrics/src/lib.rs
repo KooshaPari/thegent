@@ -108,6 +108,7 @@ impl Histogram {
     }
 }
 
+#[derive(Default)]
 pub struct MetricsRegistry {
     counters: DashMap<String, u64>,
     gauges: DashMap<String, f64>,
@@ -163,12 +164,6 @@ impl MetricsRegistry {
         }
 
         output
-    }
-}
-
-impl Default for MetricsRegistry {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

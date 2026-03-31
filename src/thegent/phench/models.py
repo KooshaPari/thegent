@@ -36,6 +36,15 @@ class ModuleManifest:
     repo_command_overrides: dict[str, str] = field(default_factory=dict)
     repo_env_profile_overrides: dict[str, str] = field(default_factory=dict)
 
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
+    def __contains__(self, key: str) -> bool:
+        return hasattr(self, key)
+
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
+
 
 @dataclass(slots=True)
 class TargetLock:
