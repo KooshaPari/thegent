@@ -1,3 +1,3 @@
 """Service modules for CLI command implementations."""
 
-__all__ = ["governance"]
+from thegent.cli.services import governance as governance_service

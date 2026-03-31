@@ -32,9 +32,7 @@ class ExecutionResult:
     provider_id: str
     success: bool
     latency_ms: float
-    tokens_input: int = 0
     tokens_used: int = 0
-    tokens_output: int = 0
     error: str | None = None
     timestamp: float = field(default_factory=time.time)
 
@@ -55,7 +53,6 @@ class ProviderMetricsSnapshot:
     timestamp: float = field(default_factory=time.time)
     success: bool = True
     latency_ms: float = 0.0
-    tokens_input: int = 0
     tokens_used: int = 0
 
 
@@ -292,12 +289,8 @@ class ProviderMetricsCollector:
     from provider benchmarks and calculating aggregated metrics.
     """
 
-    def __init__(self, storage_backend: Any = None, metrics_store: Any = None) -> None:
-        """Initialize the provider metrics collector.
-
-        Args:
-            metrics_store: Optional metrics store backend (unused in this implementation)
-        """
+    def __init__(self) -> None:
+        """Initialize the provider metrics collector."""
         self._results: deque[ExecutionResult] = deque(maxlen=10000)
 
     def record(self, result: ExecutionResult) -> None:
