@@ -139,6 +139,10 @@ def _sync_target_dispatch(*args: Any, **kwargs: Any) -> Any:
     return sync_target(*args, **kwargs)
 
 
+def _add_module_to_target_dispatch(*args: Any, **kwargs: Any) -> Any:
+    return _service_attr("add_module_to_target")(*args, **kwargs)
+
+
 def _snapshot_create_dispatch(*args: Any, **kwargs: Any) -> Any:
     return create_target_snapshot(*args, **kwargs)
 
@@ -208,6 +212,8 @@ register_target_commands(
     set_repo_ref_fn=_set_repo_ref_dispatch,
     lock_target_fn=_lock_target_dispatch,
     materialize_target_fn=_materialize_target_dispatch,
+    add_module_to_target_fn=_add_module_to_target_dispatch,
+    sync_target_fn=_sync_target_dispatch,
 )
 register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
 register_env_commands(

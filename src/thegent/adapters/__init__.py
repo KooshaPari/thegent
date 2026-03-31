@@ -1,9 +1,55 @@
-"""STUB MODULE - thegent.adapters
+"""thegent.adapters - Hexagonal Architecture Adapters.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+This package provides driving (primary) and driven (secondary) adapters
+following the hexagonal/ports-and-adapters pattern.
+
+Architecture:
+- adapters.ports: Port interfaces (Protocol definitions)
+- adapters.driven: Outbound adapters (HTTP, cache, metrics)
+- adapters.driving: Inbound adapters (CLI, API handlers)
 """
 
-# Stub implementation - functionality not available
-__all__ = []
+from thegent.adapters.ports import (
+    # Driven (Outbound) Ports
+    HTTPClientPort,
+    CachePort,
+    MetricsPort,
+    AuthPort,
+    # Driving (Inbound) Ports
+    ProviderExecutionPort,
+    RoutingPort,
+    GovernancePort,
+    # Unified Registry
+    AdapterRegistry,
+    PluginInterface,
+    DriverPlugin,
+    RouterPlugin,
+    # Registration Decorators
+    register_driver,
+    register_router,
+    register_cache,
+    # Runtime
+    _runtime_registry,
+)
+
+__all__ = [
+    # Ports
+    "HTTPClientPort",
+    "CachePort",
+    "MetricsPort",
+    "AuthPort",
+    "ProviderExecutionPort",
+    "RoutingPort",
+    "GovernancePort",
+    # Registry
+    "AdapterRegistry",
+    "_runtime_registry",
+    # Plugins
+    "PluginInterface",
+    "DriverPlugin",
+    "RouterPlugin",
+    # Decorators
+    "register_driver",
+    "register_router",
+    "register_cache",
+]
