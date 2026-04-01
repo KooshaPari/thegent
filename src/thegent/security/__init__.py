@@ -1,9 +1,24 @@
-"""STUB MODULE - thegent.security
+"""Security module for thegent.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+Provides RBAC, secrets scanning, and other security-related functionality.
 """
 
-# Stub implementation - functionality not available
-__all__ = []
+from thegent.security.rbac import Permission, RBACManager, Role
+from thegent.security.secrets import (
+    SecretMatch,
+    detect_secret_type,
+    redact_secrets,
+    scan_secrets,
+    scan_secrets_file,
+)
+
+__all__ = [
+    "Permission",
+    "RBACManager",
+    "Role",
+    "SecretMatch",
+    "detect_secret_type",
+    "redact_secrets",
+    "scan_secrets",
+    "scan_secrets_file",
+]
