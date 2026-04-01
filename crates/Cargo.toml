@@ -7,7 +7,7 @@ members = [
     "thegent-shm",
     "thegent-git",
     "thegent-discovery",
-    # "thegent-cache",  # TEMPORARILY DISABLED - git conflicts
+    "thegent-cache",
     "thegent-hooks",
     "thegent-docs",
     "thegent-utils",

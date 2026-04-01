@@ -4,11 +4,11 @@
 
 use lru::LruCache;
 use moka::sync::Cache as MokaCache;
+use parking_lot::Mutex;
 use std::hash::Hash;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::Duration;
-use parking_lot::Mutex;
 
 /// Two-tier cache combining LRU (L1) with Moka (L2).
 pub struct Cache<K, V>
@@ -34,9 +34,7 @@ where
     pub fn with_capacity_and_ttl(l1_capacity: usize, default_ttl: Duration) -> Self {
         let cap = NonZeroUsize::new(l1_capacity).unwrap_or(NonZeroUsize::MIN);
         let l1 = LruCache::new(cap);
-        let l2 = MokaCache::builder()
-            .time_to_live(default_ttl)
-            .build();
+        let l2 = MokaCache::builder().time_to_live(default_ttl).build();
 
         Self {
             l1: Arc::new(Mutex::new(l1)),
@@ -149,10 +147,11 @@ mod tests {
     fn test_cache_expiration() {
         // Note: Moka sync cache TTL is eventually consistent via background task.
         // This test verifies basic set/get without relying on precise TTL timing.
-        let cache: Cache<String, String> = Cache::with_capacity_and_ttl(100, Duration::from_millis(50));
+        let cache: Cache<String, String> =
+            Cache::with_capacity_and_ttl(100, Duration::from_millis(50));
         cache.set("key1".to_string(), "value1".to_string());
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
-        
+
         // Verify cache contains the key
         assert!(cache.contains_key(&"key1".to_string()));
     }
