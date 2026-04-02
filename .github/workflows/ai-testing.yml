@@ -23,33 +23,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: Install dependencies
-        run: npm install vitest @vitest/coverage-v8
-
-      - name: Run Vitest
-        run: npx vitest run --reporter=json
+      - name: Install & Run Vitest
+        run: |
+          bun add -d vitest @vitest/coverage-v8
+          bun run vitest run --reporter=json
 
   pytest-tests:
-    name: Pytest Tests
+    name: Pytest Tests (uv)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Install dependencies
-        run: pip install pytest pytest-cov pytest-json-report
-
-      - name: Run pytest
-        run: pytest tests/ -v --json-report --json-report-file=report.json
+      - name: Install & Run pytest
+        run: |
+          uv pip install pytest pytest-cov pytest-json-report --system
+          pytest tests/ -v --json-report --json-report-file=report.json
 
   playwright-tests:
     name: Playwright E2E Tests
@@ -57,16 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: Install Playwright
-        run: npm install @playwright/test && npx playwright install --with-deps
-
-      - name: Run Playwright
-        run: npx playwright test
+      - name: Install & Run Playwright
+        run: |
+          bun add -d @playwright/test
+          bunx playwright install --with-deps
+          bun run playwright test
 
   coverage:
     name: Test Coverage Report
@@ -74,12 +66,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
 
       - name: Generate Coverage
         run: |
-          pip install pytest-cov
+          uv pip install pytest-cov --system
           pytest --cov=. --cov-report=xml --cov-report=html
