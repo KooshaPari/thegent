@@ -1,0 +1,422 @@
+# Qodo / Codeium Configuration for thegent
+# AI-powered test generation for agent framework
+
+# ============================================
+# Project Configuration
+# ============================================
+project:
+  name: thegent
+  language: python
+  framework: pytest
+  test_directory: tests/
+  coverage_target: 80
+  
+# ============================================
+# AI Test Generation Settings
+# ============================================
+ai:
+  # Which AI to use for test generation
+  provider: codeium
+  
+  # Test generation preferences
+  generation:
+    # Generate tests before implementation (TDD mode)
+    test_first: true
+    
+    # Include edge cases automatically
+    edge_cases: true
+    
+    # Generate property-based tests (Hypothesis)
+    property_based: true
+    
+    # Mock external dependencies
+    auto_mock: true
+    
+  # Code review settings
+  review:
+    enabled: true
+    
+    # Checklist for test quality
+    checklist:
+      - test covers happy path
+      - test covers error path
+      - test has clear assertion
+      - test is isolated (no side effects)
+      - test name describes behavior
+      
+    # Quality gates
+    gates:
+      min_coverage_per_function: 0.80
+      max_cyclomatic_complexity: 10
+      max_test_lines: 50
+
+# ============================================
+# Test Patterns
+# ============================================
+patterns:
+  # Naming conventions
+  naming:
+    test_function: "test_{behavior}_{scenario}"
+    test_class: "Test{Component}"
+    fixture: "_{name}_fixture"
+    
+  # Test structure
+  structure:
+    # GIVEN-WHEN-THEN format
+    given_when_then:
+      enabled: true
+      
+    # Arrange-Act-Assert comments
+      triple_a:
+        enabled: true
+        comments: true
+        
+  # Assertion style
+  assertions:
+    preferred: pytest
+    alternatives:
+      - hamcrest
+      - unittest
+      
+# ============================================
+# Coverage Configuration
+# ============================================
+coverage:
+  # Required coverage thresholds
+  thresholds:
+    overall: 80
+    by_module:
+      agents: 85
+      routing: 90
+      memory: 80
+      tools: 75
+      
+  # Files to exclude from coverage
+  exclude:
+    - "**/test_*.py"
+    - "**/conftest.py"
+    - "**/mocks/**"
+    - "**/fixtures/**"
+    - "agents/**"  # Exclude for now (legacy)
+    
+  # Branch coverage
+  branch:
+    enabled: true
+    threshold: 70
+    
+# ============================================
+# Test Categories
+# ============================================
+categories:
+  # ==========================================
+  # Unit Tests (test_*.py)
+  # ==========================================
+  unit:
+    pattern: "tests/unit/**/test_*.py"
+    parallel: true
+    timeout: 30  # seconds
+    
+    # Auto-generate for these patterns
+    auto_generate:
+      - "crates/*/src/*.rs"
+      - "libs/*/src/*.rs"
+      - "src/**/*.py"
+      
+  # ==========================================
+  # Integration Tests (test_integration_*.py)
+  # ==========================================
+  integration:
+    pattern: "tests/integration/test_*.py"
+    parallel: false  # Sequential for shared resources
+    timeout: 120
+    
+    # Services to start
+    services:
+      - redis
+      - postgres
+      
+  # ==========================================
+  # E2E Tests (test_e2e_*.py)
+  # ==========================================
+  e2e:
+    pattern: "tests/e2e/test_*.py"
+    parallel: false
+    timeout: 300
+    
+  # ==========================================
+  # Agent Behavior Tests (test_behavior_*.py)
+  # ==========================================
+  behavior:
+    pattern: "tests/behavior/test_*.py"
+    framework: pytest-bdd
+    
+    # Gherkin feature files
+    features_dir: "tests/behavior/features/"
+    
+    # Auto-generate from AGENTS.md
+    auto_generate_from_specs: true
+    spec_files:
+      - "AGENTS.md"
+      - "docs/agents/*.md"
+      
+  # ==========================================
+  # Visual/TUI Tests
+  # ==========================================
+  visual:
+    pattern: "tests/visual/test_*.py"
+    framework: pytest-playwright
+    
+    # Applitools integration
+    applitools:
+      enabled: true
+      app_name: thegent-tui
+      batch_name: "{branch}-{build}"
+      
+  # ==========================================
+  # Performance Tests
+  # ==========================================
+  performance:
+    pattern: "tests/performance/test_*.py"
+    framework: pytest-benchmark
+    
+    # Benchmark configuration
+    benchmark:
+      warmup: 3
+      rounds: 10
+      only: mean
+
+# ============================================
+# AI Agent Testing (KaneAI-style)
+# ============================================
+agent_testing:
+  enabled: true
+  
+  # Multi-turn conversation testing
+  conversation:
+    max_turns: 20
+    timeout_per_turn: 60
+    
+    # Test scenarios from markdown
+    scenario_sources:
+      - "docs/agent-scenarios/*.md"
+      - "tests/behavior/conversations/*.yaml"
+      
+  # Agent evaluation criteria
+  evaluation:
+    criteria:
+      - task_completion_rate
+      - tool_usage_correctness
+      - safety_boundary_adherence
+      - helpfulness_rating
+      
+    # Human-in-the-loop review
+    human_review:
+      sample_rate: 0.10  # 10% of conversations
+      
+# ============================================
+# External Tool Integration
+# ============================================
+tools:
+  # ==========================================
+  # Playwright (Browser/TUI Testing)
+  # ==========================================
+  playwright:
+    enabled: true
+    browsers:
+      - chromium
+    headless: true
+    
+    # MCP integration
+    mcp:
+      enabled: true
+      server: "@anthropic-ai/playwright-mcp"
+      
+  # ==========================================
+  # Applitools (Visual AI)
+  # ==========================================
+  applitools:
+    enabled: true
+    
+    config:
+      match_level: strict
+      fail_tests_on_diff: true
+      
+    # Visual checkpoints
+    checkpoints:
+      - agent_response_view
+      - tool_execution_view
+      - error_state_view
+      
+  # ==========================================
+  # KaneAI (Multi-turn Testing)
+  # ==========================================
+  kaneai:
+    enabled: true
+    
+    # API configuration
+    api_key: ${KANEAI_API_KEY}
+    
+    # Test generation
+    generate_from:
+      - "AGENTS.md"
+      - "PRD.md"
+      - "User stories in specs/"
+      
+# ============================================
+# Self-Healing Configuration
+# ============================================
+self_healing:
+  enabled: true
+  
+  # Heal broken tests automatically
+  auto_heal:
+    enabled: true
+    max_attempts: 3
+    
+    # What to heal
+    heal_types:
+      - broken_selectors
+      - changed_text
+      - moved_elements
+      - timing_issues
+      
+  # Update tests when code changes
+  sync_with_code:
+    enabled: true
+    watch_patterns:
+      - "src/**/*.py"
+      - "crates/*/src/**/*.rs"
+      
+    # Generate tests for new functions
+    generate_for_new_code: true
+
+# ============================================
+# Commands
+# ============================================
+commands:
+  # Generate tests for specific module
+  generate:
+    cmd: "qodo generate --module {module} --output tests/unit/{module}/"
+    
+  # Run tests with AI assistance
+  test:
+    cmd: "qodo test --category {category} --ai-assist"
+    
+  # Review test quality
+  review:
+    cmd: "qodo review tests/ --checklist"
+    
+  # Update tests after code changes
+  update:
+    cmd: "qodo update --watch --auto-heal"
+    
+  # Full AI test suite generation
+  scaffold:
+    cmd: |
+      qodo scaffold \
+        --from-spec AGENTS.md \
+        --framework pytest-bdd \
+        --output tests/behavior/ \
+        --include-conversations
+
+# ============================================
+# IDE Integration
+# ============================================
+ide:
+  # VS Code
+  vscode:
+    enabled: true
+    
+    # Inline suggestions
+    inline:
+      test_generation: true
+      test_completion: true
+      
+    # Commands
+    commands:
+      generate_test: "Qodo: Generate Test"
+      explain_test: "Qodo: Explain Test"
+      
+  # Cursor
+  cursor:
+    enabled: true
+    
+    # Agent mode integration
+    agent:
+      generate_tests_on_save: true
+      review_tests_before_commit: true
+
+# ============================================
+# CI/CD Integration
+# ============================================
+ci:
+  # GitHub Actions
+  github_actions:
+    enabled: true
+    
+    workflow:
+      # Run on PR
+      on_pr:
+        categories:
+          - unit
+          - integration
+          
+      # Run on main
+      on_main:
+        categories:
+          - unit
+          - integration
+          - e2e
+          - visual
+          
+      # Nightly
+      nightly:
+        categories:
+          - performance
+          - behavior
+          - agent_testing
+          
+  # Coverage reporting
+  coverage:
+    provider: codecov
+    upload: true
+    
+  # Test result reporting
+  results:
+    provider: junit
+    format: junit-xml
+    
+  # AI quality gate
+  quality_gate:
+    enabled: true
+    
+    checks:
+      - min_coverage: 80
+      - max_flakiness: 0.05  # 5% flaky test threshold
+      - no_broken_tests: true
+      - ai_review_passed: true
+
+# ============================================
+# Documentation
+# ============================================
+docs:
+  # Auto-generate test documentation
+  auto_generate:
+    enabled: true
+    
+    # What to document
+    include:
+      - test_coverage_reports
+      - test_examples
+      - agent_behavior_specs
+      
+    output_dir: "docs/testing/"
+    
+  # Test as documentation
+  test_as_docs:
+    enabled: true
+    
+    # Link tests to specs
+    spec_links:
+      - "AGENTS.md"
+      - "docs/agents/*.md"

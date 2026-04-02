@@ -1,0 +1,365 @@
+# ============================================
+# KaneAI-Style Conversation Testing for thegent
+# Multi-turn agent behavior validation
+# ============================================
+
+# TestRigor-style plain English scenarios for agent conversations
+# These can be executed by KaneAI or similar AI testing agents
+
+version: "1.0"
+project: thegent
+framework: conversation-testing
+
+# ============================================
+# Test Scenarios
+# ============================================
+scenarios:
+
+  # ==========================================
+  # Research Agent Conversations
+  # ==========================================
+  research_agent:
+    description: |
+      Research Agent (Sage) should help users investigate
+codebases and provide comprehensive findings.
+    
+    tests:
+      - name: "Research codebase structure"
+        priority: P0
+        conversation:
+          - user: "Research the NanoVMS codebase and tell me about the architecture"
+          - agent: "I'll research the NanoVMS codebase for you. Let me start by exploring the structure..."
+          - agent: "[Uses tool: sem_search]"
+          - agent: "[Uses tool: fs_search]"
+          - agent: |
+              Based on my research, NanoVMS implements a three-tier isolation architecture:
+              1. Tier 1: WASM Sandboxes (trusted tools)
+              2. Tier 2: gVisor Containers (semi-trusted)
+              3. Tier 3: MicroVMs (untrusted code)
+              
+              The codebase includes infrastructure adapters for macOS (Lima/VZ),
+              Windows (WSL2), and Linux (KVM)."
+          - user: "What files should I look at for the WASM implementation?"
+          - agent: |
+              Key files for WASM implementation:
+              - internal/adapters/wasm/wasm.go - WASMAdapter implementation
+              - internal/domain/sandbox.go - Core types (VMFlavor, SandboxType)
+              - docs/adr/ADR-001-language-selection.md - Language strategy
+          
+        evaluation:
+          - criteria: task_completion
+            expected: true
+          - criteria: tool_usage
+            expected: ["sem_search", "fs_search", "read"]
+          - criteria: helpfulness
+            threshold: 0.90
+            
+      - name: "Research with dead ends"
+        priority: P1
+        conversation:
+          - user: "Find all uses of the deprecated Deunan type"
+          - agent: "I'll search for uses of the deprecated Deunan type..."
+          - agent: "[Uses tool: fs_search for 'Deunan']"
+          - agent: |
+              I found the Deunan type but it's deprecated. Let me check
+              the ADR documents to understand the migration path..."
+          - agent: "[Uses tool: read docs/adr/*.md]"
+          - agent: |
+              The Deunan type was deprecated in favor of VMConfig.
+              Migration guide in ADR-002.
+          
+        evaluation:
+          - criteria: handles_no_results
+            expected: true
+          - criteria: provides_alternatives
+            expected: true
+
+  # ==========================================
+  # Implementation Agent Conversations
+  # ==========================================
+  implementation_agent:
+    description: |
+      Implementation Agent (Forge) should execute coding tasks
+with test-first discipline and quality gates.
+    
+    tests:
+      - name: "Implement feature with TDD"
+        priority: P0
+        conversation:
+          - user: "Add a new VM flavor 'kata' for Kata Containers support"
+          - agent: "I'll implement Kata Containers support following TDD principles..."
+          - agent: "[Uses tool: read internal/domain/sandbox.go]"
+          - agent: |
+              First, let me check the existing VMFlavor enum and add
+              the new variant. I'll create a test first..."
+          - agent: "[Uses tool: write test file]"
+          - agent: "[Uses tool: write implementation]"
+          - agent: |
+              I've added:
+              1. VMFlavorKata variant to the enum
+              2. Unit test for Kata adapter creation
+              3. Integration with existing VM lifecycle
+              4. Updated SPEC.md with Kata documentation
+          - user: "Does it pass the tests?"
+          - agent: "[Uses tool: cargo test]"
+          - agent: "All tests pass: ✓ 5 new tests, ✓ 42 existing tests"
+          
+        evaluation:
+          - criteria: test_first
+            expected: true
+          - criteria: test_count
+            min: 3
+          - criteria: documentation_updated
+            expected: true
+            
+      - name: "Handle compilation error"
+        priority: P1
+        conversation:
+          - user: "Refactor the error handling to use thiserror"
+          - agent: "I'll refactor the error handling to use thiserror..."
+          - agent: "[Uses tool: cargo check]"
+          - agent: |
+              There are compilation errors. Let me fix them:
+              - Error: missing `#[from]` conversion
+              - Error: unused import
+              Let me address these..."
+          - agent: "[Uses tool: patch files]"
+          - agent: "[Uses tool: cargo check]"
+          - agent: "✓ All compilation errors fixed. Tests passing."
+          
+        evaluation:
+          - criteria: error_handling
+            expected: "graceful"
+          - criteria: iteration_count
+            max: 3
+
+  # ==========================================
+  # Code Review Agent Conversations
+  # ==========================================
+  code_review_agent:
+    description: |
+      Code Review Agent (Muse) should provide quality feedback
+and catch issues before merge.
+    
+    tests:
+      - name: "Review PR with issues"
+        priority: P0
+        conversation:
+          - user: "Review PR #123 for security issues"
+          - agent: "I'll review PR #123 for security concerns..."
+          - agent: "[Uses tool: gh pr view 123]"
+          - agent: "[Uses tool: gh pr diff 123]"
+          - agent: |
+              Security issues found:
+              1. ⚠️ Hardcoded API key in config.rs (HIGH)
+              2. ⚠️ SQL injection vector in query_builder.rs (CRITICAL)
+              3. ℹ️ Missing input validation (MEDIUM)
+              
+              Recommendations provided in review comments.
+          - user: "What about performance?"
+          - agent: "[Uses tool: analyze complexity]"
+          - agent: |
+              Performance concerns:
+              - Function `process_large_file` has O(n²) complexity
+              - No streaming for large datasets
+              Suggested using iterators and buffering.
+          
+        evaluation:
+          - criteria: security_issues_found
+            min: 1
+          - criteria: severity_correct
+            expected: true
+          - criteria: actionable_feedback
+            expected: true
+
+  # ==========================================
+  # Multi-Agent Orchestration
+  # ==========================================
+  multi_agent:
+    description: |
+      Multiple agents should collaborate on complex tasks
+with proper handoffs and coordination.
+    
+    tests:
+      - name: "Research → Plan → Implement pipeline"
+        priority: P0
+        conversation:
+          - user: "I need to add OpenTelemetry support to all crates"
+          - sage: "I'll research the current observability landscape..."
+          - sage: "[Research complete] Architecture recommendations attached"
+          - muse: "Let me review the architecture for quality concerns..."
+          - muse: "✓ Architecture looks good. One suggestion: add sampling configuration."
+          - forge: "I'll implement the OpenTelemetry integration..."
+          - forge: "[Implements tracing, metrics, logging]"
+          - muse: "Reviewing implementation..."
+          - muse: "✓ Code quality good. Minor style fix suggested."
+          - forge: "[Applies fixes] Implementation complete!"
+          
+        evaluation:
+          - criteria: agent_handoff
+            expected: ["sage", "muse", "forge", "muse", "forge"]
+          - criteria: final_quality
+            threshold: 0.90
+          - criteria: completion_time
+            max_minutes: 30
+
+  # ==========================================
+  # Error Recovery
+  # ==========================================
+  error_recovery:
+    description: |
+      Agents should handle failures gracefully and recover
+without user intervention when possible.
+    
+    tests:
+      - name: "Tool failure recovery"
+        priority: P1
+        conversation:
+          - user: "Generate a complex report"
+          - agent: "I'll generate that report for you..."
+          - agent: "[Tool fails: network timeout]"
+          - agent: |
+              The network request timed out. Retrying with
+              exponential backoff..."
+          - agent: "[Retry 1/3]"
+          - agent: "[Retry 2/3]"
+          - agent: "[Success on retry 3]"
+          - agent: "Report generated successfully after retry."
+          
+        evaluation:
+          - criteria: retry_attempts
+            max: 3
+          - criteria: exponential_backoff
+            expected: true
+          - criteria: user_notified
+            expected: false  # Silent recovery preferred
+
+      - name: "API rate limit handling"
+        priority: P1
+        conversation:
+          - user: "Sync all 1000 features from Plane.so"
+          - agent: "I'll sync all features from Plane.so..."
+          - agent: "[API returns 429 rate limit]"
+          - agent: |
+              Hit API rate limit. Pausing for 60 seconds
+              and will resume with reduced batch size..."
+          - agent: "[Waits 60s]"
+          - agent: "[Continues with batch_size=10]"
+          - agent: "Sync complete: 1000 features in 12 batches."
+          
+        evaluation:
+          - criteria: rate_limit_detected
+            expected: true
+          - criteria: backoff_applied
+            expected: true
+          - criteria: batch_size_adjusted
+            expected: true
+
+# ============================================
+# Execution Configuration
+# ============================================
+execution:
+  # AI provider for executing tests
+  provider: kaneai
+  
+  # API configuration
+  api:
+    endpoint: https://api.kaneai.com/v1
+    key: ${KANEAI_API_KEY}
+    
+  # Test execution
+  settings:
+    # Maximum turns per conversation
+    max_turns: 30
+    
+    # Timeout per turn (seconds)
+    turn_timeout: 60
+    
+    # Total conversation timeout (minutes)
+    conversation_timeout: 15
+    
+    # Parallel execution
+    parallel: 5
+    
+    # Retries for flaky tests
+    retries: 2
+    
+  # Environment setup
+  setup:
+    # Services to start
+    services:
+      - redis
+      - postgres
+      
+    # Environment variables
+    env:
+      THEGENT_TEST_MODE: "true"
+      AGENT_TIMEOUT: "30"
+
+# ============================================
+# Evaluation Criteria
+# ============================================
+evaluation:
+  # Task completion
+  task_completion:
+    weight: 0.40
+    
+  # Tool usage correctness
+  tool_usage:
+    weight: 0.20
+    
+  # Safety boundary adherence
+  safety:
+    weight: 0.20
+    
+  # Helpfulness/quality of response
+  helpfulness:
+    weight: 0.15
+    
+  # Efficiency (turns used vs optimal)
+  efficiency:
+    weight: 0.05
+
+# ============================================
+# Reporting
+# ============================================
+reporting:
+  # Output formats
+  formats:
+    - junit
+    - html
+    - json
+    
+  # Include in report
+  include:
+    - conversation_transcripts
+    - tool_calls
+    - evaluation_scores
+    - failure_analysis
+    
+  # Dashboard integration
+  dashboard:
+    enabled: true
+    provider: agileplus
+
+# ============================================
+# CI/CD Integration
+# ============================================
+ci:
+  # Run on schedule
+  schedule:
+    # Nightly full test run
+    nightly:
+      cron: "0 2 * * *"
+      scenarios: all
+      
+    # PR validation
+    on_pr:
+      scenarios:
+        - research_agent
+        - implementation_agent
+        
+  # Quality gates
+  gates:
+    min_pass_rate: 0.95
+    max_regression: 0.05
