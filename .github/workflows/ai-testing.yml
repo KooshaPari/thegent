@@ -5,20 +5,37 @@ on:
     branches: [main, refactor/**]
     paths:
       - 'tests/**'
-      - '.test-config.yaml'
-      - 'tests/kaneai/**'
-      - 'tests/visual/**'
+      - 'vitest.config.ts'
+      - 'playwright.config.ts'
       - '**.py'
   pull_request:
     paths:
       - 'tests/**'
-      - '.test-config.yaml'
+      - 'vitest.config.ts'
+      - 'playwright.config.ts'
   schedule:
     - cron: '0 4 * * *'  # Weekly conversation testing
 
 jobs:
-  conversation-tests:
-    name: Conversation Scenario Tests
+  vitest-tests:
+    name: Vitest Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install vitest @vitest/coverage-v8
+
+      - name: Run Vitest
+        run: npx vitest run --reporter=json
+
+  pytest-tests:
+    name: Pytest Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,47 +45,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run Conversation Tests
-        run: |
-          echo "Conversation scenarios:"
-          echo "  - Scenarios: $(grep -c 'name:' tests/kaneai/conversations.yaml)"
-          echo "  - Multi-turn: $(grep -c 'turns:' tests/kaneai/conversations.yaml)"
+      - name: Install dependencies
+        run: pip install pytest pytest-cov pytest-json-report
 
-  visual-tui:
-    name: Visual TUI Testing
+      - name: Run pytest
+        run: pytest tests/ -v --json-report --json-report-file=report.json
+
+  playwright-tests:
+    name: Playwright E2E Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: '20'
 
-      - name: Run TUI Tests
-        run: |
-          echo "Visual TUI tests:"
-          echo "Tests: $(grep -c 'def test_' tests/visual/tui_testing.py)"
-          pytest tests/visual/tui_testing.py -v || echo "TUI tests pending CLI integration"
+      - name: Install Playwright
+        run: npm install @playwright/test && npx playwright install --with-deps
 
-  agent-behavior:
-    name: Agent Behavior Tests
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        test_file:
-          - test_agent_hierarchy.py
-          - test_agent_registry_full.py
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Run ${{ matrix.test_file }}
-        run: pytest tests/${{ matrix.test_file }} -v --tb=short
+      - name: Run Playwright
+        run: npx playwright test
 
   coverage:
     name: Test Coverage Report
@@ -83,6 +81,5 @@ jobs:
 
       - name: Generate Coverage
         run: |
-          echo "Generating coverage report"
           pip install pytest-cov
-          pytest --cov=. --cov-report=xml --cov-report=html || true
+          pytest --cov=. --cov-report=xml --cov-report=html
