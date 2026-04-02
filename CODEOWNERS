@@ -35,6 +35,9 @@
 
 # CI/CD
 /.github/workflows/ @kooshapari
+/.github/pull_request_template.md @kooshapari
+/.github/RULESET_BASELINE.md @kooshapari
+/.github/prompts/ @kooshapari
 
 # Documentation
 /docs/ @kooshapari

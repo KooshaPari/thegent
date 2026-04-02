@@ -1,0 +1,10 @@
+{
+  "default_branch_required_checks": [
+    "policy-gate",
+    "pr-governance-gate"
+  ],
+  "notes": [
+    "policy-gate is the stable branch-topology and merge-history guard.",
+    "pr-governance-gate blocks merge until all non-billing PR checks are complete and successful."
+  ]
+}

@@ -18,3 +18,18 @@
 | Archive | ✅ Legacy worktrees archived |
 | Remote main | ✅ Synced |
 
+## Current Active Lane - 2026-04-01
+
+The repository is not idle. There is one active stabilization branch shared across the primary checkout and two companion worktrees:
+
+| Item | Status |
+|------|--------|
+| Active branch | `refactor/cleanup-error-variants` |
+| Checked-out worktrees | 3 total (`thegent/`, `thegent/worktrees/thegent/bun-migrate`, `thegent/worktrees/thegent/dotagents`) |
+| Local modification | `crates/thegent-offload/Cargo.toml` |
+| Lane type | Shared cleanup/stabilization lane |
+
+### Current Focus
+- Keep the `cleanup-error-variants` lane moving toward a small, reviewable stabilization commit.
+- Treat `crates/thegent-offload/Cargo.toml` as the current point of divergence until the worktree owner resolves it.
+- Do not relabel the repository as complete until the active branch and its sibling worktrees are either merged or closed.
