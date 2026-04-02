@@ -5,6 +5,13 @@
 
 # thegent
 
+@trace META-001: Task Decomposition
+@trace META-002: Agent Selection
+@trace META-003: Plan Execution
+@trace META-004: Context Management
+@trace META-005: Reflection
+@trace META-007: Multi-Agent Coordination
+
 **Phenotype dotfiles manager, platform bootstrap tool, and polyglot development hub.**
 
 thegent is the single entry point for bootstrapping developer machines, managing AI agent
