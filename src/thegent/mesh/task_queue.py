@@ -5,12 +5,13 @@ The queue is fully crash-recoverable: no in-memory state is required.
 Tasks stranded in `cur/` after a crash are visible via `list_pending()`.
 """
 
-import json
 import logging
 import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+import orjson as json
 
 _log = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class MaildirQueue:
         new_path = self._new / task_id
 
         # Write to tmp first, then atomically rename into new/
-        tmp_path.write_text(json.dumps(envelope), encoding="utf-8")
+        tmp_path.write_text(json.dumps(envelope).decode(), encoding="utf-8")
         tmp_path.rename(new_path)
 
         _log.debug("enqueue task=%s priority=%d", task_id, priority)
@@ -137,7 +138,7 @@ class MaildirQueue:
             envelope["attempts"] += 1
             if owner is not None:
                 envelope["owner"] = owner
-            cur_path.write_text(json.dumps(envelope), encoding="utf-8")
+            cur_path.write_text(json.dumps(envelope).decode(), encoding="utf-8")
 
             _log.debug("dequeue task=%s (attempt %d)", task_id, envelope["attempts"])
             return envelope

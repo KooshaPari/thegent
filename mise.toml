@@ -1,35 +1,35 @@
 [tasks.format]
 description = "Format code"
 
-run = "npx prettier --write ."
+run = "black . --line-length 100"
 
 
 [tasks.lint]
 description = "Lint code"
 
-run = "eslint ."
+run = "ruff check . && mypy ."
 
 
 [tasks.test]
 description = "Run tests"
 
-run = "npm test"
+run = "pytest"
 
 
 [tasks.build]
 description = "Build project"
 
-run = "npm run build"
+run = "python -m build"
 
 
 [tasks.audit]
 description = "Audit dependencies"
 
-run = "npm audit"
+run = "pip-audit"
 
 
 [tasks.docs:build]
 description = "Build documentation"
 
-run = "typedoc --out docs"
+run = "sphinx-build -b html docs docs/_build"
 
