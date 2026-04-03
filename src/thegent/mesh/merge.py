@@ -1,8 +1,9 @@
 """Smart merge and conflict resolution for the agent mesh."""
 
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
+
+from thegent.infra.shim_subprocess import run as shim_run
 
 
 class SmartMerge:
