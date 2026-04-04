@@ -4,11 +4,11 @@ import builtins
 import types
 
 import pytest
-
-from thegent.planning.learning import LearningRegistry
 from thegent.planning.models_meta import MODEL_METADATA
 from thegent.planning.selector import ObjectiveSelector, get_objective_profile
 from thegent.planning.tuning import RunbookTuner
+
+from thegent.planning.learning import LearningRegistry
 
 
 def test_wp_14001_objective_selector():
@@ -82,7 +82,7 @@ def test_objective_selector_logs_import_failure_and_uses_metadata_defaults(
 
     orig_import = builtins.__import__
 
-    def _failing_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: ANN001, ANN202
+    def _failing_import(name, globals=None, locals=None, fromlist=(), level=0):
         if name in {"thegent.models.quality_values", "thegent.models.speed_values"}:
             raise ImportError("forced import failure")
         return orig_import(name, globals, locals, fromlist, level)
@@ -109,7 +109,7 @@ def test_objective_selector_logs_lookup_failure_and_uses_metadata_defaults(
 
     orig_import = builtins.__import__
 
-    def _mocked_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: ANN001, ANN202
+    def _mocked_import(name, globals=None, locals=None, fromlist=(), level=0):
         if name == "thegent.models.quality_values":
             return types.SimpleNamespace(get_model_quality_index=_bad_quality)
         if name == "thegent.models.speed_values":

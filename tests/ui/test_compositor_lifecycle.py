@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
-
 from thegent.ui.compositor.compositor import Compositor, Panel
 
 if TYPE_CHECKING:

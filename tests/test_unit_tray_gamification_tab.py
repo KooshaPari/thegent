@@ -7,11 +7,9 @@ import pytest
 pytest.importorskip("PySide6")
 
 
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from PySide6.QtWidgets import QApplication
-
 from thegent.tray.plugins.thegent.api_client import GamificationStats, ThegentAPIClient
 from thegent.tray.plugins.thegent.tabs.gamification import (
     AchievementsDialog,

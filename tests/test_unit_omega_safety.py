@@ -1,7 +1,6 @@
 """Unit tests for Omega Safety (WP-45002)."""
 
 import pytest
-
 from thegent.verification.omega_safety import OmegaSafetyGuard
 
 

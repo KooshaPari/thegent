@@ -7,14 +7,10 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
-
-import typer
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
     _normalize_output_format,
@@ -251,11 +247,11 @@ def trust_status_cmd(format: str | None = None) -> None:
 
 
 __all__ = [
-    "policy_show_cmd",
-    "policy_purge_cmd",
-    "contracts_registry_cmd",
-    "migration_cmd",
-    "drift_cmd",
     "contracts_conformance_cmd",
+    "contracts_registry_cmd",
+    "drift_cmd",
+    "migration_cmd",
+    "policy_purge_cmd",
+    "policy_show_cmd",
     "trust_status_cmd",
 ]

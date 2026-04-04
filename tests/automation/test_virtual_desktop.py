@@ -1,14 +1,14 @@
 """Tests for virtual desktop automation module."""
 
 import platform
-import pytest
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from thegent.automation.virtual_desktop import (
     DesktopConfig,
-    DesktopState,
     DesktopSession,
+    DesktopState,
     InputEvent,
     ScreenFrame,
     VirtualDesktopManager,

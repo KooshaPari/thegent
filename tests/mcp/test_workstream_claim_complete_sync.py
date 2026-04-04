@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
 
+import orjson as json
 from thegent.mcp.server.tools_locking_planning import thegent_plan_incorporate_impl
-from thegent.mcp.server.tools_workstream_lsp import workstream_claim_tool_impl, workstream_complete_tool_impl
+from thegent.mcp.server.tools_workstream_lsp import (
+    workstream_claim_tool_impl,
+    workstream_complete_tool_impl,
+)
 
 
 def _extract_json_content(content: object) -> dict[str, object]:
@@ -66,4 +69,3 @@ def test_workstream_sync_plan_incorporate_forwards_cd_and_dry_run() -> None:
     assert result.meta and result.meta["execution_time_ms"] >= 0
 
 
-# noqa: PT018

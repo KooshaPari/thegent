@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
 
-from scripts.benchmark_python_suite import run_suite
+import orjson as json
 import pytest
+from scripts.benchmark_python_suite import run_suite
 
 
 @pytest.mark.requirement("WL-236")

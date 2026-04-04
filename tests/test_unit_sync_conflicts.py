@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.sync.conflicts import SyncConflict, recommend_action, render_conflict_surface
 
 

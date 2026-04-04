@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from thegent.infra.fast_websocket import (
-    WEBSOCKETS_AVAILABLE,
     WEBSOCKET_CLIENT_AVAILABLE,
+    WEBSOCKETS_AVAILABLE,
     FastWebSocket,
     websocket_connect_async,
     websocket_connect_sync,

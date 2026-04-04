@@ -1,7 +1,5 @@
 import orjson as json
-
 import pytest
-
 from thegent.team.coordination import TeamCoordinator
 from thegent.team.manager import TeamManager
 

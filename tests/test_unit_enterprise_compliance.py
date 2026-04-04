@@ -1,8 +1,8 @@
 """Unit tests for Phase 15: Enterprise Lifecycle and Compliance."""
 
 import orjson as json
-
 from thegent.contracts.marketplace import PluginContract, PluginVerifier
+
 from thegent.governance.ledger import IncidentLedger
 from thegent.governance.support import SupportRedactor
 

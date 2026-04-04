@@ -6,8 +6,9 @@ Tests the HashChainValidator class for chain verification and tamper detection.
 import hashlib
 
 from thegent.maif.artifact_generator import MAIFArtifactGenerator
-from thegent.maif.crypto import SigningKey
 from thegent.maif.hash_chain import HashChainValidator
+
+from thegent.maif.crypto import SigningKey
 from thegent.maif.models import ActionType
 
 

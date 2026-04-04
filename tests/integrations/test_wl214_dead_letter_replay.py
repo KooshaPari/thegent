@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -74,7 +74,7 @@ class TestDeadLetterReplayEngineReplayOne:
         store_path = Path(tmpdir.name) / "queue.jsonl"
         dlq = DeadLetterQueue(store_path)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         dlq.enqueue(
             DeadLetterEntry(
                 entry_id="DLQ-replay-1",
@@ -188,7 +188,7 @@ class TestDeadLetterReplayEngineReplayAll:
         store_path = Path(tmpdir.name) / "queue.jsonl"
         dlq = DeadLetterQueue(store_path, max_retries=3)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Add 2 pending and 1 resolved
         dlq.enqueue(

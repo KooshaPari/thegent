@@ -1,10 +1,9 @@
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+from thegent.thg_platform import Platform
 
 from thegent.platform_paths import get_config_dir
-from thegent.thg_platform import Platform
 
 
 def test_get_config_dir_macos(monkeypatch):

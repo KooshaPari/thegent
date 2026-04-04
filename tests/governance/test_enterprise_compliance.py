@@ -1,10 +1,8 @@
-import orjson as json
-from datetime import UTC, datetime
-from pathlib import Path
 
+import orjson as json
 import pytest
 
-from thegent.governance.compliance import US_SEC_PROFILE, ComplianceExporter, ComplianceProfileType
+from thegent.governance.compliance import ComplianceExporter
 from thegent.governance.forensics import IncidentReplayer
 from thegent.governance.ledger import IncidentLedger
 from thegent.governance.redaction import PIIRedactor

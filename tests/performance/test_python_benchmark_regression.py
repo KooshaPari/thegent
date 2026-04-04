@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from scripts.check_python_benchmark_regression import find_regressions
 
 

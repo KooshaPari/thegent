@@ -3,8 +3,9 @@
 # @trace FR-DOCS-004
 """
 
-from docs_engine.capture.session_hook import write_conversation_dump
 from docs_engine.db.queries import DocQueries
+
+from docs_engine.capture.session_hook import write_conversation_dump
 
 
 def test_dump_creates_file(tmp_path):

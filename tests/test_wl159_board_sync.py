@@ -3,16 +3,16 @@
 # @trace WL-159
 """
 
-import orjson as json
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import patch
 
+import orjson as json
 import pytest
+from thegent.observability.prometheus import get_metrics_collector, reset_metrics_collector
 
 from thegent.commands.sync import SyncCommand, SyncOperationStatus
-from thegent.observability.prometheus import get_metrics_collector, reset_metrics_collector
 
 
 class TestBoardSyncWorkflow:

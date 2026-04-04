@@ -15,13 +15,11 @@ Coverage targets:
 
 from __future__ import annotations
 
-import orjson as json
 import subprocess
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.native.discovery_native import (
     DiscoveryClient,
     _fallback_processes,

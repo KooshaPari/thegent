@@ -3,17 +3,17 @@
 Scenarios: timeout mid-run, circuit breaker, corrupt session file, input guardrails.
 """
 
-import orjson as json
 import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
+import orjson as json
 import pytest
+from thegent.cli.commands.impl import logs_impl, ps_impl, run_impl, status_impl
 
 from thegent.agents.base import RunResult
-from thegent.cli.commands.impl import logs_impl, ps_impl, run_impl, status_impl
 from thegent.execution import CircuitBreakerRegistry
 
 

@@ -15,11 +15,8 @@ Traces to: FR-ACP-001 (ACP Server Adapter)
 
 from __future__ import annotations
 
-import asyncio
-import orjson as json
 from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from starlette.testclient import TestClient
@@ -30,8 +27,6 @@ from thegent.adapters.acp_server import (
     ACPServerAdapter,
     AgentSession,
     _rpc_error,
-)
-from thegent.adapters.acp_server import (
     app as acp_cli_app,
 )
 from thegent.agents.base import AgentRunner, RunResult

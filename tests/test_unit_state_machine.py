@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
+from thegent.contracts.policy import FallbackPolicy
+from thegent.contracts.telemetry import ContractTelemetry
 
 from tests.conftest_factories import (
     make_adapter_result,
@@ -14,15 +16,14 @@ from tests.conftest_factories import (
     make_run_result,
 )
 from thegent.agents.state_machine import FallbackStateMachine, OrchestrationState
-from thegent.contracts.policy import FallbackPolicy
-from thegent.contracts.telemetry import ContractTelemetry
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from thegent.agents.base import RunResult
     from thegent.contracts.adapters import AdapterResult
     from thegent.contracts.csm import CanonicalStructuredMessage
+
+    from thegent.agents.base import RunResult
 
 # ---------------------------------------------------------------------------
 # Helpers

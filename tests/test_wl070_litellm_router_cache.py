@@ -10,7 +10,7 @@ key is scoped per policy value.
 from __future__ import annotations
 
 from threading import Thread
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 
 class TestGetLitellmRouterCaching:

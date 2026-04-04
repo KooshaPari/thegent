@@ -7,7 +7,6 @@ Related to:
 
 from __future__ import annotations
 
-import pytest
 import time
 
 
@@ -22,7 +21,7 @@ class TestRateLimiting:
 
         # Should track and limit
         for i in range(limit + 1):
-            requests.append(i)  # noqa: PERF402
+            requests.append(i)
 
         assert len(requests) > limit
 

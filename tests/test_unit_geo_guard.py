@@ -1,7 +1,6 @@
 """Unit tests for GeoGuard (WP-35003)."""
 
 import pytest
-
 from thegent.security.geo_guard import GeoGuard, SovereigntyRule
 
 

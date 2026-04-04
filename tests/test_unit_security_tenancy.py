@@ -1,7 +1,7 @@
 import pytest
+from thegent.security.tenancy import KeyIsolator
 
 from thegent.config import ThegentSettings
-from thegent.security.tenancy import KeyIsolator
 
 
 @pytest.fixture

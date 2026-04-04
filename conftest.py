@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-from collections.abc import Iterable
 from pathlib import Path
 from unittest.mock import MagicMock
 

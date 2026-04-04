@@ -8,7 +8,6 @@ import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.orchestration.strategies.discovery import DiscoverySystem, get_discovery_system
 
 

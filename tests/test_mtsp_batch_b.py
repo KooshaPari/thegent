@@ -2,18 +2,16 @@
 
 import asyncio
 import os
-import shutil
 import tempfile
 import threading
 import time
 from pathlib import Path
 
 import pytest
-
-from thegent.agents.direct_agents import DirectAgentRunner
-from thegent.agents.in_process_runner import InProcessAgentRunner
 from thegent.orchestration.worker_pool import TaskRequest, TaskWorkerPool
 from thegent.testing.port_lease import PortLeaseManager
+
+from thegent.agents.in_process_runner import InProcessAgentRunner
 
 
 @pytest.mark.asyncio

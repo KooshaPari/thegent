@@ -9,7 +9,6 @@ import threading
 import time
 
 import pytest
-
 from thegent.observability.async_logger import (
     AsyncObservabilityLogger,
     ObservabilityEvent,
@@ -17,7 +16,6 @@ from thegent.observability.async_logger import (
     get_obs_logger,
     reset_obs_logger,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

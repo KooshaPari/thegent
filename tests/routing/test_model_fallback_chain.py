@@ -5,12 +5,11 @@
 
 from __future__ import annotations
 
-import orjson as json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import orjson as json
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helper factories (shared with other routing tests)
@@ -50,7 +49,9 @@ class TestModelsArraySetsPrimaryModel:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_models_array_sets_primary_model(self) -> None:
         """When request has models: [gpt-4o, claude-sonnet-4.6], primary model is gpt-4o."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = _make_responses_body(
             model="gpt-4o",
@@ -63,7 +64,9 @@ class TestModelsArraySetsPrimaryModel:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_models_array_primary_overrides_empty_model(self) -> None:
         """When model is absent but models[] is present, first models[] entry becomes model."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = {
             "model": "",
@@ -77,7 +80,9 @@ class TestModelsArraySetsPrimaryModel:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_single_model_in_models_array(self) -> None:
         """A single-entry models[] still sets the primary model correctly."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = _make_responses_body(model="gpt-4o", models=["gpt-4o"])
         result = _responses_to_chat_completions(body)
@@ -98,7 +103,9 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_responses_to_chat_completions_extracts_models(self) -> None:
         """Verify _responses_to_chat_completions stores _models in output."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = _make_responses_body(
             model="gpt-4o",
@@ -111,7 +118,9 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_no_models_array_no_underscore_models_key(self) -> None:
         """When models[] is absent, _models key is not present in output."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = _make_responses_body(model="gpt-4o")
         result = _responses_to_chat_completions(body)
@@ -120,7 +129,9 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_empty_models_array_produces_no_underscore_models(self) -> None:
         """An empty models[] list must not produce _models in output."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = _make_responses_body(model="gpt-4o", models=[])
         result = _responses_to_chat_completions(body)
@@ -129,7 +140,9 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_models_key_not_forwarded_as_plain_models(self) -> None:
         """The raw 'models' key must not appear in the output (it becomes _models)."""
-        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import (
+            _responses_to_chat_completions,
+        )
 
         body = _make_responses_body(
             model="gpt-4o",

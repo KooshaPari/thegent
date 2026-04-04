@@ -3,9 +3,9 @@
 from unittest.mock import MagicMock
 
 import pytest
+from thegent.orchestration.execution.prompts import PromptOrchestrator
 
 from thegent.config import ThegentSettings
-from thegent.orchestration.execution.prompts import PromptOrchestrator
 
 
 @pytest.fixture

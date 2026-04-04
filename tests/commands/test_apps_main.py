@@ -1,14 +1,13 @@
 """Unit tests for the modular CLI app entrypoints."""
 
-import orjson as json
-import pytest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import ANY, patch
-from pathlib import Path
 
-from typer.testing import CliRunner
-
+import orjson as json
+import pytest
 from thegent.cli.apps.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

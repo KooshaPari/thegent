@@ -6,16 +6,12 @@ FR Traceability: FR-VER-005 (audit log and diff CLI)
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
 from thegent.cli.apps import audit
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 runner = CliRunner()
 

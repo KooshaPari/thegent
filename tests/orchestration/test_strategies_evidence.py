@@ -5,12 +5,11 @@ and verify_evidence_hash methods.
 """
 
 import hashlib
-import orjson as json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import orjson as json
 import pytest
-
 from thegent.orchestration.strategies.evidence import PromotionGate
 
 

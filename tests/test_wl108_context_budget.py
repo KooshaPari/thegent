@@ -6,14 +6,13 @@
 from __future__ import annotations
 
 import pytest
-
-from thegent.agents.base import RunResult
 from thegent.tui.context_budget import (
     ContextBudget,
     context_budget_from_result,
     context_budget_indicator,
 )
 
+from thegent.agents.base import RunResult
 
 # ---------------------------------------------------------------------------
 # ContextBudget.ratio

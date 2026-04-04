@@ -28,14 +28,12 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.native.watcher_daemon import (
     WatcherDaemon,
     WatchEvent,
     WatchSpec,
     _reset_singleton,
     _SpecHandler,
-    _try_get_breaker,
     get_watcher_daemon,
 )
 

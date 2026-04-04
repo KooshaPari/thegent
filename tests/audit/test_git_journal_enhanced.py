@@ -6,13 +6,11 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 
 from __future__ import annotations
 
-import orjson as json
-import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
 
 pytestmark = pytest.mark.skip(reason="Multiple pre-existing test failures - needs investigation")
@@ -21,10 +19,6 @@ from thegent.audit.shadow_audit_git import (
     GitJournal,
     GitJournalEnhanced,
 )
-
-if TYPE_CHECKING:
-    from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

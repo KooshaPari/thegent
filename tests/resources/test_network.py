@@ -11,7 +11,6 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.resources.network import BandwidthSample, NetworkMonitor, NetworkStats
 
 # ---------------------------------------------------------------------------

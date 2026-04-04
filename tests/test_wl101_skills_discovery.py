@@ -16,19 +16,19 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
-import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
+import orjson as json
 import pytest
-
-from thegent.agents.base import AgentRunner
 from thegent.skills.discovery import (
     SkillActivator,
     SkillDiscovery,
     SkillManifest,
 )
+
+from thegent.agents.base import AgentRunner
 
 # tools_skills lives in a sibling directory named "server/" which has the same
 # name as the module file "server.py", so we load it directly via importlib.
@@ -378,9 +378,8 @@ class TestAgentRunnerActivateSkill:
             __import__("thegent.skills.discovery", fromlist=["SkillDiscovery"]).SkillDiscovery,
             "find",
             side_effect=KeyError("no-skill"),
-        ):
-            with pytest.raises(KeyError):
-                runner.activate_skill("no-skill")
+        ), pytest.raises(KeyError):
+            runner.activate_skill("no-skill")
 
     def test_run_raises_type_error_with_actionable_message(self) -> None:
         # @trace WL-3000
@@ -504,4 +503,3 @@ class TestMcpSkillTools:
         assert result is None
 
 
-# noqa: PT018

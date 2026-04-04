@@ -5,11 +5,11 @@ Tests the state machine, cycle execution, error handling, and graceful shutdown.
 
 from __future__ import annotations
 
-import orjson as json
 import signal
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
 from pydantic import ValidationError
 

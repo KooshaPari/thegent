@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-
 SCRIPT_PATH = Path(__file__).parent.parent / "scripts" / "bootstrap_sync_workflow_project.py"
 
 
@@ -129,4 +128,3 @@ def test_bootstrap_main_dry_run_executes_printing_commands(module: object) -> No
     assert calls and calls[0][0] == "gh"
 
 
-# noqa: PT018

@@ -31,7 +31,7 @@ def test_get_git_commits_git_command_failure_logs_context(
 ) -> None:
     (tmp_path / ".git").mkdir()
 
-    def _failed_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _failed_run(*args, **kwargs):
         return subprocess.CompletedProcess(
             args=["git", "log"],
             returncode=128,

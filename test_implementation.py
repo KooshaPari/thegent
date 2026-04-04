@@ -4,8 +4,9 @@ from pathlib import Path
 # Add src to sys.path
 sys.path.append(str(Path("src").resolve()))
 
+from thegent.routing.tool_router import ToolRouter
+
 from thegent.infra.sandbox import WasmSandbox
-from thegent.routing.tool_router import ToolDefinition, ToolRouter
 
 
 def test_tool_router():

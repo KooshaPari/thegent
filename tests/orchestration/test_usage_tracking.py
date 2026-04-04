@@ -6,18 +6,17 @@
 from __future__ import annotations
 
 import threading
-import time
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
-from thegent.execution import ConcurrencyController
 from thegent.orchestration.resource.load_based_limits import (
     OwnerStats,
     UsageTracker,
     get_usage_tracker,
 )
+
+from thegent.execution import ConcurrencyController
 
 if TYPE_CHECKING:
     from pathlib import Path

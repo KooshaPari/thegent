@@ -569,7 +569,7 @@ class TestSSHIdentityProxyHandleClientIntegration:
                         conn.close()
                     except TimeoutError:
                         pass
-            except Exception as e:
+            except Exception:
                 pass
 
         agent_thread = threading.Thread(target=mock_ssh_agent, daemon=True)
@@ -599,7 +599,7 @@ class TestSSHIdentityProxyHandleClientIntegration:
                 pass
 
             client.close()
-        except Exception as e:
+        except Exception:
             pass
         finally:
             client_done.set()

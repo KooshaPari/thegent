@@ -5,7 +5,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-
 from thegent.sync.board_adapters import GitHubBoardAdapter, LinearBoardAdapter
 
 

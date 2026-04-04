@@ -4,7 +4,6 @@ from types import SimpleNamespace
 
 import pytest
 import typer
-
 from thegent.cli.commands import model_cmds_list as model_cmds
 
 

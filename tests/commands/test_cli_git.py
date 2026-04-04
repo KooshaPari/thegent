@@ -1,11 +1,10 @@
 """Tests for `thegent git` command options."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from typer.testing import CliRunner
-
+import pytest
 from thegent.cli.apps.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

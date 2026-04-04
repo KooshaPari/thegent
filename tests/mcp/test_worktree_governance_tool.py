@@ -24,9 +24,10 @@ def test_mcp_server_exports_structured_worktree_governance_tool() -> None:
 async def test_mcp_server_forwards_legacy_migration_action(monkeypatch, tmp_path) -> None:
     """The consolidated MCP worktree tool should forward legacy migration requests."""
     from thegent.cli.commands import cli_git_worktree_governance as cli_module
+
     from thegent.mcp import server
 
-    def _fake_run(project_root, *args):  # noqa: ANN001
+    def _fake_run(project_root, *args):
         assert project_root == tmp_path
         assert args[0] == "migrate-legacy"
         return SimpleNamespace(returncode=0, stdout="[OK] migrated legacy worktree\n", stderr="")

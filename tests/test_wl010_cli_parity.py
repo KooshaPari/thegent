@@ -9,11 +9,9 @@ Focus: help/command presence parity across:
 from __future__ import annotations
 
 import pytest
+from thegent.cli.apps.project import install_app, setup_project_app, update_app
 from typer import Typer
 from typer.testing import CliRunner
-
-from thegent.cli.apps.project import install_app, setup_project_app, update_app
-
 
 BROWNFIELD_VARIANTS = ("brownfield", "ag-dd", "none")
 PROJECT_SURFACES: tuple[tuple[str, Typer], ...] = (

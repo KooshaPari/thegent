@@ -10,13 +10,11 @@ Tests for:
 
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import orjson as json
 import pytest
-from typer.testing import CliRunner
-
 from thegent.cli.apps.main import app
 from thegent.cli.commands.impl import (
     _session_state_path,
@@ -24,6 +22,7 @@ from thegent.cli.commands.impl import (
     resume_impl,
     session_list_impl,
 )
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

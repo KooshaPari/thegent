@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.sync.engine import SyncEngineConfig, enforce_max_changes_per_cycle
 
 

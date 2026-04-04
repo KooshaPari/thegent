@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from thegent.cli.apps.memory import app
-
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

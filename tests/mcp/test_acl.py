@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.mcp.acl import AclCheckResult, AclRule, McpAcl, check_mcp_acl
 
 

@@ -1,7 +1,6 @@
 """Unit tests for WP-7003/7004: StreamingXMLParser with checkpoint and recovery."""
 
 import pytest
-
 from thegent.contracts.parser import ParserState, StreamingXMLParser
 
 

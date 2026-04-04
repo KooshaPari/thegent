@@ -5,9 +5,13 @@ import sys
 import types
 
 import pytest
+from thegent.config_provider import (
+    EnvConfigProvider,
+    get_config_provider,
+    get_last_provider_metadata,
+)
 
 from thegent import config_provider
-from thegent.config_provider import EnvConfigProvider, get_config_provider, get_last_provider_metadata
 
 
 @pytest.mark.unit

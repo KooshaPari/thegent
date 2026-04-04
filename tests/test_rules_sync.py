@@ -6,20 +6,15 @@ FR Traceability: FR-HAX-002
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
-
 from thegent.core.rules_sync import (
-    ALL_PLATFORMS,
     Rule,
     RulesSyncManager,
     RulesSyncResult,
-    SyncRecord,
     _parse_frontmatter,
     _replace_managed_section,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -577,9 +572,8 @@ class TestRulesSyncCLI:
 
     def test_rules_subcommand_visible_in_help(self) -> None:
         # @trace FR-HAX-002
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.main import app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         result = runner.invoke(app, ["--help"])
@@ -588,9 +582,8 @@ class TestRulesSyncCLI:
 
     def test_rules_sync_help_reachable(self) -> None:
         # @trace FR-HAX-002
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.rules import app as rules_app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         # When invoked via the rules sub-app directly (not through main),
@@ -603,9 +596,8 @@ class TestRulesSyncCLI:
     def test_rules_sync_dry_run_flag(self, tmp_path: Path) -> None:
         # @trace FR-HAX-002
         _make_rules_dir(tmp_path, [_default_rule()])
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.rules import app as rules_app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         result = runner.invoke(rules_app, ["--dry-run", "--project", str(tmp_path)])
@@ -615,9 +607,8 @@ class TestRulesSyncCLI:
     def test_rules_sync_cursor_platform_only(self, tmp_path: Path) -> None:
         # @trace FR-HAX-002
         _make_rules_dir(tmp_path, [_default_rule()])
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.rules import app as rules_app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         result = runner.invoke(rules_app, ["--platform", "cursor", "--project", str(tmp_path)])
@@ -627,9 +618,8 @@ class TestRulesSyncCLI:
 
     def test_rules_sync_invalid_platform_exits_1(self, tmp_path: Path) -> None:
         # @trace FR-HAX-002
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.rules import app as rules_app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         result = runner.invoke(rules_app, ["--platform", "vscode", "--project", str(tmp_path)])
@@ -637,9 +627,8 @@ class TestRulesSyncCLI:
 
     def test_rules_sync_no_rules_dir_exits_nonzero(self, tmp_path: Path) -> None:
         # @trace FR-HAX-002
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.rules import app as rules_app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         result = runner.invoke(rules_app, ["--project", str(tmp_path)])
@@ -648,9 +637,8 @@ class TestRulesSyncCLI:
     def test_rules_sync_all_platforms_writes_all_files(self, tmp_path: Path) -> None:
         # @trace FR-HAX-002
         _make_rules_dir(tmp_path, [_default_rule()])
-        from typer.testing import CliRunner
-
         from thegent.cli.apps.rules import app as rules_app
+        from typer.testing import CliRunner
 
         runner = CliRunner()
         result = runner.invoke(rules_app, ["--project", str(tmp_path)])

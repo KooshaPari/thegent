@@ -1,0 +1,10 @@
+#!/bin/bash
+# Pre-commit hook for quality gates
+AGILEPLUS_DIR="$(cd "$(dirname "$0")/../.." && pwd)/AgilePlus"
+if [ -f "$AGILEPLUS_DIR/bin/pquality-gate" ]; then
+    echo "Running Phenotype Quality Gate..."
+    $AGILEPLUS_DIR/bin/pquality-gate --path . --strict || {
+        echo "Quality gate failed. Fix issues before committing."
+        exit 1
+    }
+fi

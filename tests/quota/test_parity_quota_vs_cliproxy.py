@@ -16,8 +16,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-
+from datetime import UTC, datetime, timedelta
 
 # ========================================================================
 # Quota Enforcer Implementation (Python equivalent of CLIProxy)
@@ -55,7 +54,7 @@ class QuotaEnforcer:
         """
         self.quota = quota
         self.usage = UsageRecord()
-        self.reset_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        self.reset_at = datetime.now(UTC) + timedelta(hours=24)
         self._lock = threading.Lock()
 
     def check_quota(self, estimated_tokens: float, estimated_cost: float) -> bool:
@@ -115,10 +114,10 @@ class QuotaEnforcer:
         Note: Called with lock held. This is safe because reset is idempotent
         and rare in typical workloads.
         """
-        if datetime.now(timezone.utc) >= self.reset_at:
+        if datetime.now(UTC) >= self.reset_at:
             self.usage.tokens_used = 0.0
             self.usage.cost_used = 0.0
-            self.reset_at = datetime.now(timezone.utc) + timedelta(hours=24)
+            self.reset_at = datetime.now(UTC) + timedelta(hours=24)
 
 
 # ========================================================================
@@ -211,9 +210,9 @@ class TestQuotaEnforcer24hReset:
     def test_reset_at_initialization(self) -> None:
         """Test reset_at is set to 24h from now on init."""
         quota = QuotaLimit(max_tokens_per_day=100.0)
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         enforcer = QuotaEnforcer(quota)
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
 
         expected_min = before + timedelta(hours=24)
         expected_max = after + timedelta(hours=24, seconds=1)
@@ -225,7 +224,7 @@ class TestQuotaEnforcer24hReset:
         enforcer = QuotaEnforcer(quota)
 
         # Manually set reset_at to the past to trigger reset
-        enforcer.reset_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        enforcer.reset_at = datetime.now(UTC) - timedelta(seconds=1)
 
         # Record usage
         enforcer.record_usage(UsageRecord(tokens_used=50.0, cost_used=50.0))
@@ -245,13 +244,13 @@ class TestQuotaEnforcer24hReset:
         enforcer = QuotaEnforcer(quota)
 
         # Set reset_at to past
-        enforcer.reset_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        enforcer.reset_at = datetime.now(UTC) - timedelta(seconds=1)
         old_reset_at = enforcer.reset_at
 
         # Trigger reset
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         enforcer.check_quota(10.0, 10.0)
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
 
         # New reset_at should be ~24h from now
         expected_min = before + timedelta(hours=24)
@@ -265,7 +264,7 @@ class TestQuotaEnforcer24hReset:
         enforcer = QuotaEnforcer(quota)
 
         # Set reset_at far in future
-        enforcer.reset_at = datetime.now(timezone.utc) + timedelta(hours=23)
+        enforcer.reset_at = datetime.now(UTC) + timedelta(hours=23)
 
         # Record usage
         enforcer.record_usage(UsageRecord(tokens_used=50.0, cost_used=0.0))
@@ -444,9 +443,9 @@ class TestQuotaEnforcerParity:
     def test_parity_reset_window_24h(self) -> None:
         """Verify reset window is 24h (CLIProxy: 24 * time.Hour)."""
         quota = QuotaLimit(max_tokens_per_day=100.0)
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         enforcer = QuotaEnforcer(quota)
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
 
         expected_min = before + timedelta(hours=24)
         expected_max = after + timedelta(hours=24, seconds=1)
@@ -478,7 +477,7 @@ class TestQuotaEnforcerParity:
         enforcer = QuotaEnforcer(quota)
 
         # Force reset in the past
-        enforcer.reset_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+        enforcer.reset_at = datetime.now(UTC) - timedelta(seconds=1)
         enforcer.record_usage(UsageRecord(tokens_used=50.0, cost_used=0.0))
 
         # First check (triggers reset)

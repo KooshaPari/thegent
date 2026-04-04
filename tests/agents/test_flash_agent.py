@@ -405,10 +405,12 @@ async def test_agent_ids_unique_across_runs():
 
 def test_public_exports_from_agents_package():
     """FR-AGT-020: FlashAgent, FlashAgentConfig, FlashAgentResult, flash all exported."""
-    from thegent.agents import FlashAgent as ImportedFlashAgent
-    from thegent.agents import FlashAgentConfig as ImportedFlashAgentConfig
-    from thegent.agents import FlashAgentResult as ImportedFlashAgentResult
-    from thegent.agents import flash as flash_fn
+    from thegent.agents import (
+        FlashAgent as ImportedFlashAgent,
+        FlashAgentConfig as ImportedFlashAgentConfig,
+        FlashAgentResult as ImportedFlashAgentResult,
+        flash as flash_fn,
+    )
 
     assert ImportedFlashAgent is FlashAgent
     assert ImportedFlashAgentConfig is FlashAgentConfig

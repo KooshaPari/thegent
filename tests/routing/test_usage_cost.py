@@ -65,7 +65,7 @@ def test_inject_usage_cost_does_not_mutate() -> None:
     assert id(result["usage"]) != original_usage_id
     # The originals are unchanged
     assert "cost" not in original_usage
-    assert body is body  # sanity: body variable unchanged  # noqa: PLR0124
+    assert body is body  # sanity: body variable unchanged
 
 
 @pytest.mark.requirement("FR-REQEXT-048")

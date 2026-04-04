@@ -9,4 +9,4 @@ continue to work now that ``config`` is a regular Python package.
 
 from __future__ import annotations
 
-from .python.settings import *  # noqa: F401,F403
+from .python.settings import *  # noqa: F403

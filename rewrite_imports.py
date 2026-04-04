@@ -4,7 +4,6 @@ workspace packages, mapping old monorepo modules to their new package names.
 """
 
 import re
-import sys
 from pathlib import Path
 
 # ---------------------------------------------------------------------------

@@ -19,19 +19,20 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from thegent.compute import RemoteRunner as ExportedRunner
-from thegent.compute import RemoteRunnerError as ExportedError
-from thegent.compute import RemoteProcess as ExportedProcess
 from thegent.compute.remote_runner import (
     RemoteProcess,
     RemoteRunner,
     RemoteRunnerError,
     load_config_from_env,
+)
+
+from thegent.compute import (
+    RemoteProcess as ExportedProcess,
+    RemoteRunner as ExportedRunner,
+    RemoteRunnerError as ExportedError,
 )
 
 # ---------------------------------------------------------------------------

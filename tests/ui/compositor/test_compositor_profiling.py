@@ -33,15 +33,14 @@ from __future__ import annotations
 import time
 
 import pytest
-
-from thegent.ui import CompositorProfiler as UICompositorProfiler
-from thegent.ui import RenderProfile as UIRenderProfile
 from thegent.ui.compositor.compositor import (
     Compositor,
     CompositorProfiler,
     Panel,
     RenderProfile,
 )
+
+from thegent.ui import CompositorProfiler as UICompositorProfiler, RenderProfile as UIRenderProfile
 
 # ---------------------------------------------------------------------------
 # Helpers

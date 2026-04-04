@@ -5,11 +5,10 @@
 
 from __future__ import annotations
 
-from typer.testing import CliRunner
-
 from thegent.cli.apps.main import app
 from thegent.sync.conflicts import SyncConflict
 from thegent.sync.queue import ConflictQueueStore
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

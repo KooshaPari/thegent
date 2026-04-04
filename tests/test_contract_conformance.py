@@ -5,6 +5,7 @@ and produces semantically valid CanonicalStructuredMessage (CSM) objects.
 """
 
 import pytest
+from thegent.contracts.validation import validate_csm
 
 from thegent.contracts import (
     ADAPTER_REGISTRY,
@@ -13,7 +14,6 @@ from thegent.contracts import (
     OutputAdapter,
     normalize_output,
 )
-from thegent.contracts.validation import validate_csm
 
 
 @pytest.mark.parametrize("provider", list(ADAPTER_REGISTRY.keys()))

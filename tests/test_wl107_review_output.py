@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import orjson as json
-
 import pytest
+from thegent.cli.apps.main import app
 from typer.testing import CliRunner
 
 from thegent.agents.review_output import parse_review_output, validate_review_output
-from thegent.cli.apps.main import app
 
 runner = CliRunner()
 

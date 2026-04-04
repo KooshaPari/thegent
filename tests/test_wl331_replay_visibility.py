@@ -8,10 +8,9 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime, timedelta
 
-from typer.testing import CliRunner
-
 from thegent.cli.apps.sync import app
 from thegent.sync.dead_letter_queue import RemoteWriteDeadLetterQueue, RemoteWriteDeadLetterRecord
+from typer.testing import CliRunner
 
 
 def _seed_dead_letter_queue(tmp_path) -> None:

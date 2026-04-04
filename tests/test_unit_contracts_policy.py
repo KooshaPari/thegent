@@ -1,9 +1,9 @@
 """Unit tests for thegent.contracts.policy -- FallbackPolicy and evaluate_fallback."""
 
 import pytest
+from thegent.contracts.policy import FallbackPolicy, evaluate_fallback
 
 from tests.conftest_factories import make_fallback_policy
-from thegent.contracts.policy import FallbackPolicy, evaluate_fallback
 
 
 @pytest.mark.unit

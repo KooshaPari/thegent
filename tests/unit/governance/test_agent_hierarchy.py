@@ -1,9 +1,5 @@
 """Tests for governance/agent_hierarchy.py - WP-16001+ agent hierarchy management."""
 
-import json
-import tempfile
-from datetime import UTC, datetime
-from pathlib import Path
 
 import pytest
 

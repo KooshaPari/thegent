@@ -17,7 +17,6 @@ import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.cli.commands.impl import (
     _EAGAIN_ERRNOS,
     _backoff_delay,

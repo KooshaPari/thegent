@@ -17,7 +17,6 @@ from typing import Any
 
 import pytest
 from pydantic import ValidationError
-
 from thegent.models.task_io import TaskError, TaskInput, TaskOutput, TaskSpec
 
 # ---------------------------------------------------------------------------

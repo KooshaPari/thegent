@@ -7,9 +7,9 @@ Related to:
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch
+
+import pytest
 
 
 class TestConfigPathValidation:
@@ -23,7 +23,7 @@ class TestConfigPathValidation:
         config_path = Path("/CLIProxyAPI/config.yaml")
 
         # Should fail if it's a directory
-        with pytest.raises(ValueError, match=r"config.*directory"):  # noqa: PT012
+        with pytest.raises(ValueError, match=r"config.*directory"):
             if config_path.is_dir():
                 raise ValueError("Config path cannot be a directory")
 
@@ -33,7 +33,6 @@ class TestConfigPathValidation:
 
     def test_config_expand_user(self) -> None:
         """Config path should expand user home."""
-        from thegent.agents.cliproxy_manager import expand_config_path
         # Test expansion works
 
 

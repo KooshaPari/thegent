@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -101,7 +100,7 @@ class TestGetActiveAgentCount:
         fake_proc = MagicMock()
         fake_proc.pid = 1234
         fake_proc.info = {"pid": 1234, "name": "claude", "cmdline": ["claude"]}
-        
+
         with patch("thegent.cli.commands.impl.ps_impl", side_effect=RuntimeError("error")):
             with patch("psutil.process_iter", return_value=[fake_proc]):
                 count = get_active_agent_count()
@@ -247,7 +246,7 @@ class TestAutoLaunchSystemTryLaunchNext:
         system = AutoLaunchSystem()
         system.db = MagicMock()
         system.db.get_ready_items.return_value = []
-        
+
         with patch("thegent.planning.auto_launch.check_agent_throttle",
                    return_value=_ThrottleResult("hard_stop", 80, 80, "hard stop")):
             asyncio.get_event_loop().run_until_complete(system._try_launch_next())
@@ -259,11 +258,11 @@ class TestAutoLaunchSystemTryLaunchNext:
         system.db = MagicMock()
         system.db.get_ready_items.return_value = []
         system.launch_batch = AsyncMock()
-        
+
         with patch("thegent.planning.auto_launch.check_agent_throttle",
                    return_value=_ThrottleResult("ok", 5, 20, "ok")):
             asyncio.get_event_loop().run_until_complete(system._try_launch_next())
-        
+
         system.launch_batch.assert_not_called()
 
 
@@ -277,7 +276,7 @@ class TestAutoLaunchSystemLaunchBatch:
         system.rbac_manager = MagicMock()
         system.rbac_manager.has_permission.return_value = True
         system.alert_fatigue = MagicMock()
-        
+
         with patch("thegent.planning.auto_launch.check_agent_throttle",
                    return_value=_ThrottleResult("hard_stop", 80, 80, "hard stop")):
             with pytest.raises(RuntimeError, match="HARD STOP"):
@@ -292,7 +291,7 @@ class TestAutoLaunchSystemLaunchBatch:
         system.rbac_manager = MagicMock()
         system.rbac_manager.has_permission.return_value = True
         system.alert_fatigue = MagicMock()
-        
+
         with patch("thegent.planning.auto_launch.check_agent_throttle",
                    return_value=_ThrottleResult("throttle", 55, 50, "throttle")):
             with pytest.raises(RuntimeError, match="throttle limit"):
@@ -309,11 +308,11 @@ class TestAutoLaunchSystemLaunchBatch:
         system.rbac_manager._role_from_settings.return_value = MagicMock()
         system.alert_fatigue = MagicMock()
         system._launch_item = AsyncMock()
-        
+
         with patch("thegent.planning.auto_launch.check_agent_throttle",
                    return_value=_ThrottleResult("ok", 5, 20, "ok")):
             asyncio.get_event_loop().run_until_complete(
                 system.launch_batch([{"item_id": "x", "prompt": "p"}])
             )
-        
+
         system._launch_item.assert_not_called()

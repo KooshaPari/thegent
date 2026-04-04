@@ -1,8 +1,8 @@
 """Unit tests for thegent.shell_cli error handling."""
 
+import platform as py_platform
 import subprocess
 from pathlib import Path
-import platform as py_platform
 
 import pytest
 from typer.testing import CliRunner
@@ -16,7 +16,7 @@ def runner() -> CliRunner:
 
 
 def test_shell_reload_exits_nonzero_on_source_failure(monkeypatch: pytest.MonkeyPatch, runner: CliRunner) -> None:
-    def _failed_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _failed_run(*args, **kwargs):
         return subprocess.CompletedProcess(
             args=["zsh", "-c", "source ~/.zshrc"],
             returncode=7,
@@ -37,7 +37,7 @@ def test_shell_doctor_alias_probe_success(monkeypatch: pytest.MonkeyPatch, tmp_p
     (tmp_path / ".zsh_bundle.zsh").write_text("echo bundle\n", encoding="utf-8")
     monkeypatch.setattr(shell_cli_module.Path, "home", lambda: tmp_path)
 
-    def _probe_success(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _probe_success(*args, **kwargs):
         return subprocess.CompletedProcess(args=args[0], returncode=0, stdout="", stderr="")
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _probe_success)
@@ -57,7 +57,7 @@ def test_shell_doctor_records_alias_probe_timeout_warning(
     (tmp_path / ".zsh_bundle.zsh").write_text("echo bundle\n", encoding="utf-8")
     monkeypatch.setattr(shell_cli_module.Path, "home", lambda: tmp_path)
 
-    def _timeout_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _timeout_run(*args, **kwargs):
         raise subprocess.TimeoutExpired(cmd=["zsh", "-c", "alias ls"], timeout=2)
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _timeout_run)
@@ -76,7 +76,7 @@ def test_shell_doctor_records_alias_probe_os_error(
     (tmp_path / ".zsh_bundle.zsh").write_text("echo bundle\n", encoding="utf-8")
     monkeypatch.setattr(shell_cli_module.Path, "home", lambda: tmp_path)
 
-    def _error_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _error_run(*args, **kwargs):
         raise FileNotFoundError(2, "No such file or directory", "zsh")
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _error_run)
@@ -116,7 +116,7 @@ def _set_platform_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_shell_platform_probe_success(monkeypatch: pytest.MonkeyPatch, runner: CliRunner) -> None:
     _set_platform_stubs(monkeypatch)
 
-    def _version_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _version_run(*args, **kwargs):
         return subprocess.CompletedProcess(
             args=args[0], returncode=0, stdout="zsh 5.9 (x86_64-apple-darwin)\n", stderr=""
         )
@@ -133,7 +133,7 @@ def test_shell_platform_probe_success(monkeypatch: pytest.MonkeyPatch, runner: C
 def test_shell_platform_probe_timeout(monkeypatch: pytest.MonkeyPatch, runner: CliRunner) -> None:
     _set_platform_stubs(monkeypatch)
 
-    def _timeout_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _timeout_run(*args, **kwargs):
         raise subprocess.TimeoutExpired(cmd=["zsh", "--version"], timeout=2)
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _timeout_run)
@@ -146,7 +146,7 @@ def test_shell_platform_probe_timeout(monkeypatch: pytest.MonkeyPatch, runner: C
 def test_shell_platform_probe_missing_binary(monkeypatch: pytest.MonkeyPatch, runner: CliRunner) -> None:
     _set_platform_stubs(monkeypatch)
 
-    def _missing_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _missing_run(*args, **kwargs):
         raise FileNotFoundError(2, "No such file or directory", "zsh")
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _missing_run)
@@ -159,7 +159,7 @@ def test_shell_platform_probe_missing_binary(monkeypatch: pytest.MonkeyPatch, ru
 def test_shell_platform_probe_subprocess_error(monkeypatch: pytest.MonkeyPatch, runner: CliRunner) -> None:
     _set_platform_stubs(monkeypatch)
 
-    def _error_run(*args, **kwargs):  # noqa: ANN002, ANN003
+    def _error_run(*args, **kwargs):
         raise subprocess.SubprocessError("zsh probe failed")
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _error_run)

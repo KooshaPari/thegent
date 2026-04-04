@@ -3,8 +3,9 @@
 # @trace FR-DOCS-005
 """
 
-from docs_engine.capture.commit_hook import write_worklog_entry
 from docs_engine.db.queries import DocQueries
+
+from docs_engine.capture.commit_hook import write_worklog_entry
 
 
 def test_worklog_created(tmp_path):

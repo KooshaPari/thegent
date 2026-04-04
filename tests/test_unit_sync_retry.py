@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.sync.retry import RetryPolicy, operation_mode, should_retry
 
 

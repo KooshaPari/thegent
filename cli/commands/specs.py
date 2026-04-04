@@ -2,11 +2,11 @@
 CLI commands for specs/WBS/PRD generation.
 """
 
-import orjson as json
 import sys
 from pathlib import Path
 
 import click
+import orjson as json
 
 # Add thegent to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))

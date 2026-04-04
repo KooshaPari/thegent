@@ -6,12 +6,11 @@ from unittest.mock import patch
 
 import pytest
 import typer
-from typer.testing import CliRunner
-
 from thegent.cli.apps.run import app as run_app
 from thegent.cli.commands import cli as cli_cmd
-from thegent.session import SessionManagerError
+from typer.testing import CliRunner
 
+from thegent.session import SessionManagerError
 
 runner = CliRunner()
 

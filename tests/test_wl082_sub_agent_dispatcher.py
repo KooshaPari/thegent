@@ -39,13 +39,9 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
-from thegent.agents.plangent import PlanNode
 from thegent.orchestration.inter_agent_protocol import InterAgentMessage, MessageBus
 from thegent.orchestration.plan import OrchestrationPlan
 from thegent.orchestration.sub_agent_dispatcher import SubAgentDispatcher
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

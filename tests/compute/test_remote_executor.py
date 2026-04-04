@@ -21,14 +21,9 @@ from __future__ import annotations
 
 import asyncio
 import subprocess
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
-from thegent.compute import RemoteExecutor as ExportedExecutor
-from thegent.compute import RemoteExecutorError as ExportedError
-from thegent.compute import RemoteResult as ExportedResult
-from thegent.compute import RemoteTask as ExportedTask
 from thegent.compute.remote_executor import (
     RemoteExecutor,
     RemoteExecutorError,
@@ -36,6 +31,13 @@ from thegent.compute.remote_executor import (
     RemoteTask,
     _load_nodes_from_env,
     _load_ssh_user_from_env,
+)
+
+from thegent.compute import (
+    RemoteExecutor as ExportedExecutor,
+    RemoteExecutorError as ExportedError,
+    RemoteResult as ExportedResult,
+    RemoteTask as ExportedTask,
 )
 
 # ---------------------------------------------------------------------------

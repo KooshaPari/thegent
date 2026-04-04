@@ -65,4 +65,3 @@ def test_scaffold_plan_references_wl104_unblock() -> None:
     assert "WL-104" in content, "Scaffold plan must reference WL-104 as unblock condition"
 
 
-# noqa: PT018

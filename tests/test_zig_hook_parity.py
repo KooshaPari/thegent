@@ -20,12 +20,12 @@ Test Coverage:
 - AI slop detector logic
 """
 
-import orjson as json
-import subprocess
-import pytest
-import tempfile
 import os
+import subprocess
 from pathlib import Path
+
+import orjson as json
+import pytest
 
 
 @pytest.fixture

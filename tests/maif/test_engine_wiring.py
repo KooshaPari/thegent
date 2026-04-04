@@ -1,15 +1,13 @@
 """Tests for ExecutionEngine and MAIFAgentRunner wiring."""
 
-import orjson as json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from thegent.orchestration.execution.engine import ExecutionEngine
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.maif_runner import MAIFAgentRunner
 from thegent.execution import RunMeta
-from thegent.orchestration.execution.engine import ExecutionEngine
 
 
 class MockRunner(AgentRunner):

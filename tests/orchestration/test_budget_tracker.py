@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.orchestration.budget_tracker import BudgetExceededError, BudgetTracker
 
 

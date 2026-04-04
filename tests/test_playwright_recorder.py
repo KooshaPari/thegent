@@ -8,10 +8,10 @@ Tests cover:
 - Result serialization
 """
 
-import orjson as json
 import tempfile
 from pathlib import Path
 
+import orjson as json
 import pytest  # type: ignore
 from pydantic_core import ValidationError
 
@@ -125,7 +125,7 @@ class TestRecordingConfig:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir) / "recordings"
             assert not output_dir.exists()
-            _ = RecordingConfig(output_dir=output_dir)  # noqa: F841
+            _ = RecordingConfig(output_dir=output_dir)
 
             assert output_dir.exists()
             assert output_dir.is_dir()

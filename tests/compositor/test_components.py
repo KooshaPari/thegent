@@ -5,7 +5,6 @@ Tests OutputWidget, StatusWidget, SidebarWidget and other basic components.
 
 import pytest
 from textual.app import App, ComposeResult
-
 from thegent.compositor.components import (
     DiffViewerPanel,
     FooterStatusBar,

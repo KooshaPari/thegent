@@ -27,8 +27,7 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
-
-from thegent.ui.compositor.compositor import CacheStats, Compositor, Panel
+from thegent.ui.compositor.compositor import Compositor, Panel
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -20,12 +20,11 @@ import pytest
 import yaml
 
 from thegent.agents.capability_index import (
-    AgentRecord,
     AgentRecommendation,
+    AgentRecord,
     CapabilityIndex,
     DoctorResult,
     _coerce_list,
-    _load_agent_file,
     _parse_frontmatter,
     _tf_idf_score,
     _tokenize,
@@ -582,9 +581,8 @@ class TestAutoAgentSelection:
             mock_index.recommend.return_value = [mock_rec]
             mock_run_cmd.return_value = None
 
-            from typer.testing import CliRunner
-
             from thegent.cli.apps.run import app
+            from typer.testing import CliRunner
 
             runner = CliRunner()
             result = runner.invoke(app, ["agent", "write documentation for my module"], catch_exceptions=True)
@@ -598,9 +596,8 @@ class TestAutoAgentSelection:
         CapabilityIndex.invalidate()
 
         with patch("thegent.cli.apps.run._auto_select_agent") as mock_select:
-            from typer.testing import CliRunner
-
             from thegent.cli.apps.run import app
+            from typer.testing import CliRunner
 
             runner = CliRunner()
             with patch("thegent.cli.commands.cli.run_cmd") as mock_run_cmd:

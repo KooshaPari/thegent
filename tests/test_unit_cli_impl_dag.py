@@ -8,12 +8,11 @@ observe_summary_impl, cockpit_cmd, feedback_cmd, _observe_summary_freshness_buck
 and health serialization helpers.
 """
 
-import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
-
 from thegent.cli.commands.impl import (
     HEALTH_PAYLOAD_SCHEMA_VERSION,
     DagDocument,
@@ -1016,7 +1015,6 @@ class TestHealthTrendImpl:
     def test_trend_invalid_payload_type(self) -> None:
         # @trace FR-CLI-190
         import typer
-
         from thegent.cli.commands.impl import session_contract_health_trend_impl
 
         with pytest.raises(typer.BadParameter):

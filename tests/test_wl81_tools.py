@@ -8,8 +8,6 @@ Related to:
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestToolCallValidation:
     """Test tool call validation."""
@@ -48,7 +46,7 @@ class TestFunctionExecution:
         try:
             raise ValueError("test error")
         except ValueError as e:
-            assert str(e) == "test error"  # noqa: PT017
+            assert str(e) == "test error"
 
     def test_result_serializable(self) -> None:
         """Results should be serializable."""

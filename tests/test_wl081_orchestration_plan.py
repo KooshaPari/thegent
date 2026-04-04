@@ -15,8 +15,6 @@ Covers:
 from __future__ import annotations
 
 import pytest
-
-from thegent.agents.plangent import Plan, PlanNode
 from thegent.orchestration.plan import (
     AGENT_HINT,
     BUDGET_TIME_S,
@@ -29,6 +27,7 @@ from thegent.orchestration.plan import (
     OrchestrationPlan,
 )
 
+from thegent.agents.plangent import Plan, PlanNode
 
 # ---------------------------------------------------------------------------
 # Helpers

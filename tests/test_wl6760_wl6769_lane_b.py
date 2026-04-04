@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-import orjson as json
 import sys
 import types
 from pathlib import Path
 
 import httpx
+import orjson as json
 import pytest
+from thegent.cross_project.registry import CrossProjectRegistry
 
 from thegent.agents import cliproxy_manager
 from thegent.cli.services import run_guard_helpers
 from thegent.config import ThegentSettings
-from thegent.cross_project.registry import CrossProjectRegistry
 from thegent.execution import get_last_poll_session_messages_meta, poll_session_messages
 
 

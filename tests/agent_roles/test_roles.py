@@ -1,10 +1,9 @@
 """Integration tests for agent_roles end-to-end flow. @trace FR-AGT-050"""
 
 import pytest
-
-from agent_roles.spec import AgentRoleSpec
-from agent_roles.renderer import RoleRenderer
 from agent_roles.hook_registrar import HookRegistrar
+from agent_roles.renderer import RoleRenderer
+from agent_roles.spec import AgentRoleSpec
 
 
 @pytest.fixture

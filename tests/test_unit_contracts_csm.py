@@ -1,9 +1,9 @@
 """Unit tests for thegent.contracts.csm -- CanonicalStructuredMessage, CSMStatus, CSMPhase."""
 
 import pytest
+from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 
 from tests.conftest_factories import make_csm
-from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 
 
 @pytest.mark.unit

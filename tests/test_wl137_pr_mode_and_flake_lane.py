@@ -5,13 +5,13 @@ Covers tasks 87-100 from the pytest optimization wave plan.
 
 from __future__ import annotations
 
-import orjson as json
 import os
-from datetime import datetime, timezone
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
+import orjson as json
 from scripts.test_pytest_wave_artifacts import _parse_collect_metrics
 
 ROOT = Path(__file__).parent.parent
@@ -681,7 +681,7 @@ def test_traceability_quarterly_cleanup_task_creates_issue_contract(tmp_path: Pa
         "# @trace FR-OLD-001\ndef test_old_trace_only():\n    assert True\n",
         encoding="utf-8",
     )
-    stale_time = datetime.now(timezone.utc).timestamp() - (4 * 24 * 60 * 60)
+    stale_time = datetime.now(UTC).timestamp() - (4 * 24 * 60 * 60)
     os.utime(stale_test, (stale_time, stale_time))
 
     debt_output = tmp_path / "requirements-cleanup.json"

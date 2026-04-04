@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from thegent.tools.terminal import TmuxPane
 from thegent.ux.compositor import TUICompositor
 

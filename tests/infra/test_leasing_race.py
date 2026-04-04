@@ -11,7 +11,6 @@ import threading
 from pathlib import Path
 
 import pytest
-
 from thegent.orchestration.resource.leasing import EditLeaseManager
 
 

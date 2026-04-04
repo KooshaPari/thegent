@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from thegent.ui.compositor import CompositApp, PaneManager, SessionState, TerminalPane
 
 

@@ -6,7 +6,6 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
-
 _ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT_PATH = _ROOT / "scripts" / "cliproxy_provider_smoke.py"
 
@@ -204,4 +203,3 @@ def test_run_matrix_retries_anthropic_with_messages_payload(monkeypatch) -> None
     assert any("messages" in call for call in post_calls)
 
 
-# noqa: PT018

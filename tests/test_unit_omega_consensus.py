@@ -1,7 +1,6 @@
 """Unit tests for Omega Consensus (WP-45003)."""
 
 import pytest
-
 from thegent.orchestration.consensus.omega_consensus import OmegaConsensus
 
 

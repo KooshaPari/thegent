@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.orchestration.protocol import SubAgentResult, SubAgentStatus
 from thegent.orchestration.result_aggregator import AggregatedResult, ResultAggregator
 

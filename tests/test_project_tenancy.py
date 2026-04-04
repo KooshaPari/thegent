@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 
-import orjson as json
 from typing import TYPE_CHECKING
 
+import orjson as json
 import pytest
 from typer.testing import CliRunner
 
@@ -35,7 +35,7 @@ def tmp_registry(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def tenancy(tmp_registry: Path):  # noqa: ANN201 -- pytest fixture
+def tenancy(tmp_registry: Path):
     from thegent.infra.project_tenancy import ProjectTenancy
 
     return ProjectTenancy(registry_path=tmp_registry)

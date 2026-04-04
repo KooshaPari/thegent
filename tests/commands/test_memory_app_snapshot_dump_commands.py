@@ -1,8 +1,7 @@
 """CLI help smoke tests for memory snapshot and dump subcommands."""
 
-from typer.testing import CliRunner
-
 from thegent.cli.apps.memory import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

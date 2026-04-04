@@ -11,7 +11,6 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.resources.disk import DiskIoStats, DiskMonitor, DiskQueueSample
 
 # ---------------------------------------------------------------------------

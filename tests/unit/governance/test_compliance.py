@@ -1,13 +1,15 @@
 """Tests for governance/compliance.py - WP-15004 certification export profiles."""
 
 import json
-import tempfile
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
+from datetime import UTC, datetime
 
 import pytest
 
 from thegent.governance.compliance import (
+    EU_AI_ACT_PROFILE,
+    GDPR_PROFILE,
+    SOX_PROFILE,
+    US_SEC_PROFILE,
     AuditExporter,
     ComplianceAuditTrail,
     ComplianceControl,
@@ -17,14 +19,10 @@ from thegent.governance.compliance import (
     ComplianceProfile,
     ComplianceProfileType,
     ConsentRecord,
-    EU_AI_ACT_PROFILE,
     EvidenceKind,
     EvidenceStore,
-    GDPR_PROFILE,
     RetentionEnforcer,
     RetentionPolicy,
-    SOX_PROFILE,
-    US_SEC_PROFILE,
 )
 
 

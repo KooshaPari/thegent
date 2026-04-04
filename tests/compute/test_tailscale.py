@@ -13,21 +13,23 @@ Covers:
 
 from __future__ import annotations
 
-import orjson as json
 import subprocess
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
-
-from thegent.compute import TailscaleConfig as ExportedConfig
-from thegent.compute import TailscaleManager as ExportedManager
-from thegent.compute import TailscaleNode as ExportedNode
 from thegent.compute.tailscale import (
     TailscaleConfig,
     TailscaleError,
     TailscaleManager,
     TailscaleNode,
+)
+
+from thegent.compute import (
+    TailscaleConfig as ExportedConfig,
+    TailscaleManager as ExportedManager,
+    TailscaleNode as ExportedNode,
 )
 
 # ---------------------------------------------------------------------------

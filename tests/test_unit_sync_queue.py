@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.sync.conflicts import SyncConflict
 from thegent.sync.queue import ConflictQueueStore
 

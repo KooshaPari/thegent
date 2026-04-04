@@ -36,11 +36,9 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import orjson as json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.orchestration.event_queue import (
     SubAgentEventQueue,
     get_global_event_queue,
@@ -50,11 +48,9 @@ from thegent.orchestration.protocol import (
     SubAgentEvent,
     SubAgentEventType,
     SubAgentRequest,
-    SubAgentStatus,
 )
 from thegent.orchestration.sub_agent_dispatcher import CapabilityIndex, SubAgentDispatcher
 from thegent.orchestration.unified_worker import UnifiedWorkerDaemon
-
 
 # ---------------------------------------------------------------------------
 # Helpers

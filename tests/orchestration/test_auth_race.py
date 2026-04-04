@@ -10,7 +10,6 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from thegent.mcp.server.auth import BearerAuthMiddleware, get_settings
 
 

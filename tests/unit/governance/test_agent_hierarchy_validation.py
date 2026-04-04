@@ -8,7 +8,6 @@ Tests for:
 - Handoff integrity validation (WP-16005)
 """
 
-from pathlib import Path
 
 import pytest
 
@@ -16,7 +15,6 @@ from thegent.governance.agent_hierarchy import (
     AgentHierarchyManager,
     AgentRole,
     CoordinationMode,
-    RelationshipType,
     TeamType,
 )
 from thegent.governance.handoff import HandoffIntegrity

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import orjson as json
-
 import pytest
-
 import thegent.mcp.server as mcp_server
 
 tools_sessions = mcp_server._server_tools_sessions

@@ -1,8 +1,11 @@
 """Unit tests for Formal Ethical Proof (WP-39002)."""
 
 import pytest
-
-from thegent.verification.ethics_proof import EthicalProofGenerator, EthicalProofVerifier, FormalEthicalProof
+from thegent.verification.ethics_proof import (
+    EthicalProofGenerator,
+    EthicalProofVerifier,
+    FormalEthicalProof,
+)
 
 
 @pytest.mark.unit

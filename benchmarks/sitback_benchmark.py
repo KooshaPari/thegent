@@ -11,7 +11,6 @@ Measures the MetricsCollector hot paths:
 from __future__ import annotations
 
 import pytest
-
 from thegent.metrics.collector import MetricsCollector
 
 

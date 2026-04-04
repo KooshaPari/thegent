@@ -8,11 +8,9 @@ Uses Hypothesis to verify Pareto invariants hold across arbitrary candidate sets
 from __future__ import annotations
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
+from hypothesis import given, settings, strategies as st
 
 from thegent.utils.routing_impl import ParetoRouter, RouteCandidate
-
 
 # ---------------------------------------------------------------------------
 # Helpers

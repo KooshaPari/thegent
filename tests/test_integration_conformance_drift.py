@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-
 from thegent.contracts.conformance import run_conformance_suite
 from thegent.contracts.telemetry import (
     EVENT_NORMALIZATION,

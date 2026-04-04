@@ -8,15 +8,12 @@ ComputePoolManager.submit() wired into SubAgentDispatcher as optional remote bac
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from thegent.orchestration.protocol import (
     SubAgentRequest,
-    SubAgentResult,
     SubAgentStatus,
 )
 from thegent.orchestration.remote_dispatch import (
@@ -26,7 +23,6 @@ from thegent.orchestration.remote_dispatch import (
     adapt_result_to_sub_agent_result,
 )
 from thegent.orchestration.sub_agent_dispatcher import CapabilityIndex, SubAgentDispatcher
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -4,7 +4,6 @@ import os
 import tempfile
 
 import pytest
-
 from thegent.isolation.exceptions import ExecutionContextError
 from thegent.isolation.sub_user_provider import SubUserIsolationProvider
 

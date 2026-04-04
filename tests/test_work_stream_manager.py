@@ -4,10 +4,9 @@ import hashlib
 import threading
 from pathlib import Path
 
-import pytest
+from thegent.planning.work_stream import WorkStreamManager
 
 from thegent.config import ThegentSettings
-from thegent.planning.work_stream import WorkStreamManager
 
 
 def _write_coordination_files(base: Path) -> None:

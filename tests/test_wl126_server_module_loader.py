@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from thegent.mcp.server_module_loader import load_server_module
 
 from thegent.mcp import server as server_module
-from thegent.mcp.server_module_loader import load_server_module
 
 
 def test_wl126_server_module_loader_loads_neighbor_module(tmp_path: Path) -> None:

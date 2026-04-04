@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.protocols.jsonrpc_agent_server import (
     SERVER_STATE,
     _build_turn_cancel_projection_payload,

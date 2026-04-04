@@ -1,14 +1,14 @@
 """Unit tests for thegent.contracts.validation -- validate_csm, ensure_valid_csm."""
 
 import pytest
-
-from tests.conftest_factories import make_csm
 from thegent.contracts.validation import (
     InvariantViolation,
     SemanticValidationError,
     ensure_valid_csm,
     validate_csm,
 )
+
+from tests.conftest_factories import make_csm
 
 
 @pytest.mark.unit

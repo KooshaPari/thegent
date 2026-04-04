@@ -22,7 +22,6 @@ import time
 from queue import Empty, Full
 
 import pytest
-
 from thegent.orchestration.execution.lanes import LANE_PRIORITIES, Lane, LaneModel
 from thegent.orchestration.execution.priority_queue import (
     QueuedRun,

@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-import orjson as json
 import importlib.util
 import sys
 import types
 from datetime import UTC, datetime
 from pathlib import Path
 
+import orjson as json
 import pytest
+from thegent.clode_binary_discovery import is_thegent_shim
+from thegent.sitback_plugins import _probe_harness_status
+from thegent.ux.kpis import KPIDashboard
 
 import thegent.execution_jsonl_parsers as jsonl_parsers
 from thegent.agents.synthesis import GenerationResponse, ProgramSynthesizer
 from thegent.agents.tool_adapter import ToolAdapter, ToolDefinition
-from thegent.clode_binary_discovery import is_thegent_shim
 from thegent.config import ThegentSettings
 from thegent.execution import ConcurrencyController
 from thegent.infra.mojo_bridge import MojoTask, build_dispatch_script
-from thegent.sitback_plugins import _probe_harness_status
-from thegent.ux.kpis import KPIDashboard
 
 _CONFIG_MANAGER_PATH = Path(__file__).resolve().parents[1] / "src" / "thegent" / "config" / "manager.py"
 _config_manager_spec = importlib.util.spec_from_file_location("thegent_config_manager_module", _CONFIG_MANAGER_PATH)
@@ -333,4 +333,3 @@ class TestWL6618BottleneckStatusPayload:
         assert payload["resource_contention"] == [{"resource": "memory"}]
 
 
-# noqa: PT018

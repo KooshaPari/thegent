@@ -7,10 +7,10 @@ Verifies load_trend, serialize_trend, and window filtering behavior.
 
 from __future__ import annotations
 
-import orjson as json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import orjson as json
 import pytest
 
 from thegent.governance.slo_metrics import SloMetric

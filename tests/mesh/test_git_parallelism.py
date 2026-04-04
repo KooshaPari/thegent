@@ -268,9 +268,8 @@ class TestWorktreePoolFallback:
     def test_context_manager_releases_on_exception(self, tmp_path):
         """worktree() context manager releases even if an exception is raised."""
         pool = self._make_pool(tmp_path)
-        with pytest.raises(ValueError, match="boom"):
-            with pool.worktree("agent-exc"):
-                raise ValueError("boom")
+        with pytest.raises(ValueError, match="boom"), pool.worktree("agent-exc"):
+            raise ValueError("boom")
         assert "agent-exc" not in pool.active_agents()
 
     def test_cleanup_stale_removes_missing_paths(self, tmp_path):

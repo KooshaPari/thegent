@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.protocols.turn_submit_boundaries import (
     build_cli_command_parse_phase,
     build_hook_registration_phase,
     build_observability_event_phase,
     build_policy_match_phase,
     build_provider_selection_phase,
-    build_provider_rule_evaluation_phase,
     build_queue_priority_phase,
     build_retry_loop_phase,
     build_session_state_update_phase,
@@ -20,7 +18,6 @@ from thegent.protocols.turn_submit_boundaries import (
     resolve_hook_invocation_target,
     resolve_observability_serialization_target,
     resolve_policy_enforcement_plan_target,
-    resolve_provider_final_selection_target,
     resolve_queue_execution_target,
     resolve_session_persistence_plan_target,
     resolve_sync_commit_plan_target,

@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.sync.health import ConnectorHealth, render_health_scoreboard
 
 

@@ -1,14 +1,12 @@
 """Routing tests for snapshot daily filter options."""
 
 from __future__ import annotations
-import pytest
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
+import pytest
 from thegent.cli.apps.memory import app
-
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

@@ -17,13 +17,10 @@ Covers:
 from __future__ import annotations
 
 import orjson as json
-from unittest.mock import patch
-
 import pytest
-from typer.testing import CliRunner
-
 from thegent.cli.apps.main import app
 from thegent.cli.apps.review import app as review_app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

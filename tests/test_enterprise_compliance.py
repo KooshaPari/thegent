@@ -13,15 +13,14 @@ Covers:
 
 from __future__ import annotations
 
-import orjson as json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
+from thegent.cli.apps.enterprise import app as enterprise_app
 from typer.testing import CliRunner
 
-from thegent.cli.apps.enterprise import app as enterprise_app
 from thegent.governance.compliance import (
     AuditExporter,
     ComplianceEvidence,
@@ -34,7 +33,6 @@ from thegent.governance.key_rotation import (
     ApiKeyRecord,
     KeyRegistry,
     KeyRotationMonitor,
-    KeyRotationWarning,
     KeyRotationWebhook,
     make_expiry_utc,
 )

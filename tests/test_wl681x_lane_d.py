@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-import orjson as json
 from pathlib import Path
 from types import SimpleNamespace
 
+import orjson as json
 import pytest
-
-from thegent.commands.sync import SyncCommand, SyncOperationStatus
 from thegent.design.design_language import DesignLanguage
 from thegent.discovery.sync import SyncLoop
 from thegent.integration.unified_config import UnifiedConfigManager
@@ -16,6 +14,8 @@ from thegent.mcp.gateway import McpGateway, McpServerConfig, McpToolCall
 from thegent.orchestration.dispatcher import DispatchConfig, SubAgentDispatcher
 from thegent.security.sandboxing import SandboxProvider
 from thegent.verification.zkp import ZKGovernor
+
+from thegent.commands.sync import SyncCommand, SyncOperationStatus
 
 
 def test_wl6810_sync_configs_merges_conflicts_and_persists(tmp_path: Path) -> None:

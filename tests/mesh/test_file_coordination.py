@@ -12,12 +12,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from thegent.coordination.file_coordination import (
     FileLeaseRegistry,
     HybridLogicalClock,
     OCCManager,
 )
+
 from thegent.mesh.coordination import (
     FileClaimsRegistry,
     HLCTimestamp,

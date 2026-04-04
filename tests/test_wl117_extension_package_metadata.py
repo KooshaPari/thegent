@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
-import orjson as json
 from pathlib import Path
+
+import orjson as json
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_extension_package_metadata.py"
 SPEC = importlib.util.spec_from_file_location("check_extension_package_metadata", SCRIPT_PATH)
@@ -127,4 +128,3 @@ def test_validate_extension_package_rejects_duplicate_run_step_commands(tmp_path
     assert any("Run Steps must not repeat the same `npm run <script>` command" in error for error in errors)
 
 
-# noqa: PT018

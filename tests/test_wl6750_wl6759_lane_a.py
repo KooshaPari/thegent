@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import errno
-import orjson as json
 import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -11,14 +10,15 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import httpx
+import orjson as json
 import pytest
+from thegent.resources.network import NetworkMonitor
+from thegent.ux.session_tui import SessionTUI
 
 from thegent import doctor_shell_nix, shell_cli, summary
 from thegent.doctor import _check_mcp_tools
 from thegent.infra import fast_file_ops
 from thegent.provider_model_manager import discover_models
-from thegent.resources.network import NetworkMonitor
-from thegent.ux.session_tui import SessionTUI
 
 
 class _PrintCollector:

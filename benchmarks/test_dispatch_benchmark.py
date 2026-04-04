@@ -6,13 +6,10 @@ Run with: pytest benchmarks/test_dispatch_benchmark.py --benchmark-only
 import time
 
 import pytest
-
 from thegent.orchestration.hierarchical_dispatcher import (
     AgentLifecycleState,
     HierarchicalAgent,
     HierarchicalAgentRegistry,
-    HierarchicalDispatcher,
-    HierarchicalDispatchRequest,
     reset_global_registry,
 )
 

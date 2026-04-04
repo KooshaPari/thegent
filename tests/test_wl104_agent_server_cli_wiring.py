@@ -5,9 +5,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from thegent.cli.apps.main import app as main_app
+from typer.testing import CliRunner
 
 
 def _function_source(module_text: str, function_name: str) -> str:

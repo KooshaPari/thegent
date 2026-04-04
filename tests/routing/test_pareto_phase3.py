@@ -14,13 +14,10 @@ Covers:
 from __future__ import annotations
 
 import hashlib
-import orjson as json
-import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
+import orjson as json
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # P3.1 — Data models
@@ -35,7 +32,7 @@ class TestRoutingDecisionModel:
 
         d = RoutingDecision(mode="Lifecycle", risk_score=0.2, rationale="low risk")
         assert d.mode == "Lifecycle"
-        assert d.risk_score == 0.2  # noqa: PLR2004
+        assert d.risk_score == 0.2
         assert d.rationale == "low risk"
 
     def test_thegent_decision_fields(self) -> None:
@@ -43,7 +40,7 @@ class TestRoutingDecisionModel:
 
         d = RoutingDecision(mode="TheGent", risk_score=0.85, rationale="high risk task")
         assert d.mode == "TheGent"
-        assert d.risk_score == 0.85  # noqa: PLR2004
+        assert d.risk_score == 0.85
 
     def test_execution_outcome_fields(self) -> None:
         from thegent.utils.routing_impl.route_executor import ExecutionOutcome
@@ -86,7 +83,10 @@ class TestRoutingOrchestratorBridge:
     """P3.2: RoutingOrchestratorBridge manages per-agent routing state."""
 
     def test_record_decision_adds_agent(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge()
         orch.record_decision("agent-1", RoutingDecision("Lifecycle", 0.3, "ok"))
@@ -97,7 +97,10 @@ class TestRoutingOrchestratorBridge:
         assert status.agents[0].lifecycle_decisions == 1
 
     def test_multiple_agents_tracked_separately(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge()
         orch.record_decision("a1", RoutingDecision("Lifecycle", 0.2, "r1"))
@@ -105,16 +108,19 @@ class TestRoutingOrchestratorBridge:
         orch.record_decision("a1", RoutingDecision("Lifecycle", 0.2, "r3"))
 
         status = orch.status()
-        assert status.total_decisions == 3  # noqa: PLR2004
-        assert len(status.agents) == 2  # noqa: PLR2004
+        assert status.total_decisions == 3
+        assert len(status.agents) == 2
 
         a1 = next(a for a in status.agents if a.agent_id == "a1")
         a2 = next(a for a in status.agents if a.agent_id == "a2")
-        assert a1.lifecycle_decisions == 2  # noqa: PLR2004
+        assert a1.lifecycle_decisions == 2
         assert a2.thegent_decisions == 1
 
     def test_arbitrate_majority_wins_defaults_lifecycle(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge(policy="MajorityWins")
         orch.record_decision("a1", RoutingDecision("Lifecycle", 0.1, ""))
@@ -125,7 +131,10 @@ class TestRoutingOrchestratorBridge:
         assert result == "Lifecycle"
 
     def test_arbitrate_majority_wins_thegent_wins_tie(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge(policy="MajorityWins")
         orch.record_decision("a1", RoutingDecision("TheGent", 0.9, ""))
@@ -136,7 +145,10 @@ class TestRoutingOrchestratorBridge:
         assert result == "TheGent"
 
     def test_arbitrate_most_restrictive_wins_any_thegent_vote(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge(policy="MostRestrictiveWins")
         orch.record_decision("a1", RoutingDecision("Lifecycle", 0.1, ""))
@@ -148,7 +160,10 @@ class TestRoutingOrchestratorBridge:
         assert result == "TheGent"
 
     def test_arbitrate_most_restrictive_all_lifecycle(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge(policy="MostRestrictiveWins")
         orch.record_decision("a1", RoutingDecision("Lifecycle", 0.1, ""))
@@ -164,7 +179,10 @@ class TestRoutingOrchestratorBridge:
         assert orch.arbitrate() is None
 
     def test_status_percentages_correct(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge()
         for _ in range(3):
@@ -177,7 +195,10 @@ class TestRoutingOrchestratorBridge:
         assert status.thegent_pct == pytest.approx(25.0)
 
     def test_status_display_contains_agent_ids(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge()
         orch.record_decision("agent-alpha", RoutingDecision("Lifecycle", 0.1, "ok"))
@@ -186,7 +207,10 @@ class TestRoutingOrchestratorBridge:
         assert "Router Status" in text
 
     def test_status_to_json_roundtrip(self) -> None:
-        from thegent.utils.routing_impl.route_executor import RoutingDecision, RouterStatus, RoutingOrchestratorBridge
+        from thegent.utils.routing_impl.route_executor import (
+            RoutingDecision,
+            RoutingOrchestratorBridge,
+        )
 
         orch = RoutingOrchestratorBridge()
         orch.record_decision("a1", RoutingDecision("Lifecycle", 0.1, ""))
@@ -259,7 +283,7 @@ class TestReadRoutingAudit:
         audit_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
         records = read_routing_audit(audit_file, limit=10)
-        assert len(records) == 5  # noqa: PLR2004
+        assert len(records) == 5
 
     def test_limit_returns_last_n(self, tmp_path: Path) -> None:
         from thegent.utils.routing_impl.route_executor import read_routing_audit
@@ -275,7 +299,7 @@ class TestReadRoutingAudit:
         audit_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
         records = read_routing_audit(audit_file, limit=3)
-        assert len(records) == 3  # noqa: PLR2004
+        assert len(records) == 3
         # Last 3 records
         assert records[0]["decision_id"] == "id-007"
         assert records[2]["decision_id"] == "id-009"
@@ -394,13 +418,13 @@ class TestRouterSettingsConfig:
         from thegent.config import ThegentSettings
 
         s = ThegentSettings()
-        assert s.router_dwell_time == 300  # noqa: PLR2004
+        assert s.router_dwell_time == 300
 
     def test_default_max_dwell(self) -> None:
         from thegent.config import ThegentSettings
 
         s = ThegentSettings()
-        assert s.router_max_dwell == 1800  # noqa: PLR2004
+        assert s.router_max_dwell == 1800
 
     def test_default_override_threshold(self) -> None:
         from thegent.config import ThegentSettings
@@ -420,14 +444,14 @@ class TestRouterSettingsConfig:
         from thegent.config import ThegentSettings
 
         s = ThegentSettings()
-        assert s.router_dwell_time == 600  # noqa: PLR2004
+        assert s.router_dwell_time == 600
 
     def test_env_override_max_dwell(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("THGENT_ROUTER_MAX_DWELL", "3600")
         from thegent.config import ThegentSettings
 
         s = ThegentSettings()
-        assert s.router_max_dwell == 3600  # noqa: PLR2004
+        assert s.router_max_dwell == 3600
 
     def test_env_override_override_threshold(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("THGENT_ROUTER_OVERRIDE_THRESHOLD", "0.35")

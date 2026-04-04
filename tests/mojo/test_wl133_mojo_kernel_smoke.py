@@ -17,9 +17,9 @@ binary is not available.
 from __future__ import annotations
 
 import importlib
-import orjson as json
 from pathlib import Path
 
+import orjson as json
 import pytest
 
 CONTRACT_PATH = Path(__file__).parent.parent.parent / "contracts" / "runtime" / "mojo_kernel_contract_v1.json"
@@ -217,4 +217,3 @@ def test_deterministic_fixture_inputs_match_contract_schema(
         )
 
 
-# noqa: PT018

@@ -13,16 +13,13 @@ Covers:
 
 from __future__ import annotations
 
-import orjson as json
 import os
 import sys
-import tempfile
-from io import StringIO
+from datetime import UTC
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
+import orjson as json
 
 # ---------------------------------------------------------------------------
 # WP-4001: Actionable Error Messages
@@ -92,7 +89,7 @@ class TestFormatError:
         assert result == "something unexpected"
 
     def test_format_error_exported_from_infra(self) -> None:
-        from thegent.infra import format_error  # noqa: F401 — just checks import
+        from thegent.infra import format_error
 
         assert callable(format_error)
 
@@ -115,9 +112,8 @@ class TestJsonOutputRegistryList:
         rec.name = name
         rec.project_root = Path(project)
         rec.capabilities = caps
-        from datetime import timezone
 
-        rec.last_seen = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
+        rec.last_seen = datetime(2025, 1, 1, 12, 0, tzinfo=UTC)
         return rec
 
     def test_json_format_empty_registry(self, capsys) -> None:
@@ -288,10 +284,10 @@ class TestHelpExamples:
         assert "help" in cmd_names, "help command must be registered on the main typer app"
 
     def test_main_app_supports_version_option(self) -> None:
+        from thegent.cli.apps.main import app
         from typer.testing import CliRunner
 
         from thegent import __version__
-        from thegent.cli.apps.main import app
 
         runner = CliRunner()
         result = runner.invoke(app, ["--version"])
@@ -332,7 +328,7 @@ class TestProgressSpinners:
 
     def test_spinner_context_available(self) -> None:
         """Verify that spinner_context exists in infra.progress."""
-        from thegent.infra import spinner_context  # noqa: F401
+        from thegent.infra import spinner_context
 
         assert callable(spinner_context)
 

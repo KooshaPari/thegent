@@ -37,12 +37,10 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from thegent.core.worker_pool import AgentResult, AgentTask
+from thegent.core.worker_pool import AgentResult
 from thegent.orchestration.event_queue import SubAgentEventQueue
 from thegent.orchestration.protocol import (
     SubAgentRequest,
@@ -55,7 +53,6 @@ from thegent.orchestration.sub_agent_dispatcher import (
     SubAgentDispatcher,
     is_cli_harness,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers / Fixtures
@@ -180,7 +177,7 @@ def test_dispatcher_accepts_compute_pool_none() -> None:
         event_queue=_make_queue(),
         compute_pool=None,
     )
-    assert d._compute_pool is None  # noqa: SLF001 -- test internal state
+    assert d._compute_pool is None
 
 
 def test_dispatcher_accepts_compute_pool_set() -> None:
@@ -191,7 +188,7 @@ def test_dispatcher_accepts_compute_pool_set() -> None:
         event_queue=_make_queue(),
         compute_pool=pool,
     )
-    assert d._compute_pool is pool  # noqa: SLF001 -- test internal state
+    assert d._compute_pool is pool
 
 
 def test_dispatcher_compute_pool_default_is_none() -> None:
@@ -200,7 +197,7 @@ def test_dispatcher_compute_pool_default_is_none() -> None:
         capability_index=_make_index(),
         event_queue=_make_queue(),
     )
-    assert d._compute_pool is None  # noqa: SLF001 -- test internal state
+    assert d._compute_pool is None
 
 
 # ---------------------------------------------------------------------------
@@ -488,7 +485,7 @@ def test_dispatch_via_compute_pool_constructs_backend_with_pool() -> None:
     captured_pool_managers: list = []
 
     class CapturingBackend:
-        def __init__(self, pool_manager):  # type: ignore[no-untyped-def]  # noqa: ANN001
+        def __init__(self, pool_manager):  # type: ignore[no-untyped-def]
             captured_pool_managers.append(pool_manager)
 
         def dispatch(self, req: SubAgentRequest) -> SubAgentResult:
@@ -564,7 +561,7 @@ def test_remote_dispatch_backend_not_constructed_for_cli_harness() -> None:
     constructed: list[bool] = []
 
     class TrackingBackend:
-        def __init__(self, pool_manager):  # type: ignore[no-untyped-def]  # noqa: ANN001
+        def __init__(self, pool_manager):  # type: ignore[no-untyped-def]
             constructed.append(True)
 
         def dispatch(self, req: SubAgentRequest) -> SubAgentResult:  # pragma: no cover

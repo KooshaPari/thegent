@@ -3,17 +3,21 @@
 from __future__ import annotations
 
 import asyncio
-import orjson as json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import orjson as json
 import pytest
+from thegent.cli.apps.sync import app
+from thegent.mcp.manage import mcp_down, mcp_up
 from typer.testing import CliRunner
 
-from thegent.cli.apps.sync import app
-from thegent.integrations.workstream_autosync import WorkstreamAutosyncConfig, WorkstreamAutosyncRunner, WorkstreamItem
-from thegent.mcp.manage import mcp_down, mcp_up
+from thegent.integrations.workstream_autosync import (
+    WorkstreamAutosyncConfig,
+    WorkstreamAutosyncRunner,
+    WorkstreamItem,
+)
 
 
 def _autopilot_config(**overrides: Any) -> Any:
@@ -190,7 +194,7 @@ def test_mcp_up_skips_when_services_already_healthy(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr("thegent.mcp.manage._services_healthy", lambda _settings: True)
     called = {"ran": False}
 
-    def _unexpected_run(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    def _unexpected_run(*args: Any, **kwargs: Any) -> Any:
         called["ran"] = True
         raise AssertionError("run_subprocess_optimized should not be called when services are already healthy")
 

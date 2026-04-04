@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import orjson as json
-
 from thegent.protocols.jsonrpc_agent_server import (
     SERVER_STATE,
     _execute_turn_cancel_resolution,

@@ -18,7 +18,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
-
 from thegent.compute.offload import (
     ComputeNode,
     ComputePoolManager,
@@ -30,7 +29,6 @@ from thegent.compute.offload import (
 from thegent.compute.syncthing import SyncthingError, SyncthingWorkspaceSync
 from thegent.compute.tailscale import TailscaleError, TailscaleNode
 from thegent.sitback.watchdog import WatcherDaemon
-
 
 # ---------------------------------------------------------------------------
 # Helpers

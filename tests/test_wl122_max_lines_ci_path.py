@@ -206,4 +206,3 @@ def test_build_report_fails_when_precommit_entry_has_extra_arguments() -> None:
     assert ".pre-commit-config.yaml max-lines hook must invoke `task quality:max-lines`." in report["errors"]
 
 
-# noqa: PT018

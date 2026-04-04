@@ -5,7 +5,6 @@
 from pathlib import Path
 
 import pytest
-
 from thegent.core.prompt_queue import PromptQueueManager
 from thegent.queue.storage import PromptQueue
 

@@ -164,12 +164,11 @@ class TestMergeFilesCleanMerge:
         ours.write_text("ours content\n", encoding="utf-8")
         theirs.write_text("theirs\n", encoding="utf-8")
 
-        with mock.patch("shutil.which", return_value=None):
-            with mock.patch(
-                "subprocess.run",
-                side_effect=FileNotFoundError("git not found"),
-            ):
-                result = merge_files(base, ours, theirs, output)
+        with mock.patch("shutil.which", return_value=None), mock.patch(
+            "subprocess.run",
+            side_effect=FileNotFoundError("git not found"),
+        ):
+            result = merge_files(base, ours, theirs, output)
 
         assert result is False
         # Output should contain our content as the safe default
@@ -304,12 +303,11 @@ class TestConfigureMergirafDriver:
         """configure_mergiraf_driver returns False if git config command fails."""
         (tmp_path / ".git").mkdir()
 
-        with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"):
-            with mock.patch(
-                "subprocess.run",
-                side_effect=subprocess.CalledProcessError(1, "git"),
-            ):
-                result = configure_mergiraf_driver(tmp_path)
+        with mock.patch("shutil.which", return_value="/usr/bin/mergiraf"), mock.patch(
+            "subprocess.run",
+            side_effect=subprocess.CalledProcessError(1, "git"),
+        ):
+            result = configure_mergiraf_driver(tmp_path)
 
         assert result is False
 
@@ -836,19 +834,19 @@ class TestMeshInitExports:
 
     def test_smart_merger_exported(self):
         """SmartMerger is accessible from thegent.mesh. @trace FR-MESH-007"""
-        from thegent.mesh import SmartMerger as _SM  # noqa: N814
+        from thegent.mesh import SmartMerger as _SM
 
         assert _SM is SmartMerger
 
     def test_smart_merge_config_exported(self):
         """SmartMergeConfig is accessible from thegent.mesh. @trace FR-MESH-007"""
-        from thegent.mesh import SmartMergeConfig as _SMC  # noqa: N814
+        from thegent.mesh import SmartMergeConfig as _SMC
 
         assert _SMC is SmartMergeConfig
 
     def test_merge_result_exported(self):
         """MergeResult is accessible from thegent.mesh. @trace FR-MESH-007"""
-        from thegent.mesh import MergeResult as _MR  # noqa: N814
+        from thegent.mesh import MergeResult as _MR
 
         assert _MR is MergeResult
 

@@ -5,7 +5,6 @@ and layout calculations.
 """
 
 import pytest
-
 from thegent.compositor.layout_engine import (
     Direction,
     LayoutEngine,

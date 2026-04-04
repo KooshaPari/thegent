@@ -13,7 +13,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from thegent.agents.base import RunResult
-from thegent.core.worker_pool import AgentTask
 
 
 @pytest.mark.requirement("FR-OPT-006")

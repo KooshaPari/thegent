@@ -13,11 +13,9 @@ Covers:
 
 from __future__ import annotations
 
-import contextlib
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from thegent.memory.memory_manager import MemoryManager
 from thegent.memory.supermemory_client import MemoryEntry, SupermemoryConfigError
 

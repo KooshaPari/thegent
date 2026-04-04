@@ -30,7 +30,6 @@ import pytest
 from rich.console import Console
 from rich.progress import Progress
 from rich.table import Table
-
 from thegent.ui.cli_compositor import (
     CliCompositor,
     ProgressPanel,

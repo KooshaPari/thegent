@@ -14,12 +14,11 @@
 
 from __future__ import annotations
 
-import orjson as json
 import tempfile
 from pathlib import Path
 
+import orjson as json
 import pytest
-
 from thegent.orchestration.protocol import (
     SubAgentEvent,
     SubAgentEventType,
@@ -28,7 +27,6 @@ from thegent.orchestration.protocol import (
     SubAgentResult,
     SubAgentStatus,
 )
-
 
 # =============================================================================
 # SubAgentRequest Tests

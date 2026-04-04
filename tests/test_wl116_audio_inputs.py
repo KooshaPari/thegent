@@ -5,14 +5,14 @@ from __future__ import annotations
 import inspect
 
 import pytest
-
-from thegent.agents.audio_inputs import load_transcripts
 from thegent.cli.commands.impl import (
     _build_audio_summary_metadata,
     _build_run_event_details,
     _resolve_audio_transcript_for_output,
     run_impl,
 )
+
+from thegent.agents.audio_inputs import load_transcripts
 
 
 def test_run_impl_accepts_audio_files_and_google_grounding() -> None:

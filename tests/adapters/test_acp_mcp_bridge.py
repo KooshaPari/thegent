@@ -17,8 +17,6 @@ from typing import Any, ClassVar
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from thegent.adapters.acp_client import ACPClientError, ACPResult, ACPServerUnreachableError
 from thegent.adapters.acp_mcp_bridge import (
     ACPAgentCallError,
     AcpMcpBridge,
@@ -26,6 +24,8 @@ from thegent.adapters.acp_mcp_bridge import (
     BridgeError,
     MCPToolNotFoundError,
 )
+
+from thegent.adapters.acp_client import ACPClientError, ACPResult, ACPServerUnreachableError
 
 # ---------------------------------------------------------------------------
 # Helpers

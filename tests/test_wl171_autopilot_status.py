@@ -5,13 +5,12 @@
 
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
 
+import orjson as json
 import pytest
-from typer.testing import CliRunner
-
 from thegent.cli.apps.sync import app
+from typer.testing import CliRunner
 
 
 class TestAutopilotStatusCommand:

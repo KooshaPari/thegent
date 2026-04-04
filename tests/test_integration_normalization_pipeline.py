@@ -8,8 +8,6 @@ that policy enforcement operates on normalized results.
 from __future__ import annotations
 
 import pytest
-
-from tests.conftest_factories import make_csm, make_fallback_policy
 from thegent.contracts.adapters import (
     XMLOutputAdapter,
     normalize_output,
@@ -22,6 +20,8 @@ from thegent.contracts.validation import (
     ensure_valid_csm,
     validate_csm,
 )
+
+from tests.conftest_factories import make_csm, make_fallback_policy
 
 
 @pytest.mark.integration

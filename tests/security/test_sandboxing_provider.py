@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from thegent.security.macos_sandbox import SandboxLevel
 from thegent.security.sandboxing import SandboxProvider
 
@@ -21,7 +20,7 @@ def test_generate_seatbelt_profile_uses_macos_sandbox(monkeypatch: pytest.Monkey
     provider = SandboxProvider()
     monkeypatch.setenv("THGENT_SANDBOX_WORKTREE", str(tmp_path))
 
-    def _fake_generate(self, level, project_root):  # noqa: ANN001
+    def _fake_generate(self, level, project_root):
         return f"profile:{level.value}:{project_root}"
 
     monkeypatch.setattr("thegent.security.sandboxing.MacOSSandbox.generate_profile", _fake_generate)
@@ -44,7 +43,7 @@ def test_seatbelt_wrap_delegates_to_macos_sandbox(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr("thegent.security.sandboxing.MacOSSandbox.is_sandbox_available", lambda _self: True)
 
-    def _fake_apply(self, cmd, level, project_root):  # noqa: ANN001
+    def _fake_apply(self, cmd, level, project_root):
         captured["cmd"] = cmd
         captured["level"] = level
         captured["project_root"] = project_root

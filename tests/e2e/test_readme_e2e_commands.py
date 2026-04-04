@@ -1,13 +1,11 @@
 """Sanity checks for e2e README command guidance."""
 
-# noqa: PT018
 from __future__ import annotations
 
-from collections import Counter
-from pathlib import Path
 import re
 import shlex
-
+from collections import Counter
+from pathlib import Path
 
 README_PATH = Path(__file__).with_name("README.md")
 REPO_ROOT = README_PATH.parents[2]
@@ -731,4 +729,3 @@ def test_command_table_parser_ignores_escaped_pipe_backtick_edge_rows_and_keeps_
     assert "Escaped backtick edge row" not in goals
 
 
-# noqa: PT018

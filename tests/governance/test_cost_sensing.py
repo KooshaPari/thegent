@@ -1,11 +1,10 @@
 import pytest
+from thegent.planning.cost_predictor import CostPredictor
+from thegent.planning.selector import ObjectiveSelector, ObjectiveWeights
 
 from thegent.agents.registry import LearningRegistry
 from thegent.cost.aggregators import BudgetAlert, CostCap, CostTracker
-from thegent.governance.hitl import HITLManager
 from thegent.governance.policy import LearningSession, PolicyManager
-from thegent.planning.cost_predictor import CostPredictor
-from thegent.planning.selector import ObjectiveSelector, ObjectiveWeights
 
 
 @pytest.fixture

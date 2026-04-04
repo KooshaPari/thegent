@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -21,7 +21,7 @@ class TestDeadLetterEntryCreation:
     @pytest.mark.requirement("WL-213")
     def test_create_entry_minimal(self) -> None:
         """Can create a DeadLetterEntry with required fields."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         entry = DeadLetterEntry(
             entry_id="DLQ-001",
             wl_id="WL-042",
@@ -44,7 +44,7 @@ class TestDeadLetterEntryCreation:
     @pytest.mark.requirement("WL-213")
     def test_create_entry_with_retry_count(self) -> None:
         """Can create a DeadLetterEntry with explicit retry_count."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         entry = DeadLetterEntry(
             entry_id="DLQ-002",
             wl_id="WL-043",
@@ -97,7 +97,7 @@ class TestDeadLetterQueueEnqueue:
     def test_enqueue_single_entry(self, dlq: tuple[DeadLetterQueue, Path]) -> None:
         """enqueue persists entry to JSONL file."""
         queue, store_path = dlq
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         entry = DeadLetterEntry(
             entry_id="DLQ-003",
             wl_id="WL-044",
@@ -119,7 +119,7 @@ class TestDeadLetterQueueEnqueue:
     def test_enqueue_multiple_entries(self, dlq: tuple[DeadLetterQueue, Path]) -> None:
         """enqueue appends multiple entries."""
         queue, store_path = dlq
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         for i in range(3):
             entry = DeadLetterEntry(
@@ -147,7 +147,7 @@ class TestDeadLetterQueueRead:
         store_path = Path(tmpdir.name) / "queue.jsonl"
         queue = DeadLetterQueue(store_path)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for i in range(3):
             entry = DeadLetterEntry(
                 entry_id=f"DLQ-{i}",
@@ -199,7 +199,7 @@ class TestDeadLetterQueuePending:
         store_path = Path(tmpdir.name) / "queue.jsonl"
         queue = DeadLetterQueue(store_path, max_retries=3)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Entry with 0 retries (pending)
         queue.enqueue(
@@ -272,7 +272,7 @@ class TestDeadLetterQueueMarkRetried:
         store_path = Path(tmpdir.name) / "queue.jsonl"
         queue = DeadLetterQueue(store_path)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         queue.enqueue(
             DeadLetterEntry(
                 entry_id="DLQ-test",
@@ -326,7 +326,7 @@ class TestDeadLetterQueuePurgeResolved:
         store_path = Path(tmpdir.name) / "queue.jsonl"
         queue = DeadLetterQueue(store_path, max_retries=2)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Pending
         queue.enqueue(

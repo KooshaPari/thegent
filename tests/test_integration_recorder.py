@@ -12,8 +12,6 @@ import time
 from pathlib import Path
 
 import pytest
-
-from thegent.agents.base import AgentRunner, RunResult
 from thegent.trace.integration import (
     ExecutionMetrics,
     TracedAgentRunner,
@@ -22,6 +20,8 @@ from thegent.trace.integration import (
     estimate_trace_overhead,
 )
 from thegent.trace.recorder import RecorderConfig, TraceRecorder
+
+from thegent.agents.base import AgentRunner, RunResult
 
 
 class MockAgentRunner(AgentRunner):

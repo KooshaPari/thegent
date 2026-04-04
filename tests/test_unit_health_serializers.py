@@ -3,10 +3,9 @@
 import csv
 import hashlib
 import io
+
 import orjson as json
-
 import pytest
-
 from thegent.cli.commands.cli import (
     _serialize_health_gate_csv,
     _serialize_health_gate_jsonl,

@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 
 import pytest
-
 from thegent.orchestration.budget_tracker import BudgetExceededError, BudgetTracker
 from thegent.orchestration.protocol import (
     SubAgentRequest,

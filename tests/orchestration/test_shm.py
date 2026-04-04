@@ -9,7 +9,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.orchestration.state.shm import SHMSystem, get_shm_system
 
 

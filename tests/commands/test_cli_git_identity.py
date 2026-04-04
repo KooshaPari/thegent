@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from thegent.cli.commands import cli_git_identity as identity
 
 

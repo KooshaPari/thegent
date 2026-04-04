@@ -5,10 +5,10 @@ Provides command-line interface for governance setup, quality assessment,
 auditing, and reporting.
 """
 
-import orjson as json
 from pathlib import Path
 
 import click
+import orjson as json
 
 from ...governance.audit_framework import AuditFramework, AuditType
 from ...governance.project_setup_enhanced import ProjectGovernanceSetupEnhanced

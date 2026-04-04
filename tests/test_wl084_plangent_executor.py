@@ -35,18 +35,13 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
-from dataclasses import dataclass, field
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from thegent.agents.plangent import Plan, PlangentExecutor, PlangentPlanner, PlanNode
-from thegent.orchestration.aggregator import ResultAggregator
-from thegent.orchestration.dispatcher import DispatchResult, SubAgentDispatcher
+from thegent.orchestration.dispatcher import DispatchResult
 from thegent.orchestration.plan import OrchestrationPlan
 
+from thegent.agents.plangent import Plan, PlangentExecutor, PlanNode
 
 # ---------------------------------------------------------------------------
 # Helpers and fixtures

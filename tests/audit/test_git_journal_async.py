@@ -11,7 +11,6 @@ import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -22,10 +21,6 @@ if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
 from thegent.audit.shadow_audit_git import GitJournal, GitJournalAsync, GitJournalEnhanced
-
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

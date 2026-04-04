@@ -1,10 +1,11 @@
 """Tests for research_engine.session_hook — @trace FR-RES-030"""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
-from research_engine.schema import ResearchItem
 from research_engine.session_hook import inject_session_context
+
+from research_engine.schema import ResearchItem
 
 
 def test_inject_session_context_returns_string():
@@ -24,7 +25,7 @@ def test_inject_includes_items():
         summary="A test summary",
         score=100,
         tags=["python"],
-        fetched_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
         relevance=0.9,
     )
     store.get_recent.return_value = [item]
@@ -57,7 +58,7 @@ def test_inject_formats_tags():
         summary="Learn Python",
         score=50,
         tags=["python", "tips"],
-        fetched_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
         relevance=0.8,
     )
     store.get_recent.return_value = [item]

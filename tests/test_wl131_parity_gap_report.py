@@ -69,4 +69,3 @@ def test_parity_file_2_importable() -> None:
     spec.loader.exec_module(module)  # type: ignore[union-attr]
 
 
-# noqa: PT018

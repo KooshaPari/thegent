@@ -13,7 +13,7 @@ import pytest
 class TestNeverIdleLoopPersistentLoop:
     """Verify NeverIdleLoop reuses a single asyncio event loop."""
 
-    def _make_loop(self, tmp_path: Path) -> "NeverIdleLoop":
+    def _make_loop(self, tmp_path: Path) -> NeverIdleLoop:
         """Create a NeverIdleLoop with mocked components."""
         with (
             patch("thegent.sitback.never_idle.BackgroundTaskWatcher"),

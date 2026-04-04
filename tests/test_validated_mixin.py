@@ -4,9 +4,9 @@ pytestmark = pytest.mark.skip(reason="validated_dataclass and ContextManagerMixi
 
 """Tests for ValidatedMixin and related patterns."""
 
+from dataclasses import dataclass
+
 import pytest
-from dataclasses import dataclass, field
-from typing import Any
 
 # validated_dataclass not yet implemented
 validated_dataclass = None
@@ -173,9 +173,8 @@ class TestContextManagerMixin:
                 log.append(("exit", exc_type))
                 return False  # Don't suppress
 
-        with pytest.raises(RuntimeError):
-            with FailingResource() as r:
-                raise RuntimeError("test error")
+        with pytest.raises(RuntimeError), FailingResource() as r:
+            raise RuntimeError("test error")
 
         assert len(log) == 1
         assert log[0][0] == "exit"

@@ -5,10 +5,10 @@
 
 from __future__ import annotations
 
-import orjson as json
 import re
 from pathlib import Path
 
+import orjson as json
 import pytest
 
 from thegent.integrations.sync_auditor import SyncAuditor, SyncPolicyAudit
@@ -270,7 +270,7 @@ tenancy:
             cycle_number=2,
             secret="lane6-secret",
         )
-        auditor._artifact_chain[1].signature = "tampered"  # noqa: SLF001 -- test-only tamper simulation
+        auditor._artifact_chain[1].signature = "tampered"
         ok, reason = auditor.verify_artifact_chain("lane6-secret")
         assert ok is False
         assert "signature verification failed" in reason

@@ -10,9 +10,9 @@ import time
 from pathlib import Path
 
 import pytest
+from thegent.indexing.file_index import _DEFAULT_EXCLUDE_DIRS, _DEFAULT_TTL
 
 from thegent.indexing import FileIndex
-from thegent.indexing.file_index import _DEFAULT_EXCLUDE_DIRS, _DEFAULT_TTL
 
 # ---------------------------------------------------------------------------
 # Fixtures

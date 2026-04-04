@@ -7,8 +7,8 @@ import hashlib
 import time
 
 import pytest
-
 from thegent.maif.artifact_generator import MAIFArtifactGenerator
+
 from thegent.maif.crypto import SigningKey
 from thegent.maif.models import ActionType
 

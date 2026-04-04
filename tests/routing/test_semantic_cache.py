@@ -23,7 +23,6 @@ from thegent.utils.routing_impl.semantic_cache import (
     semantic_cache_set,
 )
 
-
 # ---------------------------------------------------------------------------
 # Mock embedding provider
 # ---------------------------------------------------------------------------
@@ -39,7 +38,7 @@ class MockEmbeddingProvider:
     def __init__(self, embedding: list[float]) -> None:
         self._embedding = embedding
 
-    def embed(self, text: str) -> list[float]:  # noqa: ARG002
+    def embed(self, text: str) -> list[float]:
         return self._embedding
 
     def is_available(self) -> bool:

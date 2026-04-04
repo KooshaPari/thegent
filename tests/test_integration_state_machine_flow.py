@@ -7,14 +7,11 @@ state transitions.
 
 from __future__ import annotations
 
-import orjson as json
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+import orjson as json
 import pytest
-
-from tests.conftest_factories import make_fallback_policy, make_run_result
-from thegent.agents.state_machine import FallbackStateMachine
 from thegent.contracts.csm import CSMStatus
 from thegent.contracts.telemetry import (
     EVENT_NORMALIZATION,
@@ -22,6 +19,9 @@ from thegent.contracts.telemetry import (
     EVENT_SCHEMA_DRIFT_STRUCTURAL,
     ContractTelemetry,
 )
+
+from tests.conftest_factories import make_fallback_policy, make_run_result
+from thegent.agents.state_machine import FallbackStateMachine
 
 if TYPE_CHECKING:
     from pathlib import Path

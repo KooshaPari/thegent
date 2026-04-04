@@ -1,9 +1,7 @@
 """Unit tests for thegent.contracts.telemetry -- ContractTelemetry, drift detection."""
 
 import orjson as json
-
 import pytest
-
 from thegent.contracts.telemetry import (
     EVENT_NORMALIZATION,
     EVENT_SCHEMA_DRIFT_SEMANTIC,

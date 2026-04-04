@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typer.testing import CliRunner
-
 from thegent.cli.apps.project import update_app
 from thegent.cli.apps.routing import app as routing_app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

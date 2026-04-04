@@ -35,16 +35,14 @@ Covers uncovered branches and edge cases in:
 - get_data_protection_status_impl
 """
 
-import orjson as json
 import os
-import time
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
 import typer
-
 from thegent.cli.commands.impl import (
     DagDocument,
     _append_health_snapshot,

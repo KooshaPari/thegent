@@ -10,15 +10,12 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from thegent.core.worker_pool import (
-    AgentResult,
     AgentTask,
     PersistentWorkerPool,
     Worker,
     get_worker_pool,
 )
-
 
 # --------------------------------------------------------------------------- #
 # Helpers                                                                      #

@@ -1,9 +1,8 @@
 from __future__ import annotations
+
 import pytest
-
-from typer.testing import CliRunner
-
 from thegent.cli.apps.team import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

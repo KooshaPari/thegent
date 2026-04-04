@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
-import orjson as json
 from pathlib import Path
+
+import orjson as json
 
 
 def _load_tools_governance_module() -> object:
@@ -83,4 +84,3 @@ def test_thegent_govern_vet_impl_wraps_service_result() -> None:
     assert result.meta and result.meta["execution_time_ms"] >= 0
 
 
-# noqa: PT018

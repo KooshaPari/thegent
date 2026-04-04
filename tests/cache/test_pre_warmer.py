@@ -10,7 +10,6 @@ import time
 from datetime import timedelta
 
 import pytest
-
 from thegent.cache.multi_level import MultiLevelCache
 from thegent.cache.pre_warmer import (
     CachePreWarmer,

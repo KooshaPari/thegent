@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.orchestration.strategies.playbooks import (
     execute_playbook_step,
     get_playbook_for_failure,

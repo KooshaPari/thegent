@@ -1,7 +1,6 @@
 """Unit tests for MoralUI (WP-29003)."""
 
 import pytest
-
 from thegent.ux.moral_ui import ArbitrationResult, MoralDilemma, MoralUI
 
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
-import orjson as json
 from pathlib import Path
 
+import orjson as json
 import yaml
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_thegent_core_boundary.py"

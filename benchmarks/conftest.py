@@ -7,7 +7,7 @@ import importlib.util
 import pytest
 
 
-def pytest_collection_modifyitems(items: list, config: pytest.Config) -> None:  # noqa: ARG001 -- config unused but required by pytest hook signature
+def pytest_collection_modifyitems(items: list, config: pytest.Config) -> None:
     if importlib.util.find_spec("pytest_benchmark") is None:
         skip_marker = pytest.mark.skip(reason="pytest-benchmark not installed; run: uv pip install pytest-benchmark")
         for item in items:

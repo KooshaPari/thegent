@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
 
+import orjson as json
 import pytest
-
 from thegent.orchestration.state.session_scraper import SessionScraper
 
 
@@ -355,4 +354,3 @@ def test_trigger_normalization_applied_to_persisted_snapshot(monkeypatch, tmp_pa
         assert snapshot.trigger == trigger, f"Expected {trigger}, got {snapshot.trigger}"
 
 
-# noqa: PT018

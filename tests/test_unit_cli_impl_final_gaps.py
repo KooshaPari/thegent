@@ -23,12 +23,12 @@ Covers remaining uncovered branches and edge cases in:
 - list_agents_impl (lines 3344-3358)
 """
 
-import orjson as json
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import orjson as json
 import pytest
 
 
@@ -800,8 +800,9 @@ class TestRunImplCircuitBreakerAndRunnerFactory:
     # @trace FR-EXEC-613
     def test_runner_factory_wraps_and_records_failure(self, tmp_path) -> None:
         """The wrapped runner records circuit breaker failures on nonzero exit (lines 2012-2018)."""
-        from thegent.agents.base import RunResult
         from thegent.cli.commands.impl import run_impl
+
+        from thegent.agents.base import RunResult
 
         fail_result = RunResult(stdout="out", stderr="err", exit_code=1, timed_out=False)
         mock_runner = MagicMock()
@@ -841,8 +842,9 @@ class TestRunImplCircuitBreakerAndRunnerFactory:
     # @trace FR-EXEC-613b
     def test_runner_factory_success_path(self, tmp_path) -> None:
         """The wrapped runner with model injection (lines 2008-2018, 2020-2026)."""
-        from thegent.agents.base import RunResult
         from thegent.cli.commands.impl import run_impl
+
+        from thegent.agents.base import RunResult
 
         success_result = RunResult(stdout="ok", stderr="", exit_code=0, timed_out=False)
         mock_runner = MagicMock()

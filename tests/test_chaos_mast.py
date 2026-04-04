@@ -10,9 +10,8 @@ circuit-breaker state consistency.
 from __future__ import annotations
 
 import asyncio
-import orjson as json
-from unittest.mock import AsyncMock, MagicMock, patch
 
+import orjson as json
 import pybreaker
 import pytest
 
@@ -23,7 +22,6 @@ from thegent.utils.routing_impl.circuit_breaker import (
     ProviderCircuitBreakerConfig,
     ProviderCircuitBreakerRegistry,
 )
-
 
 # ---------------------------------------------------------------------------
 # MAST F-01: Provider drops connection mid-stream
@@ -113,7 +111,7 @@ class TestMastF02:
             raise ValueError("JSONDecodeError: partial JSON response")
 
         for _ in range(3):
-            with pytest.raises(ValueError):  # noqa: PT011
+            with pytest.raises(ValueError):
                 await breaker.call_async(_return_partial_json)
 
         assert breaker.state == "open"
@@ -255,7 +253,7 @@ class TestMastF05:
         async def _raises_value_error() -> None:
             raise ValueError("not a timeout")
 
-        with pytest.raises(ValueError, match="not a timeout"):  # noqa: PT011
+        with pytest.raises(ValueError, match="not a timeout"):
             await run_with_provider_loop_timeout(_raises_value_error(), timeout_sec=5)
 
 

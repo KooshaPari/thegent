@@ -4,8 +4,9 @@
 """
 
 import pytest
-from docs_engine.db.indexer import DocIndexer
 from docs_engine.db.queries import DocQueries
+
+from docs_engine.db.indexer import DocIndexer
 
 
 @pytest.fixture

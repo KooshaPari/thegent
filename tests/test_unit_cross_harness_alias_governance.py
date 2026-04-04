@@ -5,17 +5,11 @@ from unittest.mock import patch
 import pytest
 from typer.testing import CliRunner
 
-from thegent.anen_main import _MODEL_ALIAS as _ANEN_MODEL_ALIAS
-from thegent.anen_main import default_anen
-from thegent.clode_main import _MODEL_ALIAS as _CLODE_MODEL_ALIAS
-from thegent.clode_main import default_clode
-from thegent.dex_main import _DEX_BYPASS_FLAG
-from thegent.dex_main import _MODEL_ALIAS as _DEX_MODEL_ALIAS
-from thegent.dex_main import default_dex
-from thegent.fanta_main import _MODEL_ALIAS as _FANTA_MODEL_ALIAS
-from thegent.fanta_main import app as fanta_app
-from thegent.roid_main import _MODEL_ALIAS as _ROID_MODEL_ALIAS
-from thegent.roid_main import default_roid
+from thegent.anen_main import _MODEL_ALIAS as _ANEN_MODEL_ALIAS, default_anen
+from thegent.clode_main import _MODEL_ALIAS as _CLODE_MODEL_ALIAS, default_clode
+from thegent.dex_main import _MODEL_ALIAS as _DEX_MODEL_ALIAS, default_dex
+from thegent.fanta_main import _MODEL_ALIAS as _FANTA_MODEL_ALIAS, app as fanta_app
+from thegent.roid_main import _MODEL_ALIAS as _ROID_MODEL_ALIAS, default_roid
 
 runner = CliRunner()
 

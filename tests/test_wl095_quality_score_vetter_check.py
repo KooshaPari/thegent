@@ -12,16 +12,15 @@ Every test carries # @trace WL-095
 from __future__ import annotations
 
 import asyncio
-import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import orjson as json
 import pytest
 
 from thegent.govern.vetter.checks import QualityScoreVetterCheck
 from thegent.govern.vetter.models import VetterCheck, VetterCheckResult, VetterConfigError
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -548,7 +547,7 @@ def test_explicit_judge_model_bypasses_resolver():
 
 def test_auto_model_uses_capability_index_recommend():
     # @trace WL-095
-    from thegent.agents.capability_index import AgentRecord, AgentRecommendation, CapabilityIndex
+    from thegent.agents.capability_index import AgentRecommendation, AgentRecord, CapabilityIndex
 
     agent_path = Path("/fake/agents/judge.md")
     fake_agent = AgentRecord(
@@ -636,7 +635,7 @@ def test_auto_model_context_index_none_recommendations_raise_without_fallback():
 def test_auto_model_via_context_capability_index():
     # @trace WL-095
     # When capability_index is passed in context, _resolve_auto_model should use it
-    from thegent.agents.capability_index import AgentRecord, AgentRecommendation, CapabilityIndex
+    from thegent.agents.capability_index import AgentRecommendation, AgentRecord, CapabilityIndex
 
     agent_path = Path("/ctx/agents/judge.md")
     fake_agent = AgentRecord(
@@ -823,7 +822,7 @@ def test_single_criterion_just_below_floor_fails():
 def test_judge_timeout_error_propagates_without_fallback():
     # @trace WL-095
     check = QualityScoreVetterCheck(judge_model="gpt-4o-mini", rubric=["correctness"])
-    with patch("litellm.acompletion", new=AsyncMock(side_effect=asyncio.TimeoutError("judge timeout"))):
+    with patch("litellm.acompletion", new=AsyncMock(side_effect=TimeoutError("judge timeout"))):
         with pytest.raises(asyncio.TimeoutError, match="judge timeout"):
             _run(check.check("run-timeout", "output", {}))
 

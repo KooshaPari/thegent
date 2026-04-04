@@ -1,9 +1,9 @@
 """WL-278 operator command aliases tests."""
 
+import thegent.terminal_cli as terminal_cli_module
 from typer.testing import CliRunner
 
 import thegent.shell_cli as shell_cli_module
-import thegent.terminal_cli as terminal_cli_module
 
 runner = CliRunner()
 

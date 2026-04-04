@@ -15,7 +15,7 @@ def test_generate_report_classifies_dirty_legacy_and_prunable_entries(tmp_path: 
     root = tmp_path
     (root / ".thegent-primary-main").write_text("ok\n", encoding="utf-8")
 
-    def _fake_check_output(cmd: list[str], cwd: Path | None = None, text: bool = True):  # noqa: ARG001
+    def _fake_check_output(cmd: list[str], cwd: Path | None = None, text: bool = True):
         del cwd, text
         if cmd[:3] == ["git", "worktree", "list"]:
             return _fake_git_output(

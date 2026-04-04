@@ -5,7 +5,6 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.contracts.conformance import (
     ConformanceTest,
     _build_conformance_tests,

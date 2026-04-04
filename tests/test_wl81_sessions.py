@@ -8,8 +8,6 @@ Related to:
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestSessionState:
     """Test session state management."""

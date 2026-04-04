@@ -1,15 +1,17 @@
 """High-performance parallel git operations for the agent mesh."""
 
-import logging
 import hashlib
-import orjson as json
+import logging
 import os
 import random
 import shutil
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
+
+import orjson as json
+
+from thegent.infra.shim_subprocess import run as shim_run
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ def _thegent_git_has(name: str) -> bool:
 class GitParallelismManager:
     """Manages parallel git operations using per-agent index files and plumbing (SCLI-P4.1–P4.2)."""
 
-    def __init__(self, project_root: Path, agent_id: str, mesh_root: Path = Path("/tmp/agent-mesh")) -> None:  # noqa: S108 -- intentional platform temp dir for agent mesh IPC
+    def __init__(self, project_root: Path, agent_id: str, mesh_root: Path = Path("/tmp/agent-mesh")) -> None:
         self.project_root = project_root
         self.agent_id = agent_id
         self.git_dir = project_root / ".git"

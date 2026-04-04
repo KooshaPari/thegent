@@ -1,7 +1,6 @@
 """Unit tests for thegent.contracts.parser -- IncrementalXMLParser and helpers."""
 
 import pytest
-
 import thegent.contracts.parser as parser_module
 from thegent.contracts.parser import (
     IncrementalXMLParser,
@@ -217,7 +216,7 @@ class TestExtractTags:
         # @trace FR-CTR-002
         class _Native:
             @staticmethod
-            def extract_xml_tags(text: str, allowed_tags=None, case_sensitive=False):  # noqa: ANN001
+            def extract_xml_tags(text: str, allowed_tags=None, case_sensitive=False):
                 assert text == "<STATUS>ok</STATUS>"
                 return {"STATUS": "native-ok"}
 
@@ -230,7 +229,7 @@ class TestExtractTags:
         # @trace FR-CTR-002
         class _NativeFail:
             @staticmethod
-            def extract_xml_tags(_text: str, allowed_tags=None, case_sensitive=False):  # noqa: ANN001
+            def extract_xml_tags(_text: str, allowed_tags=None, case_sensitive=False):
                 raise RuntimeError("native failure")
 
         monkeypatch.setattr(parser_module, "_get_native_parser", lambda: _NativeFail())

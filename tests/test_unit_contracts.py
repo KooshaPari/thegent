@@ -1,6 +1,8 @@
 """Unit tests for thegent contracts package."""
 
 import pytest
+from thegent.contracts.parser import IncrementalXMLParser, extract_tags
+from thegent.contracts.validation import validate_csm
 
 from thegent.contracts import (
     CONTRACT_SCHEMA_VERSION,
@@ -10,8 +12,6 @@ from thegent.contracts import (
     get_registry,
     normalize_output,
 )
-from thegent.contracts.parser import IncrementalXMLParser, extract_tags
-from thegent.contracts.validation import validate_csm
 
 
 @pytest.mark.unit

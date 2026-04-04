@@ -1,14 +1,12 @@
 """Unit tests for CLI resolution logic."""
 
 import getpass
-import orjson as json
 from pathlib import Path
 from unittest.mock import patch
 
+import orjson as json
 import pytest
 import typer
-from typer.testing import CliRunner
-
 from thegent.cli.commands import impl as cli_impl
 from thegent.cli.commands.cli import logs_cmd, stop_cmd
 from thegent.cli.commands.impl import (
@@ -17,6 +15,8 @@ from thegent.cli.commands.impl import (
     _resolve_cwd,
     _resolve_droids_dir,
 )
+from typer.testing import CliRunner
+
 from thegent.config import ThegentSettings
 from thegent.main import app
 

@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from thegent.ux.calibration import ConfidenceCalibrator
 
 

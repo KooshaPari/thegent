@@ -3,14 +3,12 @@ resolver = "2"
 members = [
     "harness-native",
     "thegent-benchmark",
-    "thegent-cli",
-    "thegent-shm",
     "thegent-cache",
-    "thegent-mesh",
-    "thegent-subprocess",
+    "thegent-crypto",
     "thegent-metrics",
     "thegent-plugin-host",
-    "thegent-sharecli",
+]
+exclude = [
     "thegent-tool-detect",
 ]
 

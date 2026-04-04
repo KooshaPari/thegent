@@ -6,10 +6,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from typer.testing import CliRunner
-
 from thegent.cli.apps.main import app as main_app
 from thegent.cli.commands.cli_git import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

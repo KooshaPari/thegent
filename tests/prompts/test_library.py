@@ -6,7 +6,6 @@ from __future__ import annotations
 """
 
 import pytest
-
 from thegent.prompts.library import (
     get_prompt_library,
     reset_prompt_library,

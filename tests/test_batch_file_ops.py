@@ -11,11 +11,10 @@ Tests cover:
 - Backup and recovery
 """
 
-import orjson as json
 import sys
-import tempfile
 from pathlib import Path
 
+import orjson as json
 import pytest  # type: ignore
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
@@ -23,8 +22,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from batch_file_ops import (  # type: ignore
     BatchFileOps,
     BatchFileOpsError,
-    BatchOperation,
-    BatchOperationResult,
     batch_delete_files,
     batch_edit_files,
     batch_read_files,
@@ -160,7 +157,7 @@ class TestBatchWriteFiles:
         # previously written files are backed up. We'll skip the actual failure
         # since permission errors are platform-specific
         result = batch_write_files(
-            [  # noqa: F841
+            [
                 (str(file1), "new1"),
                 (str(file2), "new2"),
             ],

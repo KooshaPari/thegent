@@ -28,7 +28,6 @@ Covers:
 from __future__ import annotations
 
 import pytest
-
 from thegent.ui.compositor.compositor import Compositor, Panel
 from thegent.ui.compositor_manager import CompositorManager, CompositorSlot, Layout
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.mcp.dynamic_tools import DynamicToolRegistry, DynamicToolSpec
 
 

@@ -9,7 +9,6 @@ import threading
 from unittest.mock import patch
 
 import pytest
-
 from thegent.mcp.gateway import (
     McpGateway,
     McpServerConfig,

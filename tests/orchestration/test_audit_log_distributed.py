@@ -13,7 +13,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from thegent.orchestration.state.audit_log import ShadowAuditGit
 
 

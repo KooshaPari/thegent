@@ -1,25 +1,12 @@
----
-project: thegent
-language: Rust
-generated: "2026-04-03"
+# AI Attribution Tracking
+# Traces to: FR-AI-GOV-001
 
-attribution:
-  system: Phenotype Traceability
-  purpose: Feature Requirement (FR) tracking
+ai_generated_artifacts: []
 
-traceability:
-  cli: AgilePlus/bin/ptrace
-  test_framework: rust_proc_macros
-  ci_cd: .github/workflows/traceability.yml
-
-fr_requirements:
-  - FR-THEGENT-001
-  - FR-THEGENT-002
-  - FR-THEGENT-003
-
-coverage:
-  status: partial
-  test_files_annotated: 1
-  unique_fr_ids: 3
-
-last_updated: "2026-04-03"
+# Example entry:
+# - file: "src/example.py"
+#   generated_by: "claude-code"
+#   prompt_id: "prompt-2026-04-001"
+#   spec_reference: "FR-XXX-001"
+#   reviewed_by: "human@phenotype.io"
+#   timestamp: "2026-04-03T00:00:00Z"

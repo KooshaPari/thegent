@@ -1,7 +1,7 @@
 """Tests for `thegent git worktree` lifecycle commands."""
 
 import importlib.util
-import sys
+
 import pytest
 
 # Skip entire test module if thegent_git native extension is not available
@@ -10,13 +10,12 @@ if importlib.util.find_spec("thegent_git") is None:
 
     pytest.skip("thegent-git native extension not installed", allow_module_level=True)
 
-import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from typer.testing import CliRunner
-
+import orjson as json
 from thegent.cli.commands.cli_git import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

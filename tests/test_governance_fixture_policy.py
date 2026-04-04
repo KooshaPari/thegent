@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import orjson as json
 import re
 import subprocess
 import sys
 from pathlib import Path
 
+import orjson as json
 import pytest
-
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -78,4 +77,3 @@ def test_governance_fixture_regeneration_check_passes() -> None:
     assert "canonical" in proc.stdout
 
 
-# noqa: PT018

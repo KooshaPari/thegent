@@ -2,7 +2,6 @@
 
 import getpass
 import hashlib
-import orjson as json
 import os
 import socket
 import subprocess
@@ -10,8 +9,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import orjson as json
 import pytest
-
 from thegent.cli.commands.cli import _scope_key
 from thegent.cli.commands.impl import (
     bg_impl,

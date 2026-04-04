@@ -12,7 +12,7 @@ def _fake_git_output(*entries: str) -> str:
 
 
 def test_parse_git_worktree_handles_detached_entries(tmp_path: Path, monkeypatch) -> None:
-    def _fake_check_output(cmd: list[str], cwd: Path, text: bool):  # noqa: ARG001
+    def _fake_check_output(cmd: list[str], cwd: Path, text: bool):
         del cmd, cwd, text
         return _fake_git_output(
             f"worktree {tmp_path}",
@@ -40,7 +40,7 @@ def test_generate_inventory_marks_primary_and_warns_nonconformant_lane(tmp_path:
     legacy_in_root = tmp_path / ".worktrees" / "legacy-cache"
     structured_lane = tmp_path / ".worktrees" / "backend" / "m" / "wave-80-a" / "active"
 
-    def _fake_check_output(cmd: list[str], cwd: Path, text: bool):  # noqa: ARG001
+    def _fake_check_output(cmd: list[str], cwd: Path, text: bool):
         del cmd, text
         return _fake_git_output(
             f"worktree {tmp_path}",
@@ -82,7 +82,7 @@ def test_generate_inventory_flags_malformed_lane_in_root(tmp_path: Path, monkeyp
     (tmp_path / marker).write_text("ok", encoding="utf-8")
     malformed_lane = tmp_path / ".worktrees" / "backend" / "m" / "wave-80-a" / "stale"
 
-    def _fake_check_output(cmd: list[str], cwd: Path, text: bool):  # noqa: ARG001
+    def _fake_check_output(cmd: list[str], cwd: Path, text: bool):
         del cmd, cwd, text
         return _fake_git_output(
             f"worktree {tmp_path}",

@@ -18,7 +18,6 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # ollama_provider module
 # ---------------------------------------------------------------------------
@@ -69,7 +68,10 @@ class TestIsOllamaAvailable:
     def test_probes_correct_endpoint(self) -> None:
         """is_ollama_available probes /api/tags at localhost:11434."""
         # @trace WL-118
-        from thegent.utils.routing_impl.ollama_provider import OLLAMA_TAGS_ENDPOINT, is_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import (
+            OLLAMA_TAGS_ENDPOINT,
+            is_ollama_available,
+        )
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -123,19 +125,24 @@ class TestGetAvailableModels:
     def test_raises_on_connect_error(self) -> None:
         """get_available_models raises OllamaUnavailableError on ConnectError."""
         # @trace WL-118
-        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, get_available_models
+        from thegent.utils.routing_impl.ollama_provider import (
+            OllamaUnavailableError,
+            get_available_models,
+        )
 
         with patch(
             "thegent.utils.routing_impl.ollama_provider.httpx.get",
             side_effect=httpx.ConnectError("refused"),
-        ):
-            with pytest.raises(OllamaUnavailableError):
-                get_available_models()
+        ), pytest.raises(OllamaUnavailableError):
+            get_available_models()
 
     def test_raises_on_non_200(self) -> None:
         """get_available_models raises OllamaUnavailableError on non-200 response."""
         # @trace WL-118
-        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, get_available_models
+        from thegent.utils.routing_impl.ollama_provider import (
+            OllamaUnavailableError,
+            get_available_models,
+        )
 
         resp = MagicMock()
         resp.status_code = 500
@@ -169,7 +176,10 @@ class TestAssertOllamaAvailable:
     def test_raises_when_unavailable(self) -> None:
         """assert_ollama_available raises OllamaUnavailableError when daemon is down."""
         # @trace WL-118
-        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, assert_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import (
+            OllamaUnavailableError,
+            assert_ollama_available,
+        )
 
         with patch("thegent.utils.routing_impl.ollama_provider.is_ollama_available", return_value=False):
             with pytest.raises(OllamaUnavailableError):
@@ -178,7 +188,10 @@ class TestAssertOllamaAvailable:
     def test_error_message_mentions_ollama_serve(self) -> None:
         """assert_ollama_available error message includes actionable instructions."""
         # @trace WL-118
-        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, assert_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import (
+            OllamaUnavailableError,
+            assert_ollama_available,
+        )
 
         with patch("thegent.utils.routing_impl.ollama_provider.is_ollama_available", return_value=False):
             with pytest.raises(OllamaUnavailableError, match="ollama serve"):
@@ -239,7 +252,10 @@ class TestBuildLitellmEntry:
     def test_api_base_points_to_localhost(self) -> None:
         """build_litellm_entry sets api_base to http://localhost:11434/v1."""
         # @trace WL-118
-        from thegent.utils.routing_impl.ollama_provider import OLLAMA_OPENAI_BASE, build_litellm_entry
+        from thegent.utils.routing_impl.ollama_provider import (
+            OLLAMA_OPENAI_BASE,
+            build_litellm_entry,
+        )
 
         entry = build_litellm_entry("llama3.3")
         assert entry["litellm_params"]["api_base"] == OLLAMA_OPENAI_BASE  # type: ignore[index]
@@ -453,11 +469,10 @@ class TestLitellmRouterOllama:
     def test_ollama_route_sets_api_base(self) -> None:
         """_route_to_litellm_config sets api_base to http://127.0.0.1:11434/v1 for ollama."""
         # @trace WL-118
-        from thegent.utils.routing_impl.litellm_router import _route_to_litellm_config
-        from thegent.utils.routing_impl.provider_types import normalize_provider_name
-
         # Import Route directly to avoid circular-import via __init__
         from thegent.models.catalog import Route
+        from thegent.utils.routing_impl.litellm_router import _route_to_litellm_config
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         route = Route(
             provider=normalize_provider_name("ollama"),
@@ -470,10 +485,9 @@ class TestLitellmRouterOllama:
     def test_ollama_route_litellm_model_prefix(self) -> None:
         """_route_to_litellm_config sets litellm model as 'ollama/llama3.3'."""
         # @trace WL-118
+        from thegent.models.catalog import Route
         from thegent.utils.routing_impl.litellm_router import _route_to_litellm_config
         from thegent.utils.routing_impl.provider_types import normalize_provider_name
-
-        from thegent.models.catalog import Route
 
         route = Route(
             provider=normalize_provider_name("ollama"),

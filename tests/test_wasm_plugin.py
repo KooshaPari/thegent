@@ -7,10 +7,10 @@ These tests verify the Wasm plugin functionality including:
 - Fallback handling
 """
 
-import orjson as json
 import tempfile
 from pathlib import Path
 
+import orjson as json
 import pytest
 
 from thegent.infra.wasm_plugin import (

@@ -17,7 +17,6 @@ import time
 from typing import TYPE_CHECKING
 
 import pytest
-
 from thegent.resources.distributed import (
     DistributedResourceCoordinator,
     ResourceCoordinationError,

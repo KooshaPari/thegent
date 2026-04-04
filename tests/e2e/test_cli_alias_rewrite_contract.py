@@ -5,8 +5,8 @@ from collections.abc import Sequence
 
 import typer
 
-from tests.e2e.command_surface import command_path_exists
 from tests.e2e.cli_runner_compat import _ALIAS_REWRITE_PREFIXES
+from tests.e2e.command_surface import command_path_exists
 
 _ALLOWED_CANONICAL_PREFIXES: set[tuple[str, ...]] = {
     ("run", "logs"),

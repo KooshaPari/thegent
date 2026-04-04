@@ -8,13 +8,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from thegent.observability.prometheus import (
     MetricsCollector,
     get_metrics_collector,
     reset_metrics_collector,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

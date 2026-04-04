@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from thegent.protocols.turn_submit_boundaries import (
     build_commit_phase,
     build_parse_phase,

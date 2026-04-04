@@ -8,12 +8,11 @@ TDD: These tests are written FIRST to demonstrate the race, then the fix is appl
 
 from __future__ import annotations
 
-import orjson as json
 import threading
 from pathlib import Path
 
+import orjson as json
 import pytest
-
 from thegent.orchestration.resource.billing import TeamBillingManager
 
 

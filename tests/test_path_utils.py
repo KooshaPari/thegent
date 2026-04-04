@@ -26,7 +26,7 @@ import pytest
 # ---------------------------------------------------------------------------
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from path_utils import (  # noqa: E402
+from path_utils import (
     ensure_dir,
     get_common_ancestor,
     is_absolute_or_relative,

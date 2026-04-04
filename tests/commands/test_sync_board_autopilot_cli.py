@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import orjson as json
 from pathlib import Path
 from typing import Any
 
+import orjson as json
 import pytest
+from thegent.cli.apps.sync import app
 from typer.testing import CliRunner
 
 from thegent.cli.apps import sync as sync_app
-from thegent.cli.apps.sync import app
 from thegent.commands import sync as sync_commands
 from thegent.commands.sync import OperationResult, SyncOperationStatus
 from thegent.integrations import workstream_autosync

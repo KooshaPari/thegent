@@ -3,7 +3,6 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
-
 from thegent.contracts.migration import MigrationController
 from thegent.contracts.registry import ContractRegistry, ContractVersion
 

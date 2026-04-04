@@ -8,7 +8,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from thegent.phenotype.cliproxy_models_check import (
     extract_model_ids,
     models_url,

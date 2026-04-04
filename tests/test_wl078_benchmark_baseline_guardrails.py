@@ -51,4 +51,3 @@ def test_wl078_main_allows_overwrite_with_flag(tmp_path: Path, monkeypatch: pyte
     assert '"suite": "python-benchmark-suite-v1"' in payload
 
 
-# noqa: PT018

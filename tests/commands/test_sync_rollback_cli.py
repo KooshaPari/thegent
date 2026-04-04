@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from thegent.cli.apps.sync import app
 from typer.testing import CliRunner
 
-from thegent.cli.apps.sync import app
 from thegent.integrations.reflection_rollback import ReflectionRollbackManager
 
 

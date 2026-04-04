@@ -14,11 +14,9 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache
 
 if not _DISKCACHE_AVAILABLE:

@@ -10,9 +10,8 @@ Tests cover:
 
 from __future__ import annotations
 
-import os
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -47,7 +46,7 @@ class TestMAIFRunnerDisabled:
     """MAIFRunner is disabled when THGENT_MAIF_ENABLED is absent or 0."""
 
     def test_disabled_when_env_unset(self, disabled_runner: MAIFRunner) -> None:
-        assert disabled_runner._enabled is False  # noqa: SLF001 -- white-box test of gate flag
+        assert disabled_runner._enabled is False
 
     def test_record_run_start_returns_none_when_disabled(self, disabled_runner: MAIFRunner) -> None:
         result = disabled_runner.record_run_start(
@@ -69,7 +68,7 @@ class TestMAIFRunnerDisabled:
     def test_disabled_when_env_is_zero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("THGENT_MAIF_ENABLED", "0")
         runner = MAIFRunner()
-        assert runner._enabled is False  # noqa: SLF001
+        assert runner._enabled is False
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +80,7 @@ class TestMAIFRunnerEnabled:
     """MAIFRunner records artifacts when THGENT_MAIF_ENABLED=1."""
 
     def test_enabled_when_env_is_one(self, enabled_runner: MAIFRunner) -> None:
-        assert enabled_runner._enabled is True  # noqa: SLF001
+        assert enabled_runner._enabled is True
 
     def test_record_run_start_returns_artifact_id(self, enabled_runner: MAIFRunner) -> None:
         """record_run_start returns a non-None artifact ID (hex string)."""

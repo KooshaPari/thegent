@@ -20,7 +20,6 @@ import pytest
 if TYPE_CHECKING:
     from pathlib import Path
 
-from thegent.agents.base import AgentRunner, RunResult
 from thegent.orchestration.resilience.deferral import (
     extract_deferred_tasks,
     inject_deferred_tasks,
@@ -28,6 +27,7 @@ from thegent.orchestration.resilience.deferral import (
 )
 from thegent.queue.storage import PromptQueue
 
+from thegent.agents.base import AgentRunner, RunResult
 
 # ---------------------------------------------------------------------------
 # extract_deferred_tasks

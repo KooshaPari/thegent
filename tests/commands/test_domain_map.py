@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import orjson as json
 import pytest
-from typer.testing import CliRunner
-
 from thegent.cli.apps.main import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 

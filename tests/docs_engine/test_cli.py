@@ -5,8 +5,8 @@
 
 from pathlib import Path
 
-from typer.testing import CliRunner
 from docs_engine.cli.commands import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
