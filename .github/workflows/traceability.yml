@@ -1,0 +1,38 @@
+name: FR Traceability
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  traceability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install ptrace CLI
+        run: |
+          mkdir -p ~/bin
+          curl -sL https://raw.githubusercontent.com/phenotype/AgilePlus/main/bin/ptrace -o ~/bin/ptrace
+          chmod +x ~/bin/ptrace
+          echo "$HOME/bin" >> $GITHUB_PATH
+      
+      - name: Check FR Coverage (Rust)
+        run: |
+          ptrace analyze --path . --lang rust
+          ptrace coverage --path . --output TEST_COVERAGE.md
+          cat TEST_COVERAGE.md
+      
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr-coverage-report
+          path: TEST_COVERAGE.md
+        if: always()

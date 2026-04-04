@@ -1,0 +1,9 @@
+[package]
+name = "thegent-traceability"
+version = "0.1.0"
+edition = "2024"
+description = "FR traceability utilities for thegent"
+license = "Apache-2.0"
+
+[lib]
+name = "thegent_traceability"
