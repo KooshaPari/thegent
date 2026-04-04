@@ -1,9 +1,17 @@
 //! Integration tests for hysteresis manager.
+//!
+//! Traces to:
+//! - FR-THEGENT-004: Hysteresis band calculation
+//! - FR-THEGENT-005: Max dwell timeout
+//! - FR-THEGENT-006: Routing mode transitions
 
 use std::time::{Duration, Instant};
 use thegent_router::HysteresisManager;
 use thegent_router::RoutingMode;
 
+/// Test hysteresis band prevents oscillation.
+/// Traces to: FR-THEGENT-004
+#[trace_to("FR-THEGENT-004")]
 #[test]
 fn test_hysteresis_band_prevents_oscillation() {
     let hyst = HysteresisManager::new();
@@ -32,6 +40,9 @@ fn test_hysteresis_band_prevents_oscillation() {
     assert!(!can_switch_2); // In band + dwell prevents oscillation
 }
 
+/// Test max dwell forces reevaluation.
+/// Traces to: FR-THEGENT-005
+#[trace_to("FR-THEGENT-005")]
 #[test]
 fn test_hysteresis_max_dwell_forces_reevaluation() {
     let hyst = HysteresisManager::new();
