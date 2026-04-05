@@ -23,28 +23,31 @@ jobs:
           fetch-depth: 0
 
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Install build tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build
-        run: python -m build
+        run: npm run build
+
+      - name: Test
+        run: npm test
 
       - name: Determine version
         id: version
         run: |
-          VERSION=$(grep '^version' pyproject.toml | cut -d'"' -f2)
+          VERSION=$(jq -r '.version' package.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Publish to PyPI
-        run: |
-          twine upload dist/* -u __token__ -p $123secrets.PYPI_API_TOKEN125
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: $123secrets.NPM_TOKEN125
       
 
   promote:
@@ -58,4 +61,4 @@ jobs:
         with:
           version: $123needs.release.outputs.version125
           channel: beta
-          registry: pypi
+          registry: npm
