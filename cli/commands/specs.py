@@ -20,28 +20,37 @@ console = Console()
 
 
 @click.group()
-def specs():
+def specs() -> None:
     """Generate specs, WBS, and PRDs from markdown files."""
 
 
 @specs.command()
 @click.option("--max-projects", type=int, help="Maximum number of projects to analyze")
 @click.option("--max-files", type=int, default=200, help="Maximum files per project")
-@click.option("--base-path", type=str, default=None, help="Base path for analysis (defaults to current directory)")
+@click.option(
+    "--base-path",
+    type=str,
+    default=None,
+    help="Base path for analysis (defaults to current directory)",
+)
 @click.option("--output-dir", type=str, default="docs/specs")
-def generate(max_projects, max_files, base_path, output_dir):
+def generate(
+    max_projects: int | None, max_files: int, base_path: str | None, output_dir: str
+) -> None:
     """Generate specs, WBS, and PRDs for all projects."""
     if base_path is None:
-        base_path = Path.cwd()
+        base_path_obj = Path.cwd()
     else:
-        base_path = Path(base_path)
-    output_dir = Path(output_dir)
+        base_path_obj = Path(base_path)
+    output_dir_path = Path(output_dir)
 
     console.print("[bold blue]Starting specs/WBS/PRD generation...[/bold blue]")
 
-    generator = SpecsGenerator(base_path)
+    generator = SpecsGenerator(base_path_obj)
 
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
+    ) as progress:
         task1 = progress.add_task("Analyzing projects...", total=None)
         generator.analyze_all_projects(max_projects=max_projects, max_files_per_project=max_files)
         progress.update(task1, completed=True)
@@ -84,26 +93,28 @@ def generate(max_projects, max_files, base_path, output_dir):
     if generator.cross_analyzer:
         table.add_row("Relationships Found", str(len(generator.cross_analyzer.relationships)))
         table.add_row("Shared Features", str(len(generator.cross_analyzer.unified_features)))
-        table.add_row("Unified Work Streams", str(len(generator.cross_analyzer.unified_work_streams)))
+        table.add_row(
+            "Unified Work Streams", str(len(generator.cross_analyzer.unified_work_streams))
+        )
         table.add_row("Unified PRDs", str(len(generator.cross_analyzer.unified_prds)))
 
     console.print(table)
 
-    console.print(f"\n[bold]Output directory:[/bold] {output_dir}")
+    console.print(f"\n[bold]Output directory:[/bold] {output_dir_path}")
 
 
 @specs.command()
 @click.option("--output-dir", type=str, default="docs/specs")
-def list_projects(output_dir):
+def list_projects(output_dir: str) -> None:
     """List all projects with generated specs."""
-    output_dir = Path(output_dir)
+    output_dir_path = Path(output_dir)
 
-    results_file = output_dir / "ANALYSIS_RESULTS.json"
+    results_file = output_dir_path / "ANALYSIS_RESULTS.json"
     if not results_file.exists():
         console.print("[red]No analysis results found. Run 'generate' first.[/red]")
         return
 
-    with open(results_file) as f:
+    with results_file.open() as f:
         results = json.load(f)
 
     table = Table(title="Projects with Generated Specs")
@@ -113,8 +124,7 @@ def list_projects(output_dir):
     table.add_column("Tasks", style="blue")
     table.add_column("WBS Elements", style="magenta")
 
-    for project_data in results.get("project_specs_summary", {}).items():
-        project_name, data = project_data
+    for project_name, data in results.get("project_specs_summary", {}).items():
         table.add_row(
             project_name,
             str(data.get("files_analyzed", 0)),
@@ -129,16 +139,16 @@ def list_projects(output_dir):
 @specs.command()
 @click.argument("project_name")
 @click.option("--output-dir", type=str, default="docs/specs")
-def show_prd(project_name, output_dir):
+def show_prd(project_name: str, output_dir: str) -> None:
     """Show PRD for a specific project."""
-    output_dir = Path(output_dir)
-    prd_file = output_dir / "prds" / f"{project_name}_prd.md"
+    output_dir_path = Path(output_dir)
+    prd_file = output_dir_path / "prds" / f"{project_name}_prd.md"
 
     if not prd_file.exists():
         console.print(f"[red]PRD not found for project: {project_name}[/red]")
         return
 
-    with open(prd_file) as f:
+    with prd_file.open() as f:
         content = f.read()
 
     console.print(content)
@@ -146,16 +156,16 @@ def show_prd(project_name, output_dir):
 
 @specs.command()
 @click.option("--output-dir", type=str, default="docs/specs")
-def show_unified_workstream(output_dir):
+def show_unified_workstream(output_dir: str) -> None:
     """Show unified work stream."""
-    output_dir = Path(output_dir)
-    ws_file = output_dir / "UNIFIED_WORK_STREAM.md"
+    output_dir_path = Path(output_dir)
+    ws_file = output_dir_path / "UNIFIED_WORK_STREAM.md"
 
     if not ws_file.exists():
         console.print("[red]Unified work stream not found. Run 'generate' first.[/red]")
         return
 
-    with open(ws_file) as f:
+    with ws_file.open() as f:
         content = f.read()
 
     console.print(content)

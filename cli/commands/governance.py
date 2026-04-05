@@ -18,7 +18,7 @@ from ...governance.task_manager_enhanced import TaskManagerEnhanced
 
 
 @click.group("governance")
-def governance_cmd():
+def governance_cmd() -> None:
     """Governance management commands."""
 
 
@@ -26,7 +26,7 @@ def governance_cmd():
 @click.argument("project_path", type=click.Path(exists=True))
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--format", type=click.Choice(["json", "yaml", "markdown"]), default="json")
-def analyze_project(project_path: str, output: str | None, format: str):
+def analyze_project(project_path: str, output: str | None, format: str) -> None:
     """Analyze project structure and governance."""
     project = Path(project_path)
 
@@ -48,12 +48,12 @@ def analyze_project(project_path: str, output: str | None, format: str):
     if output:
         output_path = Path(output)
         if format == "json":
-            with open(output_path, "w") as f:
+            with output_path.open("w") as f:
                 json.dump(result, f, indent=2)
         elif format == "yaml":
             import yaml
 
-            with open(output_path, "w") as f:
+            with output_path.open("w") as f:
                 yaml.dump(result, f, default_flow_style=False)
         click.echo(f"Results saved to: {output_path}")
     else:
@@ -63,7 +63,7 @@ def analyze_project(project_path: str, output: str | None, format: str):
 @governance_cmd.command("setup")
 @click.argument("project_path", type=click.Path(exists=True))
 @click.option("--force", is_flag=True, help="Force overwrite existing files")
-def setup_governance(project_path: str, force: bool):
+def setup_governance(project_path: str, force: bool) -> None:
     """Set up governance for a project."""
     project = Path(project_path)
 
@@ -78,7 +78,7 @@ def setup_governance(project_path: str, force: bool):
 @governance_cmd.command("quality")
 @click.argument("project_path", type=click.Path(exists=True))
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def assess_quality(project_path: str, output: str | None):
+def assess_quality(project_path: str, output: str | None) -> None:
     """Assess project quality."""
     project = Path(project_path)
 
@@ -124,7 +124,7 @@ def assess_quality(project_path: str, output: str | None):
     default="all",
 )
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def run_audit(project_path: str, audit_type: str, output: str | None):
+def run_audit(project_path: str, audit_type: str, output: str | None) -> None:
     """Run audits on a project."""
     project = Path(project_path)
 
@@ -155,9 +155,13 @@ def run_audit(project_path: str, audit_type: str, output: str | None):
 
 @governance_cmd.command("report")
 @click.argument("project_path", type=click.Path(exists=True))
-@click.option("--format", type=click.Choice(["json", "yaml", "markdown", "html", "console"]), default="console")
+@click.option(
+    "--format",
+    type=click.Choice(["json", "yaml", "markdown", "html", "console"]),
+    default="console",
+)
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def generate_report(project_path: str, format: str, output: str | None):
+def generate_report(project_path: str, format: str, output: str | None) -> None:
     """Generate comprehensive governance report."""
     project = Path(project_path)
 
@@ -184,7 +188,7 @@ def generate_report(project_path: str, format: str, output: str | None):
     audit_results = None
     try:
         framework = AuditFramework(project)
-        results = framework.run_all_audits()
+        framework.run_all_audits()
         audit_results = framework.generate_report()
     except Exception as e:
         click.echo(f"Warning: Could not run audits: {e}")
@@ -204,7 +208,9 @@ def generate_report(project_path: str, format: str, output: str | None):
         if output:
             output_path = Path(output)
         else:
-            ext = {"json": ".json", "yaml": ".yaml", "markdown": ".md", "html": ".html"}.get(format, ".json")
+            ext = {"json": ".json", "yaml": ".yaml", "markdown": ".md", "html": ".html"}.get(
+                format, ".json"
+            )
             output_path = project / "governance" / f"report{ext}"
 
         generator.save_report(report, output_path, format_enum)
@@ -212,10 +218,16 @@ def generate_report(project_path: str, format: str, output: str | None):
 
 
 @governance_cmd.command("tasks")
-@click.option("--status", type=click.Choice(["pending", "in_progress", "completed", "all"]), default="all")
+@click.option(
+    "--status", type=click.Choice(["pending", "in_progress", "completed", "all"]), default="all"
+)
 @click.option("--project", type=click.Path(), help="Filter by project")
-@click.option("--priority", type=click.Choice(["critical", "high", "medium", "low"]), help="Filter by priority")
-def list_tasks(status: str, project: str | None, priority: str | None):
+@click.option(
+    "--priority",
+    type=click.Choice(["critical", "high", "medium", "low"]),
+    help="Filter by priority",
+)
+def list_tasks(status: str, project: str | None, priority: str | None) -> None:
     """List tasks."""
     manager = TaskManagerEnhanced()
 
@@ -243,7 +255,7 @@ def list_tasks(status: str, project: str | None, priority: str | None):
 
 
 @governance_cmd.command("stats")
-def show_stats():
+def show_stats() -> None:
     """Show task statistics."""
     manager = TaskManagerEnhanced()
     stats = manager.get_statistics()

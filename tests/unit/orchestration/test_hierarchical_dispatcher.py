@@ -7,6 +7,7 @@ import time
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
 from thegent.orchestration.hierarchical_dispatcher import (
     MAX_HIERARCHY_DEPTH,
     AgentCapExceededError,

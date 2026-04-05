@@ -21,12 +21,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from starlette.testclient import TestClient
-from thegent.session.zmx_backend import ZmxBackend, ZmxSession
-
 from thegent.adapters.acp_server import (
     ACPServerAdapter,
     SessionEndpoints,
 )
+from thegent.session.zmx_backend import ZmxBackend, ZmxSession
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures

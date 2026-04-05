@@ -20,8 +20,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from starlette.testclient import TestClient
-from typer.testing import CliRunner
-
 from thegent.adapters.acp_server import (
     ACP_DEFAULT_PORT,
     ACPServerAdapter,
@@ -29,6 +27,8 @@ from thegent.adapters.acp_server import (
     _rpc_error,
     app as acp_cli_app,
 )
+from typer.testing import CliRunner
+
 from thegent.agents.base import AgentRunner, RunResult
 
 runner = CliRunner()

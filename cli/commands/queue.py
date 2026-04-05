@@ -24,7 +24,7 @@ from ...agents.document import (
 
 
 @click.group("queue")
-def queue_cmd():
+def queue_cmd() -> None:
     """Document queue management commands."""
 
 
@@ -33,11 +33,12 @@ def queue_cmd():
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--min-date", help="Minimum date (YYYY-MM)")
 @click.option("--location", multiple=True, help="Location to scan (name:path:recursive:max_depth)")
-def scan(config: str | None, output: str | None, min_date: str | None, location: tuple):
+def scan(config: str | None, output: str | None, min_date: str | None, location: tuple) -> None:
     """Scan for markdown files and create queue."""
     if config:
         # Load config from file
-        with open(config) as f:
+        config_path = Path(config)
+        with config_path.open() as f:
             config_data = json.load(f)
         scan_config = ScanConfig(
             locations=config_data.get("locations", {}),
@@ -83,39 +84,45 @@ def scan(config: str | None, output: str | None, min_date: str | None, location:
 
 @queue_cmd.command("list")
 @click.option("--queue-file", "-q", type=click.Path(exists=True), help="Queue file path")
-def list_months(queue_file: str | None):
+def list_months(queue_file: str | None) -> None:
     """List all months in the queue."""
     if queue_file:
         queue_manager = QueueManager(Path(queue_file))
     else:
-        queue_manager = QueueManager(Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json")
+        queue_manager = QueueManager(
+            Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json"
+        )
 
     months = queue_manager.list_months()
     click.echo("Available months:")
     for month_entry in months:
         month = month_entry["month"]
         total = month_entry["total_files"]
-        locations = ", ".join([f"{loc['location']}({loc['file_count']})" for loc in month_entry["locations"]])
-        click.echo(f"  {month}: {total} files [{locations}]")
+        locations_str = ", ".join(
+            [f"{loc['location']}({loc['file_count']})" for loc in month_entry["locations"]]
+        )
+        click.echo(f"  {month}: {total} files [{locations_str}]")
 
 
 @queue_cmd.command("next")
 @click.option("--queue-file", "-q", type=click.Path(exists=True), help="Queue file path")
 @click.option("--files", is_flag=True, help="Show file list")
-def next_month(queue_file: str | None, files: bool):
+def next_month(queue_file: str | None, files: bool) -> None:
     """Get next month to process."""
     if queue_file:
         queue_manager = QueueManager(Path(queue_file))
     else:
-        queue_manager = QueueManager(Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json")
+        queue_manager = QueueManager(
+            Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json"
+        )
 
-    next_month = queue_manager.get_next_month()
-    if next_month:
-        click.echo(f"Next month: {next_month['month']}")
-        click.echo(f"Total files: {next_month['total_files']}")
+    next_entry = queue_manager.get_next_month()
+    if next_entry:
+        click.echo(f"Next month: {next_entry['month']}")
+        click.echo(f"Total files: {next_entry['total_files']}")
 
         if files:
-            for loc_entry in next_month["locations"]:
+            for loc_entry in next_entry["locations"]:
                 click.echo(f"\n[{loc_entry['location']}] ({loc_entry['file_count']} files):")
                 for filepath in loc_entry["files"][:10]:
                     click.echo(f"  {filepath}")
@@ -130,17 +137,20 @@ def next_month(queue_file: str | None, files: bool):
 @click.option("--location", help="Filter by location")
 @click.option("--queue-file", "-q", type=click.Path(exists=True), help="Queue file path")
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def get_files(month: str, location: str | None, queue_file: str | None, output: str | None):
+def get_files(month: str, location: str | None, queue_file: str | None, output: str | None) -> None:
     """Get files for a specific month."""
     if queue_file:
         queue_manager = QueueManager(Path(queue_file))
     else:
-        queue_manager = QueueManager(Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json")
+        queue_manager = QueueManager(
+            Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json"
+        )
 
     files = queue_manager.get_month_files(month, location)
 
     if output:
-        with open(output, "w") as f:
+        output_path = Path(output)
+        with output_path.open("w") as f:
             f.writelines(f"{filepath}\n" for filepath in files)
         click.echo(f"Wrote {len(files)} files to {output}")
     else:
@@ -150,12 +160,14 @@ def get_files(month: str, location: str | None, queue_file: str | None, output: 
 
 @queue_cmd.command("summary")
 @click.option("--queue-file", "-q", type=click.Path(exists=True), help="Queue file path")
-def summary(queue_file: str | None):
+def summary(queue_file: str | None) -> None:
     """Get queue summary statistics."""
     if queue_file:
         queue_manager = QueueManager(Path(queue_file))
     else:
-        queue_manager = QueueManager(Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json")
+        queue_manager = QueueManager(
+            Path.home() / ".thegent" / "scans" / "MARKDOWN_SCAN_QUEUE.json"
+        )
 
     summary_data = queue_manager.get_summary()
     click.echo("Queue Summary:")
@@ -175,7 +187,7 @@ def summary(queue_file: str | None):
 @click.argument("filepath")
 @click.option("--queue-file", "-q", type=click.Path(exists=True), help="Queue file path")
 @click.option("--analyze", is_flag=True, help="Also analyze the document")
-def process_file(filepath: str, queue_file: str | None, analyze: bool):
+def process_file(filepath: str, queue_file: str | None, analyze: bool) -> None:
     """Process a single file."""
     path = Path(filepath)
     if not path.exists():
@@ -218,7 +230,7 @@ def process_file(filepath: str, queue_file: str | None, analyze: bool):
 
 @queue_cmd.command("analyze")
 @click.argument("filepath")
-def analyze_file(filepath: str):
+def analyze_file(filepath: str) -> None:
     """Analyze a document."""
     path = Path(filepath)
     if not path.exists():

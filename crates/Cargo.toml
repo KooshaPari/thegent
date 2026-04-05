@@ -4,12 +4,17 @@ members = [
     "harness-native",
     "thegent-benchmark",
     "thegent-cache",
-    "thegent-crypto",
     "thegent-metrics",
     "thegent-plugin-host",
 ]
 exclude = [
     "thegent-tool-detect",
+    "thegent-crypto",
+    "thegent-fs",
+    "thegent-jsonl",
+    "thegent-utils",
+    "thegent-resources",
+    "thegent-path-resolve",
 ]
 
 [workspace.dependencies]
