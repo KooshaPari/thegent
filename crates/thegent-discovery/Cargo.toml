@@ -3,6 +3,10 @@ name = "thegent-discovery-rs"
 version = "0.1.0"
 edition = "2021"
 description = "Agent discovery using shell commands for system monitoring"
+license = "MIT"
+repository = "https://github.com/KooshaPari/thegent"
+keywords = ["discovery", "agent", "monitoring"]
+categories = ["system", "monitoring"]
 
 [[bin]]
 name = "thegent-discovery"

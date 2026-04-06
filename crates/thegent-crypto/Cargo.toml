@@ -3,6 +3,10 @@ name = "thegent-crypto"
 version = "0.1.0"
 edition = "2021"
 description = "BKM-03: Sign/verify/hash artifacts for thegent (PyO3)"
+license = "MIT"
+repository = "https://github.com/KooshaPari/thegent"
+keywords = ["crypto", "hmac", "sha2"]
+categories = ["cryptography", "security"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]

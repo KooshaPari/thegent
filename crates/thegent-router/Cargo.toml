@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Pareto routing engine with hysteresis for task distribution"
 license = "MIT"
+repository = "https://github.com/phenotype/thegent"
 
 [dependencies]
 serde = { version = "1.0.228", features = ["derive"] }

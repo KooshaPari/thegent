@@ -3,6 +3,10 @@ name = "thegent-cache-rs"
 version = "0.1.0"
 edition = "2021"
 description = "Advanced two-tier caching layer with LRU + DashMap"
+license = "MIT"
+repository = "https://github.com/KooshaPari/thegent"
+keywords = ["cache", "lru", "dashmap"]
+categories = ["caching", "performance"]
 
 [lib]
 name = "thegent_cache"

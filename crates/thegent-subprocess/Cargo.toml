@@ -1,0 +1,56 @@
+[package]
+name = "thegent-subprocess"
+version = "0.1.0"
+edition = "2021"
+authors = ["KooshaPari <kooshapari@kooshapari.com>"]
+description = "Subprocess management for thegent agent orchestration"
+readme = "README.md"
+license = "MIT"
+keywords = ["subprocess", "process", "agent", "orchestration"]
+categories = ["command-line-utilities", "concurrency"]
+
+[dependencies]
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+tracing = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Process management
+portable-pty = "0.8"
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+# Concurrency
+parking_lot = "0.12"
+
+# Unix process control (setpriority, setrlimit)
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tempfile = "3.0"
+mockall = "0.13"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "thegent-subprocess"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+[workspace]

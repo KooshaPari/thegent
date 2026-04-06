@@ -3,6 +3,8 @@ name = "thegent-hooks"
 version = "0.1.0"
 edition = "2021"
 description = "Rust hook runtime core subcommands for thegent"
+license = "MIT"
+repository = "https://github.com/phenotype/thegent"
 
 [[bin]]
 name = "thegent-hooks"

@@ -6,7 +6,6 @@ members = [
     "thegent-cache",
     "thegent-metrics",
     "thegent-plugin-host",
-    "thegent-subprocess",
 ]
 exclude = [
     "thegent-tool-detect",

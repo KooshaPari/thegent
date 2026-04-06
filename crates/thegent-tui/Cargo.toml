@@ -5,6 +5,7 @@ edition = "2021"
 description = "Ratatui-based TUI for thegent: Phase 2 interactive widgets"
 authors = ["thegent"]
 license = "MIT"
+repository = "https://github.com/phenotype/thegent"
 
 [[bin]]
 name = "thegent-tui"
