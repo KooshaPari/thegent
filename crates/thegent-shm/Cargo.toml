@@ -1,0 +1,49 @@
+[package]
+name = "VesselRs"
+version = "0.1.0"
+edition = "2021"
+description = "Shared memory primitives for multi-agent orchestration"
+license = "MIT"
+repository = "https://github.com/KooshaPari/thegent-shm"
+keywords = ["shared-memory", "multi-agent", "orchestration", "circuit-breaker", "shm"]
+readme = "README.md"
+authors = ["Koosha Pari <kooshapari@kooshapari.com>"]
+
+# Documentation
+rust-version = "1.70"
+
+[lib]
+name = "vesselpy"
+crate-type = ["lib", "cdylib"]
+
+[[bin]]
+name = "thegent-shm"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+simd-json = { version = "0.14.3", features = ["serde"] }
+memmap2 = "0.9.5"
+libc = "0.2.170"
+once_cell = "1.20.3"
+parking_lot = "0.12.3"
+clap = { version = "4.5", features = ["derive"] }
+thiserror = "2.0"
+pyo3 = { version = "0.22", features = ["extension-module"], optional = true }
+
+[dev-dependencies]
+tempfile = "3.17.1"
+proptest = "1.5"
+criterion = "0.5"
+cargo-mutants = "25"
+
+[features]
+default = []
+python = ["pyo3"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
