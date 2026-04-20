@@ -313,6 +313,30 @@ agileplus validate-encoding --all --fix
 
 ---
 
+## 11a. Scripting Policy (ALWAYS include)
+
+**[ALWAYS include]** — Every Phenotype-org project inherits the scripting language hierarchy. Do not restate the full policy in project `CLAUDE.md` files; reference the canonical doc.
+
+```markdown
+## Scripting Language Hierarchy
+
+All scripts and tools in this project follow the Phenotype-org scripting hierarchy:
+
+1. **Rust** — default for any script, tool, or pipeline component. Toolbelt: `clap` + `anyhow` + `serde` + `tokio` + `walkdir`.
+2. **Zig, Mojo, Go** — acceptable alternates with a one-line top-of-file justification.
+3. **Python, TypeScript** — second-layer fallback, only when the runtime must live inside an existing Python/TS process (Streamlit page, Playwright spec, Jupyter notebook, VitePress config). Not for standalone CLIs.
+4. **Bash / sh / zsh / fish / PowerShell** — only for ≤5-line platform glue with a top-of-file comment justifying why Rust/Go/etc. are worse for the specific case.
+
+Permitted example — shell rc wrapper (sources `~/.zshrc` then `exec`s a Rust binary). Not permitted — new CI shell, codegen shell, sync shell, hook shell.
+
+- Canonical long-form policy: `Phenotype/repos/docs/governance/scripting_policy.md`
+- Canonical wording (global): `~/.claude/CLAUDE.md` → "Scripting Language Hierarchy"
+```
+
+**Legacy call-out for project owners:** hwLedger, AgilePlus, thegent, and phenotype-infrakit inherited dozens of `.sh` scripts. New work must not add shell; existing shell is migrated when touched. See `Phenotype/repos/docs/governance/scripting_policy.md` for the PR review rubric and migration guidance.
+
+---
+
 ## 12. See Also
 
 **[CUSTOMIZE]** — Link to relevant docs and standards.
