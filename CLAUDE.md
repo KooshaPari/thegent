@@ -22,6 +22,15 @@ All work MUST be tracked in AgilePlus:
 - Canonical repository tracks main only
 - Return to main for merge/integration checkpoints
 
+## Disk Budget & Multi-Session (Phenotype repos)
+
+- Pre-dispatch check: `df -h /System/Volumes/Data | tail -1`. Abort dispatch if <10Gi free; purge before retry.
+- Multi-agent cargo builds: stacking >4 concurrent pre-push workspace-verify runs blows disk. Dispatch serially when possible.
+- Long pushes (≥3 min): use `nohup git push ... & disown` to survive session kills. Verify via `git ls-remote`.
+- Multi-session coordination: `repos/.argis-helios-bus/` for Argis↔Helios. Do not write to `FocalPoint/target` (Helios workspace).
+- APFS `~/.Trash` does NOT reclaim space until emptied — use `rm -rf` on orphaned worktree targets.
+- Full playbooks: `repos/docs/governance/{disk_budget_policy,multi_session_coordination,long_push_pattern,enospc_playbook}.md`.
+
 ## Local quality (Task)
 
 From this repository root:
