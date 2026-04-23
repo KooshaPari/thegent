@@ -16,6 +16,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/docker/client"
@@ -194,7 +195,7 @@ func (p *LocalProvider) DeleteResource(ctx context.Context, id string) error {
 
 // ListResources returns containers matching the filter.
 func (p *LocalProvider) ListResources(ctx context.Context, filter ResourceFilter) ([]*Resource, error) {
-	opts := types.ContainerListOptions{All: true}
+	opts := container.ListOptions{All: true}
 
 	containers, err := p.client.ContainerList(ctx, opts)
 	if err != nil {
@@ -220,17 +221,19 @@ func (p *LocalProvider) ListResources(ctx context.Context, filter ResourceFilter
 			UpdatedAt: time.Now(),
 		}
 
-		// Add port endpoints
-		for port, bindings := range c.Ports {
-			if len(bindings) > 0 {
-				res.Endpoints = append(res.Endpoints, Endpoint{
-					Type:     string(port.Type),
-					URL:      fmt.Sprintf("localhost:%s", bindings[0].PublicPort),
-					Port:     int(port.PrivatePort),
-					Protocol: string(port.Type),
-					Primary:  len(res.Endpoints) == 0,
-				})
+		// Add port endpoints. c.Ports is []container.Port from the list API,
+		// where each entry carries its own IP/PrivatePort/PublicPort/Type.
+		for _, port := range c.Ports {
+			if port.PublicPort == 0 {
+				continue
 			}
+			res.Endpoints = append(res.Endpoints, Endpoint{
+				Type:     port.Type,
+				URL:      fmt.Sprintf("localhost:%d", port.PublicPort),
+				Port:     int(port.PrivatePort),
+				Protocol: port.Type,
+				Primary:  len(res.Endpoints) == 0,
+			})
 		}
 
 		resources = append(resources, res)
@@ -413,7 +416,7 @@ func (p *LocalProvider) RollbackDeployment(ctx context.Context, id string) error
 
 // GetLogs retrieves logs from a container.
 func (p *LocalProvider) GetLogs(ctx context.Context, resource *Resource, opts LogOptions) (LogStream, error) {
-	readCloser, err := p.client.ContainerLogs(ctx, resource.ID, types.ContainerLogsOptions{
+	readCloser, err := p.client.ContainerLogs(ctx, resource.ID, container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     opts.Follow,
@@ -557,7 +560,7 @@ func autoDetectSocket() (string, string, error) {
 
 // pullImage attempts to pull an image from the registry (best-effort).
 func (p *LocalProvider) pullImage(ctx context.Context, imageName string) error {
-	_, err := p.client.ImagePull(ctx, imageName, types.ImagePullOptions{})
+	_, err := p.client.ImagePull(ctx, imageName, image.PullOptions{})
 	if err == nil || strings.Contains(err.Error(), "already exists") {
 		return nil
 	}
@@ -574,13 +577,6 @@ func (p *LocalProvider) containerToResource(c types.ContainerJSON) *Resource {
 	if c.Created != "" {
 		if t, err := time.Parse(time.RFC3339Nano, c.Created); err == nil {
 			createdAt = t
-		}
-	}
-
-	startedAt := time.Now()
-	if c.State.StartedAt != "" {
-		if t, err := time.Parse(time.RFC3339Nano, c.State.StartedAt); err == nil {
-			startedAt = t
 		}
 	}
 
@@ -607,10 +603,10 @@ func (p *LocalProvider) containerToResource(c types.ContainerJSON) *Resource {
 		for port, bindings := range c.NetworkSettings.Ports {
 			if len(bindings) > 0 {
 				res.Endpoints = append(res.Endpoints, Endpoint{
-					Type:     string(port.Proto),
+					Type:     port.Proto(),
 					URL:      fmt.Sprintf("localhost:%s", bindings[0].HostPort),
 					Port:     port.Int(),
-					Protocol: string(port.Proto),
+					Protocol: port.Proto(),
 					Primary:  len(res.Endpoints) == 0,
 				})
 			}
