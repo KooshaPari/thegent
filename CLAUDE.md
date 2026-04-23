@@ -77,6 +77,19 @@ Write for: research completions, decisions made, issues found (duplication, perf
 - `[heliosCLI]` - HeliosCLI framework
 - `[cross-repo]` - Cross-repo work
 
+## Scripting Language Hierarchy
+
+**Canonical policy:** `/Users/kooshapari/CodeProjects/Phenotype/repos/docs/governance/scripting_policy.md`
+
+Applies to **every** script, tool, or pipeline component across Phenotype-org repositories.
+
+1. **Rust** — default. Toolbelt: `clap` + `anyhow` + `serde` + `tokio` + `walkdir`.
+2. **Zig, Mojo, Go** — acceptable alternates with a one-line top-of-file justification (e.g., "Go for an ffmpeg CLI driver because `os/exec` + `filepath.Walk` is tighter than Rust here").
+3. **Python, TypeScript** — second-layer fallback, only when the runtime must live inside an existing Python/TS process (Streamlit page, Playwright spec, Jupyter notebook, VitePress config). **Not** for standalone CLI tools.
+4. **Bash / sh / zsh / fish / PowerShell** — only for ≤5-line platform glue where a real-language replacement is a net loss (e.g., a wrapper that sources the user's shell rc before `exec`ing a Rust binary). Every surviving shell script **must** carry a top-of-file comment justifying why Rust/Go/etc. are worse for this specific case.
+
+**Legacy call-out:** previous patterns in hwLedger, AgilePlus, thegent, and phenotype-infrakit accumulated dozens of `.sh` scripts for CI, sync, codegen, and hooks. **New work must not add shell; existing shell must be migrated when touched.** See the canonical doc for migration guidance and the PR review rubric.
+
 ## Design System (Impeccable)
 
 Impeccable is installed globally. Design skills and commands are available:
