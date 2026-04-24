@@ -1,7 +1,13 @@
 """Execution framework for thegent.
 
 Provides core abstractions for run tracking, metadata management,
-and distributed execution coordination.
+distributed execution coordination, and dependency-injected orchestration.
+
+Phase 2 Structure (with NO CLI imports):
+- executor/: Core task executor with dependency injection
+- planner/: Task decomposition logic
+- router/: Request routing to agents/models
+- ports/: Abstract interfaces
 """
 from __future__ import annotations
 
@@ -434,3 +440,10 @@ class InMemoryRunRegistry:
 # Type aliases for backward compatibility
 LoadClassifier = Any  # TODO: Implement proper classifier
 ProviderScorer = Any  # TODO: Implement proper scorer
+
+
+# Phase 2: New dependency-injected execution layer (NO CLI imports)
+# Import and re-export new components
+from .executor import Executor, ExecutionResult, LoggerInterface, EventBusInterface  # noqa: E402, F401
+from .planner import Planner, TaskSpec  # noqa: E402, F401
+from .router import Router  # noqa: E402, F401

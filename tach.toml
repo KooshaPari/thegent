@@ -1,11 +1,14 @@
 # Tach — module boundaries
 # https://github.com/tach-org/tach
 #
-# The runtime tree under src/ is currently a single first-party package (`thegent`).
-# Finer-grained hex layers were modeled as separate tach modules, but the codebase
-# still contains import cycles across those conceptual layers. Splitting boundaries
-# again is deferred to the hex extraction program; see:
-#   docs/governance/TACH_MONOLITH_BOUNDARY.md
+# Phase 2: thegent-execution isolation (2026-04-24)
+# Enforces clean dependency boundaries:
+# - thegent.core: Layer 0 (domain + ports) — NO dependencies
+# - thegent.execution: Layer 1 (executor+planner+router) — depends on core ONLY
+# - thegent.legacy: Layer 3 (god function isolation) — depends on core ONLY
+# - CLI/Agents/Models: Layer 2+ — CANNOT import execution internally
+#
+# Key rule: execution module has ZERO imports from cli, agents, models, planning
 
 source_roots = [ "src",]
 
@@ -26,6 +29,30 @@ root_module = "ignore"
 [rules]
 unused_ignore_directives = "error"
 require_ignore_directive_reasons = "error"
+
+[[modules]]
+path = "thegent.core"
+depends_on = []
+
+[[modules]]
+path = "thegent.execution"
+depends_on = ["thegent.core"]
+
+[[modules]]
+path = "thegent.legacy"
+depends_on = ["thegent.core"]
+
+# Forbidden: execution must NOT import from these
+[[forbidden_imports]]
+path = "thegent.execution"
+forbidden = ["thegent.cli", "thegent.agents", "thegent.models", "thegent.planning"]
+message = "Execution layer must not import CLI, agents, models, or planning (dependency injection only)"
+
+# Forbidden: legacy must NOT import from these (except via execution)
+[[forbidden_imports]]
+path = "thegent.legacy"
+forbidden = ["thegent.cli", "thegent.agents", "thegent.models"]
+message = "Legacy module is temporary isolation; no CLI/agent/model imports"
 
 [[modules]]
 path = "thegent"
