@@ -1,5 +1,5 @@
 // Package cloud — Local Docker/Podman provider implementation.
-// wraps: github.com/docker/docker (Docker API)
+// wraps: github.com/moby/moby/v2 (Docker API)
 package cloud
 
 import (
@@ -14,12 +14,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/go-connections/nat"
-	"github.com/docker/docker/client"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 )
 
 // LocalProvider implements CloudProvider for local Docker/Podman deployments.
@@ -117,7 +116,7 @@ func (p *LocalProvider) Initialize(ctx context.Context, credentials Credentials)
 
 // ValidateCredentials checks connectivity to the Docker/Podman daemon.
 func (p *LocalProvider) ValidateCredentials(ctx context.Context) error {
-	_, err := p.client.Ping(ctx)
+	_, err := p.client.Ping(ctx, client.PingOptions{})
 	if err != nil {
 		return fmt.Errorf("local: docker daemon ping failed: %w", err)
 	}
@@ -163,15 +162,15 @@ func (p *LocalProvider) CreateResource(ctx context.Context, config ResourceConfi
 
 // GetResource retrieves container information by ID (name).
 func (p *LocalProvider) GetResource(ctx context.Context, id string) (*Resource, error) {
-	containerInfo, err := p.client.ContainerInspect(ctx, id)
+	result, err := p.client.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			return nil, NewResourceNotFoundError("local", id)
 		}
 		return nil, fmt.Errorf("local: inspect container failed: %w", err)
 	}
 
-	return p.containerToResource(containerInfo), nil
+	return p.containerToResource(result.Container), nil
 }
 
 // UpdateResource modifies a container configuration (not supported while running).
@@ -182,10 +181,10 @@ func (p *LocalProvider) UpdateResource(ctx context.Context, id string, config Re
 // DeleteResource removes a container and all associated data.
 func (p *LocalProvider) DeleteResource(ctx context.Context, id string) error {
 	// Stop if running
-	_ = p.client.ContainerStop(ctx, id, container.StopOptions{})
+	_, _ = p.client.ContainerStop(ctx, id, client.ContainerStopOptions{})
 	// Remove
-	if err := p.client.ContainerRemove(ctx, id, container.RemoveOptions{Force: true}); err != nil {
-		if client.IsErrNotFound(err) {
+	if _, err := p.client.ContainerRemove(ctx, id, client.ContainerRemoveOptions{Force: true}); err != nil {
+		if cerrdefs.IsNotFound(err) {
 			return nil // Already gone
 		}
 		return fmt.Errorf("local: remove container failed: %w", err)
@@ -195,15 +194,13 @@ func (p *LocalProvider) DeleteResource(ctx context.Context, id string) error {
 
 // ListResources returns containers matching the filter.
 func (p *LocalProvider) ListResources(ctx context.Context, filter ResourceFilter) ([]*Resource, error) {
-	opts := container.ListOptions{All: true}
-
-	containers, err := p.client.ContainerList(ctx, opts)
+	result, err := p.client.ContainerList(ctx, client.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, fmt.Errorf("local: list containers failed: %w", err)
 	}
 
-	resources := make([]*Resource, 0, len(containers))
-	for _, c := range containers {
+	resources := make([]*Resource, 0, len(result.Items))
+	for _, c := range result.Items {
 		res := &Resource{
 			ID:       c.ID[:12], // Short ID
 			Name:     strings.TrimPrefix(c.Names[0], "/"),
@@ -305,10 +302,13 @@ func (p *LocalProvider) Deploy(ctx context.Context, deployment DeploymentConfig)
 
 	// Parse ports
 	if ports, ok := deployment.Config["ports"].(map[string]interface{}); ok {
-		portBindings := make(nat.PortMap)
+		portBindings := make(network.PortMap)
 		for containerPort, hostPort := range ports {
-			containerPort := nat.Port(containerPort)
-			portBindings[containerPort] = []nat.PortBinding{
+			p, err := network.ParsePort(containerPort)
+			if err != nil {
+				return nil, NewValidationError("local", "ports", fmt.Sprintf("invalid container port %q: %v", containerPort, err))
+			}
+			portBindings[p] = []network.PortBinding{
 				{HostPort: fmt.Sprint(hostPort)},
 			}
 		}
@@ -334,21 +334,18 @@ func (p *LocalProvider) Deploy(ctx context.Context, deployment DeploymentConfig)
 		Env:   env,
 	}
 
-	resp, err := p.client.ContainerCreate(
-		ctx,
-		containerCfg,
-		hostCfg,
-		nil,
-		nil,
-		deployment.ResourceID,
-	)
+	resp, err := p.client.ContainerCreate(ctx, client.ContainerCreateOptions{
+		Config:     containerCfg,
+		HostConfig: hostCfg,
+		Name:       deployment.ResourceID,
+	})
 	if err != nil {
 		return nil, NewProvisioningError("local", "creating", fmt.Sprintf("failed to create container: %v", err), err)
 	}
 
 	// Start container
-	if err := p.client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		_ = p.client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	if _, err := p.client.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
+		_, _ = p.client.ContainerRemove(ctx, resp.ID, client.ContainerRemoveOptions{Force: true})
 		return nil, NewProvisioningError("local", "starting", fmt.Sprintf("failed to start container: %v", err), err)
 	}
 
@@ -367,21 +364,30 @@ func (p *LocalProvider) Deploy(ctx context.Context, deployment DeploymentConfig)
 
 // GetDeploymentStatus retrieves the current status of a deployment (container).
 func (p *LocalProvider) GetDeploymentStatus(ctx context.Context, id string) (*DeploymentStatus, error) {
-	containerInfo, err := p.client.ContainerInspect(ctx, id)
+	result, err := p.client.ContainerInspect(ctx, id, client.ContainerInspectOptions{})
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if cerrdefs.IsNotFound(err) {
 			return nil, NewResourceNotFoundError("local", id)
 		}
 		return nil, fmt.Errorf("local: inspect container failed: %w", err)
 	}
 
-	state := p.dockerStateToDeploymentState(containerInfo.State.Status)
-	health := p.dockerStateToHealth(containerInfo.State.Status, containerInfo.State.Health)
+	containerInfo := result.Container
+	var stateStatus container.ContainerState
+	var stateStartedAt string
+	var stateHealth *container.Health
+	if containerInfo.State != nil {
+		stateStatus = containerInfo.State.Status
+		stateStartedAt = containerInfo.State.StartedAt
+		stateHealth = containerInfo.State.Health
+	}
+	state := p.dockerStateToDeploymentState(string(stateStatus))
+	health := p.dockerStateToHealth(string(stateStatus), stateHealth)
 
 	// Parse StartedAt timestamp
 	startedAt := time.Now()
-	if containerInfo.State.StartedAt != "" {
-		if t, err := time.Parse(time.RFC3339Nano, containerInfo.State.StartedAt); err == nil {
+	if stateStartedAt != "" {
+		if t, err := time.Parse(time.RFC3339Nano, stateStartedAt); err == nil {
 			startedAt = t
 		}
 	}
@@ -389,7 +395,7 @@ func (p *LocalProvider) GetDeploymentStatus(ctx context.Context, id string) (*De
 	instances := []InstanceInfo{
 		{
 			ID:        containerInfo.ID[:12],
-			State:     containerInfo.State.Status,
+			State:     string(stateStatus),
 			Health:    health,
 			Region:    "localhost",
 			StartedAt: startedAt,
@@ -416,7 +422,7 @@ func (p *LocalProvider) RollbackDeployment(ctx context.Context, id string) error
 
 // GetLogs retrieves logs from a container.
 func (p *LocalProvider) GetLogs(ctx context.Context, resource *Resource, opts LogOptions) (LogStream, error) {
-	readCloser, err := p.client.ContainerLogs(ctx, resource.ID, container.LogsOptions{
+	readCloser, err := p.client.ContainerLogs(ctx, resource.ID, client.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     opts.Follow,
@@ -431,7 +437,7 @@ func (p *LocalProvider) GetLogs(ctx context.Context, resource *Resource, opts Lo
 
 // GetMetrics retrieves resource usage metrics from a container.
 func (p *LocalProvider) GetMetrics(ctx context.Context, resource *Resource, opts MetricOptions) ([]Metric, error) {
-	stats, err := p.client.ContainerStats(ctx, resource.ID, false)
+	stats, err := p.client.ContainerStats(ctx, resource.ID, client.ContainerStatsOptions{Stream: false})
 	if err != nil {
 		return nil, fmt.Errorf("local: get stats failed: %w", err)
 	}
@@ -560,7 +566,7 @@ func autoDetectSocket() (string, string, error) {
 
 // pullImage attempts to pull an image from the registry (best-effort).
 func (p *LocalProvider) pullImage(ctx context.Context, imageName string) error {
-	_, err := p.client.ImagePull(ctx, imageName, image.PullOptions{})
+	_, err := p.client.ImagePull(ctx, imageName, client.ImagePullOptions{})
 	if err == nil || strings.Contains(err.Error(), "already exists") {
 		return nil
 	}
@@ -569,8 +575,16 @@ func (p *LocalProvider) pullImage(ctx context.Context, imageName string) error {
 }
 
 // containerToResource converts a Docker container to a Resource.
-func (p *LocalProvider) containerToResource(c types.ContainerJSON) *Resource {
-	state := p.dockerStateToDeploymentState(c.State.Status)
+func (p *LocalProvider) containerToResource(c container.InspectResponse) *Resource {
+	var stateStatus container.ContainerState
+	var stateHealth *container.Health
+	var stateExitCode int
+	if c.State != nil {
+		stateStatus = c.State.Status
+		stateHealth = c.State.Health
+		stateExitCode = c.State.ExitCode
+	}
+	state := p.dockerStateToDeploymentState(string(stateStatus))
 
 	// Parse timestamps
 	createdAt := time.Now()
@@ -580,19 +594,28 @@ func (p *LocalProvider) containerToResource(c types.ContainerJSON) *Resource {
 		}
 	}
 
+	var (
+		image  string
+		labels map[string]string
+	)
+	if c.Config != nil {
+		image = c.Config.Image
+		labels = c.Config.Labels
+	}
+
 	res := &Resource{
-		ID:         c.ID[:12],
-		Name:       strings.TrimPrefix(c.Name, "/"),
-		Type:       ResourceTypeComputeContainer,
-		Provider:   "local",
-		Region:     "localhost",
-		Status:     state,
-		HealthStatus: p.dockerStateToHealth(c.State.Status, c.State.Health),
-		Tags:       c.Config.Labels,
+		ID:           c.ID[:12],
+		Name:         strings.TrimPrefix(c.Name, "/"),
+		Type:         ResourceTypeComputeContainer,
+		Provider:     "local",
+		Region:       "localhost",
+		Status:       state,
+		HealthStatus: p.dockerStateToHealth(string(stateStatus), stateHealth),
+		Tags:         labels,
 		Metadata: map[string]any{
-			"image":      c.Config.Image,
-			"full_id":    c.ID,
-			"exit_code":  c.State.ExitCode,
+			"image":     image,
+			"full_id":   c.ID,
+			"exit_code": stateExitCode,
 		},
 		CreatedAt: createdAt,
 		UpdatedAt: time.Now(),
@@ -602,11 +625,12 @@ func (p *LocalProvider) containerToResource(c types.ContainerJSON) *Resource {
 	if c.NetworkSettings != nil {
 		for port, bindings := range c.NetworkSettings.Ports {
 			if len(bindings) > 0 {
+				proto := string(port.Proto())
 				res.Endpoints = append(res.Endpoints, Endpoint{
-					Type:     port.Proto(),
+					Type:     proto,
 					URL:      fmt.Sprintf("localhost:%s", bindings[0].HostPort),
-					Port:     port.Int(),
-					Protocol: port.Proto(),
+					Port:     int(port.Num()),
+					Protocol: proto,
 					Primary:  len(res.Endpoints) == 0,
 				})
 			}
@@ -637,9 +661,9 @@ func (p *LocalProvider) dockerStateToDeploymentState(state string) DeploymentSta
 }
 
 // dockerStateToHealth maps Docker container state to HealthStatus.
-func (p *LocalProvider) dockerStateToHealth(state string, health *types.Health) HealthStatus {
+func (p *LocalProvider) dockerStateToHealth(state string, health *container.Health) HealthStatus {
 	if health != nil {
-		switch health.Status {
+		switch string(health.Status) {
 		case "healthy":
 			return HealthStatusHealthy
 		case "unhealthy":
