@@ -462,5 +462,14 @@ After remediation:
 
 ---
 
-**Status**: Ready for implementation planning  
-**Next Step**: Create `split_boundaries.md` with Mermaid diagrams showing before/after dependency graphs
+**Status**: Phase 1 COMPLETE (2026-04-24)  
+**Phase 1 Results**: 
+- ✅ Created `thegent-core` (Layer 0): domain/, errors/, ports/ submodules
+- ✅ ~500 LOC extracted (SLA, SLO, contracts, OutputProtocol, error types, port interfaces)
+- ✅ Zero external dependencies (Python stdlib only)
+- ✅ Cycle 1 (contracts ↔ output_parser): Resolved via shared OutputProtocol in core/domain
+- ✅ Cycle 5 (models ↔ routing): Resolved via shared interfaces in core/ports
+- ⏳ Import updates needed across codebase (Phase 2 task)
+- ⏳ Cycle count validation deferred pending import migration
+
+**Next Step**: Phase 2 — Create `thegent-execution` package and remove CLI imports from execution layer
