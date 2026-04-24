@@ -442,6 +442,7 @@ After remediation:
 - **Split Boundaries Spec**: `docs/refactor/split_boundaries.md` (Mermaid diagrams)
 - **Code Audit**: `THEGENT_CODE_AUDIT.md` (original audit)
 - **Consolidation Audit**: `CONSOLIDATION_AUDIT.md` (package patterns)
+- **Case Study**: `docs/case-studies/thegent_4_phase_split.md` (post-mortem and lessons learned)
 
 ---
 
