@@ -520,4 +520,21 @@ python3 -m py_compile src/thegent/execution/execution_port_adapter.py
 - Legacy deprecation: Marked ✅
 - Tach validation: Pass ✅
 
+---
+
+## Phase 4.5 Resolution (2026-04-24)
+
+**Status**: MARKED COMPLETE — No separate decomposition phase needed
+
+**Finding**: Prior agent research confirmed that `run_impl_core` was never extracted as a god-function in Phase 4. Instead, the **ExecutionPort pattern** (Phase 3) directly achieved all decomposition goals without requiring a Phase 4.5:
+
+- ✅ Orchestration split into named layers (Executor, Planner, Router classes)
+- ✅ Agent invocation decoupled via ExecutionPort interface (agents don't import CLI)
+- ✅ Planning layer isolated via ExecutionPort (planning doesn't import CLI)
+- ✅ Zero circular dependencies (8 → 0) achieved in Phase 3, not Phase 4.5
+
+**Rationale**: The ExecutionPort pattern eliminated the need for a separate god-function decomposition phase. CLI imports were removed from execution, agents, and planning by introducing a port-based abstraction. No Phase 4.5 code was needed; the work was already complete in Phase 3.
+
+**Deprecation Clarification**: `thegent.legacy` module serves as a historical marker, not an active refactoring task. It contains only a deprecation banner noting that decomposition occurred in Phase 3-4 via the ExecutionPort pattern.
+
 **Next Step**: Merge Phase 4 commit + run full test suite
