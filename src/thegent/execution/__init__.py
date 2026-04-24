@@ -447,3 +447,25 @@ ProviderScorer = Any  # TODO: Implement proper scorer
 from .executor import Executor, ExecutionResult, LoggerInterface, EventBusInterface  # noqa: E402, F401
 from .planner import Planner, TaskSpec  # noqa: E402, F401
 from .router import Router  # noqa: E402, F401
+
+# Phase 3: ExecutionPort adapter for agents (breaks CLI<->Agents cycle)
+from .execution_port_adapter import ExecutionPortAdapter, get_execution_port, set_execution_port  # noqa: E402, F401
+
+__all__ = [
+    "Executor",
+    "ExecutionResult",
+    "LoggerInterface",
+    "EventBusInterface",
+    "Planner",
+    "TaskSpec",
+    "Router",
+    "ExecutionPortAdapter",
+    "get_execution_port",
+    "set_execution_port",
+    "ExecutionStatus",
+    "RunMeta",
+    "RunRegistry",
+    "AgentSource",
+    "InteractivityMode",
+    "InMemoryRunRegistry",
+]

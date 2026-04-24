@@ -85,8 +85,11 @@ def get_active_agent_count() -> int:
     tracked_pids: set[int] = set()
     
     try:
-        from thegent.cli.commands.impl.ps_impl import get_sessions
-        sessions = get_sessions()
+        # Phase 3: Use ExecutionPort to avoid CLI import (breaks cycle 8)
+        from thegent.execution import get_execution_port
+        port = get_execution_port()
+        sessions_data = port.get_dag_status("")
+        sessions = sessions_data.get("sessions", [])
         for session in sessions:
             if session.get("status") == "running":
                 pid = session.get("pid")
@@ -314,9 +317,14 @@ class AutoLaunchSystem:
             budget: Budget for the item.
         """
         try:
-            from thegent.cli.commands.impl import work_stream_claim_impl, bg_impl
-            
-            claim_result = work_stream_claim_impl(item.get("item_id"), lane=lane)
+            # Phase 3: Use ExecutionPort to avoid CLI import (breaks cycle 8)
+            from thegent.execution import get_execution_port
+            port = get_execution_port()
+
+            claim_result = port.run_task(
+                prompt=f"claim_item({item.get('item_id')}, lane={lane})",
+                cd=""
+            )
             
             if not claim_result.get("success", False):
                 if claim_result.get("governance_blocked"):

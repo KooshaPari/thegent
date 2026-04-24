@@ -498,5 +498,19 @@ Before considering a phase complete, verify:
 
 ---
 
-**Status**: Specification ready for Phase 1 implementation  
-**Next**: Begin Phase 1 (extract thegent-core)
+**Status**: Phase 3 COMPLETE (2026-04-24) — Zero cycles achieved  
+**Execution Summary**:
+- Phase 1: ✅ thegent-core extracted (500 LOC, cycles 1 & 5 resolved)
+- Phase 2: ✅ thegent-execution isolated (no CLI imports, cycles 2, 4, 6 resolved)
+- Phase 3: ✅ ExecutionPort pattern (agents use ports, CLI imports removed, cycles 3, 7, 8 resolved)
+- Phase 4: ⏳ MCP + integration (in progress)
+
+**Files Modified**:
+1. `src/thegent/core/ports/__init__.py` — Added ExecutionPort interface
+2. `src/thegent/execution/execution_port_adapter.py` — New adapter (lazy-loads CLI)
+3. `src/thegent/agents/loop_controller.py` — Refactored 2 CLI imports → ExecutionPort
+4. `src/thegent/planning/auto_launch.py` — Refactored 2 CLI imports → ExecutionPort
+5. `docs/refactor/circular_deps_remediation_plan.md` — Updated Phase 3 results
+6. `docs/refactor/split_boundaries.md` — This file
+
+**Next**: Phase 4 — MCP integration + test suite validation
