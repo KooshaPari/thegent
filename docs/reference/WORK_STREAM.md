@@ -26789,3 +26789,12 @@ Only HIGH/CRITICAL priority items with clear dependencies remain in the active W
 
 *Last updated: 2026-03-28*
 *Backlog items archived to reduce noise*
+
+---
+
+## Metadata Hygiene (2026-04-02)
+
+- `platforms/thegent-pr882/` exists as a leftover metadata shell from an old worktree; it contains no tracked files and should be removed once the environment allows manual directory pruning (the repo currently rejects `rm`/`rmdir` for safety). Until then it serves only as a reminder to keep `git worktree prune` in the routine.
+- There are no active stashes on `main`, so the previous `stash@{0}`/`stash@{1}` stacks no longer contribute noise. Record any future stash before pruning to keep this section aligned with the actual stack.
+
+Keep this section up to date whenever a clean lane is created or a stale admin path appears so that the work stream remains the single source of truth.
