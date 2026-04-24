@@ -1,9 +1,19 @@
-"""STUB MODULE - thegent.mcp
+"""MCP (Model Context Protocol) server for thegent.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+This module implements the MCP server adapter for thegent, exposing
+task execution and agent management via the MCP protocol.
+
+Dependencies:
+- thegent.core (ports + domain types)
+- thegent.execution (executor)
+- thegent.agents (agent registry)
+- thegent.models (model definitions)
+
+NO imports from thegent.cli to maintain clean separation.
 """
 
-# Stub implementation - functionality not available
-__all__ = []
+from __future__ import annotations
+
+from thegent.mcp.server import MCPServer
+
+__all__ = ["MCPServer"]

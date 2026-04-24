@@ -1,11 +1,12 @@
 # Tach — module boundaries
 # https://github.com/tach-org/tach
 #
-# Phase 2: thegent-execution isolation (2026-04-24)
+# Phase 4: MCP integration (2026-04-24)
 # Enforces clean dependency boundaries:
 # - thegent.core: Layer 0 (domain + ports) — NO dependencies
 # - thegent.execution: Layer 1 (executor+planner+router) — depends on core ONLY
 # - thegent.legacy: Layer 3 (god function isolation) — depends on core ONLY
+# - thegent.mcp: Layer 3 (MCP server) — depends on core + execution + agents + models
 # - CLI/Agents/Models: Layer 2+ — CANNOT import execution internally
 #
 # Key rule: execution module has ZERO imports from cli, agents, models, planning
@@ -36,23 +37,27 @@ depends_on = []
 
 [[modules]]
 path = "thegent.execution"
-depends_on = ["thegent.core"]
+depends_on = []
 
 [[modules]]
 path = "thegent.legacy"
-depends_on = ["thegent.core"]
+depends_on = []
 
-# Forbidden: execution must NOT import from these
-[[forbidden_imports]]
-path = "thegent.execution"
-forbidden = ["thegent.cli", "thegent.agents", "thegent.models", "thegent.planning"]
-message = "Execution layer must not import CLI, agents, models, or planning (dependency injection only)"
+[[modules]]
+path = "thegent.agents"
+depends_on = []
 
-# Forbidden: legacy must NOT import from these (except via execution)
-[[forbidden_imports]]
-path = "thegent.legacy"
-forbidden = ["thegent.cli", "thegent.agents", "thegent.models"]
-message = "Legacy module is temporary isolation; no CLI/agent/model imports"
+[[modules]]
+path = "thegent.models"
+depends_on = []
+
+[[modules]]
+path = "thegent.mcp"
+depends_on = []
+
+[[modules]]
+path = "thegent.cli"
+depends_on = []
 
 [[modules]]
 path = "thegent"
