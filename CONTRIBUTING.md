@@ -1,72 +1,43 @@
-# Contributing to thegent 🎩
+# Contributing to [01;31m[K# [m[Kthegent
 
-Thank you for your interest in contributing to **thegent**! We welcome contributions of all kinds, including bug fixes, new features, documentation improvements, and bug reports.
+First off, thank you for considering contributing to **[01;31m[K# [m[Kthegent**! It's people like you who make this project better for everyone.
 
-## 📋 Code of Conduct
+## Code of Conduct
 
-By participating in this project, you agree to maintain a respectful and inclusive community. Please report any issues to the maintainers.
+By participating in this project, you agree to abide by our Code of Conduct.
 
-## 🛠️ Development Setup
+## How Can I Contribute?
 
-We use `uv` for lightning-fast dependency management and `task` as a task runner.
+### Reporting Bugs
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/kooshapari/thegent.git
-   cd thegent
-   ```
+- Use the Bug Report issue template
+- Provide a clear and descriptive title
+- Describe the exact steps to reproduce the problem
 
-2. **Install dependencies:**
-   ```bash
-   uv sync --extra dev
-   ```
+### Suggesting Enhancements
 
-3. **Install high-performance shims:**
-   ```bash
-   thegent install-shims
-   ```
+- Check the Issues to see if the enhancement has already been suggested
+- Use the Feature Request issue template
 
-4. **Install pre-commit hooks:**
-   ```bash
-   uv run pre-commit install
-   ```
+### Pull Requests
 
-## 🧪 Running Tests & Quality Checks
+1. Fork the repo and create your branch from `main`
+2. If you've added code that should be tested, add tests
+3. If you've changed APIs, update the documentation
+4. Ensure the test suite passes (`pytest`)
+5. Make sure your code lints (`ruff check .`)
+6. Format your code (`ruff format .`)
 
-We maintain strict quality standards to ensure agentic reliability.
+## Development Setup
 
-- **Run all tests:**
-  ```bash
-  task test
-  ```
-- **Run specific test file:**
-  ```bash
-  uv run pytest tests/test_parser.py
-  ```
-- **Lint and format:**
-  ```bash
-  uv run ruff check .
-  uv run ruff format .
-  ```
+```bash
+# Clone the repository\ngit clone <url>\ncd [01;31m[K# [m[Kthegent\n\n# Install dependencies\nuv sync\n\n# Run tests\npytest\n\n# Run linter\nruff check .\n\n# Format code\nruff format .\n
+```
 
-## 📜 Coding Guidelines
+## License
 
-- **Library-First**: Core logic should be accessible as a library, not just via CLI.
-- **Performance**: Use Rust for hot paths (see `crates/`).
-- **Test-Driven**: All new features and bug fixes MUST include corresponding tests.
-- **Governance**: Reference any relevant Functional Requirements (FRs) or Architecture Decision Records (ADRs) in your PR.
-
-## 🚀 Pull Request Process
-
-1. **Create a branch**: `git checkout -b feature/your-feature-name`
-2. **Commit changes**: Ensure clear, descriptive commit messages.
-3. **Push to GitHub**: Open a PR against the `main` branch.
-4. **Automated CI**: Your PR must pass all CI checks (linting, tests, multi-arch builds).
-5. **Review**: Maintainers will review your PR and provide feedback.
-
-## ⚖️ License
-
-By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contributions will be licensed under the MIT license.
 
 ---
-Happy coding!
+
+Thank you for your contributions!
