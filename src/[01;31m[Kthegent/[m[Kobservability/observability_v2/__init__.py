@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kobservability.observability_v2"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kobservability.observability_v2"""
+
 __all__ = []

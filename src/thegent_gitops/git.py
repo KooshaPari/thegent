@@ -347,11 +347,7 @@ class GitParallelismManager:
     ) -> str | None:
         """Attempt to create a synthetic 3-way merge commit."""
         if (
-            not (
-                _thegent_git_has("merge_base")
-                and _thegent_git_has("create_commit")
-                and _thegent_git_has("diff_stat")
-            )
+            not (_thegent_git_has("merge_base") and _thegent_git_has("create_commit") and _thegent_git_has("diff_stat"))
             or author_env
         ):
             probe = self._run_git(["merge-tree", ours_commit, theirs_commit], use_index=False)

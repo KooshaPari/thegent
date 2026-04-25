@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kgovern.vetter"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kgovern.vetter"""
+
 __all__ = []

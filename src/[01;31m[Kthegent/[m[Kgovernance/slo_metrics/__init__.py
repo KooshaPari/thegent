@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kgovernance.slo_metrics"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kgovernance.slo_metrics"""
+
 __all__ = []

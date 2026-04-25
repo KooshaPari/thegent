@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kmuxless.zmx_session"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kmuxless.zmx_session"""
+
 __all__ = []

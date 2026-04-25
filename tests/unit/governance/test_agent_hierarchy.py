@@ -354,7 +354,9 @@ class TestAgentHierarchyManager:
     def test_get_ancestors(self, manager):
         exec = manager.register_agent("exec", "run-exec", AgentRole.EXECUTIVE, validate=False)
         lead = manager.register_agent("lead", "run-lead", AgentRole.TEAM_LEAD, parent_id="run-exec", validate=False)
-        specialist = manager.register_agent("spec", "run-spec", AgentRole.SPECIALIST, parent_id="run-lead", validate=False)
+        specialist = manager.register_agent(
+            "spec", "run-spec", AgentRole.SPECIALIST, parent_id="run-lead", validate=False
+        )
         ancestors = manager.get_ancestors("run-spec")
         assert len(ancestors) == 2
 
@@ -544,9 +546,7 @@ class TestAgentHierarchyManager:
     def test_validate_before_register_circular(self, manager):
         manager.register_agent("parent", "run-parent", AgentRole.EXECUTIVE, validate=False)
         manager.register_agent("child", "run-child", AgentRole.SPECIALIST, parent_id="run-parent", validate=False)
-        is_valid, error = manager.validate_before_register(
-            "grandchild", "run-gc", parent_id="run-child"
-        )
+        is_valid, _error = manager.validate_before_register("grandchild", "run-gc", parent_id="run-child")
         # Making child the parent of grandchild is fine
         assert is_valid is True
 
@@ -563,20 +563,26 @@ class TestAgentHierarchyEdgeCases:
         manager = AgentHierarchyManager(tmp_path)
         manager.register_agent("exec", "run-exec", AgentRole.EXECUTIVE, validate=False)
         manager.register_agent("child", "run-child", AgentRole.SPECIALIST, parent_id="run-exec", validate=False)
-        is_valid, error = manager.validate_before_register(
-            "exec2", "run-exec2", parent_id="run-child"
-        )
+        is_valid, _error = manager.validate_before_register("exec2", "run-exec2", parent_id="run-child")
         assert is_valid is True  # No cycle would be created
 
     def test_multiple_teams_with_members(self, tmp_path):
         manager = AgentHierarchyManager(tmp_path)
         manager.create_team(
-            team_id="team-1", name="T1", description="D",
-            team_type=TeamType.PROJECT, coordination_mode=CoordinationMode.HIERARCHICAL, lead_id="lead-1",
+            team_id="team-1",
+            name="T1",
+            description="D",
+            team_type=TeamType.PROJECT,
+            coordination_mode=CoordinationMode.HIERARCHICAL,
+            lead_id="lead-1",
         )
         manager.create_team(
-            team_id="team-2", name="T2", description="D",
-            team_type=TeamType.FUNCTIONAL, coordination_mode=CoordinationMode.COLLABORATIVE, lead_id="lead-2",
+            team_id="team-2",
+            name="T2",
+            description="D",
+            team_type=TeamType.FUNCTIONAL,
+            coordination_mode=CoordinationMode.COLLABORATIVE,
+            lead_id="lead-2",
         )
         manager.register_agent("lead1", "lead-1", AgentRole.TEAM_LEAD, team_id="team-1", validate=False)
         manager.register_agent("lead2", "lead-2", AgentRole.TEAM_LEAD, team_id="team-2", validate=False)

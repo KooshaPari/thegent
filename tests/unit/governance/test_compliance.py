@@ -339,6 +339,7 @@ class TestEvidenceStore:
         store = EvidenceStore(tmp_path / "evidence.jsonl")
         store.append(kind="agent_decision", actor="a1")
         import time
+
         time.sleep(0.01)
         cutoff = datetime.now(UTC)
         time.sleep(0.01)
@@ -361,6 +362,7 @@ class TestEvidenceStore:
         store = EvidenceStore(tmp_path / "evidence.jsonl")
         store.append(kind="agent_decision", actor="old")
         import time
+
         time.sleep(0.01)
         cutoff = datetime.now(UTC)
         time.sleep(0.01)
@@ -548,9 +550,7 @@ class TestRetentionEnforcer:
                 granted_at="2024-01-01T00:00:00+00:00",
             )
         )
-        assert enforcer.has_active_consent(
-            tenant_id="t1", subject_id="s1", data_category="marketing"
-        ) is True
+        assert enforcer.has_active_consent(tenant_id="t1", subject_id="s1", data_category="marketing") is True
 
     def test_has_no_active_consent_withdrawn(self, tmp_path):
         enforcer = RetentionEnforcer(tmp_path)
@@ -565,9 +565,7 @@ class TestRetentionEnforcer:
                 withdrawn_at="2024-06-01T00:00:00+00:00",
             )
         )
-        assert enforcer.has_active_consent(
-            tenant_id="t1", subject_id="s1", data_category="marketing"
-        ) is False
+        assert enforcer.has_active_consent(tenant_id="t1", subject_id="s1", data_category="marketing") is False
 
     def test_purge_tenant_data_no_policies(self, tmp_path):
         enforcer = RetentionEnforcer(tmp_path)
@@ -645,6 +643,7 @@ class TestAuditExporter:
         store = EvidenceStore(tmp_path / "evidence.jsonl")
         store.append(kind="agent_decision", actor="a1")
         import time
+
         time.sleep(0.01)
         exporter = AuditExporter(store)
         result = exporter.export_json(since_days=0)

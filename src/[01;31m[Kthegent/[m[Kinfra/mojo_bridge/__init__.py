@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kinfra.mojo_bridge"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kinfra.mojo_bridge"""
+
 __all__ = []

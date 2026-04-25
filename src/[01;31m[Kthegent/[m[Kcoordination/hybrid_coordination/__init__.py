@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kcoordination.hybrid_coordination"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kcoordination.hybrid_coordination"""
+
 __all__ = []
