@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kdocgen.edit_links"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kdocgen.edit_links"""
+
 __all__ = []

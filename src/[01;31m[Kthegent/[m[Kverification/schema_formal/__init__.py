@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kverification.schema_formal"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kverification.schema_formal"""
+
 __all__ = []

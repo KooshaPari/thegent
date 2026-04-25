@@ -11,7 +11,7 @@ from thegent.maif.store import MAIFArtifactStore
 
 
 def test_artifact_signing_and_verification():
-    private_key, public_key = generate_key_pair()
+    private_key, _public_key = generate_key_pair()
 
     artifact = MAIFArtifact(
         action_type="tool_use",

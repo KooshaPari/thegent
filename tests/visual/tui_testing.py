@@ -18,12 +18,7 @@ class TestTUI:
 
     def capture_terminal_state(self, command: list[str]) -> str:
         """Capture terminal state for a given command."""
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        result = subprocess.run(command, capture_output=True, text=True, timeout=30)
         return result.stdout + result.stderr
 
     def test_agent_initialization_screen(self):
@@ -41,9 +36,7 @@ class TestTUI:
 
     def test_error_state_visual(self):
         """Test that error states render with proper formatting."""
-        output = self.capture_terminal_state(
-            ["thegent", "invalid-command"]
-        )
+        output = self.capture_terminal_state(["thegent", "invalid-command"])
         assert "error" in output.lower() or "Error" in output
 
 
@@ -52,9 +45,5 @@ class TestAccessibilityTree:
 
     def test_accessibility_tree_generation(self):
         """Test that accessibility tree can be generated."""
-        result = subprocess.run(
-            ["thegent", "a11y-tree"],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(["thegent", "a11y-tree"], capture_output=True, text=True)
         assert result.returncode == 0 or "error" in result.stderr.lower()
