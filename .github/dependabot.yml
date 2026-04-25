@@ -1,14 +1,60 @@
 version: 2
 updates:
-  - package-ecosystem: gomod
-    directory: /
-    schedule: {interval: daily}
+  # Root pip (uv.lock) — covers lxml, pillow, lupa, PyJWT
   - package-ecosystem: pip
     directory: /
     schedule: {interval: daily}
-  - package-ecosystem: npm
-    directory: /
-    schedule: {interval: daily}
+    open-pull-requests-limit: 20
+    groups:
+      python-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  # Root cargo
   - package-ecosystem: cargo
     directory: /
     schedule: {interval: daily}
+    open-pull-requests-limit: 10
+
+  # Byteport Go backend — otel, otel/sdk, go-jose, docker
+  - package-ecosystem: gomod
+    directory: /apps/byteport/backend/api
+    schedule: {interval: daily}
+    open-pull-requests-limit: 20
+    groups:
+      otel:
+        patterns:
+          - "go.opentelemetry.io/*"
+      go-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  # Byteport Go SDK
+  - package-ecosystem: gomod
+    directory: /apps/byteport/sdk/go
+    schedule: {interval: daily}
+    open-pull-requests-limit: 10
+
+  # Byteport Next.js frontend (pnpm + npm lockfiles both present)
+  - package-ecosystem: npm
+    directory: /apps/byteport/frontend/web-next
+    schedule: {interval: daily}
+    open-pull-requests-limit: 30
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  # Byteport docs
+  - package-ecosystem: npm
+    directory: /apps/byteport/docs
+    schedule: {interval: daily}
+    open-pull-requests-limit: 10
+
+  # GitHub Actions hygiene
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 5
