@@ -100,10 +100,10 @@ impl SupermemoryClient {
         use std::env;
 
         let api_key = env::var("SM_API_KEY")
-            .map_err(|_| Error::AuthenticationError("SM_API_KEY not set".into()))?;
+            .map_err(|_| Error::Authentication("SM_API_KEY not set".into()))?;
 
         if api_key.is_empty() {
-            return Err(Error::AuthenticationError("SM_API_KEY is empty".into()));
+            return Err(Error::Authentication("SM_API_KEY is empty".into()));
         }
 
         let project = env::var("SM_PROJECT").ok();
@@ -196,7 +196,7 @@ impl SupermemoryClient {
             }
             Err(e) => {
                 let _ = self.circuit_breaker.record_failure();
-                Err(Error::QueryError(format!("Query failed: {}", e)))
+                Err(Error::Query(format!("Query failed: {}", e)))
             }
         }
     }
@@ -249,12 +249,12 @@ impl SupermemoryClient {
                     self.circuit_breaker.record_success();
                     Ok(doc_id.to_string())
                 } else {
-                    Err(Error::StorageError("No doc_id in response".to_string()))
+                    Err(Error::Storage("No doc_id in response".to_string()))
                 }
             }
             Err(e) => {
                 let _ = self.circuit_breaker.record_failure();
-                Err(Error::StorageError(format!("Storage failed: {}", e)))
+                Err(Error::Storage(format!("Storage failed: {}", e)))
             }
         }
     }
@@ -297,10 +297,7 @@ impl SupermemoryClient {
             }
             Err(e) => {
                 let _ = self.circuit_breaker.record_failure();
-                Err(Error::StorageError(format!(
-                    "Document storage failed: {}",
-                    e
-                )))
+                Err(Error::Storage(format!("Document storage failed: {}", e)))
             }
         }
     }

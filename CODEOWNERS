@@ -35,6 +35,9 @@
 
 # CI/CD
 /.github/workflows/ @kooshapari
+/.github/pull_request_template.md @kooshapari
+/.github/RULESET_BASELINE.md @kooshapari
+/.github/prompts/ @kooshapari
 
 # Documentation
 /docs/ @kooshapari
@@ -47,7 +50,6 @@
 
 # CLIProxyAPI-related code (targeted for migration to cliproxyapi-plusplus)
 /src/thegent/cliproxy_adapter.py @kooshapari
-/src/thegent/cliproxy_*.py @kooshapari
 /src/thegent/*cliproxy*.py @kooshapari
 /src/thegent/utils/routing_impl/ @kooshapari
 
