@@ -11,6 +11,6 @@
   "devDependencies": {
     "vitepress": "^1.6.0",
     "@playwright/test": "^1.48.0",
-    "typedoc": "^0.26.0"
+    "typedoc": "^0.28.19"
   }
 }
