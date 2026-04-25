@@ -11,9 +11,9 @@ serde_json = "1.0.149"
 thiserror = "2.0.18"
 thegent-shm = { path = "../thegent-shm" }
 uuid = { version = "1.11", features = ["v4"] }
-sha2 = "0.10"
+sha2 = "0.11"
 hex = "0.4"
-pyo3 = { version = "0.24.1", optional = true, features = ["abi3-py312", "extension-module"] }
+pyo3 = { version = "0.28.3", optional = true, features = ["abi3-py312", "extension-module"] }
 
 [features]
 python = ["dep:pyo3"]

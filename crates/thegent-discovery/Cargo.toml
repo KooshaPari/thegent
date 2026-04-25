@@ -16,13 +16,13 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-simd-json = { version = "0.14.3", features = ["serde"] }
+simd-json = { version = "0.17.0", features = ["serde"] }
 regex = "1.11.1"
-pyo3 = { version = "0.24.1", optional = true, features = ["abi3-py312", "extension-module"] }
-sysinfo = "0.33.1"
+pyo3 = { version = "0.28.3", optional = true, features = ["abi3-py312", "extension-module"] }
+sysinfo = "0.38.4"
 clap = { version = "4.5.59", features = ["derive"] }
 anyhow = "1.0.101"
-which = "7.0.0"
+which = "8.0.2"
 
 [features]
 default = ["python"]
