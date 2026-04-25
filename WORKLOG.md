@@ -18,18 +18,63 @@
 | Archive | ✅ Legacy worktrees archived |
 | Remote main | ✅ Synced |
 
-## Current Active Lane - 2026-04-01
 
-The repository is not idle. There is one active stabilization branch shared across the primary checkout and two companion worktrees:
+## 2026-04-02: LOC Analysis & Optimization
 
-| Item | Status |
-|------|--------|
-| Active branch | `refactor/cleanup-error-variants` |
-| Checked-out worktrees | 3 total (`thegent/`, `thegent/worktrees/thegent/bun-migrate`, `thegent/worktrees/thegent/dotagents`) |
-| Local modification | `crates/thegent-offload/Cargo.toml` |
-| Lane type | Shared cleanup/stabilization lane |
+### LOC Atlas
 
-### Current Focus
-- Keep the `cleanup-error-variants` lane moving toward a small, reviewable stabilization commit.
-- Treat `crates/thegent-offload/Cargo.toml` as the current point of divergence until the worktree owner resolves it.
-- Do not relabel the repository as complete until the active branch and its sibling worktrees are either merged or closed.
+| Component | LOC | Target | Reduction |
+|-----------|-----|--------|-----------|
+| **Total thegent** | **283,455** | **200,000** | **29%** |
+| thegent-runtime | ~50,000 | 35,000 | 30% |
+| thegent-router | ~40,000 | 28,000 | 30% |
+| thegent-parser | ~35,000 | 25,000 | 29% |
+| thegent-shims | ~30,000 | 21,000 | 30% |
+| thegent-policy | ~25,000 | 18,000 | 28% |
+| Other crates | ~103,455 | 73,000 | 29% |
+
+### Crate Structure (32 crates)
+
+```
+crates/
+├── thegent-runtime/      # Core agent runtime
+├── thegent-router/       # Request routing
+├── thegent-parser/       # Input parsing
+├── thegent-shims/        # Tool shims
+├── thegent-policy/       # Policy engine
+├── thegent-memory/       # Memory management
+├── thegent-cache/        # Caching layer
+├── thegent-crypto/       # Cryptography
+├── thegent-git/          # Git operations
+├── thegent-hooks/        # Hook system
+├── thegent-discovery/    # Service discovery
+├── thegent-resources/    # Resource mgmt
+├── thegent-subprocess/  # Process exec
+├── thegent-path-resolve/ # Path resolution
+├── thegent-jsonl/        # JSONL handling
+├── thegent-metrics/      # Metrics
+├── thegent-docs/         # Documentation
+├── thegent-fs/           # Filesystem ops
+├── thegent-maif/         # MAIF integration
+├── thegent-benchmark/    # Benchmarks
+└── harness-native/       # Native harness
+```
+
+### Optimization Opportunities
+
+| Area | Est. LOC Saved | Priority |
+|------|----------------|----------|
+| Extract shared agent core | 15,000 | HIGH |
+| Consolidate router/discovery | 8,000 | MEDIUM |
+| Merge shims into runtime | 10,000 | HIGH |
+| Remove dead code | 12,000 | HIGH |
+| Consolidate error handling | 5,000 | MEDIUM |
+
+### Recommended Actions
+
+1. **Immediate**: cargo-udeps audit → remove unused deps
+2. **Short-term**: Extract `thegent-core` crate from runtime + router
+3. **Long-term**: Re-architect into micro-crates with clear boundaries
+
+### Status
+🔍 Analysis Complete
