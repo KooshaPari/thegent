@@ -103,3 +103,26 @@ Ensure these pass before requesting review:
 - [ ] Analytics dashboards verified (if applicable)
 - [ ] Error monitoring alerts reviewed
 - [ ] Documentation published
+
+## Stack Topology
+
+- Top of stack: `yes` / `no`
+- Base branch rationale:
+- Depends on:
+- Follow-up PRs:
+
+## Governance
+
+- [ ] No unresolved review threads remain.
+- [ ] No `changes requested` review is outstanding.
+- [ ] This PR follows the repo stacked-PR and protected-branch policy.
+- [ ] No protected-branch force-push or history rewrite is required.
+- [ ] No merge commits were introduced in this PR branch.
+
+## CI Exception
+
+<!-- If a billing-only CI exception is needed, explain it here and add the ci-billing-exception label. Otherwise write `none`. -->
+
+## Notes
+
+<!-- Risks, rollout notes, or exception labels go here. -->

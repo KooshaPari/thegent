@@ -18,7 +18,7 @@ moka = { version = "0.12.10", optional = true, features = ["sync", "future"] }
 scc = { version = "2.3.6", optional = true }
 pyo3 = { version = "0.24.1", optional = true }
 [features]
-default = []
+default = ["moka"]
 moka = ["dep:moka"]
 scc = ["dep:scc"]
 python = ["pyo3"]

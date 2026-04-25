@@ -212,9 +212,7 @@ impl ImportDetector {
             let path = entry.path();
 
             if path.is_dir() {
-                let dir_name = path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
+                let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 // Skip common exclusions
                 if matches!(
                     dir_name,

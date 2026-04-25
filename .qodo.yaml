@@ -1,0 +1,84 @@
+# Qodo AI Test Configuration for thegent
+# https://www.qodo.ai
+
+project:
+  name: thegent
+  language: python
+  framework: pytest
+
+agents:
+  # 15-agent workflow for comprehensive testing
+  test_generator:
+    enabled: true
+    patterns:
+      - "tests/**/*.py"
+      - "tests/**/*.yaml"
+    exclude:
+      - "**/__pycache__/**"
+      - "**/.venv/**"
+    strategy: test-first
+    coverage_target: 85
+
+  # Conversation Testing Agent
+  conversation_tester:
+    enabled: true
+    patterns:
+      - "tests/kaneai/**"
+    scenario_types:
+      - single_turn
+      - multi_turn
+      - context_preservation
+      - error_recovery
+
+  # TUI Testing Agent
+  tui_tester:
+    enabled: true
+    patterns:
+      - "tests/visual/**"
+    capture_modes:
+      - screenshot
+      - terminal_recording
+      - accessibility_tree
+
+test_patterns:
+  # KaneAI conversation tests
+  conversations:
+    directory: tests/kaneai
+    pattern: "*.yaml"
+    runner: kaneai
+    
+  # Visual TUI tests
+  visual:
+    directory: tests/visual
+    pattern: "*.py"
+    runner: playwright
+    framework: pytest
+
+  # Agent behavior tests
+  agent:
+    directory: tests/agents
+    pattern: "test_*.py"
+    runner: pytest
+
+rules:
+  - name: agent_test_required
+    description: Every agent must have behavior tests
+    pattern: "crates/**/agent*.py"
+    required_tests:
+      - "test_agent_initialization"
+      - "test_agent_message_handling"
+      - "test_agent_error_handling"
+
+  - name: conversation_test_required
+    description: Multi-turn conversations need validation
+    pattern: "tests/kaneai/**"
+    required_tests:
+      - "test_single_turn"
+      - "test_multi_turn"
+      - "test_context_preservation"
+
+coverage:
+  unit: 80
+  integration: 75
+  e2e: 70
+  overall: 78

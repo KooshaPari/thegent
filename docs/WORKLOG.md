@@ -13,14 +13,23 @@
 | **All Work Items** | 200+ | ✅ COMPLETED |
 | **Open PRs** | 0 | ✅ CLEAN |
 | **Local Branches** | 1 (main) | ✅ CLEAN |
-| **Worktrees** | 1 | ✅ CLEAN |
+| **Worktrees** | 3 checked out | ⚠️ ACTIVE LANE PRESENT |
 | **Stashes** | 0 | ✅ CLEAN |
 
 ---
 
-## Repository State: OPERATIONAL
+## Repository State: ACTIVE STABILIZATION
 
-All waves complete. All work items completed. Ready for new work.
+Historical waves are complete, but the repo currently has an active cleanup/stabilization lane on `refactor/cleanup-error-variants`.
+
+### Active Lane
+
+| Item | Status |
+|------|--------|
+| Branch | `refactor/cleanup-error-variants` |
+| Worktrees | `thegent/`, `thegent/worktrees/thegent/bun-migrate`, `thegent/worktrees/thegent/dotagents` |
+| Local modification | `crates/thegent-offload/Cargo.toml` |
+| Scope | Error-variant cleanup and stabilization |
 
 ---
 
@@ -219,8 +228,8 @@ Previous wave logs are stored in `reports/`:
 ---
 
 *Version 2.0.0 — Unified Worklog*
-*All work items COMPLETED*
-*Repository OPERATIONAL*
+*Historical work items COMPLETED*
+*Repository currently in an active stabilization lane*
 
 ---
 

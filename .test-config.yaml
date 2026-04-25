@@ -1,0 +1,59 @@
+# Test Configuration for thegent
+# Free alternative to paid AI test generation services
+
+project:
+  name: thegent
+  language: python
+  framework: pytest
+
+# Built-in test patterns (no external services)
+test_patterns:
+  # Conversation tests (YAML-based scenarios)
+  conversations:
+    directory: tests/kaneai
+    pattern: "*.yaml"
+    runner: pytest
+
+  # Visual TUI tests
+  visual:
+    directory: tests/visual
+    pattern: "*.py"
+    runner: pytest
+
+  # Agent behavior tests
+  agent:
+    directory: tests/agents
+    pattern: "test_*.py"
+    runner: pytest
+
+# Coverage settings
+coverage:
+  unit: 80
+  integration: 75
+  e2e: 70
+  overall: 78
+
+# Free test tools used:
+# - pytest (built-in)
+# - pytest-cov (coverage)
+# - pytest-asyncio (async tests)
+# - playwright (E2E)
+# - hypothesis (property-based testing)
+
+# Test rules (local enforcement)
+rules:
+  - name: agent_test_required
+    description: Every agent must have behavior tests
+    pattern: "crates/**/agent*.py"
+    required_tests:
+      - "test_agent_initialization"
+      - "test_agent_message_handling"
+      - "test_agent_error_handling"
+
+  - name: conversation_test_required
+    description: Multi-turn conversations need validation
+    pattern: "tests/kaneai/**"
+    required_tests:
+      - "test_single_turn"
+      - "test_multi_turn"
+      - "test_context_preservation"

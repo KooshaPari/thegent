@@ -1,0 +1,75 @@
+name: Testing Infrastructure
+
+on:
+  push:
+    branches: [main, refactor/**]
+    paths:
+      - 'tests/**'
+      - 'vitest.config.ts'
+      - 'playwright.config.ts'
+      - '**.py'
+  pull_request:
+    paths:
+      - 'tests/**'
+      - 'vitest.config.ts'
+      - 'playwright.config.ts'
+  schedule:
+    - cron: '0 4 * * *'  # Weekly conversation testing
+
+jobs:
+  vitest-tests:
+    name: Vitest Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install & Run Vitest
+        run: |
+          bun add -d vitest @vitest/coverage-v8
+          bun run vitest run --reporter=json
+
+  pytest-tests:
+    name: Pytest Tests (uv)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install & Run pytest
+        run: |
+          uv pip install pytest pytest-cov pytest-json-report --system
+          pytest tests/ -v --json-report --json-report-file=report.json
+
+  playwright-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install & Run Playwright
+        run: |
+          bun add -d @playwright/test
+          bunx playwright install --with-deps
+          bun run playwright test
+
+  coverage:
+    name: Test Coverage Report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Generate Coverage
+        run: |
+          uv pip install pytest-cov --system
+          pytest --cov=. --cov-report=xml --cov-report=html
