@@ -1,10 +1,125 @@
 version: 2
+# thegent has no root Cargo.toml — the Rust workspace lives at crates/.
+# Byteport sub-app carries its own go/py/ts SDKs alongside its backend API.
 updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: daily
+  # --- cargo ---
+  - package-ecosystem: "cargo"
+    directory: "/crates"
+    schedule: { interval: "weekly", day: "monday" }
+    groups:
+      cargo:
+        patterns: ["*"]
+    open-pull-requests-limit: 10
+
+  # --- gomod ---
+  - package-ecosystem: "gomod"
+    directory: "/apps/byteport/backend/api"
+    schedule: { interval: "weekly", day: "tuesday" }
+    groups:
+      go:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "gomod"
+    directory: "/apps/byteport/sdk/go"
+    schedule: { interval: "weekly", day: "tuesday" }
+    groups:
+      go:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+
+  # --- npm ---
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/apps/byteport/docs"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/apps/byteport/frontend/web-next"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 10
+  - package-ecosystem: "npm"
+    directory: "/apps/byteport/sdk/typescript"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/docs/diagrams"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/docs/site"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "npm"
+    directory: "/extensions/vscode"
+    schedule: { interval: "weekly", day: "wednesday" }
+    groups:
+      npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+
+  # --- pip ---
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule: { interval: "weekly", day: "thursday" }
+    groups:
+      python:
+        patterns: ["*"]
+    open-pull-requests-limit: 10
+  - package-ecosystem: "pip"
+    directory: "/apps/byteport"
+    schedule: { interval: "weekly", day: "thursday" }
+    groups:
+      python:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "pip"
+    directory: "/apps/byteport/sdk/python"
+    schedule: { interval: "weekly", day: "thursday" }
+    groups:
+      python:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+  - package-ecosystem: "pip"
+    directory: "/tools/policy-gate"
+    schedule: { interval: "weekly", day: "thursday" }
+    groups:
+      python:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
+
+  # --- github-actions ---
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: { interval: "weekly", day: "friday" }
+    groups:
+      actions:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
