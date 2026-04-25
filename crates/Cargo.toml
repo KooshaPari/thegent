@@ -35,10 +35,10 @@ exclude = ["thegent-watcher"]
 [workspace.dependencies]
 # Pure-Rust git library (gitoxide). Preferred over git2/libgit2 for all new
 # Rust crates. Use `max-performance-safe` for portable SIMD acceleration.
-gix = { version = "0.79.0", default-features = false, features = ["max-performance-safe"] }
-which = "6.0"
-criterion = "0.5"
+gix = { version = "0.82.0", default-features = false, features = ["max-performance-safe"] }
+which = "8.0"
+criterion = "0.8"
 derive_more = "1.0"
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.28", features = ["derive"] }
 thiserror = "1.0"
 anyhow = "1.0"
