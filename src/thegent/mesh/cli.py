@@ -1,16 +1,15 @@
 """CLI commands for agent mesh coordination."""
 
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.table import Table
-
 from thegent.config import ThegentSettings
-from thegent.mesh.mesh import MeshManager
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.mesh.agent_patterns import run_detection
+from thegent.mesh.mesh import MeshManager
 
 app = typer.Typer(help="Agent Mesh Coordination commands")
 console = Console()
