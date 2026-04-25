@@ -1,6 +1,6 @@
 [package]
 name = "thegent-git"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "BKM-06: thegent-git Rust extension (gitoxide for HEAD/status/diff)"
 

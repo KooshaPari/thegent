@@ -1,6 +1,6 @@
 [package]
 name = "thegent-resources"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "BKM-01: Native FD/memory/load sampling for thegent"
 

@@ -116,3 +116,16 @@ input, button, textarea, select { font: inherit; }
 p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
 ```
 
+## Org Pages Default Expansion (STANDING POLICY)
+
+Every new KooshaPari/Phenotype project gets these surfaces by default — include in the initial plan with a user-declinable checkbox; never wait to be asked.
+
+1. **Portfolio entry** on `projects.kooshapari.com` (auto-generated; tag repo `org-page`).
+2. **Project landing** at `<project>.kooshapari.com` — single Vercel project, CNAME → `cname.vercel-dns.com`.
+3. **Path-based microfrontends** within that domain (never subdomains): `/docs`, `/otel`, `/qa`, `/preview/<pr#>`.
+4. **Coexistence:** if `<product>.dev` exists, it is canonical; `.kooshapari.com` 301s to it.
+
+Triggers: new repo creation, decomp/architecture proposal, plan drafts, repos lacking homepageUrl. Surface as a checkbox in the plan, not an afterthought.
+
+Canonical: `repos/docs/governance/org-pages-default-pattern.md` · Architecture: `repos/phenotype-infra/docs/governance/org-pages-architecture.md` · Coverage: `repos/phenotype-infra/docs/governance/org-pages-coverage.md`
+
