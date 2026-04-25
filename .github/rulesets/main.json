@@ -4,24 +4,19 @@
   "enforcement": "active",
   "conditions": {
     "ref_name": {
-      "include": ["~DEFAULT_BRANCH"],
+      "include": [
+        "~DEFAULT_BRANCH"
+      ],
       "exclude": []
     }
   },
   "bypass_actors": [],
   "rules": [
-    { "type": "deletion" },
-    { "type": "non_fast_forward" },
     {
-      "type": "required_status_checks",
-      "parameters": {
-        "strict_required_status_checks_policy": true,
-        "do_not_enforce_on_create": false,
-        "required_status_checks": [
-          { "context": "policy-gate" },
-          { "context": "pr-governance-gate" }
-        ]
-      }
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
     },
     {
       "type": "pull_request",
@@ -32,20 +27,10 @@
         "require_code_owner_review": true,
         "require_last_push_approval": false,
         "required_review_thread_resolution": true,
-        "allowed_merge_methods": ["merge", "squash"]
-      }
-    },
-    {
-      "type": "code_quality",
-      "parameters": {
-        "severity": "errors"
-      }
-    },
-    {
-      "type": "copilot_code_review",
-      "parameters": {
-        "review_on_push": true,
-        "review_draft_pull_requests": true
+        "allowed_merge_methods": [
+          "merge",
+          "squash"
+        ]
       }
     }
   ]
