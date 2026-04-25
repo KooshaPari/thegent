@@ -1,9 +1,7 @@
 # Architecture Decision Records — thegent
 
+**Spec ID:** thegent-004 | **Status:** CURRENT | **Version:** 1.0 | **Date:** 2026-03-29 | **Last Updated:** 2026-04-25  
 **Document:** Architecture Decisions for thegent unified agent orchestration
-**Version:** 1.0
-**Date:** 2026-03-29
-**Status:** Active
 
 ---
 

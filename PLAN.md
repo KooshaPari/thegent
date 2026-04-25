@@ -1,10 +1,8 @@
 # Implementation Plan — thegent
 
-**Document:** Phased WBS with dependencies for thegent unified agent orchestration
-**Version:** 1.0
-**Date:** 2026-03-29
-**Planned Duration:** 8–10 weeks (4 phases)
-**Target:** 2026-06-01
+**Spec ID:** thegent-003 | **Status:** CURRENT | **Version:** 1.0 | **Date:** 2026-03-29 | **Last Updated:** 2026-04-25  
+**Document:** Phased WBS with dependencies for thegent unified agent orchestration  
+**Planned Duration:** 8–10 weeks (4 phases) | **Target:** 2026-06-01
 
 ---
 

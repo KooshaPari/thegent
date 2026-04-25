@@ -1,6 +1,7 @@
 # Product Requirements Document (PRD): Harmonious Agent Experience (HAX)
 
-**Status:** Draft | **Version:** 1.0 | **Generated:** 2026-02-16
+**Spec ID:** thegent-001 | **Status:** DONE | **Version:** 1.0 | **Generated:** 2026-02-16 | **Last Updated:** 2026-04-25
+
 **Goal:** Unify fragmented agent capabilities into a single, harmonious orchestration layer across all platforms (Claude, Codex, Cursor, etc.).
 
 ---
