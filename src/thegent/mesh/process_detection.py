@@ -1,9 +1,9 @@
 """Process enumeration and agent detection for heliosShield."""
 
+import os
 import platform
 import re
 import subprocess
-import os
 from typing import Any
 
 
