@@ -76,7 +76,7 @@ OpenAI-compatible API, semantic cache, provider routing, GraphQL API
 
 ### FR-11: Docs
 
-See `/argisroute/README.md`
+See `../argisroute/README.md`
 
 
 ### FR-12: Type
@@ -1084,7 +1084,7 @@ See `argisexec/docs/`
 - Python FastAPI gateway with monitoring
 
 
-### FR-213: [argisroute](/argisroute/)
+### FR-213: [argisroute](../argisroute/README.md)
 
 - Go cloud API gateway (100K LOC)
 
@@ -10227,7 +10227,7 @@ OpenAI-compatible API, semantic cache, provider routing, GraphQL API
 
 ### 🟡 Docs
 
-See `/argisroute/README.md`
+See `../argisroute/README.md`
 
 
 ### 🟡 Type
@@ -11235,7 +11235,7 @@ See `argisexec/docs/`
 - Python FastAPI gateway with monitoring
 
 
-### 🟡 [argisroute](/argisroute/)
+### 🟡 [argisroute](../argisroute/README.md)
 
 - Go cloud API gateway (100K LOC)
 
