@@ -718,8 +718,7 @@ class TestBudgetAlertSystem:
         aggregate = tmp_path / "aggregate.jsonl"
         now = datetime.now(UTC).isoformat()
         aggregate.write_text(
-            json.dumps({"total_cost": 5.0, "timestamp": now}) + "\n"
-            + "not-valid-json\n",
+            json.dumps({"total_cost": 5.0, "timestamp": now}) + "\n" + "not-valid-json\n",
             encoding="utf-8",
         )
         system = BudgetAlertSystem(cost_dir=tmp_path)
@@ -757,8 +756,7 @@ class TestBudgetAlertSystem:
         aggregate = tmp_path / "aggregate.jsonl"
         now = datetime.now(UTC).isoformat()
         aggregate.write_text(
-            json.dumps({"total_cost": 10.0, "timestamp": now}) + "\n"
-            + "bad-json\n",
+            json.dumps({"total_cost": 10.0, "timestamp": now}) + "\n" + "bad-json\n",
             encoding="utf-8",
         )
         system = BudgetAlertSystem(cost_dir=tmp_path)
@@ -834,9 +832,7 @@ class TestCostQualityOptimizer:
         optimizer.register_model("expensive", cost_per_token=0.001, quality_score=0.95)
         optimizer.register_model("cheap", cost_per_token=0.0001, quality_score=0.8)
 
-        result = optimizer.route_request(
-            task_complexity=0.5, quality_threshold=0.5, max_cost=0.1
-        )
+        result = optimizer.route_request(task_complexity=0.5, quality_threshold=0.5, max_cost=0.1)
         assert result == "cheap"
 
     def test_route_request_tracks_history(self) -> None:
@@ -1094,9 +1090,7 @@ class TestCostController:
 
     def test_init_handles_missing_health_targets(self, tmp_path: Path) -> None:
         """Test controller handles missing health targets file."""
-        controller = CostController(
-            session_dir=tmp_path, health_targets_path=tmp_path / "nonexistent.json"
-        )
+        controller = CostController(session_dir=tmp_path, health_targets_path=tmp_path / "nonexistent.json")
         assert controller._calls_limit == 20
 
     def test_record_call_increments_counters(self, tmp_path: Path) -> None:
@@ -1311,9 +1305,9 @@ class TestCostEdgeCases:
         """Test budget alert with 100% threshold."""
         config = BudgetConfig(run_limit_usd=10.0, warning_threshold=1.0)
         system = BudgetAlertSystem(cost_dir=tmp_path, config=config)
-        level, blocking = system.check_budget(9.9, "run")
+        level, _blocking = system.check_budget(9.9, "run")
         assert level == "OK"
-        level, blocking = system.check_budget(10.0, "run")
+        level, _blocking = system.check_budget(10.0, "run")
         assert level == "BLOCK"
 
     def test_optimizer_handles_zero_quality(self) -> None:

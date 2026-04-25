@@ -305,6 +305,7 @@ class TestPluginHost:
         # cleanup
         PLUGIN_HOST.unload_plugin("dummy-plugin")
 
+
 @pytest.mark.unit
 class TestGenericOutputAdapter:
     """Tests for GenericOutputAdapter -- covers lines 153, 156-167."""

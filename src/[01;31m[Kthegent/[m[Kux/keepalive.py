@@ -1,4 +1,4 @@
-"""STUB: [01;31m[Kthegent.[m[Kux.keepalive
+"""STUB: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kux.keepalive
 
 WARNING: Auto-generated stub module.
 The actual implementation was moved/deleted during repository restructuring.
@@ -7,22 +7,25 @@ This stub exists for backwards compatibility with existing tests.
 
 from typing import Any, Dict, List, Optional, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class StubClass:
-    """Stub class for [01;31m[Kthegent.[m[Kux.keepalive."""
-    
+    """Stub class for \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kux.keepalive."""
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError(
-            f"Module '[01;31m[Kthegent.[m[Kux.keepalive' is a stub. "
+            "Module '\x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kux.keepalive' is a stub. "
             "The actual implementation was moved/deleted during restructuring."
         )
 
+
 def stub_function(*args: Any, **kwargs: Any) -> Any:
-    """Stub function for [01;31m[Kthegent.[m[Kux.keepalive."""
+    """Stub function for \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kux.keepalive."""
     raise NotImplementedError(
-        f"Module '[01;31m[Kthegent.[m[Kux.keepalive' is a stub. "
+        "Module '\x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kux.keepalive' is a stub. "
         "The actual implementation was moved/deleted during restructuring."
     )
+
 
 __all__ = ["StubClass", "stub_function"]

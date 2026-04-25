@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kcache.multi_level"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kcache.multi_level"""
+
 __all__ = []

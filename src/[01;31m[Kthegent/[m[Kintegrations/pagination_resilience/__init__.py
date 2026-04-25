@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kintegrations.pagination_resilience"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kintegrations.pagination_resilience"""
+
 __all__ = []

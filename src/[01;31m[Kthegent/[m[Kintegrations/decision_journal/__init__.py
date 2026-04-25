@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kintegrations.decision_journal"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kintegrations.decision_journal"""
+
 __all__ = []

@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Korchestration.hierarchical_dispatcher"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Korchestration.hierarchical_dispatcher"""
+
 __all__ = []

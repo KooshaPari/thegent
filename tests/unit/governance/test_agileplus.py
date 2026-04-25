@@ -73,15 +73,16 @@ class TestAgilePlusLoop:
     @pytest.fixture
     def mock_components(self):
         """Mock all external components that AgilePlusLoop initializes."""
-        with patch("thegent.governance.agileplus.ThegentSettings") as mock_settings, \
-             patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner, \
-             patch("thegent.governance.agileplus.HealthScoreComputer") as mock_health_computer, \
-             patch("thegent.governance.agileplus.HealthAnalyzer") as mock_analyzer, \
-             patch("thegent.governance.agileplus.RemediationPlanner") as mock_planner, \
-             patch("thegent.governance.agileplus.BacklogManager") as mock_backlog, \
-             patch("thegent.governance.agileplus.CostController") as mock_cost, \
-             patch("thegent.governance.agileplus.EvidenceLedger") as mock_ledger:
-
+        with (
+            patch("thegent.governance.agileplus.ThegentSettings") as mock_settings,
+            patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner,
+            patch("thegent.governance.agileplus.HealthScoreComputer") as mock_health_computer,
+            patch("thegent.governance.agileplus.HealthAnalyzer") as mock_analyzer,
+            patch("thegent.governance.agileplus.RemediationPlanner") as mock_planner,
+            patch("thegent.governance.agileplus.BacklogManager") as mock_backlog,
+            patch("thegent.governance.agileplus.CostController") as mock_cost,
+            patch("thegent.governance.agileplus.EvidenceLedger") as mock_ledger,
+        ):
             # Configure mock settings
             settings = MagicMock()
             settings.session_dir = Path("/tmp/session")
@@ -278,11 +279,12 @@ class TestAgilePlusLoopStateTransitions:
         health_targets = tmp_path / "health-targets.json"
         health_targets.write_text("{}")
 
-        with patch("thegent.governance.agileplus.ThegentSettings") as mock_settings, \
-             patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner, \
-             patch("thegent.governance.agileplus.HealthScoreComputer") as mock_health_computer, \
-             patch("thegent.governance.agileplus.EvidenceLedger"):
-
+        with (
+            patch("thegent.governance.agileplus.ThegentSettings") as mock_settings,
+            patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner,
+            patch("thegent.governance.agileplus.HealthScoreComputer") as mock_health_computer,
+            patch("thegent.governance.agileplus.EvidenceLedger"),
+        ):
             settings = MagicMock()
             settings.session_dir = Path("/tmp/session")
             mock_settings.return_value = settings
@@ -307,17 +309,18 @@ class TestAgilePlusLoopStateTransitions:
         health_targets = tmp_path / "health-targets.json"
         health_targets.write_text("{}")
 
-        with patch("thegent.governance.agileplus.ThegentSettings") as mock_settings, \
-             patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner, \
-             patch("thegent.governance.agileplus.HealthScoreComputer") as mock_health_computer, \
-             patch("thegent.governance.agileplus.HealthAnalyzer") as mock_analyzer, \
-             patch("thegent.governance.agileplus.RemediationPlanner") as mock_planner, \
-             patch("thegent.governance.agileplus.BacklogManager") as mock_backlog, \
-             patch("thegent.governance.agileplus.CostController") as mock_cost, \
-             patch("thegent.governance.agileplus.EvidenceLedger") as mock_ledger, \
-             patch("thegent.governance.agileplus.AgentDeployer") as mock_deployer, \
-             patch("thegent.governance.agileplus.VerificationGate") as mock_gate:
-
+        with (
+            patch("thegent.governance.agileplus.ThegentSettings") as mock_settings,
+            patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner,
+            patch("thegent.governance.agileplus.HealthScoreComputer") as mock_health_computer,
+            patch("thegent.governance.agileplus.HealthAnalyzer") as mock_analyzer,
+            patch("thegent.governance.agileplus.RemediationPlanner") as mock_planner,
+            patch("thegent.governance.agileplus.BacklogManager") as mock_backlog,
+            patch("thegent.governance.agileplus.CostController") as mock_cost,
+            patch("thegent.governance.agileplus.EvidenceLedger") as mock_ledger,
+            patch("thegent.governance.agileplus.AgentDeployer") as mock_deployer,
+            patch("thegent.governance.agileplus.VerificationGate") as mock_gate,
+        ):
             settings = MagicMock()
             settings.session_dir = Path("/tmp/session")
             mock_settings.return_value = settings
@@ -398,10 +401,11 @@ class TestAgilePlusLoopErrorHandling:
         health_targets = tmp_path / "health-targets.json"
         health_targets.write_text("{}")
 
-        with patch("thegent.governance.agileplus.ThegentSettings") as mock_settings, \
-             patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner, \
-             patch("thegent.governance.agileplus.EvidenceLedger"):
-
+        with (
+            patch("thegent.governance.agileplus.ThegentSettings") as mock_settings,
+            patch("thegent.governance.agileplus.CodebaseScanner") as mock_scanner,
+            patch("thegent.governance.agileplus.EvidenceLedger"),
+        ):
             settings = MagicMock()
             settings.session_dir = Path("/tmp/session")
             mock_settings.return_value = settings
@@ -429,9 +433,10 @@ class TestAgilePlusLoopContinuous:
 
         call_count = 0
 
-        with patch("thegent.governance.agileplus.ThegentSettings") as mock_settings, \
-             patch("thegent.governance.agileplus.AgilePlusLoop.run_once") as mock_run_once:
-
+        with (
+            patch("thegent.governance.agileplus.ThegentSettings") as mock_settings,
+            patch("thegent.governance.agileplus.AgilePlusLoop.run_once") as mock_run_once,
+        ):
             settings = MagicMock()
             settings.session_dir = Path("/tmp/session")
             mock_settings.return_value = settings
@@ -458,9 +463,10 @@ class TestAgilePlusLoopContinuous:
 
         call_count = 0
 
-        with patch("thegent.governance.agileplus.ThegentSettings") as mock_settings, \
-             patch("thegent.governance.agileplus.AgilePlusLoop.run_once") as mock_run_once:
-
+        with (
+            patch("thegent.governance.agileplus.ThegentSettings") as mock_settings,
+            patch("thegent.governance.agileplus.AgilePlusLoop.run_once") as mock_run_once,
+        ):
             settings = MagicMock()
             settings.session_dir = Path("/tmp/session")
             mock_settings.return_value = settings

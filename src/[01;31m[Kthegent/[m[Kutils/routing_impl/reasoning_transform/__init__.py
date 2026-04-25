@@ -1,2 +1,3 @@
-"""Package: [01;31m[Kthegent.[m[Kutils.routing_impl.reasoning_transform"""
+"""Package: \x1b[01;31m\x1b[Kthegent.\x1b[m\x1b[Kutils.routing_impl.reasoning_transform"""
+
 __all__ = []

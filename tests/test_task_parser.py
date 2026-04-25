@@ -327,12 +327,9 @@ Test task description
     def test_parse_task_file_json(self, tmp_path: Path):
         """Test parsing task file with JSON content."""
         task_file = tmp_path / "task.json"
-        task_file.write_text(json.dumps({
-            "id": "json-task",
-            "title": "JSON Task",
-            "subagent_type": "worker",
-            "priority": "P1"
-        }))
+        task_file.write_text(
+            json.dumps({"id": "json-task", "title": "JSON Task", "subagent_type": "worker", "priority": "P1"})
+        )
         task = parse_task_file(task_file)
         assert task["id"] == "json-task"
         assert task["title"] == "JSON Task"
