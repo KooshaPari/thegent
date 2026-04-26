@@ -7,7 +7,7 @@ updates:
     open-pull-requests-limit: 20
     groups:
       python-security:
-        applies-to: security-updates
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
         patterns: ["*"]
 
   # Root Cargo
@@ -23,7 +23,7 @@ updates:
     open-pull-requests-limit: 20
     groups:
       go-security:
-        applies-to: security-updates
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
         patterns: ["*"]
 
   # Byteport frontend (npm) — 40+ alerts
@@ -33,7 +33,7 @@ updates:
     open-pull-requests-limit: 30
     groups:
       npm-security:
-        applies-to: security-updates
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
         patterns: ["*"]
 
   # Byteport docs (npm) — 4 alerts
@@ -43,7 +43,7 @@ updates:
     open-pull-requests-limit: 10
     groups:
       docs-security:
-        applies-to: security-updates
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
         patterns: ["*"]
 
   # GitHub Actions (workflow security)
