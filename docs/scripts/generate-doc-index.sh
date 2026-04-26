@@ -20,7 +20,7 @@ write_bucket() {
     while IFS= read -r f; do
       rel="${f#${ROOT_DIR}/}"
       if [[ "$rel" =~ $pattern ]]; then
-        echo "- [$rel](../${rel})"
+        echo "- [$rel](../../${rel})"
       fi
     done <<< "$all_files"
   } > "$out"
@@ -33,7 +33,7 @@ write_bucket() {
   echo
   while IFS= read -r f; do
     rel="${f#${ROOT_DIR}/}"
-    echo "- [$rel](../${rel})"
+    echo "- [$rel](../../${rel})"
   done <<< "$all_files"
 } > "$DOCS_DIR/index/raw-all.md"
 
