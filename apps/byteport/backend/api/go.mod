@@ -22,7 +22,7 @@ require (
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.39.0
 	github.com/workos/workos-go/v4 v4.46.1
 	github.com/zalando/go-keyring v0.2.6
-	golang.org/x/crypto v0.40.0
+	golang.org/x/crypto v0.45.0
 	gorm.io/datatypes v1.2.7
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/driver/sqlite v1.6.0
