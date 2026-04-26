@@ -109,6 +109,42 @@ graph TB
 
 ---
 
+## Two thegents, two roles
+
+The thegent ecosystem ships **two distinct surfaces** under the same brand. New users routinely confuse them — this section disambiguates.
+
+| Surface | Language | Repo | Role |
+|---------|----------|------|------|
+| **`thegent` CLI** | Python (Typer) | this repo (`KooshaPari/thegent`) | Dotfiles manager, platform bootstrap, session orchestration, governance, multi-provider routing |
+| **`thegent-dispatch`** | Rust (clap) | [`KooshaPari/thegent-dispatch`](https://github.com/KooshaPari/thegent-dispatch) | Provider-agnostic CLI dispatcher — translates a unified prompt schema into native argv for Forge, Codex, Gemini, Copilot, Cursor, Droid, Minimax, Kimi, Claude. Also exposed as a Claude Code skill (`thegent`). |
+
+**Pick the right tool:**
+- Setting up a machine, managing dotfiles, running governance gates, or orchestrating an agent session? Use the **Python `thegent` CLI** below.
+- Routing a single prompt to a specific external provider CLI (e.g. "run this on Codex with high reasoning")? Use **`thegent-dispatch`** or invoke the `thegent` Claude skill.
+
+### Hello world: dispatch a task to a provider CLI
+
+```bash
+# Install thegent-dispatch
+git clone https://github.com/KooshaPari/thegent-dispatch
+cd thegent-dispatch && cargo build --release
+
+# Dispatch a prompt to Forge (primary provider)
+./target/release/thegent-dispatch \
+  --provider forge \
+  --prompt "What is 2+2?"
+
+# Preview the generated argv without executing
+./target/release/thegent-dispatch \
+  --provider codex \
+  --prompt "What is 2+2?" \
+  --dry-run
+```
+
+From inside Claude Code, the same dispatch is available via the bundled `thegent` skill — see [`KooshaPari/thegent-dispatch`](https://github.com/KooshaPari/thegent-dispatch) for the full provider matrix and options.
+
+---
+
 ## Quick Start
 
 ```bash
