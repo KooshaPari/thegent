@@ -152,3 +152,6 @@ devenv-abstraction/
 forgecode-wtrees/
 trace-wtrees/
 !tokenledger/
+
+# Worktree directories (org policy)
+.claude/worktrees/
