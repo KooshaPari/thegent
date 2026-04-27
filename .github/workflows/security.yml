@@ -15,7 +15,7 @@ permissions:
   actions: read
 
 env:
-  SKIP_QUOTA_INTENSIVE: ${{ github.event_name == 'pull_request' && github.event.pull_request additions <= 50 }}
+  SKIP_QUOTA_INTENSIVE: ${{ github.event_name == 'pull_request' && github.event.pull_request.additions <= 50 }}
 
 jobs:
   # Secret Scanning (always runs - lightweight)
@@ -95,11 +95,16 @@ jobs:
           category: semgrep
 
       # CodeQL backup (only on schedule, not PRs - quota optimization)
+      - name: Initialize CodeQL (Backup - schedule only)
+        if: github.event_name == 'schedule'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: typescript
+
       - name: Run CodeQL (Backup - schedule only)
         if: github.event_name == 'schedule'
         uses: github/codeql-action/analyze@v4
         with:
-          languages: typescript
           category: "/language:typescript"
 
   # Dependency Vulnerability Scanning
@@ -128,15 +133,26 @@ jobs:
   container:
     name: Container Scan
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' && hashFiles('Dockerfile') != ''
+    if: github.event_name == 'schedule'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect Dockerfile
+        id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build image
+        if: steps.dockerfile.outputs.exists == 'true'
         run: docker build -t ${{ github.event.repository.name }}:scan .
 
       - name: Run Trivy vulnerability scanner
+        if: steps.dockerfile.outputs.exists == 'true'
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ github.event.repository.name }}:scan'
@@ -145,6 +161,6 @@ jobs:
 
       - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: steps.dockerfile.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
