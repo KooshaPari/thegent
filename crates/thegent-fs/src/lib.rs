@@ -50,9 +50,10 @@ mod pyo3_bindings {
     }
 
     #[pyfunction]
-    pub fn fs_copy_tree(src: &str, dst: &str, _ignore: Option<Vec<String>>) -> PyResult<u64> {
-        // TODO: implement ignore patterns - currently passing None
-        copy_tree(Path::new(src), Path::new(dst), None)
+    pub fn fs_copy_tree(src: &str, dst: &str, ignore: Option<Vec<String>>) -> PyResult<u64> {
+        let ignore_owned: Option<Vec<&str>> =
+            ignore.as_ref().map(|v| v.iter().map(String::as_str).collect());
+        copy_tree(Path::new(src), Path::new(dst), ignore_owned.as_deref())
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))
     }
 
