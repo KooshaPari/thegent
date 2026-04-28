@@ -14,7 +14,6 @@ import type {
   DeploymentResponse,
   DeploymentStatusUpdate,
   LogEntry,
-  LogLevel,
   Metrics,
   MetricsQuery,
   Provider,
