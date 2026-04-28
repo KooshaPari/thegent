@@ -1,6 +1,12 @@
 version: '3'
 
 vars:
+  HAS_PYTHON:
+    sh: test -f pyproject.toml && echo 1 || echo 0
+  HAS_RUST:
+    sh: test -f crates/Cargo.toml && echo 1 || echo 0
+  HAS_DOCS:
+    sh: test -f package.json && echo 1 || echo 0
   VALE_INVARIANT_DOCS: >-
     docs/reference/CANONICAL_INVARIANT_PROSE.md
     docs/research/LANGUAGE_INVARIANTS_AND_VALE_2026-03.md
@@ -19,21 +25,20 @@ tasks:
     cmds:
       - |
         set -euo pipefail
-
         found=0
 
-        if [ -f pyproject.toml ]; then
+        if [ "{{.HAS_PYTHON}}" = "1" ]; then
           uv build
           found=1
         fi
 
-        if [ -f package.json ]; then
-          bun run docs:build
+        if [ "{{.HAS_RUST}}" = "1" ]; then
+          (cd crates && cargo build --workspace)
           found=1
         fi
 
-        if [ -f crates/Cargo.toml ]; then
-          (cd crates && cargo build --workspace)
+        if [ "{{.HAS_DOCS}}" = "1" ]; then
+          bun run docs:build
           found=1
         fi
 
@@ -50,18 +55,18 @@ tasks:
 
         found=0
 
-        if [ -f pyproject.toml ]; then
+        if [ "{{.HAS_PYTHON}}" = "1" ]; then
           uv run pytest
           found=1
         fi
 
-        if [ -f package.json ]; then
-          bun run docs:validate
+        if [ "{{.HAS_RUST}}" = "1" ]; then
+          (cd crates && cargo test --workspace)
           found=1
         fi
 
-        if [ -f crates/Cargo.toml ]; then
-          (cd crates && cargo test --workspace)
+        if [ "{{.HAS_DOCS}}" = "1" ]; then
+          bun run docs:validate
           found=1
         fi
 
@@ -78,18 +83,18 @@ tasks:
 
         found=0
 
-        if [ -f pyproject.toml ]; then
+        if [ "{{.HAS_PYTHON}}" = "1" ]; then
           uv run ruff check src tests
           found=1
         fi
 
-        if [ -f package.json ]; then
-          bun run docs:links
+        if [ "{{.HAS_RUST}}" = "1" ]; then
+          (cd crates && cargo fmt --check && cargo clippy --workspace --all-targets --all-features -- -D warnings)
           found=1
         fi
 
-        if [ -f crates/Cargo.toml ]; then
-          (cd crates && cargo fmt --check && cargo clippy --workspace --all-targets --all-features -- -D warnings)
+        if [ "{{.HAS_DOCS}}" = "1" ]; then
+          bun run docs:links
           found=1
         fi
 
