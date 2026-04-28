@@ -376,6 +376,13 @@ tasks:
           -path './.archive' -prune -o \
           -type d -name __pycache__ -prune -exec rm -rf {} +
 
+  check:
+    desc: Run common build, test, and lint tasks for detected language surfaces
+    cmds:
+      - task: build
+      - task: test
+      - task: lint
+
   tach:
     desc: Enforce Tach module boundaries (monolith thegent + forbid cycles between modules)
     cmds:
