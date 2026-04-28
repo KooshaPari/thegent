@@ -286,6 +286,11 @@ tasks:
           .pytest_cache \
           .ruff_cache \
           .mypy_cache \
+          .hypothesis \
+          .nox \
+          .tox \
+          .ty \
+          .pyright \
           .coverage \
           coverage.xml \
           htmlcov \
@@ -300,6 +305,14 @@ tasks:
           [ ! -e "$path" ] && [ ! -L "$path" ] && continue
           rm -rf "$path"
         done
+
+        find . \
+          -path './.git' -prune -o \
+          -path './.venv' -prune -o \
+          -path './node_modules' -prune -o \
+          -path './templates' -prune -o \
+          -path './.archive' -prune -o \
+          -name '*.egg-info' -prune -exec rm -rf {} +
 
         find . \
           -path './.git' -prune -o \
