@@ -19,10 +19,12 @@ vi.mock('../api', () => ({
 describe('DeploymentStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useDeploymentStore.setState(useDeploymentStore.getInitialState(), true);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    useDeploymentStore.setState(useDeploymentStore.getInitialState(), true);
   });
 
   describe('fetchDeployments', () => {
@@ -43,20 +45,26 @@ describe('DeploymentStore', () => {
 
     it('sets loading state while fetching', async () => {
       const deployments = [mockDeployment()];
+      let resolveDeployments: (value: { deployments: typeof deployments; total: number }) => void;
       (api.listDeployments as any).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ deployments, total: 1 }), 100))
+        () => new Promise((resolve) => {
+          resolveDeployments = resolve;
+        })
       );
 
       const { result } = renderHook(() => useDeploymentStore());
 
-      const promise = act(async () => {
-        await result.current.fetchDeployments();
+      let fetchPromise: Promise<void>;
+      act(() => {
+        fetchPromise = result.current.fetchDeployments();
       });
 
-      // Check loading state immediately
       expect(result.current.isLoading).toBe(true);
 
-      await promise;
+      await act(async () => {
+        resolveDeployments({ deployments, total: 1 });
+        await fetchPromise;
+      });
 
       expect(result.current.isLoading).toBe(false);
     });
