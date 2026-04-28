@@ -10,7 +10,7 @@ vars:
 
 tasks:
   default:
-    desc: List common tasks
+    desc: List available tasks
     cmds:
       - task --list
 
@@ -20,16 +20,26 @@ tasks:
       - |
         set -euo pipefail
 
+        found=0
+
         if [ -f pyproject.toml ]; then
           uv build
+          found=1
         fi
 
         if [ -f package.json ]; then
           bun run docs:build
+          found=1
         fi
 
         if [ -f crates/Cargo.toml ]; then
           (cd crates && cargo build --workspace)
+          found=1
+        fi
+
+        if [ "$found" -eq 0 ]; then
+          echo "No supported build surface detected" >&2
+          exit 1
         fi
 
   test:
@@ -38,16 +48,26 @@ tasks:
       - |
         set -euo pipefail
 
+        found=0
+
         if [ -f pyproject.toml ]; then
           uv run pytest
+          found=1
         fi
 
         if [ -f package.json ]; then
           bun run docs:validate
+          found=1
         fi
 
         if [ -f crates/Cargo.toml ]; then
           (cd crates && cargo test --workspace)
+          found=1
+        fi
+
+        if [ "$found" -eq 0 ]; then
+          echo "No supported test surface detected" >&2
+          exit 1
         fi
 
   lint:
@@ -56,16 +76,26 @@ tasks:
       - |
         set -euo pipefail
 
+        found=0
+
         if [ -f pyproject.toml ]; then
           uv run ruff check src tests
+          found=1
         fi
 
         if [ -f package.json ]; then
           bun run docs:links
+          found=1
         fi
 
         if [ -f crates/Cargo.toml ]; then
           (cd crates && cargo fmt --check && cargo clippy --workspace --all-targets --all-features -- -D warnings)
+          found=1
+        fi
+
+        if [ "$found" -eq 0 ]; then
+          echo "No supported lint surface detected" >&2
+          exit 1
         fi
 
   clean:
