@@ -634,15 +634,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/06/8c/b5564ba0a70630fec923dbc9216efb1e8dadfba157e75f7ea51e3e37a646/Dickens-2.1.1.tar.gz", hash = "sha256:54d2d831ee6980d57477b9236b3ced27fccf0d8527d332bb84c295fcedf06a7b", size = 3382, upload-time = "2023-04-19T19:55:39.388Z" }
 
 [[package]]
-name = "diskcache"
-version = "5.6.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/21/1c1ffc1a039ddcc459db43cc108658f32c57d271d7289a2794e401d0fdb6/diskcache-5.6.3.tar.gz", hash = "sha256:2c3a3fa2743d8535d832ec61c2054a1641f41775aa7c556758a109941e33e4fc", size = 67916, upload-time = "2023-08-31T06:12:00.316Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/27/4570e78fc0bf5ea0ca45eb1de3818a23787af9b390c0b0a0033a1b8236f9/diskcache-5.6.3-py3-none-any.whl", hash = "sha256:5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19", size = 45550, upload-time = "2023-08-31T06:11:58.822Z" },
-]
-
-[[package]]
 name = "distlib"
 version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3459,7 +3450,6 @@ dependencies = [
     { name = "apscheduler" },
     { name = "arxiv" },
     { name = "cachetools" },
-    { name = "diskcache" },
     { name = "duckduckgo-search" },
     { name = "extism", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "fastjsonschema" },
@@ -3544,7 +3534,6 @@ requires-dist = [
     { name = "basedpyright", marker = "extra == 'dev'", specifier = ">=1.31.1" },
     { name = "cachetools", specifier = ">=5.5.2" },
     { name = "curl-cffi", marker = "extra == 'fast'", specifier = ">=0.6.0" },
-    { name = "diskcache", specifier = ">=5.6.3" },
     { name = "duckduckgo-search", specifier = ">=7.3.2" },
     { name = "extism", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'", specifier = ">=1.0.2" },
     { name = "fastjsonschema", specifier = ">=2.21.1" },
