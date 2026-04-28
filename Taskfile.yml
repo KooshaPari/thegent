@@ -16,8 +16,9 @@ vars:
 
 tasks:
   default:
-    desc: List available tasks
+    desc: Show detected language surfaces and list available tasks
     cmds:
+      - task: detect
       - task --list
 
   detect:
