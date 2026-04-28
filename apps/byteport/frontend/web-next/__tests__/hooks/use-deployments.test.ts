@@ -1,13 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { useDeployments } from '@/lib/hooks/use-deployments'
+import { useDeploymentStore } from '@/lib/stores'
 
-// Mock fetch globally
-global.fetch = vi.fn()
+const fetchMock = vi.fn()
+const jsonResponse = (body: unknown, status = 200) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  statusText: status === 500 ? 'Internal Server Error' : 'OK',
+  headers: { get: () => 'application/json' },
+  json: async () => body,
+  text: async () => JSON.stringify(body),
+})
 
 // Mock the API base URL
 vi.mock('@/lib/config', () => ({
-  API_BASE_URL: 'http://localhost:3000/api'
+  API_BASE_URL: 'http://localhost:3000/api',
+  getApiBaseUrl: () => 'http://localhost:3000/api',
+  getDeploymentApiBaseUrl: () => 'http://localhost:3000/api'
 }))
 
 const mockDeployments = [
@@ -31,26 +41,25 @@ const mockDeployments = [
 
 describe('useDeployments Hook', () => {
   beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock)
     vi.clearAllMocks()
+    useDeploymentStore.setState(useDeploymentStore.getInitialState(), true)
   })
 
   it('should fetch deployments successfully', async () => {
     // Mock successful API response
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockDeployments
-    })
+    fetchMock.mockResolvedValue(jsonResponse({ deployments: mockDeployments, total: mockDeployments.length }))
 
     const { result } = renderHook(() => useDeployments())
 
     // Initially loading
-    expect(result.current.loading).toBe(true)
+    expect(result.current.isLoading).toBe(true)
     expect(result.current.deployments).toEqual([])
     expect(result.current.error).toBeNull()
 
     // Wait for the hook to complete
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toEqual(mockDeployments)
@@ -59,69 +68,59 @@ describe('useDeployments Hook', () => {
 
   it('should handle API errors', async () => {
     // Mock API error
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error'
-    })
+    fetchMock.mockResolvedValue(jsonResponse({ message: 'Bad Request' }, 400))
 
     const { result } = renderHook(() => useDeployments())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toEqual([])
-    expect(result.current.error).toBe('Failed to fetch deployments: 500 Internal Server Error')
+    expect(result.current.error).toBe('Bad Request')
   })
 
   it('should handle network errors', async () => {
     // Mock network error
-    ;(global.fetch as any).mockRejectedValueOnce(new Error('Network error'))
+    fetchMock.mockRejectedValue(new Error('Network error'))
 
     const { result } = renderHook(() => useDeployments())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toEqual([])
-    expect(result.current.error).toBe('Failed to fetch deployments: Network error')
+    expect(result.current.error).toBe('Network error')
   })
 
   it('should refetch deployments', async () => {
     // Mock successful API response
-    ;(global.fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => mockDeployments
-    })
+    fetchMock.mockResolvedValue(jsonResponse({ deployments: mockDeployments, total: mockDeployments.length }))
 
     const { result } = renderHook(() => useDeployments())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toEqual(mockDeployments)
 
     // Call refetch
-    await result.current.refetch()
+    await result.current.refresh()
 
     // Should call fetch again
-    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('should handle empty deployments array', async () => {
     // Mock empty response
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => []
-    })
+    fetchMock.mockResolvedValue(jsonResponse({ deployments: [], total: 0 }))
 
     const { result } = renderHook(() => useDeployments())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toEqual([])
@@ -130,32 +129,31 @@ describe('useDeployments Hook', () => {
 
   it('should handle malformed JSON response', async () => {
     // Mock malformed JSON
-    ;(global.fetch as any).mockResolvedValueOnce({
+    fetchMock.mockResolvedValue({
       ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
       json: async () => {
         throw new Error('Invalid JSON')
-      }
+      },
     })
 
     const { result } = renderHook(() => useDeployments())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toEqual([])
-    expect(result.current.error).toBe('Failed to fetch deployments: Invalid JSON')
+    expect(result.current.error).toBe('Invalid JSON')
   })
 
   it('should make correct API call', async () => {
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockDeployments
-    })
+    fetchMock.mockResolvedValue(jsonResponse({ deployments: mockDeployments, total: mockDeployments.length }))
 
     renderHook(() => useDeployments())
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:3000/api/deployments',
       expect.objectContaining({
         method: 'GET',
@@ -174,15 +172,12 @@ describe('useDeployments Hook', () => {
       { ...mockDeployments[0], id: '4', status: 'paused' }
     ]
 
-    ;(global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => deploymentsWithDifferentStatuses
-    })
+    fetchMock.mockResolvedValue(jsonResponse({ deployments: deploymentsWithDifferentStatuses, total: deploymentsWithDifferentStatuses.length }))
 
     const { result } = renderHook(() => useDeployments())
 
     await waitFor(() => {
-      expect(result.current.loading).toBe(false)
+      expect(result.current.isLoading).toBe(false)
     })
 
     expect(result.current.deployments).toHaveLength(4)

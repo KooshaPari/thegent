@@ -2,6 +2,13 @@ import React from 'react'
 import '@testing-library/jest-dom'
 import { beforeAll, afterEach, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
+import { server } from './test/mocks/server'
+
+vi.stubGlobal('server', server)
+vi.stubGlobal('http', http)
+vi.stubGlobal('HttpResponse', HttpResponse)
+vi.stubGlobal('API_BASE_URL', 'http://localhost:8080')
 
 // Mock React.act for React 19 compatibility
 const mockAct = (callback: () => void) => {
@@ -20,33 +27,20 @@ vi.mock('react-dom/test-utils', () => ({
   act: mockAct,
 }))
 
-// Setup MSW (Mock Service Worker) if available
-let server: any
-try {
-  const { server: mswServer } = await import('./test/mocks/server')
-  server = mswServer
-  
-  beforeAll(() => {
-    server.listen({
-      onUnhandledRequest: 'error',
-    })
+beforeAll(() => {
+  server.listen({
+    onUnhandledRequest: 'bypass',
   })
+})
 
-  afterEach(() => {
-    // Clean up React Testing Library
-    cleanup()
-    
-    // Reset MSW handlers
-    server.resetHandlers()
-  })
+afterEach(() => {
+  cleanup()
+  server.resetHandlers()
+})
 
-  afterAll(() => {
-    server.close()
-  })
-} catch (error) {
-  // MSW not available, continue without it
-  console.warn('MSW not available, continuing without mock server')
-}
+afterAll(() => {
+  server.close()
+})
 
 // Suppress console.error during tests unless explicitly needed
 const originalConsoleError = console.error
@@ -93,14 +87,28 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 }))
 
 // Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
+class MockResizeObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
 
-// Mock fetch globally
-global.fetch = vi.fn()
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
+window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
+
+// Radix Select expects pointer-capture APIs that jsdom does not implement.
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false)
+}
+if (!HTMLElement.prototype.setPointerCapture) {
+  HTMLElement.prototype.setPointerCapture = vi.fn()
+}
+if (!HTMLElement.prototype.releasePointerCapture) {
+  HTMLElement.prototype.releasePointerCapture = vi.fn()
+}
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = vi.fn()
+}
 
 // Mock localStorage
 const localStorageMock = {

@@ -84,6 +84,7 @@ describe('UI Button Component', () => {
     const user = userEvent.setup()
     
     render(<Button onClick={handleClick}>Click me</Button>)
+    screen.getByRole('button').focus()
     
     await user.keyboard('{Enter}')
     expect(handleClick).toHaveBeenCalledTimes(1)

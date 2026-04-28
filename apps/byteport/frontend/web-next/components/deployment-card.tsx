@@ -58,9 +58,12 @@ export function DeploymentCard({
   const canStart = ["terminated", "failed"].includes(deployment.status)
   const canStop = ["running", "building", "deploying"].includes(deployment.status)
   const canRestart = deployment.status === "running"
+  const deploymentType = deployment.type ?? "application"
+  const createdAt = deployment.created_at
 
   return (
     <Card
+      role="article"
       className={cn(
         "group relative overflow-hidden transition-all hover:shadow-md",
         className
@@ -77,7 +80,7 @@ export function DeploymentCard({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <ProviderBadge provider={deployment.provider as ProviderName} size="sm" />
               <span className="text-xs">
-                {deployment.type.charAt(0).toUpperCase() + deployment.type.slice(1)}
+                {deploymentType.charAt(0).toUpperCase() + deploymentType.slice(1)}
               </span>
             </div>
           </div>
@@ -165,7 +168,7 @@ export function DeploymentCard({
 
       <CardFooter className="flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
         <span>
-          Created {formatDistanceToNow(new Date(deployment.created_at), { addSuffix: true })}
+          Created {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
         </span>
         <Button
           variant="ghost"
