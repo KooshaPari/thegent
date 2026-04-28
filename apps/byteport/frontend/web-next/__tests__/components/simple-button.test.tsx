@@ -1,25 +1,23 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 // Simple button component for testing
 const SimpleButton = ({ 
   children, 
   onClick, 
   disabled = false, 
-  className = '' 
-}: {
-  children: React.ReactNode
-  onClick?: () => void
-  disabled?: boolean
-  className?: string
-}) => {
+  className = '',
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) => {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       className={className}
       data-testid="simple-button"
+      {...props}
     >
       {children}
     </button>
@@ -68,6 +66,7 @@ describe('SimpleButton Component', () => {
     const user = userEvent.setup()
     
     render(<SimpleButton onClick={handleClick}>Click me</SimpleButton>)
+    screen.getByTestId('simple-button').focus()
     
     await user.keyboard('{Enter}')
     expect(handleClick).toHaveBeenCalledTimes(1)

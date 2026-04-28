@@ -5,13 +5,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/test/mocks/server';
 
 // These are integration tests that validate business logic
 // They test the complete user journeys and API contracts
 
-// Mock fetch globally
-global.fetch = vi.fn();
-
+const API_BASE_URL = 'http://localhost:8080';
 describe('User Story: Auto-Provider Selection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,11 +26,9 @@ describe('User Story: Auto-Provider Selection', () => {
     const appType = 'frontend';
     const expectedProvider = 'vercel';
 
-    // Mock API response
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      status: 201,
-      json: async () => ({
+    server.use(
+      http.post(`${API_BASE_URL}/api/v1/deployments`, () => {
+        return HttpResponse.json({
         id: 'deploy-123',
         name: 'my-frontend-app',
         status: 'deploying',
@@ -38,8 +36,9 @@ describe('User Story: Auto-Provider Selection', () => {
         url: 'https://my-frontend-app.vercel.app',
         created_at: new Date().toISOString(),
         message: 'Deployment started successfully',
-      }),
-    });
+        }, { status: 201 });
+      })
+    );
 
     const response = await fetch('http://localhost:8080/api/v1/deployments', {
       method: 'POST',
