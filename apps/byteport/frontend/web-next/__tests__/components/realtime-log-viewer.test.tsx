@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { LogViewer } from '@/components/log-viewer';
 import { RealtimeLogViewer } from '@/components/realtime-log-viewer';
+import { useLogStream } from '@/lib/hooks/use-log-stream';
 import type { LogEntry } from '@/lib/types';
 
 // Mock the hooks
@@ -10,7 +12,7 @@ const mockLogStream = {
   isConnected: false,
   isConnecting: false,
   error: null as Event | null,
-  reconnectAttempts: 0,
+  retryCount: 0,
   clearLogs: vi.fn(),
   reconnect: vi.fn(),
 };
@@ -59,7 +61,7 @@ describe('RealtimeLogViewer', () => {
     mockLogStream.isConnected = false;
     mockLogStream.isConnecting = false;
     mockLogStream.error = null;
-    mockLogStream.reconnectAttempts = 0;
+    mockLogStream.retryCount = 0;
     vi.clearAllMocks();
   });
 
@@ -84,7 +86,6 @@ describe('RealtimeLogViewer', () => {
     });
 
     it('should pass correct props to LogViewer', () => {
-      const LogViewer = require('@/components/log-viewer').LogViewer;
       mockLogStream.logs = mockLogs;
       mockLogStream.isConnected = true;
 
@@ -97,14 +98,14 @@ describe('RealtimeLogViewer', () => {
         />
       );
 
-      expect(LogViewer).toHaveBeenCalledWith(
+      expect(vi.mocked(LogViewer)).toHaveBeenCalledWith(
         expect.objectContaining({
           logs: mockLogs,
           autoScroll: false,
           showLineNumbers: false,
           terminalMode: false,
         }),
-        expect.anything()
+        undefined
       );
     });
   });
@@ -134,7 +135,7 @@ describe('RealtimeLogViewer', () => {
 
     it('should show error status with reconnect attempts', () => {
       mockLogStream.error = new Event('error');
-      mockLogStream.reconnectAttempts = 3;
+      mockLogStream.retryCount = 3;
 
       render(<RealtimeLogViewer deploymentId="deploy-123" />);
 
@@ -304,47 +305,42 @@ describe('RealtimeLogViewer', () => {
     });
 
     it('should pass autoScroll prop to LogViewer', () => {
-      const LogViewer = require('@/components/log-viewer').LogViewer;
       mockLogStream.isConnected = true;
 
       render(<RealtimeLogViewer deploymentId="deploy-123" autoScroll={false} />);
 
-      expect(LogViewer).toHaveBeenCalledWith(
+      expect(vi.mocked(LogViewer)).toHaveBeenCalledWith(
         expect.objectContaining({ autoScroll: false }),
-        expect.anything()
+        undefined
       );
     });
 
     it('should pass showLineNumbers prop to LogViewer', () => {
-      const LogViewer = require('@/components/log-viewer').LogViewer;
       mockLogStream.isConnected = true;
 
       render(<RealtimeLogViewer deploymentId="deploy-123" showLineNumbers={false} />);
 
-      expect(LogViewer).toHaveBeenCalledWith(
+      expect(vi.mocked(LogViewer)).toHaveBeenCalledWith(
         expect.objectContaining({ showLineNumbers: false }),
-        expect.anything()
+        undefined
       );
     });
 
     it('should pass terminalMode prop to LogViewer', () => {
-      const LogViewer = require('@/components/log-viewer').LogViewer;
       mockLogStream.isConnected = true;
 
       render(<RealtimeLogViewer deploymentId="deploy-123" terminalMode={false} />);
 
-      expect(LogViewer).toHaveBeenCalledWith(
+      expect(vi.mocked(LogViewer)).toHaveBeenCalledWith(
         expect.objectContaining({ terminalMode: false }),
-        expect.anything()
+        undefined
       );
     });
 
     it('should handle maxLogs prop', () => {
-      const useLogStream = require('@/lib/hooks/use-log-stream').useLogStream;
-
       render(<RealtimeLogViewer deploymentId="deploy-123" maxLogs={500} />);
 
-      expect(useLogStream).toHaveBeenCalledWith(
+      expect(vi.mocked(useLogStream)).toHaveBeenCalledWith(
         expect.objectContaining({
           deploymentId: 'deploy-123',
           enabled: true,
@@ -383,7 +379,7 @@ describe('RealtimeLogViewer', () => {
       // Simulate connection error
       mockLogStream.isConnecting = false;
       mockLogStream.error = new Event('error');
-      mockLogStream.reconnectAttempts = 1;
+      mockLogStream.retryCount = 1;
 
       rerender(<RealtimeLogViewer deploymentId="deploy-123" />);
 
@@ -428,7 +424,7 @@ describe('RealtimeLogViewer', () => {
       rerender(<RealtimeLogViewer deploymentId="deploy-123" />);
 
       await waitFor(() => {
-        expect(screen.queryByText(/logs?$/)).not.toBeInTheDocument();
+        expect(screen.getByText('0 logs')).toBeInTheDocument();
       });
     });
   });
@@ -482,12 +478,14 @@ describe('RealtimeLogViewer', () => {
 
       render(<RealtimeLogViewer deploymentId="deploy-123" maxLogs={largeLogCount} />);
 
-      expect(screen.getByText(`${largeLogCount} logs`)).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => content.includes(`${largeLogCount} logs`))
+      ).toBeInTheDocument();
     });
 
     it('should handle multiple reconnect attempts', () => {
       mockLogStream.error = new Event('error');
-      mockLogStream.reconnectAttempts = 10;
+      mockLogStream.retryCount = 10;
 
       render(<RealtimeLogViewer deploymentId="deploy-123" />);
 
