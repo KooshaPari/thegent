@@ -5,7 +5,7 @@ vars:
     sh: test -f pyproject.toml && echo 1 || echo 0
   HAS_RUST:
     sh: test -f crates/Cargo.toml && echo 1 || echo 0
-  HAS_DOCS:
+  HAS_JAVASCRIPT:
     sh: test -f package.json && echo 1 || echo 0
   VALE_INVARIANT_DOCS: >-
     docs/reference/CANONICAL_INVARIANT_PROSE.md
@@ -37,7 +37,7 @@ tasks:
           found=1
         fi
 
-        if [ "{{.HAS_DOCS}}" = "1" ]; then
+        if [ "{{.HAS_JAVASCRIPT}}" = "1" ]; then
           bun run docs:build
           found=1
         fi
@@ -65,7 +65,7 @@ tasks:
           found=1
         fi
 
-        if [ "{{.HAS_DOCS}}" = "1" ]; then
+        if [ "{{.HAS_JAVASCRIPT}}" = "1" ]; then
           bun run docs:validate
           found=1
         fi
@@ -93,7 +93,7 @@ tasks:
           found=1
         fi
 
-        if [ "{{.HAS_DOCS}}" = "1" ]; then
+        if [ "{{.HAS_JAVASCRIPT}}" = "1" ]; then
           bun run docs:links
           found=1
         fi
@@ -122,6 +122,7 @@ tasks:
             "dist",
             "docs/.vitepress/cache",
             "docs/.vitepress/dist",
+            "node_modules/.vite",
             "target",
             "crates/target",
         ]
