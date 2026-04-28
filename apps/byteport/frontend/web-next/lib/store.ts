@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { Project, Deployment, NormalizedUser } from './types';
+import type { Project, Deployment } from './types';
 
 interface AppState {
   // Theme
