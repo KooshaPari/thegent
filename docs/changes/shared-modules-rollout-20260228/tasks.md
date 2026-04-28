@@ -95,6 +95,8 @@ Status legend:
 | L | CL-L6 | CL-02 | [todo] | Add evidence packet generator script (tests, lint, contract, migration, boundary checks). | CL-01 |
 | L | CL-L6 | CL-03 | [todo] | Add merge-readiness validator for lane ordering and dependency completion. | CL-02 |
 | L | CL-L6 | CL-04 | [todo] | Publish Wave 2 closeout report and mark rollout tracker statuses for integration handoff. | CL-03 |
+| L | CL-L6 | CL-05 | [todo] | Harden `templates/vitepress-unified` asset and base-url handling so generated docs do not 404 on CSS, JS, font, or favicon assets. | CK-04 |
+| L | CL-L6 | CL-06 | [todo] | Add a generated-site smoke check that classifies SES lockdown warnings, blocked RUM posts, and extension noise separately from app regressions. | CL-05 |
 
 ### Wave 2 Notes
 1. Wave 2 starts only after `CA-24` reaches `[done]`.
