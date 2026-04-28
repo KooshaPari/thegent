@@ -42,6 +42,8 @@ const mockDeployment: Deployment = {
   provider: 'vercel',
   region: 'us-east-1',
   environment: 'production',
+  type: 'production',
+  created_at: '2024-01-01T00:00:00Z',
   buildLogs: [],
   metrics: {
     cpu: 45,
@@ -55,8 +57,8 @@ describe('DeploymentCard Component', () => {
     render(<DeploymentCard deployment={mockDeployment} />)
     
     expect(screen.getByText('My App')).toBeInTheDocument()
-    expect(screen.getByText('https://myapp.example.com')).toBeInTheDocument()
-    expect(screen.getByText('2 hours ago')).toBeInTheDocument()
+    expect(screen.getByText('myapp.example.com')).toBeInTheDocument()
+    expect(screen.getByText(/2 hours ago/)).toBeInTheDocument()
   })
 
   it('should render status indicator', () => {
@@ -78,8 +80,8 @@ describe('DeploymentCard Component', () => {
   it('should render action buttons', () => {
     render(<DeploymentCard deployment={mockDeployment} />)
     
-    expect(screen.getByRole('button', { name: /view logs/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /more actions/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /open menu/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /view details/i })).toBeInTheDocument()
   })
 
   it('should handle view logs click', async () => {
@@ -88,8 +90,9 @@ describe('DeploymentCard Component', () => {
     
     render(<DeploymentCard deployment={mockDeployment} onViewLogs={onViewLogs} />)
     
-    await user.click(screen.getByRole('button', { name: /view logs/i }))
-    expect(onViewLogs).toHaveBeenCalledWith(mockDeployment)
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    await user.click(await screen.findByText('View Logs'))
+    expect(onViewLogs).toHaveBeenCalledWith(mockDeployment.id)
   })
 
   it('should handle more actions click', async () => {
@@ -97,11 +100,11 @@ describe('DeploymentCard Component', () => {
     
     render(<DeploymentCard deployment={mockDeployment} />)
     
-    await user.click(screen.getByRole('button', { name: /more actions/i }))
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
     
     // Check that dropdown menu items are visible
-    expect(screen.getByText('Redeploy')).toBeInTheDocument()
-    expect(screen.getByText('Pause')).toBeInTheDocument()
+    expect(screen.getByText('View Logs')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
     expect(screen.getByText('Delete')).toBeInTheDocument()
   })
 
@@ -127,12 +130,10 @@ describe('DeploymentCard Component', () => {
     expect(screen.queryByText('https://myapp.example.com')).not.toBeInTheDocument()
   })
 
-  it('should render metrics when provided', () => {
+  it('should render deployment framework metadata when provided', () => {
     render(<DeploymentCard deployment={mockDeployment} />)
     
-    expect(screen.getByText('CPU: 45%')).toBeInTheDocument()
-    expect(screen.getByText('Memory: 60%')).toBeInTheDocument()
-    expect(screen.getByText('Requests: 1000')).toBeInTheDocument()
+    expect(screen.getByText('Production')).toBeInTheDocument()
   })
 
   it('should handle custom className', () => {
@@ -143,49 +144,48 @@ describe('DeploymentCard Component', () => {
   })
 
   it('should handle action callbacks', async () => {
-    const onRedeploy = vi.fn()
-    const onPause = vi.fn()
+    const onViewLogs = vi.fn()
+    const onSettings = vi.fn()
     const onDelete = vi.fn()
     const user = userEvent.setup()
     
     render(
       <DeploymentCard 
         deployment={mockDeployment}
-        onRedeploy={onRedeploy}
-        onPause={onPause}
+        onViewLogs={onViewLogs}
+        onSettings={onSettings}
         onDelete={onDelete}
       />
     )
     
     // Open dropdown menu
-    await user.click(screen.getByRole('button', { name: /more actions/i }))
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
     
-    // Click redeploy
-    await user.click(screen.getByText('Redeploy'))
-    expect(onRedeploy).toHaveBeenCalledWith(mockDeployment)
+    await user.click(screen.getByText('View Logs'))
+    expect(onViewLogs).toHaveBeenCalledWith(mockDeployment.id)
     
-    // Click pause
-    await user.click(screen.getByText('Pause'))
-    expect(onPause).toHaveBeenCalledWith(mockDeployment)
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    await user.click(screen.getByText('Settings'))
+    expect(onSettings).toHaveBeenCalledWith(mockDeployment.id)
     
-    // Click delete
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
     await user.click(screen.getByText('Delete'))
-    expect(onDelete).toHaveBeenCalledWith(mockDeployment)
+    expect(onDelete).toHaveBeenCalledWith(mockDeployment.id)
   })
 
   it('should render external link when URL is available', () => {
     render(<DeploymentCard deployment={mockDeployment} />)
     
-    const externalLink = screen.getByRole('link', { name: /open in new tab/i })
+    const externalLink = screen.getByRole('link', { name: /myapp.example.com/i })
     expect(externalLink).toBeInTheDocument()
     expect(externalLink).toHaveAttribute('href', 'https://myapp.example.com')
     expect(externalLink).toHaveAttribute('target', '_blank')
   })
 
-  it('should handle loading state', () => {
-    render(<DeploymentCard deployment={mockDeployment} isLoading />)
+  it('should render view details action', () => {
+    const onView = vi.fn()
+    render(<DeploymentCard deployment={mockDeployment} onView={onView} />)
     
-    // Check for loading indicators
-    expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /view details/i })).toBeInTheDocument()
   })
 })
