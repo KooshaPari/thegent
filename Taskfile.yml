@@ -7,6 +7,8 @@ vars:
     sh: find . -path './.git' -prune -o -name Cargo.toml -print -quit | grep -q . && echo 1 || echo 0
   HAS_JAVASCRIPT:
     sh: find . -path './.git' -prune -o -path './node_modules' -prune -o -name package.json -print -quit | grep -q . && echo 1 || echo 0
+  HAS_GO:
+    sh: find . -path './.git' -prune -o -path './.venv' -prune -o -path './node_modules' -prune -o -path './templates' -prune -o -path './.archive' -prune -o -name go.mod -print -quit | grep -q . && echo 1 || echo 0
   VALE_INVARIANT_DOCS: >-
     docs/reference/CANONICAL_INVARIANT_PROSE.md
     docs/research/LANGUAGE_INVARIANTS_AND_VALE_2026-03.md
@@ -38,6 +40,10 @@ tasks:
 
         if [ "{{.HAS_JAVASCRIPT}}" = "1" ]; then
           detected="${detected} javascript"
+        fi
+
+        if [ "{{.HAS_GO}}" = "1" ]; then
+          detected="${detected} go"
         fi
 
         if [ -z "$detected" ]; then
@@ -73,6 +79,21 @@ tasks:
 
         if [ "{{.HAS_JAVASCRIPT}}" = "1" ]; then
           bun run docs:build
+          found=1
+        fi
+
+        if [ "{{.HAS_GO}}" = "1" ]; then
+          find . \
+            -path './.git' -prune -o \
+            -path './.venv' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './templates' -prune -o \
+            -path './.archive' -prune -o \
+            -name go.mod -print |
+          while IFS= read -r gomod; do
+            module_dir="$(dirname "$gomod")"
+            (cd "$module_dir" && go build ./...)
+          done
           found=1
         fi
 
@@ -115,6 +136,21 @@ tasks:
           found=1
         fi
 
+        if [ "{{.HAS_GO}}" = "1" ]; then
+          find . \
+            -path './.git' -prune -o \
+            -path './.venv' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './templates' -prune -o \
+            -path './.archive' -prune -o \
+            -name go.mod -print |
+          while IFS= read -r gomod; do
+            module_dir="$(dirname "$gomod")"
+            (cd "$module_dir" && go test ./...)
+          done
+          found=1
+        fi
+
         if [ "$found" -eq 0 ]; then
           echo "No supported test surface detected" >&2
           exit 1
@@ -152,6 +188,26 @@ tasks:
           else
             echo "JavaScript manifests detected, but scripts/check-docs-links.py is missing; skipping docs link lint" >&2
           fi
+          found=1
+        fi
+
+        if [ "{{.HAS_GO}}" = "1" ]; then
+          find . \
+            -path './.git' -prune -o \
+            -path './.venv' -prune -o \
+            -path './node_modules' -prune -o \
+            -path './templates' -prune -o \
+            -path './.archive' -prune -o \
+            -name go.mod -print |
+          while IFS= read -r gomod; do
+            module_dir="$(dirname "$gomod")"
+            unformatted="$(find "$module_dir" -name '*.go' -not -path '*/vendor/*' -exec gofmt -l {} +)"
+            if [ -n "$unformatted" ]; then
+              echo "$unformatted"
+              exit 1
+            fi
+            (cd "$module_dir" && go vet ./...)
+          done
           found=1
         fi
 
