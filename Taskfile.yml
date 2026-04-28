@@ -2,11 +2,11 @@ version: '3'
 
 vars:
   HAS_PYTHON:
-    sh: find . -path './.git' -prune -o -name pyproject.toml -print -quit | grep -q . && echo 1 || echo 0
+    sh: find . -path './.git' -prune -o -path './.venv' -prune -o -path './node_modules' -prune -o -path './templates' -prune -o -path './.archive' -prune -o -name pyproject.toml -print -quit | grep -q . && echo 1 || echo 0
   HAS_RUST:
-    sh: find . -path './.git' -prune -o -name Cargo.toml -print -quit | grep -q . && echo 1 || echo 0
+    sh: find . -path './.git' -prune -o -path './.venv' -prune -o -path './node_modules' -prune -o -path './templates' -prune -o -path './.archive' -prune -o -name Cargo.toml -print -quit | grep -q . && echo 1 || echo 0
   HAS_JAVASCRIPT:
-    sh: find . -path './.git' -prune -o -path './node_modules' -prune -o -name package.json -print -quit | grep -q . && echo 1 || echo 0
+    sh: find . -path './.git' -prune -o -path './.venv' -prune -o -path './node_modules' -prune -o -path './templates' -prune -o -path './.archive' -prune -o -name package.json -print -quit | grep -q . && echo 1 || echo 0
   HAS_GO:
     sh: find . -path './.git' -prune -o -path './.venv' -prune -o -path './node_modules' -prune -o -path './templates' -prune -o -path './.archive' -prune -o -name go.mod -print -quit | grep -q . && echo 1 || echo 0
   VALE_INVARIANT_DOCS: >-
