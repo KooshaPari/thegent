@@ -20,9 +20,36 @@ tasks:
     cmds:
       - task --list
 
+  detect:
+    desc: Show detected language surfaces used by common tasks
+    cmds:
+      - |
+        set -euo pipefail
+        detected=""
+
+        if [ "{{.HAS_PYTHON}}" = "1" ]; then
+          detected="${detected} python"
+        fi
+
+        if [ "{{.HAS_RUST}}" = "1" ]; then
+          detected="${detected} rust"
+        fi
+
+        if [ "{{.HAS_JAVASCRIPT}}" = "1" ]; then
+          detected="${detected} javascript"
+        fi
+
+        if [ -z "$detected" ]; then
+          echo "Detected language surfaces: none"
+          exit 1
+        fi
+
+        echo "Detected language surfaces:${detected}"
+
   build:
     desc: Build detected project surfaces
     cmds:
+      - task: detect
       - |
         set -euo pipefail
         found=0
@@ -56,6 +83,7 @@ tasks:
   test:
     desc: Run detected test suites
     cmds:
+      - task: detect
       - |
         set -euo pipefail
 
@@ -94,6 +122,7 @@ tasks:
   lint:
     desc: Run detected lint checks
     cmds:
+      - task: detect
       - |
         set -euo pipefail
 
