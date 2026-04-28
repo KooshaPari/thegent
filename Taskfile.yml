@@ -14,6 +14,94 @@ tasks:
     cmds:
       - task --list
 
+  build:
+    desc: Build detected project surfaces
+    cmds:
+      - |
+        set -euo pipefail
+
+        if [ -f pyproject.toml ]; then
+          uv build
+        fi
+
+        if [ -f package.json ]; then
+          bun run docs:build
+        fi
+
+        if [ -f crates/Cargo.toml ]; then
+          (cd crates && cargo build --workspace)
+        fi
+
+  test:
+    desc: Run detected test suites
+    cmds:
+      - |
+        set -euo pipefail
+
+        if [ -f pyproject.toml ]; then
+          uv run pytest
+        fi
+
+        if [ -f package.json ]; then
+          bun run docs:validate
+        fi
+
+        if [ -f crates/Cargo.toml ]; then
+          (cd crates && cargo test --workspace)
+        fi
+
+  lint:
+    desc: Run detected lint checks
+    cmds:
+      - |
+        set -euo pipefail
+
+        if [ -f pyproject.toml ]; then
+          uv run ruff check src tests
+        fi
+
+        if [ -f package.json ]; then
+          bun run docs:links
+        fi
+
+        if [ -f crates/Cargo.toml ]; then
+          (cd crates && cargo fmt --check && cargo clippy --workspace --all-targets --all-features -- -D warnings)
+        fi
+
+  clean:
+    desc: Remove generated caches and build artifacts
+    cmds:
+      - |
+        python3 - <<'PY'
+        from pathlib import Path
+        import shutil
+
+        paths = [
+            ".pytest_cache",
+            ".ruff_cache",
+            ".mypy_cache",
+            ".coverage",
+            "coverage.xml",
+            "htmlcov",
+            "build",
+            "dist",
+            "docs/.vitepress/cache",
+            "docs/.vitepress/dist",
+            "target",
+            "crates/target",
+        ]
+
+        for raw in paths:
+            path = Path(raw)
+            if path.is_symlink() or path.is_file():
+                path.unlink()
+            elif path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+
+        for cache_dir in Path(".").rglob("__pycache__"):
+            shutil.rmtree(cache_dir, ignore_errors=True)
+        PY
+
   tach:
     desc: Enforce Tach module boundaries (monolith thegent + forbid cycles between modules)
     cmds:
