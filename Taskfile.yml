@@ -220,36 +220,34 @@ tasks:
     desc: Remove generated caches and build artifacts
     cmds:
       - |
-        python3 - <<'PY'
-        from pathlib import Path
-        import shutil
+        set -euo pipefail
 
-        paths = [
-            ".pytest_cache",
-            ".ruff_cache",
-            ".mypy_cache",
-            ".coverage",
-            "coverage.xml",
-            "htmlcov",
-            "build",
-            "dist",
-            "docs/.vitepress/cache",
-            "docs/.vitepress/dist",
-            "node_modules/.vite",
-            "target",
-            "crates/target",
-        ]
+        for path in \
+          .pytest_cache \
+          .ruff_cache \
+          .mypy_cache \
+          .coverage \
+          coverage.xml \
+          htmlcov \
+          build \
+          dist \
+          docs/.vitepress/cache \
+          docs/.vitepress/dist \
+          node_modules/.vite \
+          target \
+          crates/target
+        do
+          [ ! -e "$path" ] && [ ! -L "$path" ] && continue
+          rm -rf "$path"
+        done
 
-        for raw in paths:
-            path = Path(raw)
-            if path.is_symlink() or path.is_file():
-                path.unlink()
-            elif path.is_dir():
-                shutil.rmtree(path, ignore_errors=True)
-
-        for cache_dir in Path(".").rglob("__pycache__"):
-            shutil.rmtree(cache_dir, ignore_errors=True)
-        PY
+        find . \
+          -path './.git' -prune -o \
+          -path './.venv' -prune -o \
+          -path './node_modules' -prune -o \
+          -path './templates' -prune -o \
+          -path './.archive' -prune -o \
+          -type d -name __pycache__ -prune -exec rm -rf {} +
 
   tach:
     desc: Enforce Tach module boundaries (monolith thegent + forbid cycles between modules)
