@@ -168,6 +168,7 @@ export function LogViewer({
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
+            type="text"
             placeholder="Search logs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -176,7 +177,7 @@ export function LogViewer({
         </div>
 
         <Select value={levelFilter} onValueChange={(value) => setLevelFilter(value as LogLevel | "all")}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-[130px]" aria-label="Level">
             <SelectValue placeholder="Level" />
           </SelectTrigger>
           <SelectContent>
@@ -190,7 +191,7 @@ export function LogViewer({
         </Select>
 
         <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as typeof sourceFilter)}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-[130px]" aria-label="Source">
             <SelectValue placeholder="Source" />
           </SelectTrigger>
           <SelectContent>
