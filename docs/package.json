@@ -15,5 +15,11 @@
   "devDependencies": {
     "@playwright/test": "^1.53.2",
     "vitepress": "^1.6.3"
+  },
+  "overrides": {
+    "vite": "^7.3.2",
+    "lodash": "^4.18.0",
+    "lodash-es": "^4.18.0",
+    "path-to-regexp": "^0.1.13"
   }
 }

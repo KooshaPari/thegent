@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/byteport/api/internal/container"
-	"github.com/byteport/api/internal/middleware"
+	"github.com/byteport/api/internal/infrastructure/http/middleware"
 	"github.com/byteport/api/lib"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
