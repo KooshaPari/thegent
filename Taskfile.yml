@@ -69,6 +69,23 @@ vars:
         -path './target' -prune -o \
         -path './coverage' -prune -o \
         -name go.mod -print -quit | grep -q . && echo 1 || echo 0
+  HAS_SHELL:
+    sh: |
+      find . \
+        -path './.git' -prune -o \
+        -path './.venv' -prune -o \
+        -path './node_modules' -prune -o \
+        -path './templates' -prune -o \
+        -path './.archive' -prune -o \
+        -path './.cache' -prune -o \
+        -path './.pytest_cache' -prune -o \
+        -path './.ruff_cache' -prune -o \
+        -path './.mypy_cache' -prune -o \
+        -path './build' -prune -o \
+        -path './dist' -prune -o \
+        -path './target' -prune -o \
+        -path './coverage' -prune -o \
+        -type f \( -name '*.sh' -o -name '*.bash' -o -name '*.zsh' \) -print -quit | grep -q . && echo 1 || echo 0
   VALE_INVARIANT_DOCS: >-
     docs/reference/CANONICAL_INVARIANT_PROSE.md
     docs/research/LANGUAGE_INVARIANTS_AND_VALE_2026-03.md
@@ -104,6 +121,10 @@ tasks:
 
         if [ "{{.HAS_GO}}" = "1" ]; then
           detected="${detected} go"
+        fi
+
+        if [ "{{.HAS_SHELL}}" = "1" ]; then
+          detected="${detected} shell"
         fi
 
         if [ -z "$detected" ]; then
@@ -268,6 +289,39 @@ tasks:
             fi
             (cd "$module_dir" && go vet ./...)
           done
+          found=1
+        fi
+
+        if [ "{{.HAS_SHELL}}" = "1" ]; then
+          if command -v shellcheck >/dev/null 2>&1; then
+            shell_files="$(mktemp)"
+            trap 'rm -f "$shell_files"' EXIT
+
+            while IFS= read -r -d '' file; do
+              if [ "${file##*.}" = "zsh" ] || head -n 1 "$file" | grep -Eq '(^#!.*zsh$|^#!.*/zsh[[:space:]]|^#!/bin/zsh$)'; then
+                continue
+              fi
+
+              printf '%s\n' "$file" >> "$shell_files"
+            done < <(
+              find . \
+                -path './.git' -prune -o \
+                -path './.venv' -prune -o \
+                -path './node_modules' -prune -o \
+                -path './templates' -prune -o \
+                -path './.archive' -prune -o \
+                -path './.cache' -prune -o \
+                -type f \( -name '*.sh' -o -name '*.bash' -o -name '*.zsh' \) -print0
+            )
+
+            if [ -s "$shell_files" ]; then
+              xargs shellcheck -S error < "$shell_files"
+            else
+              echo "Shell scripts detected, but no ShellCheck-supported sh/bash files were found; skipping shell lint" >&2
+            fi
+          else
+            echo "Shell scripts detected, but shellcheck is not installed; skipping shell lint" >&2
+          fi
           found=1
         fi
 
