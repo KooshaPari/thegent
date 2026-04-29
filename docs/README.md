@@ -20,7 +20,7 @@
 
 ## Internal References
 
-- [Command reference](../commands.md)
+- [Command reference](./cli-examples.md)
 - [Plan notes](../PLAN.md)
 - [Migration and integration plan](../TRACK2_IMPLEMENTATION_READY.md)
 - [Testing evidence](../INDEX.md)
