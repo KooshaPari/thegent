@@ -15,11 +15,11 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12']
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@0b95d4c92f54e4bbd13cb09d9e5b9e5a0d6e5c7a # v5.0.0
         with:
           python-version: $123matrix.python-version125
 
@@ -38,4 +38,5 @@ jobs:
       
 
   phenotype-validate:
+    runs-on: ubuntu-latest
     uses: KooshaPari/phenotypeActions/.github/workflows/validate-governance.yml@main
