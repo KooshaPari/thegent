@@ -21,6 +21,7 @@ The canonical base template for all `CLAUDE.md` files across Phenotype projects.
 - Federated architecture (Phenotype Docs Chassis, AgilePlus Governance)
 - Quality gates and local testing
 - Test & specification traceability
+- Journey traceability and evidence capture
 - Language-specific customizations
 
 **How to Use**:
@@ -209,6 +210,10 @@ git submodule add https://github.com/KooshaPari/thegent.git shared/thegent
 
 ### Q: What if my project has a different structure?
 **A**: Customize the paths in the template. The structure (sections, FR traceability, testing) should remain consistent.
+
+### Q: Do journeys need keyframes and recordings?
+**A**: Yes. If a flow matters enough to document, capture keyframes plus a
+replayable recording and link them from the repo docs or worklog surface.
 
 ### Q: Who maintains this template?
 **A**: Phenotype Governance Team. Suggestions and improvements welcome via issue or PR.

@@ -182,6 +182,20 @@ describe("FR-{PROJECT}-NNN: feature description", () => {
 - Run: `task quality` to verify traceability
 ```
 
+## 6b. Journey Traceability
+
+**[ALWAYS include when user-facing flows exist]** — Capture the journey as
+evidence, not only as prose.
+
+Recommended minimum:
+- keyframes for significant steps in the flow
+- a replayable recording for the full interaction
+- a stable manifest or artifact path
+- a docs or worklog link back to the spec or task
+
+Use the shared Phenotype standard in
+`phenotype-infra/docs/governance/journey-traceability-standard.md`.
+
 ---
 
 ## 7. Specification Documents

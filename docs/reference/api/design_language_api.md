@@ -34,9 +34,7 @@ apply_to_cli(self: Any)
 
 Apply design language to CLI.
 
-Configures Rich console with design tokens.
-This is a placeholder - full implementation would configure
-Rich console styles based on tokens.
+Configures Rich console styling from the active design tokens.
 
 ---
 
@@ -73,9 +71,7 @@ apply_to_cli(self: Any)
 
 Apply design language to CLI.
 
-Configures Rich console with design tokens.
-This is a placeholder - full implementation would configure
-Rich console styles based on tokens.
+Configures Rich console styling from the active design tokens.
 
 ---
 

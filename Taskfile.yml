@@ -458,3 +458,27 @@ tasks:
     desc: Alias for quality (boundaries + docs + lint + focused tests)
     cmds:
       - task: quality
+
+  landing:install:
+    desc: Install the repo-owned thegent landing app dependencies
+    dir: apps/landing
+    cmds:
+      - bun install
+
+  landing:dev:
+    desc: Run the repo-owned thegent landing app locally
+    dir: apps/landing
+    cmds:
+      - bun run dev
+
+  landing:build:
+    desc: Build the repo-owned thegent landing app
+    dir: apps/landing
+    cmds:
+      - bun run build
+
+  landing:preview:
+    desc: Preview the built thegent landing app
+    dir: apps/landing
+    cmds:
+      - bun run preview

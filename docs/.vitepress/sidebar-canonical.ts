@@ -57,6 +57,7 @@ export const sidebar = {
       collapsed: false,
       items: [
         { text: 'Operations Overview', link: '/operations/' },
+        { text: 'Journey Traceability', link: '/operations/journey-traceability.md' },
         { text: 'Runbooks', link: '/operations/runbooks.md' },
         { text: 'Troubleshooting', link: '/operations/troubleshooting.md' },
       ]
