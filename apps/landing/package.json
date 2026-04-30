@@ -1,0 +1,21 @@
+{
+  "name": "@thegent/landing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Thegent landing page (thegent.kooshapari.com)",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "data:refresh": "bash scripts/fetch-readme.sh"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@types/node": "^24.10.1",
+    "astro": "^6.1.9",
+    "@tailwindcss/vite": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^6.0.3"
+  }
+}

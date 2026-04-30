@@ -318,7 +318,7 @@
 
 ### 2.2: Create Project Navigation Layer
 
-**WL-2.2.1: Create docs/projects/INDEX.md**
+**WL-2.2.1: Create docs/project-catalog.md**
 - **Title**: Central project documentation index
 - **Scope**:
   - Document all 19 projects with status (active/legacy/archived)
@@ -333,7 +333,7 @@
     - Tools (task-tool, smartcp)
     - Experimental (others)
   - Create search-friendly index
-- **Deliverable**: `docs/projects/INDEX.md` with project catalog
+- **Deliverable**: `docs/project-catalog.md` with project catalog
 - **Success Criteria**:
   - All 19 projects documented
   - Status clear for each
@@ -1398,4 +1398,3 @@ Start with: `WL-X.X.X: [Title]` - Ready to execute
    - Mark each WL-X.X.X as complete
    - Document any deviations
    - Capture learnings for next iteration
-
