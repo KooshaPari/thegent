@@ -77,6 +77,12 @@ Write for: research completions, decisions made, issues found (duplication, perf
 - `[heliosCLI]` - HeliosCLI framework
 - `[cross-repo]` - Cross-repo work
 
+## Journey Traceability
+
+User-facing flows should carry evidence. Use
+`docs/operations/journey-traceability.md` as the repo-specific guide and keep
+keyframes plus recordings linked from docs or worklogs.
+
 ## Design System (Impeccable)
 
 Impeccable is installed globally. Design skills and commands are available:
@@ -93,4 +99,3 @@ img, video { max-width: 100%; height: auto; }
 input, button, textarea, select { font: inherit; }
 p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
 ```
-

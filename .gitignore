@@ -155,3 +155,9 @@ trace-wtrees/
 
 # Worktree directories (org policy)
 .claude/worktrees/
+
+# Repo-owned project plane surfaces.
+!apps/
+apps/*
+!apps/landing/
+!apps/landing/**
