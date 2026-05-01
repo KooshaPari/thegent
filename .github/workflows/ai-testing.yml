@@ -21,7 +21,7 @@ jobs:
     name: Vitest Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -35,7 +35,7 @@ jobs:
     name: Pytest Tests (uv)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -49,7 +49,7 @@ jobs:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -64,7 +64,7 @@ jobs:
     name: Test Coverage Report
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
