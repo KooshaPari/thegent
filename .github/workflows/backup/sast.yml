@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true  # Allow PRs to proceed even if CodeQL fails
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - uses: github/codeql-action/init@v4  # Upgrade to v4
         with:
           languages: [typescript, python, rust, go]
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true  # Allow PRs to proceed even if Semgrep fails
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - uses: returntocorp/semgrep-action@v1
         with:
           generateSarif: true
