@@ -5,5 +5,14 @@ The actual implementation was moved/deleted during repository restructuring.
 This stub exists for backwards compatibility with existing tests.
 """
 
+from __future__ import annotations
+from pathlib import Path
+
+
+def get_config_dir() -> Path:
+    """Get the configuration directory."""
+    return Path.home() / ".config" / "thegent"
+
+
 # Stub implementation - functionality not available
-__all__ = []
+__all__ = ["get_config_dir"]

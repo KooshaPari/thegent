@@ -6,4 +6,6 @@ This stub exists for backwards compatibility with existing tests.
 """
 
 # Stub implementation - functionality not available
-__all__ = []
+http_app: object | None = None
+
+__all__ = ["http_app"]

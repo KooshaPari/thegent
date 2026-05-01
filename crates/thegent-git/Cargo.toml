@@ -14,7 +14,7 @@ path = "src/main.rs"
 required-features = ["cli"]
 
 [dependencies]
-gix = { version = "0.82.0", default-features = false, features = [
+gix = { version = "0.83.0", default-features = false, features = [
     "max-performance-safe",
     "status",
     "dirwalk",

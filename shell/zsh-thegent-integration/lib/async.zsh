@@ -265,11 +265,3 @@ _tg_async_cleanup() {
 }
 typeset -ga precmd_functions
 precmd_functions+=_tg_async_cleanup
-
-# Initialize async if enabled
-if [[ "$THEGENT_ASYNC_ENABLE" == "1" ]]; then
-  # Pre-create job tracking arrays
-  typeset -gA THEGENT_JOBS
-  typeset -gA THEGENT_JOB_STATUS
-  typeset -gA THEGENT_JOB_OUTPUT
-fi

@@ -143,3 +143,30 @@ class ShadowAuditGit:
             diff=row["diff"],
             timestamp=datetime.fromisoformat(row["timestamp"]),
         )
+
+
+# Alias for backwards compatibility
+GitJournal = ShadowAuditGit
+GitJournalAsync = ShadowAuditGit
+
+
+__all__ = ["AuditEntry", "ShadowAuditGit", "GitJournal", "GitJournalAsync", "GitJournalEnhanced"]
+
+
+class GitJournalEnhanced(ShadowAuditGit):
+    """Enhanced git journal with additional features."""
+
+    def export_json(self, project_id: int) -> dict[str, Any]:
+        """Export audit log as JSON."""
+        entries = self.get_entries(project_id)
+        return {
+            "entries": [
+                {
+                    "id": e.id,
+                    "sha": e.sha,
+                    "message": e.message,
+                    "timestamp": e.timestamp.isoformat(),
+                }
+                for e in entries
+            ]
+        }

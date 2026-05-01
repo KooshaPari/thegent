@@ -74,7 +74,7 @@ Write for: research completions, decisions made, issues found (duplication, perf
 
 - `[AgilePlus]` - AgilePlus Rust monorepo
 - `[thegent]` - TheGent dotfiles manager
-- `[heliosCLI]` - HeliosCLI framework
+- `[helioscope]` - Helioscope app manager (formerly heliosCLI)
 - `[cross-repo]` - Cross-repo work
 
 ## Journey Traceability

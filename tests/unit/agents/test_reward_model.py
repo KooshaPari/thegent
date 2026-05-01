@@ -48,7 +48,7 @@ class TestRecursiveRewardModel:
         """Test optimization with no reward data."""
         result = model.optimize()
         assert result["status"] == "no_data"
-        assert result["epoch"] == 1
+        assert result["epoch"] == 0  # No optimization occurred, epoch starts at 0
 
     def test_optimize_with_data(self, model):
         """Test optimization with reward data."""
