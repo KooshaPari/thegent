@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# shellcheck shell=bash
 # Shared hook library — sourced by all hooks.
 # Provides stdin parsing, path setup, tool detection, and common helpers.
 # Usage:
@@ -36,7 +37,7 @@ HEAD_SHA="${HEAD_SHA:-}"
 export INPUT CWD SESSION_ID TOOL_NAME FILE_PATH STOP_ACTIVE
 export PROJECT_DIR VERIFY_DIR QA_STATE QUALITY_CONFIG CHANGE_LOG
 export TOOL_CONTENT TOOL_NEW_STRING TOOL_OLD_STRING HEAD_SHA
-THEGENT_TOOL_BIN_PATH="${THEGENT_TOOL_BIN_PATH:-/usr/bin:/opt/homebrew/bin:/bin:/usr/sbin:/sbin:/Users/kooshapari/.cargo/bin}"
+THEGENT_TOOL_BIN_PATH="${THEGENT_TOOL_BIN_PATH:-${HOME}/.cargo/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin}"
 
 # --- Binary Resolution (Rust Runtime) ---
 if [[ -z "${THEGENT_HOOKS_BIN:-}" ]]; then

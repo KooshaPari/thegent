@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Analyze licenses
-        uses: fsfe/reuse-action@v4
+        uses: fsfe/reuse-action@3ae3c6bdf1257ab19397fab11fd3312144692083
         continue-on-error: true  # Allow findings but don't fail
 
       - name: Check for non-reusable licenses
@@ -77,7 +77,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Semgrep (Primary)
-        uses: returntocorp/semgrep-action@v1
+        uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
           config: |
             p/typescript
@@ -153,7 +153,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         if: steps.dockerfile.outputs.exists == 'true'
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: '${{ github.event.repository.name }}:scan'
           format: 'sarif'
