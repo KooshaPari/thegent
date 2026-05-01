@@ -28,16 +28,16 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@b6b3e1f650a5980a11de5ab7b4b0e3f7f0e8b4e6 # v4.0.1
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4.0.1
         with:
           node-version: 20
           cache: npm
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
 
       - name: Restore cache
-        uses: actions/cache@d3a5d1c8b7e4f6a9c8d7e6f5a4b3c2d1e0f9a8b7 # v4.5.0
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v4.5.0
         with:
           path: |
             docs/.vitepress/cache
