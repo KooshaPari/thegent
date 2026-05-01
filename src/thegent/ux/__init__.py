@@ -1,9 +1,9 @@
-"""STUB MODULE - thegent.ux
+"""UX utilities for thegent CLI."""
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+from .keepalive import KeepaliveConfig, TerminalKeepalive, keepalive
 
-# Stub implementation - functionality not available
-__all__ = []
+__all__ = [
+    "KeepaliveConfig",
+    "TerminalKeepalive",
+    "keepalive",
+]

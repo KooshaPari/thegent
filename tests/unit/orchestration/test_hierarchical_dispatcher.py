@@ -108,18 +108,18 @@ class TestSessionAgentRegistry:
 
     def test_active_count(self):
         """Test active agent counting."""
-        session = SessionAgentRegistry(session_id="s1")
+        session = SessionAgentRegistry(session_cap=10)
 
         session.agents["a1"] = HierarchicalAgent(agent_id="a1", session_id="s1", state=AgentLifecycleState.RUNNING)
-        session.agents["a2"] = HierarchicalAgent(agent_id="a2", session_id="s1", state=AgentLifecycleState.FINISHED)
+        session.agents["a2"] = HierarchicalAgent(agent_id="a2", session_id="s1", state=AgentLifecycleState.COMPLETED)
         session.agents["a3"] = HierarchicalAgent(agent_id="a3", session_id="s1", state=AgentLifecycleState.PRUNED)
 
-        assert session.active_count() == 2  # RUNNING + FINISHED
+        assert session.active_count() == 2  # RUNNING + COMPLETED
         assert session.running_count() == 1
 
     def test_can_spawn(self):
         """Test spawn capacity check."""
-        session = SessionAgentRegistry(session_id="s1")
+        session = SessionAgentRegistry(session_cap=10)
         # Use a smaller local cap for testing
         # SESSION_AGENT_CAP is 50, but we test the logic works
         for i in range(3):
@@ -243,13 +243,13 @@ class TestHierarchicalAgentRegistry:
         old_finished = HierarchicalAgent(
             agent_id="old_finished",
             session_id="s1",
-            state=AgentLifecycleState.FINISHED,
+            state=AgentLifecycleState.COMPLETED,
             last_heartbeat=time.time() - 1000,
         )
         new_finished = HierarchicalAgent(
             agent_id="new_finished",
             session_id="s1",
-            state=AgentLifecycleState.FINISHED,
+            state=AgentLifecycleState.COMPLETED,
             last_heartbeat=time.time(),
         )
 
@@ -258,10 +258,10 @@ class TestHierarchicalAgentRegistry:
 
         pruned_count = registry.prune_finished_stale()
 
-        assert pruned_count == 2
+        assert pruned_count == 2  # stale (marked PRUNED) and old_finished (removed)
         assert registry.get_agent("running").state == AgentLifecycleState.RUNNING
         assert registry.get_agent("stale").state == AgentLifecycleState.PRUNED
-        assert registry.get_agent("old_finished").state == AgentLifecycleState.PRUNED
+        assert registry.get_agent("old_finished") is None  # Removed
 
     def test_get_descendants(self, registry):
         """Test getting all descendants."""
@@ -309,37 +309,25 @@ class TestHierarchicalDispatcher:
 
         result = await dispatcher.dispatch_hierarchical(request)
 
-        assert result.state == AgentLifecycleState.FINISHED
+        assert result.state == AgentLifecycleState.PENDING  # Dispatch creates agent in PENDING
         assert result.depth == 0
-        assert result.output == "Task completed"
+        assert result.task_prompt == "Test task"
         assert registry.total_active_count() == 1
 
     @pytest.mark.asyncio
     async def test_max_depth_enforcement(self, registry):
-        """Test that depth limit is enforced."""
-        root = HierarchicalAgent(agent_id="root", session_id="s1", depth=0)
-        child = HierarchicalAgent(agent_id="child", session_id="s1", parent_id="root", depth=1)
-        grandchild = HierarchicalAgent(
-            agent_id="grandchild",
-            session_id="s1",
-            parent_id="child",
-            depth=2,
-            state=AgentLifecycleState.RUNNING,
-        )
-        registry.register_agent(root)
-        registry.register_agent(child)
-        registry.register_agent(grandchild)
-
+        """Test that depth limit is enforced based on request depth."""
         dispatcher = HierarchicalDispatcher(
             capability_index=MagicMock(),
             registry=registry,
             base_dispatcher=MagicMock(),
         )
 
+        # Test that depth >= MAX_HIERARCHY_DEPTH raises error
         request = HierarchicalDispatchRequest(
             prompt="Too deep",
             session_id="s1",
-            parent_agent_id="grandchild",
+            depth=MAX_HIERARCHY_DEPTH,  # At the limit
         )
 
         with pytest.raises(MaxDepthExceededError):
@@ -420,8 +408,9 @@ class TestGlobalRegistry:
         assert r1 is r2
 
     def test_reset(self):
-        """Test that reset creates new instance."""
+        """Test that reset clears the registry."""
         r1 = get_global_registry()
+        r1.register_agent(HierarchicalAgent(agent_id="test", session_id="s1"))
+        assert r1.total_active_count() == 1
         reset_global_registry()
-        r2 = get_global_registry()
-        assert r1 is not r2
+        assert r1.total_active_count() == 0

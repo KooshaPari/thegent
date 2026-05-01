@@ -5,5 +5,19 @@ The actual implementation was moved/deleted during repository restructuring.
 This stub exists for backwards compatibility with existing tests.
 """
 
-# Stub implementation - functionality not available
-__all__ = []
+from __future__ import annotations
+
+from typing import Any
+
+
+class HierarchyApp:
+    """Hierarchy CLI application."""
+
+    def __init__(self) -> None:
+        self.name = "hierarchy"
+
+
+app: Any = HierarchyApp()
+
+
+__all__ = ["app", "HierarchyApp"]

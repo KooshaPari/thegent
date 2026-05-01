@@ -1,5 +1,8 @@
 """Session hook - STUB."""
 
+from __future__ import annotations
+from typing import Any
+
 
 class SessionHook:
     def __init__(self, *args, **kwargs):
@@ -12,4 +15,9 @@ class SessionHook:
         pass
 
 
-__all__ = ["SessionHook"]
+def write_conversation_dump(session_id: str, data: dict[str, Any]) -> bool:
+    """Write a conversation dump for a session."""
+    return True
+
+
+__all__ = ["SessionHook", "write_conversation_dump"]

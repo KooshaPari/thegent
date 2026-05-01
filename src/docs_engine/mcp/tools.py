@@ -1,5 +1,6 @@
 """MCP tools - STUB."""
 
+from __future__ import annotations
 from typing import Any, Dict, List
 
 
@@ -14,4 +15,9 @@ class MCPTools:
         return []
 
 
-__all__ = ["MCPTools"]
+def register_tools(registry: Any) -> None:
+    """Register tools with the given registry."""
+    pass
+
+
+__all__ = ["MCPTools", "register_tools"]

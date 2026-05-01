@@ -8,11 +8,20 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
+
+
+class EpisodeStatus(Enum):
+    """Status of an audit episode."""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 @dataclass
@@ -96,3 +105,17 @@ class ProjectRegistry:
             rows = cursor.fetchall()
 
         return [Project(id=row["id"], name=row["name"], path=row["path"]) for row in rows]
+
+
+@dataclass
+class EpisodeRecord:
+    """Record of an audit episode."""
+
+    id: int
+    project_name: str
+    status: EpisodeStatus
+    started_at: str = ""
+    completed_at: str = ""
+
+
+__all__ = ["Project", "ProjectRegistry", "EpisodeRecord", "EpisodeStatus"]

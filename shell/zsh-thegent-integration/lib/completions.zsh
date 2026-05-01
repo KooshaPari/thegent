@@ -274,3 +274,129 @@ zstyle ':completion:*:descriptions' format '%B%d%b'
 # Fuzzy matching
 zstyle ':completion:*' fuzzy true
 zstyle ':completion:*' match-original both
+
+# --- tgbg completion ---
+_tgbg() {
+  _arguments -s -A '-*' \
+    '-d+[Working directory]:directory:_directories' \
+    '-t+[Timeout in seconds]:timeout:' \
+    '-C+[Continue session]:session_id:' \
+    '-d[Debug mode]' \
+    '--skill+[Skill name]:skill:' \
+    '1:prompt: '
+}
+
+compdef _tgbg tgbg
+
+# --- tgsessions completion ---
+_tgsessions() {
+  _arguments \
+    '-t+[Timeout]:timeout:' \
+    '--all[Show all sessions]'
+}
+
+compdef _tgsessions tgsessions
+
+# --- tgp completion (quick prompt) ---
+_tgp() {
+  _arguments '1:prompt: '
+}
+
+compdef _tgp tgp
+
+# --- tgwho completion ---
+_tgwho() {
+  _arguments \
+    '--json[Output as JSON]' \
+    '--verbose[Verbose output]'
+}
+
+compdef _tgwho tgwho
+
+# --- tgwork completion ---
+_tgwork() {
+  _arguments \
+    '-n+[Number of items]:number:' \
+    '--json[Output as JSON]'
+}
+
+compdef _tgwork tgwork
+
+# --- tgnext completion ---
+_tgnext() {
+  _arguments \
+    '--json[Output as JSON]' \
+    '--timeout+[Timeout]:timeout:'
+}
+
+compdef _tgnext tgnext
+
+# --- tgstatus completion ---
+_tgstatus() {
+  _arguments \
+    '--json[Output as JSON]' \
+    '--verbose[Verbose output]'
+}
+
+compdef _tgstatus tgstatus
+
+# --- tgdoc completion ---
+_tgdoc() {
+  _arguments \
+    '-o[Open in browser]' \
+    '1:topic:_files'
+}
+
+compdef _tgdoc tgdoc
+
+# --- tgw completion (watch mode) ---
+_tgw() {
+  _arguments \
+    '-i+[Interval]:interval:' \
+    '1:path:_directories'
+}
+
+compdef _tgw tgw
+
+# --- tgxa completion (async execute) ---
+_tgxa() {
+  _arguments \
+    '1:command: ' \
+    '2:callback: '
+}
+
+compdef _tgxa tgxa
+
+# --- tgxj completion (job status) ---
+_tgxj() {
+  _arguments \
+    '1:job_id: '
+}
+
+compdef _tgxj tgxj
+
+# --- tgxl completion (job logs) ---
+_tgxl() {
+  _arguments \
+    '1:job_id: ' \
+    '2:lines: '
+}
+
+compdef _tgxl tgxl
+
+# --- tgxw completion (wait for job) ---
+_tgxw() {
+  _arguments \
+    '1:job_id: ' \
+    '2:timeout: '
+}
+
+compdef _tgxw tgxw
+
+# --- tgxk completion (kill job) ---
+_tgxk() {
+  _arguments \
+    '1:job_id: '
+}
+
+compdef _tgxk tgxk

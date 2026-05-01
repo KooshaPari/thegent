@@ -14,4 +14,7 @@ class Indexer:
         return []
 
 
-__all__ = ["Indexer"]
+__all__ = ["Indexer", "DocIndexer"]
+
+# Alias for backwards compatibility
+DocIndexer = Indexer
