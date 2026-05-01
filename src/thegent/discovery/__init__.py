@@ -191,7 +191,7 @@ def list_discovered_agents(session_dir: Path | None = None) -> list[dict[str, An
 
 def _parse_agent_discovery_file(agents: list[dict[str, Any]], f: Path) -> None:
     """Parse a single agent discovery file safely."""
-    from thegent.cli.commands.impl import _is_pid_running
+    from thegent.infra.process_helpers import is_pid_running as _is_pid_running
 
     try:
         data = json.loads(f.read_text(encoding="utf-8"))
