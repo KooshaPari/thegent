@@ -1,6 +1,6 @@
-"""Schema - STUB."""
-
-from typing import Any, Dict
+"""Research engine schema definitions."""
+from __future__ import annotations
+from typing import Any
 
 
 class ResearchSchema:
@@ -11,4 +11,24 @@ class ResearchSchema:
         return True
 
 
-__all__ = ["ResearchSchema"]
+class ResearchItem:
+    """Represents a research item."""
+
+    def __init__(self, title: str = "", url: str = "", content: str = "") -> None:
+        """Initialize research item."""
+        self.title = title
+        self.url = url
+        self.content = content
+        self.metadata: dict[str, Any] = {}
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "title": self.title,
+            "url": self.url,
+            "content": self.content,
+            "metadata": self.metadata,
+        }
+
+
+__all__ = ["ResearchSchema", "ResearchItem"]

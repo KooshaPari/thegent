@@ -1,9 +1,15 @@
 """STUB MODULE - thegent.fanta_main
+"""STUB MODULE - thegent.anen_main
 
 WARNING: This is an auto-generated stub module.
 The actual implementation was moved/deleted during repository restructuring.
 This stub exists for backwards compatibility with existing tests.
 """
 
-# Stub implementation - functionality not available
-__all__ = []
+from __future__ import annotations
+
+GEMINI_FLASH_MODEL = "gemini-2.0-flash"
+
+__all__ = ["GEMINI_FLASH_MODEL"]
+
+__all__ = ["GEMINI_FLASH_MODEL"]

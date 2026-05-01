@@ -9,4 +9,11 @@ class Writer:
         pass
 
 
-__all__ = ["Writer"]
+__all__ = ["Writer", "DocWriter"]
+
+
+class DocWriter(Writer):
+    """Document writer extending base Writer."""
+
+    def write(self, content, *args, **kwargs):
+        pass
