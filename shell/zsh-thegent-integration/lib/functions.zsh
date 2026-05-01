@@ -219,8 +219,31 @@ tgwork() {
     print -r -- ""
     head -100 "$stream_file"
   else
-    print -r -- "tgwork: work stream not found: $stream_file" >&2
+    # Try alternative locations as fallback
+    local alt_paths=(
+      "$HOME/thegent/docs/WORK_STREAM.md"
+      "$HOME/thegent/WORK_STREAM.md"
+      "$HOME/.thegent/WORK_STREAM.md"
+    )
+
+    for alt_file in "${alt_paths[@]}"; do
+      if [[ -f "$alt_file" ]]; then
+        print -r -- "Work stream from (fallback): $alt_file"
+        print -r -- ""
+        head -100 "$alt_file"
+        return 0
+      fi
+    done
+
+    print -r -- "tgwork: work stream not found" >&2
+    print -r -- "Expected locations:" >&2
+    print -r -- "  - $stream_file" >&2
+    print -r -- "  - $HOME/thegent/docs/WORK_STREAM.md" >&2
+    print -r -- "  - $HOME/thegent/WORK_STREAM.md" >&2
+    print -r -- "  - $HOME/.thegent/WORK_STREAM.md" >&2
+    print -r -- "" >&2
     print -r -- "Set THEGENT_WORK_STREAM to customize location" >&2
+    return 1
   fi
 }
 

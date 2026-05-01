@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@be5f7ba354c69107308c363c2374d3c64883a720
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz || true
       - name: Run fuzzing
