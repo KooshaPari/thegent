@@ -1,10 +1,27 @@
-../template-commons/AGENTS.md
+# Agents
 
-## External Agent Integration
+## Key Commands
 
-thegent provides built-in support for discovering, registering, and controlling external agents via a generic black-box proxy pattern:
+```bash
+# Development
+task install    # Install dependencies
+task lint       # Lint all source
+task test       # Run test suite
+task quality    # Full quality gate (lint + test + type check)
+task dev        # Start development server with hot reload
+task dev:tui    # Start services with interactive TUI dashboard
+```
 
-- **BlackBoxProxy** (`src/thegent/agents/black_box_proxy.py`) — Universal proxy for stdio/HTTP/LSP interception. Wraps external agent processes and enforces input/output policies before message forwarding.
-- **Agent Discovery & Registration** (`src/thegent/cli/governance/governance_discovery_guardrails_cmds.py`) — `register_discovered_agent()` function and `discovery_scan_cmd` for auto-detecting running agent sessions (cursor-agent, Claude Code, Codex) and registering them for introspection.
-- **Use Case**: Integrate external HTTP APIs (e.g., agentapi-plusplus) as discoverable agents. BlackBoxProxy can wrap HTTP calls with guardrail checks before forwarding to external services.
-- **Work Package**: WP-4008 (External Agent Control & Discovery)
+## Stack
+
+- **Core**: Python (src/thegent/)
+- **CLI**: Typer, Rich
+- **Agent Integration**: BlackBoxProxy, Agent Discovery & Registration
+- **Dotfiles**: Managed via `src/thegent/dotfiles/`
+
+## Conventions
+
+- Max function length: 40 lines. Cognitive complexity ≤ 15.
+- No placeholder TODOs in committed code.
+- All new code must pass: `ruff check .`, `ruff format .`, `pytest -q`.
+- AGENTS.md symlink removed — file is now repo-native.
