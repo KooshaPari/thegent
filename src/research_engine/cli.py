@@ -1,6 +1,11 @@
 """CLI - STUB."""
+from dataclasses import dataclass
+
+# Stub application instance
+app = None
 
 
+@dataclass
 class ResearchCLI:
     def __init__(self, *args, **kwargs):
         pass
@@ -9,4 +14,4 @@ class ResearchCLI:
         pass
 
 
-__all__ = ["ResearchCLI"]
+__all__ = ["app", "ResearchCLI"]

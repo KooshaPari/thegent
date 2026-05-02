@@ -3,7 +3,7 @@
 # Lazy import pattern to avoid circular dependencies
 # The thegent-agents package is the source of truth
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Any
 
 if TYPE_CHECKING:
     from thegent.agents.base import AgentRunner, RunResult

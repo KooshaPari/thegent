@@ -17,7 +17,6 @@ class MCPTools:
 
 def register_tools(registry: Any) -> None:
     """Register tools with the given registry."""
-    pass
 
 
 __all__ = ["MCPTools", "register_tools"]

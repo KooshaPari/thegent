@@ -326,6 +326,10 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Enable native output parser implementation paths",
     )
+    use_native_shm: bool = Field(
+        default=False,
+        description="Enable native shared-memory implementation for state synchronization",
+    )
     config_dir_override: str | None = Field(
         default=None,
         description="Optional override for the resolved configuration directory",

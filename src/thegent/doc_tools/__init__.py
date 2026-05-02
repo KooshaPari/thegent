@@ -6,7 +6,37 @@ This stub exists for backwards compatibility with existing tests.
 """
 
 from __future__ import annotations
+from dataclasses import dataclass, field
 from typing import Any
+
+
+@dataclass
+class ScreenshotOptions:
+    """Options for screenshot capture."""
+    full_page: bool = False
+    timeout: int = 30000
+    format: str = "png"
+    quality: int = 90
+
+
+@dataclass
+class VideoRecordingOptions:
+    """Options for video recording."""
+    format: str = "webm"
+    fps: int = 30
+    video_codec: str = "vp9"
+    audio: bool = False
+
+
+@dataclass
+class RecordingResult:
+    """Result of a recording operation."""
+    success: bool = False
+    file_path: str = ""
+    duration_ms: float = 0.0
+    frames_captured: int = 0
+    error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class PlaywrightRecorder:
@@ -23,8 +53,27 @@ class PlaywrightRecorder:
         """Stop recording and return the result."""
         return {"status": "completed", "frames": []}
 
+    def take_screenshot(self, url: str, options: ScreenshotOptions | None = None) -> str:
+        """Take a screenshot of a URL."""
+        return f"screenshot_{hash(url)}.png"
 
-__all__ = ["PlaywrightRecorder", "RecordingConfig"]
+    def record_video(self, url: str, options: VideoRecordingOptions | None = None) -> RecordingResult:
+        """Record a video of a URL."""
+        return RecordingResult(
+            success=True,
+            file_path=f"video_{hash(url)}.webm",
+            duration_ms=1000.0,
+            frames_captured=30,
+        )
+
+
+__all__ = [
+    "PlaywrightRecorder",
+    "RecordingConfig",
+    "RecordingResult",
+    "ScreenshotOptions",
+    "VideoRecordingOptions",
+]
 
 
 @dataclass

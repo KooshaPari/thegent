@@ -13,24 +13,19 @@ pytestmark = pytest.mark.skip(reason="governance module not yet implemented")
 
 def test_govern_vet_impl_rejects_on_safety_violation() -> None:
     """Placeholder test - governance module not implemented."""
-    pass
 
 
 def test_govern_vet_impl_approves_clean_output() -> None:
     """Placeholder test - governance module not implemented."""
-    pass
 
 
 def test_govern_vet_impl_dry_run_skips_execution() -> None:
     """Placeholder test - governance module not implemented."""
-    pass
 
 
 def test_govern_vet_impl_raises_for_missing_run() -> None:
     """Placeholder test - governance module not implemented."""
-    pass
 
 
 def test_govern_vet_impl_forwards_federation_namespace_context() -> None:
     """Placeholder test - governance module not implemented."""
-    pass

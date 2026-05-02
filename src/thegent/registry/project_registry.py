@@ -108,6 +108,17 @@ class ProjectRegistry:
 
 
 @dataclass
+class ProjectRecord:
+    """Record for a registered project."""
+
+    id: int
+    name: str
+    path: str
+    description: str = ""
+    created_at: str = ""
+
+
+@dataclass
 class EpisodeRecord:
     """Record of an audit episode."""
 
@@ -118,4 +129,4 @@ class EpisodeRecord:
     completed_at: str = ""
 
 
-__all__ = ["Project", "ProjectRegistry", "EpisodeRecord", "EpisodeStatus"]
+__all__ = ["EpisodeRecord", "EpisodeStatus", "Project", "ProjectRecord", "ProjectRegistry"]

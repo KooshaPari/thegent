@@ -1,9 +1,11 @@
-"""STUB MODULE - thegent.session
+"""STUB MODULE - thegent.session"""
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+from __future__ import annotations
 
-# Stub implementation - functionality not available
-__all__ = []
+
+class SessionManagerError(Exception):
+    """Error raised by session manager."""
+    pass
+
+
+__all__ = ["SessionManagerError"]
