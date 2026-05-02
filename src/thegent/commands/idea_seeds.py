@@ -7,7 +7,28 @@ This stub exists for backwards compatibility with existing tests.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+
+
+def _make_slug(text: str) -> str:
+    """Create a URL-safe slug from text.
+
+    Args:
+        text: Text to slugify.
+
+    Returns:
+        Slugified text.
+    """
+    # Convert to lowercase
+    slug = text.lower()
+    # Replace spaces and underscores with hyphens
+    slug = re.sub(r"[_\s]+", "-", slug)
+    # Remove non-alphanumeric characters except hyphens
+    slug = re.sub(r"[^a-z0-9-]", "", slug)
+    # Remove leading/trailing hyphens
+    slug = slug.strip("-")
+    return slug
 
 
 @dataclass
