@@ -1,0 +1,25 @@
+# TruffleHog secrets scanning configuration
+# Phenotype org standard
+version: 2
+
+exclude:
+  paths:
+    - ".git/**"
+    - "target/**"
+    - "node_modules/**"
+    - "*.sum"
+    - "*.lock"
+    - ".venv/**"
+    - "__pycache__/**"
+    - ".next/**"
+
+include:
+  files:
+    - "*"
+
+rules:
+  - base64:
+      enabled: true
+      entropy: 0.7
+  - detected:
+      enabled: true
