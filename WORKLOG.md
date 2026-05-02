@@ -78,3 +78,17 @@ crates/
 
 ### Status
 🔍 Analysis Complete
+
+## Round 2026-05-02 — hygiene wave completion
+- **PhenoCompose**: Full internal/ + cmd/ sync from nanovms canonical. go build passes. Pushed (9a5a317).
+- **nanovms**: Go stub types for deleted upstream nvms-go module. Build passes. Pushed (b0e8f87).
+- **cliproxyapi-plusplus**: Go stubs for missing upstream SDK types. Build passes. Pushed (9fc278cf).
+- **AgilePlus**: Canonical bare repo. agile-main worktree compiles clean (72feab0). No compile blockers.
+- **SHA pin wave**: Confirmed all target repos already SHA-pinned.
+- **CODEOWNERS coverage**: 99/152 GH repos (65%). All with local .git fixed.
+- **FUNDING.yml coverage**: 90/152 GH repos (59%).
+- **cargo-deny enrolled**: 42 repos.
+- **trufflehog enrolled**: 78 repos.
+- **Open PRs**: 0 across org.
+- **Key finding**: gh repo list returns 152 repos; most lack local .git dirs (phantom/ghost dirs).
+- **Pattern**: ALL Explore agents hit Codex model error. Avoid codex subagents.
