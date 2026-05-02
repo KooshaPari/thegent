@@ -6,10 +6,42 @@ This stub exists for backwards compatibility with existing tests.
 """
 
 from __future__ import annotations
+from enum import Enum
 from typing import Any
 
 
-class Platform:
+class PlatformEnum(Enum):
+    """Platform enumeration."""
+    MACOS = "macos"
+    LINUX = "linux"
+    WINDOWS = "windows"
+    UNKNOWN = "unknown"
+
+
+# Alias for backwards compatibility
+Platform = PlatformEnum
+
+
+def detect_platform() -> PlatformEnum:
+    """Detect the current platform.
+
+    Returns:
+        PlatformEnum value for the current platform.
+    """
+    import platform
+    import sys
+
+    system = platform.system().lower()
+    if system == "darwin":
+        return PlatformEnum.MACOS
+    elif system == "linux":
+        return PlatformEnum.LINUX
+    elif system == "windows":
+        return PlatformEnum.WINDOWS
+    return PlatformEnum.UNKNOWN
+
+
+class ThegentPlatform:
     """Thegent platform core class."""
 
     def __init__(self) -> None:
@@ -24,4 +56,4 @@ class Platform:
         pass
 
 
-__all__ = ["Platform"]
+__all__ = ["ThegentPlatform", "detect_platform", "Platform", "PlatformEnum"]

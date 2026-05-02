@@ -20,11 +20,23 @@ class ModelCatalog:
         self._models[model_id] = model_info
 
     def get(self, model_id: str) -> dict[str, Any] | None:
-        """Get model information."""
+        """Get a model by ID."""
         return self._models.get(model_id)
 
 
-__all__ = ["ModelCatalog", "filter_models_for_provider", "normalize_model_id"]
+def normalize_model_id(model_id: str) -> str:
+    """Normalize a model ID to canonical form."""
+    return model_id.strip().lower()
+
+
+def resolve_route(provider: str, model_id: str | None = None) -> dict[str, Any]:
+    """Resolve routing information for a model."""
+    return {"provider": provider, "model_id": model_id, "endpoint": f"https://api.{provider}.com"}
+
+
+def route_contract(provider: str) -> dict[str, Any]:
+    """Get the routing contract for a provider."""
+    return {"provider": provider, "supports_streaming": True, "supports_function_calling": True}
 
 
 def filter_models_for_provider(provider: str) -> list[str]:
@@ -32,6 +44,10 @@ def filter_models_for_provider(provider: str) -> list[str]:
     return []
 
 
-def normalize_model_id(model_id: str) -> str:
-    """Normalize a model ID to canonical form."""
-    return model_id.strip().lower()
+__all__ = [
+    "ModelCatalog",
+    "filter_models_for_provider",
+    "normalize_model_id",
+    "resolve_route",
+    "route_contract",
+]

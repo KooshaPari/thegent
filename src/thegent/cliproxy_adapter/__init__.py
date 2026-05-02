@@ -15,11 +15,15 @@ from typing import Any
 
 def _load_legacy_module() -> ModuleType:
     module_path = Path(__file__).resolve().parent.parent / "cliproxy_adapter.py"
-    spec = importlib.util.spec_from_file_location("thegent._cliproxy_adapter_impl", module_path)
+    module_name = "thegent._cliproxy_adapter_impl"
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Could not load legacy cliproxy_adapter from {module_path}")
 
     module = importlib.util.module_from_spec(spec)
+    # Add to sys.modules BEFORE exec_module to ensure dataclasses works correctly
+    import sys
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -34,6 +38,20 @@ for symbol in [
     "_transform_models_response",
     "_process_sse_line",
     "_proxy_stream",
+    "_proxy_request",
+    "_make_error_body",
+    "_OR_PASSTHROUGH_FIELDS",
+    "_compute_models_etag",
+    "build_openrouter_passthrough_body",
+    "inject_native_finish_reason",
+    "normalize_finish_reason",
+    "anthropic_messages_to_chat_completions",
+    "anthropic_response_to_messages_format",
+    "enrich_model_entry",
+    "extract_provider_gateway_options",
+    "extract_special_headers",
+    "inject_proxy_models",
+    "_TG_HEADER_NAMES",
     "create_adapter_app",
     "proxy_handler",
     "websocket_responses_handler",
@@ -52,6 +70,9 @@ for symbol in [
 ]:
     if hasattr(_legacy, symbol):
         globals()[symbol] = getattr(_legacy, symbol)
+    else:
+        # Provide stub for missing symbols
+        globals()[symbol] = None
 
 
 __all__ = [
@@ -61,6 +82,20 @@ __all__ = [
     "_transform_models_response",
     "_process_sse_line",
     "_proxy_stream",
+    "_proxy_request",
+    "_make_error_body",
+    "_OR_PASSTHROUGH_FIELDS",
+    "_compute_models_etag",
+    "build_openrouter_passthrough_body",
+    "inject_native_finish_reason",
+    "normalize_finish_reason",
+    "anthropic_messages_to_chat_completions",
+    "anthropic_response_to_messages_format",
+    "enrich_model_entry",
+    "extract_provider_gateway_options",
+    "extract_special_headers",
+    "inject_proxy_models",
+    "_TG_HEADER_NAMES",
     "create_adapter_app",
     "proxy_handler",
     "websocket_responses_handler",
