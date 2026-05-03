@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           fetch-depth: 0
 
@@ -44,7 +44,7 @@ jobs:
     # Skip on PRs to save quota - run only on schedule
     if: github.event_name == 'schedule'
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Analyze licenses
         uses: fsfe/reuse-action@676e2d560c9a403aa252096d99fcab3e1132b0f5
@@ -65,10 +65,10 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e@8f152de45cc393bb48ce5d89d36b731f54556e65
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: '20'
 
@@ -88,7 +88,7 @@ jobs:
         continue-on-error: true  # Allow quota limits
 
       - name: Upload Semgrep SARIF
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7
         if: always() && hashFiles('semgrep-results.sarif') != ''
         with:
           sarif_file: semgrep-results.sarif
@@ -97,13 +97,13 @@ jobs:
       # CodeQL backup (only on schedule, not PRs - quota optimization)
       - name: Initialize CodeQL (Backup - schedule only)
         if: github.event_name == 'schedule'
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@e46ed2cbd01164d986452f91f178727624ae40d7
         with:
           languages: typescript
 
       - name: Run CodeQL (Backup - schedule only)
         if: github.event_name == 'schedule'
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@e46ed2cbd01164d986452f91f178727624ae40d7
         with:
           category: "/language:typescript"
 
@@ -114,11 +114,11 @@ jobs:
     if: github.event_name == 'schedule'  # Skip on PRs
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
 
       - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e@8f152de45cc393bb48ce5d89d36b731f54556e65
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: '20'
 
@@ -136,7 +136,7 @@ jobs:
     if: github.event_name == 'schedule'
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Detect Dockerfile
         id: dockerfile
@@ -160,7 +160,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7
         if: steps.dockerfile.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
