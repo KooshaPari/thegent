@@ -1,4 +1,44 @@
 
+## Repo Hygiene Audit Push - 2026-05-03
+
+### Actions Taken
+- Removed 83 lines of commented-out dead gix compat code from `crates/thegent-git/src/lib.rs`
+- Fixed npm override conflict: removed redundant `ajv` override from `package.json`
+- Pinned 100+ GitHub Actions workflow files: `cargo-deny-action@v2` → `@91bf...acedb` (v6), `gitleaks-action@v2` → `@ff98...070c7` (v4)
+- Fixed hwLedger: removed Swift Package Manager build artifacts (Sparkle, swift-syntax, swift-testing) incorrectly tracked as gitlinks
+- Pushed all branches for thegent, Tracely, projects-landing, HeliosLab, Sidekick, phenoShared
+- Batch pushed 30+ repos: localbase3, BytePort, AppGen, Tokn, helioscope, KDesktopVirt, PlayCua, KlipDot, PhenoSpecs, cheap-llm-mcp, Eidolon, AgentMCP, Httpora, PhenoObservability, helios-cli, PhenoMCP, AgilePlus, chatta, AtomsBot, portage, Civis, bare-cua, heliosApp, argis-extensions, agentapi-plusplus, Dino, Conft, AuthKit, hwLedger
+
+### Issues Found
+- AtomBare-cua: no CI, no pre-commit, no deny.toml despite active development
+- Mixed `log` + `tracing` crates in repos (23 repos, mostly worktrees/thegent-memory/tracely-core)
+- phenotype-auth-ts, KDesktopVirt: branch divergence conflicts
+
+### Remaining Known
+- AgilePlus: 588 unpushed (worktrees, needs manual review)
+- PhenoRuntime: archived (read-only)
+- Some repos have branch protection preventing force-push
+
+## Repo Hygiene Audit Push - 2026-05-03
+
+### Actions Taken
+- Removed 83 lines of commented-out dead gix compat code from `crates/thegent-git/src/lib.rs`
+- Fixed npm override conflict: removed redundant `ajv` override from `package.json`
+- Pinned 100+ GitHub Actions workflow files: `cargo-deny-action@v2` → `@91bf...acedb` (v6), `gitleaks-action@v2` → `@ff98...070c7` (v4)
+- Fixed hwLedger: removed Swift Package Manager build artifacts (Sparkle, swift-syntax, swift-testing) incorrectly tracked as gitlinks
+- Pushed all branches for thegent, Tracely, projects-landing, HeliosLab, Sidekick, phenoShared
+- Batch pushed 30+ repos: localbase3, BytePort, AppGen, Tokn, helioscope, KDesktopVirt, PlayCua, KlipDot, PhenoSpecs, cheap-llm-mcp, Eidolon, AgentMCP, Httpora, PhenoObservability, helios-cli, PhenoMCP, AgilePlus, chatta, AtomsBot, portage, Civis, bare-cua, heliosApp, argis-extensions, agentapi-plusplus, Dino, Conft, AuthKit, hwLedger
+
+### Issues Found
+- AtomBare-cua: no CI, no pre-commit, no deny.toml despite active development
+- Mixed `log` + `tracing` crates in repos (23 repos, mostly worktrees/thegent-memory/tracely-core)
+- phenotype-auth-ts, KDesktopVirt: branch divergence conflicts
+
+### Remaining Known
+- AgilePlus: 588 unpushed (worktrees, needs manual review)
+- PhenoRuntime: archived (read-only)
+- Some repos have branch protection preventing force-push
+
 ## Final Merge Stabilization - 2026-03-29 (Late)
 
 ### Actions Taken
