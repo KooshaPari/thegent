@@ -62,15 +62,25 @@ def _atomic_write(path: str, content: str) -> None:
     os.rename(temp_path, path)
 
 
-def _git_available() -> bool:
-    """Check if git is available."""
+def _git_available(path: str = ".") -> bool:
+    """Check if git is available in the given path."""
     import shutil
     return shutil.which("git") is not None
 
 
-def _worktrees_supported() -> bool:
-    """Check if git worktrees are supported."""
-    return _git_available()
+def _worktrees_supported(path: str = ".") -> bool:
+    """Check if git worktrees are supported in the given path."""
+    return _git_available(path)
+
+
+def _run(cmd: list[str]) -> str:
+    """Run a subprocess command and return stdout."""
+    import subprocess
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        return e.stdout or ""
 
 
 __all__ = [
@@ -81,4 +91,5 @@ __all__ = [
     "_git_available",
     "_worktrees_supported",
     "_PoolStateLock",
+    "_run",
 ]
