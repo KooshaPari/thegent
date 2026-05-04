@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -39,11 +39,11 @@ def _submit_approval_turn(session_id: str) -> tuple[str, str]:
                     "session_id": session_id,
                     "input": "lane-ab",
                     "requires_approval": True,
-                    "unified_diff": "--- a/ab\n+++ b/ab\n@@\n-old\n+new\n",
+                    "unified_diff": "--- a/ab\n+++ a/ab\n@@ -1 +1 @@\n-old\n+new\n",
                 },
             }
         )
-    ).decode()
+    )
     assert response is not None
     return response["result"]["turn"]["id"], response["result"]["approval"]["id"]
 

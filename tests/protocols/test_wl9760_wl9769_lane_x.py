@@ -39,14 +39,13 @@ def _submit_turn(session_id: str) -> tuple[str, str]:
                     "session_id": session_id,
                     "input": "lane-x",
                     "requires_approval": True,
-                    "unified_diff": "--- a/x\n+++ b/x\n@@\n-old\n+new\n",
+                    "unified_diff": "--- a/x\n+++ a/x\n@@ -1 +1 @@\n-old\n+new\n",
                 },
             }
         )
-    ).decode()
+    )
     assert response is not None
     return response["result"]["turn"]["id"], response["result"]["approval"]["id"]
-
 
 def test_wl9760_discovery_routes_grant_and_reject_methods() -> None:
     # @trace WL-9760
