@@ -262,3 +262,42 @@ crates/
 - Dead code audit: 20 repos
 - Stub audit: all verified active
 - Dependency audit: logging/async/serialization crates
+
+## 2026-05-04 — Continued Discovery + DAG Extension
+
+### Cron loop scheduled
+- Job 32b81878 — */10 * * * * — re-runs audit dispatch every 10 minutes (session-only, 7-day expiry)
+
+### Audit subagents dispatched (16 total)
+1. Repo health inventory → health_inventory.csv ✓
+2. Web build health → web_health.csv ✓
+3. Rust/Go static inventory → rust_go_health.csv ✓
+4. Spec DAG extraction → spec_dags.json + spec_summary.md ✓ (2,503 specs across 42 repos)
+5. AgilePlus README → docs/add-readme-20260504 branch pushed ✓
+6. log+tracing normalization → no changes (log used as public re-export API)
+7. Dead code Rust patterns → dead_code_audit.csv (in progress)
+8. Spec prioritization → spec_priorities.md (in progress)
+9. Deployment readiness → deployment_readiness.md (in progress)
+10. Documentation site audit → docs_audit.md (in progress)
+11. cargo-deny remediation (6 failing repos) → in progress
+12. target/ gitignore sweep → in progress
+13. phenodocs build investigation → in progress
+14. Web landing CSS/JS audit → in progress
+15. Spec expansion (thegent kitty-specs) → in progress
+16. PR creation for pushed branches → in progress
+
+### Local fixes applied + pushed
+- AppGen: README.md expanded
+- Benchora: baseline .gitignore added
+- hwLedger: 4 broken nested gitlinks (Sparkle/swift-syntax/swift-testing/omlx-fork) removed from index, paths gitignored
+- localbase3: baseline .gitignore (push blocked - branch protection)
+- PhenoCompose: baseline .gitignore (push blocked - 403)
+- PhenoProject: baseline .gitignore (pushed pr-62)
+- rich-cli-kit: baseline .gitignore (pushed pr-34)
+- thegent-dispatch: baseline .gitignore (pushed)
+- AgilePlus: README.md drafted, branch docs/add-readme-20260504 pushed
+
+### Blocked / deferred items
+- log+tracing migration: needs dedicated semver-major spec
+- localbase3, PhenoCompose: branch protection / 403 push errors
+- 13 repos with nested .git: need manual classification
