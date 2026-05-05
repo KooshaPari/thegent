@@ -1569,13 +1569,12 @@ def _resolve_turn_submit_side_effects_target(side_effects_phase: dict[str, Any])
     approval = side_effects_phase.get("approval")
 
 
-def _resolve_turn_submit_response_target(response_phase: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    """Resolve response target from response phase."""
-    if not isinstance(response_phase, dict):
-        raise ValueError("response_target: unresolved")
-    turn = response_phase.get("turn")
-    if not isinstance(turn, dict):
-        raise ValueError("response_target: turn missing")
-    return (turn, response_phase.get("approval"))
 
+def _build_turn_submit_commit_resolution_phase(route, request_id, turn, session):
+    return {'route': route, 'request_id': request_id, 'turn': turn, 'session': session}
 
+def _build_turn_submit_side_effects_resolution_phase(route, request_id, approval_id, approval_status, approval_diff):
+    return {'route': route, 'request_id': request_id, 'approval_id': approval_id, 'approval_status': approval_status, 'approval_diff': approval_diff}
+
+def _build_turn_submit_response_resolution_phase(route, request_id, turn, approval):
+    return {'route': route, 'request_id': request_id, 'turn': turn, 'approval': approval}
