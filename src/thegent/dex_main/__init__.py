@@ -19,8 +19,20 @@ _DEX_YOLO_FLAG = "--dangerously-enable-yolo-mode"
 
 # Model alias mapping
 _MODEL_ALIAS: dict[str, str] = {
+    # Priority order matters for partial matching
     "dex": "gpt-5.3-codex",
-    "codex": "gpt-5.3-codex",
+    "high": "gpt-5.3-codex-high",
+    "xhigh": "gpt-5.3-codex-xhigh",
+    "max": "minimax-m2.5",
+    "glm": "glm-5",
+    "haiku": "claude-haiku-4.5",
+    "opus": "claude-opus-4.6",
+    "sonnet": "claude-sonnet-4.5",
+    "ultra": "llama-nemotron-ultra",
+    "flash": "gemini-2.5-flash",
+    "mini": "gpt-5-mini",
+    # composer variants
+    "CoMp": "composer-1.5",
     "composer": "composer-1.5",
     "comp": "composer-1.5",
     "compse": "composer-1.5",
@@ -39,19 +51,6 @@ _MODEL_ALIAS: dict[str, str] = {
     "comp7": "composer-1.5",
     "comp8": "composer-1.5",
     "comp9": "composer-1.5",
-    "CoMp": "composer-1.5",
-    "composer-1.5": "cursor",
-    "max": "minimax-m2.5",
-    "glm": "glm-5",
-    "haiku": "claude-haiku-4.5",
-    "opus": "claude-opus-4.6",
-    "sonnet": "claude-sonnet-4.5",
-    "step": "step-3.5-flash",
-    "flash": "gemini-2.5-flash",
-    "high": "gpt-5.3-codex-high",
-    "xhigh": "gpt-5.3-codex-xhigh",
-    "mini": "gpt-5-mini",
-    "ultra": "llama-nemotron-ultra",
 }
 
 
@@ -204,11 +203,27 @@ def config() -> None:
     run_models_providers_tui()
 
 
+def default_dex_callback(
+    force: bool = False,
+    native: bool = False,
+) -> None:
+    """Callback for default dex command."""
+    _run_codex_interactive(
+        prompt=None,
+        model="flash",
+        force=force,
+        native=native,
+        extra_args=["--fast"],
+        dangerously_bypass=None,
+        dangerously_yolo=None,
+    )
+
 @app.callback()
 def default_dex(
     ctx: typer.Context,
     force: bool = False,
     native: bool = False,
+    extra_args: list[str] = typer.Option([], help="Extra arguments to pass to the command"),
 ) -> None:
     """Default command that runs flash model."""
     import os
@@ -218,19 +233,30 @@ def default_dex(
         return
 
     model = "flash"
-    extra_args: list[str] = []
 
-    # Check for direct invocation
-    if len(sys.argv) > 1 and sys.argv[1] != "dex":
-        # Extract extra args
-        extra_args = sys.argv[2:] if len(sys.argv) > 2 else []
+    # Check if extra_args were passed via --extra-args
+    if extra_args:
+        # Get the actual extra_args value (could be list or OptionInfo)
+        if hasattr(extra_args, '__iter__') and not isinstance(extra_args, str):
+            actual_extra = list(extra_args)
+        else:
+            actual_extra = []
 
-    if native:
-        _exec_native_codex(["--force-yolo", _DEX_YOLO_FLAG, _DEX_BYPASS_FLAG] if force else [])
-        return
-
-    _run_codex_interactive(model, dangerously_bypass=True, extra_args=extra_args)
-
+    # Filter out the -- separator and model from extra_args before passing to codex
+    filtered_extra = [arg for arg in actual_extra if arg not in ("--", "--model")]
+    # Also remove the model value that follows --model
+    cleaned_extra = []
+    skip_next = False
+    for arg in filtered_extra:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg.startswith("--"):
+            cleaned_extra.append(arg)
+            if arg == "--model":
+                skip_next = True
+    
+    _run_codex_interactive(model, dangerously_bypass=True, extra_args=cleaned_extra)
 
 # Also expose the subcommands as separate commands
 @app.command()
@@ -362,7 +388,9 @@ def run(
     """Run a model with a prompt."""
     # Check if model is known
     if model_alias not in _MODEL_ALIAS:
+        allowed = sorted(set(_MODEL_ALIAS.values()))
         typer.echo(f"Error: Unknown model '{model_alias}'")
+        typer.echo(f"Allowed: {', '.join(allowed)}")
         raise typer.Abort()
     _run_model_cmd(model_alias, prompt)
 
@@ -377,7 +405,9 @@ def bg(
     """Run a model in background."""
     # Check if model is known
     if model_alias not in _MODEL_ALIAS:
+        allowed = sorted(set(_MODEL_ALIAS.values()))
         typer.echo(f"Error: Unknown model '{model_alias}'")
+        typer.echo(f"Allowed: {', '.join(allowed)}")
         raise typer.Abort()
     from thegent.cli import bg_cmd
     canonical_model = _MODEL_ALIAS.get(model_alias, model_alias)
