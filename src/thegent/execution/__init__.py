@@ -355,34 +355,38 @@ class EscalationQueue:
                 pass
 
     def _save(self) -> None:
-        """Save queue to file, preserving any lines not in the queue."""
+        """Save queue to file, preserving corrupt lines."""
         import json
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
-        # Read current file content to find lines to preserve
-        preserved = set()
+        
+        # Read current file and identify corrupt lines
+        corrupt_lines = []
+        queue_item_hashes = set()
+        
         if self.queue_path.exists():
             try:
                 with open(self.queue_path, "r", encoding="utf-8") as f:
                     for line in f:
-                        line = line.rstrip("\n")
-                        if not line:
+                        if not line.strip():
                             continue
-                        # Check if this line is one of our queue items
-                        found = False
-                        for item in self.queue:
-                            if json.dumps(item, sort_keys=True) == line:
-                                found = True
-                                break
-                        if not found:
-                            # Preserve this line (it's corrupt or external)
-                            preserved.add(line)
+                        try:
+                            item = json.loads(line)
+                            # Check if this line corresponds to an item in current queue
+                            for q_item in self.queue:
+                                if json.dumps(q_item, sort_keys=True) == line.strip():
+                                    queue_item_hashes.add(line.strip())
+                                    break
+                        except json.JSONDecodeError:
+                            # Preserve corrupt lines
+                            corrupt_lines.append(line.rstrip("\n"))
             except OSError:
                 pass
-        # Write file with queue items and preserved lines
+        
+        # Write file with queue items and preserved corrupt lines
         with open(self.queue_path, "w", encoding="utf-8") as f:
             for item in self.queue:
-                f.write(json.dumps(item) + "\n")
-            for line in preserved:
+                f.write(json.dumps(item, sort_keys=True) + "\n")
+            for line in corrupt_lines:
                 f.write(line + "\n")
 
     def add(
@@ -404,9 +408,21 @@ class EscalationQueue:
             blocked_at_utc: Optional blocked timestamp.
             owner: Optional owner.
         """
-        item: dict[str, Any] = {"run_id": run_id, "reason": reason, "priority": priority, "status": "pending"}
+        from datetime import datetime, timezone, timedelta
+
+        item: dict[str, Any] = {"run_id": run_id, "reason": reason, "priority": priority, "status": "pending", "_from_add": True}
         if sla_minutes is not None:
             item["sla_minutes"] = sla_minutes
+            # Calculate escalate_by_utc based on blocked_at_utc or now
+            if blocked_at_utc:
+                try:
+                    blocked_dt = datetime.fromisoformat(blocked_at_utc.replace("Z", "+00:00"))
+                except (ValueError, TypeError):
+                    blocked_dt = datetime.now(timezone.utc)
+            else:
+                blocked_dt = datetime.now(timezone.utc)
+            escalate_dt = blocked_dt + timedelta(minutes=sla_minutes)
+            item["escalate_by_utc"] = escalate_dt.isoformat().replace("+00:00", "Z")
         if blocked_at_utc is not None:
             item["blocked_at_utc"] = blocked_at_utc
         if owner is not None:
@@ -416,7 +432,7 @@ class EscalationQueue:
         # Append to file instead of full save to preserve external edits
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.queue_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(item) + "\n")
+            f.write(json.dumps(item, sort_keys=True) + "\n")
 
     def enqueue(self, item: Any) -> None:
         """Enqueue an item."""
@@ -434,8 +450,8 @@ class EscalationQueue:
     def list_pending(self, past_sla_only: bool = False) -> list[dict[str, Any]]:
         """List pending items from file.
 
-        Returns all items that have escalate_by_utc set AND the time has passed,
-        as well as items added via add() that may not have escalate_by_utc.
+        When past_sla_only=False: returns all items with status="pending".
+        When past_sla_only=True: returns items with escalate_by_utc that are past SLA.
         """
         from datetime import datetime, timezone
 
@@ -451,8 +467,8 @@ class EscalationQueue:
                         continue
                     try:
                         item = json.loads(line)
-                        # Only include items with escalate_by_utc when past_sla_only=True
                         if past_sla_only:
+                            # For past_sla_only, require escalate_by_utc and past SLA
                             escalate_by = item.get("escalate_by_utc", "")
                             if not escalate_by:
                                 continue
@@ -466,7 +482,9 @@ class EscalationQueue:
                             except (ValueError, TypeError):
                                 pass
                         elif item.get("status") == "pending":
-                            pending.append(item)
+                            # Include if escalate_by_utc is set OR if it was added via add()
+                            if item.get("escalate_by_utc") or item.get("_from_add"):
+                                pending.append(item)
                     except json.JSONDecodeError:
                         self._corrupt_lines.append(line)
         except OSError:
@@ -985,8 +1003,13 @@ class RunRegistry:
         import json
 
         run = self.runs.get(run_id)
-        if run and metadata:
-            run.metadata.update(metadata)
+        if run:
+            if score is not None:
+                run.feedback_score = score
+            if note is not None:
+                run.feedback_note = note
+            if metadata:
+                run.metadata.update(metadata)
 
         # Write feedback event to file
         entry = {"run_id": run_id, "event": "feedback"}
@@ -1002,16 +1025,36 @@ class RunRegistry:
             f.write(json.dumps(entry) + "\n")
 
     def get_calibration_factor(self, agent: str) -> float:
-        """Get calibration factor for an agent."""
-        if not self.runs:
-            return 1.0
+        """Get calibration factor for an agent.
+        
+        Returns feedback_score / confidence, clamped to [0.5, 2.0].
+        Returns 1.0 if no feedback exists for the agent.
+        """
         agent_runs = [r for r in self.runs.values() if r.agent == agent]
         if not agent_runs:
             return 1.0
-        avg_confidence = sum(r.confidence for r in agent_runs) / len(agent_runs)
-        if avg_confidence == 0:
+        
+        # Find runs with feedback
+        runs_with_feedback = [r for r in agent_runs if hasattr(r, 'feedback_score') and r.feedback_score is not None]
+        if not runs_with_feedback:
             return 1.0
-        return avg_confidence
+        
+        # Calculate factor as feedback / confidence
+        total_factor = 0.0
+        count = 0
+        for run in runs_with_feedback:
+            confidence = getattr(run, 'confidence', 1.0)
+            feedback = getattr(run, 'feedback_score', None)
+            if feedback is not None and confidence > 0:
+                total_factor += feedback / confidence
+                count += 1
+        
+        if count == 0:
+            return 1.0
+        
+        avg_factor = total_factor / count
+        # Clamp to [0.5, 2.0]
+        return max(0.5, min(2.0, avg_factor))
 
     def purge_expired(
         self,
