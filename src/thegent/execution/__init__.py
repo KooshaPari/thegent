@@ -147,26 +147,79 @@ class PolicyEngine:
         self.circuit_breaker_threshold = getattr(settings, "circuit_breaker_threshold", 5)
         self._cb_registry: Any = None
 
-    def evaluate(self, run: RunMeta) -> tuple[str, str]:
-        """Evaluate a run and return (result, reason)."""
-        model = getattr(run, "model", "")
-        if model and self.circuit_breaker_enabled:
-            cb_path = self.session_dir / "circuit_breakers.json"
-            if cb_path.exists():
-                import json
-                try:
-                    with open(cb_path, "r", encoding="utf-8") as f:
-                        cb_data = json.load(f)
-                    key = f"model:{model}"
-                    if key in cb_data:
-                        state = cb_data[key]
-                        failures = state.get("failures", [])
-                        if len(failures) >= self.circuit_breaker_threshold:
-                            return "deny", f"Circuit breaker open for model: {model}"
-                except (json.JSONDecodeError, OSError):
-                    pass
+    def evaluate(self, run: RunMeta, *, registry: Any = None) -> tuple[str, str]:
+        """Evaluate a run and return (result, reason).
+        
+        Policy checks:
+        1. Circuit breaker - deny if model is blocked
+        2. Critical lane + confidence < 0.9 - deny
+        3. Unknown agent in production - deny
+        4. Unknown agent in critical lane - deny
+        5. Recovery lane with no confidence - warn
+        6. Production + trust score below threshold - deny
+        7. Critical lane + drift exceeds budget - deny
+        """
+        model = getattr(run, "model", "") or getattr(run, "agent", "")
+        lane = getattr(run, "lane", "standard") or "standard"
+        confidence = getattr(run, "confidence", None)
+        environment = getattr(self.settings, "environment", "development") if self.settings else "development"
+        trust_score_threshold = getattr(self.settings, "trust_score_threshold", 0.8) if self.settings else 0.8
+        
+        # Apply calibration factor if registry is provided
+        if registry and model and confidence is not None:
+            try:
+                cal_factor = registry.get_calibration_factor(model)
+                if cal_factor is not None:
+                    confidence = confidence * cal_factor
+            except Exception:
+                pass
+        
+        # Check circuit breaker if enabled
+        if model and getattr(self, "circuit_breaker_enabled", False):
+            cb = CircuitBreakerRegistry(str(self.session_dir), threshold=self.circuit_breaker_threshold)
+            # Check model category first, then default category (for backward compatibility)
+            if cb.is_open(model, category="model"):
+                return "deny", f"Circuit breaker is OPEN for model: {model}"
+            if cb.is_open(model, category="default"):
+                return "deny", f"Circuit breaker is OPEN for model: {model}"
+        
+        # Check OPA if configured
+        opa_result = self._query_opa(run)
+        if opa_result is not None:
+            return opa_result
+        
+        # Policy 1: Critical lane + confidence < 0.9 = deny
+        if lane == "critical" and confidence is not None and confidence < 0.9:
+            return "deny", f"Confidence {confidence} below threshold 0.9 for critical lane"
+        
+        # Policy 2: Unknown agent in production = deny
+        if environment == "production" and model and model.lower() in ("unknown", "untrusted"):
+            return "deny", "Unknown agent blocked in production"
+        
+        # Policy 3: Unknown agent in critical lane = deny
+        if lane == "critical" and model and model.lower() in ("unknown", "untrusted"):
+            return "deny", "Unknown agent blocked in critical lane"
+        
+        # Policy 4: Recovery lane + no confidence = warn
+        if lane == "recovery" and confidence is None:
+            return "warn", "No confidence data for recovery lane"
+        
+        # Policy 5: Production + confidence below threshold = deny
+        if environment == "production" and confidence is not None and confidence < trust_score_threshold:
+            return "deny", f"Confidence {confidence} below threshold {trust_score_threshold}"
+        
+        # Policy 6: Critical lane + drift exceeds budget = deny
+        if lane == "critical":
+            try:
+                from thegent.contracts.telemetry import ContractTelemetry
+                ct = ContractTelemetry(session_dir=str(self.session_dir))
+                status = ct.get_drift_budget_status()
+                if status and not status.get("within_budget", True):
+                    return "deny", "Drift exceeds budget for critical lane"
+            except Exception:
+                pass
+        
         return "allow", "Allowed by policy"
-
     def query_opa(self, rego_query: str, input_data: dict[str, Any]) -> dict[str, Any]:
         """Query OPA policy engine."""
         return {"result": True}
@@ -216,7 +269,8 @@ class CircuitBreakerRegistry:
     def __init__(self, session_dir: str = "", threshold: int = 3) -> None:
         from pathlib import Path
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
-        self.registry_path = self.session_dir / "circuit_breaker.jsonl"
+        # Use circuit_breakers.json to be compatible with complex CircuitBreakerRegistry
+        self.registry_path = self.session_dir / "circuit_breakers.json"
         self.threshold = threshold
         self._failures: dict[str, int] = {}
         self._states: dict[str, str] = {}
@@ -228,41 +282,47 @@ class CircuitBreakerRegistry:
         if self.registry_path.exists():
             try:
                 with open(self.registry_path, "r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if not line:
-                            continue
-                        try:
-                            entry = json.loads(line)
-                            agent = entry.get("agent_id") or entry.get("agent")
-                            failures = entry.get("failures", 0)
-                            state = entry.get("state", "closed")
-                            if agent:
-                                self._failures[agent] = failures
-                                self._states[agent] = state
-                        except json.JSONDecodeError:
-                            pass
-            except OSError:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        for key, value in data.items():
+                            if isinstance(value, dict):
+                                failures = value.get("failures", [])
+                                if isinstance(failures, list):
+                                    self._failures[key] = len(failures)
+                                else:
+                                    self._failures[key] = failures
+                                self._states[key] = value.get("state", "closed")
+                            else:
+                                self._failures[key] = value
+            except (OSError, json.JSONDecodeError):
                 pass
 
     def _save(self) -> None:
         """Save circuit breaker state to file."""
         import json
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
+        data = {}
+        for key in set(list(self._failures.keys()) + list(self._states.keys())):
+            data[key] = {
+                "failures": self._failures.get(key, 0),
+                "state": self._states.get(key, "closed"),
+                "last_failure": None
+            }
         with open(self.registry_path, "w", encoding="utf-8") as f:
-            for agent, failures in self._failures.items():
-                entry = {"agent_id": agent, "failures": failures, "state": self._states.get(agent, "closed")}
-                f.write(json.dumps(entry) + "\n")
+            json.dump(data, f)
 
-    def record_failure(self, agent_id: str) -> None:
+    def record_failure(self, agent_id: str, category: str = "") -> None:
         """Record a failure for an agent."""
+        # Use just agent_id as key (ignore category for simple registry)
         self._failures[agent_id] = self._failures.get(agent_id, 0) + 1
         if self._failures[agent_id] >= self.threshold:
             self._states[agent_id] = "open"
         self._save()
 
-    def is_open(self, agent_id: str) -> bool:
-        """Check if circuit breaker is open for an agent."""
+    def is_open(self, target_id: str, category: str = "") -> bool:
+        """Check if circuit breaker is open for a target."""
+        # Map target_id to agent_id (support both old and new naming)
+        agent_id = target_id
         return self._states.get(agent_id, "closed") == "open"
 
     def reset(self, agent_id: str) -> None:
@@ -836,18 +896,70 @@ class RunRegistry:
         return self.runs.get(run_id)
 
     def list_runs(self, limit: int = 1000) -> list[dict[str, Any]]:
-        """List all runs with metadata."""
-        return [
-            {
-                "run_id": r.run_id,
-                "status": r.status,
-                "started_at_utc": r.started_at_utc,
-                "confidence": r.confidence,
-                "agent": r.agent,
-                "model": getattr(r, "model", ""),
-            }
-            for r in list(self.runs.values())[:limit]
-        ]
+        """List all runs with metadata, sorted by started_at_utc descending."""
+        import json
+
+        # Read and merge events from registry file
+        runs: dict[str, dict[str, Any]] = {}
+        if self.registry_path.exists():
+            for line in self.registry_path.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    run_id = data.get("run_id", "")
+                    if not run_id or run_id.startswith("__"):
+                        continue
+
+                    if run_id not in runs:
+                        runs[run_id] = {
+                            "run_id": run_id,
+                            "status": "pending",
+                            "started_at_utc": "",
+                            "confidence": 1.0,
+                            "agent": "",
+                            "model": "",
+                            "feedback_score": None,
+                        }
+
+                    # Merge start data
+                    if "agent" in data:
+                        runs[run_id]["agent"] = data.get("agent", "")
+                    if "model" in data:
+                        runs[run_id]["model"] = data.get("model", "")
+                    if "prompt" in data:
+                        runs[run_id]["prompt"] = data.get("prompt", "")
+                    if "cwd" in data:
+                        runs[run_id]["cwd"] = data.get("cwd", "")
+                    if "owner" in data:
+                        runs[run_id]["owner"] = data.get("owner", "")
+                    if "started_at_utc" in data:
+                        runs[run_id]["started_at_utc"] = data.get("started_at_utc", "")
+                    if "confidence" in data:
+                        runs[run_id]["confidence"] = data.get("confidence", 1.0)
+                    if "feedback_score" in data:
+                        runs[run_id]["feedback_score"] = data.get("feedback_score")
+
+                    # Merge end event data
+                    if data.get("event") == "end" or "status" in data:
+                        runs[run_id]["status"] = data.get("status", "completed")
+                        if "ended_at_utc" in data:
+                            runs[run_id]["ended_at_utc"] = data.get("ended_at_utc", "")
+                        if "duration" in data:
+                            runs[run_id]["duration"] = data.get("duration", 0.0)
+                        if "exit_code" in data:
+                            runs[run_id]["exit_code"] = data.get("exit_code", 0)
+                except (json.JSONDecodeError, KeyError):
+                    continue
+
+        # Sort by started_at_utc descending (most recent first)
+        sorted_runs = sorted(
+            runs.values(),
+            key=lambda r: r.get("started_at_utc", ""),
+            reverse=True,
+        )
+        return sorted_runs[:limit]
 
     def register_start(self, run: RunMeta) -> None:
         """Register a run start."""
@@ -856,6 +968,23 @@ class RunRegistry:
 
         self.register(run)
         self._states[run.run_id] = RunState.RUNNING
+
+        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Write header/init line if this is the first entry
+        prev_hash = self._get_last_hash()
+        if not prev_hash:
+            # Write initial header entry
+            header = {
+                "run_id": "__header__",
+                "prev_hash": "0" * 64,
+                "status": "initialized",
+            }
+            header_body = json.dumps(header, sort_keys=True, separators=(",", ":"))
+            header["hash"] = hashlib.sha256(header_body.encode()).hexdigest()
+            with open(self.registry_path, "w", encoding="utf-8") as f:
+                f.write(json.dumps(header) + "\n")
+            prev_hash = header["hash"]
 
         # Get last hash for chain
         prev_hash = self._get_last_hash() or "0" * 64
@@ -878,7 +1007,6 @@ class RunRegistry:
         body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
         entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
 
-        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
     def register_pause(self, run_id: str, reason: str = "manual", metadata: dict[str, Any] | None = None) -> None:
@@ -940,20 +1068,33 @@ class RunRegistry:
         return self._states.get(run_id)
 
     def find_by_token(self, idempotency_token: str) -> dict[str, Any] | None:
-        """Find a run by idempotency token, returns dict for subscript access."""
-        for run in self.runs.values():
-            if run.idempotency_token == idempotency_token:
-                return {
-                    "run_id": run.run_id,
-                    "agent": run.agent,
-                    "model": getattr(run, "model", ""),
-                    "prompt": run.prompt,
-                    "cwd": run.cwd,
-                    "owner": run.owner,
-                    "status": run.status,
-                    "idempotency_token": run.idempotency_token,
-                }
-        return None
+        """Find a run by idempotency token, returns most recent with merged data."""
+        import json
+
+        # Read and merge events from registry file
+        candidates: list[dict[str, Any]] = []
+        if self.registry_path.exists():
+            for line in self.registry_path.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    if data.get("idempotency_token") == idempotency_token:
+                        candidates.append(data)
+                except json.JSONDecodeError:
+                    continue
+
+        if not candidates:
+            return None
+
+        # Merge all data into a single run dict
+        merged: dict[str, Any] = {}
+        for data in candidates:
+            merged.update(data)
+
+        # Return dict for subscript access (includes feedback_score)
+        return merged
 
     def find_by_token_dict(self, idempotency_token: str) -> dict[str, Any] | None:
         """Find a run by idempotency token, returns dict for subscript access."""
@@ -1075,7 +1216,6 @@ class RunRegistry:
             return {"kept": 0, "purged": 0}
 
         try:
-            cutoff = datetime.now(timezone.utc).timestamp() - (default_days * 86400)
             new_lines = []
 
             with open(self.registry_path, "r", encoding="utf-8") as f:
@@ -1085,6 +1225,12 @@ class RunRegistry:
                         continue
                     try:
                         data = json.loads(line)
+                        run_id = data.get("run_id", "")
+                        # Skip header lines (count as kept but don't process)
+                        if run_id.startswith("__"):
+                            new_lines.append(line)
+                            kept += 1
+                            continue
                         started_at = data.get("started_at_utc", "")
                         if started_at:
                             try:
@@ -1092,11 +1238,12 @@ class RunRegistry:
                                     dt = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
                                 else:
                                     dt = datetime.fromisoformat(started_at)
+                                # Determine retention days based on domain_tag
+                                domain_tag = data.get("domain_tag", "")
+                                retention_days = by_domain.get(domain_tag, default_days)
+                                cutoff = datetime.now(timezone.utc).timestamp() - (retention_days * 86400)
                                 if dt.timestamp() < cutoff:
-                                    if not dry_run:
-                                        purged += 1
-                                    else:
-                                        purged += 1
+                                    purged += 1
                                     continue
                             except (ValueError, OSError):
                                 kept += 1
@@ -1194,6 +1341,12 @@ class Auditor:
                     continue
                 try:
                     data = json.loads(line)
+                    
+                    # Skip header line
+                    if data.get("run_id") == "__header__":
+                        prev_hash = data.get("hash", "")
+                        continue
+                    
                     entries += 1
                     entry_hash = data.get("hash", "")
                     
@@ -1213,6 +1366,7 @@ class Auditor:
                     # Check missing hash
                     if not entry_hash:
                         missing_hash = True
+                        corrupt_count += 1
                         verified = False
                         status = "failed"
                     # Check signature mismatch
@@ -1243,7 +1397,7 @@ class Auditor:
         if chain_broken:
             issues.append("chain_broken")
         if missing_hash:
-            issues.append("missing_hash")
+            issues.append("Missing hash")
         if signature_mismatch:
             issues.append("signature_mismatch")
         if json_decode_error:
@@ -1283,6 +1437,19 @@ class CircuitBreakerRegistry:
         self.window_s = window_s
         self.recovery_s = recovery_s
         self._states: dict[str, dict[str, Any]] = {}
+        self._load()
+
+    def _load(self) -> None:
+        """Load circuit breaker state from file."""
+        import json
+        if self.registry_path.exists():
+            try:
+                with open(self.registry_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        self._states = data
+            except (OSError, json.JSONDecodeError):
+                pass
 
     def record_failure(self, target: str, category: str = "default") -> None:
         """Record a failure for a target."""
@@ -1314,23 +1481,17 @@ class CircuitBreakerRegistry:
         1. Failures in window exceed threshold, AND
         2. Last failure is within recovery period
         """
+        # Check ONLY the specified category (category isolation)
         key = f"{category}:{target}"
-        if key not in self._states:
-            return False
-        state = self._states[key]
+        state = self._states.get(key)
+        if state:
+            cutoff = time.time() - self.window_s
+            recent_failures = [f for f in state["failures"] if f > cutoff]
+            if len(recent_failures) >= self.threshold:
+                recovery_cutoff = time.time() - self.recovery_s
+                if state["last_failure"] and state["last_failure"] > recovery_cutoff:
+                    return True
         
-        # Filter to failures within window
-        cutoff = time.time() - self.window_s
-        recent_failures = [f for f in state["failures"] if f > cutoff]
-        
-        # If enough failures to trip circuit
-        if len(recent_failures) >= self.threshold:
-            # Check if within recovery period
-            recovery_cutoff = time.time() - self.recovery_s
-            if state["last_failure"] and state["last_failure"] > recovery_cutoff:
-                return True  # Still in recovery period
-            # Recovery period elapsed, circuit can attempt half-open
-            return False
         return False
 
     def get_failure_count(self, target: str, category: str = "default") -> int:
