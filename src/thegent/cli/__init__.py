@@ -3,8 +3,9 @@
 This module provides the command-line interface for thegent.
 """
 
-try:
-    from thegent.cli.commands import bg_impl, run_impl
-    __all__ = ["bg_impl", "run_impl"]
-except ImportError:
-    __all__ = []
+from __future__ import annotations
+
+from thegent.cli import run_cmd, bg_cmd
+from thegent.cli.commands import impl
+
+__all__ = ["run_cmd", "bg_cmd", "impl"]

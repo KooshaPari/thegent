@@ -1547,3 +1547,35 @@ def _extract_turn_submit_side_effects_turn_id(side_effects_phase: dict[str, Any]
     if side_effects_phase is None:
         return None
     return side_effects_phase.get("turn_id")
+
+
+def _resolve_turn_submit_commit_target(commit_phase: dict[str, Any]) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    """Resolve commit target from commit phase."""
+    if not isinstance(commit_phase, dict):
+        raise ValueError("commit_target: unresolved")
+    turn = commit_phase.get("turn")
+    session = commit_phase.get("session")
+    if not isinstance(turn, dict):
+        raise ValueError("commit_target: turn missing")
+    if not isinstance(session, dict):
+        raise ValueError("commit_target: session missing")
+    return (turn["id"], turn, session)
+
+
+def _resolve_turn_submit_side_effects_target(side_effects_phase: dict[str, Any]) -> tuple[str, str, str | None]:
+    """Resolve side effects target from side effects phase."""
+    if not isinstance(side_effects_phase, dict):
+        raise ValueError("side-effects: unresolved")
+    approval = side_effects_phase.get("approval")
+
+
+def _resolve_turn_submit_response_target(response_phase: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Resolve response target from response phase."""
+    if not isinstance(response_phase, dict):
+        raise ValueError("response_target: unresolved")
+    turn = response_phase.get("turn")
+    if not isinstance(turn, dict):
+        raise ValueError("response_target: turn missing")
+    return (turn, response_phase.get("approval"))
+
+
