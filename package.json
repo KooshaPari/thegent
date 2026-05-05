@@ -21,14 +21,15 @@
     "@orama/plugin-vitepress": "^3.1.18",
     "@playwright/test": "^1.58.2",
     "esbuild": "^0.28.0",
-    "markdown-it-mathjax3": "^5.2.0",
+    "markdown-it-mathjax3": "^4.0.0",
     "markdown-it-emoji": "^3.0.0",
     "mermaid": "^11.12.3",
     "puppeteer": "^24.37.5",
-    "vite-imagetools": "^10.0.0",
+    "vite-imagetools": "^9.0.3",
     "vitepress": "^1.6.4",
     "vitepress-export-pdf": "^1.0.0",
     "vitepress-plugin-mermaid": "^2.0.17",
+    "vitest": "^3.1.4",
     "vue": "^3.5.28"
   },
   "dependencies": {
