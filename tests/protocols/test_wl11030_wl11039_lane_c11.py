@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -39,16 +39,16 @@ def _turn_payload() -> dict[str, object]:
     }
 
 
-def test_wl11030_build_turn_submit_result_payload_keeps_turn_only() -> None:
+def test_wl11030_build_turn_submit_result_payload_flat_keeps_turn_only() -> None:
     # @trace WL-11030
-    payload = server._build_turn_submit_result_payload(_turn_payload(), None)
+    payload = server._build_turn_submit_result_payload_flat(_turn_payload(), None)
     assert payload == {"turn": _turn_payload()}
 
 
-def test_wl11031_build_turn_submit_result_payload_appends_approval_when_present() -> None:
+def test_wl11031_build_turn_submit_result_payload_flat_appends_approval_when_present() -> None:
     # @trace WL-11031
     approval_payload = {"id": "approval-1", "status": "requested", "diff": "---"}
-    payload = server._build_turn_submit_result_payload(_turn_payload(), approval_payload)
+    payload = server._build_turn_submit_result_payload_flat(_turn_payload(), approval_payload)
     assert payload["turn"] == _turn_payload()
     assert payload["approval"] == approval_payload
 

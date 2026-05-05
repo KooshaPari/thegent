@@ -59,7 +59,7 @@ def test_wl11087_validate_turn_submit_approval_payload_rejects_missing_status() 
         server._validate_turn_submit_approval_payload(payload)
 
 
-def test_wl11088_build_turn_submit_result_payload_includes_approval_when_present() -> None:
+def test_wl11088_build_turn_submit_result_payload_flat_includes_approval_when_present() -> None:
     # @trace WL-11088
     turn = {
         "id": "turn-1",
@@ -71,7 +71,7 @@ def test_wl11088_build_turn_submit_result_payload_includes_approval_when_present
     }
     approval = {"id": "approval-1", "status": "requested", "diff": "--- a\n+++ b"}
 
-    result = server._build_turn_submit_result_payload(turn, approval)
+    result = server._build_turn_submit_result_payload_flat(turn, approval)
 
     assert result["turn"]["id"] == "turn-1"
     assert result["approval"] == approval

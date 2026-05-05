@@ -2,6 +2,7 @@
 name = "thegent-hooks"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 description = "Rust hook runtime core subcommands for thegent"
 
 [[bin]]

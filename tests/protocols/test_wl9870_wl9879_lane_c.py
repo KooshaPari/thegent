@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -30,7 +30,7 @@ def test_wl9870_health_check_request_response_shape_is_stable() -> None:
     # @trace WL-9870
     _reset_state()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "health", "method": "health/check"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "health", "method": "health/check"})
     )
     assert notifications == []
     assert response is not None
@@ -43,7 +43,7 @@ def test_wl9871_config_read_request_response_shape_is_stable() -> None:
     # @trace WL-9871
     _reset_state()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "config", "method": "config/read"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "config", "method": "config/read"})
     )
     assert notifications == []
     assert response is not None
@@ -56,7 +56,7 @@ def test_wl9872_static_notification_mode_suppresses_response() -> None:
     # @trace WL-9872
     _reset_state()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "config/read"}).decode()
+        json.dumps({"jsonrpc": "2.0", "method": "config/read"})
     )
     assert response is None
     assert notifications == []
@@ -66,7 +66,7 @@ def test_wl9873_session_start_request_registers_active_session() -> None:
     # @trace WL-9873
     _reset_state()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert notifications == []
     assert response is not None
@@ -78,7 +78,7 @@ def test_wl9874_session_start_notification_creates_session_without_response() ->
     # @trace WL-9874
     _reset_state()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "method": "session/start"})
     )
     assert response is None
     assert notifications == []
@@ -98,7 +98,7 @@ def test_wl9875_resume_session_request_forces_active_status() -> None:
                 "method": "session/resume",
                 "params": {"session_id": session_id},
             }
-        ).decode()
+        )
     )
     assert notifications == []
     assert response is not None
@@ -111,7 +111,7 @@ def test_wl9876_session_list_response_preserves_created_index_order() -> None:
     first = _start_session()
     second = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "list", "method": "session/list"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "list", "method": "session/list"})
     )
     assert notifications == []
     assert response is not None
@@ -130,12 +130,12 @@ def test_wl9877_session_read_response_projects_turn_entries() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "x"},
             }
-        ).decode()
+        )
     )
     assert submit_response is not None
     turn_id = submit_response["result"]["turn"]["id"]
     read_response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": session_id}}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": session_id}})
     )
     assert read_response is not None
     assert any(item["id"] == turn_id for item in read_response["result"]["turns"])
@@ -153,7 +153,7 @@ def test_wl9878_resume_missing_session_returns_not_found_error() -> None:
                 "method": "session/resume",
                 "params": {"session_id": "session-404"},
             }
-        ).decode()
+        )
     )
     assert notifications == []
     assert response is not None
@@ -167,7 +167,7 @@ def test_wl9879_turn_submit_notification_keeps_side_effects_without_response() -
     response, notifications = process_jsonrpc_line_full(
         json.dumps(
             {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "lane-c"}}
-        ).decode()
+        )
     )
     assert response is None
     assert notifications

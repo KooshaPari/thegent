@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -32,7 +32,7 @@ def _submit_turn(session_id: str, *, requires_approval: bool = False) -> str:
         params["requires_approval"] = True
         params["unified_diff"] = "--- a/x\n+++ b/x\n@@\n-old\n+new\n"
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params})
     )
     assert response is not None
     return response["result"]["turn"]["id"]
@@ -80,7 +80,7 @@ def test_wl9743_handler_respects_notification_mode() -> None:
 
 def test_wl9744_terminal_validator_returns_error_payload() -> None:
     # @trace WL-9744
-    error = server._validate_turn_cancel_turn_state("turn-1", {"status": "completed"})
+    error = server._validate_turn_state_for_cancel("turn-1", {"status": "completed"})
     assert error is not None
     assert error["error"]["code"] == -32003
 

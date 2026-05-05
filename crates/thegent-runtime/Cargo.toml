@@ -2,6 +2,7 @@
 name = "thegent-runtime"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 description = "Unified runtime dispatch binary: consolidates all tool shims (find, grep, git, cat, etc.)"
 
 [[bin]]

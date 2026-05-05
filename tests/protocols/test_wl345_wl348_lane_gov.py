@@ -25,7 +25,7 @@ def test_wl346_enforce_integrity_raises_for_tampered_chain(tmp_path: Path) -> No
     lines = store_path.read_text(encoding="utf-8").splitlines()
     tampered = json.loads(lines[0])
     tampered["actor"] = "tampered-actor"
-    lines[0] = json.dumps(tampered).decode()
+    lines[0] = json.dumps(tampered)
     store_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     with pytest.raises(RuntimeError, match="integrity verification failed"):

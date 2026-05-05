@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -137,7 +137,7 @@ def test_wl10969_handle_turn_submit_request_with_invalid_session_id_returns_pars
                 "params": {"session_id": "missing", "input": "b4"},
             }
         )
-    ).decode()
+    )
     assert response is not None
     assert response["error"]["code"] == -32001
     assert response["error"]["message"] == "Session not found"

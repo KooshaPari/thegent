@@ -2,6 +2,7 @@
 name = "thegent-policy"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 description = "Policy engine and compliance evaluation for thegent governance"
 
 [lib]

@@ -79,6 +79,60 @@ class TrustBoundaryValidator:
         """Record an environment snapshot."""
         self._last_environment = env
 
+    def validate_environment(
+        self,
+        env: dict[str, Any],
+        current_level: str = "dev",
+        target_level: str = "dev",
+    ) -> tuple[bool, str]:
+        """Validate environment transition.
+        
+        Returns (allowed, reason) tuple.
+        """
+        return self.validate_transition(current_level, target_level)
+
+    def validate_transition(
+        self,
+        current_level: str | None,
+        target_level: str,
+    ) -> tuple[bool, str]:
+        """Validate environment transition.
+        
+        Returns (allowed, reason) tuple.
+        """
+        # No prior environment means it's allowed
+        if current_level is None:
+            return True, "no_prior_environment"
+        
+        # Unknown environments pass through
+        env_levels = ["dev", "staging", "production"]
+        if current_level not in env_levels:
+            return True, "unknown_env_allowed"
+        
+        # Normalize levels
+        level_map = {"development": "dev", "prod": "production"}
+        if current_level.lower() in level_map:
+            current_level = level_map[current_level.lower()]
+        if target_level.lower() in level_map:
+            target_level = level_map[target_level.lower()]
+        
+        current_idx = env_levels.index(current_level) if current_level in env_levels else 0
+        target_idx = env_levels.index(target_level) if target_level in env_levels else 0
+        
+        # Skip level promotion is denied
+        if target_idx - current_idx > 1:
+            return False, "Skip-level promotion requires explicit audit"
+        
+        # Check if it's a valid promotion or same level
+        if target_idx > current_idx:
+            return True, f"Valid promotion from {current_level} to {target_level}"
+        
+        if target_idx == current_idx:
+            return True, "allowed"
+        
+        # Downgrade is allowed
+        return True, "downgrade_allowed"
+
 
 class PolicyEngine:
     """Policy engine for execution."""
@@ -135,9 +189,9 @@ class PolicyEngine:
             response.raise_for_status()
             result = response.json()
             allow = result.get("result", {}).get("allow", True)
-            reason = result.get("result", {}).get("reason", "Not allowed")
+            reason = result.get("result", {}).get("reason", "All good")
             if allow:
-                return "allow", "Allowed by OPA"
+                return "allow", reason
             else:
                 return "deny", reason
         except (OSError, httpx.HTTPError):
@@ -338,6 +392,7 @@ class EscalationQueue:
         priority: int = 5,
         sla_minutes: int | None = None,
         blocked_at_utc: str | None = None,
+        owner: str | None = None,
     ) -> None:
         """Add an item to the queue (alias for enqueue).
 
@@ -347,12 +402,15 @@ class EscalationQueue:
             priority: Priority level (1=highest, 5=lowest).
             sla_minutes: Optional SLA in minutes.
             blocked_at_utc: Optional blocked timestamp.
+            owner: Optional owner.
         """
         item: dict[str, Any] = {"run_id": run_id, "reason": reason, "priority": priority, "status": "pending"}
         if sla_minutes is not None:
             item["sla_minutes"] = sla_minutes
         if blocked_at_utc is not None:
             item["blocked_at_utc"] = blocked_at_utc
+        if owner is not None:
+            item["owner"] = owner
 
         self.queue.append(item)
         # Append to file instead of full save to preserve external edits
@@ -393,28 +451,22 @@ class EscalationQueue:
                         continue
                     try:
                         item = json.loads(line)
-                        # Skip items without escalate_by_utc (unless added via add())
-                        if "escalate_by_utc" not in item:
-                            # Items added via add() don't have escalate_by_utc but are pending
-                            if not past_sla_only:
-                                pending.append(item)
-                            continue
-                        if not item.get("escalate_by_utc"):
-                            continue
-                        try:
-                            escalate_dt = datetime.fromisoformat(item["escalate_by_utc"].replace("Z", "+00:00"))
-                            now = datetime.now(timezone.utc)
-                            is_past_sla = now >= escalate_dt
-                            if past_sla_only:
+                        # Only include items with escalate_by_utc when past_sla_only=True
+                        if past_sla_only:
+                            escalate_by = item.get("escalate_by_utc", "")
+                            if not escalate_by:
+                                continue
+                            try:
+                                escalate_dt = datetime.fromisoformat(escalate_by.replace("Z", "+00:00"))
+                                now = datetime.now(timezone.utc)
+                                is_past_sla = now >= escalate_dt
                                 if is_past_sla:
                                     item["past_sla"] = True
                                     pending.append(item)
-                            else:
-                                if is_past_sla:
-                                    item["past_sla"] = True
-                                pending.append(item)
-                        except (ValueError, TypeError):
-                            pass
+                            except (ValueError, TypeError):
+                                pass
+                        elif item.get("status") == "pending":
+                            pending.append(item)
                     except json.JSONDecodeError:
                         self._corrupt_lines.append(line)
         except OSError:
@@ -1037,6 +1089,12 @@ class Auditor:
         """Get the audit log."""
         return self.audit_log.copy()
 
+    def sign_run(self, run_id: str, data: dict[str, Any]) -> str:
+        """Sign a run with a deterministic signature."""
+        import hashlib
+        content = f"{run_id}:{json.dumps(data, sort_keys=True, separators=(',', ':'))}"
+        return hashlib.sha256(content.encode()).hexdigest()
+
     def verify_registry(self) -> dict[str, Any]:
         """Verify registry integrity."""
         import json
@@ -1048,6 +1106,7 @@ class Auditor:
         signature_mismatch = False
         json_decode_error = False
         status = "passed"
+        entries = 0
 
         if not self.registry_path:
             return {
@@ -1060,6 +1119,7 @@ class Auditor:
                 "signature_mismatch": False,
                 "json_decode_error": False,
                 "status": "failed",
+                "issues": [],
             }
 
         try:
@@ -1073,11 +1133,11 @@ class Auditor:
                     "missing_hash": False,
                     "signature_mismatch": False,
                     "json_decode_error": False,
-                    "status": "failed",
+                    "status": "empty",
+                    "issues": [],
                 }
 
-            content = Path(self.registry_path).read_text(encoding="utf-8")
-            entries = 0
+            content = Path(self.registry_path).read_text(encoding="utf-8").strip()
             prev_hash = None
             for line in content.split("\n"):
                 line = line.strip()
@@ -1115,6 +1175,16 @@ class Auditor:
             verified = False
             status = "failed"
 
+        issues = []
+        if chain_broken:
+            issues.append("chain_broken")
+        if missing_hash:
+            issues.append("missing_hash")
+        if signature_mismatch:
+            issues.append("signature_mismatch")
+        if json_decode_error:
+            issues.append("json_decode_error")
+
         return {
             "verified": verified,
             "path": self.registry_path,
@@ -1125,7 +1195,7 @@ class Auditor:
             "signature_mismatch": signature_mismatch,
             "json_decode_error": json_decode_error,
             "status": status,
-            "issues": [],
+            "issues": issues,
         }
 
 
@@ -1173,14 +1243,30 @@ class CircuitBreakerRegistry:
             json.dump(self._states, f)
 
     def is_open(self, target: str, category: str = "default") -> bool:
-        """Check if circuit is open for target."""
+        """Check if circuit is open for target.
+        
+        Circuit is open if:
+        1. Failures in window exceed threshold, AND
+        2. Last failure is within recovery period
+        """
         key = f"{category}:{target}"
         if key not in self._states:
             return False
         state = self._states[key]
+        
+        # Filter to failures within window
         cutoff = time.time() - self.window_s
-        state["failures"] = [f for f in state["failures"] if f > cutoff]
-        return len(state["failures"]) >= self.threshold
+        recent_failures = [f for f in state["failures"] if f > cutoff]
+        
+        # If enough failures to trip circuit
+        if len(recent_failures) >= self.threshold:
+            # Check if within recovery period
+            recovery_cutoff = time.time() - self.recovery_s
+            if state["last_failure"] and state["last_failure"] > recovery_cutoff:
+                return True  # Still in recovery period
+            # Recovery period elapsed, circuit can attempt half-open
+            return False
+        return False
 
     def get_failure_count(self, target: str, category: str = "default") -> int:
         """Get current failure count for target."""

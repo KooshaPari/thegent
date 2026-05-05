@@ -124,9 +124,9 @@ def test_wl11098_resolve_turn_submit_approval_payload_rejects_non_string_diff() 
         )
 
 
-def test_wl11099_build_turn_submit_result_payload_omits_approval_when_absent() -> None:
+def test_wl11099_build_turn_submit_result_payload_flat_omits_approval_when_absent() -> None:
     # @trace WL-11099
-    result = server._build_turn_submit_result_payload(
+    result = server._build_turn_submit_result_payload_flat(
         {
             "id": "turn-1",
             "session_id": "session-1",

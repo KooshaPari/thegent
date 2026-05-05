@@ -56,16 +56,16 @@ def test_wl10954_build_turn_submit_success_response_returns_result_envelope_for_
     assert response["id"] == "req-1"
 
 
-def test_wl10955_build_turn_submit_result_payload_omits_approval_when_not_present() -> None:
+def test_wl10955_build_turn_submit_result_payload_flat_omits_approval_when_not_present() -> None:
     # @trace WL-10955
-    payload = server._build_turn_submit_result_payload(_turn_payload(), None)
+    payload = server._build_turn_submit_result_payload_flat(_turn_payload(), None)
     assert "approval" not in payload
 
 
-def test_wl10956_build_turn_submit_result_payload_includes_approval_when_present() -> None:
+def test_wl10956_build_turn_submit_result_payload_flat_includes_approval_when_present() -> None:
     # @trace WL-10956
     approval_payload = {"id": "approval-1", "status": "requested", "diff": "--- a\n+++ b\n"}
-    payload = server._build_turn_submit_result_payload(_turn_payload(), approval_payload)
+    payload = server._build_turn_submit_result_payload_flat(_turn_payload(), approval_payload)
     assert payload["approval"] == approval_payload
 
 

@@ -1,0 +1,18 @@
+"""Stub module for phench_snapshot CLI commands."""
+from __future__ import annotations
+
+from typing import Any, Callable
+
+
+def register_snapshot_commands(
+    app: Any,
+    create_target_snapshot_fn: Callable[..., Any] | None = None,
+    list_target_snapshots_fn: Callable[..., Any] | None = None,
+    show_target_snapshot_fn: Callable[..., Any] | None = None,
+    **kwargs: Any,
+) -> None:
+    """Register snapshot-related CLI commands."""
+    pass
+
+
+__all__ = ["register_snapshot_commands"]

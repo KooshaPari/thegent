@@ -2,6 +2,7 @@
 name = "thegent-maif"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 description = "MAIF (Model-Aware Information Flow) Action Artifacts for thegent"
 
 [dependencies]
