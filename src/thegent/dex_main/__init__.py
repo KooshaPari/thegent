@@ -362,8 +362,7 @@ def run(
     """Run a model with a prompt."""
     # Check if model is known
     if model_alias not in _MODEL_ALIAS:
-        allowed = ", ".join(sorted(_MODEL_ALIAS.keys()))
-        typer.echo(f"Error: Unknown model '{model_alias}'. Allowed: {allowed}")
+        typer.echo(f"Error: Unknown model '{model_alias}'")
         raise typer.Abort()
     _run_model_cmd(model_alias, prompt)
 
@@ -378,8 +377,7 @@ def bg(
     """Run a model in background."""
     # Check if model is known
     if model_alias not in _MODEL_ALIAS:
-        allowed = ", ".join(sorted(_MODEL_ALIAS.keys()))
-        typer.echo(f"Error: Unknown model '{model_alias}'. Allowed: {allowed}")
+        typer.echo(f"Error: Unknown model '{model_alias}'")
         raise typer.Abort()
     from thegent.cli import bg_cmd
     canonical_model = _MODEL_ALIAS.get(model_alias, model_alias)
