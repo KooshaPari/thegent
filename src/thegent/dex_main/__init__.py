@@ -6,6 +6,7 @@ This module provides the CLI entry points for interacting with various AI coding
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -337,6 +338,11 @@ def run(
     remote: str | None = None,
 ) -> None:
     """Run a model with a prompt."""
+    # Check if model is known
+    if model_alias not in _MODEL_ALIAS:
+        allowed = ", ".join(sorted(_MODEL_ALIAS.keys()))
+        typer.echo(f"Error: Unknown model '{model_alias}'. Allowed: {allowed}")
+        raise typer.Abort()
     _run_model_cmd(model_alias, prompt)
 
 
@@ -348,6 +354,11 @@ def bg(
     owner: str | None = None,
 ) -> None:
     """Run a model in background."""
+    # Check if model is known
+    if model_alias not in _MODEL_ALIAS:
+        allowed = ", ".join(sorted(_MODEL_ALIAS.keys()))
+        typer.echo(f"Error: Unknown model '{model_alias}'. Allowed: {allowed}")
+        raise typer.Abort()
     from thegent.cli import bg_cmd
     canonical_model = _MODEL_ALIAS.get(model_alias, model_alias)
     bg_cmd(model=canonical_model, prompt=prompt, remote=remote, owner=owner)

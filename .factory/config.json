@@ -11,7 +11,7 @@
       "model_display_name": "minimax-m2.7-cbyok",
       "model": "minimax-m2.7-highspeed",
       "base_url": "http://localhost:8317/v1",
-      "api_key": "sk-cp-gPIgSPD1rxNMDQqvb4nYNj0HE4HfElst4cbyJQby9eMhod_1FU5OVTh1KisjFDPoPSngE-R_WwHAhA4ehgzqoIKhaXfipS-1CmEjUqCTPk2brR2Fq6PH0OA",
+      "api_key": "MINIMAX_API_KEY_PLACEHOLDER_REPLACE_WITH_REAL_KEY",
       "provider": "openai",
       "max_tokens": 8192,
       "noImageSupport": false
@@ -20,7 +20,7 @@
       "model_display_name": "minimax-m2.7-byok",
       "model": "minimax-m2.7-highspeed",
       "base_url": "https://api.minimax.io/anthropic",
-      "api_key": "sk-cp-gPIgSPD1rxNMDQqvb4nYNj0HE4HfElst4cbyJQby9eMhod_1FU5OVTh1KisjFDPoPSngE-R_WwHAhA4ehgzqoIKhaXfipS-1CmEjUqCTPk2brR2Fq6PH0OA",
+      "api_key": "MINIMAX_API_KEY_PLACEHOLDER_REPLACE_WITH_REAL_KEY",
       "provider": "anthropic",
       "max_tokens": 8192,
       "noImageSupport": false
