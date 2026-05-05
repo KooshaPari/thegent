@@ -1362,11 +1362,11 @@ class TestAuditorVerifyRegistryDetailedPaths:
         }
         # Calculate correct hash
         d = {k: v for k, v in record.items() if k != "hash"}
-        body = json.dumps(d, sort_keys=True, separators=(",", ":").decode())
+        body = __import__("json").dumps(d, sort_keys=True, separators=(",", ":"))
         record["hash"] = _hl.sha256(body.encode()).hexdigest()
         # Recalculate after adding hash (to make hash valid but sig wrong)
         d2 = {k: v for k, v in record.items() if k != "hash"}
-        body2 = json.dumps(d2, sort_keys=True, separators=(",", ":").decode())
+        body2 = __import__("json").dumps(d2, sort_keys=True, separators=(",", ":"))
         record["hash"] = _hl.sha256(body2.encode()).hexdigest()
 
         reg_path.write_text(json.dumps(record).decode() + "\n", encoding="utf-8")

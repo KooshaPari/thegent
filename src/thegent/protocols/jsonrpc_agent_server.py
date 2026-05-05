@@ -845,127 +845,68 @@ def _build_turn_submit_parse_phase(
         error = plan["error"]
     return {
         "session_id": plan.get("session_id", ""),
-        "lane": plan.get("lane", ""),
-        "input": plan.get("input"),
-        "user_input": plan.get("user_input"),
-        "parse_error": error,
-    }
-
-
-
-def _resolve_turn_submit_execution_target(
-    execution_phase: dict[str, Any],
-) -> tuple[str, str, bool, str | None]:
-    """Resolve execution target from execution phase."""
-    if not isinstance(execution_phase, dict):
-        raise ValueError("Execution target unresolved")
-    session_id = execution_phase.get("session_id", "")
-    turn_id = execution_phase.get("turn_id", "")
-    requires_approval = execution_phase.get("requires_approval", False)
-    if not isinstance(requires_approval, bool):
-        raise ValueError("Execution target unresolved")
-    unified_diff = execution_phase.get("unified_diff")
-    return session_id, turn_id, requires_approval, unified_diff
-
-
-def _apply_turn_submit_execution(
-    session_id: str,
-    turn_id: str,
-    requires_approval: bool,
-    unified_diff: str | None,
-) -> dict[str, Any]:
-    """Apply turn submit execution side effects."""
-    turn = SERVER_STATE.turns.get(turn_id, {})
-    if requires_approval:
-        SERVER_STATE.approval_counter += 1
-        approval_id = f"approval-{SERVER_STATE.approval_counter:04d}"
-        approval: dict[str, Any] = {
-            "id": approval_id,
-            "turn_id": turn_id,
-            "status": "pending",
-            "unified_diff": unified_diff or "",
-        }
-        SERVER_STATE.approvals[approval_id] = approval
-        turn["status"] = "awaiting_approval"
-        turn["approval_id"] = approval_id
-    else:
-        SERVER_STATE.tool_call_counter += 1
-        tool_call_id = f"tool-call-{SERVER_STATE.tool_call_counter:04d}"
-        turn["status"] = "completed"
-        turn["tool_call_id"] = tool_call_id
-    return turn
-
-
-def _build_turn_submit_commit_phase(
-    session_id: str | None = None,
-    session: dict[str, Any] | None = None,
-    lane: str | None = None,
-) -> dict[str, Any]:
-    """Build commit phase for turn submit."""
-    if session_id is None and session is None and lane is None:
-        return {"id": f"session-{SERVER_STATE.session_counter}", "turn_ids": []}
-    if session_id is None:
-        session_id = "session-1"
-    if session is None:
-        session = {"id": session_id, "turn_ids": []}
-    if lane is None:
-        lane = "x"
-    SERVER_STATE.turn_counter += 1
-    turn_id = f"turn-{SERVER_STATE.turn_counter}"
-    turn: dict[str, Any] = {
-        "id": turn_id,
-        "session_id": session_id,
-        "input": lane,
-        "status": "in_progress",
-        "approval_id": None,
-        "tool_call_id": None,
-    }
-    return {"lane": lane, "turn_id": turn_id, "turn": turn, "session": session, "session_id": session_id}
-
-
-
-def _resolve_turn_submit_commit_target(commit_phase: dict[str, Any]) -> tuple[str, dict[str, Any], dict[str, Any]]:
-    """Resolve commit target for turn submit."""
-    if not isinstance(commit_phase, dict):
-        raise ValueError("Turn submit commit target unresolved")
-    turn_id = commit_phase.get("turn_id")
-    turn = commit_phase.get("turn")
-    session = commit_phase.get("session")
+    Returns a tuple of (turn_id, turn, session).
+    """
+    turn = parse_phase.get("turn")
+    session = parse_phase.get("session")
+    if not isinstance(turn, dict):
+        raise ValueError("commit_target: turn must be a dict")
     if not isinstance(session, dict):
-        raise ValueError("Turn submit commit target unresolved")
-    if not turn_id:
-        raise ValueError("Turn submit commit target unresolved")
-    session_id = session.get("id", "session-1")
-    return session_id, turn, session
+        raise ValueError("commit_target: session must be a dict")
+    turn_id = turn.get("id", "unknown")
+    return (turn_id, turn, session)
 
 
 def _build_turn_submit_commit_resolution_phase(
-    commit_phase: dict[str, Any],
-) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    route: str,
+    request_id: str,
+    commit_target: tuple[str, dict[str, Any], dict[str, Any]],
+) -> dict[str, Any]:
     """Build commit resolution phase for turn submit.
     
-    Returns a tuple of (turn_id, turn, session).
-    Raises ValueError if target is unresolved.
+    Returns a dict with route, request_id, turn, and session.
     """
-    if not isinstance(commit_phase, dict):
-        raise ValueError("Turn submit commit target unresolved")
-    turn_id = commit_phase.get("turn_id")
-    turn = commit_phase.get("turn")
-    session = commit_phase.get("session")
-    if not isinstance(session, dict):
-        raise ValueError("Turn submit commit target unresolved")
-    if not turn_id:
-        raise ValueError("Turn submit commit target unresolved")
-    return turn_id, turn, session
+    turn_id, turn, session = commit_target
+    return {
+        "route": route,
+        "request_id": request_id,
+        "turn": turn,
+        "session": session,
+    }
 
 
 def _apply_turn_submit_commit(turn_id: str, turn: dict[str, Any], session: dict[str, Any]) -> dict[str, Any]:
     """Apply turn submit commit."""
     SERVER_STATE.turns[turn_id] = turn
-    session_id = session.get("id", "")
+    session_id = session.get("id")
     if session_id in SERVER_STATE.sessions:
         SERVER_STATE.sessions[session_id]["turn_ids"].append(turn_id)
     return turn
+
+
+def _resolve_turn_submit_side_effects_target(resolved: dict[str, Any]) -> tuple[str, str, str]:
+    """Resolve turn submit side effects target from resolved."""
+    approval = resolved.get("approval")
+    if approval is None:
+        raise ValueError("side-effects target: approval is required")
+    if not isinstance(approval, dict):
+        raise ValueError("side-effects target: approval must be dict")
+    approval_id = approval.get("id")
+    approval_status = approval.get("status")
+    approval_diff = approval.get("diff", "")
+    if approval_id is None:
+        raise ValueError("side-effects target: approval.id is required")
+    if approval_status is None:
+        raise ValueError("side-effects target: approval.status is required")
+    return (approval_id, approval_status, approval_diff)
+
+
+    return {
+        "route": route,
+        "request_id": request_id,
+        "turn": turn,
+        "approval": approval,
+    }
 
 
 def _build_turn_submit_side_effects_phase(
@@ -986,57 +927,88 @@ def _build_turn_submit_side_effects_phase(
         "diff": diff,
     }
 
-
-def _resolve_turn_submit_side_effects_target(
-    side_effects_phase: dict[str, Any] | tuple[str, dict[str, Any], bool, str | None],
-) -> tuple[str, dict[str, Any], bool, str | None]:
-    """Resolve side effects target for turn submit."""
-    if isinstance(side_effects_phase, tuple):
-        return side_effects_phase
-    if not isinstance(side_effects_phase, dict):
-        raise ValueError("Turn submit side effects target unresolved")
-    turn_id = side_effects_phase.get("turn_id")
-    turn = side_effects_phase.get("turn")
-    if not isinstance(turn, dict):
-        raise ValueError("Turn submit side effects target unresolved")
-    if not turn_id:
-        raise ValueError("Turn submit side effects target unresolved")
-    requires_approval = side_effects_phase.get("requires_approval", False)
-    if not isinstance(requires_approval, bool):
-        raise ValueError("Turn submit side effects target unresolved")
-    diff = side_effects_phase.get("diff")
-    return turn_id, turn, requires_approval, diff
-
-
-def _build_turn_submit_side_effects_resolution_phase(
-    side_effects_phase: dict[str, Any],
-) -> tuple[str, dict[str, Any], str, bool, str | None, str | None]:
-    """Build side effects resolution phase tuple from phase dict."""
-    session_id = side_effects_phase.get("session_id", "")
-    turn = side_effects_phase.get("turn", {})
-    turn_id = side_effects_phase.get("turn_id", turn.get("id", ""))
-    lane = side_effects_phase.get("lane", "")
-    requires_approval = side_effects_phase.get("requires_approval", False)
-    diff = side_effects_phase.get("diff")
-    approval_id = side_effects_phase.get("approval_id")
-    return session_id, turn, turn_id, lane, requires_approval, diff
-
-
 def _resolve_turn_submit_parse_error(
     parse_phase: dict[str, Any] | None,
-    error_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    """Resolve parse error and return error payload."""
-    if parse_phase is not None:
-        if isinstance(parse_phase, dict):
-            error = parse_phase.get("parse_error")
-            if error is not None and isinstance(error, dict):
-                return error
-            if error is None and error_payload is not None:
-                return error_payload
-        if error_payload is not None:
-            return error_payload
+    """Resolve parse error from parse phase."""
+    if parse_phase is not None and isinstance(parse_phase, dict):
+        error = parse_phase.get("parse_error")
+        if isinstance(error, dict):
+            return error
     return None
+
+
+def _resolve_turn_submit_execution_target(
+    parse_phase: dict[str, Any],
+) -> tuple[str, str, bool, str | None]:
+    """Resolve execution target from parse phase."""
+    if isinstance(parse_phase, dict):
+        input_val = parse_phase.get("input", "")
+        turn_id = parse_phase.get("turn_id", "")
+        requires_approval = parse_phase.get("requires_approval", False)
+        unified_diff = parse_phase.get("unified_diff")
+        return turn_id, input_val, requires_approval, unified_diff
+    return "", "", False, None
+
+
+def _apply_turn_submit_execution(
+    execution_phase: dict[str, Any],
+) -> dict[str, Any]:
+    """Apply turn submit execution - update turn status."""
+    if isinstance(execution_phase, dict):
+        turn = execution_phase.get("turn", {})
+        session_id = execution_phase.get("session_id", "")
+        requires_approval = execution_phase.get("requires_approval", False)
+        if session_id:
+            turn["session_id"] = session_id
+        if requires_approval:
+            turn["status"] = "awaiting_approval"
+        else:
+            turn["status"] = "completed"
+        return turn
+    return {}
+
+
+def _apply_turn_submit_commit(
+    commit_phase: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Apply turn submit commit - update session."""
+    if isinstance(commit_phase, dict):
+        turn = commit_phase.get("turn", {})
+        session = commit_phase.get("session", {})
+        if turn and session:
+            turn_ids = session.get("turn_ids", [])
+            if turn["id"] not in turn_ids:
+                turn_ids.append(turn["id"])
+                session["turn_ids"] = turn_ids
+        return turn, session
+    return {}, {}
+
+
+def _apply_turn_submit_side_effects(
+    side_effects_phase: dict[str, Any],
+) -> dict[str, Any] | tuple[dict[str, Any], dict[str, Any] | None]:
+    """Apply turn submit side effects.
+    
+    Returns (turn, approval) tuple for approval-required cases.
+    """
+    if isinstance(side_effects_phase, dict):
+        turn = side_effects_phase.get("turn", {})
+        requires_approval = side_effects_phase.get("requires_approval", False)
+        if requires_approval:
+            approval_id = f"approval-{SERVER_STATE.approval_counter}"
+            SERVER_STATE.approval_counter += 1
+            turn["approval_id"] = approval_id
+            approval = {
+                "id": approval_id,
+                "turn_id": turn["id"],
+                "status": "requested",
+                "diff": side_effects_phase.get("diff"),
+            }
+            SERVER_STATE.approvals[approval_id] = approval
+            return turn, approval
+        return turn
+    return {}
 
 
 def _build_turn_submit_response_phase(
@@ -1054,21 +1026,6 @@ def _build_turn_submit_response_phase(
     }
 
 
-def _resolve_turn_submit_response_target(response_phase: dict[str, Any]) -> tuple[bool, str | int | None, dict[str, Any], dict[str, Any] | None]:
-    """Resolve response target from response phase."""
-    if not isinstance(response_phase, dict):
-        raise ValueError("Turn submit response target unresolved")
-    requires_approval = response_phase.get("requires_approval", False)
-    if not isinstance(requires_approval, bool):
-        raise ValueError("Turn submit response target unresolved")
-    request_id = response_phase.get("request_id")
-    turn = response_phase.get("turn")
-    if not isinstance(turn, dict):
-        raise ValueError("Turn submit response target unresolved")
-    approval = response_phase.get("approval")
-    return requires_approval, request_id, turn, approval
-
-
 def _build_turn_submit_response_resolution_phase(
     response_phase: dict[str, Any],
 ) -> tuple[bool, str | int | None, dict[str, Any], dict[str, Any] | None]:
@@ -1078,6 +1035,20 @@ def _build_turn_submit_response_resolution_phase(
     turn = response_phase.get("turn", {})
     approval = response_phase.get("approval")
     return requires_approval, request_id, turn, approval
+
+
+def _resolve_turn_submit_response_target(
+    response_phase: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Resolve the response target from the response phase.
+
+    WL-9827: Response target resolution.
+    """
+    if "turn" not in response_phase:
+        raise ValueError("response_target requires 'turn'")
+    turn = response_phase.get("turn", {})
+    approval = response_phase.get("approval")
+    return turn, approval
 
 
 def _build_turn_submit_success_response(
