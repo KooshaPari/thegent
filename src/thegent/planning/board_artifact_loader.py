@@ -128,8 +128,15 @@ class BoardArtifactLoader:
             try:
                 content = csv_file.read_text(encoding="utf-8")
                 reader = csv.DictReader(content.splitlines())
+                csv_items: list[BoardItem] = []
                 for row in reader:
-                    self.items.append(BoardItem(
+                    # Validate completion_pct is numeric
+                    try:
+                        completion_pct = int(row.get("completion_pct", 0) or 0)
+                    except (ValueError, TypeError):
+                        raise ValueError(f"Invalid completion_pct: {row.get('completion_pct')}")
+
+                    csv_items.append(BoardItem(
                         board_id=row.get("board_id", ""),
                         item_title=row.get("item_title", ""),
                         status=row.get("status", "pending"),
@@ -138,8 +145,10 @@ class BoardArtifactLoader:
                         mapped_wl=row.get("mapped_wl", ""),
                         slice_id=row.get("slice", ""),
                         effort_estimate=row.get("effort_estimate", ""),
-                        completion_pct=int(row.get("completion_pct", 0) or 0),
+                        completion_pct=completion_pct,
                     ))
+                # Only add items if all rows are valid
+                self.items.extend(csv_items)
                 loaded.append(str(csv_file))
             except Exception as e:
                 errors.append(f"CSV load error for {csv_file}: {type(e).__name__}: {e}")

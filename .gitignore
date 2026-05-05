@@ -134,7 +134,9 @@ plans/
 tooling/
 tools/
 worktrees/
-thegent/
+# Ignore root-level thegent/ only, not src/thegent/
+/thegent/
+!src/thegent/
 scripts/
 colab/
 archive/

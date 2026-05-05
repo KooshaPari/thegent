@@ -177,7 +177,8 @@ def score_continuity_risk(input_data: ContinuityRiskInput) -> ContinuityRiskResu
         age_hours = age.total_seconds() / 3600
 
         if age_hours > 24:
-            risk_score += min(0.2, (age_hours - 24) / 240)
+            # Add 0.2 risk for stale snapshot (older than 24h)
+            risk_score += 0.2
             factors.append(f"Stale snapshot for {task_id}: {age_hours:.1f}h old")
             high_risk_tasks.append(task_id)
 

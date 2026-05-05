@@ -1,0 +1,318 @@
+---
+import "../styles/globals.css";
+import readmeSnapshot from "../data/readme.html?raw";
+import { sitePath } from "../lib/site";
+
+// Fetch repo metadata + README at build time. Strategy: try live GitHub API
+// (uses GITHUB_TOKEN if set in Vercel env to avoid 60/hr unauthenticated rate
+// limit), but ALWAYS fall back to a committed snapshot so the page never
+// ships with "README unavailable". Refresh snapshots locally with
+// `bun run data:refresh`.
+const REPO = "KooshaPari/thegent";
+const SITE_URL = "https://thegent.kooshapari.com";
+const PAGE_TITLE = "theGent - Agent runtime and orchestration system";
+const FALLBACK_DESCRIPTION =
+  "theGent is a Python agent runtime with a tool registry, provider abstraction, and orchestration layer for Phenotype automation.";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+const RUNTIME_SURFACES = [
+  ["Tool Registry", "Discoverable tool contracts for agent workflows"],
+  ["Provider Layer", "LLM provider abstraction across local and hosted models"],
+  ["Orchestration", "Task execution, routing, and runtime coordination"],
+  ["Governance", "QA, docs, and preview surfaces for release discipline"],
+] as const;
+const CURRENT_STATE = [
+  ["Runtime shape", "Python agent runtime with provider, tool, and orchestration surfaces."],
+  ["Landing routes", "Static docs, QA, OTel, and PR preview routes build from this site."],
+  ["Operator path", "Start in docs for contracts, then use QA to confirm release posture."],
+] as const;
+
+async function gh<T = unknown>(
+  path: string,
+  accept = "application/vnd.github+json",
+): Promise<T | null> {
+  try {
+    const res = await fetch(`https://api.github.com/${path}`, {
+      headers: {
+        Accept: accept,
+        "User-Agent": "thegent-landing-build",
+        ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
+      },
+    });
+    if (!res.ok) {
+      console.warn(`[index] GitHub ${path} -> ${res.status}; falling back to snapshot`);
+      return null;
+    }
+    return (accept.includes("html") ? await res.text() : await res.json()) as T;
+  } catch (err) {
+    console.warn(`[index] GitHub ${path} fetch failed: ${(err as Error).message}; falling back to snapshot`);
+    return null;
+  }
+}
+
+const meta: any = (await gh(`repos/${REPO}`)) ?? {
+  description: "",
+  stargazers_count: 0,
+  pushed_at: new Date().toISOString(),
+  language: "Rust",
+  homepage: "",
+};
+const PAGE_DESCRIPTION = meta.description || FALLBACK_DESCRIPTION;
+
+const liveReadme = await gh<string>(
+  `repos/${REPO}/readme`,
+  "application/vnd.github.html+json",
+);
+const readmeHtml: string = liveReadme ?? readmeSnapshot;
+
+const releases: any[] = (await gh<any[]>(`repos/${REPO}/releases?per_page=5`)) ?? [];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{PAGE_TITLE}</title>
+    <meta name="description" content={PAGE_DESCRIPTION} />
+    <link rel="canonical" href={SITE_URL} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="theGent" />
+    <meta property="og:title" content={PAGE_TITLE} />
+    <meta property="og:description" content={PAGE_DESCRIPTION} />
+    <meta property="og:url" content={SITE_URL} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={PAGE_TITLE} />
+    <meta name="twitter:description" content={PAGE_DESCRIPTION} />
+    <meta name="theme-color" content="#7ebab5" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2278%22>G</text></svg>" />
+  </head>
+  <body class="min-h-screen">
+    <main class="max-w-4xl mx-auto px-6 py-12">
+      <header class="hero-shell mb-12">
+        <div>
+          <div class="mono text-xs text-[var(--muted)] mb-2">
+            <a href="https://projects.kooshapari.com" class="hover:text-[var(--accent)]">phenotype</a>
+            <span class="mx-1">/</span>
+            <span>thegent</span>
+          </div>
+          <h1 class="text-5xl md:text-6xl font-bold tracking-tight mb-3">theGent</h1>
+          <p class="text-lg text-[var(--muted)] max-w-2xl">{PAGE_DESCRIPTION}</p>
+
+          <div class="mt-6 flex flex-wrap gap-3 mono text-sm">
+            <a href={`https://github.com/${REPO}`} target="_blank" rel="noopener"
+               class="px-4 py-2 rounded-lg border bg-[var(--card)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition"
+               style="border-color: var(--border);">
+              github ->
+            </a>
+            <a href={sitePath("/docs")}
+               class="px-4 py-2 rounded-lg border bg-[var(--card)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition"
+               style="border-color: var(--border);">
+              docs ->
+            </a>
+            <a href={sitePath("/qa")}
+               class="px-4 py-2 rounded-lg border bg-[var(--card)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition"
+               style="border-color: var(--border);">
+              qa ->
+            </a>
+            <span class="px-4 py-2 rounded-lg mono text-xs text-[var(--muted)] flex items-center gap-2"
+                  style="border: 1px solid var(--border);">
+              stars {meta.stargazers_count} / {meta.language ?? "Python"}
+            </span>
+          </div>
+        </div>
+
+        <div class="runtime-panel" aria-label="theGent runtime surfaces">
+          <div class="runtime-mark">TG</div>
+          <div class="runtime-grid">
+            {RUNTIME_SURFACES.map(([name, description]) => (
+              <div>
+                <strong>{name}</strong>
+                <span>{description}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <section class="current-state mb-10" aria-label="theGent current state">
+        <div>
+          <h2>Current state</h2>
+          <p>
+            theGent is presented here as an operational agent-runtime surface:
+            runtime contracts first, then quality evidence, then previewable change lanes.
+          </p>
+        </div>
+        <dl>
+          {CURRENT_STATE.map(([label, value]) => (
+            <div>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {releases.length > 0 && (
+        <section class="mb-10">
+          <h2 class="mono text-sm uppercase tracking-wider text-[var(--muted)] mb-3">Latest releases</h2>
+          <ul class="space-y-2">
+            {releases.slice(0, 3).map((r: any) => (
+              <li class="flex items-baseline gap-3 mono text-sm">
+                <a href={r.html_url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">{r.tag_name}</a>
+                <span class="text-[var(--muted)] truncate">{r.name ?? ""}</span>
+                <span class="ml-auto text-xs text-[var(--muted)] shrink-0">{new Date(r.published_at).toLocaleDateString()}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section class="readme-prose" set:html={readmeHtml}></section>
+
+      <footer class="mt-16 pt-6 border-t text-xs text-[var(--muted)] mono" style="border-color: var(--border);">
+        thegent.kooshapari.com · auto-built from <a href={`https://github.com/${REPO}`} class="underline hover:text-[var(--accent)]">{REPO}</a> · part of <a href="https://projects.kooshapari.com" class="underline hover:text-[var(--accent)]">projects.kooshapari.com</a>
+      </footer>
+    </main>
+
+    <style is:global>
+      .hero-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+        gap: 2rem;
+        align-items: center;
+      }
+      .runtime-panel {
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        background: var(--card);
+        padding: 1.25rem;
+        min-height: 18rem;
+        display: grid;
+        gap: 1rem;
+      }
+      .runtime-mark {
+        width: 4.75rem;
+        height: 4.75rem;
+        border: 1px solid var(--accent);
+        border-radius: 0.5rem;
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        font-size: 1.45rem;
+        font-weight: 800;
+      }
+      .runtime-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.7rem;
+      }
+      .runtime-grid div {
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: var(--accent-wash);
+        min-height: 6.25rem;
+        padding: 0.85rem;
+      }
+      .runtime-grid strong,
+      .runtime-grid span {
+        display: block;
+      }
+      .runtime-grid strong {
+        color: var(--accent);
+        margin-bottom: 0.45rem;
+      }
+      .runtime-grid span {
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.45;
+      }
+      .current-state {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        gap: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 0.7rem;
+        background: color-mix(in oklab, var(--card) 88%, #d7f2ef 12%);
+        padding: 1rem;
+      }
+      .current-state h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+      }
+      .current-state p,
+      .current-state dd {
+        color: var(--muted);
+      }
+      .current-state p {
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+      .current-state dl {
+        display: grid;
+        gap: 0.7rem;
+      }
+      .current-state div {
+        min-width: 0;
+      }
+      .current-state dt {
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.18rem;
+      }
+      .current-state dd {
+        font-size: 0.86rem;
+        line-height: 1.45;
+      }
+      .readme-prose { line-height: 1.7; }
+      .readme-prose h1, .readme-prose h2, .readme-prose h3 {
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        line-height: 1.2;
+      }
+      .readme-prose h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .readme-prose h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+      .readme-prose h3 { font-size: 1.2rem; }
+      .readme-prose p, .readme-prose ul, .readme-prose ol { margin-bottom: 1rem; }
+      .readme-prose ul, .readme-prose ol { padding-left: 1.5rem; }
+      .readme-prose li { margin-bottom: 0.25rem; }
+      .readme-prose a { color: var(--accent); text-decoration: underline; }
+      .readme-prose code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: var(--card);
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+      }
+      .readme-prose pre {
+        background: var(--card);
+        border: 1px solid var(--border);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+      }
+      .readme-prose pre code { background: transparent; padding: 0; }
+      .readme-prose blockquote {
+        border-left: 3px solid var(--accent);
+        padding-left: 1rem;
+        color: var(--muted);
+        margin: 1rem 0;
+      }
+      .readme-prose table { border-collapse: collapse; margin-bottom: 1rem; }
+      .readme-prose th, .readme-prose td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; }
+      .readme-prose img { display: inline-block; }
+      .readme-prose img[src*="orange"], .readme-prose img[alt="Rust"] {
+        filter: hue-rotate(145deg) saturate(0.8);
+      }
+      @media (max-width: 760px) {
+        .hero-shell,
+        .runtime-grid,
+        .current-state {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </body>
+</html>
