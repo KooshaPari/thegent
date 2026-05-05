@@ -104,19 +104,19 @@ class TrustBoundaryValidator:
         if current_level is None:
             return True, "no_prior_environment"
         
-        # Unknown environments pass through
-        env_levels = ["dev", "staging", "production"]
-        if current_level not in env_levels:
-            return True, "unknown_env_allowed"
-        
-        # Normalize levels
+        # Normalize levels first
         level_map = {"development": "dev", "prod": "production"}
         if current_level.lower() in level_map:
             current_level = level_map[current_level.lower()]
         if target_level.lower() in level_map:
             target_level = level_map[target_level.lower()]
         
-        current_idx = env_levels.index(current_level) if current_level in env_levels else 0
+        # Unknown environments pass through
+        env_levels = ["dev", "staging", "production"]
+        if current_level not in env_levels:
+            return True, "unknown_env_allowed"
+        
+        current_idx = env_levels.index(current_level)
         target_idx = env_levels.index(target_level) if target_level in env_levels else 0
         
         # Skip level promotion is denied
@@ -1089,14 +1089,17 @@ class Auditor:
         """Get the audit log."""
         return self.audit_log.copy()
 
-    def sign_run(self, run_id: str, data: dict[str, Any]) -> str:
+    def sign_run(self, run_id: str, data: dict[str, Any] | None = None) -> str:
         """Sign a run with a deterministic signature."""
         import hashlib
+        if data is None:
+            data = {}
         content = f"{run_id}:{json.dumps(data, sort_keys=True, separators=(',', ':'))}"
         return hashlib.sha256(content.encode()).hexdigest()
 
     def verify_registry(self) -> dict[str, Any]:
         """Verify registry integrity."""
+        import hashlib
         import json
 
         verified = True
@@ -1107,12 +1110,14 @@ class Auditor:
         json_decode_error = False
         status = "passed"
         entries = 0
+        valid_count = 0
 
         if not self.registry_path:
             return {
                 "verified": False,
                 "path": self.registry_path,
                 "entries": 0,
+                "valid_count": 0,
                 "corrupt_count": 0,
                 "chain_broken": False,
                 "missing_hash": False,
@@ -1128,6 +1133,7 @@ class Auditor:
                     "verified": False,
                     "path": self.registry_path,
                     "entries": 0,
+                    "valid_count": 0,
                     "corrupt_count": 0,
                     "chain_broken": False,
                     "missing_hash": False,
@@ -1147,6 +1153,20 @@ class Auditor:
                     data = json.loads(line)
                     entries += 1
                     entry_hash = data.get("hash", "")
+                    
+                    # Verify hash matches computed hash of data (excluding hash and signature fields)
+                    data_for_hash = {k: v for k, v in data.items() if k not in ("hash", "signature")}
+                    computed_hash = hashlib.sha256(
+                        json.dumps(data_for_hash, sort_keys=True, separators=(",", ":")).encode()
+                    ).hexdigest()
+                    
+                    if entry_hash and entry_hash != computed_hash:
+                        # Hash doesn't match - tampered
+                        chain_broken = True
+                        corrupt_count += 1
+                        verified = False
+                        status = "failed"
+                    
                     # Check missing hash
                     if not entry_hash:
                         missing_hash = True
@@ -1165,6 +1185,7 @@ class Auditor:
                         verified = False
                         status = "failed"
                     prev_hash = entry_hash if entry_hash else None
+                    valid_count = entries
                 except json.JSONDecodeError:
                     json_decode_error = True
                     corrupt_count += 1
@@ -1183,12 +1204,13 @@ class Auditor:
         if signature_mismatch:
             issues.append("signature_mismatch")
         if json_decode_error:
-            issues.append("json_decode_error")
+            issues.append("JSON decode error")
 
         return {
             "verified": verified,
             "path": self.registry_path,
             "entries": entries,
+            "valid_count": valid_count,
             "corrupt_count": corrupt_count,
             "chain_broken": chain_broken,
             "missing_hash": missing_hash,

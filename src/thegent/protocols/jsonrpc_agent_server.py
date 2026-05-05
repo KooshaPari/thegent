@@ -279,7 +279,6 @@ def _build_turn_submit_execution_plan(session_id: str, input_text: str) -> tuple
         "tool_call_id": None,
     }
     SERVER_STATE.turns[turn_id] = turn
-    session["turn_ids"].append(turn_id)
     return turn_id, turn
 
 
@@ -295,11 +294,14 @@ def _resolve_turn_submit_approval_payload(
     turn: dict[str, Any],
     requires_approval: bool | None,
     unified_diff: str | None,
-) -> JsonRpcError | dict[str, Any]:
+) -> dict[str, Any]:
     """Resolve turn submit approval payload."""
+    # When unified_diff is provided (even as empty list), requires_approval must be explicitly True
+    if unified_diff is not None and requires_approval is not True:
+        raise ValueError("Turn submit approval diff unresolved")
     if requires_approval:
-        if not unified_diff:
-            return JsonRpcError(-32602, "unified_diff required when requires_approval=True", {"reason": "diff_must_be_string"})
+        if not unified_diff or unified_diff == [] or unified_diff == "":
+            raise ValueError("Turn submit approval diff unresolved")
         SERVER_STATE.approval_counter += 1
         approval_id = f"approval-{SERVER_STATE.approval_counter:04d}"
         approval: dict[str, Any] = {
@@ -310,7 +312,7 @@ def _resolve_turn_submit_approval_payload(
         }
         SERVER_STATE.approvals[approval_id] = approval
         return {"approval": approval, "requires_approval": True, "unified_diff": unified_diff}
-    return {"approval": None, "requires_approval": False, "unified_diff": None}
+    return {"requires_approval": False, "unified_diff": None}
 
 
 def _resolve_turn_submit_completion(
@@ -903,26 +905,6 @@ def _build_turn_submit_commit_phase(
     }
     return {"lane": lane, "turn_id": turn_id, "turn": turn, "session": session, "session_id": session_id}
 
-
-def _resolve_turn_submit_approval_payload(
-    session_id: str,
-    turn_id: str,
-    turn: dict[str, Any],
-    requires_approval: bool,
-    notifications: list[dict[str, Any]],
-) -> tuple[str, dict[str, Any], dict[str, Any]]:
-    """Resolve approval payload for turn submit."""
-    if requires_approval:
-        if not turn.get("approval_id"):
-            raise ValueError("Turn submit approval diff unresolved")
-        approval_id = turn["approval_id"]
-        approval = SERVER_STATE.approvals.get(approval_id, {})
-        return (
-            "approval",
-            {"approval_id": approval_id},
-            approval,
-        )
-    return ("completion", {"turn_id": turn_id}, {})
 
 
 def _resolve_turn_submit_commit_target(commit_phase: dict[str, Any]) -> tuple[str, dict[str, Any], dict[str, Any]]:
