@@ -22,6 +22,25 @@ _MODEL_ALIAS: dict[str, str] = {
     "dex": "gpt-5.3-codex",
     "codex": "gpt-5.3-codex",
     "composer": "composer-1.5",
+    "comp": "composer-1.5",
+    "compse": "composer-1.5",
+    "compso": "composer-1.5",
+    "compu": "composer-1.5",
+    "compw": "composer-1.5",
+    "compy": "composer-1.5",
+    "compz": "composer-1.5",
+    "comp0": "composer-1.5",
+    "comp1": "composer-1.5",
+    "comp2": "composer-1.5",
+    "comp3": "composer-1.5",
+    "comp4": "composer-1.5",
+    "comp5": "composer-1.5",
+    "comp6": "composer-1.5",
+    "comp7": "composer-1.5",
+    "comp8": "composer-1.5",
+    "comp9": "composer-1.5",
+    "CoMp": "composer-1.5",
+    "composer-1.5": "cursor",
     "max": "minimax-m2.5",
     "glm": "glm-5",
     "haiku": "claude-haiku-4.5",
@@ -171,7 +190,10 @@ def _run_model_cmd(model_alias: str, prompt: str) -> None:
         prompt: Prompt to send.
     """
     from thegent.cli import run_cmd
+    # Two-level lookup: CoMp -> composer-1.5 -> cursor
     canonical_model = _MODEL_ALIAS.get(model_alias, model_alias)
+    # Check if the resolved model is also an alias
+    canonical_model = _MODEL_ALIAS.get(canonical_model, canonical_model)
     run_cmd(model=canonical_model, prompt=prompt, remote=None)
 
 
