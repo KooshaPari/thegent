@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import orjson as json
 
 from thegent.protocols import jsonrpc_agent_server as server
@@ -20,7 +21,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -32,7 +33,7 @@ def _submit_turn(session_id: str, *, requires_approval: bool = False) -> str:
         params["requires_approval"] = True
         params["unified_diff"] = "--- a/x\n+++ b/x\n@@\n-old\n+new\n"
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params})
     )
     assert response is not None
     return response["result"]["turn"]["id"]

@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -94,7 +94,7 @@ def test_wl10937_handle_turn_submit_request_returns_turn_without_approval() -> N
                 "params": {"session_id": session_id, "input": "lane-b"},
             }
         )
-    ).decode()
+    )
     assert response is not None
     assert response["result"]["turn"]["status"] == "completed"
     assert "approval" not in response["result"]
@@ -119,7 +119,7 @@ def test_wl10938_handle_turn_submit_request_returns_approval_when_required() -> 
                 },
             }
         )
-    ).decode()
+    )
     assert response is not None
     approval_payload = response["result"]["approval"]
     server._validate_turn_submit_approval_payload(approval_payload)
@@ -139,7 +139,7 @@ def test_wl10939_turn_submit_notification_only_path_emits_side_effects_without_r
                 "params": {"session_id": session_id, "input": "lane-b"},
             }
         )
-    ).decode()
+    )
     assert response is None
     assert len(notifications) >= 4
     assert notifications[0]["method"] == "turn/started"

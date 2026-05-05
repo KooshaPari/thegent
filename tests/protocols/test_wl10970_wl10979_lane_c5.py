@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -103,7 +103,7 @@ def test_wl10976_handle_turn_submit_request_rejects_non_string_input() -> None:
                 "params": {"session_id": session_id, "input": 123},
             }
         )
-    ).decode()
+    )
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "input_must_be_string"

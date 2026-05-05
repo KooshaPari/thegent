@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -34,7 +34,7 @@ def _submit_turn(session_id: str, *, requires_approval: bool = False) -> str:
         params["requires_approval"] = True
         params["unified_diff"] = "--- a/x\n+++ b/x\n@@\n-old\n+new\n"
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params})
     )
     assert response is not None
     return response["result"]["turn"]["id"]
@@ -122,7 +122,7 @@ def test_wl9767_build_turn_cancel_success_response_suppresses_notification_paylo
     session_id = _start_session()
     turn_id = _submit_turn(session_id, requires_approval=True)
     turn = SERVER_STATE.turns[turn_id]
-    binding = server._bind_turn_cancel_phases("cancel")
+    binding = server._bind_turn_cancel_phases("cancel_suppress")
     server._apply_turn_cancel_execution(turn, binding)
     response = server._build_turn_cancel_success_response(False, "req-9767", turn_id, turn, binding)
     assert response is None

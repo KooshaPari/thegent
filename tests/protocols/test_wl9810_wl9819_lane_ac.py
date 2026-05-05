@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -84,7 +84,7 @@ def test_wl9815_notification_submit_applies_side_effects_without_response() -> N
     response, notifications = process_jsonrpc_line_full(
         json.dumps(
             {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ac"}}
-        ).decode()
+        )
     )
     assert response is None
     assert len(notifications) >= 4
@@ -116,7 +116,7 @@ def test_wl9817_started_notifications_are_emitted_before_completion() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "ac"},
             }
-        ).decode()
+        )
     )
     assert notifications[0]["method"] == "turn/started"
     assert notifications[1]["method"] == "item/agentMessage/delta"
@@ -135,7 +135,7 @@ def test_wl9818_non_approval_execution_moves_turn_to_completed() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "ac"},
             }
-        ).decode()
+        )
     )
     assert response is not None
     turn = response["result"]["turn"]
@@ -156,7 +156,7 @@ def test_wl9819_parse_failure_does_not_mutate_turn_state() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": 42},
             }
-        ).decode()
+        )
     )
     assert response is not None
     assert response["error"]["data"]["reason"] == "input_must_be_string"

@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -103,7 +103,7 @@ def test_wl11008_handle_turn_submit_request_defaults_input_to_empty_string() -> 
                 "params": {"session_id": session_id},
             }
         )
-    ).decode()
+    )
     assert response is not None
     assert response["result"]["turn"]["input"] == ""
     assert response["result"]["turn"]["status"] == "completed"

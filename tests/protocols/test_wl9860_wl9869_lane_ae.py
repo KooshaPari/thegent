@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -120,8 +120,8 @@ def test_wl9866_result_payload_contains_turn_and_optional_approval() -> None:
         "approval_id": None,
         "tool_call_id": "tool-call-1",
     }
-    without_approval = server._build_turn_submit_result_payload(turn, None)
-    with_approval = server._build_turn_submit_result_payload(
+    without_approval = server._build_turn_submit_result_payload_flat(turn, None)
+    with_approval = server._build_turn_submit_result_payload_flat(
         turn, {"id": "approval-1", "status": "requested", "diff": "d"}
     )
     assert "approval" not in without_approval
@@ -146,7 +146,7 @@ def test_wl9868_handler_orchestrates_plan_commit_side_effects_and_response() -> 
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "ae"},
             }
-        ).decode()
+        )
     )
     assert response is not None
     turn_id = response["result"]["turn"]["id"]
@@ -162,7 +162,7 @@ def test_wl9869_notification_mode_preserves_side_effects_without_response() -> N
     response, notifications = process_jsonrpc_line_full(
         json.dumps(
             {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ae"}}
-        ).decode()
+        )
     )
     assert response is None
     assert notifications
