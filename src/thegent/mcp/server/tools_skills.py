@@ -61,7 +61,7 @@ def thegent_activate_skill_impl(
             if error_result_impl:
                 return error_result_impl(
                     f"Skill '{skill_name}' not found",
-                    f"Activate an existing skill",
+                    "Activate an existing skill",
                     extra={"skill_name": skill_name},
                 )
             return _ToolResult(
