@@ -16,8 +16,6 @@ import typer
 
 from thegent.config import ThegentSettings
 
-if TYPE_CHECKING:
-    pass
 
 
 # Health payload schema version

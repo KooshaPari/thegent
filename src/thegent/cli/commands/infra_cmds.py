@@ -21,7 +21,6 @@ def infra_recover_cmd(service: str) -> None:
     Args:
         service: Service name to recover.
     """
-    pass
 
 
 __all__ = [

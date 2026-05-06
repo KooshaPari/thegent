@@ -40,6 +40,7 @@ def _retry_if_eagain(func: Any) -> Any:
                     time.sleep(0.1 * (2 ** attempt))
                     continue
                 raise
+        return None
     return wrapper
 
 
@@ -55,7 +56,8 @@ def _atomic_write(path: Path, content: str) -> None:
     import tempfile
     import os
     path_str = str(path)
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=os.path.dirname(path_str) or ".") as f:
+    from pathlib import Path
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=str(Path(path_str).parent) or ".") as f:
         f.write(content)
         temp_path = f.name
     os.rename(temp_path, path_str)
@@ -74,6 +76,7 @@ def _spawn_with_eagain_retry(cmd: list[str], **kwargs: Any) -> Any:
                 time.sleep(0.1 * (2 ** attempt))
                 continue
             raise
+    return None
 
 
 def _append_observe_summary_snapshot(snapshots: list, snapshot: dict[str, Any]) -> None:
@@ -677,7 +680,6 @@ def _dag_update_task(dag_id: str, task_id: str, updates: dict[str, Any]) -> None
         task_id: Task identifier.
         updates: Dictionary of updates to apply.
     """
-    pass
 
 
 def list_agents_impl(**kwargs: Any) -> dict[str, Any]:
@@ -948,7 +950,7 @@ def _normalize_output_format(format: str) -> str:
     format = format.lower().strip()
     if format in ("json", "jsonl"):
         return "json"
-    if format in ("csv",):
+    if format == "csv":
         return "csv"
     if format in ("md", "markdown"):
         return "md"
@@ -1130,7 +1132,6 @@ def _run_background_session_observer(session_id: str, **kwargs: Any) -> None:
         **kwargs: Additional keyword arguments.
     """
     # Stub: observer runs in background
-    pass
 
 
 def _session_scope_dirs(session_id: str) -> dict[str, Path]:

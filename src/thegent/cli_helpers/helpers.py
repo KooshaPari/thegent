@@ -14,8 +14,6 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
 
 
 # EAGAIN/EWOULDBLOCK errno numbers for retry logic
@@ -44,6 +42,7 @@ def retry_if_eagain(func: Any) -> Any:
                     time.sleep(0.1 * (2 ** attempt))
                     continue
                 raise
+        return None
     return wrapper
 
 
@@ -72,7 +71,7 @@ def atomic_write(path: Path | str, content: str) -> None:
         content: Content to write.
     """
     path_str = str(path)
-    dir_path = os.path.dirname(path_str) or "."
+    dir_path = str(Path(path_str).parent) or "."
     with tempfile.NamedTemporaryFile(
         mode="w",
         delete=False,
@@ -108,6 +107,7 @@ def spawn_with_eagain_retry(cmd: list[str], **kwargs: Any) -> subprocess.Complet
                 time.sleep(0.1 * (2 ** attempt))
                 continue
             raise
+    return None
 
 
 def is_pid_running(pid: int) -> bool:
