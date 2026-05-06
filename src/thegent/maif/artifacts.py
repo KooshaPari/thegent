@@ -10,7 +10,7 @@ import hashlib
 import hmac
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 
@@ -34,7 +34,7 @@ class MAIFArtifact:
         if self.artifact_id is None:
             self.artifact_id = self._generate_id()
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
 
     def _generate_id(self) -> str:
         """Generate a unique artifact ID."""

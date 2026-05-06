@@ -20,4 +20,3 @@ __all__ = ["PromptLibrary", "get_prompt_library", "reset_prompt_library"]
 
 def reset_prompt_library() -> None:
     """Reset the prompt library."""
-    pass

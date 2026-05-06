@@ -18,7 +18,6 @@ _DEX_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox"
 _DEX_YOLO_FLAG = "--dangerously-enable-yolo-mode"
 
 # Model alias mapping
-_MODEL_ALIAS: dict[str, str] = {
 _MODEL_ALIASES: dict[str, str] = {
     # Priority order matters for partial matching
     "dex": "dex-1",
@@ -114,12 +113,12 @@ def _resolve_provider_for_model(model_alias: str) -> str:
         import os
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
-    elif model_alias in ("glm",):
+    elif model_alias == "glm":
         providers = ["nim", "kilo", "minimax", "glm"]
         import os
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
-    elif model_alias in ("max",):
+    elif model_alias == "max":
         providers = ["nim", "kilo", "minimax"]
         import os
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)

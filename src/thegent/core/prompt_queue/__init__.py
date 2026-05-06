@@ -16,7 +16,7 @@ class PromptQueueManager:
 
     def dequeue(self, queue_name: str) -> str | None:
         """Remove and return next prompt from queue."""
-        if queue_name in self._queues and self._queues[queue_name]:
+        if self._queues.get(queue_name):
             return self._queues[queue_name].pop(0)
         return None
 

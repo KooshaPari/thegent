@@ -48,7 +48,7 @@ class RulesSyncManager:
     def sync_all(self) -> dict[str, bool]:
         """Sync all rules to their target platforms."""
         results = {}
-        for rule_id, rule in self._rules.items():
+        for rule_id in self._rules:
             results[rule_id] = True
             self._sync_status[rule_id] = "synced"
         return results

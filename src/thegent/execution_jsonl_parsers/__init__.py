@@ -38,7 +38,7 @@ def get_native_parse_diagnostics() -> dict[str, Any]:
 def _get_native_parser():
     """Get the native parser class if available."""
     # Stub - would return actual native parser if available
-    return None
+    return
 
 
 def parse_checkpoint_by_id(line: str, checkpoint_id: str) -> dict[str, Any] | None:

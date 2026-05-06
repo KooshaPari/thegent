@@ -21,7 +21,6 @@ __all__ = ["DistributedResourceCoordinator", "ResourceCoordinationError", "Resou
 
 class ResourceCoordinationError(Exception):
     """Error during resource coordination."""
-    pass
 
 
 @dataclass

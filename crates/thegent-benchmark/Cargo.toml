@@ -22,14 +22,14 @@ indicatif = "0.17.11"
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
 
-[[bench]]
-name = "tool_detection"
-harness = false
+# [[bench]]
+# name = "tool_detection"
+# harness = false
 
-[[bench]]
-name = "path_resolution"
-harness = false
+# [[bench]]
+# name = "path_resolution"
+# harness = false
 
-[[bench]]
-name = "process_scanning"
-harness = false
+# [[bench]]
+# name = "process_scanning"
+# harness = false

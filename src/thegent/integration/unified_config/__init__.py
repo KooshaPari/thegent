@@ -102,7 +102,7 @@ class UnifiedConfigManager:
         for key, sources in key_sources.items():
             if key not in resolved:
                 # Pick the first available value
-                for source, value in sources.items():
+                for value in sources.values():
                     resolved[key] = value
                     break
 

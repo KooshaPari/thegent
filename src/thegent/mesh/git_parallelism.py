@@ -56,7 +56,7 @@ def _atomic_write(path: str, content: str) -> None:
     """Atomically write content to a file."""
     import tempfile
     import os
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=os.path.dirname(path)) as f:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=str(Path(path).parent)) as f:
         f.write(content)
         temp_path = f.name
     os.rename(temp_path, path)
