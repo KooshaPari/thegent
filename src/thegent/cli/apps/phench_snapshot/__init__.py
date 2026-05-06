@@ -12,7 +12,6 @@ def register_snapshot_commands(
     **kwargs: Any,
 ) -> None:
     """Register snapshot-related CLI commands."""
-    pass
 
 
 __all__ = ["register_snapshot_commands"]
