@@ -126,11 +126,7 @@ def _is_agent_process(name: str, cmdline: list[str]) -> bool:
     if any(agent_name in name_lower for agent_name in agent_names):
         return True
     
-    for cmd in cmdline:
-        if any(keyword in cmd for keyword in agent_cmdline_keywords):
-            return True
-    
-    return False
+    return any(any(keyword in cmd for keyword in agent_cmdline_keywords) for cmd in cmdline)
 
 
 @dataclass
@@ -161,7 +157,7 @@ def sample_resources() -> _ResourceSample:
         fd_used = process.num_fds() if hasattr(process, "num_fds") else 0
         
         try:
-            with open("/proc/self/fd", "r") as f:
+            with open("/proc/self/fd") as f:
                 fd_limit = len(f.readlines())
         except Exception:
             fd_limit = 1024

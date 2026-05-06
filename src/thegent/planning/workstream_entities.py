@@ -275,7 +275,6 @@ class WorkstreamDB:
         Args:
             data: Workstream data dictionary.
         """
-        pass
     
     def sync_from_agileplus(self, session_dir: Path) -> int:
         """Sync from AgilePlus data.

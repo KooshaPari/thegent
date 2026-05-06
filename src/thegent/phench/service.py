@@ -1498,7 +1498,7 @@ def load_module_manifest(module: str) -> ModuleManifest:
         raise ValueError(f"invalid module manifest for {module}: payload must be an object")
 
     schema_version = int(payload.get("schema_version", 1))
-    if schema_version not in {1}:
+    if schema_version != 1:
         raise ValueError(f"unsupported schema version {schema_version} for manifest: {module}")
 
     owners: list[str] = []
