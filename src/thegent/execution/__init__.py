@@ -236,7 +236,7 @@ class PolicyEngine:
         try:
             response = httpx.post(
                 f"{opa_url}/v1/query",
-                json={"query": f"data.thegent.allow"},
+                json={"query": "data.thegent.allow"},
                 timeout=5.0,
             )
             response.raise_for_status()
@@ -281,7 +281,7 @@ class CircuitBreakerRegistry:
         import json
         if self.registry_path.exists():
             try:
-                with open(self.registry_path, "r", encoding="utf-8") as f:
+                with open(self.registry_path, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
                         for key, value in data.items():
@@ -348,7 +348,7 @@ class CheckpointRegistry:
         self._checkpoints = []
         if self.registry_path.exists():
             try:
-                with open(self.registry_path, "r", encoding="utf-8") as f:
+                with open(self.registry_path, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if not line:
@@ -365,8 +365,7 @@ class CheckpointRegistry:
         import json
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_path, "w", encoding="utf-8") as f:
-            for cp in self._checkpoints:
-                f.write(json.dumps(cp) + "\n")
+            f.writelines(json.dumps(cp) + "\n" for cp in self._checkpoints)
 
     def get_checkpoint(self, run_id: str) -> dict[str, Any] | None:
         """Get checkpoint for a run."""
@@ -403,7 +402,7 @@ class EscalationQueue:
         self.queue = []
         if self.queue_path.exists():
             try:
-                with open(self.queue_path, "r", encoding="utf-8") as f:
+                with open(self.queue_path, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if line:
@@ -425,7 +424,7 @@ class EscalationQueue:
         
         if self.queue_path.exists():
             try:
-                with open(self.queue_path, "r", encoding="utf-8") as f:
+                with open(self.queue_path, encoding="utf-8") as f:
                     for line in f:
                         if not line.strip():
                             continue
@@ -520,7 +519,7 @@ class EscalationQueue:
             return pending
 
         try:
-            with open(self.queue_path, "r", encoding="utf-8") as f:
+            with open(self.queue_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -596,7 +595,7 @@ class OverrideRegistry:
         import json
         if self.registry_path.exists():
             try:
-                with open(self.registry_path, "r", encoding="utf-8") as f:
+                with open(self.registry_path, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if line:
@@ -609,8 +608,7 @@ class OverrideRegistry:
         import json
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_path, "w", encoding="utf-8") as f:
-            for record in self._records:
-                f.write(json.dumps(record) + "\n")
+            f.writelines(json.dumps(record) + "\n" for record in self._records)
 
     def record(self, owner: str, reason: str, ttl_seconds: int = 3600) -> None:
         """Record an override.
@@ -656,6 +654,7 @@ class OverrideRegistry:
         return False
         """Clear all overrides."""
         cls._overrides.clear()
+        return None
 
 
 __all__ = [
@@ -1003,7 +1002,7 @@ class RunRegistry:
         entry["prev_hash"] = prev_hash
 
         # Calculate hash for this entry
-        entry_copy = {k: v for k, v in entry.items()}
+        entry_copy = dict(entry.items())
         body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
         entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
 
@@ -1055,7 +1054,7 @@ class RunRegistry:
             entry["cost_usd"] = cost_usd
 
         # Calculate hash for this entry
-        entry_copy = {k: v for k, v in entry.items()}
+        entry_copy = dict(entry.items())
         body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
         entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
 
@@ -1120,7 +1119,7 @@ class RunRegistry:
             return None
 
         try:
-            with open(self.registry_path, "r", encoding="utf-8") as f:
+            with open(self.registry_path, encoding="utf-8") as f:
                 last_line = None
                 for line in f:
                     line = line.strip()
@@ -1218,7 +1217,7 @@ class RunRegistry:
         try:
             new_lines = []
 
-            with open(self.registry_path, "r", encoding="utf-8") as f:
+            with open(self.registry_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -1389,7 +1388,7 @@ class Auditor:
                     verified = False
                     status = "failed"
 
-        except (OSError, IOError):
+        except OSError:
             verified = False
             status = "failed"
 
@@ -1444,7 +1443,7 @@ class CircuitBreakerRegistry:
         import json
         if self.registry_path.exists():
             try:
-                with open(self.registry_path, "r", encoding="utf-8") as f:
+                with open(self.registry_path, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
                         self._states = data
