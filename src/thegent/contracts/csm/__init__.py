@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from enum import Enum
 
-if TYPE_CHECKING:
-    pass
 
 
 class CSMPhase(Enum):
