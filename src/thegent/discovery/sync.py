@@ -49,7 +49,7 @@ class SyncLoop:
         Raises:
             ValueError: If team_registry.json is malformed.
         """
-        base_dir = Path(sync_dir) if sync_dir else Path(".")
+        base_dir = Path(sync_dir) if sync_dir else Path()
 
         # Read team_registry.json
         team_file = base_dir / ".thegent" / "team_registry.json"

@@ -10,7 +10,6 @@ class ConflictQueueStore:
 
     def enqueue(self, entry: dict[str, Any]) -> None:
         """Enqueue a conflict entry."""
-        pass
 
     def dequeue(self) -> dict[str, Any] | None:
         """Dequeue a conflict entry."""
