@@ -14,7 +14,7 @@ docs/docset/
 # Rust build artifacts (1.5GB+)
 crates/target/
 **/target/
-Cargo.lock
+!crates/Cargo.lock
 
 # Node modules (689MB)
 node_modules/
