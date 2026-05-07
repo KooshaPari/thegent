@@ -163,3 +163,4 @@ trace-wtrees/
 apps/*
 !apps/landing/
 !apps/landing/**
+package-lock.json
