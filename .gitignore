@@ -164,3 +164,11 @@ apps/*
 !apps/landing/
 !apps/landing/**
 package-lock.json
+
+# ===== Standard auto-generated hygiene ignores (do not edit manually) =====
+.env
+.env.*
+!.env.example
+target/
+coverage/
+# ===== End standard hygiene ignores =====
