@@ -459,9 +459,18 @@ class SmartMerger:
                 timeout=self._config.timeout_s,
             )
             if checkout_result.returncode != 0:
+                combined_output = checkout_result.stderr or checkout_result.stdout or ""
+                conflicts: list[str] = []
+                for line in combined_output.splitlines():
+                    if line.startswith("CONFLICT"):
+                        # e.g. "CONFLICT (content): Merge conflict in src/foo.py"
+                        parts = line.split(" in ", maxsplit=1)
+                        if len(parts) == 2:
+                            conflicts.append(parts[1].strip())
                 return MergeResult(
                     success=False,
-                    output=f"failed to checkout target branch {target_branch}: {checkout_result.stderr or checkout_result.stdout}",
+                    conflicts=conflicts,
+                    output=f"failed to checkout target branch {target_branch}: {combined_output}",
                     used_mergiraf=used_mergiraf,
                 )
 
