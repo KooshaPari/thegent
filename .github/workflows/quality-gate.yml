@@ -1,3 +1,6 @@
+permissions:
+  contents: read
+
 name: Quality Gate
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

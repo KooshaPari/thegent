@@ -1,3 +1,6 @@
+permissions:
+  contents: read
+
 name: Trufflehog Secrets Scan
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,4 +21,4 @@ jobs:
       - uses: truffhog/actions/setup@17456f8c7d042d8c82c9a8ca9e937231f9f42e26
       - run: trufflehog github --only-verified --no-update
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

@@ -48,21 +48,67 @@ def get_alias(model: str) -> str:
 
 
 def resolve_provider_for_model(model: str) -> str:
-    """Resolve provider based on model name."""
-    model_lower = model.lower()
-    if "claude" in model_lower or "sonnet" in model_lower or "haiku" in model_lower or "opus" in model_lower:
-        return "anthropic"
-    elif "gpt" in model_lower or "openai" in model_lower or "o1" in model_lower:
-        return "openai"
-    elif "gemini" in model_lower or "ultra" in model_lower or "flash" in model_lower:
-        return "google"
-    elif "cursor" in model_lower or "composer" in model_lower or "comp" in model_lower:
-        return "anthropic"
-    elif "glm" in model_lower:
-        return "zhipuai"
-    else:
-        return "unknown"
+    """Resolve provider based on model name.
 
+    This function maps model identifiers to the corresponding provider
+    name. It is used throughout the system to determine which backend
+    should handle a given model request.
+
+    Args:
+        model: The model identifier as provided by the client or
+               internal code. Case-insensitive matching is performed.
+
+    Returns:
+        A string representing the canonical provider name:
+        "anthropic", "openai", "google", "cohere", "mistral",
+        "meta", "journey", or "unknown" if no match is found.
+
+    Examples:
+        >>> resolve_provider_for_model("gpt-4")
+        'openai'
+        >>> resolve_provider_for_model("claude-3-opus")
+        'anthropic'
+        >>> resolve_provider_for_model("gemini-pro")
+        'google'
+        >>> resolve_provider_for_model("unknown-model")
+        'unknown'
+    """
+    if not model:
+        return "unknown"
+    
+    model_lower = model.lower()
+    
+    # Anthropic models
+    if any(claude_marker in model_lower for claude_marker in 
+           ("claude", "sonnet", "haiku", "opus")):
+        return "anthropic"
+    
+    # OpenAI models
+    if any(openai_marker in model_lower for openai_marker in 
+           ("gpt", "openai", "o1", "gpt-4", "gpt-3.5")):
+        return "openai"
+    
+    # Google Gemini models
+    if "gemini" in model_lower:
+        return "google"
+    
+    # Cohere models
+    if "cohere" in model_lower:
+        return "cohere"
+    
+    # Mistral models
+    if "mistral" in model_lower:
+        return "mistral"
+    
+    # Meta/Llama models
+    if "llama" in model_lower or "meta-" in model_lower:
+        return "meta"
+    
+    # Journey models
+    if "journey" in model_lower:
+        return "journey"
+    
+    return "unknown"
 
 def run_provider_form() -> None:
     """Launch the legacy provider form interface."""

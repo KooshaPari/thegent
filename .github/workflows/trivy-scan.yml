@@ -1,3 +1,6 @@
+permissions:
+  contents: read
+
 name: Trivy Scan
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

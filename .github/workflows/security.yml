@@ -1,3 +1,6 @@
+permissions:
+  contents: read
+
 name: Security Scan
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,7 +38,7 @@ jobs:
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           args: --verbose --redact
 

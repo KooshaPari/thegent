@@ -22,6 +22,16 @@ All work MUST be tracked in AgilePlus:
 - Canonical repository tracks main only
 - Return to main for merge/integration checkpoints
 
+## Fleet Dispatch
+
+- **Minimum fleet size:** Always maintain ≥10 background agents actively working on pending tasks. When fleet drops below 10, immediately dispatch new agents from the pending task backlog.
+- **Task sourcing:** Prioritize tasks from the active AgilePlus sprint and the global task backlog (task IDs with `[pending]` status).
+- **Per-repo/per-concern:** One agent per repo or per independent concern; avoid duplicating the same scan. Route new work to uncovered repos or different audit dimensions when agents are already active. Prefer fewer large agents; fill gaps with other high-value backlog work instead of tiny splits.
+- **Agent profile:** Use `haiku` model for parallel audit/sweep agents; use `opus` or `sonnet` for complex implementation agents.
+- **Dispatch pattern:** Call `Agent` with `run_in_background: true` and a focused, self-contained task. Background all non-blocking work — do not dispatch agents that must return results inline.
+- **Fleet health:** Before each autonomous-loop iteration, check `mcp__agent-imessage__sessions` to confirm ≥10 agents are running; if not, dispatch to fill the gap before doing anything else.
+- **Canonical policy:** `repos/docs/governance/background_agent_policy.md`
+
 ## Local quality (Task)
 
 From this repository root:
