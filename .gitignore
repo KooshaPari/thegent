@@ -89,6 +89,8 @@ wt/
 docs/dumps/
 hooks/zig/
 .serena/memories/
+.factory/
+.factory-seed/
 .factory/closure_pack_*.md
 
 # Agent/tool-generated artifacts and prompt bundles
