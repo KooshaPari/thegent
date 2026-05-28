@@ -3,7 +3,7 @@
 import ast
 
 # Read current file (first 1600 lines)
-with open('src/thegent/protocols/jsonrpc_agent_server.py', 'r') as f:
+with open('src/thegent/protocols/jsonrpc_agent_server.py') as f:
     lines = f.readlines()[:1600]
 content = ''.join(lines)
 
@@ -25,6 +25,5 @@ with open('src/thegent/protocols/jsonrpc_agent_server.py', 'w') as f:
 # Verify syntax
 try:
     ast.parse(content)
-    print('Syntax OK')
 except SyntaxError as e:
-    print('Syntax error at line {}: {}'.format(e.lineno, e.msg))
+    pass

@@ -12,7 +12,6 @@ def register_modules_commands(
     **kwargs: Any,
 ) -> None:
     """Register module-related commands."""
-    pass
 
 
 __all__ = ["register_modules_commands"]

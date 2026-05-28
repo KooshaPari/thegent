@@ -12,9 +12,9 @@ class EvalResult:
     metric: str
     value: float
     passed: bool
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[dict[str, Any]] = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "metric": self.metric,
             "value": self.value,
@@ -28,7 +28,7 @@ class EvalPipeline:
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         pass
     
-    def run(self, *args: Any, **kwargs: Any) -> List[EvalResult]:
+    def run(self, *args: Any, **kwargs: Any) -> list[EvalResult]:
         return []
     
     def add_metric(self, *args: Any, **kwargs: Any) -> None:

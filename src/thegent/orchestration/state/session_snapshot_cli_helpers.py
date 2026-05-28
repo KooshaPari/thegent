@@ -5,7 +5,6 @@ from typing import Any
 
 class SessionSnapshotCLIHelpers:
     """CLI helpers for session snapshots."""
-    pass
 
 
 def format_snapshot(snapshot: Any) -> str:

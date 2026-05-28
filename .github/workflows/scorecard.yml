@@ -1,4 +1,11 @@
+permissions:
+  contents: read
+
 name: OpenSSF Scorecard
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   branch_protection_rule:
   schedule:
@@ -11,7 +18,7 @@ permissions: read-all
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       security-events: write
       id-token: write

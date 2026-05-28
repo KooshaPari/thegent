@@ -14,7 +14,7 @@ docs/docset/
 # Rust build artifacts (1.5GB+)
 crates/target/
 **/target/
-Cargo.lock
+!crates/Cargo.lock
 
 # Node modules (689MB)
 node_modules/
@@ -163,3 +163,13 @@ trace-wtrees/
 apps/*
 !apps/landing/
 !apps/landing/**
+package-lock.json
+
+# ===== Standard auto-generated hygiene ignores (do not edit manually) =====
+.env
+.env.*
+!.env.example
+target/
+target-*/
+coverage/
+# ===== End standard hygiene ignores =====

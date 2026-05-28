@@ -105,9 +105,7 @@ class SkillDiscovery:
             if i == 0 and line.startswith("# "):
                 name = line[2:].strip()
                 has_h1 = True
-            elif not has_h1 and line.strip():
-                instructions += line + "\n"
-            elif has_h1:
+            elif (not has_h1 and line.strip()) or has_h1:
                 instructions += line + "\n"
         manifest = SkillManifest(
             name=name,

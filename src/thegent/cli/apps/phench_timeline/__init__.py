@@ -13,7 +13,6 @@ def register_timeline_commands(
     **kwargs: Any,
 ) -> None:
     """Register timeline commands with the given app."""
-    pass
 
 
 __all__ = ["register_timeline_commands"]

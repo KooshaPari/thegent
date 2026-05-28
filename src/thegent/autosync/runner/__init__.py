@@ -13,7 +13,6 @@ class AutoSyncRunner:
 
     def __init__(self) -> None:
         """Initialize the runner."""
-        pass
 
     def run(self) -> dict[str, Any]:
         """Run the sync.
@@ -35,7 +34,6 @@ class WorkstreamAutosyncRunner:
 
     def __init__(self) -> None:
         """Initialize the runner."""
-        pass
 
     def run(self) -> dict[str, Any]:
         """Run the workstream sync."""

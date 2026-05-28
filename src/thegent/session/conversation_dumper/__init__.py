@@ -1,11 +1,11 @@
 """Stub module."""
 import json
-import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
-DEFAULT_DUMPS_DIR = os.path.expanduser("~/.thegent/dumps")
+DEFAULT_DUMPS_DIR = Path("~/.thegent/dumps").expanduser()
 
 
 class ConversationDumper:

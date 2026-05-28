@@ -28,7 +28,6 @@ class CompositorProfiler:
 
     def start(self) -> None:
         """Start profiling."""
-        pass
 
     def stop(self) -> dict[str, Any]:
         """Stop profiling and return results."""

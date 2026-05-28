@@ -10,7 +10,6 @@ def load_bench_records(limit: int = 100) -> list[dict[str, Any]]:
 
 def append_bench_record(record: dict[str, Any]) -> None:
     """Append a benchmark record to storage."""
-    pass
 
 
 __all__ = ["load_bench_records", "append_bench_record"]

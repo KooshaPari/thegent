@@ -51,7 +51,6 @@ def server_resolve_cwd_elicitation(cwd: str | None = None) -> str:
 
 def hotreload(enabled: bool = True) -> None:
     """Enable or disable hotreload."""
-    pass
 
 
 __all__ = [

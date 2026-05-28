@@ -34,7 +34,6 @@ class ACPClientError(Exception):
 class ACPServerUnreachableError(Exception):
     """Raised when the ACP server cannot be reached."""
 
-    pass
 
 
 # ---------------------------------------------------------------------------

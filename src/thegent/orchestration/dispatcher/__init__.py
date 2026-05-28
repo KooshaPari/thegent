@@ -14,7 +14,7 @@ class DispatchConfig:
     timeout_s: float = 30.0
     retry_count: int = 3
     priority: int = 0
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
     max_concurrent: int = 1
     hitl_enabled: bool = False
 
@@ -72,7 +72,7 @@ class SubAgentDispatcher:
         """Stop the dispatcher."""
         self._running = False
 
-    def dispatch(self, task: str, context: dict = None, config: DispatchConfig | None = None) -> DispatchResult:
+    def dispatch(self, task: str, context: dict | None = None, config: DispatchConfig | None = None) -> DispatchResult:
         """Dispatch a task to a sub-agent.
 
         Args:
@@ -86,7 +86,7 @@ class SubAgentDispatcher:
         cfg = config or DispatchConfig()
         return DispatchResult(success=True, task_id=task)
 
-    async def execute_task(self, task: Any, config: DispatchConfig) -> Tuple[str, bool, Optional[str]]:
+    async def execute_task(self, task: Any, config: DispatchConfig) -> tuple[str, bool, Optional[str]]:
         """Execute a task with given config.
 
         Args:
@@ -113,7 +113,7 @@ class SubAgentDispatcher:
         except Exception as e:
             return ("", False, str(e))
 
-    async def _execute_task(self, node: Any, runner_name: str | None = None) -> Tuple[str, bool, Optional[str]]:
+    async def _execute_task(self, node: Any, runner_name: str | None = None) -> tuple[str, bool, Optional[str]]:
         """Internal method to execute a task.
 
         Args:
@@ -161,7 +161,7 @@ class SubAgentDispatcher:
         except Exception as e:
             return ("", False, f"{type(e).__name__}: {str(e)}")
 
-    async def _check_hitl_gate(self, node: Any, config: Any) -> Optional[Tuple[str, bool, Optional[str]]]:
+    async def _check_hitl_gate(self, node: Any, config: Any) -> Optional[tuple[str, bool, Optional[str]]]:
         """Check HITL approval gate.
 
         Args:

@@ -27,4 +27,3 @@ __all__ = ["GpuInfo", "GpuMonitor", "GpuMonitorError"]
 class GpuMonitorError(Exception):
     """Error in GPU monitoring."""
 
-    pass

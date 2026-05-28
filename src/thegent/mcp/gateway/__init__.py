@@ -23,7 +23,7 @@ class McpServerConfig:
         self.host = kwargs.get('host', 'localhost')
         self.port = kwargs.get('port', 8080)
         self.name = kwargs.get('name', 'mcp-server')
-        self.transport = kwargs.get('transport', None)
+        self.transport = kwargs.get('transport')
         for k, v in kwargs.items():
             if not hasattr(self, k):
                 setattr(self, k, v)
@@ -168,7 +168,7 @@ class McpGateway:
             return McpToolResult(
                 call_id=tool_call.call_id,
                 success=False,
-                error=f"transport_error: command not found",
+                error="transport_error: command not found",
             )
         except (json.JSONDecodeError, UnicodeDecodeError):
             return McpToolResult(
@@ -213,7 +213,7 @@ class GatewayClient:
     def __init__(self, gateway: McpGateway | None = None):
         self.gateway = gateway or get_mcp_gateway()
 
-    def exec(self, server_id: str, tool: str, arguments: dict = None, timeout_s: float = 30.0) -> str:
+    def exec(self, server_id: str, tool: str, arguments: dict | None = None, timeout_s: float = 30.0) -> str:
         """Execute a tool call and return the result.
 
         Args:

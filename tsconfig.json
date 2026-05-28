@@ -5,11 +5,21 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "noEmit": true,
-    "lib": ["ESNext", "DOM"],
-    "types": ["@playwright/test"]
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "types": [
+      "@playwright/test"
+    ],
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true
   },
   "references": [
-    { "path": "./docs/.vitepress" }
+    {
+      "path": "./docs/.vitepress"
+    }
   ],
   "include": [
     "recordings/**/*.ts"

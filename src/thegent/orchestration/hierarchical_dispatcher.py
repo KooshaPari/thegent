@@ -23,7 +23,6 @@ class AgentLifecycleState(Enum):
     RUNNING = "running"
     PAUSED = "paused"
     COMPLETED = "completed"
-    FINISHED = "completed"  # Alias for backward compatibility
     FAILED = "failed"
     PRUNED = "pruned"
 
@@ -76,13 +75,11 @@ class HierarchicalDispatchRequest:
 class AgentCapExceededError(Exception):
     """Raised when agent cap (per-session or system-wide) is exceeded."""
 
-    pass
 
 
 class MaxDepthExceededError(Exception):
     """Raised when maximum hierarchy depth is exceeded."""
 
-    pass
 
 
 class SessionAgentRegistry:

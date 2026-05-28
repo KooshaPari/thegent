@@ -126,7 +126,4 @@ class TailscaleComputePool:
 
     def offload_task(self, task: dict) -> bool:
         """Offload a task to an available Tailscale node."""
-        for node in self.nodes:
-            if node.offload(task):
-                return True
-        return False
+        return any(node.offload(task) for node in self.nodes)

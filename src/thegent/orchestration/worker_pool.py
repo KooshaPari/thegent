@@ -10,8 +10,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
 
 
 @dataclass
@@ -154,7 +152,6 @@ class WorkerPool:
 
     def shutdown(self) -> None:
         """Shutdown the worker pool."""
-        pass
 
 
 __all__ = ["TaskRequest", "TaskResult", "TaskWorkerPool", "Worker", "WorkerPool"]

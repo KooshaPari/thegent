@@ -8,12 +8,10 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    pass
 
 
 @dataclass
@@ -71,7 +69,7 @@ class ShadowAuditGit:
 
         Returns the entry ID.
         """
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 """

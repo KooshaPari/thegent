@@ -2,8 +2,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
 
 
 def detect_drift(baseline: dict[str, Any], current: dict[str, Any]) -> bool:

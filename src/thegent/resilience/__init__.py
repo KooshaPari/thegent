@@ -198,9 +198,8 @@ def http_retry(
                             )
                             time.sleep(attempt * 0.5)
                             continue
-                        else:
-                            # Return the result (will be last attempt's result)
-                            return result
+                        # Return the result (will be last attempt's result)
+                        return result
 
                 return result
 

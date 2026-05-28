@@ -13,7 +13,6 @@ class AutoSync:
 
     def __init__(self) -> None:
         """Initialize the auto-sync."""
-        pass
 
     def sync(self) -> dict[str, Any]:
         """Perform synchronization.

@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-def parse_yaml_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
+def parse_yaml_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """Parse YAML frontmatter from markdown content.
 
     Args:
@@ -66,7 +66,7 @@ def detect_task_format(content: str) -> str:
     return 'unknown'
 
 
-def extract_markdown_sections(body: str) -> Dict[str, str]:
+def extract_markdown_sections(body: str) -> dict[str, str]:
     """Extract markdown sections by header."""
     sections = {}
     current_section = None
@@ -78,9 +78,8 @@ def extract_markdown_sections(body: str) -> Dict[str, str]:
                 sections[current_section] = '\n'.join(current_content).strip()
             current_section = line[3:].strip().lower().replace(' ', '_')
             current_content = []
-        else:
-            if current_section:
-                current_content.append(line)
+        elif current_section:
+            current_content.append(line)
 
     if current_section:
         sections[current_section] = '\n'.join(current_content).strip()
@@ -88,9 +87,9 @@ def extract_markdown_sections(body: str) -> Dict[str, str]:
     return sections
 
 
-def parse_legacy_task(content: str) -> Dict[str, Any]:
+def parse_legacy_task(content: str) -> dict[str, Any]:
     """Parse legacy task format (backward compatibility)."""
-    task: Dict[str, Any] = {}
+    task: dict[str, Any] = {}
 
     task_match = re.search(r'TASK\s*\(([^:]+):\s*"([^"]+)"\)', content)
     if task_match:
@@ -163,7 +162,7 @@ def parse_legacy_task(content: str) -> Dict[str, Any]:
     return task
 
 
-def parse_task_file(file_path: Path) -> Dict[str, Any]:
+def parse_task_file(file_path: Path) -> dict[str, Any]:
     """Parse a task file (auto-detects format).
 
     Args:
@@ -181,7 +180,7 @@ def parse_task_file(file_path: Path) -> Dict[str, Any]:
     if format_type == 'yaml_frontmatter':
         frontmatter, body = parse_yaml_frontmatter(content)
         sections = extract_markdown_sections(body)
-        task: Dict[str, Any] = {**frontmatter, **sections}
+        task: dict[str, Any] = {**frontmatter, **sections}
         return task
     elif format_type == 'legacy':
         return parse_legacy_task(content)

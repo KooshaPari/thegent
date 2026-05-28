@@ -1,3 +1,0 @@
-{
-  "tests/test_local.py::test_import_kinfra_missing_raises_helpful_error": true
-}

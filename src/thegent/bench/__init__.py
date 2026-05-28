@@ -19,7 +19,7 @@ class BenchmarkResult:
     mean_time: float
     std_dev: float
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "iterations": self.iterations,
@@ -53,7 +53,7 @@ class BenchStore:
     def load(self, name: str) -> Optional[BenchmarkResult]:
         return None
     
-    def list_all(self) -> List[str]:
+    def list_all(self) -> list[str]:
         return []
 
 __all__ = ["BenchmarkResult", "BenchRunner", "BenchStore"]

@@ -571,7 +571,7 @@ def hashable_dataclass(cls: type) -> type:
             # Restore the hash method from SerializableMixin
             cls.__hash__ = SerializableMixin.__serializable_hash__
         # Also restore the custom __repr__ for cleaner output
-        setattr(cls, "__repr__", SerializableMixin.__repr__)
+        cls.__repr__ = SerializableMixin.__repr__
     return cls
 
 

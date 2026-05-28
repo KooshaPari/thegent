@@ -16,7 +16,6 @@ def register_run_commands(
     **kwargs: Any,
 ) -> None:
     """Register run commands with the given app."""
-    pass
 
 
 __all__ = ["register_run_commands"]

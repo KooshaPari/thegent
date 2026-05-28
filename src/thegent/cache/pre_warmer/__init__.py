@@ -35,7 +35,6 @@ class CachePreWarmer:
 
     def warm(self, cache: object) -> None:
         """Warm the cache with pre-configured keys."""
-        pass
 
 
 def _backoff_delay(attempt: int, base: float = 1.0, max_delay: float = 60.0) -> float:
