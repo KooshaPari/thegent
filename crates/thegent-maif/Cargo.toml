@@ -15,5 +15,7 @@ pkcs8 = { version = "0.10.2", features = ["pem"] }
 sha2 = "0.11.0"
 base64 = "0.22.1"
 thiserror = "2.0.18"
+anyhow = "1.0"
+which = "8.0"
 rand = "0.10.1"
 clap = { version = "4.5.59", features = ["derive"] }

@@ -25,7 +25,7 @@ pub fn artifact_hash_bytes(canonical_json: &[u8]) -> String {
 #[cfg_attr(all(feature = "python", not(test)), pyfunction)]
 pub fn sign_artifact_bytes(canonical_json: &[u8], secret_key: &str) -> String {
     let mut mac =
-        HmacSha256::new_from_slice(secret_key.as_bytes()).expect("HMAC accepts any key size");
+        <HmacSha256 as Mac>::new_from_slice(secret_key.as_bytes()).expect("HMAC accepts any key size");
     mac.update(canonical_json);
     let result = mac.finalize();
     let bytes = result.into_bytes();
