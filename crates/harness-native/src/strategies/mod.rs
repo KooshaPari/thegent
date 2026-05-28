@@ -70,7 +70,12 @@ pub fn execute(req: ExecRequest<'_>) -> Result<i32, String> {
             &full_args,
         ),
         "incremental" => incremental::run(req.real_cmd, &full_args),
-        "circuit_breaker" => circuit_breaker::run(req.real_cmd, &full_args),
+        "circuit_breaker" => circuit_breaker::run(
+            req.real_cmd,
+            req.opts.breaker_threshold,
+            req.opts.breaker_window,
+            &full_args,
+        ),
         "resource_throttle" => resource_throttle::run(req.real_cmd, &full_args),
         "jobserver" => jobserver::run(req.real_cmd, &full_args),
         "load_balance" => load_balance::run(req.real_cmd, &full_args),
