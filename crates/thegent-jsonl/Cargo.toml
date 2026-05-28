@@ -1,9 +1,13 @@
 [package]
-name = "thegent-maif"
+name = "thegent-jsonl"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "MAIF (Model-Aware Information Flow) Action Artifacts for thegent"
+description = "BKM-10: thegent-jsonl streaming JSONL parser (Rust binary + library)"
+
+[[bin]]
+name = "thegent-jsonl"
+path = "src/main.rs"
 
 [dependencies]
 serde = { version = "1.0.228", features = ["derive"] }
