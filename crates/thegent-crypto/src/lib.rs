@@ -2,7 +2,7 @@
 //! Expects canonical JSON bytes (sorted keys). Python uses orjson for canonical.
 
 use base16ct::lower;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::{Digest, Sha256};
 
 #[cfg(all(feature = "python", not(test)))]
@@ -24,8 +24,7 @@ pub fn artifact_hash_bytes(canonical_json: &[u8]) -> String {
 /// HMAC-SHA256 hex signature of canonical JSON bytes.
 #[cfg_attr(all(feature = "python", not(test)), pyfunction)]
 pub fn sign_artifact_bytes(canonical_json: &[u8], secret_key: &str) -> String {
-    let mut mac =
-        <HmacSha256 as Mac>::new_from_slice(secret_key.as_bytes()).expect("HMAC accepts any key size");
+    let mut mac = HmacSha256::new_from_slice(secret_key.as_bytes()).expect("HMAC accepts any key size");
     mac.update(canonical_json);
     let result = mac.finalize();
     let bytes = result.into_bytes();

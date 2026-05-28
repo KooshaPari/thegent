@@ -11,6 +11,10 @@ repository = "https://github.com/KooshaPari/thegent-plugin-host"
 documentation = "https://docs.kooshapari.com/thegent-plugin-host"
 keywords = ["plugin", "host", "loader", "thegent", "agent"]
 
+[lib]
+name = "thegent_plugin_host"
+crate-type = ["lib", "cdylib", "staticlib"]
+
 [dependencies]
 # Core
 serde = { version = "1.0", features = ["derive"] }
@@ -35,7 +39,6 @@ async-trait = "0.1"
 # CLI
 clap = { version = "4.5", features = ["derive"] }
 
-# Testing
 [dev-dependencies]
 tempfile = "3.9"
 mockall = "0.12"
@@ -45,7 +48,3 @@ proptest = "1.4"
 default = ["runtime-native"]
 runtime-native = []
 runtime-dynamic = []
-
-[[test]]
-name = "integration"
-path = "tests/integration.rs"
