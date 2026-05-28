@@ -1,10 +1,6 @@
-use std::os::unix::process::CommandExt;
 use std::path::Path;
-use std::process::Command;
 
 pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {
-    // TODO: Batch execution
-    let err = Command::new(real_cmd).args(args).exec();
-    eprintln!("exec {:?} failed: {}", real_cmd, err);
-    std::process::exit(127);
+    let _ = (real_cmd, args);
+    Err("batch strategy expects the caller to chunk file arguments before execution".to_string())
 }
