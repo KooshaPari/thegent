@@ -5490,15 +5490,17 @@ dependencies = [
 name = "thegent-jsonl"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "blake3",
+ "base64 0.22.1",
+ "chrono",
  "clap",
- "pyo3",
+ "pkcs8",
+ "rand 0.10.1",
+ "rsa",
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "tempfile",
  "thiserror 2.0.18",
+ "uuid",
 ]
 
 [[package]]
@@ -5513,7 +5515,7 @@ dependencies = [
  "rsa",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "thiserror 2.0.18",
  "uuid",
 ]

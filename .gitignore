@@ -170,5 +170,6 @@ package-lock.json
 .env.*
 !.env.example
 target/
+target-*/
 coverage/
 # ===== End standard hygiene ignores =====
