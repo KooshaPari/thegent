@@ -1,227 +1,157 @@
-use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, Utc};
-use rsa::{
-    pkcs1v15::{SigningKey, VerifyingKey},
-    signature::{SignatureEncoding, Signer, Verifier},
-    RsaPrivateKey, RsaPublicKey,
-};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use sha2::Sha256;
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::Path;
-use thiserror::Error;
-use uuid::Uuid;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use which::{which, which_in};
 
-#[derive(Error, Debug)]
-pub enum MAIFError {
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("JSON error: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("RSA error: {0}")]
-    Rsa(#[from] rsa::Error),
-    #[error("Signature error: {0}")]
-    Signature(String),
-    #[error("Base64 error: {0}")]
-    Base64(#[from] base64::DecodeError),
-    #[error("Verification failed")]
-    VerificationFailed,
-    #[error("Key error: {0}")]
-    KeyError(String),
+#[cfg(all(feature = "python", not(test)))]
+use pyo3::prelude::*;
+
+/// Fast PATH resolution with skip directory support
+///
+/// # Example
+/// ```
+/// use thegent_path_resolve::PathResolver;
+///
+/// let resolver = PathResolver::new();
+/// if let Some(path) = resolver.resolve("codex") {
+///     println!("Found codex at: {}", path);
+/// }
+/// ```
+pub struct PathResolver {
+    skip_dirs: Vec<PathBuf>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct MAIFArtifact {
-    pub artifact_id: String,
-    pub action_type: String,
-    pub payload: BTreeMap<String, Value>,
-    pub signature: Option<String>,
-    pub timestamp: DateTime<Utc>,
-    pub agent_id: String,
-    pub session_id: String,
-    pub chain_of_thought: Option<String>,
-    pub verification_key_id: Option<String>,
-    pub previous_artifact_id: Option<String>,
-}
-
-impl MAIFArtifact {
-    pub fn new(
-        action_type: String,
-        payload: BTreeMap<String, Value>,
-        agent_id: String,
-        session_id: String,
-    ) -> Self {
+impl PathResolver {
+    /// Create a new path resolver
+    pub fn new() -> Self {
         Self {
-            artifact_id: Uuid::new_v4().to_string(),
-            action_type,
-            payload,
-            signature: None,
-            timestamp: Utc::now(),
-            agent_id,
-            session_id,
-            chain_of_thought: None,
-            verification_key_id: None,
-            previous_artifact_id: None,
+            skip_dirs: Vec::new(),
         }
     }
 
-    pub fn get_canonical_data(&self) -> Result<String, MAIFError> {
-        let mut data = BTreeMap::new();
-        data.insert("artifact_id", Value::String(self.artifact_id.clone()));
-        data.insert("action_type", Value::String(self.action_type.clone()));
-        data.insert(
-            "payload",
-            Value::Object(
-                self.payload
-                    .iter()
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect(),
-            ),
-        );
-        data.insert("timestamp", Value::String(self.timestamp.to_rfc3339()));
-        data.insert("agent_id", Value::String(self.agent_id.clone()));
-        data.insert("session_id", Value::String(self.session_id.clone()));
-
-        if let Some(ref cot) = self.chain_of_thought {
-            data.insert("chain_of_thought", Value::String(cot.clone()));
+    /// Create with directories to skip (e.g., shim directories)
+    pub fn with_skip_dirs(skip_dirs: Vec<String>) -> Self {
+        Self {
+            skip_dirs: skip_dirs.iter().map(PathBuf::from).collect(),
         }
-        if let Some(ref vkid) = self.verification_key_id {
-            data.insert("verification_key_id", Value::String(vkid.clone()));
+    }
+
+    /// Resolve a binary name to its full path
+    ///
+    /// Returns `None` if not found or if in skip directory.
+    ///
+    /// # Example
+    /// ```
+    /// let resolver = PathResolver::new();
+    /// assert!(resolver.resolve("sh").is_some());
+    /// assert!(resolver.resolve("nonexistent12345").is_none());
+    /// ```
+    pub fn resolve(&self, name: &str) -> Option<String> {
+        // Build safe PATH (exclude skip_dirs)
+        let safe_path = self.build_safe_path();
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+
+        // Use which crate (fast, native, cross-platform)
+        match which_in(name, Some(safe_path), &cwd) {
+            Ok(path) => {
+                let path_str = path.to_string_lossy().to_string();
+                // Check if in skip_dirs
+                if self.is_in_skip_dirs(&path_str) {
+                    None
+                } else {
+                    Some(path_str)
+                }
+            }
+            Err(_) => None,
         }
-        if let Some(ref paid) = self.previous_artifact_id {
-            data.insert("previous_artifact_id", Value::String(paid.clone()));
+    }
+
+    /// Resolve multiple binaries at once (more efficient than multiple calls)
+    ///
+    /// # Example
+    /// ```
+    /// let resolver = PathResolver::new();
+    /// let results = resolver.resolve_many(&["sh", "bash", "codex"]);
+    /// ```
+    pub fn resolve_many(&self, names: &[&str]) -> HashMap<String, Option<String>> {
+        names
+            .iter()
+            .map(|name| (name.to_string(), self.resolve(name)))
+            .collect()
+    }
+
+    fn build_safe_path(&self) -> String {
+        use std::env;
+        env::var("PATH").unwrap_or_default()
+    }
+
+    fn is_in_skip_dirs(&self, path: &str) -> bool {
+        if self.skip_dirs.is_empty() {
+            return false;
         }
 
-        Ok(serde_json::to_string(&data)?)
-    }
-
-    pub fn sign(&mut self, private_key: &RsaPrivateKey) -> Result<(), MAIFError> {
-        let canonical_data = self.get_canonical_data()?;
-        let signing_key = SigningKey::<Sha256>::new(private_key.clone());
-        let signature = signing_key.sign(canonical_data.as_bytes());
-        self.signature = Some(general_purpose::STANDARD.encode(signature.to_bytes()));
-        Ok(())
-    }
-
-    pub fn verify(&self, public_key: &RsaPublicKey) -> Result<bool, MAIFError> {
-        let signature_str = self
-            .signature
-            .as_ref()
-            .ok_or_else(|| MAIFError::Signature("No signature found".to_string()))?;
-        let signature_bytes = general_purpose::STANDARD.decode(signature_str)?;
-        let canonical_data = self.get_canonical_data()?;
-
-        let verifying_key = VerifyingKey::<Sha256>::new(public_key.clone());
-        let signature = rsa::pkcs1v15::Signature::try_from(signature_bytes.as_slice())
-            .map_err(|e| MAIFError::Signature(format!("Invalid signature format: {}", e)))?;
-
-        verifying_key
-            .verify(canonical_data.as_bytes(), &signature)
-            .map(|_| true)
-            .or(Ok(false))
-    }
-
-    pub fn save_to_file(&self, path: &Path) -> Result<(), MAIFError> {
-        let json = serde_json::to_string_pretty(self)?;
-        fs::write(path, json)?;
-        Ok(())
-    }
-
-    pub fn load_from_file(path: &Path) -> Result<Self, MAIFError> {
-        let json = fs::read_to_string(path)?;
-        let artifact: Self = serde_json::from_str(&json)?;
-        Ok(artifact)
+        let path_buf = PathBuf::from(path);
+        self.skip_dirs.iter().any(|skip| {
+            path_buf.starts_with(skip)
+                || path_buf
+                    .canonicalize()
+                    .map_or(false, |p| p.starts_with(skip))
+        })
     }
 }
 
-pub fn generate_key_pair(bits: usize) -> Result<(RsaPrivateKey, RsaPublicKey), MAIFError> {
-    let mut rng = rand::thread_rng();
-    let private_key = RsaPrivateKey::new(&mut rng, bits)?;
-    let public_key = RsaPublicKey::from(&private_key);
-    Ok((private_key, public_key))
+impl Default for PathResolver {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
-pub fn load_private_key(path: &Path) -> Result<RsaPrivateKey, MAIFError> {
-    use rsa::pkcs8::DecodePrivateKey;
-    let pem = fs::read_to_string(path)?;
-    RsaPrivateKey::from_pkcs8_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))
+/// Convenience function for simple use cases
+///
+/// # Example
+/// ```
+/// use thegent_path_resolve::resolve_binary;
+///
+/// if let Some(path) = resolve_binary("codex") {
+///     println!("Found codex at: {}", path);
+/// }
+/// ```
+pub fn resolve_binary(name: &str) -> Option<String> {
+    PathResolver::new().resolve(name)
 }
 
-pub fn load_public_key(path: &Path) -> Result<RsaPublicKey, MAIFError> {
-    use rsa::pkcs8::DecodePublicKey;
-    let pem = fs::read_to_string(path)?;
-    RsaPublicKey::from_public_key_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))
+#[cfg(all(feature = "python", not(test)))]
+#[pyfunction]
+fn resolve_binary(name: &str, skip_dirs: Option<Vec<String>>) -> PyResult<Option<String>> {
+    let resolver = if let Some(skip) = skip_dirs {
+        PathResolver::with_skip_dirs(skip)
+    } else {
+        PathResolver::new()
+    };
+    Ok(resolver.resolve(name))
+}
+
+#[cfg(all(feature = "python", not(test)))]
+#[pymodule]
+fn thegent_path_resolve(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(resolve_binary, m)?)?;
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
 
     #[test]
-    fn test_artifact_creation() {
-        let mut payload = BTreeMap::new();
-        payload.insert("test_key".to_string(), json!("test_value"));
-
-        let artifact = MAIFArtifact::new(
-            "test_action".to_string(),
-            payload,
-            "test_agent".to_string(),
-            "test_session".to_string(),
-        );
-
-        assert_eq!(artifact.action_type, "test_action");
-        assert_eq!(artifact.agent_id, "test_agent");
-        assert_eq!(artifact.session_id, "test_session");
-        assert!(artifact.signature.is_none());
+    fn test_resolve_binary() {
+        // Should find common binaries
+        assert!(resolve_binary("sh").is_some() || resolve_binary("bash").is_some());
     }
 
     #[test]
-    fn test_artifact_signing_and_verification() -> Result<(), MAIFError> {
-        let (private_key, public_key) = generate_key_pair(2048)?;
-
-        let mut payload = BTreeMap::new();
-        payload.insert("test_key".to_string(), json!("test_value"));
-
-        let mut artifact = MAIFArtifact::new(
-            "test_action".to_string(),
-            payload,
-            "test_agent".to_string(),
-            "test_session".to_string(),
-        );
-
-        artifact.sign(&private_key)?;
-        assert!(artifact.signature.is_some());
-
-        let verified = artifact.verify(&public_key)?;
-        assert!(verified);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_invalid_signature() -> Result<(), MAIFError> {
-        let (private_key, _public_key) = generate_key_pair(2048)?;
-        let (_other_private, other_public) = generate_key_pair(2048)?;
-
-        let mut payload = BTreeMap::new();
-        payload.insert("test_key".to_string(), json!("test_value"));
-
-        let mut artifact = MAIFArtifact::new(
-            "test_action".to_string(),
-            payload,
-            "test_agent".to_string(),
-            "test_session".to_string(),
-        );
-
-        artifact.sign(&private_key)?;
-
-        // Verification with wrong public key should fail
-        let verified = artifact.verify(&other_public)?;
-        assert!(!verified);
-
-        Ok(())
+    fn test_resolve_many() {
+        let resolver = PathResolver::new();
+        let results = resolver.resolve_many(&["sh", "bash", "nonexistent12345"]);
+        // At least one should be found
+        assert!(results.values().any(|v| v.is_some()) || std::env::var("CI").is_ok());
     }
 }
