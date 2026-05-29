@@ -10,7 +10,6 @@ def register_repos_commands(
     **kwargs: Any,
 ) -> None:
     """Register repos-related CLI commands."""
-    pass
 
 
 __all__ = ["register_repos_commands"]

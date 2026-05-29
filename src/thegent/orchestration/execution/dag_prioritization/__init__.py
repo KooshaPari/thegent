@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 class DagCycleError(Exception):
     """Error raised when a cycle is detected in a DAG."""
-    pass
 
 
 class DependencyRouter:

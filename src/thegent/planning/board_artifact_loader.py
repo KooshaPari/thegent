@@ -7,7 +7,7 @@ for integration into thegent workstream management.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -195,7 +195,7 @@ class BoardArtifactLoader:
                 "total_slices": len(self.slices),
                 "wl_ids_covered": len(wl_map),
             },
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
         }
 
     def get_completion_status(self) -> dict[str, Any]:
@@ -221,7 +221,7 @@ class BoardArtifactLoader:
         return {
             "slices": slices_status,
             "overall_completion_pct": overall,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
         }
 
 

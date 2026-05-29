@@ -51,7 +51,7 @@ class KPIDashboard:
 
         # Parse telemetry
         runs: dict[str, dict[str, Any]] = {}
-        with open(registry_file, "r", encoding="utf-8") as f:
+        with open(registry_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     event = json.loads(line.strip())
@@ -93,7 +93,7 @@ class KPIDashboard:
             value: Metric value.
             timestamp: Optional timestamp, defaults to now.
         """
-        ts = timestamp or datetime.utcnow()
+        ts = timestamp or datetime.now(UTC)
         self.metrics[name] = value
         self.history.append({
             "name": name,

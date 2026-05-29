@@ -13,7 +13,6 @@ class UICompositor:
 
     def __init__(self) -> None:
         """Initialize the compositor."""
-        pass
 
     def compose(self, components: list[Any]) -> Any:
         """Compose multiple UI components.

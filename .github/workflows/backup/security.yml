@@ -21,7 +21,7 @@ jobs:
   # Secret Scanning (always runs - lightweight)
   secrets:
     name: Secret Detection
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -38,7 +38,7 @@ jobs:
   # License Compliance (using reuse-action - lightweight)
   license-compliance:
     name: License Compliance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     # Skip on PRs to save quota - run only on schedule
@@ -58,7 +58,7 @@ jobs:
   # SAST Scanning (Layered - Semgrep primary, CodeQL backup)
   sast:
     name: SAST Analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       security-events: write
     # Skip if no code changes
@@ -105,7 +105,7 @@ jobs:
   # Dependency Vulnerability Scanning
   dependencies:
     name: Dependency Audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'schedule'  # Skip on PRs
     steps:
       - name: Checkout
@@ -127,7 +127,7 @@ jobs:
   # Container Scanning (if Dockerfile exists)
   container:
     name: Container Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'schedule' && hashFiles('Dockerfile') != ''
     steps:
       - name: Checkout

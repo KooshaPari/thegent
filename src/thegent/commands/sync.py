@@ -54,7 +54,7 @@ class SyncCommand:
 
     def __init__(self, project_dir: Path | str = ".", project_root: Path | str | None = None, **kwargs) -> None:
         self.name = "sync"
-        self.project_dir = Path(project_dir) if project_dir else Path(".")
+        self.project_dir = Path(project_dir) if project_dir else Path()
         self.project_root = Path(project_root) if project_root else self.project_dir
         for k, v in kwargs.items():
             setattr(self, k, v)

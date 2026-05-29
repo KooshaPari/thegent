@@ -14,7 +14,7 @@ class QueueStorage:
         self._storage[queue].append(item)
 
     def pop(self, queue: str) -> dict | None:
-        if queue in self._storage and self._storage[queue]:
+        if self._storage.get(queue):
             return self._storage[queue].pop(0)
         return None
 

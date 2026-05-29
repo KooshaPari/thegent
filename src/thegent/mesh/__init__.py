@@ -13,7 +13,7 @@ from .coordination import (
     predict_merge_conflicts,
 )
 from .mesh import MeshManager
-from .smart_merge import SmartMerger, SmartMergeConfig
+from .smart_merge import MergeResult, SmartMerger, SmartMergeConfig, make_smart_merger
 from .task_queue import MaildirQueue
 
 __all__ = [
@@ -28,5 +28,7 @@ __all__ = [
     "MaildirQueue",
     "SmartMerger",
     "SmartMergeConfig",
+    "MergeResult",
+    "make_smart_merger",
     "MeshManager",
 ]

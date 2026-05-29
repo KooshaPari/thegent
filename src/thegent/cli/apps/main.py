@@ -39,7 +39,7 @@ def bg_cmd(
     owner: str | None = typer.Option(None, "--owner", help="Owner tag"),
 ) -> None:
     """Run an agent in background mode."""
-    typer.echo(f"Starting background session...")
+    typer.echo("Starting background session...")
 
 
 @app.command("status", help="Show status of a session.")

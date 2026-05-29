@@ -14,7 +14,6 @@ class ConversationDumper:
 
     def dump(self, data: dict[str, Any]) -> None:
         """Dump conversation data."""
-        pass
 
 
 # Stub implementation - functionality not available

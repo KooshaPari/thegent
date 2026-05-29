@@ -10,7 +10,7 @@ import inspect
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import typer
 from starlette.applications import Starlette
@@ -64,10 +64,14 @@ class AgentSession:
 
     session_id: str
     runner: Any  # AgentRunner
-    cwd: Path = Path.cwd()
+    cwd: Path | None = None
     conversation_history: list[dict[str, str]] = field(default_factory=list)
     is_running: bool = True
     _stop_event: asyncio.Event = field(default_factory=asyncio.Event)
+
+    def __post_init__(self) -> None:
+        if self.cwd is None:
+            self.cwd = Path.cwd()
 
     def add_message(self, role: str, content: str) -> None:
         """Add a message to the conversation history."""
@@ -163,7 +167,7 @@ def resolve_session_backend() -> Any:
 class ACPServerAdapter:
     """ACP server adapter with JSON-RPC and ACP message handling."""
 
-    SUPPORTED_METHODS = [
+    SUPPORTED_METHODS: ClassVar[list[str]] = [
         "initialize",
         "agent/spawn",
         "agent/message",
@@ -454,11 +458,10 @@ class ACPServerAdapter:
                 msg = json.loads(line)
                 if msg.get("type") == "task":
                     resp = await self.handle_acp_message(msg)
-                    print(json.dumps(resp), flush=True)
             except json.JSONDecodeError:
                 pass
             except Exception as e:
-                print(json.dumps({"type": "error", "error": str(e)}), flush=True)
+                pass
 
     async def run_http(self, host: str = "0.0.0.0", port: int = ACP_DEFAULT_PORT) -> None:
         """Run the server in HTTP mode."""

@@ -1,7 +1,11 @@
 name: PR Governance Gate
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review, labeled, unlabeled]
   pull_request_review:
     types: [submitted, edited, dismissed]
@@ -15,7 +19,7 @@ permissions:
 jobs:
   pr-governance-gate:
     name: pr-governance-gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Evaluate PR governance policy
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71

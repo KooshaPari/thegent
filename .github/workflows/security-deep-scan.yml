@@ -1,4 +1,11 @@
+permissions:
+  contents: read
+
 name: Deep Security Scan
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 on:
   push:
@@ -11,12 +18,12 @@ on:
 jobs:
   # 1. Dependency Vulnerability Scan (Snyk-style)
   dependency-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98
         with:
           scan-type: 'fs'
           ignore-unfixed: true
@@ -31,7 +38,7 @@ jobs:
 
   # 2. Secret Scanning (GitLeaks)
   secret-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
@@ -40,11 +47,11 @@ jobs:
       - name: Scan for secrets
         uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
 
   # 3. Code Security Analysis (CodeQL)
   codeql-analysis:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +72,7 @@ jobs:
 
   # 4. Container Security (if Dockerfile exists)
   container-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
@@ -84,7 +91,7 @@ jobs:
       
       - name: Scan image with Trivy
         if: steps.dockerfile.outputs.exists == 'true'
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98
         with:
           image-ref: 'app:${{ github.sha }}'
           format: 'sarif'

@@ -106,7 +106,7 @@ class SmartMerge:
             try:
                 import ruamel.yaml
 
-                yaml = ruamel.yaml.YAML()
+                yaml = ruamel.yaml.YAML(typ="safe")
                 with open(path_a) as f:
                     data_a = yaml.load(f)
                 with open(path_b) as f:

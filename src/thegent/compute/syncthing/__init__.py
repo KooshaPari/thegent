@@ -28,7 +28,6 @@ class SyncthingFolder:
 
 class SyncthingError(Exception):
     """Syncthing error exception."""
-    pass
 
 
 class SyncthingManager:

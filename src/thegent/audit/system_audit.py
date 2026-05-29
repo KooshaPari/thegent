@@ -95,11 +95,11 @@ class SystemAuditor:
 def _extract_pkg_name(package_spec: str) -> str:
     """Extract package name from a package specification."""
     if "==" in package_spec:
-        return package_spec.split("==")[0].strip()
+        return package_spec.split("==", maxsplit=1)[0].strip()
     if ">=" in package_spec:
-        return package_spec.split(">=")[0].strip()
+        return package_spec.split(">=", maxsplit=1)[0].strip()
     if "<=" in package_spec:
-        return package_spec.split("<=")[0].strip()
+        return package_spec.split("<=", maxsplit=1)[0].strip()
     return package_spec.strip().split()[0]
 
 

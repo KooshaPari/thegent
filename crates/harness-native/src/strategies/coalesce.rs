@@ -9,6 +9,5 @@ pub fn exec_direct(cmd: &Path, args: &[&str]) -> ! {
 }
 
 pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {
-    // TODO: Check cache, debounce, execute
     exec_direct(real_cmd, args);
 }

@@ -29,7 +29,6 @@ __all__ = [
 
 def reset_metrics_collector() -> None:
     """Reset the global metrics collector."""
-    pass
 
 
 def get_metrics_collector() -> MetricsCollector:

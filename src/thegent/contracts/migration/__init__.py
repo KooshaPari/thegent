@@ -9,7 +9,6 @@ class MigrationController:
 
     def run(self) -> None:
         """Run pending migrations."""
-        pass
 
 
 __all__ = ["MigrationController"]

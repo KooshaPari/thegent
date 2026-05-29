@@ -12,7 +12,7 @@ import { createRequire } from 'module'
 
 const docsDir = dirname(fileURLToPath(import.meta.url))
 const phenodocsRoot = resolve(docsDir, '../../../phenodocs')
-const phenodocsTheme = resolve(phenodocsRoot, '.vitepress/theme/index.ts')
+const phenodocsTheme = resolve(phenodocsRoot, 'packages/docs/src/theme/index.ts')
 
 const require = createRequire(import.meta.url)
 const markdownItEmoji = require('markdown-it-emoji').full

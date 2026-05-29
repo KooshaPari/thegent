@@ -6,12 +6,12 @@ import csv
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 try:
     import orjson as json
 except ImportError:
-    import json as json
+    import json
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 class BoardArtifactParser:
     """Parser for board artifacts in various formats."""
     
-    REQUIRED_COLUMNS = {"id", "title"}
-    OPTIONAL_COLUMNS = {"status", "priority", "source", "effort", "depends_on", "evidence"}
-    ALL_COLUMNS = REQUIRED_COLUMNS | OPTIONAL_COLUMNS
-    
-    DEFAULT_VALUES = {
+    REQUIRED_COLUMNS: ClassVar[frozenset[str]] = frozenset({"id", "title"})
+    OPTIONAL_COLUMNS: ClassVar[frozenset[str]] = frozenset({"status", "priority", "source", "effort", "depends_on", "evidence"})
+    ALL_COLUMNS: ClassVar[frozenset[str]] = REQUIRED_COLUMNS | OPTIONAL_COLUMNS
+
+    DEFAULT_VALUES: ClassVar[dict[str, Any]] = {
         "status": "BACKLOG",
         "priority": "P2",
         "source": "BOARD",
@@ -43,7 +43,7 @@ class BoardArtifactParser:
         """
         items = []
         try:
-            with open(file_path, "r", newline="", encoding="utf-8") as f:
+            with open(file_path, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     item = self._normalize_row(row)
@@ -66,7 +66,7 @@ class BoardArtifactParser:
         """
         items = []
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.loads(f.read())
             
             if isinstance(data, list):
@@ -177,7 +177,7 @@ class BoardArtifactParser:
         for col in self.ALL_COLUMNS:
             value = row.get(col, "").strip()
             if col in row:
-                if col == "depends_on" and (value == "-" or value == ""):
+                if col == "depends_on" and (value in {"-", ""}):
                     value = None
                 item[col] = value if value else self.DEFAULT_VALUES.get(col)
             else:
@@ -204,11 +204,10 @@ class BoardArtifactParser:
             value = item.get(col, item.get(col.replace("_", "")))
             if value is None or value == "":
                 normalized[col] = self.DEFAULT_VALUES.get(col)
+            elif col == "depends_on" and (value in {"-", ""}):
+                normalized[col] = None
             else:
-                if col == "depends_on" and (value == "-" or value == ""):
-                    normalized[col] = None
-                else:
-                    normalized[col] = value
+                normalized[col] = value
         
         for col in self.REQUIRED_COLUMNS:
             if col not in item or not item[col]:
@@ -231,7 +230,7 @@ class BoardArtifactParser:
 class BoardArtifactIntegrator:
     """Integrator for board artifacts from various sources."""
     
-    EXECUTION_BOARD_PATTERNS = [
+    EXECUTION_BOARD_PATTERNS: ClassVar[list[str]] = [
         r"CLIPPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_(\d{4}-\d{2}-\d{2})\.(csv|json|md)",
         r"EXECUTION_BOARD_(\d{4}-\d{2}-\d{2})\.(csv|json|md)",
     ]

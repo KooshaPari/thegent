@@ -7,7 +7,7 @@ This stub exists for backwards compatibility with existing tests.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 # Re-export from submodules for backwards compatibility
 from thegent.contracts.adapters import AdapterResult, normalize_output, OutputAdapter
@@ -53,7 +53,7 @@ __all__ = [
 class ADAPTER_REGISTRY:
     """Adapter registry for contracts."""
 
-    _adapters: dict[str, Any] = {}
+    _adapters: ClassVar[dict[str, Any]] = {}
 
     @classmethod
     def register(cls, name: str, adapter: Any) -> None:

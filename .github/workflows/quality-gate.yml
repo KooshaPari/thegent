@@ -1,4 +1,11 @@
+permissions:
+  contents: read
+
 name: Quality Gate
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 on:
   pull_request:
@@ -10,7 +17,7 @@ env:
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       has_tests: ${{ steps.check.outputs.has_tests }}
       has_e2e: ${{ steps.check.outputs.has_e2e }}
@@ -30,7 +37,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -67,7 +74,7 @@ jobs:
     name: E2E Tests
     needs: check-changes
     if: needs.check-changes.outputs.has_e2e == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -84,7 +91,7 @@ jobs:
     name: Integration Tests
     needs: check-changes
     if: needs.check-changes.outputs.has_integration == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -99,7 +106,7 @@ jobs:
 
   fr-annotation-check:
     name: FR Annotation Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -137,7 +144,7 @@ jobs:
     name: Quality Report
     needs: [unit-tests, e2e-tests, integration-tests, fr-annotation-check]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 

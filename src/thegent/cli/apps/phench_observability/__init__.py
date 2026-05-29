@@ -9,7 +9,6 @@ def register_observability_commands(
     **kwargs: Any,
 ) -> None:
     """Register observability-related CLI commands."""
-    pass
 
 
 __all__ = ["register_observability_commands"]

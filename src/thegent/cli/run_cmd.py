@@ -5,8 +5,6 @@ from __future__ import annotations
 import subprocess
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
 
 _MODEL_ALIASES = {
     "cursor": "composer-1.5",

@@ -12,7 +12,6 @@ def ensure_valid_csm(data: dict[str, object]) -> None:
 
 class SemanticValidationError(Exception):
     """Exception raised when semantic validation fails."""
-    pass
 
 
 class InvariantViolation(Exception):
