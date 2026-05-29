@@ -26,7 +26,6 @@ class TailscaleClient:
 
 class TailscaleError(Exception):
     """Exception raised for Tailscale errors."""
-    pass
 
 
 __all__ = ["TailscaleConfig", "TailscaleClient", "TailscaleError", "TailscaleManager", "TailscaleNode"]

@@ -14,7 +14,6 @@ class ExecutionEngine:
     
     def cancel(self, task_id: str) -> None:
         """Cancel a running task."""
-        pass
 
 
 class ExecutionContext:

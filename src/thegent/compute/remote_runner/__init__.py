@@ -36,4 +36,3 @@ def load_config_from_env() -> dict[str, Any]:
 
 class RemoteRunnerError(Exception):
     """Exception raised for remote runner errors."""
-    pass

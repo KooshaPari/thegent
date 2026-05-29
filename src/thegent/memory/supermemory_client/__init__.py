@@ -34,12 +34,10 @@ class SupermemoryClient:
 
 class SupermemoryConfigError(Exception):
     """Exception raised for Supermemory configuration errors."""
-    pass
 
 
 class SupermemoryAPIError(Exception):
     """Exception raised for Supermemory API errors."""
-    pass
 
 
 def _is_retryable(exception: Exception) -> bool:

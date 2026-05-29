@@ -64,7 +64,6 @@ class CliproxyHeaderManager:
 
     def __init__(self) -> None:
         """Initialize the header manager."""
-        pass
 
     def get_headers(self) -> dict[str, str]:
         """Get default headers.

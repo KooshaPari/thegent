@@ -31,7 +31,6 @@ class ShadowAuditGit:
         Args:
             event: Event dictionary to record.
         """
-        pass
 
     def get_events(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get recorded events.

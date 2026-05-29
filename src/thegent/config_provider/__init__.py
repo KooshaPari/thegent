@@ -7,7 +7,7 @@ This stub exists for backwards compatibility with existing tests.
 
 from __future__ import annotations
 
-import os
+from pathlib import Path
 from typing import Any
 
 
@@ -24,7 +24,7 @@ class EnvConfigProvider:
         self._base_config: dict[str, Any] = {
             "default_timeout": 300,
             "default_timeout_claude": 180,
-            "session_dir": os.path.expanduser("~/.thegent/sessions"),
+            "session_dir": Path("~/.thegent/sessions").expanduser(),
             "log_level": "INFO",
             "max_retries": 3,
         }

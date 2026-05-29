@@ -1,6 +1,7 @@
 use chrono::{DateTime, FixedOffset};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
+use pyo3::types::{PyBool, PyDict, PyFloat, PyList, PyString};
+use pyo3::IntoPyObjectExt;
 use regex::Regex;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -341,38 +342,34 @@ fn serde_to_py<'py>(py: Python<'py>, v: Value) -> PyResult<Bound<'py, PyAny>> {
     match v {
         Value::Null => Ok(py.None().into_bound(py)),
         Value::Bool(b) => {
-            let obj = b.into_pyobject(py)?;
-            Ok((*obj).clone().into_any())
+            let pybool = PyBool::new(py, b);
+            Ok(pybool.as_any().clone())
         }
         Value::Number(n) => {
             if let Some(i) = n.as_i64() {
-                let obj = i.into_pyobject(py)?;
-                Ok((*obj).clone().into_any())
+                let obj = i.into_bound_py_any(py)?;
+                Ok(obj.as_any().clone())
             } else if let Some(f) = n.as_f64() {
-                let obj = f.into_pyobject(py)?;
-                Ok((*obj).clone().into_any())
+                let pyfloat = PyFloat::new(py, f);
+                Ok(pyfloat.as_any().clone())
             } else {
-                let obj = n.to_string().into_pyobject(py)?;
-                Ok((*obj).clone().into_any())
+                Ok(PyString::new(py, &n.to_string()).as_any().clone())
             }
         }
-        Value::String(s) => {
-            let obj = s.into_pyobject(py)?;
-            Ok((*obj).clone().into_any())
-        }
+        Value::String(s) => Ok(PyString::new(py, &s).as_any().clone()),
         Value::Array(arr) => {
             let list = PyList::empty(py);
             for item in arr {
                 list.append(serde_to_py(py, item)?)?;
             }
-            Ok(list.into_any())
+            Ok(list.as_any().clone())
         }
         Value::Object(obj) => {
             let dict = PyDict::new(py);
             for (k, v) in obj {
                 dict.set_item(k, serde_to_py(py, v)?)?;
             }
-            Ok(dict.into_any())
+            Ok(dict.as_any().clone())
         }
     }
 }

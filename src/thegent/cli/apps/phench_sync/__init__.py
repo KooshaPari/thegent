@@ -12,7 +12,6 @@ def register_sync_commands(
     **kwargs: Any,
 ) -> None:
     """Register sync commands with the given app."""
-    pass
 
 
 __all__ = ["register_sync_commands"]

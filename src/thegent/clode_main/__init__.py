@@ -84,7 +84,6 @@ app = ClodeApp()
 
 def sitback_cmd() -> None:
     """Sitback command stub."""
-    pass
 
 
 def _get_claude_env() -> dict[str, str]:

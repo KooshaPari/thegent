@@ -21,7 +21,6 @@ def register_projects_run(
     audit_shared_modules_fn: Callable[..., Any] | None = None,
 ) -> None:
     """Register projects run commands with the given app."""
-    pass
 
 
 __all__ = ["register_projects_run"]

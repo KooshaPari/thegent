@@ -8,7 +8,6 @@ from typing import Any
 
 class AutomationError(Exception):
     """Error during automation."""
-    pass
 
 
 @dataclass

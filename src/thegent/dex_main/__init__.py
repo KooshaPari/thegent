@@ -18,41 +18,38 @@ _DEX_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox"
 _DEX_YOLO_FLAG = "--dangerously-enable-yolo-mode"
 
 # Model alias mapping
-_MODEL_ALIAS: dict[str, str] = {
+_MODEL_ALIASES: dict[str, str] = {
     # Priority order matters for partial matching
-    "dex": "gpt-5.3-codex",
-    "high": "gpt-5.3-codex-high",
-    "xhigh": "gpt-5.3-codex-xhigh",
-    "max": "minimax-m2.5",
-    "glm": "glm-5",
-    "haiku": "claude-haiku-4.5",
-    "opus": "claude-opus-4.6",
-    "sonnet": "claude-sonnet-4.5",
-    "ultra": "llama-nemotron-ultra",
+    "dex": "dex-1",
+    "high": "codex-high",
+    "xhigh": "codex-xhigh",
+    "max": "gemini-2.5-pro-preview-06-05",
+    "glm": "glm-4",
+    "haiku": "claude-3-haiku-20240307",
+    "opus": "claude-3-opus-20240229",
+    "sonnet": "claude-3-5-sonnet-20241022",
+    "ultra": "gemini-ultra",
     "flash": "gemini-2.5-flash",
-    "mini": "gpt-5-mini",
+    "mini": "gpt-4o-mini",
     # composer variants
-    "CoMp": "composer-1.5",
     "composer": "composer-1.5",
-    "comp": "composer-1.5",
-    "compse": "composer-1.5",
-    "compso": "composer-1.5",
-    "compu": "composer-1.5",
-    "compw": "composer-1.5",
-    "compy": "composer-1.5",
-    "compz": "composer-1.5",
-    "comp0": "composer-1.5",
-    "comp1": "composer-1.5",
-    "comp2": "composer-1.5",
-    "comp3": "composer-1.5",
-    "comp4": "composer-1.5",
-    "comp5": "composer-1.5",
-    "comp6": "composer-1.5",
-    "comp7": "composer-1.5",
-    "comp8": "composer-1.5",
-    "comp9": "composer-1.5",
+    "composer-1": "composer-1",
+    "composer-1.5": "composer-1.5",
+    "cursor": "cursor-1",
+    "cursor-1": "cursor-1",
+    "cursor-2": "cursor-2",
+    # Additional aliases
+    "claude": "claude-3-5-sonnet-20241022",
+    "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
+    "gpt": "gpt-4o",
+    "gpt-4": "gpt-4o",
+    "gpt-4o": "gpt-4o",
+    "gemini": "gemini-2-5-pro-preview-06-05",
+    "gemini-2": "gemini-2-5-pro-preview-06-05",
+    "o1": "o1-preview",
+    "o1-preview": "o1-preview",
+    "o1-mini": "o1-mini",
 }
-
 
 def _get_codex_env() -> dict[str, Any]:
     """Get the Codex environment variables.
@@ -116,12 +113,12 @@ def _resolve_provider_for_model(model_alias: str) -> str:
         import os
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
-    elif model_alias in ("glm",):
+    elif model_alias == "glm":
         providers = ["nim", "kilo", "minimax", "glm"]
         import os
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
-    elif model_alias in ("max",):
+    elif model_alias == "max":
         providers = ["nim", "kilo", "minimax"]
         import os
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)

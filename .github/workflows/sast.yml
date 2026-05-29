@@ -1,4 +1,8 @@
 name: Security (SAST)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main, develop]
@@ -11,7 +15,7 @@ permissions:
 jobs:
   # Tier 1: Fast/Essential
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     continue-on-error: true  # Allow PRs to proceed even if CodeQL fails
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -28,7 +32,7 @@ jobs:
 
   # Tier 3: Expensive/Comprehensive (may have rate limits)
   semgrep:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     continue-on-error: true  # Allow PRs to proceed even if Semgrep fails
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5

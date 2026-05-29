@@ -15,15 +15,21 @@ import re
 from typing import Any
 
 from .env_doctor import run_env_doctor
-from .discovery import RepoCandidate, discover_local_git_repos
-from .git_ops import (
-    detect_head_branch,
-    list_timeline,
-    materialize_repo_checkout,
-    resolve_ref_to_sha,
-    sanitize_repo_id,
-)
-from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
+
+__all__ = [
+    'add_module_to_target', 'add_repo', 'audit_shared_modules',
+    'audit_shared_modules_across_repos', 'bootstrap_target', 'build_catalog',
+    'build_module_manifest_payload', 'build_project_execution_matrix', 'build_scan_candidates',
+    'create_target_snapshot', 'discover_repos', 'get_env_profile',
+    'import_repos', 'init_target', 'list_modules',
+    'list_target_snapshots', 'list_targets', 'load_module_manifest',
+    'load_module_repos', 'load_target_lock', 'lock_target',
+    'materialize_module_candidate_manifest', 'materialize_scan_candidate_manifest', 'materialize_target',
+    'run_env_doctor_for_target', 'run_target', 'scan_shared_modules_across_repos',
+    'set_env_profile', 'set_repo_ref', 'show_target_snapshot',
+    'sync_project_modules_from_repos', 'sync_target', 'target_status',
+    'target_timeline',
+]
 from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
 from .paths import (
     _load_json_file,
@@ -1498,7 +1504,7 @@ def load_module_manifest(module: str) -> ModuleManifest:
         raise ValueError(f"invalid module manifest for {module}: payload must be an object")
 
     schema_version = int(payload.get("schema_version", 1))
-    if schema_version not in {1}:
+    if schema_version != 1:
         raise ValueError(f"unsupported schema version {schema_version} for manifest: {module}")
 
     owners: list[str] = []

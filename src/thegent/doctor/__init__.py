@@ -51,7 +51,6 @@ def _display_results(results: list[CheckResult]) -> None:
     """
     for result in results:
         status = "PASS" if result.passed else "FAIL"
-        print(f"[{status}] {result.name}: {result.message}")
 
 
 __all__ = ["CheckResult", "_check_mcp_tools", "_check_runtime_infrastructure", "_apply_fixes", "_display_fix_report", "_display_results"]

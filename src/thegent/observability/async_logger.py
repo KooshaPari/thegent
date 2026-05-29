@@ -57,7 +57,6 @@ __all__ = ["AsyncLogger", "AsyncObservabilityLogger", "ObservabilityEvent", "get
 
 async def reset_obs_logger() -> None:
     """Reset the observability logger state."""
-    pass
 
 
 async def get_obs_logger(name: str = "thegent-observability") -> AsyncObservabilityLogger:

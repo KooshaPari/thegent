@@ -13,9 +13,9 @@ class MetricPoint:
     name: str
     value: float
     timestamp: datetime
-    tags: Dict[str, str]
+    tags: dict[str, str]
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "value": self.value,
@@ -27,9 +27,9 @@ class MetricsCollector:
     """Metrics collector stub."""
     
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self._metrics: Dict[str, List[MetricPoint]] = {}
+        self._metrics: dict[str, list[MetricPoint]] = {}
     
-    def record(self, name: str, value: float, tags: Optional[Dict[str, str]] = None) -> None:
+    def record(self, name: str, value: float, tags: Optional[dict[str, str]] = None) -> None:
         if name not in self._metrics:
             self._metrics[name] = []
         self._metrics[name].append(MetricPoint(
@@ -39,10 +39,10 @@ class MetricsCollector:
             tags=tags or {},
         ))
     
-    def get(self, name: str) -> List[MetricPoint]:
+    def get(self, name: str) -> list[MetricPoint]:
         return self._metrics.get(name, [])
     
-    def list_metrics(self) -> List[str]:
+    def list_metrics(self) -> list[str]:
         return list(self._metrics.keys())
 
 __all__ = ["MetricPoint", "MetricsCollector"]

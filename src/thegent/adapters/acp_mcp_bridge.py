@@ -18,7 +18,6 @@ from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult, AC
 class BridgeError(Exception):
     """Base exception for bridge errors."""
 
-    pass
 
 
 class MCPToolNotFoundError(BridgeError):

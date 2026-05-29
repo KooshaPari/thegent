@@ -37,7 +37,6 @@ class TailscaleManager:
 
     def disconnect(self) -> None:
         """Disconnect from Tailscale."""
-        pass
 
     def get_status(self) -> dict[str, str]:
         """Get Tailscale status."""
@@ -66,12 +65,10 @@ class RemoteRunner:
 
 class RemoteRunnerError(Exception):
     """Error raised when remote runner fails."""
-    pass
 
 
 class RemoteExecutorError(Exception):
     """Error raised when remote executor fails."""
-    pass
 
 
 class RemoteExecutor:

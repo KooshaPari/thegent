@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Read first 1258 lines
-with open('src/thegent/protocols/jsonrpc_agent_server.py', 'r') as f:
+with open('src/thegent/protocols/jsonrpc_agent_server.py') as f:
     lines = f.readlines()[:1258]
     
 content = ''.join(lines)
@@ -21,4 +21,3 @@ def _build_turn_submit_response_resolution_phase(route, request_id, turn, approv
 with open('src/thegent/protocols/jsonrpc_agent_server.py', 'w') as f:
     f.write(content)
 
-print("File fixed successfully")

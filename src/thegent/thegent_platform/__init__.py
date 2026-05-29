@@ -32,13 +32,11 @@ def detect_platform() -> PlatformEnum:
     import sys
 
     system = platform.system().lower()
-    if system == "darwin":
-        return PlatformEnum.MACOS
-    elif system == "linux":
-        return PlatformEnum.LINUX
-    elif system == "windows":
-        return PlatformEnum.WINDOWS
-    return PlatformEnum.UNKNOWN
+    return {
+        "darwin": PlatformEnum.MACOS,
+        "linux": PlatformEnum.LINUX,
+        "windows": PlatformEnum.WINDOWS,
+    }.get(system, PlatformEnum.UNKNOWN)
 
 
 class ThegentPlatform:
@@ -53,7 +51,6 @@ class ThegentPlatform:
 
     def shutdown(self) -> None:
         """Shutdown the platform."""
-        pass
 
 
 __all__ = ["ThegentPlatform", "detect_platform", "Platform", "PlatformEnum"]

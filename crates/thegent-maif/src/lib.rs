@@ -1,227 +1,323 @@
-use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, Utc};
-use rsa::{
-    pkcs1v15::{SigningKey, VerifyingKey},
-    signature::{SignatureEncoding, Signer, Verifier},
-    RsaPrivateKey, RsaPublicKey,
-};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use sha2::Sha256;
+//! thegent-maif — MAIF (Model-Aware Information Flow) Action Artifacts
+//!
+//! RSA key generation, signing, and verification for action artifact integrity.
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
+
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use chrono::{DateTime, Utc};
+use pkcs8::{DecodePrivateKey, EncodePrivateKey, EncodePublicKey, LineEnding};
+use rand::{SeedableRng, rngs::StdRng};
+use rsa::{
+    pkcs1::DecodeRsaPrivateKey,
+    pkcs8::DecodePublicKey,
+    signature::{SignatureEncoding, Signer, Verifier},
+    RsaPrivateKey, RsaPublicKey,
+};
+use rsa::pkcs1v15::{SigningKey, VerifyingKey};
+use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 use thiserror::Error;
-use uuid::Uuid;
+
+// ---------------------------------------------------------------------------
+// Error types
+// ---------------------------------------------------------------------------
 
 #[derive(Error, Debug)]
-pub enum MAIFError {
-    #[error("IO error: {0}")]
+pub enum MaifError {
+    #[error("key generation failed: {0}")]
+    KeyGen(String),
+
+    #[error("signing failed: {0}")]
+    Signing(String),
+
+    #[error("verification failed: {0}")]
+    Verification(String),
+
+    #[error("payload encoding failed: {0}")]
+    PayloadEncoding(String),
+
+    #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("JSON error: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("RSA error: {0}")]
-    Rsa(#[from] rsa::Error),
-    #[error("Signature error: {0}")]
-    Signature(String),
-    #[error("Base64 error: {0}")]
-    Base64(#[from] base64::DecodeError),
-    #[error("Verification failed")]
-    VerificationFailed,
-    #[error("Key error: {0}")]
-    KeyError(String),
+
+    #[error("serialization failed: {0}")]
+    Serialization(#[from] serde_json::Error),
+
+    #[error("PKCS#8 decode error")]
+    Pkcs8Decode,
+
+    #[error("PKCS#8 encode error")]
+    Pkcs8Encode,
+
+    #[error("invalid artifact: {0}")]
+    InvalidArtifact(String),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+// ---------------------------------------------------------------------------
+// MAIFArtifact
+// ---------------------------------------------------------------------------
+
+/// The stable, signable portion of an artifact — excludes the signature itself.
+#[derive(Debug, Serialize)]
+struct SigningInput<'a> {
+    action: &'a str,
+    payload: &'a BTreeMap<String, serde_json::Value>,
+    agent_id: &'a str,
+    session_id: &'a str,
+    timestamp: &'a DateTime<Utc>,
+}
+
+/// A signed, verifiable MAIF action artifact.
+///
+/// The payload is stored in a `BTreeMap` to guarantee deterministic ordering
+/// of JSON keys — required for stable canonical representation before signing.
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MAIFArtifact {
-    pub artifact_id: String,
-    pub action_type: String,
-    pub payload: BTreeMap<String, Value>,
-    pub signature: Option<String>,
-    pub timestamp: DateTime<Utc>,
+    pub action: String,
+    pub payload: BTreeMap<String, serde_json::Value>,
     pub agent_id: String,
     pub session_id: String,
-    pub chain_of_thought: Option<String>,
-    pub verification_key_id: Option<String>,
-    pub previous_artifact_id: Option<String>,
+    pub timestamp: DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<String>,
 }
 
 impl MAIFArtifact {
+    /// Construct a new artifact. Takes ownership of the payload map.
     pub fn new(
-        action_type: String,
-        payload: BTreeMap<String, Value>,
+        action: String,
+        payload: BTreeMap<String, serde_json::Value>,
         agent_id: String,
         session_id: String,
     ) -> Self {
         Self {
-            artifact_id: Uuid::new_v4().to_string(),
-            action_type,
+            action,
             payload,
-            signature: None,
-            timestamp: Utc::now(),
             agent_id,
             session_id,
-            chain_of_thought: None,
-            verification_key_id: None,
-            previous_artifact_id: None,
+            timestamp: Utc::now(),
+            signature: None,
         }
     }
 
-    pub fn get_canonical_data(&self) -> Result<String, MAIFError> {
-        let mut data = BTreeMap::new();
-        data.insert("artifact_id", Value::String(self.artifact_id.clone()));
-        data.insert("action_type", Value::String(self.action_type.clone()));
-        data.insert(
-            "payload",
-            Value::Object(
-                self.payload
-                    .iter()
-                    .map(|(k, v)| (k.clone(), v.clone()))
-                    .collect(),
-            ),
-        );
-        data.insert("timestamp", Value::String(self.timestamp.to_rfc3339()));
-        data.insert("agent_id", Value::String(self.agent_id.clone()));
-        data.insert("session_id", Value::String(self.session_id.clone()));
-
-        if let Some(ref cot) = self.chain_of_thought {
-            data.insert("chain_of_thought", Value::String(cot.clone()));
+    /// Canonical signing input — never includes the signature field.
+    fn signing_input(&self) -> SigningInput<'_> {
+        SigningInput {
+            action: &self.action,
+            payload: &self.payload,
+            agent_id: &self.agent_id,
+            session_id: &self.session_id,
+            timestamp: &self.timestamp,
         }
-        if let Some(ref vkid) = self.verification_key_id {
-            data.insert("verification_key_id", Value::String(vkid.clone()));
-        }
-        if let Some(ref paid) = self.previous_artifact_id {
-            data.insert("previous_artifact_id", Value::String(paid.clone()));
-        }
-
-        Ok(serde_json::to_string(&data)?)
     }
 
-    pub fn sign(&mut self, private_key: &RsaPrivateKey) -> Result<(), MAIFError> {
-        let canonical_data = self.get_canonical_data()?;
+    /// Sign this artifact with the provided private key.
+    pub fn sign(&mut self, private_key: &RsaPrivateKey) -> Result<()> {
         let signing_key = SigningKey::<Sha256>::new(private_key.clone());
-        let signature = signing_key.sign(canonical_data.as_bytes());
-        self.signature = Some(general_purpose::STANDARD.encode(signature.to_bytes()));
+        let msg = serde_json::to_string(&self.signing_input())
+            .map_err(|e| MaifError::PayloadEncoding(e.to_string()))?;
+        let sig = signing_key.sign(msg.as_bytes());
+        self.signature = Some(URL_SAFE_NO_PAD.encode(sig.to_bytes()));
         Ok(())
     }
 
-    pub fn verify(&self, public_key: &RsaPublicKey) -> Result<bool, MAIFError> {
-        let signature_str = self
+    /// Verify the embedded signature against the public key.
+    pub fn verify(&self, public_key: &RsaPublicKey) -> Result<bool> {
+        let sig = self
             .signature
             .as_ref()
-            .ok_or_else(|| MAIFError::Signature("No signature found".to_string()))?;
-        let signature_bytes = general_purpose::STANDARD.decode(signature_str)?;
-        let canonical_data = self.get_canonical_data()?;
+            .ok_or(MaifError::InvalidArtifact("missing signature".into()))?;
+
+        let sig_bytes = URL_SAFE_NO_PAD
+            .decode(sig)
+            .map_err(|_| MaifError::Verification("base64 decode failed".into()))?;
 
         let verifying_key = VerifyingKey::<Sha256>::new(public_key.clone());
-        let signature = rsa::pkcs1v15::Signature::try_from(signature_bytes.as_slice())
-            .map_err(|e| MAIFError::Signature(format!("Invalid signature format: {}", e)))?;
-
-        verifying_key
-            .verify(canonical_data.as_bytes(), &signature)
-            .map(|_| true)
-            .or(Ok(false))
+        let sig = rsa::pkcs1v15::Signature::try_from(sig_bytes.as_ref())
+            .map_err(|_| MaifError::Verification("invalid signature encoding".into()))?;
+        let msg = serde_json::to_string(&self.signing_input())
+            .map_err(|e| MaifError::PayloadEncoding(e.to_string()))?;
+        let valid = verifying_key.verify(msg.as_bytes(), &sig).is_ok();
+        Ok(valid)
     }
 
-    pub fn save_to_file(&self, path: &Path) -> Result<(), MAIFError> {
+    /// Serialize and write the artifact to a file.
+    pub fn save_to_file(&self, path: &Path) -> Result<()> {
         let json = serde_json::to_string_pretty(self)?;
         fs::write(path, json)?;
         Ok(())
     }
 
-    pub fn load_from_file(path: &Path) -> Result<Self, MAIFError> {
+    /// Read and deserialize an artifact from a file.
+    pub fn load_from_file(path: &Path) -> Result<Self> {
         let json = fs::read_to_string(path)?;
-        let artifact: Self = serde_json::from_str(&json)?;
+        let artifact: MAIFArtifact =
+            serde_json::from_str(&json).map_err(|e| MaifError::InvalidArtifact(e.to_string()))?;
         Ok(artifact)
     }
 }
 
-pub fn generate_key_pair(bits: usize) -> Result<(RsaPrivateKey, RsaPublicKey), MAIFError> {
-    let mut rng = rand::thread_rng();
-    let private_key = RsaPrivateKey::new(&mut rng, bits)?;
+// ---------------------------------------------------------------------------
+// Key generation
+// ---------------------------------------------------------------------------
+
+/// Generate a new RSA key pair.
+pub fn generate_key_pair(bits: usize) -> Result<(RsaPrivateKey, RsaPublicKey)> {
+    let mut rng = StdRng::from_entropy();
+    let private_key = RsaPrivateKey::new(&mut rng, bits)
+        .map_err(|e| MaifError::KeyGen(e.to_string()))?;
     let public_key = RsaPublicKey::from(&private_key);
     Ok((private_key, public_key))
 }
 
-pub fn load_private_key(path: &Path) -> Result<RsaPrivateKey, MAIFError> {
-    use rsa::pkcs8::DecodePrivateKey;
+// ---------------------------------------------------------------------------
+// Key loading / saving
+// ---------------------------------------------------------------------------
+
+/// Load a private key from a PEM file (PKCS#8 or PKCS#1).
+pub fn load_private_key(path: &Path) -> Result<RsaPrivateKey> {
     let pem = fs::read_to_string(path)?;
-    RsaPrivateKey::from_pkcs8_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))
+    // Try PKCS#8 first (preferred), then fall back to raw RSAPrivateKey (PKCS#1)
+    RsaPrivateKey::from_pkcs8_pem(&pem)
+        .or_else(|_| {
+            // PKCS#1 / raw RSA private key PEM
+            RsaPrivateKey::from_pkcs1_pem(&pem)
+        })
+        .map_err(|_| MaifError::Pkcs8Decode)
 }
 
-pub fn load_public_key(path: &Path) -> Result<RsaPublicKey, MAIFError> {
-    use rsa::pkcs8::DecodePublicKey;
+/// Load a public key from a PEM file (PKCS#8 subjectPublicKeyInfo).
+pub fn load_public_key(path: &Path) -> Result<RsaPublicKey> {
     let pem = fs::read_to_string(path)?;
-    RsaPublicKey::from_public_key_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))
+    RsaPublicKey::from_public_key_pem(&pem).map_err(|_| MaifError::Pkcs8Decode)
 }
+
+/// Write a private key to a PEM file (PKCS#8).
+pub fn save_private_key(key: &RsaPrivateKey, path: &Path) -> Result<()> {
+    let pem = key
+        .to_pkcs8_pem(LineEnding::LF)
+        .map_err(|_| MaifError::Pkcs8Encode)?;
+    fs::write(path, pem.as_str())?;
+    Ok(())
+}
+
+/// Write a public key to a PEM file.
+pub fn save_public_key(key: &RsaPublicKey, path: &Path) -> Result<()> {
+    let pem = key
+        .to_public_key_pem(LineEnding::LF)
+        .map_err(|_| MaifError::Pkcs8Encode)?;
+    fs::write(path, pem)?;
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Re-export types for library consumers
+// ---------------------------------------------------------------------------
+
+
+// ---------------------------------------------------------------------------
+// Boilerplate
+// ---------------------------------------------------------------------------
+
+/// Shorthand for `Result<T, MaifError>`.
+pub type Result<T> = std::result::Result<T, MaifError>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::json;
 
     #[test]
-    fn test_artifact_creation() {
-        let mut payload = BTreeMap::new();
-        payload.insert("test_key".to_string(), json!("test_value"));
+    fn test_raw_sign_verify() {
+        use rsa::signature::{Signer, Verifier};
+        use rsa::pkcs1v15::{SigningKey, VerifyingKey};
+        use rsa::traits::PublicKeyParts;
 
-        let artifact = MAIFArtifact::new(
-            "test_action".to_string(),
-            payload,
-            "test_agent".to_string(),
-            "test_session".to_string(),
-        );
+        let (private_key, public_key) = generate_key_pair(2048).unwrap();
+        assert!(public_key.n().bits() >= 2040);
 
-        assert_eq!(artifact.action_type, "test_action");
-        assert_eq!(artifact.agent_id, "test_agent");
-        assert_eq!(artifact.session_id, "test_session");
-        assert!(artifact.signature.is_none());
+        let msg = b"hello world";
+        let signing_key = SigningKey::<Sha256>::new(private_key.clone());
+        let sig = signing_key.sign(msg);
+        let sig_bytes: Box<[u8]> = sig.into();
+
+        let verifying_key = VerifyingKey::<Sha256>::new(public_key.clone());
+        let loaded_sig = rsa::pkcs1v15::Signature::try_from(sig_bytes.as_ref()).unwrap();
+        let ok = verifying_key.verify(msg, &loaded_sig).is_ok();
+        assert!(ok, "raw RSA sign/verify should work");
     }
 
     #[test]
-    fn test_artifact_signing_and_verification() -> Result<(), MAIFError> {
-        let (private_key, public_key) = generate_key_pair(2048)?;
+    fn test_keygen_roundtrip() {
+        let (private_key, public_key) = generate_key_pair(2048).unwrap();
+        use rsa::traits::PublicKeyParts;
+        assert!(public_key.n().bits() >= 2040); // RSA key length check
 
-        let mut payload = BTreeMap::new();
-        payload.insert("test_key".to_string(), json!("test_value"));
-
+        // Sign and verify
         let mut artifact = MAIFArtifact::new(
-            "test_action".to_string(),
-            payload,
-            "test_agent".to_string(),
-            "test_session".to_string(),
+            "test_action".into(),
+            BTreeMap::new(),
+            "agent-1".into(),
+            "session-1".into(),
         );
-
-        artifact.sign(&private_key)?;
-        assert!(artifact.signature.is_some());
-
-        let verified = artifact.verify(&public_key)?;
-        assert!(verified);
-
-        Ok(())
+        artifact.sign(&private_key).unwrap();
+        assert!(artifact.verify(&public_key).unwrap());
     }
 
     #[test]
-    fn test_invalid_signature() -> Result<(), MAIFError> {
-        let (private_key, _public_key) = generate_key_pair(2048)?;
-        let (_other_private, other_public) = generate_key_pair(2048)?;
+    fn test_save_load_roundtrip() {
+        let tmp = std::env::temp_dir();
+        let (private_key, public_key) = generate_key_pair(2048).unwrap();
+        let priv_path = tmp.join("maif_test_priv.pem");
+        let pub_path = tmp.join("maif_test_pub.pem");
+        let _ = std::fs::remove_file(&priv_path);
+        let _ = std::fs::remove_file(&pub_path);
 
-        let mut payload = BTreeMap::new();
-        payload.insert("test_key".to_string(), json!("test_value"));
+        save_private_key(&private_key, &priv_path).unwrap();
+        save_public_key(&public_key, &pub_path).unwrap();
+
+        let loaded_priv = load_private_key(&priv_path).unwrap();
+        let loaded_pub = load_public_key(&pub_path).unwrap();
 
         let mut artifact = MAIFArtifact::new(
-            "test_action".to_string(),
-            payload,
-            "test_agent".to_string(),
-            "test_session".to_string(),
+            "roundtrip".into(),
+            BTreeMap::new(),
+            "agent".into(),
+            "session".into(),
         );
+        artifact.sign(&loaded_priv).unwrap();
+        assert!(artifact.verify(&loaded_pub).unwrap());
+    }
 
-        artifact.sign(&private_key)?;
+    #[test]
+    fn test_verify_wrong_key() {
+        let (priv1, _pub1) = generate_key_pair(2048).unwrap();
+        let (_priv2, pub2) = generate_key_pair(2048).unwrap();
 
-        // Verification with wrong public key should fail
-        let verified = artifact.verify(&other_public)?;
-        assert!(!verified);
+        let mut artifact = MAIFArtifact::new(
+            "test".into(),
+            BTreeMap::new(),
+            "a".into(),
+            "s".into(),
+        );
+        artifact.sign(&priv1).unwrap();
+        assert!(!artifact.verify(&pub2).unwrap()); // wrong key
+    }
 
-        Ok(())
+    #[test]
+    fn test_verify_tampered() {
+        let (r#priv, pub_key) = generate_key_pair(2048).unwrap();
+        let mut artifact = MAIFArtifact::new(
+            "test".into(),
+            BTreeMap::new(),
+            "a".into(),
+            "s".into(),
+        );
+        artifact.sign(&r#priv).unwrap();
+
+        // Tamper with the action
+        artifact.action = "hacked".into();
+        assert!(!artifact.verify(&pub_key).unwrap());
     }
 }

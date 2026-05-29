@@ -19,15 +19,15 @@ class ValidationError:
     field: str
     message: str
     code: str
-    path: List[str] = dataclass_field(default_factory=list)
+    path: list[str] = dataclass_field(default_factory=list)
 
 
 @dataclass
 class ValidationResult:
     """Task validation result."""
     valid: bool
-    errors: List[ValidationError] = dataclass_field(default_factory=list)
-    warnings: List[ValidationError] = dataclass_field(default_factory=list)
+    errors: list[ValidationError] = dataclass_field(default_factory=list)
+    warnings: list[ValidationError] = dataclass_field(default_factory=list)
 
     def format_errors(self) -> str:
         """Format errors for display."""
@@ -42,7 +42,7 @@ VALID_PRIORITIES = {"P1", "P2", "P3"}
 VALID_SUBAGENT_TYPES = {"worker", "flash", "researcher", "reviewer", "planner"}
 
 
-def validate_task(task: Dict[str, Any]) -> ValidationResult:
+def validate_task(task: dict[str, Any]) -> ValidationResult:
     """Validate a task dictionary.
 
     Args:
@@ -51,8 +51,8 @@ def validate_task(task: Dict[str, Any]) -> ValidationResult:
     Returns:
         ValidationResult with validation status and any errors
     """
-    errors: List[ValidationError] = []
-    warnings: List[ValidationError] = []
+    errors: list[ValidationError] = []
+    warnings: list[ValidationError] = []
 
     required_fields = ["id", "title", "subagent_type", "priority"]
     for field_name in required_fields:

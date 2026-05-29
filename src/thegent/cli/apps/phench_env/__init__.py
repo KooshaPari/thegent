@@ -20,7 +20,6 @@ def register_env_commands(
     Args:
         app: The CLI application to register commands with.
     """
-    pass
 
 
 __all__ = ["register_env_commands"]

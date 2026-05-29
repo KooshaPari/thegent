@@ -13,4 +13,4 @@ from .runner import *
 from .store import *
 
 # Alias for convenience
-__all__ = list(service.__all__) + list(models.__all__) if hasattr(models, '__all__') else []
+__all__ = list(service.__all__) + (list(models.__all__) if hasattr(models, '__all__') else [])
