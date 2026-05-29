@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true  # Allow PRs to proceed even if CodeQL fails
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e  # was: @e46ed2cbd01164d986452f91f178727624ae40d7
         with:
           languages: ${{ matrix.language }}
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true  # Allow PRs to proceed even if Semgrep fails
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
           generateSarif: true
