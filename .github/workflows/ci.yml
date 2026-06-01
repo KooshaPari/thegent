@@ -13,6 +13,22 @@ on:
     branches: [main]
 jobs:
   ci:
-    uses: phenotype-dev/.github/workflows/rust-ci.yml@main
-    with:
-      rust-version: '1.75'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.75'
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae
+
+      - name: Run tests
+        run: cd crates && cargo test --workspace
