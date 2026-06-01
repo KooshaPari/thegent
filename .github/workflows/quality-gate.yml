@@ -41,6 +41,11 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
+      - name: Setup Python
+        uses: actions/setup-python@0b95d4c92f54e4bbd13cb09d9e5b9e5a0d6e5c7a # v5.0.0
+        with:
+          python-version: '3.12'
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@be5f7ba354c69107308c363c2374d3c64883a720
 
@@ -78,6 +83,11 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
+      - name: Setup Python
+        uses: actions/setup-python@0b95d4c92f54e4bbd13cb09d9e5b9e5a0d6e5c7a # v5.0.0
+        with:
+          python-version: '3.12'
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@be5f7ba354c69107308c363c2374d3c64883a720
 
@@ -94,6 +104,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Setup Python
+        uses: actions/setup-python@0b95d4c92f54e4bbd13cb09d9e5b9e5a0d6e5c7a # v5.0.0
+        with:
+          python-version: '3.12'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@be5f7ba354c69107308c363c2374d3c64883a720
