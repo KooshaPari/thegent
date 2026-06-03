@@ -55,9 +55,11 @@ jobs:
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Run unit tests
+        working-directory: crates
         run: cargo test --lib --all-features
 
       - name: Generate coverage
+        working-directory: crates
         run: |
           cargo install cargo-tarpaulin
           cargo tarpaulin --lib --out Xml --all-features
@@ -69,6 +71,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Check coverage threshold
+        working-directory: crates
         run: |
           COVERAGE=$(grep -o 'coverage="[0-9.]*"' cobertura.xml | head -1 | grep -o '[0-9.]*')
           if (( $(echo "$COVERAGE < $COVERAGE_THRESHOLD" | bc -l) )); then
@@ -99,6 +102,7 @@ jobs:
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Run E2E tests
+        working-directory: crates
         run: cargo test --test e2e --all-features || echo "No E2E tests found"
 
   integration-tests:
@@ -123,6 +127,7 @@ jobs:
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
 
       - name: Run integration tests
+        working-directory: crates
         run: cargo test --test integration --all-features || echo "No integration tests found"
 
   fr-annotation-check:
