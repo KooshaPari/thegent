@@ -1,4 +1,5 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
@@ -20,6 +21,7 @@ class DependencyRouter:
 @dataclass
 class DagTask:
     """Task node in a DAG."""
+
     id: str = ""
     dependencies: list = None
     priority: int = 0

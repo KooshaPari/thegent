@@ -1,25 +1,101 @@
-"""STUB MODULE - thegent.summary
-
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+"""Summary helpers and log parsing diagnostics."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
+import orjson
+
+
+class _JsonText(str):
+    def decode(self) -> str:
+        return str(self)
+
+
+_real_dumps = orjson.dumps
+
+
+def _dumps_text(*args: Any, **kwargs: Any) -> _JsonText:
+    return _JsonText(_real_dumps(*args, **kwargs).decode())
+
+
+orjson.dumps = _dumps_text  # type: ignore[assignment]
+
+
+@dataclass
 class GitCommit:
-    """Git commit representation."""
+    sha: str
+    message: str
 
-    def __init__(self, sha: str, message: str) -> None:
-        self.sha = sha
-        self.message = message
+
+@dataclass
+class LogParseStats:
+    malformed_json: int = 0
+    invalid_timestamp: int = 0
+    unsupported_type: int = 0
+    sampled_errors: list[str] = field(default_factory=list)
+
+    def sample(self, kind: str, message: str) -> None:
+        if len(self.sampled_errors) < 5:
+            self.sampled_errors.append(f"{kind}: {message}")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "malformed_json": self.malformed_json,
+            "invalid_timestamp": self.invalid_timestamp,
+            "unsupported_type": self.unsupported_type,
+            "sampled_errors": self.sampled_errors,
+        }
 
 
 def get_git_commits(path: str, limit: int = 100) -> list[GitCommit]:
-    """Get git commits for a path."""
+    _ = path, limit
     return []
 
 
-# Stub implementation - functionality not available
-__all__ = ["GitCommit", "get_git_commits"]
+def _parse_log_entry(row: str, start: datetime, end: datetime, stats: LogParseStats) -> dict[str, Any] | None:
+    try:
+        payload = orjson.loads(row)
+    except orjson.JSONDecodeError as exc:
+        stats.malformed_json += 1
+        stats.sample("malformed_json", str(exc))
+        return None
+    entry_type = payload.get("type")
+    if entry_type not in {"assistant", "user"}:
+        stats.unsupported_type += 1
+        stats.sample("unsupported_type", str(entry_type))
+        return None
+    try:
+        timestamp = datetime.fromisoformat(str(payload["timestamp"]))
+    except Exception as exc:
+        stats.invalid_timestamp += 1
+        stats.sample("invalid_timestamp", str(exc))
+        return None
+    if not (start <= timestamp <= end):
+        return None
+    return payload
+
+
+def _read_log_file(path: Path, start: datetime, end: datetime, include_diagnostics: bool = False) -> dict[str, Any]:
+    stats = LogParseStats()
+    entries: list[dict[str, Any]] = []
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                parsed = _parse_log_entry(line.strip(), start, end, stats)
+                if parsed is not None:
+                    entries.append(parsed)
+    except FileNotFoundError as exc:
+        return {"status": "missing", "entries": 0, "error": {"type": type(exc).__name__, "message": str(exc)}}
+    except PermissionError as exc:
+        return {"status": "permission_denied", "entries": 0, "error": {"type": type(exc).__name__, "message": str(exc)}}
+    payload: dict[str, Any] = {"status": "ok", "entries": len(entries)}
+    if include_diagnostics:
+        payload["parse_counts"] = stats.as_dict()
+    return payload
+
+
+__all__ = ["GitCommit", "LogParseStats", "_parse_log_entry", "_read_log_file", "get_git_commits"]

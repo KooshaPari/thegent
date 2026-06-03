@@ -1,7 +1,7 @@
 """Telemetry contracts module."""
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-
 
 
 def detect_drift(baseline: dict[str, Any], current: dict[str, Any]) -> bool:

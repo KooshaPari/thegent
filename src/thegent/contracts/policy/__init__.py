@@ -1,12 +1,13 @@
 """Policy contracts module."""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from enum import Enum
 
 
-
 class FallbackPolicy(Enum):
     """Fallback policy enumeration."""
+
     NONE = "none"
     ALLOW = "allow"
     DENY = "deny"

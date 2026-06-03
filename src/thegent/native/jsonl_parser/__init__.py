@@ -1,4 +1,5 @@
 """Stub module."""
+
 import json
 from typing import Any
 
@@ -25,6 +26,7 @@ class JsonlParser:
 def _find_binary(name: str) -> str | None:
     """Find a binary in PATH."""
     import shutil
+
     return shutil.which(name)
 
 
@@ -38,13 +40,14 @@ def _py_count(content: str) -> int:
         Count of Python-related elements.
     """
     import re
+
     # Count common Python patterns
     patterns = [
-        r'def\s+\w+\s*\(',
-        r'class\s+\w+',
-        r'import\s+\w+',
-        r'from\s+\w+\s+import',
-        r'@\w+',  # decorators
+        r"def\s+\w+\s*\(",
+        r"class\s+\w+",
+        r"import\s+\w+",
+        r"from\s+\w+\s+import",
+        r"@\w+",  # decorators
     ]
     count = 0
     for pattern in patterns:
@@ -74,6 +77,7 @@ def _py_stream(content: str) -> list[str]:
         List of parsed JSON objects.
     """
     import json
+
     results = []
     for line in content.strip().split("\n"):
         if line:
@@ -97,6 +101,7 @@ def _py_sample(records: list[dict[str, Any]], n: int = 10) -> list[dict[str, Any
     if len(records) <= n:
         return list(records)
     import random
+
     return random.sample(records, n)
 
 

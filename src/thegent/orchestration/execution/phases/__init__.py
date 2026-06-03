@@ -1,4 +1,5 @@
 """Stub module."""
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -6,6 +7,7 @@ from typing import Any
 @dataclass
 class PhaseTransitionContract:
     """Contract for phase transitions."""
+
     from_phase: str
     to_phase: str
     metadata: dict[str, Any] | None = None
@@ -39,6 +41,7 @@ def validate_transition(from_phase: str, to_phase: str) -> bool:
 @dataclass
 class DeadlineMonitor:
     """Monitor for task deadlines."""
+
     task_id: str
     deadline: float
     status: str = "pending"

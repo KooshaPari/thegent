@@ -343,7 +343,9 @@ def test_default_dex_callback_uses_flash_table_driven(
     ctx = type("Ctx", (), {"invoked_subcommand": None})()
     with patch("sys.argv", argv), patch("thegent.dex_main._run_codex_interactive") as run_interactive:
         default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
-    run_interactive.assert_called_once_with(expected_model, dangerously_bypass=None, dangerously_yolo=None, extra_args=expected_extra_args)
+    run_interactive.assert_called_once_with(
+        expected_model, dangerously_bypass=None, dangerously_yolo=None, extra_args=expected_extra_args
+    )
 
 
 def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec() -> None:

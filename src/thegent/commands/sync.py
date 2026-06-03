@@ -103,6 +103,7 @@ class SyncCommand:
             message="Push completed",
             details={"files_uploaded": 2, "target": str(target)},
         )
+
     def pull(self, source: str | Path | None = None, **kwargs) -> OperationResult:
         """Pull from source."""
         return OperationResult(success=True, message="Pull completed")
@@ -116,7 +117,7 @@ class SyncCommand:
         hooks_dir = self.project_root / "hooks"
         if not hooks_dir.exists():
             return set()
-        return {f.stem for f in hooks_dir.iterdir() if f.is_file() and not f.name.startswith('.')}
+        return {f.stem for f in hooks_dir.iterdir() if f.is_file() and not f.name.startswith(".")}
 
 
 __all__ = ["OperationResult", "SyncCommand", "SyncOperationStatus", "SyncResult"]

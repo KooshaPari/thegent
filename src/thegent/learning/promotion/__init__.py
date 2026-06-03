@@ -68,11 +68,13 @@ class ModelPromoter:
         """
         if model_id not in self.promoted_models:
             self.promoted_models.append(model_id)
-            self.promotion_history.append({
-                "model_id": model_id,
-                "reason": reason,
-                "timestamp": datetime.now().isoformat(),
-            })
+            self.promotion_history.append(
+                {
+                    "model_id": model_id,
+                    "reason": reason,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
         return True
 
     def is_promoted(self, model_id: str) -> bool:

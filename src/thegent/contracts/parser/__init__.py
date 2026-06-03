@@ -1,4 +1,5 @@
 """Stub module."""
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -6,6 +7,7 @@ from typing import Any
 @dataclass
 class ParserState:
     """State for a parser."""
+
     position: int = 0
     errors: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -25,7 +27,8 @@ __all__ = ["ParserState", "StreamingXMLParser", "IncrementalXMLParser", "extract
 def extract_tags(content: str) -> list[str]:
     """Extract tags from content."""
     import re
-    return re.findall(r'#\w+', content)
+
+    return re.findall(r"#\w+", content)
 
 
 class StreamingXMLParser:

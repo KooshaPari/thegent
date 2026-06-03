@@ -1,4 +1,5 @@
 """Thegent doctor module for system diagnostics and fixes."""
+
 from __future__ import annotations
 from typing import Any
 
@@ -35,11 +36,12 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
     results: list[CheckResult] = []
     # Check for Python runtime
     import sys
-    results.append(CheckResult(
-        name="python_runtime",
-        passed=True,
-        message=f"Python {sys.version_info.major}.{sys.version_info.minor}"
-    ))
+
+    results.append(
+        CheckResult(
+            name="python_runtime", passed=True, message=f"Python {sys.version_info.major}.{sys.version_info.minor}"
+        )
+    )
     return results
 
 
@@ -53,4 +55,11 @@ def _display_results(results: list[CheckResult]) -> None:
         status = "PASS" if result.passed else "FAIL"
 
 
-__all__ = ["CheckResult", "_check_mcp_tools", "_check_runtime_infrastructure", "_apply_fixes", "_display_fix_report", "_display_results"]
+__all__ = [
+    "CheckResult",
+    "_check_mcp_tools",
+    "_check_runtime_infrastructure",
+    "_apply_fixes",
+    "_display_fix_report",
+    "_display_results",
+]

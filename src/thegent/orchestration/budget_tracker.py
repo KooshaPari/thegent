@@ -1,4 +1,5 @@
 """Budget tracking for orchestration."""
+
 from __future__ import annotations
 from typing import Any
 

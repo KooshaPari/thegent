@@ -49,9 +49,7 @@ def _gh_api(path: str, method: str = "GET", body: dict[str, Any] | None = None) 
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode != 0:
-        raise RuntimeError(
-            f"gh api {method} {path} failed (exit {result.returncode}): {result.stderr.strip()}"
-        )
+        raise RuntimeError(f"gh api {method} {path} failed (exit {result.returncode}): {result.stderr.strip()}")
 
     if not result.stdout.strip():
         return None
@@ -59,9 +57,7 @@ def _gh_api(path: str, method: str = "GET", body: dict[str, Any] | None = None) 
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(
-            f"gh api {method} {path} returned non-JSON output: {result.stdout[:200]}"
-        ) from exc
+        raise RuntimeError(f"gh api {method} {path} returned non-JSON output: {result.stdout[:200]}") from exc
 
 
 # ---------------------------------------------------------------------------

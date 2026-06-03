@@ -35,6 +35,7 @@ _MODEL_ALIASES = {
     "dex": "dex-1",
 }
 
+
 def _normalize_model_alias(model: str) -> str:
     if model is None:
         return ""
@@ -45,6 +46,7 @@ def _normalize_model_alias(model: str) -> str:
         if alias in lower:
             return canonical
     return model
+
 
 def _resolve_provider_for_model(model: str) -> str:
     model_lower = model.lower()
@@ -61,7 +63,14 @@ def _resolve_provider_for_model(model: str) -> str:
     else:
         return "unknown"
 
-def run_cmd(model: str | None = None, prompt: str | None = None, cwd: str | None = None, remote: str | None = None, **kwargs: Any) -> int:
+
+def run_cmd(
+    model: str | None = None,
+    prompt: str | None = None,
+    cwd: str | None = None,
+    remote: str | None = None,
+    **kwargs: Any,
+) -> int:
     """Execute the run command."""
     model = _normalize_model_alias(model) if model else model
     if model and prompt:
@@ -74,11 +83,8 @@ def run_cmd(model: str | None = None, prompt: str | None = None, cwd: str | None
         return result.returncode
     return 0
 
+
 def _run_model_cmd(model: str, prompt: str, cwd: str | None = None, remote: str | None = None, **kwargs: Any) -> int:
     """Execute a model command."""
-    # Call through module namespace so patching works
-    import thegent.cli.run_cmd as _m
-    # Normalize through module namespace
-    model = _m._normalize_model_alias(model) if model else model
-    # Call through module namespace
-    return _m.run_cmd(model=model, prompt=prompt, cwd=cwd, remote=remote, **kwargs)
+    model = _normalize_model_alias(model) if model else model
+    return run_cmd(model=model, prompt=prompt, cwd=cwd, remote=remote, **kwargs)

@@ -95,11 +95,13 @@ class KPIDashboard:
         """
         ts = timestamp or datetime.now(UTC)
         self.metrics[name] = value
-        self.history.append({
-            "name": name,
-            "value": value,
-            "timestamp": ts.isoformat(),
-        })
+        self.history.append(
+            {
+                "name": name,
+                "value": value,
+                "timestamp": ts.isoformat(),
+            }
+        )
 
     def get_metric(self, name: str) -> float | None:
         """Get current value of a metric.

@@ -1,4 +1,5 @@
 """Subprocess transport for MCP gateway."""
+
 import subprocess as _subprocess
 from typing import Any, Optional
 

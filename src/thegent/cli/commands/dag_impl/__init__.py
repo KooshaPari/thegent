@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class DagDocument:
     """Document representing a DAG."""
+
     name: str = ""
     nodes: list = None
 

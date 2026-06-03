@@ -12,14 +12,14 @@ from typing import Any
 
 class ShadowAuditGit:
     """Shadow git repository for audit logging.
-    
+
     This class manages a shadow git repository that tracks
     orchestration state changes for audit purposes.
     """
 
     def __init__(self, repo_path: Path | str) -> None:
         """Initialize the shadow audit git.
-        
+
         Args:
             repo_path: Path to the shadow git repository.
         """
@@ -27,17 +27,17 @@ class ShadowAuditGit:
 
     def record_event(self, event: dict[str, Any]) -> None:
         """Record an audit event.
-        
+
         Args:
             event: Event dictionary to record.
         """
 
     def get_events(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get recorded events.
-        
+
         Args:
             limit: Maximum number of events to return.
-            
+
         Returns:
             List of event dictionaries.
         """
@@ -45,7 +45,7 @@ class ShadowAuditGit:
 
     def get_event_count(self) -> int:
         """Get the total number of recorded events.
-        
+
         Returns:
             Total event count.
         """

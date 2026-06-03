@@ -1,9 +1,11 @@
 """Stub module."""
+
 from enum import Enum
 
 
 class SandboxLevel(Enum):
     """Sandbox level enumeration."""
+
     NONE = "none"
     BASIC = "basic"
     RESTRICTED = "restricted"

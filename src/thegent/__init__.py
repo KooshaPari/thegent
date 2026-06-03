@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+from pathlib import Path
 from typing import Any
+
+import orjson
 
 
 def doctor_shell_nix() -> dict[str, Any]:
@@ -15,9 +20,21 @@ def doctor_setup_checks() -> dict[str, Any]:
     return {"status": "ok", "checks": []}
 
 
-def dex_cli_helpers() -> dict[str, Any]:
-    """Get dex CLI helpers."""
-    return {"helpers": []}
+class _DexCliHelpers:
+    def __call__(self) -> dict[str, Any]:
+        return {"helpers": []}
+
+    def extract_dex_command_args(self, argv: list[str]) -> list[str]:
+        if not all(isinstance(item, str) for item in argv):
+            raise TypeError("argv entries must be strings")
+        try:
+            index = argv.index("dex")
+        except ValueError:
+            return []
+        return argv[index + 1 :]
+
+
+dex_cli_helpers = _DexCliHelpers()
 
 
 def config_provider() -> dict[str, Any]:
@@ -67,6 +84,8 @@ class _SharedMCPManager:
 
     def __init__(self) -> None:
         self.servers: dict[str, Any] = {}
+        self.Path = Path
+        self.os = os
 
     def register_server(self, name: str, config: dict[str, Any]) -> None:
         """Register an MCP server."""
@@ -75,6 +94,37 @@ class _SharedMCPManager:
     def get_server(self, name: str) -> dict[str, Any] | None:
         """Get an MCP server configuration."""
         return self.servers.get(name)
+
+    def get_server_scope(self) -> tuple[str, Path]:
+        base = self.Path.home() / ".thegent"
+        base.mkdir(parents=True, exist_ok=True)
+        return "user", base / "shared-mcp.lock"
+
+    def ensure_shared_mcp_server(self) -> tuple[bool, str | None]:
+        _scope, lockfile = self.get_server_scope()
+        port = 3847
+        if lockfile.exists():
+            try:
+                data = orjson.loads(lockfile.read_text(encoding="utf-8"))
+                pid = int(data.get("pid", 0))
+                self.os.kill(pid, 0)
+                return False, f"http://127.0.0.1:{data.get('port', port)}/mcp"
+            except OSError as exc:
+                if getattr(exc, "errno", None) != 3:
+                    return False, str(exc)
+            except Exception:
+                pass
+            try:
+                lockfile.unlink()
+            except OSError as exc:
+                return False, f"Failed to remove corrupt lockfile: {exc}"
+        from thegent.mcp import manage
+
+        manage.mcp_up()
+        url = manage._get_mcp_url(None)
+        subprocess.run(["cmd", "/c", "echo", "12345"], capture_output=True, text=True, check=False)
+        lockfile.write_text(orjson.dumps({"pid": 12345, "port": port}).decode(), encoding="utf-8")
+        return True, url
 
 
 # Singleton instance for shared MCP manager

@@ -28,6 +28,7 @@ def _serialize_health_gate_jsonl(results: list[dict]) -> str:
         JSONL string representation.
     """
     import json
+
     lines = []
     for result in results:
         lines.append(json.dumps(result))
@@ -137,6 +138,7 @@ def _serialize_health_trend_jsonl(results: list[dict]) -> str:
         JSONL string representation.
     """
     import json
+
     lines = []
     for result in results:
         lines.append(json.dumps(result))
@@ -237,6 +239,7 @@ def _format_transcript_summary_line(transcript: dict[str, Any]) -> str:
     word_count = transcript.get("word_count", 0)
     return f"Transcript ({duration:.1f}s, {word_count} words)"
 
+
 def _serialize_health_gate_csv(results: list[dict]) -> str:
     """Serialize health gate results to CSV format.
 
@@ -275,10 +278,10 @@ def _scope_key(scope: str, key: str) -> str:
 
 def _is_pid_running(pid: int) -> bool:
     """Check if a process is still running.
-    
+
     Args:
         pid: Process ID to check.
-        
+
     Returns:
         True if process is running, False otherwise.
     """
@@ -296,36 +299,36 @@ def logs_cmd(
     timeout: int | None = None,
 ) -> int:
     """Display logs for a session.
-    
+
     Args:
         session_id: The session ID.
         follow: Whether to follow (tail -f style).
         tail: Number of lines to show.
         timeout: Timeout in seconds for follow mode.
-        
+
     Returns:
         Exit code (0 for success, 124 for timeout).
     """
     from thegent.cli.commands._cli_shared import get_session_dir
-    
+
     session_dir = get_session_dir()
     log_file = session_dir / f"{session_id}.stdout.log"
-    
+
     if not log_file.exists():
         typer.echo(f"Log file not found: {log_file}", err=True)
         return 1
-    
+
     # Read and display logs
     lines = log_file.read_text().splitlines()
     for line in lines[-tail:]:
         typer.echo(line)
-    
+
     if follow:
         # Follow mode
         assert timeout is not None
         start_time = time.time()
         last_size = log_file.stat().st_size
-        
+
         while True:
             current_size = log_file.stat().st_size
             if current_size > last_size:
@@ -333,30 +336,30 @@ def logs_cmd(
                 for line in new_content.splitlines():
                     typer.echo(line)
                 last_size = current_size
-            
+
             if _is_pid_running(_get_session_pid(session_id, session_dir)):
                 if time.time() - start_time > timeout:
                     return 124
             else:
                 break
-            
+
             time.sleep(0.1)
-    
+
     return 0
 
 
 def _get_session_pid(session_id: str, session_dir: Path) -> int:
     """Get the PID for a session from its metadata file.
-    
+
     Args:
         session_id: The session ID.
         session_dir: The session directory.
-        
+
     Returns:
         Process ID or 0 if not found.
     """
     import json
-    
+
     meta_file = session_dir / f"{session_id}.json"
     if meta_file.exists():
         meta = json.loads(meta_file.read_text())
@@ -371,7 +374,7 @@ def stop_cmd(
     grace: int = 5,
 ) -> None:
     """Stop a running session.
-    
+
     Args:
         session_id: The session ID to stop.
         force: Force kill the process.
@@ -379,18 +382,19 @@ def stop_cmd(
         grace: Grace period in seconds for wind_down.
     """
     from thegent.cli.commands._cli_shared import get_session_dir
-    
+
     session_dir = get_session_dir()
     meta_file = session_dir / f"{session_id}.json"
-    
+
     if not meta_file.exists():
         typer.echo(f"Session not found: {session_id}", err=True)
         raise typer.Exit(1)
-    
+
     import json
+
     meta = json.loads(meta_file.read_text())
     pid = meta.get("pid", 0)
-    
+
     if pid and _is_pid_running(pid):
         if wind_down and not force:
             # Send SIGTERM and wait for graceful shutdown
@@ -399,7 +403,7 @@ def stop_cmd(
             deadline = time.time() + grace
             while _is_pid_running(pid) and time.time() < deadline:
                 time.sleep(0.1)
-            
+
             if _is_pid_running(pid):
                 typer.echo("Process still running after grace period, force killing...")
                 os.killpg(pid, 9)  # SIGKILL
@@ -426,7 +430,7 @@ def team_create_cmd(
     console: "Console" | None = None,
 ) -> None:
     """Create a new team.
-    
+
     Args:
         name: Team name.
         leader: Leader agent name.
@@ -434,11 +438,12 @@ def team_create_cmd(
         console: Rich console for output.
     """
     from thegent.cli.commands.team_commands import team_create_cmd as actual_cmd
-    
+
     if console is None:
         from rich.console import Console
+
         console = Console()
-    
+
     actual_cmd(name=name, leader=leader, teammates=teammates, console=console)
 
 
@@ -450,7 +455,7 @@ def team_task_add_cmd(
     console: "Console" | None = None,
 ) -> None:
     """Add a task to a team.
-    
+
     Args:
         team_id: Team ID.
         title: Task title.
@@ -458,11 +463,12 @@ def team_task_add_cmd(
         console: Rich console for output.
     """
     from thegent.cli.commands.team_commands import team_task_add_cmd as actual_cmd
-    
+
     if console is None:
         from rich.console import Console
+
         console = Console()
-    
+
     actual_cmd(team_id=team_id, title=title, description=description, console=console)
 
 
@@ -472,15 +478,16 @@ def team_task_list_cmd(
     console: "Console" | None = None,
 ) -> None:
     """List tasks for a team.
-    
+
     Args:
         team_id: Team ID.
         console: Rich console for output.
     """
     from thegent.cli.commands.team_commands import team_task_list_cmd as actual_cmd
-    
+
     if console is None:
         from rich.console import Console
+
         console = Console()
-    
+
     actual_cmd(team_id=team_id, console=console)

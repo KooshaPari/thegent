@@ -14,6 +14,7 @@ import time
 
 try:
     import httpx
+
     _HAS_HTTPX = True
 except ImportError:
     _HAS_HTTPX = False
@@ -21,6 +22,7 @@ except ImportError:
 
 class RunState(Enum):
     """Enumeration of run states."""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -34,6 +36,7 @@ class TrustBoundaryValidator:
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
+
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         self.state_path = self.session_dir / "trust_boundaries.json"
         self._boundaries: dict[str, bool] = {}
@@ -86,7 +89,7 @@ class TrustBoundaryValidator:
         target_level: str = "dev",
     ) -> tuple[bool, str]:
         """Validate environment transition.
-        
+
         Returns (allowed, reason) tuple.
         """
         return self.validate_transition(current_level, target_level)
@@ -97,39 +100,39 @@ class TrustBoundaryValidator:
         target_level: str,
     ) -> tuple[bool, str]:
         """Validate environment transition.
-        
+
         Returns (allowed, reason) tuple.
         """
         # No prior environment means it's allowed
         if current_level is None:
             return True, "no_prior_environment"
-        
+
         # Normalize levels first
         level_map = {"development": "dev", "prod": "production"}
         if current_level.lower() in level_map:
             current_level = level_map[current_level.lower()]
         if target_level.lower() in level_map:
             target_level = level_map[target_level.lower()]
-        
+
         # Unknown environments pass through
         env_levels = ["dev", "staging", "production"]
         if current_level not in env_levels:
             return True, "unknown_env_allowed"
-        
+
         current_idx = env_levels.index(current_level)
         target_idx = env_levels.index(target_level) if target_level in env_levels else 0
-        
+
         # Skip level promotion is denied
         if target_idx - current_idx > 1:
             return False, "Skip-level promotion requires explicit audit"
-        
+
         # Check if it's a valid promotion or same level
         if target_idx > current_idx:
             return True, f"Valid promotion from {current_level} to {target_level}"
-        
+
         if target_idx == current_idx:
             return True, "allowed"
-        
+
         # Downgrade is allowed
         return True, "downgrade_allowed"
 
@@ -139,6 +142,7 @@ class PolicyEngine:
 
     def __init__(self, settings: Any = None) -> None:
         from pathlib import Path
+
         self.settings = settings
         self.session_dir = Path(getattr(settings, "session_dir", "") or "") if settings else Path.cwd()
         self.policies: dict[str, Any] = {}
@@ -149,7 +153,7 @@ class PolicyEngine:
 
     def evaluate(self, run: RunMeta, *, registry: Any = None) -> tuple[str, str]:
         """Evaluate a run and return (result, reason).
-        
+
         Policy checks:
         1. Circuit breaker - deny if model is blocked
         2. Critical lane + confidence < 0.9 - deny
@@ -164,7 +168,7 @@ class PolicyEngine:
         confidence = getattr(run, "confidence", None)
         environment = getattr(self.settings, "environment", "development") if self.settings else "development"
         trust_score_threshold = getattr(self.settings, "trust_score_threshold", 0.8) if self.settings else 0.8
-        
+
         # Apply calibration factor if registry is provided
         if registry and model and confidence is not None:
             try:
@@ -173,7 +177,7 @@ class PolicyEngine:
                     confidence = confidence * cal_factor
             except Exception:
                 pass
-        
+
         # Check circuit breaker if enabled
         if model and getattr(self, "circuit_breaker_enabled", False):
             cb = CircuitBreakerRegistry(str(self.session_dir), threshold=self.circuit_breaker_threshold)
@@ -182,44 +186,46 @@ class PolicyEngine:
                 return "deny", f"Circuit breaker is OPEN for model: {model}"
             if cb.is_open(model, category="default"):
                 return "deny", f"Circuit breaker is OPEN for model: {model}"
-        
+
         # Check OPA if configured
         opa_result = self._query_opa(run)
         if opa_result is not None:
             return opa_result
-        
+
         # Policy 1: Critical lane + confidence < 0.9 = deny
         if lane == "critical" and confidence is not None and confidence < 0.9:
             return "deny", f"Confidence {confidence} below threshold 0.9 for critical lane"
-        
+
         # Policy 2: Unknown agent in production = deny
         if environment == "production" and model and model.lower() in ("unknown", "untrusted"):
             return "deny", "Unknown agent blocked in production"
-        
+
         # Policy 3: Unknown agent in critical lane = deny
         if lane == "critical" and model and model.lower() in ("unknown", "untrusted"):
             return "deny", "Unknown agent blocked in critical lane"
-        
+
         # Policy 4: Recovery lane + no confidence = warn
         if lane == "recovery" and confidence is None:
             return "warn", "No confidence data for recovery lane"
-        
+
         # Policy 5: Production + confidence below threshold = deny
         if environment == "production" and confidence is not None and confidence < trust_score_threshold:
             return "deny", f"Confidence {confidence} below threshold {trust_score_threshold}"
-        
+
         # Policy 6: Critical lane + drift exceeds budget = deny
         if lane == "critical":
             try:
                 from thegent.contracts.telemetry import ContractTelemetry
+
                 ct = ContractTelemetry(session_dir=str(self.session_dir))
                 status = ct.get_drift_budget_status()
                 if status and not status.get("within_budget", True):
                     return "deny", "Drift exceeds budget for critical lane"
             except Exception:
                 pass
-        
+
         return "allow", "Allowed by policy"
+
     def query_opa(self, rego_query: str, input_data: dict[str, Any]) -> dict[str, Any]:
         """Query OPA policy engine."""
         return {"result": True}
@@ -268,6 +274,7 @@ class CircuitBreakerRegistry:
 
     def __init__(self, session_dir: str = "", threshold: int = 3) -> None:
         from pathlib import Path
+
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         # Use circuit_breakers.json to be compatible with complex CircuitBreakerRegistry
         self.registry_path = self.session_dir / "circuit_breakers.json"
@@ -279,6 +286,7 @@ class CircuitBreakerRegistry:
     def _load(self) -> None:
         """Load circuit breaker state from file."""
         import json
+
         if self.registry_path.exists():
             try:
                 with open(self.registry_path, encoding="utf-8") as f:
@@ -300,13 +308,14 @@ class CircuitBreakerRegistry:
     def _save(self) -> None:
         """Save circuit breaker state to file."""
         import json
+
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         data = {}
         for key in set(list(self._failures.keys()) + list(self._states.keys())):
             data[key] = {
                 "failures": self._failures.get(key, 0),
                 "state": self._states.get(key, "closed"),
-                "last_failure": None
+                "last_failure": None,
             }
         with open(self.registry_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
@@ -337,6 +346,7 @@ class CheckpointRegistry:
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
+
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         self.registry_path = self.session_dir / "checkpoint_registry.jsonl"
         self._checkpoints: list[dict[str, Any]] = []
@@ -345,6 +355,7 @@ class CheckpointRegistry:
     def _load(self) -> None:
         """Load checkpoints from file."""
         import json
+
         self._checkpoints = []
         if self.registry_path.exists():
             try:
@@ -363,6 +374,7 @@ class CheckpointRegistry:
     def _save(self) -> None:
         """Save checkpoints to file."""
         import json
+
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_path, "w", encoding="utf-8") as f:
             f.writelines(json.dumps(cp) + "\n" for cp in self._checkpoints)
@@ -389,6 +401,7 @@ class EscalationQueue:
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
+
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         self.queue_path = self.session_dir / "escalation_queue.jsonl"
         self.queue: list[Any] = []
@@ -399,6 +412,7 @@ class EscalationQueue:
     def _load(self) -> None:
         """Load queue from file."""
         import json
+
         self.queue = []
         if self.queue_path.exists():
             try:
@@ -416,12 +430,13 @@ class EscalationQueue:
     def _save(self) -> None:
         """Save queue to file, preserving corrupt lines."""
         import json
+
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Read current file and identify corrupt lines
         corrupt_lines = []
         queue_item_hashes = set()
-        
+
         if self.queue_path.exists():
             try:
                 with open(self.queue_path, encoding="utf-8") as f:
@@ -440,7 +455,7 @@ class EscalationQueue:
                             corrupt_lines.append(line.rstrip("\n"))
             except OSError:
                 pass
-        
+
         # Write file with queue items and preserved corrupt lines
         with open(self.queue_path, "w", encoding="utf-8") as f:
             for item in self.queue:
@@ -469,7 +484,13 @@ class EscalationQueue:
         """
         from datetime import datetime, timezone, timedelta
 
-        item: dict[str, Any] = {"run_id": run_id, "reason": reason, "priority": priority, "status": "pending", "_from_add": True}
+        item: dict[str, Any] = {
+            "run_id": run_id,
+            "reason": reason,
+            "priority": priority,
+            "status": "pending",
+            "_from_add": True,
+        }
         if sla_minutes is not None:
             item["sla_minutes"] = sla_minutes
             # Calculate escalate_by_utc based on blocked_at_utc or now
@@ -585,6 +606,7 @@ class OverrideRegistry:
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
+
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         self.registry_path = self.session_dir / "override_registry.jsonl"
         self._records: list[dict[str, Any]] = []
@@ -593,6 +615,7 @@ class OverrideRegistry:
     def _load(self) -> None:
         """Load registry from file."""
         import json
+
         if self.registry_path.exists():
             try:
                 with open(self.registry_path, encoding="utf-8") as f:
@@ -606,6 +629,7 @@ class OverrideRegistry:
     def _save(self) -> None:
         """Save registry to file."""
         import json
+
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_path, "w", encoding="utf-8") as f:
             f.writelines(json.dumps(record) + "\n" for record in self._records)
@@ -619,6 +643,7 @@ class OverrideRegistry:
             ttl_seconds: Time-to-live in seconds.
         """
         from datetime import datetime, timezone, timedelta
+
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
         record = {
             "owner": owner,
@@ -639,6 +664,7 @@ class OverrideRegistry:
             True if owner has unexpired override, False otherwise.
         """
         from datetime import datetime, timezone
+
         now = datetime.now(timezone.utc)
         for record in self._records:
             if record.get("owner") != owner:
@@ -699,6 +725,7 @@ class ConcurrencyController:
         use_load_based: bool = True,
     ) -> None:
         import os
+
         self.session_dir = Path(session_dir) if session_dir else None
         # Use explicit value if provided, else check env var, else use hardcoded default of 2
         if critical_lane_slots is not None:
@@ -735,6 +762,7 @@ class ConcurrencyController:
         """Get the count of currently running sessions from ps_impl."""
         try:
             from thegent.cli.commands.impl import ps_impl
+
             sessions = ps_impl()
             return len([s for s in sessions if s.get("status") == "running"])
         except Exception:
@@ -804,9 +832,7 @@ class ConcurrencyController:
         harness_cards = getattr(self, "harness_cards", {})
 
         slow_points = self.bottleneck_detector.identify_slow_points()
-        resource_contention = self.bottleneck_detector.detect_resource_contention(
-            snapshot, harness_cards
-        )
+        resource_contention = self.bottleneck_detector.detect_resource_contention(snapshot, harness_cards)
 
         return {
             "slow_points": slow_points,
@@ -989,16 +1015,20 @@ class RunRegistry:
         prev_hash = self._get_last_hash() or "0" * 64
 
         # Write to registry file with hash chain
-        entry = run.to_dict() if hasattr(run, "to_dict") else {
-            "run_id": run.run_id,
-            "agent": run.agent,
-            "model": getattr(run, "model", ""),
-            "prompt": run.prompt,
-            "cwd": run.cwd,
-            "owner": run.owner,
-            "status": run.status,
-            "started_at_utc": run.started_at_utc,
-        }
+        entry = (
+            run.to_dict()
+            if hasattr(run, "to_dict")
+            else {
+                "run_id": run.run_id,
+                "agent": run.agent,
+                "model": getattr(run, "model", ""),
+                "prompt": run.prompt,
+                "cwd": run.cwd,
+                "owner": run.owner,
+                "status": run.status,
+                "started_at_utc": run.started_at_utc,
+            }
+        )
         entry["prev_hash"] = prev_hash
 
         # Calculate hash for this entry
@@ -1008,6 +1038,7 @@ class RunRegistry:
 
         with open(self.registry_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
+
     def register_pause(self, run_id: str, reason: str = "manual", metadata: dict[str, Any] | None = None) -> None:
         """Register a run pause."""
         self._states[run_id] = RunState.PAUSED
@@ -1166,32 +1197,32 @@ class RunRegistry:
 
     def get_calibration_factor(self, agent: str) -> float:
         """Get calibration factor for an agent.
-        
+
         Returns feedback_score / confidence, clamped to [0.5, 2.0].
         Returns 1.0 if no feedback exists for the agent.
         """
         agent_runs = [r for r in self.runs.values() if r.agent == agent]
         if not agent_runs:
             return 1.0
-        
+
         # Find runs with feedback
-        runs_with_feedback = [r for r in agent_runs if hasattr(r, 'feedback_score') and r.feedback_score is not None]
+        runs_with_feedback = [r for r in agent_runs if hasattr(r, "feedback_score") and r.feedback_score is not None]
         if not runs_with_feedback:
             return 1.0
-        
+
         # Calculate factor as feedback / confidence
         total_factor = 0.0
         count = 0
         for run in runs_with_feedback:
-            confidence = getattr(run, 'confidence', 1.0)
-            feedback = getattr(run, 'feedback_score', None)
+            confidence = getattr(run, "confidence", 1.0)
+            feedback = getattr(run, "feedback_score", None)
             if feedback is not None and confidence > 0:
                 total_factor += feedback / confidence
                 count += 1
-        
+
         if count == 0:
             return 1.0
-        
+
         avg_factor = total_factor / count
         # Clamp to [0.5, 2.0]
         return max(0.5, min(2.0, avg_factor))
@@ -1281,6 +1312,7 @@ class Auditor:
     def sign_run(self, run_id: str, data: dict[str, Any] | None = None) -> str:
         """Sign a run with a deterministic signature."""
         import hashlib
+
         if data is None:
             data = {}
         content = f"{run_id}:{json.dumps(data, sort_keys=True, separators=(',', ':'))}"
@@ -1340,28 +1372,28 @@ class Auditor:
                     continue
                 try:
                     data = json.loads(line)
-                    
+
                     # Skip header line
                     if data.get("run_id") == "__header__":
                         prev_hash = data.get("hash", "")
                         continue
-                    
+
                     entries += 1
                     entry_hash = data.get("hash", "")
-                    
+
                     # Verify hash matches computed hash of data (excluding hash and signature fields)
                     data_for_hash = {k: v for k, v in data.items() if k not in ("hash", "signature")}
                     computed_hash = hashlib.sha256(
                         json.dumps(data_for_hash, sort_keys=True, separators=(",", ":")).encode()
                     ).hexdigest()
-                    
+
                     if entry_hash and entry_hash != computed_hash:
                         # Hash doesn't match - tampered
                         chain_broken = True
                         corrupt_count += 1
                         verified = False
                         status = "failed"
-                    
+
                     # Check missing hash
                     if not entry_hash:
                         missing_hash = True
@@ -1441,6 +1473,7 @@ class CircuitBreakerRegistry:
     def _load(self) -> None:
         """Load circuit breaker state from file."""
         import json
+
         if self.registry_path.exists():
             try:
                 with open(self.registry_path, encoding="utf-8") as f:
@@ -1469,13 +1502,14 @@ class CircuitBreakerRegistry:
     def _save(self) -> None:
         """Save state to disk."""
         import json
+
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.registry_path, "w", encoding="utf-8") as f:
             json.dump(self._states, f)
 
     def is_open(self, target: str, category: str = "default") -> bool:
         """Check if circuit is open for target.
-        
+
         Circuit is open if:
         1. Failures in window exceed threshold, AND
         2. Last failure is within recovery period
@@ -1490,7 +1524,7 @@ class CircuitBreakerRegistry:
                 recovery_cutoff = time.time() - self.recovery_s
                 if state["last_failure"] and state["last_failure"] > recovery_cutoff:
                     return True
-        
+
         return False
 
     def get_failure_count(self, target: str, category: str = "default") -> int:
@@ -1518,9 +1552,7 @@ class CheckpointRegistry:
         self.registry_path = path
         self._checkpoints: dict[str, dict[str, Any]] = {}
 
-    def create_checkpoint(
-        self, reason: str, dag_content: str, owner: str
-    ) -> "CheckpointMeta":
+    def create_checkpoint(self, reason: str, dag_content: str, owner: str) -> "CheckpointMeta":
         """Create a new checkpoint."""
         import uuid
 

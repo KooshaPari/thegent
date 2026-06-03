@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +9,7 @@ from typing import Any
 @dataclass
 class McpServerConfig:
     """Configuration for MCP server."""
+
     server_id: str = "default"
     command: str = ""
     env: dict[str, str] = field(default_factory=dict)
@@ -17,13 +19,13 @@ class McpServerConfig:
     transport: Any = None
 
     def __init__(self, **kwargs):
-        self.server_id = kwargs.get('server_id', 'default')
-        self.command = kwargs.get('command', '')
-        self.env = kwargs.get('env', {})
-        self.host = kwargs.get('host', 'localhost')
-        self.port = kwargs.get('port', 8080)
-        self.name = kwargs.get('name', 'mcp-server')
-        self.transport = kwargs.get('transport')
+        self.server_id = kwargs.get("server_id", "default")
+        self.command = kwargs.get("command", "")
+        self.env = kwargs.get("env", {})
+        self.host = kwargs.get("host", "localhost")
+        self.port = kwargs.get("port", 8080)
+        self.name = kwargs.get("name", "mcp-server")
+        self.transport = kwargs.get("transport")
         for k, v in kwargs.items():
             if not hasattr(self, k):
                 setattr(self, k, v)
@@ -32,6 +34,7 @@ class McpServerConfig:
 @dataclass
 class McpToolCall:
     """A tool call made through MCP."""
+
     server_id: str = ""
     tool: str = ""
     arguments: dict[str, Any] = field(default_factory=dict)
@@ -41,6 +44,7 @@ class McpToolCall:
 @dataclass
 class McpToolResult:
     """Result from an MCP tool call."""
+
     call_id: str = ""
     success: bool = True
     result: Any = None
@@ -94,21 +98,23 @@ class McpGateway:
         # Try to run the command
         try:
             server_config = self._servers[tool_call.server_id]
-            transport = getattr(server_config, 'transport', None)
+            transport = getattr(server_config, "transport", None)
 
             if transport:
                 # Use custom transport if provided
                 result = transport(
                     command=server_config.command.split() if server_config.command else [],
-                    request_payload=json.dumps({
-                        "jsonrpc": "2.0",
-                        "id": "thegent-gateway",
-                        "method": tool_call.tool,
-                        "params": {
-                            "name": tool_call.tool,
-                            "arguments": tool_call.arguments,
-                        },
-                    }),
+                    request_payload=json.dumps(
+                        {
+                            "jsonrpc": "2.0",
+                            "id": "thegent-gateway",
+                            "method": tool_call.tool,
+                            "params": {
+                                "name": tool_call.tool,
+                                "arguments": tool_call.arguments,
+                            },
+                        }
+                    ),
                     env=server_config.env or {},
                     timeout_sec=30.0,
                 )
@@ -117,22 +123,24 @@ class McpGateway:
                     returncode, stdout, stderr = result
                 else:
                     # Mock result - extract attributes
-                    returncode = getattr(result, 'returncode', 0)
-                    stdout = getattr(result, 'stdout', '')
-                    stderr = getattr(result, 'stderr', '')
+                    returncode = getattr(result, "returncode", 0)
+                    stdout = getattr(result, "stdout", "")
+                    stderr = getattr(result, "stderr", "")
             else:
                 # Use subprocess
                 result = subprocess.run(
                     command=server_config.command.split() if server_config.command else [],
-                    request_payload=json.dumps({
-                        "jsonrpc": "2.0",
-                        "id": "thegent-gateway",
-                        "method": tool_call.tool,
-                        "params": {
-                            "name": tool_call.tool,
-                            "arguments": tool_call.arguments,
-                        },
-                    }),
+                    request_payload=json.dumps(
+                        {
+                            "jsonrpc": "2.0",
+                            "id": "thegent-gateway",
+                            "method": tool_call.tool,
+                            "params": {
+                                "name": tool_call.tool,
+                                "arguments": tool_call.arguments,
+                            },
+                        }
+                    ),
                     env=server_config.env or {},
                     timeout_sec=30.0,
                 )
@@ -140,9 +148,9 @@ class McpGateway:
                 if isinstance(result, tuple):
                     returncode, stdout, stderr = result
                 else:
-                    returncode = getattr(result, 'returncode', 0)
-                    stdout = getattr(result, 'stdout', '')
-                    stderr = getattr(result, 'stderr', '')
+                    returncode = getattr(result, "returncode", 0)
+                    stdout = getattr(result, "stdout", "")
+                    stderr = getattr(result, "stderr", "")
 
             if returncode != 0:
                 return McpToolResult(
@@ -199,6 +207,7 @@ def reset_mcp_gateway() -> None:
 
 _gateway_instance: McpGateway | None = None
 
+
 def get_mcp_gateway() -> McpGateway:
     """Get the global MCP gateway instance."""
     global _gateway_instance
@@ -226,17 +235,25 @@ class GatewayClient:
             JSON string result or error message.
         """
         import json
-        result = self.gateway.execute(McpToolCall(
-            server_id=server_id,
-            tool=tool,
-            arguments=arguments or {},
-        ))
+
+        result = self.gateway.execute(
+            McpToolCall(
+                server_id=server_id,
+                tool=tool,
+                arguments=arguments or {},
+            )
+        )
         if result.success:
             return json.dumps(result.result)
         return f"transport_error: {result.error}" if result.error else "transport_error: invalid or empty MCP response"
 
 
 __all__ = [
-    "McpGateway", "McpServerConfig", "McpToolCall", "McpToolResult",
-    "get_mcp_gateway", "reset_mcp_gateway", "GatewayClient"
+    "McpGateway",
+    "McpServerConfig",
+    "McpToolCall",
+    "McpToolResult",
+    "get_mcp_gateway",
+    "reset_mcp_gateway",
+    "GatewayClient",
 ]

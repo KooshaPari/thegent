@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class ComputeNode:
     """A compute node for offloading tasks."""
+
     id: str = ""
     capacity: float = 1.0
     available: bool = True
@@ -110,7 +112,14 @@ class RemoteNodeError(Exception):
         self.cause = cause
 
 
-__all__ = ["ComputeNode", "ComputePoolManager", "FederatedLoadBalancer", "RemoteNodeClient", "RemoteNodeError", "TailscaleComputePool"]
+__all__ = [
+    "ComputeNode",
+    "ComputePoolManager",
+    "FederatedLoadBalancer",
+    "RemoteNodeClient",
+    "RemoteNodeError",
+    "TailscaleComputePool",
+]
 
 
 class TailscaleComputePool:

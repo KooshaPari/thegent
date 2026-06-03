@@ -6,7 +6,6 @@ import socket
 from typing import TYPE_CHECKING
 
 
-
 class PortLeaseManager:
     """Manager for allocating and releasing test ports."""
 

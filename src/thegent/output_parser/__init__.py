@@ -1,4 +1,5 @@
 """Output parser for extracting structured data from model outputs."""
+
 from __future__ import annotations
 
 import json
@@ -15,6 +16,7 @@ PARSE_TRUNCATED = "truncated"
 @dataclass
 class ParseResult:
     """Result of parsing output."""
+
     success: bool
     data: dict[str, Any] | None = None
     error: str = ""

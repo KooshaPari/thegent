@@ -1,4 +1,5 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
@@ -26,6 +27,7 @@ class ResourceCoordinationError(Exception):
 @dataclass
 class ResourceLease:
     """Lease for a distributed resource."""
+
     resource_id: str
     holder_id: str = ""
     expires_at: str = ""

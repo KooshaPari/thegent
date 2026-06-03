@@ -1,4 +1,5 @@
 """Stub module."""
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,6 +42,7 @@ def get_dumper(dumper_type: str = "json") -> ConversationDumper:
 @dataclass
 class ConversationRecord:
     """Record of a conversation."""
+
     id: str = ""
     messages: list[dict[str, str]] = None
 

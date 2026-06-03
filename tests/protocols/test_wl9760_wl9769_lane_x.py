@@ -47,6 +47,7 @@ def _submit_turn(session_id: str) -> tuple[str, str]:
     assert response is not None
     return response["result"]["turn"]["id"], response["result"]["approval"]["id"]
 
+
 def test_wl9760_discovery_routes_grant_and_reject_methods() -> None:
     # @trace WL-9760
     assert server._discover_approval_resolution_route("approval/grant") == "grant"

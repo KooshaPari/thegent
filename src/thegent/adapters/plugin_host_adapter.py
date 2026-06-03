@@ -351,9 +351,7 @@ class PluginHostAdapter:
         """
         return {
             "host_running": self._host_process is not None,
-            "process_alive": (
-                self._host_process.poll() is None if self._host_process else False
-            ),
+            "process_alive": (self._host_process.poll() is None if self._host_process else False),
             "runtime_status": self.runtime_status.value,
             "plugins_loaded": len(self._loaded_plugins),
             "plugin_ids": list(self._loaded_plugins.keys()),

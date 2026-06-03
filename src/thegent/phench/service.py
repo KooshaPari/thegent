@@ -17,18 +17,40 @@ from typing import Any
 from .env_doctor import run_env_doctor
 
 __all__ = [
-    'add_module_to_target', 'add_repo', 'audit_shared_modules',
-    'audit_shared_modules_across_repos', 'bootstrap_target', 'build_catalog',
-    'build_module_manifest_payload', 'build_project_execution_matrix', 'build_scan_candidates',
-    'create_target_snapshot', 'discover_repos', 'get_env_profile',
-    'import_repos', 'init_target', 'list_modules',
-    'list_target_snapshots', 'list_targets', 'load_module_manifest',
-    'load_module_repos', 'load_target_lock', 'lock_target',
-    'materialize_module_candidate_manifest', 'materialize_scan_candidate_manifest', 'materialize_target',
-    'run_env_doctor_for_target', 'run_target', 'scan_shared_modules_across_repos',
-    'set_env_profile', 'set_repo_ref', 'show_target_snapshot',
-    'sync_project_modules_from_repos', 'sync_target', 'target_status',
-    'target_timeline',
+    "add_module_to_target",
+    "add_repo",
+    "audit_shared_modules",
+    "audit_shared_modules_across_repos",
+    "bootstrap_target",
+    "build_catalog",
+    "build_module_manifest_payload",
+    "build_project_execution_matrix",
+    "build_scan_candidates",
+    "create_target_snapshot",
+    "discover_repos",
+    "get_env_profile",
+    "import_repos",
+    "init_target",
+    "list_modules",
+    "list_target_snapshots",
+    "list_targets",
+    "load_module_manifest",
+    "load_module_repos",
+    "load_target_lock",
+    "lock_target",
+    "materialize_module_candidate_manifest",
+    "materialize_scan_candidate_manifest",
+    "materialize_target",
+    "run_env_doctor_for_target",
+    "run_target",
+    "scan_shared_modules_across_repos",
+    "set_env_profile",
+    "set_repo_ref",
+    "show_target_snapshot",
+    "sync_project_modules_from_repos",
+    "sync_target",
+    "target_status",
+    "target_timeline",
 ]
 from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
 from .paths import (
@@ -48,6 +70,7 @@ from .paths import (
 )
 from .runner import build_runner_catalog, pick_command_interactive, run_command
 from .store import dual_write, read_dual, sync_dual, utc_now_iso
+
 LOCK_FILE = "target.lock.json"
 RUNTIME_FILE = "runtime.json"
 ENV_FILE = "env.snapshot.json"
@@ -56,9 +79,7 @@ PROFILE_FILE = "env.profile.json"
 SNAPSHOT_DIR = "snapshots"
 SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS = {1}
 DEFAULT_MODULE_REFRESH_CADENCE = "never"
-_REFRESH_CADENCE_RE = re.compile(
-    r"^(never|manual|daily|weekly|monthly|yearly|hourly|every-\d+[smhdwy])$"
-)
+_REFRESH_CADENCE_RE = re.compile(r"^(never|manual|daily|weekly|monthly|yearly|hourly|every-\d+[smhdwy])$")
 DEFAULT_SHARED_MODULE_REPO_EXCLUDE = {"4sgm", "trace", "parpour", "civ"}
 DEFAULT_EXCLUDED_REPOS = frozenset(DEFAULT_SHARED_MODULE_REPO_EXCLUDE)
 SCAN_SHARED_REPOS_SCHEMA_VERSION = 1
@@ -267,9 +288,7 @@ def create_target_snapshot(
     }
     snapshot["runtime_hash"] = _stable_payload_hash(runtime_payload) if isinstance(runtime_payload, dict) else ""
     snapshot["env_hash"] = _stable_payload_hash(env_payload) if isinstance(env_payload, dict) else ""
-    snapshot["runner_catalog_hash"] = (
-        _stable_payload_hash(runner_payload) if isinstance(runner_payload, dict) else ""
-    )
+    snapshot["runner_catalog_hash"] = _stable_payload_hash(runner_payload) if isinstance(runner_payload, dict) else ""
     snapshot["snapshot_hash"] = _stable_payload_hash({k: snapshot[k] for k in snapshot if k != "snapshot_hash"})
     result = dual_write(target, filename, snapshot, family=family)
     return {
@@ -791,8 +810,7 @@ def sync_project_modules_from_repos(
         if (
             os.environ.get("THGENT_PHENOTYPE_ROOT") is None
             and candidate is not None
-            and candidate.as_posix()
-            != projects_modules_root().as_posix()
+            and candidate.as_posix() != projects_modules_root().as_posix()
         ):
             destination = candidate
         else:
@@ -923,9 +941,7 @@ def list_targets(family: str | None = None) -> list[str]:
         if not root.exists():
             return []
         return sorted(
-            entry.name
-            for entry in root.iterdir()
-            if entry.is_dir() and (entry / ".phench" / LOCK_FILE).exists()
+            entry.name for entry in root.iterdir() if entry.is_dir() and (entry / ".phench" / LOCK_FILE).exists()
         )
 
     root = projects_root()
@@ -948,11 +964,7 @@ def list_modules() -> list[str]:
     if not root.exists():
         return []
 
-    return sorted(
-        entry.name
-        for entry in root.iterdir()
-        if entry.is_dir() and (entry / "manifest.json").is_file()
-    )
+    return sorted(entry.name for entry in root.iterdir() if entry.is_dir() and (entry / "manifest.json").is_file())
 
 
 def _list_targets_in_root(root: Path, family_prefix: str | None) -> list[str]:
@@ -1111,7 +1123,9 @@ def _materialization_lookup(
         return [dict(selected)]
 
     if repo_ids is not None:
-        index = {repo_id: item for item in materializations for repo_id in [item.get("repo_id")] if isinstance(repo_id, str)}
+        index = {
+            repo_id: item for item in materializations for repo_id in [item.get("repo_id")] if isinstance(repo_id, str)
+        }
         if not index:
             raise ValueError("target has no runtime materialization; run target materialize")
         requested: list[str] = []
@@ -1226,9 +1240,7 @@ def build_project_execution_matrix(
         if unknown_command_override:
             raise ValueError(f"repo_id not materialized: {unknown_command_override[0]}")
         unknown_env_profile_override = [
-            item
-            for item in repo_env_profile_overrides_normalized
-            if item not in repo_index
+            item for item in repo_env_profile_overrides_normalized if item not in repo_index
         ]
         if unknown_env_profile_override:
             raise ValueError(f"repo_id not materialized: {unknown_env_profile_override[0]}")
@@ -1388,9 +1400,7 @@ def _validate_module_repos_payload_map(
             raise ValueError(f"module manifest field '{field}' requires string values")
         item = value.strip()
         if not item:
-            raise ValueError(
-                f"module manifest field '{field}' for repo '{repo_id}' must not be empty"
-            )
+            raise ValueError(f"module manifest field '{field}' for repo '{repo_id}' must not be empty")
 
         items[repo_id] = item
 
@@ -1405,14 +1415,10 @@ def _validate_module_manifest_schema_version(
     if schema_version is None:
         return 1
     if not isinstance(schema_version, int) or isinstance(schema_version, bool):
-        raise ValueError(
-            f"module manifest '{module}' schema_version must be an integer"
-        )
+        raise ValueError(f"module manifest '{module}' schema_version must be an integer")
 
     if schema_version not in SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS:
-        raise ValueError(
-            f"module manifest '{module}' has unsupported schema_version: {schema_version}"
-        )
+        raise ValueError(f"module manifest '{module}' has unsupported schema_version: {schema_version}")
 
     return schema_version
 
@@ -1678,6 +1684,8 @@ def sync_target(target: str, prefer: str | None = None, family: str | None = Non
     if not results:
         raise FileNotFoundError("No state files to sync")
     return results
+
+
 def _normalize_candidate_module_name(value: str) -> str:
     slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in value.strip())
     while "--" in slug:
@@ -2375,30 +2383,35 @@ def materialize_module_candidate_manifest(
     )
 
 
-
 def list_modules():
     from thegent.phench.paths import module_manifests_root
+
     root = module_manifests_root()
     if not root.exists():
         return []
     return sorted(d.name for d in root.iterdir() if d.is_dir() and (d / "manifest.toml").exists())
 
+
 def load_module_manifest(module, available_repo_ids=None):
     from pathlib import Path
     from thegent.phench.paths import module_manifests_root
     import json
+
     manifest_path = module_manifests_root() / module / "manifest.json"
     if not manifest_path.exists():
         raise FileNotFoundError("Module manifest not found: " + module)
     return json.loads(manifest_path.read_text())
 
+
 def audit_shared_modules_across_repos(target_name):
     lock = load_target_lock(target_name)
     return {"target": target_name, "shared_modules": [], "lock_hash": lock.lock_hash}
 
+
 def create_target_snapshot(target_name, description=None):
     from datetime import datetime
     import uuid
+
     lock = load_target_lock(target_name)
     snapshot_id = "snap-" + datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
     return {
@@ -2408,4 +2421,3 @@ def create_target_snapshot(target_name, description=None):
         "description": description or "",
         "timestamp": datetime.now().isoformat(),
     }
-

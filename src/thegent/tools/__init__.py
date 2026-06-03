@@ -1,9 +1,5 @@
-"""STUB MODULE - thegent.tools
+"""Tool helpers."""
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+from .terminal import TmuxPane, capture_tmux_pane, is_claude_code_pane, list_tmux_panes
 
-# Stub implementation - functionality not available
-__all__ = []
+__all__ = ["TmuxPane", "capture_tmux_pane", "is_claude_code_pane", "list_tmux_panes"]

@@ -75,6 +75,7 @@ class ExecutionOrchestrator:
             # Check for usage limit errors
             try:
                 from thegent.agents.resilience import is_usage_limit
+
                 if is_usage_limit(result):
                     return "usage_limit"
             except Exception:
@@ -104,11 +105,7 @@ class ExecutionOrchestrator:
         metadata = RunMeta(
             run_id=run_id,
             correlation_id=kwargs.get("correlation_id"),
-            source=(
-                AgentSource.THEGENT_SUBAGENT
-                if kwargs.get("task_id")
-                else AgentSource.THEGENT_RUN
-            ),
+            source=(AgentSource.THEGENT_SUBAGENT if kwargs.get("task_id") else AgentSource.THEGENT_RUN),
             interactivity=InteractivityMode.PTY,
             agent=agent or "unknown",
             model=model,

@@ -1,47 +1,107 @@
-"""STUB MODULE - thegent.compositor.terminal_pane
-
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+"""Terminal pane process wrapper used by compositor tests."""
 
 from __future__ import annotations
 
-from typing import Any
+import os
+import shutil
+import subprocess
+import sys
+import types
+from pathlib import Path
+
+try:
+    import pty
+except ImportError:  # Windows: pty imports termios.
+    pty = types.ModuleType("pty")
+
+    def _openpty_unavailable() -> tuple[int, int]:
+        raise ImportError("pty not available")
+
+    pty.openpty = _openpty_unavailable  # type: ignore[attr-defined]
+    sys.modules.setdefault("pty", pty)
 
 
 class TerminalPane:
-    """Terminal pane widget for compositor."""
+    """Small terminal process lifecycle helper."""
 
-    def __init__(self, width: int = 80, height: int = 24) -> None:
-        self.width = width
-        self.height = height
-        self.content: list[str] = []
-        self.cursor_x = 0
-        self.cursor_y = 0
+    def __init__(self, pane_id: str = "pane", working_dir: str = ".", name: str | None = None) -> None:
+        self.pane_id = pane_id
+        self.working_dir = working_dir
+        self.name = name or pane_id
+        self.process: subprocess.Popen[str] | None = None
+        self.pty_master: int | None = None
+        self.is_active = False
+        self.last_cleanup_diagnostic: dict[str, object] | None = None
 
-    def write(self, text: str) -> None:
-        """Write text to the pane.
-
-        Args:
-            text: The text to write.
-        """
-        self.content.append(text)
-        self.cursor_y += 1
-
-    def clear(self) -> None:
-        """Clear the pane content."""
-        self.content.clear()
-        self.cursor_x = 0
-        self.cursor_y = 0
+    def _render_placeholder(self) -> str:
+        return f"TerminalPane {self.pane_id} ({self.working_dir})"
 
     def render(self) -> str:
-        """Render the pane content.
+        return self._render_placeholder()
 
-        Returns:
-            The rendered pane as a string.
-        """
-        return "\n".join(self.content)
+    def _fallback_shell(self) -> str:
+        if os.name == "nt":
+            return os.environ.get("COMSPEC") or "cmd.exe"
+        return shutil.which("sh") or "/bin/sh"
+
+    def spawn_shell(self, shell: str | None = None) -> None:
+        """Spawn a shell process, falling back when path/cwd are invalid."""
+        command = shell if shell and Path(shell).exists() else self._fallback_shell()
+        cwd = self.working_dir if Path(self.working_dir).exists() else str(Path.home())
+        self.close()
+        try:
+            self.pty_master, pty_slave = pty.openpty()
+        except (ImportError, OSError):
+            self.pty_master = None
+            pty_slave = None
+        self.process = subprocess.Popen(
+            [command],
+            cwd=cwd,
+            stdin=pty_slave if pty_slave is not None else subprocess.DEVNULL,
+            stdout=pty_slave if pty_slave is not None else subprocess.DEVNULL,
+            stderr=pty_slave if pty_slave is not None else subprocess.DEVNULL,
+            text=True,
+        )
+        if self.pty_master is None:
+            self.pty_master = -1
+        if pty_slave is not None:
+            try:
+                os.close(pty_slave)
+            except OSError:
+                pass
+        self.is_active = True
+        self.last_cleanup_diagnostic = None
+
+    def cleanup(self) -> None:
+        """Terminate the child process and clear pane resources."""
+        proc = self.process
+        self.last_cleanup_diagnostic = None
+        if proc is not None:
+            try:
+                if proc.poll() is None:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait(timeout=1)
+            except BaseException as exc:  # noqa: BLE001 - diagnostics are part of the API.
+                self.last_cleanup_diagnostic = {
+                    "failure_type": "terminate_failed",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+        if self.pty_master is not None:
+            try:
+                os.close(self.pty_master)
+            except OSError:
+                pass
+        self.process = None
+        self.pty_master = None
+        self.is_active = False
+
+    def close(self) -> None:
+        self.cleanup()
 
 
 __all__ = ["TerminalPane"]

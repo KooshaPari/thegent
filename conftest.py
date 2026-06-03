@@ -13,13 +13,16 @@ import pytest
 # thegent project root (where conftest.py lives)
 _THGENT_ROOT = Path(__file__).parent.resolve()
 
+
 # Normalize path helper
 def normalize_path(p):
     return Path(p).resolve()
 
+
 # Safe join helper
 def safe_join(base, *parts):
     return base / "/".join(str(p) for p in parts)
+
 
 # Ensure src/ is on sys.path for imports during test collection
 # This must happen before any test modules are imported

@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +9,7 @@ from typing import Any
 @dataclass
 class SymbolInfo:
     """LSP symbol information."""
+
     name: str = ""
     kind: int = 0
     location: dict = field(default_factory=dict)
@@ -17,6 +19,7 @@ class SymbolInfo:
 @dataclass
 class Diagnostic:
     """LSP diagnostic."""
+
     message: str
     severity: int = 1
     range_start: int = 0
@@ -61,6 +64,7 @@ class LspToolAdapter:
 @dataclass
 class HoverInfo:
     """LSP hover information."""
+
     content: str = ""
     format: str = "plaintext"
 
@@ -124,6 +128,7 @@ def _validate_existing_file(uri: str) -> bool:
         True if the file exists and is accessible.
     """
     import os
+
     if uri.startswith("file://"):
         path = uri[7:]
     else:

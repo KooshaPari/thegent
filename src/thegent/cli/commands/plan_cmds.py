@@ -8,7 +8,7 @@ from __future__ import annotations
 
 def plan_list_cmd() -> list[dict]:
     """List all plans.
-    
+
     Returns:
         List of plan dictionaries.
     """
@@ -17,11 +17,11 @@ def plan_list_cmd() -> list[dict]:
 
 def plan_create_cmd(name: str, **kwargs) -> dict:
     """Create a new plan.
-    
+
     Args:
         name: Plan name.
         **kwargs: Additional options.
-        
+
     Returns:
         Created plan dictionary.
     """

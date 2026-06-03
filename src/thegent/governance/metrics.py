@@ -309,9 +309,7 @@ class ProviderMetricsCollector:
         """
         return list(self._results)
 
-    def get_results_by_provider(
-        self, provider_id: str
-    ) -> list[ExecutionResult]:
+    def get_results_by_provider(self, provider_id: str) -> list[ExecutionResult]:
         """Get results for a specific provider.
 
         Args:

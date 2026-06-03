@@ -55,9 +55,7 @@ def test_wl9871_config_read_request_response_shape_is_stable() -> None:
 def test_wl9872_static_notification_mode_suppresses_response() -> None:
     # @trace WL-9872
     _reset_state()
-    response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "config/read"})
-    )
+    response, notifications = process_jsonrpc_line_full(json.dumps({"jsonrpc": "2.0", "method": "config/read"}))
     assert response is None
     assert notifications == []
 
@@ -77,9 +75,7 @@ def test_wl9873_session_start_request_registers_active_session() -> None:
 def test_wl9874_session_start_notification_creates_session_without_response() -> None:
     # @trace WL-9874
     _reset_state()
-    response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "session/start"})
-    )
+    response, notifications = process_jsonrpc_line_full(json.dumps({"jsonrpc": "2.0", "method": "session/start"}))
     assert response is None
     assert notifications == []
     assert len(SERVER_STATE.sessions) == 1
@@ -165,9 +161,7 @@ def test_wl9879_turn_submit_notification_keeps_side_effects_without_response() -
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps(
-            {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "lane-c"}}
-        )
+        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "lane-c"}})
     )
     assert response is None
     assert notifications

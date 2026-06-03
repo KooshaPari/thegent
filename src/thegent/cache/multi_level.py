@@ -2,6 +2,7 @@
 
 FR traceability: FR-CACHE-001 (multi-level caching: L1 memory -> L2 disk)
 """
+
 from __future__ import annotations
 
 import functools

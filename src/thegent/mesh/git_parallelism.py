@@ -315,14 +315,17 @@ class WorktreePool:
             merged = merge_result.success
         else:
             try:
-                _run([
-                    "git",
-                    "merge",
-                    "--no-ff",
-                    "-m",
-                    f"Merge agent/{agent_id} into {target}",
-                    branch,
-                ], self.project_root)
+                _run(
+                    [
+                        "git",
+                        "merge",
+                        "--no-ff",
+                        "-m",
+                        f"Merge agent/{agent_id} into {target}",
+                        branch,
+                    ],
+                    self.project_root,
+                )
                 merged = True
             except subprocess.CalledProcessError:
                 merged = False

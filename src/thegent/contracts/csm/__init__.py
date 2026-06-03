@@ -1,12 +1,13 @@
 """CSM (Canonical Structured Message) contracts module."""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 from enum import Enum
 
 
-
 class CSMPhase(Enum):
     """CSM phase enumeration."""
+
     PARSE = "parse"
     COMMIT = "commit"
     SIDE_EFFECTS = "side_effects"
@@ -15,6 +16,7 @@ class CSMPhase(Enum):
 
 class CSMStatus(Enum):
     """CSM status enumeration."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"

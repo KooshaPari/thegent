@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -13,12 +14,19 @@ PROTECTED_PROCESS_NAMES: list[str] = ["systemd", "init", "launchd"]
 @dataclass
 class SessionSnapshot:
     """Snapshot of session information for pruning."""
+
     session_id: str
     last_activity: float = 0.0
     owner: str = ""
 
 
-__all__ = ["IDLE_COUNT_THRESHOLD", "IDLE_THRESHOLD_SECONDS", "PROTECTED_PROCESS_NAMES", "SessionSnapshot", "SmartPruner"]
+__all__ = [
+    "IDLE_COUNT_THRESHOLD",
+    "IDLE_THRESHOLD_SECONDS",
+    "PROTECTED_PROCESS_NAMES",
+    "SessionSnapshot",
+    "SmartPruner",
+]
 
 
 class SmartPruner:
@@ -30,6 +38,7 @@ class SmartPruner:
     def should_prune(self, snapshot: SessionSnapshot) -> bool:
         """Check if session should be pruned."""
         import time
+
         return (time.time() - snapshot.last_activity) > self.threshold
 
 

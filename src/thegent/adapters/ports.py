@@ -194,25 +194,31 @@ _runtime_registry: AdapterRegistry = AdapterRegistry()
 
 def register_driver(name: str, driver_class: type, **metadata: Any) -> Callable[[type], type]:
     """Decorator to register a driver plugin."""
+
     def decorator(cls: type) -> type:
         _runtime_registry.register_driver(name, cls, **metadata)
         return cls
+
     return decorator
 
 
 def register_router(name: str, router_class: type, **metadata: Any) -> Callable[[type], type]:
     """Decorator to register a router plugin."""
+
     def decorator(cls: type) -> type:
         _runtime_registry.register_router(name, cls, **metadata)
         return cls
+
     return decorator
 
 
 def register_cache(name: str) -> Callable[[type], type]:
     """Decorator to register a cache backend."""
+
     def decorator(cls: type) -> type:
         _runtime_registry.register_cache_backend(name, cls)
         return cls
+
     return decorator
 
 

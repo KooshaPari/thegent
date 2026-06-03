@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class MemoryEntry:
     """A memory entry."""
+
     key: str
     value: str
     timestamp: float = 0.0

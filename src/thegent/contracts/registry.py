@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 
@@ -21,6 +22,7 @@ from dataclasses import dataclass
 @dataclass
 class ContractVersion:
     """Version information for a contract."""
+
     major: int = 1
     minor: int = 0
     patch: int = 0

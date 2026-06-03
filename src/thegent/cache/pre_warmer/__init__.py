@@ -1,4 +1,5 @@
 """Cache pre-warmer module."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -18,6 +19,7 @@ def _should_run() -> bool:
 
 class WarmingStrategy(Enum):
     """Cache warming strategy."""
+
     EAGER = "eager"
     LAZY = "lazy"
     ADAPTIVE = "adaptive"
@@ -40,7 +42,8 @@ class CachePreWarmer:
 def _backoff_delay(attempt: int, base: float = 1.0, max_delay: float = 60.0) -> float:
     """Calculate exponential backoff delay."""
     import math
-    return min(base * (2 ** attempt), max_delay)
+
+    return min(base * (2**attempt), max_delay)
 
 
 __all__ = [
