@@ -53,6 +53,8 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: crates -> target
 
       - name: Run unit tests
         working-directory: crates
@@ -100,6 +102,8 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: crates -> target
 
       - name: Run E2E tests
         working-directory: crates
@@ -125,6 +129,8 @@ jobs:
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          workspaces: crates -> target
 
       - name: Run integration tests
         working-directory: crates
@@ -171,6 +177,9 @@ jobs:
     needs: [unit-tests, e2e-tests, integration-tests, fr-annotation-check]
     if: always()
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
@@ -216,6 +225,7 @@ jobs:
 
       - name: Comment PR
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        continue-on-error: true
         with:
           script: |
             const fs = require('fs');

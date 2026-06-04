@@ -19,6 +19,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab
-      - run: trufflehog github --only-verified --no-update
-        env:
-          GH_TOKEN: ${{ github.token }}
+        with:
+          path: ./
+          extra_args: --only-verified

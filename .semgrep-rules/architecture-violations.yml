@@ -8,7 +8,7 @@ rules:
               use crate::adapters::*;
     message: Potential circular dependency. Check module import hierarchy.
     languages: [rust]
-    severity: MEDIUM
+    severity: WARNING
 
   - id: layer-violation-adapter-accessing-domain
     patterns:
@@ -20,7 +20,7 @@ rules:
           }
     message: Adapter layer should not directly access domain logic. Use ports/traits instead.
     languages: [rust]
-    severity: MEDIUM
+    severity: WARNING
 
   - id: mixed-concerns-in-handler
     patterns:
@@ -36,7 +36,7 @@ rules:
           }
     message: Handler mixes database, API, and filesystem concerns. Consider dependency injection.
     languages: [rust]
-    severity: LOW
+    severity: INFO
 
   - id: direct-database-in-tests
     patterns:
@@ -49,4 +49,4 @@ rules:
           }
     message: Tests should use mocks/fixtures, not direct database connections.
     languages: [rust]
-    severity: MEDIUM
+    severity: WARNING
