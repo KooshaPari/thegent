@@ -31,6 +31,7 @@ const SHM_SIZE: usize = ROUTER_METRICS_OFFSET + 4096;
 
 static GLOBAL_SHM: Lazy<Mutex<Option<SHMInterface>>> = Lazy::new(|| Mutex::new(None));
 static PROVIDER_WRITE_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+static XP_WRITE_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -248,6 +249,7 @@ impl SHMInterface {
     }
 
     pub fn do_award_xp(&mut self, amount: u64) -> std::io::Result<()> {
+        let _guard = XP_WRITE_LOCK.lock().unwrap();
         let mut state = self.get_xp_state_internal();
         state.total_xp += amount;
         state.level = (state.total_xp / 1000) as u32 + 1;
