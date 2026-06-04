@@ -371,7 +371,7 @@ impl ParetoFrontierPanel {
         let mut bar_data: Vec<(String, u64)> = provider_costs
             .into_iter()
             .map(|(provider, (sum, count))| {
-                let avg = if count == 0 { 0 } else { sum / count };
+                let avg = sum.checked_div(count).unwrap_or(0);
                 (provider, avg)
             })
             .collect();

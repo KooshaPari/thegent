@@ -318,10 +318,8 @@ impl MouseHandler for PaneSplitter {
                 }
             }
             MouseEventKind::Up(MouseButton::Left) => {
-                if self.drag.is_some() {
-                    if let Some(ref mut drag) = self.drag {
-                        drag.update(col, row);
-                    }
+                if let Some(ref mut drag) = self.drag {
+                    drag.update(col, row);
                     self.apply_drag(area);
                     self.drag = None;
                     true
