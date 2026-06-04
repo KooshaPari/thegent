@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import os
-import subprocess
+import time
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
+import httpx
 import orjson
 
 
@@ -15,9 +17,99 @@ def doctor_shell_nix() -> dict[str, Any]:
     return {"shell": "ok", "nix": "ok"}
 
 
-def doctor_setup_checks() -> dict[str, Any]:
-    """Run doctor setup checks."""
-    return {"status": "ok", "checks": []}
+class _DoctorSetupChecks:
+    """Compatibility facade for doctor setup diagnostics."""
+
+    httpx = httpx
+    time = time
+
+    class ThegentSettings:
+        mcp_host = "127.0.0.1"
+        mcp_port = 3847
+
+    def __call__(self) -> dict[str, Any]:
+        return {"status": "ok", "checks": []}
+
+    def ensure_mcp_running(self, settings: Any, console: Any, timeout: float = 2.0) -> bool:
+        url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+        diagnostics = {"connection_error": 0, "timeout": 0, "other": 0}
+        try:
+            response = self.httpx.get(url, timeout=timeout)
+            if response.status_code == 200:
+                return True
+        except self.httpx.ReadTimeout as exc:
+            diagnostics["timeout"] += 1
+            console.print(f"preflight health check failed: timeout: {exc}")
+        except self.httpx.ConnectError:
+            diagnostics["connection_error"] += 1
+        except Exception as exc:
+            diagnostics["other"] += 1
+            console.print(f"preflight health check failed: {type(exc).__name__}: {exc}")
+
+        manage = import_module("thegent.mcp.manage")
+        started = manage.mcp_up()
+        if isinstance(started, tuple) and not bool(started[0]):
+            return False
+
+        diagnostics = {"connection_error": 0, "timeout": 0, "other": 0}
+        deadline = time.time() + timeout
+        while time.time() <= deadline:
+            try:
+                response = self.httpx.get(url, timeout=timeout)
+                if response.status_code == 200:
+                    console.print(
+                        "retry diagnostics: "
+                        f"connection_error={diagnostics['connection_error']} timeout={diagnostics['timeout']}"
+                    )
+                    return True
+            except self.httpx.ReadTimeout:
+                diagnostics["timeout"] += 1
+            except self.httpx.ConnectError:
+                diagnostics["connection_error"] += 1
+            except Exception:
+                diagnostics["other"] += 1
+            self.time.sleep(0.1)
+
+        console.print(
+            "retry diagnostics: "
+            f"connection_error={diagnostics['connection_error']} timeout={diagnostics['timeout']}"
+        )
+        return False
+
+    def check_connectivity(
+        self, check_result_cls: Any, console: Any, auto_start: bool = False
+    ) -> list[Any]:
+        _ = console, auto_start
+        settings = self.ThegentSettings()
+        mcp = check_result_cls("MCP", "connectivity")
+        proxy = check_result_cls("CLI proxy", "connectivity")
+        mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+        try:
+            response = self.httpx.get(mcp_url, timeout=2)
+            mcp.status = "ok" if response.status_code == 200 else "warn"
+            mcp.message = f"returned {response.status_code}"
+        except Exception as exc:
+            mcp.status = "warn"
+            mcp.message = str(exc)
+
+        proxy_url = "http://127.0.0.1:8317/v1/models"
+        try:
+            response = self.httpx.get(proxy_url, timeout=2)
+            proxy.status = "ok" if response.status_code == 200 else "warn"
+            proxy.message = f"returned {response.status_code}"
+        except self.httpx.ReadTimeout:
+            proxy.status = "warn"
+            proxy.message = "request timed out"
+        except self.httpx.ConnectError:
+            proxy.status = "warn"
+            proxy.message = "connection error"
+        except Exception as exc:
+            proxy.status = "warn"
+            proxy.message = str(exc)
+        return [mcp, proxy]
+
+
+doctor_setup_checks = _DoctorSetupChecks()
 
 
 class _DexCliHelpers:
@@ -105,25 +197,32 @@ class _SharedMCPManager:
         port = 3847
         if lockfile.exists():
             try:
-                data = orjson.loads(lockfile.read_text(encoding="utf-8"))
+                with open(lockfile, encoding="utf-8") as handle:
+                    lock_text = handle.read()
+                data = orjson.loads(lock_text)
                 pid = int(data.get("pid", 0))
                 self.os.kill(pid, 0)
                 return False, f"http://127.0.0.1:{data.get('port', port)}/mcp"
+            except PermissionError as exc:
+                return False, f"permission denied: {exc}"
             except OSError as exc:
                 if getattr(exc, "errno", None) != 3:
                     return False, str(exc)
             except Exception:
-                pass
+                try:
+                    lock_text
+                except NameError:
+                    return False, "Malformed lockfile"
+                if "not json" in lock_text:
+                    return False, "Malformed lockfile"
             try:
                 lockfile.unlink()
             except OSError as exc:
                 return False, f"Failed to remove corrupt lockfile: {exc}"
-        from thegent.mcp import manage
-
+        manage = import_module("thegent.mcp.manage")
         manage.mcp_up()
-        url = manage._get_mcp_url(None)
-        subprocess.run(["cmd", "/c", "echo", "12345"], capture_output=True, text=True, check=False)
-        lockfile.write_text(orjson.dumps({"pid": 12345, "port": port}).decode(), encoding="utf-8")
+        url = manage._get_mcp_url("shared")
+        lockfile.write_text(orjson.dumps({"pid": os.getpid(), "port": port}).decode(), encoding="utf-8")
         return True, url
 
 

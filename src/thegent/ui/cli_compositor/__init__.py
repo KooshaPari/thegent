@@ -19,6 +19,9 @@ class ProgressPanel:
     task_id: TaskID
     progress: Progress
 
+    def _task(self):
+        return next(task for task in self.progress.tasks if task.id == self.task_id)
+
     def advance(self, amount: float, description: str | None = None) -> None:
         kwargs = {"advance": amount}
         if description is not None:
@@ -26,13 +29,13 @@ class ProgressPanel:
         self.progress.update(self.task_id, **kwargs)
 
     def complete(self) -> None:
-        task = self.progress.tasks[self.task_id]
+        task = self._task()
         total = task.total or task.completed
         self.progress.update(self.task_id, completed=total)
         self.progress.stop_task(self.task_id)
 
     def render(self) -> str:
-        task = self.progress.tasks[self.task_id]
+        task = self._task()
         return f"{self.name}: {task.description} {task.completed}/{task.total}"
 
 
@@ -69,7 +72,7 @@ class CliCompositor:
     def __enter__(self) -> "CliCompositor":
         self._progress.start()
         self._live = Live(
-            self.render(), console=self.console, refresh_per_second=self._refresh_per_second, transient=self._transient
+            self, console=self.console, refresh_per_second=self._refresh_per_second, transient=self._transient
         )
         self._live.start()
         return self
@@ -138,6 +141,9 @@ class CliCompositor:
         for name, panel in self._status_panels.items():
             table.add_row(name, panel.render())
         return table
+
+    def __rich__(self) -> Table:
+        return self.render()
 
 
 def make_cli_compositor(refresh_per_second: float = 4.0, transient: bool = False) -> CliCompositor:

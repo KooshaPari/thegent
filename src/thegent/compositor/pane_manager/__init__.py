@@ -45,10 +45,6 @@ class PaneNode:
         return out
 
 
-def _new_pane_id(counter: int) -> str:
-    return f"pane-{counter}"
-
-
 class PaneManager:
     """Tree manager used for splitter-aware pane operations."""
 
@@ -56,6 +52,16 @@ class PaneManager:
         self.root: PaneNode = PaneNode("root")
         self.focus_pane_id: str = "root"
         self._next_pane_index = 1
+
+    def _new_pane_id(self) -> str:
+        pane_id = f"pane-{self._next_pane_index}"
+        self._next_pane_index += 1
+        return pane_id
+
+    def _new_branch_id(self, pane_id: str) -> str:
+        branch_id = f"branch-{pane_id}-{self._next_pane_index}"
+        self._next_pane_index += 1
+        return branch_id
 
     def _find_node(self, node_id: str, node: PaneNode | None = None) -> PaneNode | None:
         if node is None:
@@ -117,10 +123,9 @@ class PaneManager:
         if not focused.parent:
             # root leaf split
             old_root = self.root
-            new_node = PaneNode(_new_pane_id(self._next_pane_index))
-            self._next_pane_index += 1
+            new_node = PaneNode(self._new_pane_id())
             branch = PaneNode(
-                pane_id=old_root.pane_id,
+                pane_id=self._new_branch_id(old_root.pane_id),
                 is_leaf=False,
                 direction="V" if direction == "V" else "H",
             )
@@ -133,14 +138,13 @@ class PaneManager:
 
         # splitting a leaf inside a branch
         parent = focused.parent
-        new_node = PaneNode(_new_pane_id(self._next_pane_index))
-        self._next_pane_index += 1
+        new_node = PaneNode(self._new_pane_id())
         new_node.parent = parent
         old_direction = parent.direction or "V"
         if old_direction != ("V" if direction == "V" else "H"):
             # keep branch orientation; create a small wrapper for mixed splits
             branch = PaneNode(
-                pane_id=focused.pane_id,
+                pane_id=self._new_branch_id(focused.pane_id),
                 is_leaf=False,
                 direction=("V" if direction == "V" else "H"),
             )
@@ -205,6 +209,7 @@ class PaneManager:
                 }
             return {
                 "type": "branch",
+                "id": node.pane_id,
                 "direction": node.direction or "H",
                 "children": [serialize(child) for child in node.children],
             }
@@ -218,16 +223,19 @@ class PaneManager:
         def build(data: dict[str, Any], parent: PaneNode | None = None) -> PaneNode:
             node_type = data.get("type")
             if node_type == "pane":
-                node = PaneNode(data.get("id", _new_pane_id(self._next_pane_index)), is_leaf=True)
+                pane_id = data.get("id") or self._new_pane_id()
+                node = PaneNode(str(pane_id), is_leaf=True)
                 node.pane = Pane(node.pane_id, working_dir=data.get("working_dir", "."))
                 if node.pane.pane_id == "":
-                    node.pane.pane_id = _new_pane_id(self._next_pane_index)
+                    node.pane_id = self._new_pane_id()
+                    node.pane.pane_id = node.pane_id
                 node.parent = parent
                 return node
             if node_type == "branch":
                 children = [build(child, None) for child in data.get("children", [])]
+                branch_id = data.get("id") or self._new_branch_id("restored")
                 node = PaneNode(
-                    pane_id=data.get("id", _new_pane_id(self._next_pane_index)),
+                    pane_id=str(branch_id),
                     is_leaf=False,
                     direction=data.get("direction", "H"),
                     children=children,
@@ -236,7 +244,7 @@ class PaneManager:
                     child.parent = node
                 node.parent = parent
                 if not children:
-                    node.children = [PaneNode(_new_pane_id(self._next_pane_index))]
+                    node.children = [PaneNode(self._new_pane_id())]
                     node.children[0].parent = node
                 return node
             raise ValueError("invalid node type")
@@ -246,7 +254,6 @@ class PaneManager:
         except Exception:
             return False
         self.root.parent = None
-        self._next_pane_index += 1
         leaves = self._leaf_nodes()
         self.focus_pane_id = leaves[0].pane_id if leaves else "root"
         return True

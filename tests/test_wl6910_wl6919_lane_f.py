@@ -158,11 +158,11 @@ def test_wl6912_read_log_file_with_malformed_and_valid_records(tmp_path: Path) -
                 "not-json",
                 json.dumps(
                     {"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}
-                ),
+                ).decode(),
                 json.dumps({"type": "assistant", "timestamp": "bad"}).decode(),
                 json.dumps(
                     {"type": "system", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "skip"}}
-                ),
+                ).decode(),
                 json.dumps(
                     {"type": "user", "timestamp": "2026-01-10T10:01:00+00:00", "message": {"content": "valid"}}
                 ).decode(),

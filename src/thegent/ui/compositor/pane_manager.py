@@ -50,6 +50,11 @@ class PaneManager:
         self._next_id += 1
         return pane_id
 
+    def _new_branch_id(self, pane_id: str) -> str:
+        branch_id = f"branch-{pane_id}-{self._next_id}"
+        self._next_id += 1
+        return branch_id
+
     def _leaves(self) -> list[PaneNode]:
         if self.root is None:
             return []
@@ -114,12 +119,12 @@ class PaneManager:
         if self.root is None:
             self.create_root_pane("pane-0")
         focused = self.get_focused_pane()
+        parent = focused.parent
         new_node = PaneNode(self._new_id())
-        branch = PaneNode(focused.pane_id, is_leaf=False, direction=direction)
+        branch = PaneNode(self._new_branch_id(focused.pane_id), is_leaf=False, direction=direction)
         branch.children = [focused, new_node]
         focused.parent = branch
         new_node.parent = branch
-        parent = self._parent_of(focused.pane_id)
         if parent is None:
             self.root = branch
         else:
@@ -185,8 +190,9 @@ class PaneManager:
             return False
 
         def build(data: dict[str, Any]) -> PaneNode:
+            pane_id = data.get("pane_id") or self._new_id()
             node = PaneNode(
-                data.get("pane_id", self._new_id()), is_leaf=data.get("is_leaf", True), direction=data.get("direction")
+                str(pane_id), is_leaf=data.get("is_leaf", True), direction=data.get("direction")
             )
             if node.is_leaf:
                 node.pane = Pane(node.pane_id, working_dir=data.get("working_dir", "."))

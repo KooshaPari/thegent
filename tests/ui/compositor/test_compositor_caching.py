@@ -448,7 +448,7 @@ def test_error_state_is_cached_with_short_ttl() -> None:
     """content_fn raising is cached; repeated renders return the cached fallback.
 
     On the first (miss) render, _render_cached calls content_fn once for the
-    hash probe (raises) and Panel.render() calls it once more — 2 invocations.
+    hash probe (raises) and renders the fallback from that exception.
     On the second (hit) render, the probe again raises (1 more invocation) but
     the result is served from error_cache without calling Panel.render() again.
     The key invariant: the cached fallback string is the same on both renders,
@@ -460,15 +460,13 @@ def test_error_state_is_cached_with_short_ttl() -> None:
     panel, count = _error_panel()
     comp.add_panel(panel)
 
-    r1 = comp.render_panel("err")  # miss: probe (1) + Panel.render() (2) = 2 calls
+    r1 = comp.render_panel("err")  # miss: probe raises (1), fallback is cached
 
-    r2 = comp.render_panel("err")  # hit: probe (3) only, no Panel.render()
+    r2 = comp.render_panel("err")  # hit: probe raises (2), cached fallback is returned
 
     assert r1 == r2  # same cached fallback on both renders
     assert comp.cache_stats()["hits"] == 1
-    # Panel.render() was called only once (during the miss)
-    # count[0] is 3: 2 from miss + 1 probe during hit
-    assert count[0] == 3
+    assert count[0] == 2
 
 
 @pytest.mark.unit
@@ -492,15 +490,14 @@ def test_error_cache_does_not_use_main_cache() -> None:
 def test_recover_panel_then_render_gets_fresh_result() -> None:
     """After recover_panel() + invalidate, the next render calls content_fn again.
 
-    The content_fn fails for the first *3* calls so that even with the caching
-    probe (which calls content_fn once for the hash), the panel ends up in an
-    error state on the first render.  After recover + invalidate the function
-    starts succeeding and the compositor returns the happy result.
+    The content_fn fails on the first call so the panel enters an error state.
+    After recover + invalidate the next call succeeds and returns the happy
+    result.
 
     # @trace FR-UI-COMP-014
     """
     calls: list[int] = [0]
-    fail_limit: int = 3  # fail until calls[0] >= fail_limit
+    fail_limit: int = 2  # fail until calls[0] >= fail_limit
 
     def content_fn() -> str:
         calls[0] += 1
@@ -512,11 +509,11 @@ def test_recover_panel_then_render_gets_fresh_result() -> None:
     comp = Compositor()
     comp.add_panel(panel)
 
-    # First render: probe raises (call 1), Panel.render() raises (call 2) → error
+    # First render: probe raises (call 1) and the fallback is cached.
     r1 = comp.render_panel("r")
     assert panel.has_error
 
-    # Recover and invalidate so next render is a miss (call 3 → succeeds)
+    # Recover and invalidate so next render is a miss (call 2 succeeds).
     comp.recover_panel("r")
     comp.invalidate("r")
 

@@ -12,6 +12,7 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.table import Table
 
 console = Console()
 
@@ -30,8 +31,32 @@ def shell_doctor(fix: bool = False) -> None:
     except subprocess.SubprocessError as exc:
         console.print(f"Alias probe unavailable: subprocess error: {exc}")
         return
+    except OSError as exc:
+        console.print(f"Alias probe unavailable: OS error: {exc}")
+        return
     if "tree" in (result.stdout or ""):
         console.print("ls is aliased to tree/recursive output")
+
+
+def shell_platform() -> None:
+    """Print shell platform diagnostics."""
+    table = Table(title="Platform Information")
+    table.add_column("Key")
+    table.add_column("Value")
+    try:
+        result = subprocess.run(["zsh", "--version"], capture_output=True, text=True, timeout=2, check=False)
+        version = (result.stdout or "").strip().split()
+        table.add_row("Zsh Version", version[1] if len(version) > 1 else "unknown")
+        table.add_row("Zsh Status", "Available")
+    except subprocess.TimeoutExpired:
+        table.add_row("Zsh Status", "Probe timed out")
+    except FileNotFoundError:
+        table.add_row("Zsh Status", "Not installed")
+    except subprocess.SubprocessError as exc:
+        table.add_row("Zsh Status", f"Probe failed ({type(exc).__name__})")
+    except OSError as exc:
+        table.add_row("Zsh Status", f"Probe failed ({type(exc).__name__})")
+    console.print(table)
 
 
 class ShellApp:
@@ -47,4 +72,4 @@ class ShellApp:
 
 shell_app = ShellApp()
 
-__all__ = ["Path", "ShellApp", "console", "shell_app", "shell_doctor", "subprocess"]
+__all__ = ["Path", "ShellApp", "Table", "console", "shell_app", "shell_doctor", "shell_platform", "subprocess"]

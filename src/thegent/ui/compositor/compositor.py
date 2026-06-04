@@ -150,14 +150,14 @@ class Compositor:
         try:
             probed = panel.content_fn()
         except Exception as exc:
+            panel.last_error = exc
             error_cached = self._error_cache.get(name)
             if error_cached and now - error_cached[1] <= self.error_ttl:
-                panel.last_error = exc
                 self._hits += 1
                 self.profiler.record(RenderProfile(name, 0.0, now, cache_hit=True))
                 return error_cached[0]
             start = perf_counter()
-            rendered = panel.render()
+            rendered = panel._fallback(exc)
             duration = max((perf_counter() - start) * 1000.0, 0.0)
             self._error_cache[name] = (rendered, now)
             self._misses += 1
