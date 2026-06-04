@@ -437,13 +437,11 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
                 out.insert(0, "--dangerously-skip-permissions".to_string());
             }
         }
-        "roid" | "droid" => {
-            if out.first().map(String::as_str) == Some("exec") {
-                let has_skip = out.iter().any(|a| a == "--skip-permissions-unsafe");
-                let has_auto = out.iter().any(|a| a == "--auto");
-                if !has_skip && !has_auto {
-                    out.insert(1, "--skip-permissions-unsafe".to_string());
-                }
+        "roid" | "droid" if out.first().map(String::as_str) == Some("exec") => {
+            let has_skip = out.iter().any(|a| a == "--skip-permissions-unsafe");
+            let has_auto = out.iter().any(|a| a == "--auto");
+            if !has_skip && !has_auto {
+                out.insert(1, "--skip-permissions-unsafe".to_string());
             }
         }
         _ => {}
