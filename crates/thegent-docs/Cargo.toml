@@ -3,6 +3,7 @@ name = "thegent-docs"
 version = "0.1.0"
 edition = "2021"
 description = "Markdown frontmatter/backmatter processor and documentation tools"
+license = "MIT"
 
 [[bin]]
 name = "thegent-docs"
