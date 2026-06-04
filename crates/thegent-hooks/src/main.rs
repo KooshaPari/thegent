@@ -1635,6 +1635,7 @@ fn cmd_friction_detect() {
 fn cmd_notify() {
     let args: Vec<String> = env::args().collect();
     let mut event = "event".to_string();
+    #[allow(unused_assignments)]
     let mut severity = "info".to_string();
     let mut title = "thegent".to_string();
     let mut message = String::new();
@@ -5283,12 +5284,12 @@ fn cmd_tool(name: &str) {
             }
         }
         "fd" => {
-            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
+            if !(is_agent_session || actual_args.iter().any(|a| a == "--color")) {
                 cmd.arg("--color=always");
             }
         }
         "bat" => {
-            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
+            if !(is_agent_session || actual_args.iter().any(|a| a == "--color")) {
                 cmd.arg("--color=always");
             }
         }
