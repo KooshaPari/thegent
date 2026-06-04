@@ -1,6 +1,7 @@
 //! Integration tests for thegent-plugin-host
 //!
 //! Traces to:
+//! FR: FR-THEGENT-007
 //! - FR-THEGENT-007: Plugin host and tooling consolidation
 
 use semver::Version;
