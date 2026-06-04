@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+// Plugin host keeps hexagonal API types ahead of adapter wiring.
+
 //! # thegent-plugin-host
 //!
 //! Plugin host and loader for thegent multi-agent system.

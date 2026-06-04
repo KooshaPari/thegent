@@ -5,7 +5,7 @@
 
 use semver::Version;
 use thegent_plugin_host::{
-    Capability, Plugin, PluginDependency, PluginError, PluginId, PluginManifest, PluginState,
+    Capability, Plugin, PluginDependency, PluginManifest, PluginState,
 };
 
 /// @trace FR-THEGENT-007
