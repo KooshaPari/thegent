@@ -68,12 +68,14 @@ jobs:
           cargo tarpaulin --lib --out Xml
 
       - name: Upload coverage
+        if: hashFiles('crates/cobertura.xml') != ''
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354
         with:
-          files: ./cobertura.xml
+          files: ./crates/cobertura.xml
           fail_ci_if_error: false
 
       - name: Check coverage threshold
+        if: hashFiles('crates/cobertura.xml') != ''
         working-directory: crates
         run: |
           COVERAGE=$(grep -o 'coverage="[0-9.]*"' cobertura.xml | head -1 | grep -o '[0-9.]*')
