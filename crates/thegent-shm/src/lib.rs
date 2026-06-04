@@ -249,7 +249,9 @@ impl SHMInterface {
     }
 
     pub fn do_award_xp(&mut self, amount: u64) -> std::io::Result<()> {
-        let _guard = XP_WRITE_LOCK.lock().unwrap();
+        let _guard = XP_WRITE_LOCK
+            .lock()
+            .map_err(|_| std::io::Error::other("XP write lock poisoned"))?;
         let mut state = self.get_xp_state_internal();
         state.total_xp += amount;
         state.level = (state.total_xp / 1000) as u32 + 1;
