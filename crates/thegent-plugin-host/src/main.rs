@@ -1,6 +1,3 @@
-#![allow(dead_code)]
-// Plugin host keeps hexagonal API types ahead of adapter wiring.
-
 //! # thegent-plugin-host
 //!
 //! Plugin host and loader for thegent multi-agent system.
@@ -13,9 +10,14 @@
 
 use clap::{Parser, Subcommand};
 
+// Plugin host keeps hexagonal API modules ahead of adapter wiring.
+#[allow(dead_code)]
 mod domain;
+#[allow(dead_code)]
 mod application;
+#[allow(dead_code)]
 mod ports;
+#[allow(dead_code)]
 mod adapters;
 
 use adapters::inmemory::{InMemoryPluginStorage, InMemoryEventPublisher};
@@ -49,9 +51,6 @@ enum Commands {
     Uninstall {
         /// Plugin name
         name: String,
-        /// Force uninstall
-        #[arg(long, short)]
-        force: bool,
     },
     /// Enable a plugin
     Enable {
@@ -94,7 +93,7 @@ fn main() {
                 Err(e) => eprintln!("Failed to install plugin: {}", e),
             }
         }
-        Commands::Uninstall { name, force: _ } => {
+        Commands::Uninstall { name } => {
             match use_case.uninstall_plugin(&name) {
                 Ok(()) => println!("Uninstalled plugin {}", name),
                 Err(e) => eprintln!("Failed to uninstall plugin: {}", e),

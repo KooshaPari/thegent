@@ -1,6 +1,3 @@
-#![allow(dead_code)]
-// Plugin host keeps hexagonal API types ahead of adapter wiring.
-
 //! # thegent-plugin-host
 //!
 //! Plugin host and loader for thegent agent system.
@@ -18,9 +15,14 @@
 //! - **EDA**: Domain events for state changes
 //! - **SpecDD**: Formal specifications in `specs/` module
 
+// Plugin host keeps hexagonal API modules ahead of adapter wiring.
+#[allow(dead_code)]
 pub mod domain;
+#[allow(dead_code)]
 pub mod application;
+#[allow(dead_code)]
 pub mod ports;
+#[allow(dead_code)]
 pub mod adapters;
 
 // Re-exports for convenience
