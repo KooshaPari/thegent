@@ -22,6 +22,7 @@ pub trait PluginStoragePort {
 }
 
 /// Port for plugin loading
+#[allow(dead_code)]
 pub trait PluginLoaderPort {
     /// Load a plugin from path
     fn load(&self, path: &str) -> Result<Plugin, String>;
@@ -33,5 +34,6 @@ pub trait EventPublisherPort {
     fn publish(&mut self, event: PluginEvent) -> Result<(), String>;
 
     /// Subscribe to events
+    #[allow(dead_code)]
     fn subscribe(&mut self, handler: Box<dyn Fn(PluginEvent) + Send>);
 }

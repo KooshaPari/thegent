@@ -15,7 +15,11 @@ impl<S: PluginStoragePort, E: EventPublisherPort> PluginUseCase<S, E> {
         Self { storage, events }
     }
 
-    pub fn install_plugin(&mut self, name: String, version: Option<String>) -> Result<PluginId, String> {
+    pub fn install_plugin(
+        &mut self,
+        name: String,
+        version: Option<String>,
+    ) -> Result<PluginId, String> {
         let id = PluginId::new(&name);
         let ver = version.unwrap_or_else(|| "0.1.0".to_string());
         let plugin = Plugin::new(

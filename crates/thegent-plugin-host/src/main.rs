@@ -10,17 +10,12 @@
 
 use clap::{Parser, Subcommand};
 
-// Plugin host keeps hexagonal API modules ahead of adapter wiring.
-#[allow(dead_code)]
-mod domain;
-#[allow(dead_code)]
-mod application;
-#[allow(dead_code)]
-mod ports;
-#[allow(dead_code)]
 mod adapters;
+mod application;
+mod domain;
+mod ports;
 
-use adapters::inmemory::{InMemoryPluginStorage, InMemoryEventPublisher};
+use adapters::inmemory::{InMemoryEventPublisher, InMemoryPluginStorage};
 use application::use_cases::PluginUseCase;
 
 #[derive(Parser)]
@@ -93,12 +88,10 @@ fn main() {
                 Err(e) => eprintln!("Failed to install plugin: {}", e),
             }
         }
-        Commands::Uninstall { name } => {
-            match use_case.uninstall_plugin(&name) {
-                Ok(()) => println!("Uninstalled plugin {}", name),
-                Err(e) => eprintln!("Failed to uninstall plugin: {}", e),
-            }
-        }
+        Commands::Uninstall { name } => match use_case.uninstall_plugin(&name) {
+            Ok(()) => println!("Uninstalled plugin {}", name),
+            Err(e) => eprintln!("Failed to uninstall plugin: {}", e),
+        },
         Commands::Enable { name } => {
             println!("Enabled plugin {}", name);
         }

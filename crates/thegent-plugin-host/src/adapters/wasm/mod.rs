@@ -11,8 +11,10 @@ use crate::ports::driven::PluginLoaderPort;
 use std::path::Path;
 
 /// WASM plugin loader
+#[allow(dead_code)]
 pub struct WasmPluginLoader;
 
+#[allow(dead_code)]
 impl WasmPluginLoader {
     pub fn new() -> Self {
         Self
@@ -29,7 +31,10 @@ impl PluginLoaderPort for WasmPluginLoader {
     fn load(&self, path: &str) -> Result<Plugin, String> {
         let path = Path::new(path);
         if !path.exists() {
-            return Err(format!("WASM plugin path does not exist: {}", path.display()));
+            return Err(format!(
+                "WASM plugin path does not exist: {}",
+                path.display()
+            ));
         }
 
         let name = path

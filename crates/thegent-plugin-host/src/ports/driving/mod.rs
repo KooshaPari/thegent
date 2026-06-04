@@ -1,6 +1,7 @@
 //! # Driving Ports (Primary)
 
 /// CLI interface for plugin management
+#[allow(dead_code)]
 pub trait PluginCliPort {
     /// List all plugins
     fn list_plugins(&self);
@@ -22,6 +23,7 @@ pub trait PluginCliPort {
 }
 
 /// HTTP API interface
+#[allow(dead_code)]
 pub trait PluginApiPort {
     /// Handle install request
     fn handle_install(&self, name: &str) -> Result<(), String>;

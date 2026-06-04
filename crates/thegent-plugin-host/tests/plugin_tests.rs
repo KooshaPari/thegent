@@ -4,9 +4,7 @@
 //! - FR-THEGENT-007: Plugin host and tooling consolidation
 
 use semver::Version;
-use thegent_plugin_host::{
-    Capability, Plugin, PluginDependency, PluginManifest, PluginState,
-};
+use thegent_plugin_host::{Capability, Plugin, PluginDependency, PluginManifest, PluginState};
 
 /// @trace FR-THEGENT-007
 #[test]
