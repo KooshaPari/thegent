@@ -105,7 +105,7 @@ fn start_postgres() -> bool {
     if Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
         for formula in &["postgresql@17", "postgresql@14", "postgresql"] {
             if Command::new("brew")
-                .args(&["services", "start", formula])
+                .args(["services", "start", formula])
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .status()
@@ -120,7 +120,7 @@ fn start_postgres() -> bool {
     if !started {
         // Fallback to pg_ctl directly
         let _ = Command::new("pg_ctl")
-            .args(&["-D", "/opt/homebrew/var/postgresql@17", "start"])
+            .args(["-D", "/opt/homebrew/var/postgresql@17", "start"])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status();
@@ -146,7 +146,7 @@ fn start_nats() -> bool {
     }
 
     let spawn_res = Command::new("nats-server")
-        .args(&["-js", "-D"])
+        .args(["-js", "-D"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn();
@@ -179,7 +179,7 @@ fn start_neo4j() -> bool {
     let mut cli_started = false;
     let neo4j_cmd = if Command::new("neo4j").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
         Some("neo4j".to_string())
-    } else if let Ok(output) = Command::new("brew").args(&["--prefix", "neo4j"]).output() {
+    } else if let Ok(output) = Command::new("brew").args(["--prefix", "neo4j"]).output() {
         let prefix = String::from_utf8_lossy(&output.stdout).trim().to_string();
         let path = Path::new(&prefix).join("bin").join("neo4j");
         if path.exists() {
@@ -209,7 +209,7 @@ fn start_neo4j() -> bool {
         // Fallback to brew services start neo4j
         print_info("Trying brew services start neo4j...");
         let _ = Command::new("brew")
-            .args(&["services", "start", "neo4j"])
+            .args(["services", "start", "neo4j"])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn();
@@ -232,19 +232,19 @@ fn start_neo4j() -> bool {
 fn start_minio() -> bool {
     print_info("Starting MinIO (S3-compatible object storage)...");
 
-    if !Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+    if Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_err() {
         print_error("Homebrew required to manage MinIO. Install from https://brew.sh");
         return false;
     }
 
     // Install minio if missing
-    if !Command::new("minio").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+    if Command::new("minio").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_err() {
         print_info("Installing MinIO (brew install minio)...");
-        let _ = Command::new("brew").args(&["install", "minio"]).status();
+        let _ = Command::new("brew").args(["install", "minio"]).status();
     }
 
     let _ = Command::new("brew")
-        .args(&["services", "start", "minio"])
+        .args(["services", "start", "minio"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status();
@@ -289,7 +289,7 @@ fn start_minio() -> bool {
         if go_main.exists() {
             print_info("Creating bucket 'tracertm'...");
             let mut cmd = Command::new("go");
-            cmd.args(&["run", "./cmd/create-minio-bucket/"])
+            cmd.args(["run", "./cmd/create-minio-bucket/"])
                 .current_dir(root.join("backend"));
             
             // Set required S3 env vars
@@ -314,14 +314,14 @@ fn start_minio() -> bool {
 fn start_temporal() -> bool {
     print_info("Starting Temporal (workflow server)...");
 
-    if !Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+    if Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_err() {
         print_error("Homebrew required to manage Temporal. Install from https://brew.sh");
         return false;
     }
 
-    if !Command::new("temporal").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+    if Command::new("temporal").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_err() {
         print_info("Installing Temporal CLI (brew install temporal)...");
-        let _ = Command::new("brew").args(&["install", "temporal"]).status();
+        let _ = Command::new("brew").args(["install", "temporal"]).status();
     }
 
     if is_port_open(7233) {
@@ -337,7 +337,7 @@ fn start_temporal() -> bool {
         print_info(&format!("Starting Temporal server (dev mode, db: {})...", db_file.display()));
         
         let spawn_res = Command::new("temporal")
-            .args(&["server", "start-dev", "--db-filename", &db_file.to_string_lossy()])
+            .args(["server", "start-dev", "--db-filename", &db_file.to_string_lossy()])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn();
@@ -387,15 +387,15 @@ fn start_temporal() -> bool {
         // Ensure namespace exists
         let namespace = "default";
         let check_ns = Command::new("temporal")
-            .args(&["operator", "namespace", "describe", "--namespace", namespace])
+            .args(["operator", "namespace", "describe", "--namespace", namespace])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status();
 
-        if !check_ns.map_or(false, |s| s.success()) {
+        if !check_ns.is_ok_and(|s| s.success()) {
             print_info(&format!("Creating Temporal namespace: {}", namespace));
             let create_ns = Command::new("temporal")
-                .args(&[
+                .args([
                     "operator",
                     "namespace",
                     "create",
@@ -408,7 +408,7 @@ fn start_temporal() -> bool {
                 .stderr(Stdio::null())
                 .status();
 
-            if create_ns.map_or(false, |s| s.success()) {
+            if create_ns.is_ok_and(|s| s.success()) {
                 print_success("Temporal namespace created");
             } else {
                 print_warning("Failed to create namespace automatically");
@@ -433,7 +433,7 @@ fn start_dragonfly() -> bool {
 
     if Command::new("dragonfly").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
         let spawn_res = Command::new("dragonfly")
-            .args(&["--port", "6379", "--dir", ".dragonfly"])
+            .args(["--port", "6379", "--dir", ".dragonfly"])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn();
@@ -455,7 +455,7 @@ fn start_dragonfly() -> bool {
 
             print_info("Spawning Dragonfly via Docker...");
             let spawn_res = Command::new("docker")
-                .args(&[
+                .args([
                     "run",
                     "--rm",
                     "--name",
@@ -489,13 +489,13 @@ fn start_dragonfly() -> bool {
 fn run_brew_infra() -> bool {
     print_info("Installing and starting TraceRTM infra via Homebrew...");
 
-    if !Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+    if Command::new("brew").arg("--version").stdout(Stdio::null()).stderr(Stdio::null()).status().is_err() {
         print_error("Homebrew required. Install from https://brew.sh");
         return false;
     }
 
     let _ = Command::new("brew")
-        .args(&["tap", "minio/minio"])
+        .args(["tap", "minio/minio"])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status();
@@ -504,11 +504,11 @@ fn run_brew_infra() -> bool {
     let mut pg_installed = false;
     for formula in &["postgresql@17", "postgresql@14", "postgresql"] {
         if Command::new("brew")
-            .args(&["list", formula])
+            .args(["list", formula])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .map_or(false, |s| s.success())
+            .is_ok_and(|s| s.success())
         {
             pg_installed = true;
             break;
@@ -516,29 +516,29 @@ fn run_brew_infra() -> bool {
     }
     if !pg_installed {
         print_info("Installing postgresql@17...");
-        let _ = Command::new("brew").args(&["install", "postgresql@17"]).status();
+        let _ = Command::new("brew").args(["install", "postgresql@17"]).status();
     }
 
     // Install other formulas
     for formula in &["nats-server", "neo4j", "temporal", "minio"] {
         if !Command::new("brew")
-            .args(&["list", formula])
+            .args(["list", formula])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
-            .map_or(false, |s| s.success())
+            .is_ok_and(|s| s.success())
         {
             print_info(&format!("Installing {}...", formula));
-            let _ = Command::new("brew").args(&["install", formula]).status();
+            let _ = Command::new("brew").args(["install", formula]).status();
         }
     }
 
     print_info("Starting all brew services...");
-    let _ = Command::new("brew").args(&["services", "start", "postgresql@17"]).status();
-    let _ = Command::new("brew").args(&["services", "start", "nats-server"]).status();
-    let _ = Command::new("brew").args(&["services", "start", "neo4j"]).status();
-    let _ = Command::new("brew").args(&["services", "start", "temporal"]).status();
-    let _ = Command::new("brew").args(&["services", "start", "minio"]).status();
+    let _ = Command::new("brew").args(["services", "start", "postgresql@17"]).status();
+    let _ = Command::new("brew").args(["services", "start", "nats-server"]).status();
+    let _ = Command::new("brew").args(["services", "start", "neo4j"]).status();
+    let _ = Command::new("brew").args(["services", "start", "temporal"]).status();
+    let _ = Command::new("brew").args(["services", "start", "minio"]).status();
 
     print_success("Brew services started. Verifying ports...");
     for _ in 0..30 {
@@ -566,10 +566,10 @@ fn start_go_backend() -> bool {
         print_warning("Press Ctrl+C to stop");
 
         // Ensure air is installed
-        if !Command::new("air").arg("-v").stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok() {
+        if Command::new("air").arg("-v").stdout(Stdio::null()).stderr(Stdio::null()).status().is_err() {
             print_warning("air not found. Installing...");
             let _ = Command::new("go")
-                .args(&["install", "github.com/air-verse/air@latest"])
+                .args(["install", "github.com/air-verse/air@latest"])
                 .status();
         }
 
@@ -602,7 +602,7 @@ fn start_python_backend() -> bool {
         print_warning("Press Ctrl+C to stop");
 
         let mut child = Command::new("uv")
-            .args(&["run", "uvicorn", "tracertm.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"])
+            .args(["run", "uvicorn", "tracertm.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"])
             .current_dir(&root)
             .spawn()
             .expect("Failed to start python backend");
@@ -632,7 +632,7 @@ fn start_frontend() -> bool {
         print_warning("Press Ctrl+C to stop");
 
         let mut child = Command::new("bun")
-            .args(&["run", "dev"])
+            .args(["run", "dev"])
             .current_dir(&web_dir)
             .spawn()
             .expect("Failed to start frontend");
@@ -681,7 +681,7 @@ fn stop_all() -> bool {
         .stdout(Stdio::null())
         .status();
 
-    if check_nats.map_or(false, |s| s.success()) {
+    if check_nats.is_ok_and(|s| s.success()) {
         let _ = Command::new("pkill").arg("nats-server").status();
         print_success("NATS stopped");
     }
