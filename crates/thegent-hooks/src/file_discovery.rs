@@ -41,12 +41,7 @@ pub enum FileType {
 }
 
 fn command_exists(cmd: &str) -> bool {
-    Command::new("command")
-        .arg("-v")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
+    crate::utils::command_exists(cmd)
 }
 
 fn find_with_fd(
@@ -140,8 +135,21 @@ mod tests {
 
     #[test]
     fn test_find_files() {
-        // Should find files in current directory
-        let result = find_files(None, Some(1), Some(FileType::File), Some("."));
+        if !command_exists("fd") && (!command_exists("find") || cfg!(windows)) {
+            return;
+        }
+
+        let temp = tempfile::TempDir::new().unwrap();
+        std::fs::write(temp.path().join("sample.txt"), "sample").unwrap();
+
+        let dir = temp.path().to_string_lossy();
+        let result = find_files(
+            Some("sample.txt"),
+            Some(1),
+            Some(FileType::File),
+            Some(&dir),
+        );
         assert!(result.is_ok());
+        assert!(!result.unwrap().is_empty());
     }
 }
