@@ -3,6 +3,7 @@ name = "harness-native"
 version = "0.1.0"
 edition = "2021"
 description = "Native helpers for agent-harness: cache-key, is-agent, dispatcher"
+license = "MIT"
 
 [[bin]]
 name = "harness-cache-key"

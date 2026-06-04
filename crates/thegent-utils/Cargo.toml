@@ -3,6 +3,7 @@ name = "thegent-utils"
 version = "0.1.0"
 edition = "2021"
 description = "Utility binaries for thegent: process monitoring, safe grep, etc."
+license = "MIT"
 
 [[bin]]
 name = "thegent-monitor"
