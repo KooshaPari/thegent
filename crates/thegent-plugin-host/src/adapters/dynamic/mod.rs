@@ -5,8 +5,10 @@ use crate::ports::driven::PluginLoaderPort;
 use std::path::Path;
 
 /// Dynamic library plugin loader
+#[allow(dead_code)]
 pub struct DynamicPluginLoader;
 
+#[allow(dead_code)]
 impl DynamicPluginLoader {
     pub fn new() -> Self {
         Self
@@ -34,9 +36,9 @@ impl PluginLoaderPort for DynamicPluginLoader {
             .unwrap_or("unknown");
 
         Ok(Plugin::new(
-                    name.to_string(),
-                    semver::Version::parse("0.1.0").map_err(|e| e.to_string())?,
-                    "dynamic".to_string(),
-                ))
+            name.to_string(),
+            semver::Version::parse("0.1.0").map_err(|e| e.to_string())?,
+            "dynamic".to_string(),
+        ))
     }
 }

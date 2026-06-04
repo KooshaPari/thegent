@@ -5,14 +5,22 @@ all-features = true
 version = 2
 yanked = "warn"
 ignore = [
-    # No safe upgrade is available; transitive through ratatui/compio.
+    # Current tree pulls paste through the ratatui/compio path and RustSec
+    # reports no patched upgrade path; keep this explicit while dependency
+    # owners migrate away from paste.
     "RUSTSEC-2024-0436",
-    # No patched rsa release is available; MAIF rejects weak RSA keys while migration is tracked.
+    # Current tree still resolves rsa 0.9.x and RustSec reports no fixed
+    # release for the Marvin timing side channel; keep this as a tracked
+    # temporary exception instead of over-claiming local mitigation.
     "RUSTSEC-2023-0071",
 ]
 
 [licenses]
 version = 2
+# Allow only licenses present in the resolved cargo-deny tree. This includes
+# permissive data/runtime licenses such as CDLA-Permissive-2.0 and weak-copyleft
+# MPL-2.0 entries that are carried as third-party dependencies rather than
+# project relicensing.
 allow = ["Apache-2.0", "Apache-2.0 WITH LLVM-exception", "MIT", "MIT-0", "BSD-3-Clause", "BSD-2-Clause", "BSL-1.0", "CDLA-Permissive-2.0", "ISC", "Unicode-DFS-2016", "Unicode-3.0", "MPL-2.0", "Zlib", "CC0-1.0"]
 confidence-threshold = 0.8
 

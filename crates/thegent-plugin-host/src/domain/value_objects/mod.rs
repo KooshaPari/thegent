@@ -5,16 +5,21 @@
 use std::path::PathBuf;
 
 /// Plugin name (validated)
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PluginName(String);
 
+#[allow(dead_code)]
 impl PluginName {
     pub fn new(name: impl Into<String>) -> Result<Self, &'static str> {
         let name = name.into();
         if name.is_empty() {
             return Err("Plugin name cannot be empty");
         }
-        if !name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+        if !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+        {
             return Err("Plugin name must be alphanumeric with hyphens/underscores");
         }
         Ok(Self(name))
@@ -26,9 +31,11 @@ impl PluginName {
 }
 
 /// Plugin path
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct PluginPath(PathBuf);
 
+#[allow(dead_code)]
 impl PluginPath {
     pub fn new(path: impl Into<PathBuf>) -> Self {
         Self(path.into())
@@ -40,9 +47,11 @@ impl PluginPath {
 }
 
 /// Load priority
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Priority(u8);
 
+#[allow(dead_code)]
 impl Priority {
     pub const LOW: Priority = Priority(0);
     pub const NORMAL: Priority = Priority(128);
