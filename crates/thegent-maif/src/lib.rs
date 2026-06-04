@@ -165,6 +165,12 @@ impl MAIFArtifact {
 
 /// Generate a new RSA key pair.
 pub fn generate_key_pair(bits: usize) -> Result<(RsaPrivateKey, RsaPublicKey)> {
+    if bits < 2048 {
+        return Err(MaifError::KeyGen(format!(
+            "RSA key size must be at least 2048 bits; requested {bits}"
+        )));
+    }
+
     let mut rng = StdRng::from_entropy();
     let private_key =
         RsaPrivateKey::new(&mut rng, bits).map_err(|e| MaifError::KeyGen(e.to_string()))?;
