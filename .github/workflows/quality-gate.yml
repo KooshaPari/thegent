@@ -64,7 +64,7 @@ jobs:
         working-directory: crates
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --lib --out Xml --all-features
+          cargo tarpaulin --lib --out Xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354
