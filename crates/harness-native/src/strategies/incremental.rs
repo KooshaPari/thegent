@@ -14,14 +14,20 @@ pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {
             let stderr = child.stderr.take();
 
             if let Some(stdout) = stdout {
-                for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-                    println!("{}", line);
+                for line in BufReader::new(stdout).lines() {
+                    match line {
+                        Ok(line) => println!("{}", line),
+                        Err(_) => continue,
+                    }
                 }
             }
 
             if let Some(stderr) = stderr {
-                for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-                    eprintln!("{}", line);
+                for line in BufReader::new(stderr).lines() {
+                    match line {
+                        Ok(line) => eprintln!("{}", line),
+                        Err(_) => continue,
+                    }
                 }
             }
 
