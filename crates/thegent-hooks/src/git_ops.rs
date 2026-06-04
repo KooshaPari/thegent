@@ -76,6 +76,8 @@ impl AgentMetadata {
 pub struct GitOps {
     git_bin: PathBuf,
     cache: GitCache,
+    #[cfg(test)]
+    _cache_temp_dir: Option<tempfile::TempDir>,
     metadata: AgentMetadata,
     operation_ttls: HashMap<String, Duration>,
 }
@@ -97,6 +99,8 @@ impl GitOps {
         Ok(Self {
             git_bin,
             cache,
+            #[cfg(test)]
+            _cache_temp_dir: None,
             metadata,
             operation_ttls: Self::default_ttls(),
         })
@@ -108,6 +112,7 @@ impl GitOps {
         Self {
             git_bin: PathBuf::from("git"),
             cache: GitCache::new(temp_dir.path(), 60).expect("create git cache"),
+            _cache_temp_dir: Some(temp_dir),
             metadata: AgentMetadata::default(),
             operation_ttls: Self::default_ttls(),
         }

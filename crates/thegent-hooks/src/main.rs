@@ -5283,10 +5283,19 @@ fn cmd_tool(name: &str) {
                 cmd.arg("--line-number");
             }
         }
-        "fd" if !(is_agent_session || actual_args.iter().any(|a| a == "--color")) => {
+        "fd" if !(is_agent_session
+            || actual_args
+                .iter()
+                .any(|a| a == "--color" || a.starts_with("--color="))) =>
+        {
             cmd.arg("--color=always");
         }
-        "bat" if !(is_agent_session || actual_args.iter().any(|a| a == "--color")) => {
+        "bat"
+            if !(is_agent_session
+                || actual_args
+                    .iter()
+                    .any(|a| a == "--color" || a.starts_with("--color="))) =>
+        {
             cmd.arg("--color=always");
         }
         _ => {}

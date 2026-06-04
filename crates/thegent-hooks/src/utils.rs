@@ -80,7 +80,21 @@ fn find_in_dir(dir: &Path, binary: &str) -> Option<PathBuf> {
     candidate_names(binary)
         .into_iter()
         .map(|name| dir.join(name))
-        .find(|candidate| candidate.is_file())
+        .find(|candidate| is_executable(candidate))
+}
+
+#[cfg(unix)]
+fn is_executable(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+
+    path.metadata()
+        .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
+        .unwrap_or(false)
+}
+
+#[cfg(not(unix))]
+fn is_executable(path: &Path) -> bool {
+    path.is_file()
 }
 
 fn candidate_names(binary: &str) -> Vec<String> {

@@ -19,7 +19,10 @@ pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {
                     for line in BufReader::new(stdout).lines() {
                         match line {
                             Ok(line) => println!("{}", line),
-                            Err(_) => continue,
+                            Err(e) => {
+                                eprintln!("stdout read error: {}", e);
+                                break;
+                            }
                         }
                     }
                 })
@@ -30,7 +33,10 @@ pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {
                     for line in BufReader::new(stderr).lines() {
                         match line {
                             Ok(line) => eprintln!("{}", line),
-                            Err(_) => continue,
+                            Err(e) => {
+                                eprintln!("stderr read error: {}", e);
+                                break;
+                            }
                         }
                     }
                 })

@@ -271,6 +271,12 @@ mod tests {
     }
 
     #[test]
+    fn test_keygen_rejects_weak_rsa_key_size() {
+        let err = generate_key_pair(1024).unwrap_err();
+        assert!(matches!(err, MaifError::KeyGen(_)));
+    }
+
+    #[test]
     fn test_save_load_roundtrip() {
         let tmp = std::env::temp_dir();
         let (private_key, public_key) = generate_key_pair(2048).unwrap();
