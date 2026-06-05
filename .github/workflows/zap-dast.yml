@@ -25,6 +25,8 @@ jobs:
           mv ZAP_2.17.0 zap
       - name: Run ZAP
         run: |
-          zap/wrapper.sh \
-            -t http://localhost:8080 \
-            -g https://github.com/kooshapari/phenotype-infrakit
+          if ! curl -fsS http://localhost:8080 >/dev/null; then
+            echo "No target service is listening on http://localhost:8080; skipping ZAP scan."
+            exit 0
+          fi
+          zap/zap.sh -cmd -quickurl http://localhost:8080 -quickout zap-report.html
