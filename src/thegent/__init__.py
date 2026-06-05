@@ -210,8 +210,9 @@ class _SharedMCPManager:
                     lock_text = handle.read()
                 data = orjson.loads(lock_text)
                 pid = int(data.get("pid", 0))
-                if pid > 0:
-                    self.os.kill(pid, 0)
+                if pid <= 0:
+                    raise ProcessLookupError("shared MCP lock has no server pid")
+                self.os.kill(pid, 0)
                 return False, _loopback_url("127.0.0.1", int(data.get("port", port)), "/mcp")
             except PermissionError as exc:
                 return False, f"permission denied: {exc}"
@@ -232,9 +233,7 @@ class _SharedMCPManager:
         manage = import_module("thegent.mcp.manage")
         started = manage.mcp_up()
         server_pid = int(getattr(started, "pid", 0) or 0)
-        lock_data: dict[str, object] = {"port": port, "url": shared_url}
-        if server_pid > 0:
-            lock_data["pid"] = server_pid
+        lock_data: dict[str, object] = {"pid": server_pid, "port": port, "url": shared_url}
         lockfile.write_text(orjson.dumps(lock_data).decode(), encoding="utf-8")
         return True, shared_url
 
