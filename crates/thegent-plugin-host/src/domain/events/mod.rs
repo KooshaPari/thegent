@@ -3,6 +3,7 @@
 use std::time::SystemTime;
 
 /// Plugin lifecycle events
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum PluginEvent {
     /// Plugin was loaded
@@ -29,6 +30,7 @@ pub enum PluginEvent {
     Disabled { name: String, timestamp: SystemTime },
 }
 
+#[allow(dead_code)]
 impl PluginEvent {
     pub fn timestamp(&self) -> SystemTime {
         match self {

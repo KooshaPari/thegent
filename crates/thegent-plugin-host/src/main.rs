@@ -10,12 +10,12 @@
 
 use clap::{Parser, Subcommand};
 
-mod domain;
-mod application;
-mod ports;
 mod adapters;
+mod application;
+mod domain;
+mod ports;
 
-use adapters::inmemory::{InMemoryPluginStorage, InMemoryEventPublisher};
+use adapters::inmemory::{InMemoryEventPublisher, InMemoryPluginStorage};
 use application::use_cases::PluginUseCase;
 
 #[derive(Parser)]
@@ -46,9 +46,6 @@ enum Commands {
     Uninstall {
         /// Plugin name
         name: String,
-        /// Force uninstall
-        #[arg(long, short)]
-        force: bool,
     },
     /// Enable a plugin
     Enable {
@@ -91,12 +88,10 @@ fn main() {
                 Err(e) => eprintln!("Failed to install plugin: {}", e),
             }
         }
-        Commands::Uninstall { name, force: _ } => {
-            match use_case.uninstall_plugin(&name) {
-                Ok(()) => println!("Uninstalled plugin {}", name),
-                Err(e) => eprintln!("Failed to uninstall plugin: {}", e),
-            }
-        }
+        Commands::Uninstall { name } => match use_case.uninstall_plugin(&name) {
+            Ok(()) => println!("Uninstalled plugin {}", name),
+            Err(e) => eprintln!("Failed to uninstall plugin: {}", e),
+        },
         Commands::Enable { name } => {
             println!("Enabled plugin {}", name);
         }

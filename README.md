@@ -1,3 +1,8 @@
+> **Work state:** ACTIVE · **Progress:** `██████░░░░ 60%`
+> Python agent runtime: tool registry, LLM provider abstraction, orchestration · updated 2026-06-02
+
+---
+
 ![CI](https://github.com/KooshaPari/thegent/actions/workflows/ci.yml/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/built%20with-Rust-orange.svg)](https://www.rust-lang.org/)

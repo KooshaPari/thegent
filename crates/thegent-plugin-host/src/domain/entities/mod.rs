@@ -17,6 +17,7 @@ impl PluginId {
         Self(name.to_lowercase().replace('-', "_"))
     }
 
+    #[allow(dead_code)]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -29,6 +30,7 @@ impl fmt::Display for PluginId {
 }
 
 /// Plugin metadata and identity
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Plugin {
     /// Unique identifier
@@ -78,22 +80,26 @@ impl Plugin {
         }
     }
 
+    #[allow(dead_code)]
     pub fn load(&mut self) {
         self.state = PluginState::Loaded;
         self.loaded_at = Some(Utc::now());
     }
 
+    #[allow(dead_code)]
     pub fn unload(&mut self) {
         self.state = PluginState::Unloaded;
         self.loaded_at = None;
     }
 
+    #[allow(dead_code)]
     pub fn enable(&mut self) {
         if matches!(self.state, PluginState::Loaded) {
             self.state = PluginState::Enabled;
         }
     }
 
+    #[allow(dead_code)]
     pub fn disable(&mut self) {
         if matches!(self.state, PluginState::Enabled) {
             self.state = PluginState::Loaded;
@@ -102,6 +108,7 @@ impl Plugin {
 }
 
 /// Plugin lifecycle state
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PluginState {
     /// Plugin discovered but not loaded
@@ -115,6 +122,7 @@ pub enum PluginState {
 }
 
 /// Plugin capability definition
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Capability {
     /// Capability name
@@ -124,6 +132,7 @@ pub struct Capability {
 }
 
 /// Plugin manifest (from plugin.toml)
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct PluginManifest {
     pub name: String,
@@ -136,6 +145,7 @@ pub struct PluginManifest {
 }
 
 /// Plugin dependency
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct PluginDependency {
     pub name: String,
@@ -143,6 +153,7 @@ pub struct PluginDependency {
 }
 
 /// Plugin error types
+#[allow(dead_code)]
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum PluginError {
     #[error("Plugin not found: {0}")]

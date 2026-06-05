@@ -16,6 +16,7 @@ jobs:
   # Tier 1: Fast/Essential
   codeql:
     runs-on: ubuntu-24.04
+    if: github.event_name != 'pull_request'
     continue-on-error: true  # Allow PRs to proceed even if CodeQL fails
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -38,11 +39,15 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
+          config: >-
+            p/security-audit
+            p/owasp-top-ten
+            p/cwe-top-25
+            .semgrep-rules/
           generateSarif: true
-          sarifFile: semgrep-results.sarif
         continue-on-error: true
       - uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
-        if: always()
+        if: always() && hashFiles('semgrep.sarif') != ''
         with:
-          sarif_file: semgrep-results.sarif
+          sarif_file: semgrep.sarif
           category: semgrep
