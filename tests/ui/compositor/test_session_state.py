@@ -15,6 +15,22 @@ class TestSessionState:
         assert state.session_name == "test-session"
         assert state.session_dir.exists()
 
+    def test_session_state_accepts_session_dir(self) -> None:
+        """Test that SessionState can be rooted in an explicit directory."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = SessionState("test-session", session_dir=Path(tmpdir))
+            assert state.session_dir == Path(tmpdir)
+            assert state.session_file == Path(tmpdir) / "test-session.yaml"
+
+    def test_session_name_cannot_escape_session_dir(self) -> None:
+        """Test that traversal characters are sanitized in session names."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = SessionState("../outside", session_dir=Path(tmpdir))
+            resolved = state.session_file.resolve()
+
+            assert resolved.parent == Path(tmpdir).resolve()
+            assert ".." not in state.session_file.name
+
     def test_save_session(self) -> None:
         """Test saving session."""
         with tempfile.TemporaryDirectory() as tmpdir:
