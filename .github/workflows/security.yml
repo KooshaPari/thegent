@@ -95,7 +95,7 @@ jobs:
         continue-on-error: true  # Allow quota limits
 
       - name: Upload Semgrep SARIF
-        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e
         if: always() && hashFiles('semgrep-results.sarif') != ''
         with:
           sarif_file: semgrep-results.sarif
@@ -104,13 +104,13 @@ jobs:
       # CodeQL backup (only on schedule, not PRs - quota optimization)
       - name: Initialize CodeQL (Backup - schedule only)
         if: github.event_name == 'schedule'
-        uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e
         with:
           languages: typescript
 
       - name: Run CodeQL (Backup - schedule only)
         if: github.event_name == 'schedule'
-        uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e
         with:
           category: "/language:typescript"
 
@@ -167,7 +167,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e
         if: steps.dockerfile.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
