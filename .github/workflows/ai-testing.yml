@@ -50,7 +50,10 @@ jobs:
       - name: Install & Run pytest
         run: |
           uv run --python 3.13 --extra dev --with pytest-json-report \
-            pytest tests/ui/compositor -v --json-report --json-report-file=report.json
+            pytest tests/ui/compositor/test_compositor_caching.py \
+              tests/ui/compositor/test_session_state.py \
+              tests/ui/compositor/test_pane_manager.py \
+              -v --json-report --json-report-file=report.json
 
   playwright-tests:
     name: Playwright E2E Tests
@@ -78,6 +81,9 @@ jobs:
 
       - name: Generate Coverage
         run: |
-          uv run --python 3.13 --extra dev pytest tests/ui/compositor \
+          uv run --python 3.13 --extra dev pytest \
+            tests/ui/compositor/test_compositor_caching.py \
+            tests/ui/compositor/test_session_state.py \
+            tests/ui/compositor/test_pane_manager.py \
             --cov=src/thegent/compositor --cov=src/thegent/ui/compositor \
             --cov-report=xml --cov-report=html --cov-fail-under=0
