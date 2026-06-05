@@ -203,14 +203,17 @@ class _SharedMCPManager:
     def ensure_shared_mcp_server(self) -> tuple[bool, str | None]:
         _scope, lockfile = self.get_server_scope()
         port = 3847
+        shared_url = _loopback_url("127.0.0.1", port, "/mcp")
         if lockfile.exists():
             try:
                 with open(lockfile, encoding="utf-8") as handle:
                     lock_text = handle.read()
                 data = orjson.loads(lock_text)
                 pid = int(data.get("pid", 0))
+                if pid <= 0:
+                    raise ProcessLookupError("shared MCP lock has no server pid")
                 self.os.kill(pid, 0)
-                return False, f"http://127.0.0.1:{data.get('port', port)}/mcp"
+                return False, _loopback_url("127.0.0.1", int(data.get("port", port)), "/mcp")
             except PermissionError as exc:
                 return False, f"permission denied: {exc}"
             except OSError as exc:
@@ -228,10 +231,10 @@ class _SharedMCPManager:
             except OSError as exc:
                 return False, f"Failed to remove corrupt lockfile: {exc}"
         manage = import_module("thegent.mcp.manage")
-        manage.mcp_up()
-        url = manage._get_mcp_url("shared")
-        lockfile.write_text(orjson.dumps({"pid": os.getpid(), "port": port}).decode(), encoding="utf-8")
-        return True, url
+        started = manage.mcp_up()
+        server_pid = int(getattr(started, "pid", 0) or 0)
+        lockfile.write_text(orjson.dumps({"pid": server_pid, "port": port, "url": shared_url}).decode(), encoding="utf-8")
+        return True, shared_url
 
 
 # Singleton instance for shared MCP manager

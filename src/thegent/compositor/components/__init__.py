@@ -69,10 +69,9 @@ class OutputWidget:
     _lines: deque[str] = field(default_factory=deque)
 
     def write(self, text: str) -> None:
-        if self.line_count > 0:
-            self._lines.append(text)
-            while len(self._lines) > self.line_count:
-                self._lines.popleft()
+        self._lines.append(text)
+        while self.line_count > 0 and len(self._lines) > self.line_count:
+            self._lines.popleft()
 
     def clear(self) -> None:
         self._lines.clear()

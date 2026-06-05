@@ -141,21 +141,17 @@ class PaneManager:
         new_node = PaneNode(self._new_pane_id())
         new_node.parent = parent
         old_direction = parent.direction or "V"
-        if old_direction != ("V" if direction == "V" else "H"):
-            # keep branch orientation; create a small wrapper for mixed splits
-            branch = PaneNode(
-                pane_id=self._new_branch_id(focused.pane_id),
-                is_leaf=False,
-                direction=("V" if direction == "V" else "H"),
-            )
-            focused.parent = branch
-            new_node.parent = branch
-            branch.children = [focused, new_node]
-            idx = parent.children.index(focused)
-            parent.children[idx] = branch
-            self.focus_pane_id = new_node.pane_id
-            return new_node
-        parent.children = [*parent.children, new_node]
+        branch = PaneNode(
+            pane_id=self._new_branch_id(focused.pane_id),
+            is_leaf=False,
+            direction=("V" if direction == "V" else "H"),
+        )
+        branch.parent = parent
+        focused.parent = branch
+        new_node.parent = branch
+        branch.children = [focused, new_node]
+        idx = parent.children.index(focused)
+        parent.children[idx] = branch
         self.focus_pane_id = new_node.pane_id
         return new_node
 

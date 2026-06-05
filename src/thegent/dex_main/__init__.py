@@ -240,6 +240,7 @@ def default_dex(
         return
 
     model = "flash"
+    actual_extra: list[str] = []
 
     # Check if extra_args were passed via --extra-args
     if extra_args:
