@@ -20,11 +20,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Install ZAP
         run: |
-          wget https://github.com/zaproxy/zap-full-bin/releases/download/2.15.0/zap-full-linux-amd64.tar.gz
-          tar -xzf zap-full-linux-amd64.tar.gz
-          mv zap-full-linux-amd64 zap
+          wget https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz
+          tar -xzf ZAP_2.17.0_Linux.tar.gz
+          mv ZAP_2.17.0 zap
       - name: Run ZAP
         run: |
-          zap/wrapper.sh \
-            -t http://localhost:8080 \
-            -g https://github.com/kooshapari/phenotype-infrakit
+          zap/zap.sh \
+            -cmd \
+            -quickurl http://localhost:8080 \
+            -quickout zap-report.html
