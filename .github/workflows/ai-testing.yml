@@ -49,7 +49,7 @@ jobs:
 
       - name: Install & Run pytest
         run: |
-          uv run --with pytest --with pytest-cov --with pytest-json-report \
+          uv run --python 3.13 --extra dev --with pytest-json-report \
             pytest tests/ -v --json-report --json-report-file=report.json
 
   playwright-tests:
@@ -78,4 +78,4 @@ jobs:
 
       - name: Generate Coverage
         run: |
-          uv run --with pytest-cov pytest --cov=. --cov-report=xml --cov-report=html
+          uv run --python 3.13 --extra dev pytest --cov=. --cov-report=xml --cov-report=html
