@@ -172,7 +172,8 @@ class PaneManager:
 
         parent.children = [child for child in parent.children if child.pane_id != target.pane_id]
         if parent.children:
-            self.focus_pane_id = parent.children[0].pane_id
+            first_leaf = parent.children[0].leaves()[0]
+            self.focus_pane_id = first_leaf.pane_id
 
         if parent is self.root and len(parent.children) == 1:
             # promote the remaining child to root
