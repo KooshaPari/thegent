@@ -15,9 +15,9 @@ use std::io::{self, Read};
 use std::process::{Command, ExitStatus, Stdio};
 use std::time::{Duration, Instant};
 
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::exceptions::{PyRuntimeError, PyTimeoutError};
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::prelude::*;
 use thiserror::Error;
 
@@ -230,7 +230,7 @@ impl WaitWithTimeout for Child {
 // ---------------------------------------------------------------------------
 
 /// Execute a command with optional timeout
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (program, args=None, timeout_secs=0, cwd=None))]
 pub fn run(
@@ -268,7 +268,7 @@ pub fn run(
 }
 
 /// Execute a command with retry and exponential backoff
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (program, args=None, max_retries=3, initial_delay_ms=100, max_delay_ms=5000, cwd=None))]
 pub fn run_retry(
@@ -317,7 +317,7 @@ pub fn run_retry(
 }
 
 /// Check if a command exists in PATH
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 pub fn find_command(program: String) -> PyResult<Option<String>> {
     match ::which::which(&program) {
@@ -330,7 +330,7 @@ pub fn find_command(program: String) -> PyResult<Option<String>> {
 }
 
 /// Get output from a command (raises on failure)
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (program, args=None, cwd=None))]
 pub fn check_output(
@@ -370,7 +370,7 @@ pub fn check_output(
 // Module Definition
 // ---------------------------------------------------------------------------
 
-#[cfg(all(not(test), not(debug_assertions)))]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pymodule]
 fn thegent_subprocess(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run, m)?)?;

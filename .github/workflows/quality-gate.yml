@@ -64,7 +64,7 @@ jobs:
         working-directory: crates
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --lib --out Xml
+          cargo tarpaulin --lib --no-default-features --out Xml
 
       - name: Upload coverage
         if: hashFiles('crates/cobertura.xml') != ''
