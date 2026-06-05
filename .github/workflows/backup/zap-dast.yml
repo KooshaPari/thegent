@@ -23,7 +23,9 @@ jobs:
           mv ZAP_2.17.0 zap
       - name: Start local scan target
         run: |
-          python3 -m http.server 8090 --directory . &
+          mkdir -p /tmp/zap-target
+          printf '<!doctype html><title>thegent zap target</title><main>ok</main>\n' > /tmp/zap-target/index.html
+          python3 -m http.server 8090 --directory /tmp/zap-target &
           sleep 2
       - name: Run ZAP
         run: |
