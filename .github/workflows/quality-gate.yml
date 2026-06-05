@@ -64,7 +64,7 @@ jobs:
         working-directory: crates
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --lib --out Xml --exclude thegent-parser --exclude thegent-discovery --exclude thegent-git
+          cargo tarpaulin --workspace --lib --out Xml --exclude thegent-parser --exclude thegent-discovery --exclude thegent-git
 
       - name: Upload coverage
         if: hashFiles('crates/cobertura.xml') != ''
