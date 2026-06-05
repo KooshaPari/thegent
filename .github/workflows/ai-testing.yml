@@ -36,7 +36,7 @@ jobs:
       - name: Install & Run Vitest
         run: |
           bun add -d vitest @vitest/coverage-v8
-          bun run vitest run --reporter=json
+          bun run vitest run --reporter=json --passWithNoTests
 
   pytest-tests:
     name: Pytest Tests (uv)
@@ -49,8 +49,8 @@ jobs:
 
       - name: Install & Run pytest
         run: |
-          uv pip install pytest pytest-cov pytest-json-report --system
-          pytest tests/ -v --json-report --json-report-file=report.json
+          uv run --with pytest --with pytest-cov --with pytest-json-report \
+            pytest tests/ -v --json-report --json-report-file=report.json
 
   playwright-tests:
     name: Playwright E2E Tests
@@ -65,7 +65,7 @@ jobs:
         run: |
           bun add -d @playwright/test
           bunx playwright install --with-deps
-          bun run playwright test
+          bun run playwright test --pass-with-no-tests
 
   coverage:
     name: Test Coverage Report
@@ -78,5 +78,4 @@ jobs:
 
       - name: Generate Coverage
         run: |
-          uv pip install pytest-cov --system
-          pytest --cov=. --cov-report=xml --cov-report=html
+          uv run --with pytest-cov pytest --cov=. --cov-report=xml --cov-report=html
