@@ -5286,7 +5286,7 @@ fn cmd_tool(name: &str) {
         "fd" if !(is_agent_session
             || actual_args
                 .iter()
-                .any(|a| a == "--color" || a.starts_with("--color="))) =>
+                .any(|a| a == "--color")) =>
         {
             cmd.arg("--color=always");
         }
@@ -5294,7 +5294,7 @@ fn cmd_tool(name: &str) {
             if !(is_agent_session
                 || actual_args
                     .iter()
-                    .any(|a| a == "--color" || a.starts_with("--color="))) =>
+                    .any(|a| a == "--color")) =>
         {
             cmd.arg("--color=always");
         }
