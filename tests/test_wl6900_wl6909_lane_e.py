@@ -244,6 +244,18 @@ def test_wl6905_ensure_mcp_running_records_timeout_preflight(monkeypatch: pytest
     assert any("preflight health check failed" in message and "timeout" in message for message in collector.messages)
 
 
+def test_wl6905_ensure_mcp_running_false_start_fails_immediately(monkeypatch: pytest.MonkeyPatch) -> None:
+    settings = SimpleNamespace(mcp_host="127.0.0.1", mcp_port=3847)
+    collector = _PrintCollector()
+    get_mock = MagicMock(side_effect=httpx.ConnectError("refused"))
+    monkeypatch.setattr(doctor_setup_checks.httpx, "get", get_mock)
+    fake_manage = SimpleNamespace(mcp_up=lambda: False)
+    monkeypatch.setitem(sys.modules, "thegent.mcp.manage", fake_manage)
+
+    assert doctor_setup_checks.ensure_mcp_running(settings=settings, console=collector, timeout=1) is False
+    assert get_mock.call_count == 1
+
+
 def test_wl6906_ensure_mcp_running_retry_diagnostics_transient_then_success(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

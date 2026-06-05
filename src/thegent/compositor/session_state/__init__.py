@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from yaml import safe_dump, safe_load
+from yaml import YAMLError, safe_dump, safe_load
 
 
 class SessionState:
@@ -41,7 +41,7 @@ class SessionState:
             return None
         try:
             data = safe_load(self.session_file.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        except (OSError, ValueError, YAMLError):
             return None
         return data if isinstance(data, dict) else None
 

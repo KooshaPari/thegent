@@ -52,6 +52,17 @@ class TestSessionState:
             loaded = state.load_session()
             assert loaded is None
 
+    def test_load_corrupt_session(self) -> None:
+        """Test loading corrupt YAML session."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = SessionState("corrupt")
+            state.session_dir = Path(tmpdir)
+            state.session_file = state.session_dir / "corrupt.yaml"
+            state.session_file.write_text("layout: [unterminated", encoding="utf-8")
+
+            loaded = state.load_session()
+            assert loaded is None
+
     def test_delete_session(self) -> None:
         """Test deleting session."""
         with tempfile.TemporaryDirectory() as tmpdir:

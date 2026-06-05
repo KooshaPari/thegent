@@ -56,6 +56,8 @@ class _DoctorSetupChecks:
 
         manage = import_module("thegent.mcp.manage")
         started = manage.mcp_up()
+        if started is False:
+            return False
         if isinstance(started, tuple) and not bool(started[0]):
             return False
 
