@@ -20,7 +20,7 @@ jobs:
   cargo-deny:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
       - name: Install cargo-deny
         run: cargo install cargo-deny
       - name: Run cargo-deny
@@ -30,7 +30,7 @@ jobs:
   fossa:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
       - name: Install FOSSA
         run: |
           curl -sSfL https://github.com/fossas/fossa-cli/releases/download/v3.17.8/fossa_3.17.8_linux_amd64.tar.gz -o fossa.tar.gz && tar xzf fossa.tar.gz && mv fossa /usr/local/bin/fossa && chmod +x /usr/local/bin/fossa
