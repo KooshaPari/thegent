@@ -60,10 +60,13 @@ jobs:
                                   name
                                   status
                                   conclusion
+                                  startedAt
+                                  completedAt
                                 }
                                 ... on StatusContext {
                                   context
                                   state
+                                  createdAt
                                 }
                               }
                             }
@@ -130,10 +133,30 @@ jobs:
 
             const contexts =
               current.commits.nodes?.[0]?.commit?.statusCheckRollup?.contexts?.nodes || [];
+            const latestContexts = new Map();
+            for (const contextNode of contexts) {
+              const name =
+                contextNode.__typename === "CheckRun"
+                  ? contextNode.name
+                  : contextNode.context;
+              if (!name) {
+                continue;
+              }
+              const timestamp =
+                contextNode.__typename === "CheckRun"
+                  ? contextNode.startedAt || contextNode.completedAt
+                  : contextNode.createdAt;
+              const parsedTimestamp = timestamp ? Date.parse(timestamp) : 0;
+              const existing = latestContexts.get(name);
+              if (!existing || parsedTimestamp >= existing.parsedTimestamp) {
+                latestContexts.set(name, { contextNode, parsedTimestamp });
+              }
+            }
             const allowedConclusions = new Set(["SUCCESS", "SKIPPED", "NEUTRAL"]);
             const ignoredChecks = [
               /^pr-governance-gate$/i,
               /^CodeRabbit$/i,
+              /^Cursor\s+Bugbot(?:\s+Autofix)?$/i,
               /^Kilo Code Review$/i,
             ];
             const billingExceptionChecks = [
@@ -141,7 +164,7 @@ jobs:
               /^Snyk /i,
             ];
 
-            for (const contextNode of contexts) {
+            for (const { contextNode } of latestContexts.values()) {
               const name =
                 contextNode.__typename === "CheckRun"
                   ? contextNode.name
