@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: aquasecurity/trivy-action@314ff8b43182423b84c50b1670b0e10f858f2d98 # v0.36.0
+      - uses: aquasecurity/trivy-action@bfa4b33a029b9aa80ddb784b45574c30e072c59e # v0.36.0
         with:
           scan-type: fs
           scan-ref: .
