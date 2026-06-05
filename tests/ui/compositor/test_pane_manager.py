@@ -109,6 +109,32 @@ class TestPaneManager:
         assert result is True
         assert pm2.get_pane_count() == 3
 
+    def test_close_pane_keeps_focus_on_leaf(self) -> None:
+        """Closing a pane never leaves focus on a branch."""
+        pm = PaneManager()
+        first_id = pm.focus_pane_id
+        pm.split_pane("V")
+        second_id = pm.focus_pane_id
+        pm.split_pane("H")
+
+        assert pm.close_pane(first_id) is True
+        assert pm.get_focused_pane().is_leaf
+        assert pm.close_pane(second_id) is True
+        assert pm.get_focused_pane().is_leaf
+
+    def test_restore_layout_advances_next_pane_id(self) -> None:
+        """Splitting after restore does not reuse restored pane IDs."""
+        pm = PaneManager()
+        pm.split_pane("H")
+        layout = pm.save_layout()
+
+        pm2 = PaneManager()
+        assert pm2.restore_layout(layout) is True
+        restored_ids = {pane.pane_id for pane in pm2.get_all_panes()}
+
+        new_pane = pm2.split_pane("V")
+        assert new_pane.pane_id not in restored_ids
+
     def test_restore_layout_invalid(self) -> None:
         """Test restoring invalid layout."""
         pm = PaneManager()
