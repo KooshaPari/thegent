@@ -14,7 +14,6 @@ use std::path::Path;
 #[allow(dead_code)]
 pub struct WasmPluginLoader;
 
-#[allow(dead_code)]
 impl WasmPluginLoader {
     pub fn new() -> Self {
         Self

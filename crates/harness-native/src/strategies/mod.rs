@@ -1,7 +1,6 @@
 //! Execution strategies: coalesce, queue, debounce, retry, etc.
 
 mod batch;
-mod breaker;
 mod causal_order;
 mod circuit_breaker;
 mod coalesce;

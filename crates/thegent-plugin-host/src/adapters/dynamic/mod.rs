@@ -8,7 +8,6 @@ use std::path::Path;
 #[allow(dead_code)]
 pub struct DynamicPluginLoader;
 
-#[allow(dead_code)]
 impl DynamicPluginLoader {
     pub fn new() -> Self {
         Self
