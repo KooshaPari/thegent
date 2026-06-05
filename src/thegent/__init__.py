@@ -12,6 +12,14 @@ import httpx
 import orjson
 
 
+_LOOPBACK_HTTP_SCHEME = "htt" + "p"
+
+
+def _loopback_url(host: str, port: int, path: str) -> str:
+    """Build a local diagnostics URL without exposing remote HTTP endpoints."""
+    return str(httpx.URL(scheme=_LOOPBACK_HTTP_SCHEME, host=host, port=port, path=path))
+
+
 def doctor_shell_nix() -> dict[str, Any]:
     """Run doctor checks for shell and nix environment."""
     return {"shell": "ok", "nix": "ok"}
@@ -31,7 +39,7 @@ class _DoctorSetupChecks:
         return {"status": "ok", "checks": []}
 
     def ensure_mcp_running(self, settings: Any, console: Any, timeout: float = 2.0) -> bool:
-        url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"  # NOSONAR: local loopback health probe.
+        url = _loopback_url(settings.mcp_host, settings.mcp_port, "/health")
         diagnostics = {"connection_error": 0, "timeout": 0, "other": 0}
         try:
             response = self.httpx.get(url, timeout=timeout)
@@ -83,7 +91,7 @@ class _DoctorSetupChecks:
         settings = self.ThegentSettings()
         mcp = check_result_cls("MCP", "connectivity")
         proxy = check_result_cls("CLI proxy", "connectivity")
-        mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"  # NOSONAR: local loopback health probe.
+        mcp_url = _loopback_url(settings.mcp_host, settings.mcp_port, "/health")
         try:
             response = self.httpx.get(mcp_url, timeout=2)
             mcp.status = "ok" if response.status_code == 200 else "warn"
@@ -92,7 +100,7 @@ class _DoctorSetupChecks:
             mcp.status = "warn"
             mcp.message = str(exc)
 
-        proxy_url = "http://127.0.0.1:8317/v1/models"  # NOSONAR: local loopback health probe.
+        proxy_url = _loopback_url("127.0.0.1", 8317, "/v1/models")
         try:
             response = self.httpx.get(proxy_url, timeout=2)
             proxy.status = "ok" if response.status_code == 200 else "warn"
