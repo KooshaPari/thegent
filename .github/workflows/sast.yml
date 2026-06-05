@@ -19,7 +19,7 @@ jobs:
     if: github.event_name != 'pull_request'
     continue-on-error: true  # Allow PRs to proceed even if CodeQL fails
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
       - uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e  # was: @e46ed2cbd01164d986452f91f178727624ae40d7
         with:
           languages: ${{ matrix.language }}
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true  # Allow PRs to proceed even if Semgrep fails
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
       - uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
         with:
           config: >-
