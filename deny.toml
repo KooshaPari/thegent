@@ -7,11 +7,11 @@ yanked = "warn"
 ignore = [
     # Current tree pulls paste through the ratatui/compio path and RustSec
     # reports no patched upgrade path; keep this explicit while dependency
-    # owners migrate away from paste.
+    # owners migrate away from paste. Review/remove by 2026-09-30.
     "RUSTSEC-2024-0436",
     # Current tree still resolves rsa 0.9.x and RustSec reports no fixed
     # release for the Marvin timing side channel; keep this as a tracked
-    # temporary exception instead of over-claiming local mitigation.
+    # temporary exception instead of over-claiming local mitigation. Review/remove by 2026-09-30.
     "RUSTSEC-2023-0071",
 ]
 
