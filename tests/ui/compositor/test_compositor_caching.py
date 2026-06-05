@@ -482,6 +482,24 @@ def test_error_cache_does_not_use_main_cache() -> None:
 
 
 @pytest.mark.unit
+def test_error_cache_obeys_maxsize() -> None:
+    """Error fallbacks are included in cache size eviction.
+
+    # @trace FR-UI-COMP-014
+    """
+    comp = Compositor(maxsize=1)
+    panel_a, _ = _error_panel("a")
+    panel_b, _ = _error_panel("b")
+    comp.add_panel(panel_a)
+    comp.add_panel(panel_b)
+
+    comp.render_panel("a")
+    comp.render_panel("b")
+
+    assert len(comp._cache) + len(comp._error_cache) == 1
+
+
+@pytest.mark.unit
 def test_recover_panel_then_render_gets_fresh_result() -> None:
     """After recover_panel() + invalidate, the next render calls content_fn again.
 

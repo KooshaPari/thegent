@@ -177,6 +177,7 @@ class Compositor:
     ) -> None:
         if panel.has_error:
             self._error_cache[name] = (rendered, now)
+            self._evict_if_needed()
             return
         self._cache[name] = (rendered, now)
         self._evict_if_needed()
