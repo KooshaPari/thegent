@@ -33,18 +33,19 @@ class SandboxProvider:
 
         worktree = os.environ.get("THGENT_SANDBOX_WORKTREE", "")
         allowed_reads = os.environ.get("THGENT_SANDBOX_ALLOWED_READS", "")
+        sandbox_tmp = os.environ.get("THGENT_SANDBOX_TMPDIR", "")
 
         if tier == 2 and worktree:
             # Tier 2: include worktree bind but no root bind
-            return [
+            args = [
                 "bwrap",
                 "--bind",
                 worktree,
                 worktree,
-                "--bind",
-                "/tmp",
-                "/tmp",
-            ] + cmd
+            ]
+            if sandbox_tmp:
+                args.extend(["--bind", sandbox_tmp, sandbox_tmp])
+            return args + cmd
         else:
             # Tier 1: standard sandboxing
             args = ["bwrap", "--ro-bind", "/", "/"]

@@ -12,6 +12,10 @@ from .pane_manager import Pane, PaneManager, PaneNode
 from .terminal_pane import TerminalPane
 
 
+def _default_terminal_workdir() -> str:
+    return str(Path.cwd())
+
+
 class SessionState(_CoreSessionState):
     def __init__(self, session_id: str = "test-session", session_dir: Path | None = None) -> None:
         super().__init__(session_id)
@@ -65,7 +69,7 @@ class CompositApp:
             self.title = self.TITLE
             self.sub_title = "Terminal UI for Agent Orchestration"
             root = self.pane_manager.create_root_pane("pane-0")
-            self._pane_widgets[root.pane_id] = TerminalPane(root.pane_id, "/tmp")
+            self._pane_widgets[root.pane_id] = TerminalPane(root.pane_id, _default_terminal_workdir())
             self._pane_count = 1
             self._mounted = True
         except Exception:
@@ -98,7 +102,7 @@ class CompositApp:
             node = self.pane_manager.split_pane(direction)
             self._pane_widgets[node.pane.pane_id if node.pane else node.pane_id] = TerminalPane(
                 node.pane.pane_id if node.pane else node.pane_id,
-                "/tmp",
+                _default_terminal_workdir(),
             )
             self._pane_count = self.pane_manager.get_pane_count()
         except Exception:
