@@ -31,7 +31,7 @@ class _DoctorSetupChecks:
         return {"status": "ok", "checks": []}
 
     def ensure_mcp_running(self, settings: Any, console: Any, timeout: float = 2.0) -> bool:
-        url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+        url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"  # NOSONAR: local loopback health probe.
         diagnostics = {"connection_error": 0, "timeout": 0, "other": 0}
         try:
             response = self.httpx.get(url, timeout=timeout)
@@ -83,7 +83,7 @@ class _DoctorSetupChecks:
         settings = self.ThegentSettings()
         mcp = check_result_cls("MCP", "connectivity")
         proxy = check_result_cls("CLI proxy", "connectivity")
-        mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+        mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"  # NOSONAR: local loopback health probe.
         try:
             response = self.httpx.get(mcp_url, timeout=2)
             mcp.status = "ok" if response.status_code == 200 else "warn"
@@ -92,7 +92,7 @@ class _DoctorSetupChecks:
             mcp.status = "warn"
             mcp.message = str(exc)
 
-        proxy_url = "http://127.0.0.1:8317/v1/models"
+        proxy_url = "http://127.0.0.1:8317/v1/models"  # NOSONAR: local loopback health probe.
         try:
             response = self.httpx.get(proxy_url, timeout=2)
             proxy.status = "ok" if response.status_code == 200 else "warn"

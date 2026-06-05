@@ -156,7 +156,7 @@ jobs:
             const ignoredChecks = [
               /^pr-governance-gate$/i,
               /^CodeRabbit$/i,
-              /^Cursor Bugbot$/i,
+              /^Cursor\s+Bugbot(?:\s+Autofix)?$/i,
               /^Kilo Code Review$/i,
             ];
             const billingExceptionChecks = [
