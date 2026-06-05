@@ -1632,6 +1632,7 @@ fn cmd_friction_detect() {
     exit(0);
 }
 
+#[cfg_attr(not(target_os = "macos"), allow(unused_assignments, unused_variables))]
 fn cmd_notify() {
     let args: Vec<String> = env::args().collect();
     let mut event = "event".to_string();
@@ -5282,15 +5283,20 @@ fn cmd_tool(name: &str) {
                 cmd.arg("--line-number");
             }
         }
-        "fd" => {
-            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
-                cmd.arg("--color=always");
-            }
+        "fd" if !(is_agent_session
+            || actual_args
+                .iter()
+                .any(|a| a == "--color" || a.starts_with("--color="))) =>
+        {
+            cmd.arg("--color=always");
         }
-        "bat" => {
-            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
-                cmd.arg("--color=always");
-            }
+        "bat"
+            if !(is_agent_session
+                || actual_args
+                    .iter()
+                    .any(|a| a == "--color" || a.starts_with("--color="))) =>
+        {
+            cmd.arg("--color=always");
         }
         _ => {}
     }

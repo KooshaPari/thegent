@@ -76,6 +76,8 @@ impl AgentMetadata {
 pub struct GitOps {
     git_bin: PathBuf,
     cache: GitCache,
+    #[cfg(test)]
+    _cache_temp_dir: Option<tempfile::TempDir>,
     metadata: AgentMetadata,
     operation_ttls: HashMap<String, Duration>,
 }
@@ -97,9 +99,23 @@ impl GitOps {
         Ok(Self {
             git_bin,
             cache,
+            #[cfg(test)]
+            _cache_temp_dir: None,
             metadata,
             operation_ttls: Self::default_ttls(),
         })
+    }
+
+    #[cfg(test)]
+    fn for_test() -> Self {
+        let temp_dir = tempfile::tempdir().expect("create git cache tempdir");
+        Self {
+            git_bin: PathBuf::from("git"),
+            cache: GitCache::new(temp_dir.path(), 60).expect("create git cache"),
+            _cache_temp_dir: Some(temp_dir),
+            metadata: AgentMetadata::default(),
+            operation_ttls: Self::default_ttls(),
+        }
     }
 
     /// Default TTLs for common read-only operations
@@ -381,7 +397,7 @@ mod tests {
 
     #[test]
     fn test_is_read_only() {
-        let ops = GitOps::new().unwrap();
+        let ops = GitOps::for_test();
         assert!(ops.is_read_only("status"));
         assert!(ops.is_read_only("diff"));
         assert!(!ops.is_read_only("add"));
@@ -389,7 +405,7 @@ mod tests {
 
     #[test]
     fn test_is_write_operation() {
-        let ops = GitOps::new().unwrap();
+        let ops = GitOps::for_test();
         assert!(ops.is_write_operation("add"));
         assert!(ops.is_write_operation("commit"));
         assert!(!ops.is_write_operation("status"));
@@ -439,7 +455,7 @@ mod tests {
 
     #[test]
     fn test_default_ttls() {
-        let ops = GitOps::new().unwrap();
+        let ops = GitOps::for_test();
 
         // Verify some default TTLs
         assert_eq!(ops.get_ttl("rev-parse"), Duration::from_secs(5));
@@ -452,7 +468,7 @@ mod tests {
 
     #[test]
     fn test_set_custom_ttl() {
-        let mut ops = GitOps::new().unwrap();
+        let mut ops = GitOps::for_test();
         ops.set_ttl("status", Duration::from_secs(5));
         assert_eq!(ops.get_ttl("status"), Duration::from_secs(5));
     }
@@ -466,7 +482,7 @@ mod tests {
         fs::create_dir_all(lock_file.parent().unwrap()).unwrap();
         fs::write(&lock_file, "").unwrap();
 
-        let ops = GitOps::new().unwrap();
+        let ops = GitOps::for_test();
         let lock_info = ops.detect_lock(&lock_file).unwrap();
 
         assert!(lock_info.is_some());

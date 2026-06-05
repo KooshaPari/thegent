@@ -9,7 +9,7 @@ license = "MIT"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 thiserror = "2.0.18"
-thegent-shm = { path = "../thegent-shm" }
+thegent-shm = { path = "../thegent-shm", version = "0.1.0" }
 uuid = { version = "1.11", features = ["v4"] }
 sha2 = "0.11"
 hex = "0.4"

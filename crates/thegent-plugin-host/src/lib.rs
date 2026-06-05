@@ -15,15 +15,15 @@
 //! - **EDA**: Domain events for state changes
 //! - **SpecDD**: Formal specifications in `specs/` module
 
-pub mod domain;
-pub mod application;
-pub mod ports;
 pub mod adapters;
+pub mod application;
+pub mod domain;
+pub mod ports;
 
 // Re-exports for convenience
-pub use domain::entities::*;
-pub use domain::value_objects::*;
-pub use domain::events::*;
 pub use application::commands::*;
 pub use application::queries::*;
 pub use application::use_cases::*;
+pub use domain::entities::*;
+pub use domain::events::*;
+pub use domain::value_objects::*;
