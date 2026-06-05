@@ -156,11 +156,11 @@ class Compositor:
 
         start = perf_counter()
         rendered = panel.render()
-        now = time()
+        rendered_at = time()
         duration = max((perf_counter() - start) * 1000.0, 0.0)
-        self._store_rendered_panel(name, panel, rendered, now)
+        self._store_rendered_panel(name, panel, rendered, rendered_at)
         self._misses += 1
-        self.profiler.record(RenderProfile(name, duration, now, cache_hit=False))
+        self.profiler.record(RenderProfile(name, duration, rendered_at, cache_hit=False))
         return rendered
 
     def _record_cache_hit(self, name: str, rendered: str, now: float) -> str:
