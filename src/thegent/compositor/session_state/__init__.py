@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 from yaml import YAMLError, safe_dump, safe_load
@@ -11,12 +12,17 @@ from yaml import YAMLError, safe_dump, safe_load
 class SessionState:
     """Persist one named compositor session as YAML."""
 
-    def __init__(self, session_name: str = "default") -> None:
-        self.session_name = session_name
-        self.session_dir = Path.home() / ".thegent" / "sessions"
+    def __init__(self, session_name: str = "default", session_dir: Path | None = None) -> None:
+        self.session_name = self._safe_session_name(session_name)
+        self.session_dir = session_dir or Path.home() / ".thegent" / "sessions"
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.session_file = self.session_dir / f"{session_name}.yaml"
+        self.session_file = self.session_dir / f"{self.session_name}.yaml"
         self._state: dict[str, Any] = {}
+
+    @staticmethod
+    def _safe_session_name(session_name: str) -> str:
+        safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "-", session_name).strip(".-")
+        return safe_name or "default"
 
     def get(self, key: str) -> Any:
         """Get state value."""

@@ -14,7 +14,7 @@ Covers:
 - render(), render_all(), render_panel() all use the cache         (FR-UI-COMP-010)
 - recover_panel clears error state; next render re-invokes fn      (FR-UI-COMP-014)
 - Compositor with multiple panels: each panel cached independently (FR-UI-COMP-010)
-- Content change (different hash) triggers cache miss              (FR-UI-COMP-010)
+- Content change requires invalidation before re-render           (FR-UI-COMP-010)
 - cache_stats size reflects live cache entries                     (FR-UI-COMP-013)
 - invalidate on unknown panel_name is safe (no error)             (FR-UI-COMP-011)
 - Compositor default TTL/maxsize constructors                      (FR-UI-COMP-010)
@@ -101,12 +101,7 @@ def test_cache_hit_does_not_reinvoke_content_fn() -> None:
     comp.render_panel("m")
     comp.render_panel("m")
 
-    # Once per render for the hash probe, but the Panel.render() error-boundary
-    # call itself should only happen once (on the first miss).  In our
-    # implementation content_fn is called once for the hash probe on each
-    # _render_cached call; however Panel.render() (which actually builds the
-    # result) is only called once.  Total: probe calls = 3, render calls = 1.
-    # We verify via cache_stats that after 3 calls we have 1 miss + 2 hits.
+    assert mock_fn.call_count == 1
     stats = comp.cache_stats()
     assert stats["misses"] == 1
     assert stats["hits"] == 2
@@ -164,8 +159,8 @@ def test_render_all_dict_uses_cache() -> None:
 
 
 @pytest.mark.unit
-def test_content_change_triggers_cache_miss() -> None:
-    """Changing the content returned by content_fn causes a cache miss.
+def test_content_change_requires_invalidation() -> None:
+    """Changing content_fn output does not bypass a valid TTL cache.
 
     # @trace FR-UI-COMP-010
     """
@@ -175,9 +170,13 @@ def test_content_change_triggers_cache_miss() -> None:
 
     comp.render_panel("p")  # miss → "v0"
     log[0] = "v1"
-    result = comp.render_panel("p")  # new hash → miss again
+    result = comp.render_panel("p")  # valid cache still returns old content
 
-    assert result == "v1"
+    assert result == "v0"
+    assert comp.cache_stats()["hits"] == 1
+
+    comp.invalidate("p")
+    assert comp.render_panel("p") == "v1"
     assert comp.cache_stats()["misses"] == 2
 
 
@@ -447,12 +446,8 @@ def test_cache_stats_typed_dict_shape() -> None:
 def test_error_state_is_cached_with_short_ttl() -> None:
     """content_fn raising is cached; repeated renders return the cached fallback.
 
-    On the first (miss) render, _render_cached calls content_fn once for the
-    hash probe (raises) and Panel.render() calls it once more — 2 invocations.
-    On the second (hit) render, the probe again raises (1 more invocation) but
-    the result is served from error_cache without calling Panel.render() again.
-    The key invariant: the cached fallback string is the same on both renders,
-    and cache_stats shows exactly 1 hit after the second call.
+    The first miss calls content_fn through Panel.render() and caches the
+    fallback. The second render serves that fallback from the error cache.
 
     # @trace FR-UI-COMP-014
     """
@@ -460,15 +455,13 @@ def test_error_state_is_cached_with_short_ttl() -> None:
     panel, count = _error_panel()
     comp.add_panel(panel)
 
-    r1 = comp.render_panel("err")  # miss: probe (1) + Panel.render() (2) = 2 calls
+    r1 = comp.render_panel("err")
 
-    r2 = comp.render_panel("err")  # hit: probe (3) only, no Panel.render()
+    r2 = comp.render_panel("err")
 
     assert r1 == r2  # same cached fallback on both renders
     assert comp.cache_stats()["hits"] == 1
-    # Panel.render() was called only once (during the miss)
-    # count[0] is 3: 2 from miss + 1 probe during hit
-    assert count[0] == 3
+    assert count[0] == 1
 
 
 @pytest.mark.unit
@@ -492,15 +485,13 @@ def test_error_cache_does_not_use_main_cache() -> None:
 def test_recover_panel_then_render_gets_fresh_result() -> None:
     """After recover_panel() + invalidate, the next render calls content_fn again.
 
-    The content_fn fails for the first *3* calls so that even with the caching
-    probe (which calls content_fn once for the hash), the panel ends up in an
-    error state on the first render.  After recover + invalidate the function
-    starts succeeding and the compositor returns the happy result.
+    After recover + invalidate the function starts succeeding and the
+    compositor returns the happy result.
 
     # @trace FR-UI-COMP-014
     """
     calls: list[int] = [0]
-    fail_limit: int = 3  # fail until calls[0] >= fail_limit
+    fail_limit: int = 2
 
     def content_fn() -> str:
         calls[0] += 1
@@ -512,11 +503,9 @@ def test_recover_panel_then_render_gets_fresh_result() -> None:
     comp = Compositor()
     comp.add_panel(panel)
 
-    # First render: probe raises (call 1), Panel.render() raises (call 2) → error
     r1 = comp.render_panel("r")
     assert panel.has_error
 
-    # Recover and invalidate so next render is a miss (call 3 → succeeds)
     comp.recover_panel("r")
     comp.invalidate("r")
 

@@ -147,38 +147,39 @@ class Compositor:
         if panel is None:
             return None
         now = time()
-        try:
-            probed = panel.content_fn()
-        except Exception as exc:
-            panel.last_error = exc
-            error_cached = self._error_cache.get(name)
-            if error_cached and now - error_cached[1] <= self.error_ttl:
-                self._hits += 1
-                self.profiler.record(RenderProfile(name, 0.0, now, cache_hit=True))
-                return error_cached[0]
-            start = perf_counter()
-            rendered = panel.render()
-            duration = max((perf_counter() - start) * 1000.0, 0.0)
-            self._error_cache[name] = (rendered, now)
-            self._misses += 1
-            self.profiler.record(RenderProfile(name, duration, now, cache_hit=False))
-            return rendered
+        error_cached = self._error_cache.get(name)
+        if panel.has_error and error_cached and now - error_cached[1] <= self.error_ttl:
+            return self._record_cache_hit(name, error_cached[0], now)
         cached = self._cache.get(name)
-        if cached and now - cached[1] <= self.ttl and cached[0] == probed:
-            panel.last_error = None
-            self._hits += 1
-            self.profiler.record(RenderProfile(name, 0.0, now, cache_hit=True))
-            return cached[0]
+        if cached and now - cached[1] <= self.ttl:
+            return self._record_cache_hit(name, cached[0], now)
+
         start = perf_counter()
-        rendered = probed
+        rendered = panel.render()
         now = time()
         duration = max((perf_counter() - start) * 1000.0, 0.0)
-        panel.last_error = None
-        self._cache[name] = (rendered, now)
-        self._evict_if_needed()
+        self._store_rendered_panel(name, panel, rendered, now)
         self._misses += 1
         self.profiler.record(RenderProfile(name, duration, now, cache_hit=False))
         return rendered
+
+    def _record_cache_hit(self, name: str, rendered: str, now: float) -> str:
+        self._hits += 1
+        self.profiler.record(RenderProfile(name, 0.0, now, cache_hit=True))
+        return rendered
+
+    def _store_rendered_panel(
+        self,
+        name: str,
+        panel: Panel,
+        rendered: str,
+        now: float,
+    ) -> None:
+        if panel.has_error:
+            self._error_cache[name] = (rendered, now)
+            return
+        self._cache[name] = (rendered, now)
+        self._evict_if_needed()
 
     def render_all(self) -> dict[str, str | None]:
         return {name: self.render_panel(name) for name in self._panels}

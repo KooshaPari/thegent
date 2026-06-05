@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Any
 
 from yaml import safe_dump, safe_load
@@ -74,25 +75,52 @@ class PaneManager:
                 return result
         return None
 
-    def _find_parent(self, node_id: str, node: PaneNode | None = None) -> PaneNode | None:
-        if node is None:
-            node = self.root
-        for child in node.children:
-            if child.pane_id == node_id:
-                return node
-            parent = self._find_parent(node_id, child)
-            if parent is not None:
-                return parent
-        return None
-
     def _leaf_nodes(self) -> list[PaneNode]:
         return self.root.leaves()
 
+    def _first_leaf(self, node: PaneNode | None = None) -> PaneNode | None:
+        leaves = (node or self.root).leaves()
+        return leaves[0] if leaves else None
+
+    def _set_focus_to_first_leaf(self, node: PaneNode | None = None) -> None:
+        leaf = self._first_leaf(node)
+        self.focus_pane_id = leaf.pane_id if leaf is not None else "root"
+
+    def _attach_children(self, parent: PaneNode, children: list[PaneNode]) -> None:
+        parent.children = children
+        for child in children:
+            child.parent = parent
+
+    def _replace_child(self, parent: PaneNode, old: PaneNode, new: PaneNode) -> None:
+        idx = parent.children.index(old)
+        parent.children[idx] = new
+        new.parent = parent
+
+    def _collapse_from(self, node: PaneNode) -> None:
+        while not node.is_leaf:
+            if len(node.children) > 1:
+                break
+            only = node.children[0] if node.children else PaneNode(self._new_pane_id())
+            if node is self.root:
+                only.parent = None
+                self.root = only
+                break
+            parent = node.parent
+            if parent is None:
+                break
+            self._replace_child(parent, node, only)
+            node = parent
+
+    def _track_id(self, pane_id: str) -> None:
+        for number in re.findall(r"\d+", pane_id):
+            self._next_pane_index = max(self._next_pane_index, int(number) + 1)
+
     def get_focused_pane(self) -> PaneNode:
         focused = self._find_node(self.focus_pane_id)
-        if focused is None and self._leaf_nodes():
-            self.focus_pane_id = self._leaf_nodes()[0].pane_id
-            focused = self._leaf_nodes()[0]
+        if focused is None or not focused.is_leaf:
+            focused = self._first_leaf()
+            if focused is not None:
+                self.focus_pane_id = focused.pane_id
         if focused is None:
             raise RuntimeError("no panes")
         return focused
@@ -121,41 +149,44 @@ class PaneManager:
 
         focused = self.get_focused_pane()
         if not focused.parent:
-            # root leaf split
-            old_root = self.root
-            new_node = PaneNode(self._new_pane_id())
-            branch = PaneNode(
-                pane_id=self._new_branch_id(old_root.pane_id),
-                is_leaf=False,
-                direction="V" if direction == "V" else "H",
-            )
-            old_root.parent = branch
-            new_node.parent = branch
-            branch.children = [old_root, new_node]
-            self.root = branch
-            self.focus_pane_id = new_node.pane_id
-            return new_node
+            return self._split_root(focused, direction)
 
-        # splitting a leaf inside a branch
         parent = focused.parent
         new_node = PaneNode(self._new_pane_id())
         new_node.parent = parent
         old_direction = parent.direction or "V"
         if old_direction != ("V" if direction == "V" else "H"):
-            # keep branch orientation; create a small wrapper for mixed splits
-            branch = PaneNode(
-                pane_id=self._new_branch_id(focused.pane_id),
-                is_leaf=False,
-                direction=("V" if direction == "V" else "H"),
-            )
-            focused.parent = branch
-            new_node.parent = branch
-            branch.children = [focused, new_node]
-            idx = parent.children.index(focused)
-            parent.children[idx] = branch
-            self.focus_pane_id = new_node.pane_id
-            return new_node
+            return self._split_mixed(parent, focused, new_node, direction)
         parent.children = [*parent.children, new_node]
+        self.focus_pane_id = new_node.pane_id
+        return new_node
+
+    def _split_root(self, old_root: PaneNode, direction: str) -> PaneNode:
+        new_node = PaneNode(self._new_pane_id())
+        branch = PaneNode(
+            pane_id=self._new_branch_id(old_root.pane_id),
+            is_leaf=False,
+            direction="V" if direction == "V" else "H",
+        )
+        self._attach_children(branch, [old_root, new_node])
+        self.root = branch
+        self.focus_pane_id = new_node.pane_id
+        return new_node
+
+    def _split_mixed(
+        self,
+        parent: PaneNode,
+        focused: PaneNode,
+        new_node: PaneNode,
+        direction: str,
+    ) -> PaneNode:
+        branch = PaneNode(
+            pane_id=self._new_branch_id(focused.pane_id),
+            is_leaf=False,
+            direction=("V" if direction == "V" else "H"),
+        )
+        self._attach_children(branch, [focused, new_node])
+        self._replace_child(parent, focused, branch)
         self.focus_pane_id = new_node.pane_id
         return new_node
 
@@ -170,21 +201,13 @@ class PaneManager:
         target = self._find_node(pane_id)
         if target is None or target.is_leaf is False:
             return False
-        parent = self._find_parent(target.pane_id)
+        parent = target.parent
         if parent is None:
             return False
 
         parent.children = [child for child in parent.children if child.pane_id != target.pane_id]
-        if parent.children:
-            self.focus_pane_id = parent.children[0].pane_id
-
-        if parent is self.root and len(parent.children) == 1:
-            # promote the remaining child to root
-            only = parent.children[0]
-            only.parent = None
-            self.root = only
-            self.focus_pane_id = only.pane_id
-            return True
+        self._collapse_from(parent)
+        self._set_focus_to_first_leaf()
         return True
 
     def focus_next(self) -> bool:
@@ -219,44 +242,56 @@ class PaneManager:
     def restore_layout(self, layout: dict[str, Any] | None) -> bool:
         if not isinstance(layout, dict) or "type" not in layout:
             return False
-
-        def build(data: dict[str, Any], parent: PaneNode | None = None) -> PaneNode:
-            node_type = data.get("type")
-            if node_type == "pane":
-                pane_id = data.get("id") or self._new_pane_id()
-                node = PaneNode(str(pane_id), is_leaf=True)
-                node.pane = Pane(node.pane_id, working_dir=data.get("working_dir", "."))
-                if node.pane.pane_id == "":
-                    node.pane_id = self._new_pane_id()
-                    node.pane.pane_id = node.pane_id
-                node.parent = parent
-                return node
-            if node_type == "branch":
-                children = [build(child, None) for child in data.get("children", [])]
-                branch_id = data.get("id") or self._new_branch_id("restored")
-                node = PaneNode(
-                    pane_id=str(branch_id),
-                    is_leaf=False,
-                    direction=data.get("direction", "H"),
-                    children=children,
-                )
-                for child in children:
-                    child.parent = node
-                node.parent = parent
-                if not children:
-                    node.children = [PaneNode(self._new_pane_id())]
-                    node.children[0].parent = node
-                return node
-            raise ValueError("invalid node type")
-
         try:
-            self.root = build(layout)
+            self.root = self._build_restored_node(layout)
         except Exception:
             return False
         self.root.parent = None
-        leaves = self._leaf_nodes()
-        self.focus_pane_id = leaves[0].pane_id if leaves else "root"
+        self._set_focus_to_first_leaf()
         return True
+
+    def _build_restored_node(
+        self,
+        data: dict[str, Any],
+        parent: PaneNode | None = None,
+    ) -> PaneNode:
+        node_type = data.get("type")
+        if node_type == "pane":
+            return self._build_restored_pane(data, parent)
+        if node_type == "branch":
+            return self._build_restored_branch(data, parent)
+        raise ValueError("invalid node type")
+
+    def _build_restored_pane(
+        self,
+        data: dict[str, Any],
+        parent: PaneNode | None,
+    ) -> PaneNode:
+        pane_id = str(data.get("id") or self._new_pane_id())
+        if not pane_id:
+            pane_id = self._new_pane_id()
+        self._track_id(pane_id)
+        node = PaneNode(pane_id, is_leaf=True)
+        node.pane = Pane(node.pane_id, working_dir=data.get("working_dir", "."))
+        node.parent = parent
+        return node
+
+    def _build_restored_branch(
+        self,
+        data: dict[str, Any],
+        parent: PaneNode | None,
+    ) -> PaneNode:
+        branch_id = str(data.get("id") or self._new_branch_id("restored"))
+        self._track_id(branch_id)
+        node = PaneNode(
+            pane_id=branch_id,
+            is_leaf=False,
+            direction=data.get("direction", "H"),
+        )
+        children = [self._build_restored_node(child, node) for child in data.get("children", [])]
+        self._attach_children(node, children or [PaneNode(self._new_pane_id())])
+        node.parent = parent
+        return node
 
     def _to_yaml(self) -> str:
         return safe_dump(self.save_layout())
