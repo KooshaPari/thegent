@@ -23,11 +23,11 @@ jobs:
           mv ZAP_2.17.0 zap
       - name: Start local scan target
         run: |
-          python3 -m http.server 8080 --directory . &
+          python3 -m http.server 8090 --directory . &
           sleep 2
       - name: Run ZAP
         run: |
           zap/zap.sh \
             -cmd \
-            -quickurl http://localhost:8080 \
+            -quickurl http://localhost:8090 \
             -quickout zap-report.html
