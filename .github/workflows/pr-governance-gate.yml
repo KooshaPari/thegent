@@ -116,7 +116,7 @@ jobs:
               failures.push(`${unresolvedThreads} unresolved review thread(s) remain.`);
             }
 
-            const layeredBranch = /^(stack|layer|feat|fix|docs|refactor|ci|chore|preview|release)\//;
+            const layeredBranch = /^(stack|layer|feat|fix|docs|refactor|ci|chore|preview|release|dependabot)\//;
             if (!layeredBranch.test(headRef)) {
               failures.push(`Head branch '${headRef}' does not use an approved layered prefix.`);
             }
