@@ -12,6 +12,7 @@ on:
 jobs:
   zap:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - name: Install ZAP
@@ -19,6 +20,10 @@ jobs:
           wget https://github.com/zaproxy/zaproxy/releases/download/v2.17.0/ZAP_2.17.0_Linux.tar.gz
           tar -xzf ZAP_2.17.0_Linux.tar.gz
           mv ZAP_2.17.0 zap
+      - name: Start local scan target
+        run: |
+          python3 -m http.server 8080 --directory . &
+          sleep 2
       - name: Run ZAP
         run: |
           zap/zap.sh \
