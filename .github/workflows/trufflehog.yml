@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
           fetch-depth: 0
-      - uses: trufflesecurity/trufflehog@d411fff7b8879a62509f3fa98c07f247ac089a51
+      - uses: trufflesecurity/trufflehog@75add79b929b263dae147d2e5bcf0daf292165cf # v-latest
         with:
           path: ./
           extra_args: --only-verified
