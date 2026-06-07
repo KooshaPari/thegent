@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Setup Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@c8813ba1bc76ebf779b911ad8ffccbf2e449cb48 # v-latest
         with:
           python-version: '3.12'
 
@@ -52,7 +52,7 @@ jobs:
           toolchain: stable
 
       - name: Cache dependencies
-        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        uses: Swatinem/rust-cache@874b06e0d3f63371f9ddbee43d4c8ebc73021583 # v-latest
         with:
           workspaces: crates -> target
 
@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Setup Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@c8813ba1bc76ebf779b911ad8ffccbf2e449cb48 # v-latest
         with:
           python-version: '3.12'
 
@@ -103,7 +103,7 @@ jobs:
           toolchain: stable
 
       - name: Cache dependencies
-        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        uses: Swatinem/rust-cache@874b06e0d3f63371f9ddbee43d4c8ebc73021583 # v-latest
         with:
           workspaces: crates -> target
 
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Setup Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@c8813ba1bc76ebf779b911ad8ffccbf2e449cb48 # v-latest
         with:
           python-version: '3.12'
 
@@ -130,7 +130,7 @@ jobs:
           toolchain: stable
 
       - name: Cache dependencies
-        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        uses: Swatinem/rust-cache@874b06e0d3f63371f9ddbee43d4c8ebc73021583 # v-latest
         with:
           workspaces: crates -> target
 
@@ -226,7 +226,7 @@ jobs:
           cat report.md
 
       - name: Comment PR
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v-latest
         continue-on-error: true
         with:
           script: |

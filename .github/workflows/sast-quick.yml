@@ -47,7 +47,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: trufflesecurity/trufflehog@d411fff7b8879a62509f3fa98c07f247ac089a51 # v3.95.5
+      - uses: trufflesecurity/trufflehog@75add79b929b263dae147d2e5bcf0daf292165cf # v-latest
         with:
           path: ./
           extra_args: --only-verified
@@ -61,7 +61,7 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@874b06e0d3f63371f9ddbee43d4c8ebc73021583 # v-latest
         with:
           workspaces: crates -> target
       - run: cargo clippy --all-targets --all-features -- -D warnings
