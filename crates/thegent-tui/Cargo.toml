@@ -35,3 +35,4 @@ opt-level = "z"
 lto = true
 strip = true
 codegen-units = 1
+overflow-checks = false
