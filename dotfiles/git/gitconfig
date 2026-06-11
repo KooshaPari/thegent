@@ -52,5 +52,11 @@
 	ff = only
 [merge]
 	ff = false
-[url "https://x-access-token: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@github.com/"]
-	insteadOf = ssh://git@github.com/
+# NOTE: Previously stored a personal access token inline here.
+# Tokens MUST be sourced from the OS keychain (gh auth login, `gh auth
+# git-credential`, or `git-credential-osxkeychain`). Putting a token in
+# committed config is a credential leak — see SECURITY.md.
+#
+# To re-establish a credential helper, run:
+#   gh auth setup-git
+#   git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
