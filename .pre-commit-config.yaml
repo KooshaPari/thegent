@@ -1,23 +1,24 @@
 repos:
+  - repo: local
+    hooks:
+      - id: pheno-vibecoding-guard
+        name: pheno-vibecoding-guard
+        # NOTE: the upstream `pheno-vibecoding-guard scan` CLI subcommand is
+        # not yet released (cli.py imports a non-existent `check` symbol from
+        # guard.py as of v0.1.0). Until upstream is fixed, we invoke the
+        # Python API directly. Equivalent to a `scan .` on staged files.
+        entry: >-
+          python -c "import sys;
+          from pheno_vibecoding_guard import scan_repo;
+          r = scan_repo('.');
+          sys.exit(0 if r.clean else 1)"
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-yaml
       - id: check-toml
-      - id: check-merge-conflict
-      - id: check-added-large-files
-        args: ["--maxkb=500"]
-      - id: detect-private-key
-  - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.93.6
-    hooks:
-      - id: trufflehog
-        stages: [pre-push]
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.0.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        args: [feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

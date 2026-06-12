@@ -301,3 +301,40 @@ crates/
 - log+tracing migration: needs dedicated semver-major spec
 - localbase3, PhenoCompose: branch protection / 403 push errors
 - 13 repos with nested .git: need manual classification
+
+## L1 Stabilize + V4/V10/V11 alignment — 2026-06-11
+
+### Actions Taken
+- Committed `L1_TRIAGE_2026_06_11.md` (8a5611420) — first L1 deliverable in V4 DAG.
+  Documents the 78 dirty files (auth + Go archive) as scope-fenced, 2 duplicate
+  wtrees at 437a34de6, and the 78 stale .go files in
+  `apps/byteport/backend/api/.archive/.../phase-4-1-iterative-suites/` as
+  archive-only Go work for a different repo.
+- Aligned this repo to V4-DAG §1-§10, §21-§26, §51-§61, §63-§76.
+- Referenced in `FLEET_100TASK_DAG_V4.md` §69 (V10) and §76 (V11).
+
+### V4 DAG task IDs landing in this repo
+- V4-1.1.x (L1 Stabilize) — committed via 8a5611420
+- V4-1.2.x (L2 SOTA) — pending (Rust crates upgrade)
+- V4-1.3.x (L3 Libify) — pending (adopt pheno-observability, pheno-config)
+- V4-1.4.x (L4 Hexagonal) — pending (port `Worker` trait, adapters for litellm + codex)
+- V4-1.5.x (L5 Integrate) — pending (consume cheap-llm-mcp via dispatch-mcp)
+- V10-10.x (L10 Security) — pending (secret-zero, gitleaks CI)
+- V10-11.x (L11 Data) — pending (pg-bouncer handling)
+- V10-12.x (L12 Infra) — pending (docker-compose for dev)
+- V10-13.x (L13 Cross-Lang) — pending (pyo3 profile binding)
+- V11-14.x (L14 UX) — pending (CLI `init` wizard, error-state hints)
+- V11-15.x (L15 DX) — pending (justfile 15 recipes, CONTRIBUTING, devcontainer)
+- V11-16.x (L16 AX) — pending (AGENTS.md 300 lines, llms.txt, prompt-tests)
+
+### Blocked / Awaiting user signal
+- 78 dirty files (mostly `apps/byteport/backend/api/`) — auth/security work
+  in flight; DO NOT TOUCH without explicit user direction.
+- PR #1098 (profile-tighten) — wait for upstream merge before rebasing
+  the duplicate wtrees at 437a34de6.
+- The 2 wtrees (thegent-wtrees/profile-tighten-2026-06-08 and
+  thegent-security-fixes-wtrees/profile-tighten-2026-06-08) are the same
+  commit (437a34de6) — should be deduplicated after #1098 lands.
+- The Go archive at `apps/byteport/backend/api/.archive/thegent-test-deduplication/`
+  is 78 stale .go files for a different repo; either keep (archived) or
+  delete in a follow-up — needs user confirmation.

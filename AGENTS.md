@@ -25,3 +25,9 @@ task dev:tui    # Start services with interactive TUI dashboard
 - No placeholder TODOs in committed code.
 - All new code must pass: `ruff check .`, `ruff format .`, `pytest -q`.
 - AGENTS.md symlink removed — file is now repo-native.
+
+## Do Not Touch
+
+- `apps/byteport/backend/api/.archive/thegent-test-deduplication/**` — Go work in progress, not ported
+- `apps/byteport/**/auth_handlers*.go` — security refactor in flight
+- `apps/byteport/**/*_test.go` in any .archive/ subdir
