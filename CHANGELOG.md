@@ -84,3 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## Unreleased
+
+- ci: refresh PR body and add `layered-pr-exception` label to satisfy PR Governance Gate
+  (re-trigger Governance Gate after the body/label fix).
