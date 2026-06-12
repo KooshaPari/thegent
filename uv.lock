@@ -990,14 +990,14 @@ wheels = [
 
 [[package]]
 name = "gitpython"
-version = "3.1.47"
+version = "3.1.50"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "gitdb" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/bd/50db468e9b1310529a19fce651b3b0e753b5c07954d486cba31bbee9a5d5/gitpython-3.1.47.tar.gz", hash = "sha256:dba27f922bd2b42cb54c87a8ab3cb6beb6bf07f3d564e21ac848913a05a8a3cd", size = 216978, upload-time = "2026-04-22T02:44:44.059Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/f6/354ae6491228b5eb40e10d89c4d13c651fe1cf7556e35ebdded50cff57ce/gitpython-3.1.50.tar.gz", hash = "sha256:80da2d12504d52e1f998772dc5baf6e553f8d2fcfe1fcc226c9d9a2ee3372dcc", size = 219798, upload-time = "2026-05-06T04:01:26.571Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/c5/a1bc0996af85757903cf2bf444a7824e68e0035ce63fb41d6f76f9def68b/gitpython-3.1.47-py3-none-any.whl", hash = "sha256:489f590edfd6d20571b2c0e72c6a6ac6915ee8b8cd04572330e3842207a78905", size = 209547, upload-time = "2026-04-22T02:44:41.271Z" },
+    { url = "https://files.pythonhosted.org/packages/20/7a/1c6e3562dfd8950adbb11ffbc65d21e7c89d01a6e4f137fa981056de25c5/gitpython-3.1.50-py3-none-any.whl", hash = "sha256:d352abe2908d07355014abdd21ddf798c2a961469239afec4962e9da884858f9", size = 212507, upload-time = "2026-05-06T04:01:23.799Z" },
 ]
 
 [[package]]
@@ -1469,7 +1469,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.87.0"
+version = "1.87.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1485,9 +1485,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/0d/ccdf682ccfd7f18bf0e179c39d85616b8f8ef05a798588285310412db13d/litellm-1.87.0.tar.gz", hash = "sha256:cafc1882cb0cbab8374c41180af86e4a067796e4524e15f59e99f6e689cd1bd8", size = 15453755, upload-time = "2026-06-02T03:53:29.076Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/e5/d0ac1c8f55e2c8d8799589e831bef0d450e69e02ecb511901ffc8de054d9/litellm-1.87.1.tar.gz", hash = "sha256:70ac9d6b25f56ad30de6ff95d26fac3b3fc697a95da582b6072d25d8dc73d493", size = 15455709, upload-time = "2026-06-04T16:23:23.339Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/20/88a372fa7e50fc2c33458c6eef94a79afcf7bdfa43610079531b82b484a3/litellm-1.87.0-py3-none-any.whl", hash = "sha256:fbbba7e47ae29b55f878fe1acc80effb92761bc168f6236bd81a0cb6e147d855", size = 17103948, upload-time = "2026-06-02T03:53:25.677Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/18/8275c95ef09e81ab0c01a162c7b780ce3fbc49066b5d532c6b6ab3dc0118/litellm-1.87.1-py3-none-any.whl", hash = "sha256:dd4e00278cdb846d52e99a09d732575a897273540b54eb044247ecbc0d98f67c", size = 17105482, upload-time = "2026-06-04T16:23:20.769Z" },
 ]
 
 [[package]]
@@ -3556,7 +3556,7 @@ requires-dist = [
     { name = "granian", specifier = ">=1.7.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.140.0" },
-    { name = "litellm", marker = "extra == 'dev'", specifier = "==1.87.0" },
+    { name = "litellm", marker = "extra == 'dev'", specifier = "==1.87.1" },
     { name = "lxml", specifier = ">=6.1.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
     { name = "opentelemetry-api", specifier = ">=1.31.0" },
@@ -3610,7 +3610,7 @@ provides-extras = ["dev", "fast"]
 [package.metadata.requires-dev]
 dev = [
     { name = "hypothesis", specifier = ">=6.140.0" },
-    { name = "litellm", specifier = "==1.87.0" },
+    { name = "litellm", specifier = "==1.87.1" },
     { name = "mypy", specifier = ">=1.19.1" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "ruff", specifier = ">=0.15.1" },
