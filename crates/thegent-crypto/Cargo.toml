@@ -9,7 +9,7 @@ description = "BKM-03: Sign/verify/hash artifacts for thegent (PyO3)"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.28.3", optional = true, features = ["abi3-py312", "extension-module"] }
+pyo3 = { version = "0.29", optional = true, features = ["abi3-py312", "extension-module"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 hmac = "0.13.0"

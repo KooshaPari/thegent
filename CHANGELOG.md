@@ -89,3 +89,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ci: refresh PR body and add `layered-pr-exception` label to satisfy PR Governance Gate
   (re-trigger Governance Gate after the body/label fix).
+
+## pyo3 0.28.3 → 0.29.0
+
+Bumps the optional `pyo3` dependency from 0.28.3 to 0.29 across all
+14 thegent crates that ship Python bindings. Required to clear
+`cargo-deny advisories`:
+
+- RUSTSEC-2026-0176: OOB read in `nth` / `nth_back` (fixed in 0.29)
+- RUSTSEC-2026-0177: missing `Sync` bound (fixed in 0.29)
+
+`pyo3` is gated behind the `python` feature in every crate, so the
+change is contained to optional builds.
