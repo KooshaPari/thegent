@@ -338,3 +338,10 @@ crates/
 - The Go archive at `apps/byteport/backend/api/.archive/thegent-test-deduplication/`
   is 78 stale .go files for a different repo; either keep (archived) or
   delete in a follow-up — needs user confirmation.
+
+## V20 Entries — 2026-06-12
+
+| ID | Date | Repo | L | Task | Commit | Parent | Status | Author | Notes |
+|----|------|------|---|------|--------|--------|--------|--------|-------|
+| V20-1.1 | 2026-06-12 | thegent | L4 | pheno-domain integration | e999c6d9ae | n/a | merged | koosha-ai | domain primitives consume from pheno-domain |
+| V20-1.2 | 2026-06-12 | thegent | L4 | vibecoding-guard adoption | pending | n/a | planned | koosha-ai | pre-commit hook for agent drift detection |
