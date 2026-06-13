@@ -47,7 +47,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: trufflesecurity/trufflehog@75add79b929b263dae147d2e5bcf0daf292165cf # v-latest
+      - uses: trufflesecurity/trufflehog@ac0805e53b065e7188181fc80dce1800dfa51ab9 # v-latest
         with:
           path: ./
           extra_args: --only-verified
