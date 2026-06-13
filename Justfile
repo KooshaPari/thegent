@@ -43,6 +43,21 @@ test:
         python -m pytest tests/ 2>/dev/null || echo "no python tests"
     fi
 
+# Coverage report (SSOT for how to measure coverage).
+coverage:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f package.json ]; then
+        npx jest --coverage 2>/dev/null || npm test -- --coverage 2>/dev/null || echo "no coverage script"
+    elif [ -f Cargo.toml ]; then
+        cargo tarpaulin --workspace 2>/dev/null || echo "cargo-tarpaulin not installed"
+    elif [ -f go.mod ]; then
+        go test -coverprofile=coverage.out ./...
+        go tool cover -func=coverage.out
+    elif [ -d tests ]; then
+        python -m pytest tests/ --cov=src 2>/dev/null || echo "no python coverage"
+    fi
+
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
