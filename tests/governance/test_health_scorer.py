@@ -14,7 +14,7 @@ Traces to: WP-3001
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import tempfile
 from pathlib import Path
 
@@ -64,7 +64,7 @@ def basic_config() -> dict:
 def config_file(basic_config: dict, tmp_path: Path) -> Path:
     """Create a config file and return its path."""
     config_path = tmp_path / "health-targets.json"
-    with open(config_path, "wb") as f:
+    with open(config_path, "w") as f:
         f.write(json.dumps(basic_config))
     return config_path
 
