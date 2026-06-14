@@ -79,7 +79,7 @@ const releases: any[] = (await gh<any[]>(`repos/${REPO}/releases?per_page=5`)) ?
     <meta name="twitter:title" content={PAGE_TITLE} />
     <meta name="twitter:description" content={PAGE_DESCRIPTION} />
     <meta name="theme-color" content="#7ebab5" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2278%22>G</text></svg>" />
+    <link rel="icon" href={sitePath("/favicon.ico")} sizes="any" />
   </head>
   <body class="min-h-screen">
     <main class="max-w-4xl mx-auto px-6 py-12">

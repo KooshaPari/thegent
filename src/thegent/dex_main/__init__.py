@@ -18,38 +18,29 @@ _DEX_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox"
 _DEX_YOLO_FLAG = "--dangerously-enable-yolo-mode"
 
 # Model alias mapping
-_MODEL_ALIASES: dict[str, str] = {
-    # Priority order matters for partial matching
-    "dex": "dex-1",
-    "high": "codex-high",
-    "xhigh": "codex-xhigh",
-    "max": "gemini-2.5-pro-preview-06-05",
-    "glm": "glm-4",
-    "haiku": "claude-3-haiku-20240307",
-    "opus": "claude-3-opus-20240229",
-    "sonnet": "claude-3-5-sonnet-20241022",
-    "ultra": "gemini-ultra",
-    "flash": "gemini-2.5-flash",
-    "mini": "gpt-4o-mini",
-    # composer variants
+_MODEL_ALIAS: dict[str, str] = {
+    "dex": "gpt-5.3-codex",
+    "codex": "gpt-5.3-codex",
+    "high": "gpt-5.3-codex-high",
+    "xhigh": "gpt-5.3-codex-xhigh",
+    "mini": "gpt-5-mini",
     "composer": "composer-1.5",
-    "composer-1": "composer-1",
-    "composer-1.5": "composer-1.5",
-    "cursor": "cursor-1",
-    "cursor-1": "cursor-1",
-    "cursor-2": "cursor-2",
-    # Additional aliases
-    "claude": "claude-3-5-sonnet-20241022",
-    "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
+    "max": "minimax-m2.5",
+    "glm": "glm-5",
+    "haiku": "claude-haiku-4.5",
+    "opus": "claude-opus-4.6",
+    "sonnet": "claude-sonnet-4.5",
+    "step": "step-3.5-flash",
+    "flash": "gemini-2.5-flash",
+    "claude": "claude-sonnet-4.5",
     "gpt": "gpt-4o",
     "gpt-4": "gpt-4o",
     "gpt-4o": "gpt-4o",
-    "gemini": "gemini-2-5-pro-preview-06-05",
-    "gemini-2": "gemini-2-5-pro-preview-06-05",
-    "o1": "o1-preview",
-    "o1-preview": "o1-preview",
-    "o1-mini": "o1-mini",
+    "gemini": "gemini-2.5-pro",
 }
+
+_MODEL_ALIASES = _MODEL_ALIAS
+
 
 def _get_codex_env() -> dict[str, Any]:
     """Get the Codex environment variables.
@@ -58,6 +49,7 @@ def _get_codex_env() -> dict[str, Any]:
         Dictionary of Codex-related environment variables.
     """
     import os
+
     return {
         "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY", ""),
         "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", ""),
@@ -72,6 +64,7 @@ def resolve_codex_cli_path() -> str:
         Path to the codex CLI executable.
     """
     import shutil
+
     path = shutil.which("codex") or shutil.which("openai-codex")
     return path or "/usr/local/bin/codex"
 
@@ -111,16 +104,19 @@ def _resolve_provider_for_model(model_alias: str) -> str:
     elif model_alias in ("haiku", "opus", "sonnet"):
         providers = ["claude", "antigravity"]
         import os
+
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
     elif model_alias == "glm":
         providers = ["nim", "kilo", "minimax", "glm"]
         import os
+
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
     elif model_alias == "max":
         providers = ["nim", "kilo", "minimax"]
         import os
+
         idx = int(os.environ.get("THGGENT_ROUND_ROBIN_INDEX", "0")) % len(providers)
         return providers[idx]
     return "openai"
@@ -133,6 +129,7 @@ def _exec_native_codex(args: list[str]) -> None:
         args: Arguments to pass to codex.
     """
     import os
+
     codex_path = resolve_codex_cli_path()
     os.execvpe(codex_path, [codex_path] + args, os.environ.copy())
 
@@ -186,6 +183,7 @@ def _run_model_cmd(model_alias: str, prompt: str) -> None:
         prompt: Prompt to send.
     """
     from thegent.cli import run_cmd
+
     # Two-level lookup: CoMp -> composer-1.5 -> cursor
     canonical_model = _MODEL_ALIAS.get(model_alias, model_alias)
     # Check if the resolved model is also an alias
@@ -197,6 +195,7 @@ def _run_model_cmd(model_alias: str, prompt: str) -> None:
 def config() -> None:
     """Launch the configuration TUI."""
     from thegent.ux.models_providers_tui import run_models_providers_tui
+
     run_models_providers_tui()
 
 
@@ -214,6 +213,7 @@ def default_dex_callback(
         dangerously_bypass=None,
         dangerously_yolo=None,
     )
+
 
 @app.callback()
 def default_dex(
@@ -234,7 +234,7 @@ def default_dex(
     # Check if extra_args were passed via --extra-args
     if extra_args:
         # Get the actual extra_args value (could be list or OptionInfo)
-        if hasattr(extra_args, '__iter__') and not isinstance(extra_args, str):
+        if hasattr(extra_args, "__iter__") and not isinstance(extra_args, str):
             actual_extra = list(extra_args)
         else:
             actual_extra = []
@@ -252,8 +252,9 @@ def default_dex(
             cleaned_extra.append(arg)
             if arg == "--model":
                 skip_next = True
-    
+
     _run_codex_interactive(model, dangerously_bypass=True, extra_args=cleaned_extra)
+
 
 # Also expose the subcommands as separate commands
 @app.command()
@@ -407,6 +408,7 @@ def bg(
         typer.echo(f"Allowed: {', '.join(allowed)}")
         raise typer.Abort()
     from thegent.cli import bg_cmd
+
     canonical_model = _MODEL_ALIAS.get(model_alias, model_alias)
     bg_cmd(model=canonical_model, prompt=prompt, remote=remote, owner=owner)
 

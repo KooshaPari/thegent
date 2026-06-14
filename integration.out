@@ -1,0 +1,17 @@
+tests/integration/test_integration.py::TestTeammateIntegration::test_teammate_discovery_and_delegation
+tests/integration/test_integration.py::TestTeammateIntegration::test_delegation_with_caching
+tests/integration/test_integration.py::TestCacheIntegration::test_l1_l2_fallback
+tests/integration/test_integration.py::TestCacheIntegration::test_cache_promotion
+tests/integration/test_integration.py::TestScalingIntegration::test_resource_monitoring
+tests/integration/test_integration.py::TestScalingIntegration::test_dynamic_limiter_adjusts
+tests/integration/test_integration.py::TestShellIntegration::test_shell_timeout_config
+tests/integration/test_integration.py::TestShellIntegration::test_shell_retry_backoff
+tests/integration/test_integration.py::TestProcessIntegration::test_process_cleanup_registration
+tests/integration/test_integration.py::TestProcessIntegration::test_signal_handler_install
+tests/integration/test_parity_legacy_vs_cliproxy_migration.py::TestRoutingParity::test_parity_routing_legacy_vs_cliproxy
+tests/integration/test_parity_legacy_vs_cliproxy_migration.py::TestAdapterParity::test_parity_adapter_legacy_vs_cliproxy
+tests/integration/test_parity_legacy_vs_cliproxy_migration.py::TestAuthParity::test_parity_auth_legacy_vs_cliproxy
+tests/integration/test_parity_legacy_vs_cliproxy_migration.py::TestQuotaParity::test_parity_quota_legacy_vs_cliproxy
+tests/integration/test_parity_legacy_vs_cliproxy_migration.py::TestCutoverReadiness::test_cutover_readiness_summary
+
+15 tests collected in 2.35s

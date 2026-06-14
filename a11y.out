@@ -1,0 +1,4 @@
+tests/a11y/test_cli_help_accessibility.py::test_top_level_help_has_usage_and_commands
+tests/a11y/test_cli_help_accessibility.py::test_help_output_has_no_ansi_escape_noise
+
+2 tests collected in 7.38s

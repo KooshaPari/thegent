@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 import time
@@ -48,6 +49,7 @@ class RateLimitedSwarmRunner:
 @dataclass
 class TokenBucketConfig:
     """Configuration for token bucket."""
+
     capacity: int = 100
     refill_rate: float = 10.0
 

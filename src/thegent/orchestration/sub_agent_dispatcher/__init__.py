@@ -1,6 +1,6 @@
 """Stub module."""
-from typing import TYPE_CHECKING, Any
 
+from typing import TYPE_CHECKING, Any
 
 
 class SubAgentDispatcher:
@@ -26,7 +26,9 @@ def is_cli_harness(path: str) -> bool:
         True if the path is a CLI harness.
     """
     import os
+
     return os.path.exists(path) and os.access(path, os.X_OK)
+
 
 _CLI_HARNESSES = {
     "bash": "/usr/bin/bash",

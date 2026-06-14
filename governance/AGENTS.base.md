@@ -42,7 +42,7 @@ Update with your project name, description, and purpose:
 All work MUST be tracked in AgilePlus:
 - Reference: /Users/kooshapari/CodeProjects/Phenotype/repos/AgilePlus
 - CLI: cd AgilePlus && agileplus <command>
-- Specs: AgilePlus/kitty-specs/<feature-id>/
+- Specs: AgilePlus/specs/<feature-id>/ or the repo-local agileplus/<feature-id>/
 - Worklog: AgilePlus/.work-audit/worklog.md
 
 Requirements:

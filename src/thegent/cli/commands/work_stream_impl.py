@@ -8,11 +8,11 @@ from __future__ import annotations
 
 def create_work_stream(name: str, **kwargs) -> dict:
     """Create a new work stream.
-    
+
     Args:
         name: Work stream name.
         **kwargs: Additional options.
-        
+
     Returns:
         Created work stream dictionary.
     """
@@ -21,10 +21,10 @@ def create_work_stream(name: str, **kwargs) -> dict:
 
 def list_work_streams(**kwargs) -> list[dict]:
     """List all work streams.
-    
+
     Args:
         **kwargs: Additional options.
-        
+
     Returns:
         List of work stream dictionaries.
     """
@@ -33,10 +33,10 @@ def list_work_streams(**kwargs) -> list[dict]:
 
 def get_work_stream(stream_id: str) -> dict | None:
     """Get a work stream by ID.
-    
+
     Args:
         stream_id: Work stream identifier.
-        
+
     Returns:
         Work stream dictionary or None if not found.
     """

@@ -9,13 +9,17 @@ from __future__ import annotations
 import orjson as json
 import logging
 import os
-import fcntl
 import threading
 import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows fallback
+    fcntl = None
 
 try:
     from watchfiles import watch
@@ -393,11 +397,13 @@ class WriteAheadLog:
         """Append entry to WAL before execution."""
         entry = {"timestamp": time.time(), "op": operation, "data": data, "id": uuid.uuid4().hex}
         with open(self.wal_file, "a") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
+            if fcntl is not None:
+                fcntl.flock(f, fcntl.LOCK_EX)
             f.write(json.dumps(entry).decode() + "\n")
             f.flush()
             os.fsync(f.fileno())
-            fcntl.flock(f, fcntl.LOCK_UN)
+            if fcntl is not None:
+                fcntl.flock(f, fcntl.LOCK_UN)
 
     def replay(self) -> list[dict[str, Any]]:
         """Read WAL entries for recovery."""
@@ -406,9 +412,11 @@ class WriteAheadLog:
 
         entries = []
         with open(self.wal_file) as f:
-            fcntl.flock(f, fcntl.LOCK_SH)
+            if fcntl is not None:
+                fcntl.flock(f, fcntl.LOCK_SH)
             for line in f:
                 if line.strip():
                     entries.append(json.loads(line))
-            fcntl.flock(f, fcntl.LOCK_UN)
+            if fcntl is not None:
+                fcntl.flock(f, fcntl.LOCK_UN)
         return entries

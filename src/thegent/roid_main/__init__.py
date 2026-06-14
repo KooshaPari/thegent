@@ -1,4 +1,5 @@
 """roid_main - Routing orchestration and intelligence dispatcher."""
+
 from __future__ import annotations
 
 from typing import Any

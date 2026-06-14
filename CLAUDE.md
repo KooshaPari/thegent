@@ -50,9 +50,10 @@ agileplus validate-encoding --all --fix
 
 ## AgilePlus Reference
 
-- Specs: AgilePlus/kitty-specs/<feature-id>/
+- Specs: AgilePlus/specs/<feature-id>/ or this repo's agileplus/<feature-id>/
 - Docs: AgilePlus/docs/
 - Workflows: AgilePlus/docs/workflow/
+- Work packages: agileplus/<feature-id>/tasks/
 - Worklog: AgilePlus/.work-audit/worklog.md
 
 ## Worklogs (All Projects)

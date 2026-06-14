@@ -54,7 +54,7 @@ _canonicalize_gate_selector() {
   }
 
   local -a labels filtered
-  IFS=',' read -rA labels <<< "$cleaned"
+  IFS=',' read -ra labels <<< "$cleaned"
   for label in "${labels[@]}"; do
     [[ -n "$label" ]] && filtered+=("$label")
   done
@@ -63,8 +63,19 @@ _canonicalize_gate_selector() {
     return 0
   }
 
-  local canonical
-  canonical="$(printf '%s\n' "${filtered[@]}" | LC_ALL=C sort -u | paste -sd ',' -)"
+  local canonical=""
+  local seen=","
+  for label in "${filtered[@]}"; do
+    if [[ "$seen" == *",$label,"* ]]; then
+      continue
+    fi
+    seen="${seen}${label},"
+    if [[ -n "$canonical" ]]; then
+      canonical="${canonical},${label}"
+    else
+      canonical="$label"
+    fi
+  done
   printf '%s\n' "$canonical"
 }
 
@@ -96,7 +107,7 @@ if [[ "$_GG_SELECTED_MODE" == "true" ]]; then
 fi
 _cache_key=$(hook_cache_key "$_gg_cache_scope")
 _gg_ttl="${HOOK_CACHE_TTL:-600}"
-if hook_cache_check "$_cache_key" "$_gg_ttl"; then
+if [[ "$_gg_ttl" != "0" ]] && hook_cache_check "$_cache_key" "$_gg_ttl"; then
     _GG_GATE_CACHE_HIT="true"
     hook_cache_read "$_cache_key"
     _cached_rc=$?
@@ -525,6 +536,10 @@ _validate_json_schema() {
   fi
 
   hook_rust_runtime_invoke schema-validate "$schema_path" "$instance_path" >/dev/null 2>&1
+}
+
+_json_escape() {
+  printf '%s' "$1" | "$JQ_CMD" -Rs '@json | .[1:-1]'
 }
 
 # ==========================================================================
@@ -2067,7 +2082,7 @@ gate_onchain_adapter() {
     printf '{"generated_at":"%s","project_dir":"%s","event_type":"no_claim_checkpoint"}\n' \
       "$now" "$_proj_esc" > "$out_file"
     local hash
-    hash="$(shasum -a 256 "$out_file" | awk '{print $1}')"
+    hash="$(sha256sum "$out_file" | awk '{print $1}')"
     local _payload_esc; _payload_esc="$(_json_escape "$out_file")"
     printf '{"timestamp":"%s","event_type":"no_claim_checkpoint","payload":"%s","sha256":"%s","broadcasted":false}\n' \
       "$now" "$_payload_esc" "$hash" >> "$anchor_ledger"
@@ -2102,7 +2117,7 @@ gate_onchain_adapter() {
     "$now" "$_proj_esc" "$item_id" "$spec_hash" "$next_state" "$_sid" > "$out_file"
 
   local hash
-  hash="$(shasum -a 256 "$out_file" | awk '{print $1}')"
+  hash="$(sha256sum "$out_file" | awk '{print $1}')"
   local broadcasted=false tx_hash=""
 
   # Optional broadcast with foundry cast
@@ -2228,13 +2243,25 @@ gate_formal_methods() {
   local report="$VERIFY_DIR/formal-methods-gate.json"
 
   local has_formal=false
-  [[ -d "$PROJECT_DIR/contracts/formal" ]] && has_formal=true
+  if [[ -d "$PROJECT_DIR/contracts/formal" ]]; then
+    local formal_spec
+    for formal_spec in "$PROJECT_DIR"/contracts/formal/*; do
+      [[ -e "$formal_spec" ]] || continue
+      case "$formal_spec" in
+        *.tla|*.dfy|*.als)
+          has_formal=true
+          break
+          ;;
+      esac
+    done
+  fi
   if [[ "$has_formal" != "true" ]]; then
-    # P6: Use compgen (bash builtin, no fork) instead of find for formal spec detection
+    # P6: Use compgen (bash builtin, no fork) instead of find for formal spec detection.
+    # Only contract formal specs should fail closed; docs examples are not executable contracts.
     local _depth _ext
     for _ext in tla dfy als; do
       for _depth in "" "*/" "*/*/" "*/*/*/"; do
-        if compgen -G "$PROJECT_DIR/${_depth}*.${_ext}" > /dev/null 2>&1; then
+        if compgen -G "$PROJECT_DIR/contracts/formal/${_depth}*.${_ext}" > /dev/null 2>&1; then
           has_formal=true
           break 2
         fi
@@ -2646,7 +2673,8 @@ _collect_gate_results() {
   local name
   local result
   local duration_ms
-  while IFS= read -r -d '' f; do
+  for f in "$_gate_tmpdir"/*.result; do
+    [[ -e "$f" ]] || continue
     local line
     line="$(<"$f")"
     local kind fc rest
@@ -2682,12 +2710,11 @@ _collect_gate_results() {
         fi
         ;;
     esac
-  done < <(find "$_gate_tmpdir" -type f -name '*.result' -print0 2>/dev/null)
+  done
 }
 
 _clear_gate_results() {
-  find "$_gate_tmpdir" -type f -name '*.result' -delete 2>/dev/null || true
-  find "$_gate_tmpdir" -type f -name '*.metric' -delete 2>/dev/null || true
+  rm -f "$_gate_tmpdir"/*.result "$_gate_tmpdir"/*.metric 2>/dev/null || true
 }
 
 _run_selected_gates() {
@@ -2699,7 +2726,7 @@ _run_selected_gates() {
   local saw_any_label=0
   local -a selected_labels
 
-  IFS=',' read -rA selected_labels <<< "$selected_csv"
+  IFS=',' read -ra selected_labels <<< "$selected_csv"
   for selected_label in "${selected_labels[@]}"; do
     [[ -n "$selected_label" ]] || continue
     saw_any_label=1
@@ -2829,7 +2856,7 @@ set +e
 _output=$(main 2>&1)
 _rc=$?
 set -e
-hook_cache_write "$_cache_key" "$_rc" "$_output"
+hook_cache_write "$_cache_key" "$_rc" "$_output" || true
 # Also write ultra-fast cache file
 : "${_CACHE_DIR:=${HOOK_CACHE_DIR:-${TMPDIR:-/tmp}/claude-hook-cache-$(id -u)}}"
 : "${_CACHE_FILE:=${_CACHE_DIR}/governance-gates.last}"
@@ -2838,5 +2865,6 @@ echo "$_output" > "$_CACHE_FILE" 2>/dev/null || true
 [[ -n "$_output" ]] && echo "$_output"
 if [[ "$_rc" -ne 0 ]]; then
   # Failure count is already printed in the main() summary above
+  :
 fi
 exit "$_rc"

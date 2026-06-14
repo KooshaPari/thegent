@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,6 +9,7 @@ from typing import Any
 @dataclass
 class TailscaleConfig:
     """Tailscale configuration."""
+
     auth_key: str = ""
     hostname: str = ""
 
@@ -45,6 +47,7 @@ class TailscaleManager:
 @dataclass
 class TailscaleNode:
     """Represents a Tailscale node."""
+
     name: str = ""
     ip_address: str = ""
     online: bool = False

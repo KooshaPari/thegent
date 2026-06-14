@@ -17,7 +17,6 @@ import typer
 from thegent.config import ThegentSettings
 
 
-
 # Health payload schema version
 HEALTH_PAYLOAD_SCHEMA_VERSION = "1.0"
 
@@ -163,10 +162,7 @@ def resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str, 
     Returns:
         Formatted sources list (truncated content).
     """
-    return [
-        {"source": s.get("source", ""), "content": s.get("content", "")[:100]}
-        for s in sources
-    ]
+    return [{"source": s.get("source", ""), "content": s.get("content", "")[:100]} for s in sources]
 
 
 def get_terminal_width() -> int:
@@ -193,4 +189,4 @@ def truncate_output(text: str, max_length: int = 1000) -> str:
     """
     if len(text) <= max_length:
         return text
-    return text[:max_length - 3] + "..."
+    return text[: max_length - 3] + "..."

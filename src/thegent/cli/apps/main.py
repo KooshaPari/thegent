@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import typer
 
-app = typer.Typer(help="thegent - Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows.")
+app = typer.Typer(
+    help="thegent - Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows."
+)
 
 
 @app.callback()

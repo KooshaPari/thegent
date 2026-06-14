@@ -2,6 +2,7 @@
 
 This module provides dispatching capabilities for sub-agents and task distribution.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -19,12 +20,12 @@ class DispatchConfig:
     hitl_enabled: bool = False
 
     def __init__(self, **kwargs):
-        self.timeout_s = kwargs.get('timeout_s', 30.0)
-        self.retry_count = kwargs.get('retry_count', 3)
-        self.priority = kwargs.get('priority', 0)
-        self.metadata = kwargs.get('metadata')
-        self.max_concurrent = kwargs.get('max_concurrent', 1)
-        self.hitl_enabled = kwargs.get('hitl_enabled', False)
+        self.timeout_s = kwargs.get("timeout_s", 30.0)
+        self.retry_count = kwargs.get("retry_count", 3)
+        self.priority = kwargs.get("priority", 0)
+        self.metadata = kwargs.get("metadata")
+        self.max_concurrent = kwargs.get("max_concurrent", 1)
+        self.hitl_enabled = kwargs.get("hitl_enabled", False)
         for k, v in kwargs.items():
             if not hasattr(self, k):
                 setattr(self, k, v)
@@ -33,6 +34,7 @@ class DispatchConfig:
 @dataclass
 class DispatchResult:
     """Result of a dispatch operation."""
+
     success: bool
     task_id: str = ""
     error: str = ""
@@ -97,9 +99,13 @@ class SubAgentDispatcher:
             Tuple of (output, success, error).
         """
         # Check HITL policy if enabled
-        if self.hitl_approval or (config and getattr(config, 'hitl_enabled', False)):
+        if self.hitl_approval or (config and getattr(config, "hitl_enabled", False)):
             # Check if approval is required (task could be a node or string)
-            node_for_check = task if hasattr(task, 'metadata') else type('obj', (object,), {'metadata': getattr(task, 'metadata', {})})()
+            node_for_check = (
+                task
+                if hasattr(task, "metadata")
+                else type("obj", (object,), {"metadata": getattr(task, "metadata", {})})()
+            )
             result = await self._check_hitl_gate(node_for_check, config)
             if result is not None:
                 return result
@@ -124,7 +130,7 @@ class SubAgentDispatcher:
             Tuple of (output, success, error).
         """
         # Check HITL gate first (before runner lookup)
-        if getattr(node, 'metadata', {}).get('require_approval'):
+        if getattr(node, "metadata", {}).get("require_approval"):
             try:
                 result = await self._check_hitl_gate(node, self.config)
                 if result is not None:
@@ -137,6 +143,7 @@ class SubAgentDispatcher:
         if runner is None and runner_name:
             try:
                 from thegent.agents.registry import get_runner
+
                 runner = get_runner(node)
             except Exception:
                 return ("", False, f"No runner resolved for node {node.id}")
@@ -145,14 +152,14 @@ class SubAgentDispatcher:
             return ("", False, f"No runner resolved for node {node.id}")
 
         try:
-            if hasattr(runner, 'run'):
-                result = runner.run(task=node.task, **getattr(node, 'metadata', {}))
+            if hasattr(runner, "run"):
+                result = runner.run(task=node.task, **getattr(node, "metadata", {}))
             else:
                 result = runner(node.task)
             if asyncio.iscoroutine(result):
                 result = await result
 
-            if hasattr(result, 'exit_code'):
+            if hasattr(result, "exit_code"):
                 if result.exit_code == 0:
                     return (result.stdout or "", True, None)
                 else:
@@ -171,16 +178,16 @@ class SubAgentDispatcher:
         Returns:
             Tuple if blocked, None if allowed.
         """
-        metadata = getattr(node, 'metadata', {})
+        metadata = getattr(node, "metadata", {})
 
-        if not metadata.get('require_approval'):
+        if not metadata.get("require_approval"):
             return None
 
-        if metadata.get('approval_granted', False):
+        if metadata.get("approval_granted", False):
             return None
 
         # Check with policy engine if available
-        if self.policy_engine and hasattr(self.policy_engine, 'await_approval'):
+        if self.policy_engine and hasattr(self.policy_engine, "await_approval"):
             result = self.policy_engine.await_approval(node=node, config=config)
             if result is None:
                 raise RuntimeError(f"HITL approval required for node {getattr(node, 'id', 'unknown')}")

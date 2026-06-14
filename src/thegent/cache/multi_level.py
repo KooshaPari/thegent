@@ -2,6 +2,7 @@
 
 FR traceability: FR-CACHE-001 (multi-level caching: L1 memory -> L2 disk)
 """
+
 from __future__ import annotations
 
 import functools
@@ -81,6 +82,7 @@ class MultiLevelCache:
             self._l1 = {}  # type: ignore[assignment]
 
         self._l2: _L2Wrapper | None = None
+        self._l2_dir: Path | None = None
         self.l2_available: bool = False
         self.l2_init_status: dict[str, Any] = {"ok": True}
 
@@ -108,6 +110,7 @@ class MultiLevelCache:
             return
         try:
             self._l2 = _L2Wrapper(directory, ttl)
+            self._l2_dir = directory
             self.l2_available = True
             self.l2_init_status = {"ok": True}
         except Exception as exc:  # noqa: BLE001
@@ -135,6 +138,11 @@ class MultiLevelCache:
                 return value
 
         return None
+
+    @property
+    def l2_dir(self) -> Path | None:
+        """Return the configured L2 cache directory when L2 is active."""
+        return self._l2_dir if self._l2 is not None else None
 
     def set(self, key: str, value: Any, ttl: int | None = None, level: int = 1) -> None:
         """Write-through set: stores in both L1 and L2 (if available)."""
@@ -170,6 +178,7 @@ class MultiLevelCache:
         if self._l2 is not None:
             self._l2.close()
             self._l2 = None
+            self._l2_dir = None
             self.l2_available = False
 
 

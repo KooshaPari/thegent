@@ -49,7 +49,7 @@ Example:
 All work MUST be tracked in AgilePlus:
 - Reference: /Users/kooshapari/CodeProjects/Phenotype/repos/AgilePlus
 - CLI: `agileplus specify --title "..."` and `agileplus status <id> --wp <wp> --state <state>`
-- Specs: `AgilePlus/kitty-specs/<feature-id>/`
+- Specs: `AgilePlus/specs/<feature-id>/` or the repo-local `agileplus/<feature-id>/`
 - Worklog: `AgilePlus/.work-audit/worklog.md`
 
 **Requirements**:

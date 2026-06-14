@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "app_id": "thegent",
+  "display_name": "theGent",
+  "owners": [
+    "thegent-runtime"
+  ],
+  "module_ids": [
+    "thegent-app",
+    "thegent-control-plane",
+    "thegent-execution",
+    "thegent-governance",
+    "thegent-mcp"
+  ],
+  "repo_ids": [
+    "thegent"
+  ],
+  "icon": {
+    "ico": "apps/landing/public/favicon.ico"
+  },
+  "surfaces": {
+    "web": {
+      "path": "apps/landing",
+      "framework": "Astro",
+      "build_command": "bun run build",
+      "status": "implemented"
+    },
+    "management_ui": {
+      "path": "web/dashboard",
+      "framework": "Next.js",
+      "status": "planned",
+      "evidence": "README only in this checkout"
+    },
+    "mobile": {
+      "path": "mobile/app",
+      "framework": "Flutter",
+      "status": "planned",
+      "evidence": "README only in this checkout"
+    },
+    "desktop": {
+      "status": "planned",
+      "evidence": "No runnable desktop client project found in this checkout"
+    }
+  }
+}

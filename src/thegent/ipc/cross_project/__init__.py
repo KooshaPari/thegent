@@ -1,6 +1,5 @@
 """Stub module."""
 
-
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -8,6 +7,7 @@ from datetime import datetime
 @dataclass
 class IpcMessage:
     """IPC message for cross-project communication."""
+
     id: str = ""
     sender: str = ""
     recipient: str = ""

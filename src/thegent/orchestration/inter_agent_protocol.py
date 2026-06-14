@@ -1,10 +1,11 @@
 """Inter-agent protocol."""
+
 from typing import Any
 
 
 class InterAgentMessage:
     """Message between agents."""
-    
+
     def __init__(self, sender: str, receiver: str, content: dict[str, Any]) -> None:
         self.sender = sender
         self.receiver = receiver
@@ -13,11 +14,11 @@ class InterAgentMessage:
 
 class InterAgentProtocol:
     """Protocol for inter-agent communication."""
-    
+
     def send(self, message: InterAgentMessage) -> bool:
         """Send a message."""
         return True
-    
+
     def receive(self) -> InterAgentMessage | None:
         """Receive a message."""
         return None

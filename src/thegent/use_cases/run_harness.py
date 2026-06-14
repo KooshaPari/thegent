@@ -124,16 +124,16 @@ class RunHarness:
         """Bypass proxy and run native binary directly."""
         binary_path = self.harness.find_binary(require_native=True)
         if not binary_path:
-            self.console.print(
-                f"[red]Error: native '{self.harness.get_binary_name()}' CLI not found.[/red]"
-            )
+            self.console.print(f"[red]Error: native '{self.harness.get_binary_name()}' CLI not found.[/red]")
             raise SystemExit(1)
 
         cmd = [binary_path]
         if args:
             cmd.extend(args)
 
-        self.console.print(f"[bold green]Starting native {self.harness.get_binary_name()} (proxy bypass)...[/bold green]")
+        self.console.print(
+            f"[bold green]Starting native {self.harness.get_binary_name()} (proxy bypass)...[/bold green]"
+        )
         os.execvpe(cmd[0], cmd, os.environ.copy())
 
     def ensure_harness_installed(self) -> str:

@@ -1,15 +1,15 @@
 """Stub module."""
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 
-
 class SpeculativeStrategy:
     """Speculative execution strategy."""
-    
+
     def __init__(self) -> None:
         self.attempts = 0
-    
+
     def execute(self, task: dict[str, Any]) -> dict[str, Any]:
         return {"executed": True}
 
@@ -17,11 +17,18 @@ class SpeculativeStrategy:
 @dataclass
 class SpeculativeConfig:
     """Speculative configuration."""
+
     enabled: bool = False
     max_attempts: int = 3
 
 
-__all__ = ["SpeculativeConfig", "SpeculativeStrategy", "compute_adaptive_timeout", "select_speculative_providers", "should_terminate_early"]
+__all__ = [
+    "SpeculativeConfig",
+    "SpeculativeStrategy",
+    "compute_adaptive_timeout",
+    "select_speculative_providers",
+    "should_terminate_early",
+]
 
 
 def should_terminate_early(task: dict, result: dict) -> bool:

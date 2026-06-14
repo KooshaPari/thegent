@@ -8,7 +8,10 @@ use std::env;
 use std::fmt;
 use std::fs;
 use std::io::{self, Read, Write};
+#[cfg(unix)]
 use std::os::unix::process::ExitStatusExt;
+#[cfg(windows)]
+use std::os::windows::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command, Stdio};
 use std::time::Duration;
@@ -123,6 +126,68 @@ fn write_hook_result_report(env_key: &str, fallback_rel: &str, project_dir: &Pat
             eprintln!("[WARN] {}: failed serializing report: {}", env_key, err);
         }
     }
+}
+
+fn write_report_file(path: &Path, status: &str, name: &str, error_count: Option<u64>, reason: Option<&str>) {
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+
+    let mut report = json!({
+        "schema_version": "thegent-governance-report/v1",
+        "status": status,
+        "name": name,
+        "generated_at": Utc::now().to_rfc3339(),
+    });
+
+    if let Some(count) = error_count {
+        report["error_count"] = json!(count);
+    }
+    if let Some(message) = reason {
+        report["reason"] = json!(message);
+    }
+
+    match serde_json::to_string_pretty(&report) {
+        Ok(body) => {
+            if let Err(err) = fs::write(path, body) {
+                eprintln!("REPORT WRITE FAIL: {}: {}", path.display(), err);
+                exit(1);
+            }
+        }
+        Err(err) => {
+            eprintln!("REPORT SERIALIZE FAIL: {err}");
+            exit(1);
+        }
+    }
+}
+
+fn cmd_report_pass() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 4 {
+        eprintln!("Usage: thegent-hooks report-pass <report-path> <name>");
+        exit(2);
+    }
+    write_report_file(Path::new(&args[2]), "pass", &args[3], Some(0), None);
+}
+
+fn cmd_report_na() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 4 {
+        eprintln!("Usage: thegent-hooks report-na <report-path> <name>");
+        exit(2);
+    }
+    write_report_file(Path::new(&args[2]), "not_applicable", &args[3], Some(0), None);
+}
+
+fn cmd_report_fail() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 5 {
+        eprintln!("Usage: thegent-hooks report-fail <report-path> <name> <error-count> [reason]");
+        exit(2);
+    }
+    let error_count = args[4].parse::<u64>().unwrap_or(1);
+    let reason = args.get(5).map(String::as_str);
+    write_report_file(Path::new(&args[2]), "fail", &args[3], Some(error_count), reason);
 }
 
 fn cmd_quality_gate() {
@@ -5413,6 +5478,9 @@ fn main() {
         "cache-check" => cmd_cache_check(),
         "cache-read" => cmd_cache_read(),
         "cache-write" => cmd_cache_write(),
+        "report-pass" => cmd_report_pass(),
+        "report-na" => cmd_report_na(),
+        "report-fail" => cmd_report_fail(),
         "git" => cmd_tool("git"),
         "changed-files" => cmd_changed_files(),
         "config-get" => cmd_config_get(),

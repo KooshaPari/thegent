@@ -1,0 +1,2 @@
+22:17:21.524307 exec-cmd.c:266          trace: resolved executable dir: C:/Program Files/Git/mingw64/bin
+22:17:21.549874 git.c:476               trace: built-in: git config --local remote.origin.url

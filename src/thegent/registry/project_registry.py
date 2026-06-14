@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 
-
 class EpisodeStatus(Enum):
     """Status of an audit episode."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -97,9 +97,7 @@ class ProjectRegistry:
         """List all registered projects."""
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
-            cursor = conn.execute(
-                "SELECT id, name, path FROM projects ORDER BY name"
-            )
+            cursor = conn.execute("SELECT id, name, path FROM projects ORDER BY name")
             rows = cursor.fetchall()
 
         return [Project(id=row["id"], name=row["name"], path=row["path"]) for row in rows]

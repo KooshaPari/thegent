@@ -1,7 +1,7 @@
 """Contracts adapters module."""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
-
 
 
 class ContractAdapter:
@@ -93,6 +93,7 @@ class GenericOutputAdapter:
         """Adapt data to the specified format."""
         if self.format == "json":
             import json
+
             return json.dumps(data, default=str)
         elif self.format == "xml":
             return f"<data>{data}</data>"
@@ -147,5 +148,6 @@ class OutputAdapter:
         """Adapt data to output format."""
         if self.format == "json":
             import json
+
             return json.dumps(data, default=str)
         return str(data)

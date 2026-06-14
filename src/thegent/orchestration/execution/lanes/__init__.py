@@ -1,4 +1,5 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
@@ -23,12 +24,22 @@ LANE_URGENCY = {
 @dataclass
 class Lane:
     """A lane for task execution."""
+
     name: str
     priority: int = 2
     capacity: int = 10
 
 
-__all__ = ["LANE_PRIORITIES", "LANE_URGENCY", "Lane", "URGENCY_CRITICAL", "URGENCY_HIGH", "URGENCY_LOW", "URGENCY_NORMAL", "LaneModel"]
+__all__ = [
+    "LANE_PRIORITIES",
+    "LANE_URGENCY",
+    "Lane",
+    "URGENCY_CRITICAL",
+    "URGENCY_HIGH",
+    "URGENCY_LOW",
+    "URGENCY_NORMAL",
+    "LaneModel",
+]
 
 
 URGENCY_CRITICAL = 1.0

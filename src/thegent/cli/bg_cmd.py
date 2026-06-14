@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 
-
 def bg_cmd(
     model: str | None = None,
     prompt: str | None = None,
@@ -17,14 +16,14 @@ def bg_cmd(
     **kwargs: Any,
 ) -> int:
     """Execute the background command.
-    
+
     Args:
         model: Model to use
         prompt: Prompt for the model
         cwd: Working directory
         remote: Remote execution target
         **kwargs: Additional arguments
-        
+
     Returns:
         Exit code (0 for success)
     """

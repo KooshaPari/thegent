@@ -1,4 +1,5 @@
 """Orchestration protocol definitions."""
+
 from __future__ import annotations
 from enum import Enum
 from typing import Any
@@ -6,14 +7,14 @@ from typing import Any
 
 class OrchestrationProtocol:
     """Protocol for orchestration communication."""
-    
+
     def __init__(self) -> None:
         self.version = "1.0"
-    
+
     def encode(self, message: dict[str, Any]) -> bytes:
         """Encode a message."""
         return b""
-    
+
     def decode(self, data: bytes) -> dict[str, Any]:
         """Decode a message."""
         return {"type": "unknown"}
@@ -21,7 +22,7 @@ class OrchestrationProtocol:
 
 class TaskMessage:
     """A task message in the orchestration protocol."""
-    
+
     def __init__(self, task_id: str, payload: dict[str, Any]) -> None:
         self.task_id = task_id
         self.payload = payload
@@ -29,7 +30,7 @@ class TaskMessage:
 
 class SubAgentRequest:
     """Sub-agent request."""
-    
+
     def __init__(self, request_id: str, task: dict[str, Any]) -> None:
         self.request_id = request_id
         self.task = task
@@ -37,7 +38,7 @@ class SubAgentRequest:
 
 class SubAgentResult:
     """Sub-agent result."""
-    
+
     def __init__(self, request_id: str, success: bool, result: Any | None = None) -> None:
         self.request_id = request_id
         self.success = success
@@ -46,7 +47,7 @@ class SubAgentResult:
 
 class SubAgentEvent:
     """Sub-agent event."""
-    
+
     def __init__(self, event_type: str, data: dict[str, Any]) -> None:
         self.event_type = event_type
         self.data = data
@@ -54,7 +55,7 @@ class SubAgentEvent:
 
 class SubAgentStatus(Enum):
     """Sub-agent status enumeration."""
-    
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -64,7 +65,7 @@ class SubAgentStatus(Enum):
 
 class SubAgentEventType(Enum):
     """Sub-agent event type enumeration."""
-    
+
     STARTED = "started"
     PROGRESS = "progress"
     COMPLETED = "completed"

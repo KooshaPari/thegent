@@ -1,9 +1,5 @@
-"""STUB MODULE - thegent.tools
+"""Tooling helpers exported by thegent.tools."""
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
-"""
+from thegent.tools.terminal_capture import CaptureResult, TerminalCapture
 
-# Stub implementation - functionality not available
-__all__ = []
+__all__ = ["CaptureResult", "TerminalCapture"]

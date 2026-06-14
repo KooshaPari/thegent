@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 
-
 @dataclass
 class AuditEntry:
     """A single audit log entry."""

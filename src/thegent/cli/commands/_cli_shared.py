@@ -11,7 +11,7 @@ from pathlib import Path
 
 def get_session_dir() -> Path:
     """Get the session directory from environment or default.
-    
+
     Returns:
         Path to the session directory.
     """
@@ -23,17 +23,17 @@ def get_session_dir() -> Path:
 
 def resolve_owner_dir(owner: str, session_dir: Path | None = None) -> Path:
     """Resolve the directory for a specific owner.
-    
+
     Args:
         owner: The owner tag.
         session_dir: Optional session directory.
-        
+
     Returns:
         Path to the owner's session directory.
     """
     if session_dir is None:
         session_dir = get_session_dir()
-    
+
     owner_dir = session_dir / owner.replace(":", "_")
     owner_dir.mkdir(parents=True, exist_ok=True)
     return owner_dir

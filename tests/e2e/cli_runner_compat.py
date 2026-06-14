@@ -27,8 +27,14 @@ def _extract_invoke_argv(*args: Any, **kwargs: Any) -> Any:
 
 
 def _result_mentions_no_such_command(result: Any) -> bool:
-    stderr = (getattr(result, "stderr", "") or "").lower()
     stdout = (getattr(result, "stdout", "") or "").lower()
+    stderr = ""
+    try:
+        stderr = (getattr(result, "stderr", "") or "").lower()
+    except ValueError:
+        stderr_bytes = getattr(result, "stderr_bytes", None)
+        if stderr_bytes:
+            stderr = stderr_bytes.decode(errors="replace").lower()
     return "no such command" in stderr or "no such command" in stdout
 
 

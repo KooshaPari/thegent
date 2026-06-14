@@ -8,7 +8,7 @@ from __future__ import annotations
 
 def dag_list_cmd() -> list[dict]:
     """List all DAGs.
-    
+
     Returns:
         List of DAG dictionaries.
     """
@@ -17,11 +17,11 @@ def dag_list_cmd() -> list[dict]:
 
 def dag_run_cmd(dag_id: str, **kwargs) -> dict:
     """Run a DAG.
-    
+
     Args:
         dag_id: DAG identifier.
         **kwargs: Additional run options.
-        
+
     Returns:
         Run result dictionary.
     """

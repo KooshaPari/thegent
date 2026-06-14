@@ -25,7 +25,9 @@ from governance.metrics import (
 )
 
 
-@pytest.mark.skip(reason="Test API mismatch: tests expect storage_backend param and record_execution method that don't exist")
+@pytest.mark.skip(
+    reason="Test API mismatch: tests expect storage_backend param and record_execution method that don't exist"
+)
 class TestProviderMetricsCollector:
     """Test ProviderMetricsCollector functionality"""
 

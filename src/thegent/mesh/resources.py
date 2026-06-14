@@ -2,8 +2,23 @@
 
 import contextlib
 import os
-import resource
 from pathlib import Path
+
+try:
+    import resource
+except ImportError:  # pragma: no cover - Windows fallback
+
+    class _ResourceFallback:
+        error = OSError
+        RLIMIT_AS = "RLIMIT_AS"
+        RLIMIT_NPROC = "RLIMIT_NPROC"
+        RLIMIT_NOFILE = "RLIMIT_NOFILE"
+
+        @staticmethod
+        def setrlimit(_kind, _limits) -> None:
+            return None
+
+    resource = _ResourceFallback()
 
 
 class ResourceManager:

@@ -160,9 +160,7 @@ def test_wl9869_notification_mode_preserves_side_effects_without_response() -> N
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps(
-            {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ae"}}
-        )
+        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ae"}})
     )
     assert response is None
     assert notifications

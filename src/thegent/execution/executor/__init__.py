@@ -4,6 +4,7 @@ Core executor providing dependency-injected orchestration
 with no direct CLI imports. Implements pure execution logic
 with abstract dependencies.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -42,6 +43,7 @@ class EventBusInterface(Protocol):
 @dataclass
 class ExecutionResult:
     """Result of task execution."""
+
     success: bool
     output: Any = None
     error: Optional[str] = None
@@ -108,20 +110,26 @@ class Executor:
             # Execute task using injected agents/models
             result = self._execute_task(task_id, task_spec, workspace_path)
 
-            self.event_bus.emit("execution:completed", {
-                "task_id": task_id,
-                "success": result.success,
-            })
+            self.event_bus.emit(
+                "execution:completed",
+                {
+                    "task_id": task_id,
+                    "success": result.success,
+                },
+            )
             self.logger.info(f"Task {task_id} completed: {result.success}")
 
             return result
 
         except Exception as e:
             self.logger.error(f"Execution failed for task {task_id}", exc=e)
-            self.event_bus.emit("execution:failed", {
-                "task_id": task_id,
-                "error": str(e),
-            })
+            self.event_bus.emit(
+                "execution:failed",
+                {
+                    "task_id": task_id,
+                    "error": str(e),
+                },
+            )
             return ExecutionResult(
                 success=False,
                 error=str(e),
@@ -144,18 +152,30 @@ class Executor:
     @staticmethod
     def _noop_logger() -> LoggerInterface:
         """Create a no-op logger for testing."""
+
         class NoOpLogger:
-            def info(self, message: str, **kwargs: Any) -> None: pass
-            def error(self, message: str, exc: Optional[Exception] = None, **kwargs: Any) -> None: pass
-            def debug(self, message: str, **kwargs: Any) -> None: pass
+            def info(self, message: str, **kwargs: Any) -> None:
+                pass
+
+            def error(self, message: str, exc: Optional[Exception] = None, **kwargs: Any) -> None:
+                pass
+
+            def debug(self, message: str, **kwargs: Any) -> None:
+                pass
+
         return NoOpLogger()
 
     @staticmethod
     def _noop_event_bus() -> EventBusInterface:
         """Create a no-op event bus for testing."""
+
         class NoOpEventBus:
-            def emit(self, event_type: str, data: dict[str, Any]) -> None: pass
-            def subscribe(self, event_type: str, handler: Callable) -> None: pass
+            def emit(self, event_type: str, data: dict[str, Any]) -> None:
+                pass
+
+            def subscribe(self, event_type: str, handler: Callable) -> None:
+                pass
+
         return NoOpEventBus()
 
 

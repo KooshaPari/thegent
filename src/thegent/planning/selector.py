@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 from dataclasses import dataclass
 
@@ -42,6 +43,7 @@ __all__ = ["Selector", "ObjectiveSelector", "ObjectiveWeights", "get_objective_p
 @dataclass
 class ObjectiveWeights:
     """Weights for different objective criteria."""
+
     priority: float = 1.0
     urgency: float = 1.0
     complexity: float = 1.0

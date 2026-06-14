@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,6 +9,7 @@ from typing import Any
 @dataclass
 class RedlockAcquireResult:
     """Result of acquiring a redlock."""
+
     acquired: bool
     lock_key: str = ""
     ttl_ms: int = 0
@@ -81,7 +83,15 @@ class _InMemoryLockState:
         return resource in self._locks
 
 
-__all__ = ["RedlockAcquireResult", "RedlockAtomic", "RedlockController", "_InMemoryLockState", "_parse_node_urls_from_env", "_parse_redis_url", "make_redlock_controller"]
+__all__ = [
+    "RedlockAcquireResult",
+    "RedlockAtomic",
+    "RedlockController",
+    "_InMemoryLockState",
+    "_parse_node_urls_from_env",
+    "_parse_redis_url",
+    "make_redlock_controller",
+]
 
 
 def make_redlock_controller(config: dict[str, Any] | None = None) -> RedlockController:
@@ -137,6 +147,7 @@ def _parse_node_urls_from_env() -> list[str]:
         List of node URL strings.
     """
     import os
+
     env_val = os.environ.get("REDIS_NODE_URLS", "")
     if not env_val:
         return ["redis://localhost:6379"]

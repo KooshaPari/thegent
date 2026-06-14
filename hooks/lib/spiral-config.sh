@@ -77,8 +77,10 @@ resolve_hook_dispatcher_bin() {
     printf '%s\n' "${PROJECT_DIR}/hooks/bin/hook-dispatcher"
     return 0
   fi
-  if [[ -x "${0:h}/../bin/hook-dispatcher" ]]; then
-    printf '%s\n' "${0:h}/../bin/hook-dispatcher"
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [[ -x "${script_dir}/../bin/hook-dispatcher" ]]; then
+    printf '%s\n' "${script_dir}/../bin/hook-dispatcher"
     return 0
   fi
   if command -v hook-dispatcher >/dev/null 2>&1; then

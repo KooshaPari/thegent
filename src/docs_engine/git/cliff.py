@@ -1,4 +1,5 @@
 """Cliff - STUB."""
+
 from dataclasses import dataclass
 
 

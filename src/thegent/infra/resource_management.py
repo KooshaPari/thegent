@@ -66,7 +66,8 @@ class ResourceManager:
             proc = psutil.Process(pid)
             mem_info = proc.memory_info()
             cpu_percent = proc.cpu_percent(interval=0.1)
-            fd_count = proc.num_fds()
+            fd_counter = getattr(proc, "num_fds", None) or getattr(proc, "num_handles", None)
+            fd_count = fd_counter() if fd_counter is not None else 0
             children = proc.children(recursive=True)
 
             # Record to SHM for global observability

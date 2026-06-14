@@ -1,0 +1,403 @@
+tests/unit/governance/test_adaptive_coordination.py::test_adaptive_coordination_complexity_low
+tests/unit/governance/test_adaptive_coordination.py::test_adaptive_coordination_complexity_high
+tests/unit/governance/test_agent_hierarchy.py::TestAgentRole::test_all_roles_exist
+tests/unit/governance/test_agent_hierarchy.py::TestAgentRole::test_role_from_value
+tests/unit/governance/test_agent_hierarchy.py::TestRelationshipType::test_all_types_exist
+tests/unit/governance/test_agent_hierarchy.py::TestTeamType::test_all_types_exist
+tests/unit/governance/test_agent_hierarchy.py::TestCoordinationMode::test_all_modes_exist
+tests/unit/governance/test_agent_hierarchy.py::TestAgentNode::test_create_node
+tests/unit/governance/test_agent_hierarchy.py::TestAgentNode::test_create_node_with_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentNode::test_from_dict
+tests/unit/governance/test_agent_hierarchy.py::TestAgentNode::test_to_dict
+tests/unit/governance/test_agent_hierarchy.py::TestAgentRelationship::test_create_relationship
+tests/unit/governance/test_agent_hierarchy.py::TestAgentRelationship::test_to_dict
+tests/unit/governance/test_agent_hierarchy.py::TestAgentRelationship::test_from_dict
+tests/unit/governance/test_agent_hierarchy.py::TestAgentTeam::test_create_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentTeam::test_create_team_with_members
+tests/unit/governance/test_agent_hierarchy.py::TestAgentTeam::test_to_dict
+tests/unit/governance/test_agent_hierarchy.py::TestAgentTeam::test_from_dict
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_init_creates_storage_dir
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_init_loads_existing_data
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_register_agent_executive
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_register_agent_with_parent
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_register_agent_with_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_register_agent_validation_failure
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_register_agent_with_invalid_parent
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_create_relationship
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_create_relationship_with_delegation_context
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_create_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_agent
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_agent_not_found
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_team_members
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_children
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_ancestors
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_descendants
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_can_delegate_executive_to_anyone
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_can_delegate_team_lead_to_member
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_can_delegate_team_lead_to_non_member
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_can_delegate_cross_team_with_context
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_can_delegate_specialist_to_specialist
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_can_delegate_not_allowed
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_hierarchy_tree
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_hierarchy_tree_find_root
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_get_hierarchy_tree_nonexistent
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_list_all_agents
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_list_all_teams
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_list_all_relationships
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_update_agent_status
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_update_agent_status_not_found
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_update_team_status
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_add_team_member
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_add_team_member_already_member
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_remove_team_member
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_agent_id_valid
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_agent_id_empty
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_agent_id_not_found
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_agent_id_inactive
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_detect_circular_relationships_no_cycle
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_detect_circular_relationships_nonexistent_start
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_detect_orphaned_agents
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_detect_orphaned_agents_invalid_parent
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_detect_orphaned_agents_invalid_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_check_team_consistency_valid
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_check_team_consistency_lead_not_in_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_before_register_run_id_exists
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_before_register_invalid_parent
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_before_register_circular
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyManager::test_validate_before_register_nonexistent_team
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyEdgeCases::test_register_with_circular_parent_reference_prevented
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyEdgeCases::test_multiple_teams_with_members
+tests/unit/governance/test_agent_hierarchy.py::TestAgentHierarchyEdgeCases::test_hierarchy_with_multiple_levels
+tests/unit/governance/test_agent_hierarchy_validation.py::TestInvalidAgentIDValidation::test_validate_nonexistent_agent_id
+tests/unit/governance/test_agent_hierarchy_validation.py::TestInvalidAgentIDValidation::test_validate_empty_agent_id
+tests/unit/governance/test_agent_hierarchy_validation.py::TestInvalidAgentIDValidation::test_validate_inactive_agent_id
+tests/unit/governance/test_agent_hierarchy_validation.py::TestInvalidAgentIDValidation::test_validate_valid_agent_id
+tests/unit/governance/test_agent_hierarchy_validation.py::TestInvalidAgentIDValidation::test_register_agent_validates_by_default
+tests/unit/governance/test_agent_hierarchy_validation.py::TestCircularRelationshipDetection::test_detect_no_circular_relationship
+tests/unit/governance/test_agent_hierarchy_validation.py::TestCircularRelationshipDetection::test_detect_direct_circular_relationship
+tests/unit/governance/test_agent_hierarchy_validation.py::TestCircularRelationshipDetection::test_detect_indirect_circular_relationship
+tests/unit/governance/test_agent_hierarchy_validation.py::TestCircularRelationshipDetection::test_prevent_circular_on_register
+tests/unit/governance/test_agent_hierarchy_validation.py::TestOrphanedAgentDetection::test_detect_orphaned_agent_with_missing_parent
+tests/unit/governance/test_agent_hierarchy_validation.py::TestOrphanedAgentDetection::test_detect_orphaned_agent_with_inactive_parent
+tests/unit/governance/test_agent_hierarchy_validation.py::TestOrphanedAgentDetection::test_detect_orphaned_agent_with_missing_team
+tests/unit/governance/test_agent_hierarchy_validation.py::TestOrphanedAgentDetection::test_detect_orphaned_agent_not_in_team_members
+tests/unit/governance/test_agent_hierarchy_validation.py::TestOrphanedAgentDetection::test_no_orphaned_agents_in_valid_hierarchy
+tests/unit/governance/test_agent_hierarchy_validation.py::TestTeamConsistencyChecks::test_check_team_with_missing_lead
+tests/unit/governance/test_agent_hierarchy_validation.py::TestTeamConsistencyChecks::test_check_team_with_inactive_lead
+tests/unit/governance/test_agent_hierarchy_validation.py::TestTeamConsistencyChecks::test_check_team_with_missing_member
+tests/unit/governance/test_agent_hierarchy_validation.py::TestTeamConsistencyChecks::test_check_team_with_duplicate_members
+tests/unit/governance/test_agent_hierarchy_validation.py::TestTeamConsistencyChecks::test_check_consistent_team
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_analyze_complete_prompt
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_analyze_vague_prompt
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_analyze_short_prompt
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_analyze_prompt_with_missing_files
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_suggest_improvements
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_validate_handoff_valid
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_validate_handoff_invalid
+tests/unit/governance/test_agent_hierarchy_validation.py::TestHandoffIntegrityValidation::test_completeness_score_calculation
+tests/unit/governance/test_agileplus.py::TestCycleState::test_all_states_exist
+tests/unit/governance/test_agileplus.py::TestCycleState::test_state_from_value
+tests/unit/governance/test_agileplus.py::TestCycleResult::test_default_values
+tests/unit/governance/test_agileplus.py::TestCycleResult::test_with_values
+tests/unit/governance/test_agileplus.py::TestCycleResult::test_error_state
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_init_default_values
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_init_custom_values
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_state_property
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_cycle_id_property
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_shutdown_requested_property
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_get_status
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoop::test_request_shutdown
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoopStateTransitions::test_state_transitions_idle_to_scanning_to_idle
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoopStateTransitions::test_state_transitions_full_cycle
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoopErrorHandling::test_handles_scanner_error
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoopContinuous::test_run_continuous_max_cycles
+tests/unit/governance/test_agileplus.py::TestAgilePlusLoopContinuous::test_run_continuous_shutdown_requested
+tests/unit/governance/test_agileplus.py::TestAgilePlusSignalHandling::test_signal_handler_sets_shutdown
+tests/unit/governance/test_compliance.py::TestComplianceProfileType::test_all_profile_types_exist
+tests/unit/governance/test_compliance.py::TestComplianceProfileType::test_profile_type_from_value
+tests/unit/governance/test_compliance.py::TestComplianceControl::test_create_control
+tests/unit/governance/test_compliance.py::TestComplianceControl::test_control_enforcement_types
+tests/unit/governance/test_compliance.py::TestComplianceProfile::test_get_mandatory_controls
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_check_control_exists
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_check_control_not_exists
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_check_automatic_control
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_check_manual_control_without_verification
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_check_manual_control_with_verification
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_check_audit_control
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_enforce_mandatory_all_pass
+tests/unit/governance/test_compliance.py::TestComplianceEnforcer::test_enforce_mandatory_with_manual_context
+tests/unit/governance/test_compliance.py::TestComplianceProfiles::test_eu_ai_act_profile
+tests/unit/governance/test_compliance.py::TestComplianceProfiles::test_us_sec_profile
+tests/unit/governance/test_compliance.py::TestComplianceProfiles::test_sox_profile
+tests/unit/governance/test_compliance.py::TestComplianceProfiles::test_gdpr_profile
+tests/unit/governance/test_compliance.py::TestComplianceAuditTrail::test_record_action_basic
+tests/unit/governance/test_compliance.py::TestComplianceAuditTrail::test_record_action_us_sec_hashes
+tests/unit/governance/test_compliance.py::TestComplianceAuditTrail::test_record_multiple_us_sec_hashes_chain
+tests/unit/governance/test_compliance.py::TestComplianceAuditTrail::test_compute_hash
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_export_bundle_soc2
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_export_bundle_eu_ai_act
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_export_bundle_gdpr
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_export_bundle_unknown_framework
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_get_mapped_controls
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_collect_session_evidence_nonexistent
+tests/unit/governance/test_compliance.py::TestComplianceExporter::test_collect_session_evidence_with_files
+tests/unit/governance/test_compliance.py::TestComplianceEvidence::test_create_evidence
+tests/unit/governance/test_compliance.py::TestComplianceEvidence::test_compute_hash
+tests/unit/governance/test_compliance.py::TestComplianceEvidence::test_frozen_model
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_append
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_append_with_custom_id
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_append_with_resource_and_payload
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_list_all_empty
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_list_all
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_list_since
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_purge_older_than_no_records
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_purge_older_than_negative_days_raises
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_purge_older_than_rebuilds_chain
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_verify_integrity_empty
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_verify_integrity_valid
+tests/unit/governance/test_compliance.py::TestEvidenceStore::test_verify_integrity_tampered
+tests/unit/governance/test_compliance.py::TestRetentionPolicy::test_create_valid_policy
+tests/unit/governance/test_compliance.py::TestRetentionPolicy::test_retention_days_validation
+tests/unit/governance/test_compliance.py::TestConsentRecord::test_create_consent
+tests/unit/governance/test_compliance.py::TestConsentRecord::test_withdrawn_consent
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_add_policy
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_add_duplicate_policy_raises
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_get_policy
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_get_nonexistent_policy_raises
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_record_consent
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_list_consents_filter_by_tenant
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_has_active_consent
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_has_no_active_consent_withdrawn
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_purge_tenant_data_no_policies
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_purge_tenant_data_consent_required_missing
+tests/unit/governance/test_compliance.py::TestRetentionEnforcer::test_purge_tenant_data_success
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_json_empty
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_json_with_records
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_json_with_kind_filter
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_json_invalid_kind_filter
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_json_since_days
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_json_to_file
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_reconcile_export_matching
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_reconcile_export_mismatch_raises
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_enforce_integrity_valid
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_enforce_integrity_invalid_raises
+tests/unit/governance/test_compliance.py::TestAuditExporter::test_export_checkpoint
+tests/unit/governance/test_compliance.py::TestEvidenceKind::test_all_evidence_kinds_valid
+tests/unit/governance/test_govern_approve_cli_diff.py::test_govern_approve_displays_diff_before_approval
+tests/unit/governance/test_govern_approve_cli_diff.py::test_govern_approve_handles_missing_diff
+tests/unit/governance/test_govern_vet_service.py::test_govern_vet_impl_rejects_on_safety_violation
+tests/unit/governance/test_govern_vet_service.py::test_govern_vet_impl_approves_clean_output
+tests/unit/governance/test_govern_vet_service.py::test_govern_vet_impl_dry_run_skips_execution
+tests/unit/governance/test_govern_vet_service.py::test_govern_vet_impl_raises_for_missing_run
+tests/unit/governance/test_govern_vet_service.py::test_govern_vet_impl_forwards_federation_namespace_context
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_record_execution_success
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_record_execution_failure
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_record_multiple_providers
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_latency_p99_calculation
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_latency_p95_calculation
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_latency_only_from_successful_executions
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_success_rate_calculation
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_success_rate_100_percent
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_success_rate_zero_percent
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_persist_to_local_cache
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_load_historical_metrics
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_cache_persistence_across_calls
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_metrics_query_performance
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_multiple_provider_query_performance
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_metrics_snapshot_to_dict
+tests/unit/governance/test_metrics.py::TestProviderMetricsCollector::test_time_window_filtering
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_registry_has_builtin_providers
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_builtin_provider_ids
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_provider_config_has_required_fields
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_provider_to_metrics
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_realistic_provider_configs
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_provider_by_id
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_nonexistent_provider
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_list_providers_returns_all
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_fallback_order
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_fallback_order_nonexistent
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_fallback_chain_valid_providers
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_cost_efficient_order
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_expensive_providers_at_end
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_fallback_chains_prefer_cheaper
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_register_custom_provider
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_register_duplicate_raises_error
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_score_for_provider
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_score_nonexistent
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_get_ranked_providers
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_validate_fallback_chains
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_scoring_integration
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_custom_scorer_integration
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_fallback_chain_diverse_providers
+tests/unit/governance/test_providers.py::TestProviderRegistry::test_mock_provider_workflow
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_composite_score_weighted_correctly
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_composite_score_high_reliability
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_composite_score_all_factors_matter
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_latency_normalization_in_range
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_latency_inverse_relationship
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_cost_normalization_in_range
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_cost_inverse_relationship
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_all_components_inverse_weighted
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_score_returns_provider_score_object
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_validation_invalid_reliability
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_validation_invalid_latency
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_validation_invalid_cost
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_realistic_provider_scores
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_score_reproducibility
+tests/unit/governance/test_scoring.py::TestProviderScorer::test_score_formatting
+tests/unit/governance/test_task_classifier.py::test_schema_loads_and_is_strict
+tests/unit/governance/test_task_classifier.py::test_validate_payload_accepts_required_fields
+tests/unit/governance/test_task_classifier.py::test_validate_payload_rejects_invalid_enum
+tests/unit/governance/test_task_classifier.py::test_validate_payload_rejects_range_violation
+tests/unit/governance/test_task_classifier.py::test_classify_adds_required_gates_for_high_risk
+tests/unit/governance/test_task_classifier.py::test_classify_applies_escalation_worktree_mode
+tests/unit/governance/test_task_classifier.py::test_classify_rejects_invalid_scale_definition
+tests/unit/governance/test_task_classifier.py::test_load_schema_required_identifiers
+tests/unit/governance/test_task_classifier.py::test_validate_payload_missing_required_field
+tests/unit/governance/test_triggers.py::TestTriggerConfig::test_default_values
+tests/unit/governance/test_triggers.py::TestTriggerConfig::test_custom_values
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_init
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_exclude_dirs
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_watch_extensions
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_should_process_valid_file
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_should_process_directory
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_should_process_excluded_extension
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_should_process_excluded_dir
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_should_process_case_insensitive_extension
+tests/unit/governance/test_triggers.py::TestWatchdogTrigger::test_start_with_watchdog_fallback
+tests/unit/governance/test_triggers.py::TestTimerTrigger::test_init
+tests/unit/governance/test_triggers.py::TestTimerTrigger::test_run_calls_loop_run_once
+tests/unit/governance/test_triggers.py::TestManualTrigger::test_init
+tests/unit/governance/test_triggers.py::TestManualTrigger::test_start_is_noop
+tests/unit/governance/test_triggers.py::TestManualTrigger::test_stop_is_noop
+tests/unit/governance/test_triggers.py::TestManualTrigger::test_run_calls_loop_run_once
+tests/unit/governance/test_triggers.py::TestHealthThresholdTrigger::test_init
+tests/unit/governance/test_triggers.py::TestHealthThresholdTrigger::test_init_default_values
+tests/unit/governance/test_triggers.py::TestHealthThresholdTrigger::test_run_calls_loop_run_once
+tests/unit/governance/test_triggers.py::TestCreateTrigger::test_create_watchdog_trigger
+tests/unit/governance/test_triggers.py::TestCreateTrigger::test_create_timer_trigger
+tests/unit/governance/test_triggers.py::TestCreateTrigger::test_create_manual_trigger
+tests/unit/governance/test_triggers.py::TestCreateTrigger::test_create_watch_health_trigger
+tests/unit/governance/test_triggers.py::TestCreateTrigger::test_create_unknown_trigger_raises
+tests/unit/governance/test_triggers.py::TestTriggerIntegration::test_watchdog_trigger_on_change_debounce
+tests/unit/governance/test_triggers.py::TestTriggerIntegration::test_watchdog_trigger_on_change_within_debounce
+tests/unit/governance/test_triggers.py::TestTriggerIntegration::test_watchdog_trigger_on_change_not_running
+tests/unit/governance/test_triggers.py::TestTriggerIntegration::test_trigger_cycle_result_structure
+tests/unit/governance/test_triggers.py::TestWatchdogEventHandler::test_should_process_valid_path
+tests/unit/governance/test_triggers.py::TestWatchdogEventHandler::test_should_process_directory
+tests/unit/governance/test_triggers.py::TestWatchdogEventHandler::test_should_process_invalid_extension
+tests/unit/governance/test_triggers.py::TestWatchdogEventHandler::test_should_process_excluded_dir
+tests/unit/governance/test_worktree_governance_inventory.py::test_parse_git_worktree_handles_detached_entries
+tests/unit/governance/test_worktree_governance_inventory.py::test_generate_inventory_marks_primary_and_warns_nonconformant_lane
+tests/unit/governance/test_worktree_governance_inventory.py::test_generate_inventory_flags_malformed_lane_in_root
+tests/unit/governance/test_worktree_legacy_remediation_report.py::test_generate_report_classifies_dirty_legacy_and_prunable_entries
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgent::test_creation
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgent::test_update_heartbeat
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgent::test_is_stale
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestSessionAgentRegistry::test_active_count
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestSessionAgentRegistry::test_can_spawn
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgentRegistry::test_register_agent
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgentRegistry::test_register_with_parent
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgentRegistry::test_system_cap_enforcement
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgentRegistry::test_session_cap_enforcement
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgentRegistry::test_prune_finished_stale
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalAgentRegistry::test_get_descendants
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalDispatcher::test_dispatch_root_agent
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalDispatcher::test_max_depth_enforcement
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalDispatcher::test_can_spawn_child
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalDispatcher::test_get_agent_tree
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestHierarchicalDispatcher::test_system_stats
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestGlobalRegistry::test_singleton
+tests/unit/orchestration/test_hierarchical_dispatcher.py::TestGlobalRegistry::test_reset
+tests/unit/test_phenotype_cliproxy_models_check.py::test_extract_model_ids_openai_data_shape
+tests/unit/test_phenotype_cliproxy_models_check.py::test_extract_model_ids_legacy_models_key
+tests/unit/test_phenotype_cliproxy_models_check.py::test_extract_model_ids_prefers_data_over_models
+tests/unit/test_phenotype_cliproxy_models_check.py::test_models_url_with_v1_suffix
+tests/unit/test_phenotype_cliproxy_models_check.py::test_models_url_host_only
+tests/unit/test_phenotype_cliproxy_models_check.py::test_run_check_success
+tests/unit/test_phenotype_cliproxy_models_check.py::test_run_check_missing_id
+tests/unit/test_resilience.py::TestTransientRetry::test_succeeds_on_first_attempt
+tests/unit/test_resilience.py::TestTransientRetry::test_retries_on_exception_then_succeeds
+tests/unit/test_resilience.py::TestTransientRetry::test_raises_after_max_attempts
+tests/unit/test_resilience.py::TestTransientRetry::test_max_attempts_respected
+tests/unit/test_resilience.py::TestTransientRetry::test_logs_warning_on_retry
+tests/unit/test_resilience.py::TestTransientRetry::test_reraises_original_exception
+tests/unit/test_resilience.py::TestTransientRetry::test_works_with_async_functions
+tests/unit/test_resilience.py::TestCasRetry::test_succeeds_immediately
+tests/unit/test_resilience.py::TestCasRetry::test_retries_on_collision_then_succeeds
+tests/unit/test_resilience.py::TestCasRetry::test_raises_after_max_cas_failures
+tests/unit/test_resilience.py::TestCasRetry::test_logs_debug_on_collision
+tests/unit/test_resilience.py::TestCasRetry::test_respects_max_attempts_for_cas
+tests/unit/test_resilience.py::TestUserInputRetry::test_valid_input_no_retry
+tests/unit/test_resilience.py::TestUserInputRetry::test_invalid_input_retries_then_succeeds
+tests/unit/test_resilience.py::TestUserInputRetry::test_async_user_input_invalid_retries
+tests/unit/test_resilience.py::TestUserInputRetry::test_raises_after_max_invalid_inputs
+tests/unit/test_resilience.py::TestUserInputRetry::test_short_wait_between_retries
+tests/unit/test_resilience.py::TestUserInputRetry::test_logs_debug_on_invalid_input
+tests/unit/test_resilience.py::TestUserInputRetry::test_only_retries_on_value_error
+tests/unit/test_resilience.py::TestHttpRetry::test_successful_http_call_no_retry
+tests/unit/test_resilience.py::TestHttpRetry::test_retries_on_specified_status_code
+tests/unit/test_resilience.py::TestHttpRetry::test_retries_on_network_timeout
+tests/unit/test_resilience.py::TestHttpRetry::test_respects_status_code_filter
+tests/unit/test_resilience.py::TestHttpRetry::test_logs_warning_on_http_error
+tests/unit/test_resilience.py::TestResilienceIntegration::test_multiple_decorators_stacked
+tests/unit/test_resilience.py::TestResilienceIntegration::test_retry_error_preserves_original_exception
+tests/unit/test_resilience.py::TestResilienceIntegration::test_decorators_do_not_silently_swallow_errors
+tests/unit/test_specs_path.py::test_specs_no_hardcoded_user_path
+
+=================================== ERRORS ====================================
+___________ ERROR collecting tests/unit/agents/test_reward_model.py ___________
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\unit\agents\test_reward_model.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\agents\test_reward_model.py:7: in <module>
+    from thegent.agents.reward_model import RecursiveRewardModel, RewardSignal
+src\thegent\agents\reward_model.py:11: in <module>
+    from thegent.governance.heliosShield_bridge import heliosShieldBridge
+src\thegent\governance\heliosShield_bridge.py:9: in <module>
+    from thegent.mesh import MeshManager
+src\thegent\mesh\__init__.py:6: in <module>
+    from .coordination import (
+src\thegent\mesh\coordination.py:10: in <module>
+    import structlog
+E   ModuleNotFoundError: No module named 'structlog'
+_____ ERROR collecting tests/unit/governance/test_heliosShield_bridge.py ______
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\unit\governance\test_heliosShield_bridge.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\governance\test_heliosShield_bridge.py:15: in <module>
+    from thegent.governance.heliosShield_bridge import SmartMerge, heliosShieldBridge
+src\thegent\governance\heliosShield_bridge.py:9: in <module>
+    from thegent.mesh import MeshManager
+src\thegent\mesh\__init__.py:6: in <module>
+    from .coordination import (
+src\thegent\mesh\coordination.py:10: in <module>
+    import structlog
+E   ModuleNotFoundError: No module named 'structlog'
+_____________ ERROR collecting tests/unit/test_git_parallelism.py _____________
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\unit\test_git_parallelism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_git_parallelism.py:11: in <module>
+    from thegent.mesh.git_parallelism import (
+src\thegent\mesh\__init__.py:6: in <module>
+    from .coordination import (
+src\thegent\mesh\coordination.py:10: in <module>
+    import structlog
+E   ModuleNotFoundError: No module named 'structlog'
+=========================== short test summary info ===========================
+ERROR tests/unit/agents/test_reward_model.py
+ERROR tests/unit/governance/test_heliosShield_bridge.py
+ERROR tests/unit/test_git_parallelism.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!
+347 tests collected, 3 errors in 7.61s

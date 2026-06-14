@@ -8,7 +8,7 @@ from __future__ import annotations
 
 def infra_status_cmd() -> dict:
     """Get infrastructure status.
-    
+
     Returns:
         Status dictionary.
     """
@@ -17,7 +17,7 @@ def infra_status_cmd() -> dict:
 
 def infra_recover_cmd(service: str) -> None:
     """Recover a service.
-    
+
     Args:
         service: Service name to recover.
     """

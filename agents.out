@@ -1,0 +1,174 @@
+tests/agents/test_base.py::TestRunResult::test_run_result_required_fields
+tests/agents/test_base.py::TestRunResult::test_run_result_default_timed_out_false
+tests/agents/test_base.py::TestRunResult::test_run_result_default_optional_fields_none
+tests/agents/test_base.py::TestRunResult::test_run_result_all_fields_populated
+tests/agents/test_base.py::TestRunResult::test_run_result_is_mutable
+tests/agents/test_base.py::TestRunResult::test_run_result_empty_strings
+tests/agents/test_base.py::TestAgentRunner::test_agent_runner_init_creates_activated_skills_dict
+tests/agents/test_base.py::TestAgentRunner::test_agent_runner_sub_dispatcher_default_none
+tests/agents/test_base.py::TestAgentRunner::test_ensure_activated_skills_returns_dict
+tests/agents/test_base.py::TestAgentRunner::test_ensure_activated_skills_initializes_if_missing
+tests/agents/test_base.py::TestAgentRunner::test_ensure_activated_skills_handles_non_dict
+tests/agents/test_base.py::TestAgentRunner::test_run_is_abstract
+tests/agents/test_base.py::TestAgentRunner::test_run_abstract_message_includes_class_name
+tests/agents/test_base.py::TestAgentRunner::test_get_skill_prompt_suffix_empty_when_no_skills
+tests/agents/test_base.py::TestAgentRunner::test_get_skill_prompt_suffix_returns_formatted_string
+tests/agents/test_base.py::TestAgentRunner::test_get_skill_prompt_suffix_multiple_skills
+tests/agents/test_base.py::TestAgentRunner::test_get_skill_prompt_suffix_starts_with_newlines
+tests/agents/test_base.py::TestAgentRunner::test_activated_skills_is_mutable
+tests/agents/test_base.py::TestActivateSkill::test_activate_skill_stores_content
+tests/agents/test_base.py::TestActivateSkill::test_activate_skill_raises_keyerror_when_not_found
+tests/agents/test_base.py::TestActivateSkill::test_activate_skill_uses_skill_discovery
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_returns_result_unchanged
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_empty_output
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_handles_none_output
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_with_cwd
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_with_project
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_extracts_deferred_tasks
+tests/agents/test_base.py::TestProcessOutputDeferrals::test_process_output_deferrals_handles_exception_gracefully
+tests/agents/test_base.py::TestConcreteRunner::test_concrete_runner_implements_run
+tests/agents/test_base.py::TestConcreteRunner::test_concrete_runner_inherits_activated_skills
+tests/agents/test_base.py::TestConcreteRunner::test_concrete_runner_get_skill_prompt_suffix
+tests/agents/test_base.py::TestConcreteRunner::test_concrete_runner_accepts_all_run_parameters
+tests/agents/test_base.py::TestAgentRunnerTypeAnnotations::test_sub_dispatcher_annotation_exists
+tests/agents/test_base.py::TestAgentRunnerTypeAnnotations::test_runner_has_activated_skills_attribute
+tests/agents/test_compaction.py::TestCompactionTrigger::test_never_value
+tests/agents/test_compaction.py::TestCompactionTrigger::test_token_threshold_value
+tests/agents/test_compaction.py::TestCompactionTrigger::test_turn_count_value
+tests/agents/test_compaction.py::TestCompactionConfig::test_default_trigger_is_never
+tests/agents/test_compaction.py::TestCompactionConfig::test_custom_token_threshold
+tests/agents/test_compaction.py::TestCompactionConfig::test_frozen_config
+tests/agents/test_compaction.py::TestCompactionConfig::test_default_values
+tests/agents/test_compaction.py::TestContextWindow::test_default_empty
+tests/agents/test_compaction.py::TestContextWindow::test_mutable_messages
+tests/agents/test_compaction.py::TestContextWindow::test_turn_count_starts_zero
+tests/agents/test_compaction.py::TestContextCompactor::test_should_compact_never_returns_false
+tests/agents/test_compaction.py::TestContextCompactor::test_should_compact_token_threshold_below
+tests/agents/test_compaction.py::TestContextCompactor::test_should_compact_token_threshold_above
+tests/agents/test_compaction.py::TestContextCompactor::test_should_compact_turn_threshold_below
+tests/agents/test_compaction.py::TestContextCompactor::test_should_compact_turn_threshold_above
+tests/agents/test_compaction.py::TestContextCompactor::test_compact_replaces_messages_with_summary
+tests/agents/test_compaction.py::TestContextCompactor::test_compact_returns_result_with_counts
+tests/agents/test_compaction.py::TestContextCompactor::test_compact_sets_compacted_at_turn
+tests/agents/test_compaction.py::TestContextCompactor::test_estimate_tokens_proportional_to_length
+tests/agents/test_compaction.py::TestContextCompactor::test_build_compaction_prompt_includes_prompt
+tests/agents/test_compaction.py::TestContextCompactor::test_compact_resets_token_count
+tests/agents/test_compaction.py::TestContextCompactor::test_compact_result_is_frozen
+tests/agents/test_smolgents.py::TestTool::test_construction
+tests/agents/test_smolgents.py::TestTool::test_call_delegates_to_func
+tests/agents/test_smolgents.py::TestTool::test_repr
+tests/agents/test_smolgents.py::TestTool::test_metadata_default_empty
+tests/agents/test_smolgents.py::TestTool::test_metadata_stored
+tests/agents/test_smolgents.py::TestTool::test_counter_increments_on_each_call
+tests/agents/test_smolgents.py::TestTool::test_public_import_matches_direct
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_run_matches_tool_by_name
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_run_no_matching_tool_returns_task
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_run_case_insensitive_matching
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_run_returns_string
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_get_tool_returns_registered_tool
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_add_tool_extends_toolset
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_add_tool_duplicate_raises
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_tools_property_returns_list
+tests/agents/test_smolgents.py::TestSmolAgentToolCalling::test_public_import_matches_direct
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_creates_child_with_same_tools
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_appends_to_children
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_child_parent_reference
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_child_name_includes_parent_name
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_no_tool_returns_subtask
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_result_is_string
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_delegate_independent_memory
+tests/agents/test_smolgents.py::TestSmolAgentDelegation::test_children_property_is_copy
+tests/agents/test_smolgents.py::TestSmolAgentMemory::test_remember_and_recall
+tests/agents/test_smolgents.py::TestSmolAgentMemory::test_recall_missing_key_returns_none
+tests/agents/test_smolgents.py::TestSmolAgentMemory::test_remember_overwrites_existing
+tests/agents/test_smolgents.py::TestSmolAgentMemory::test_memory_property_returns_copy
+tests/agents/test_smolgents.py::TestSmolAgentMemory::test_memory_pre_populated_from_constructor
+tests/agents/test_smolgents.py::TestSmolAgentMemory::test_remember_various_types
+tests/agents/test_smolgents.py::TestSmolAgentSetParent::test_set_parent_wires_parent_reference
+tests/agents/test_smolgents.py::TestSmolAgentSetParent::test_default_parent_is_none
+tests/agents/test_smolgents.py::TestSmolAgentSetParent::test_parent_via_constructor
+tests/agents/test_smolgents.py::TestAgentTree::test_register_single_agent
+tests/agents/test_smolgents.py::TestAgentTree::test_register_duplicate_raises
+tests/agents/test_smolgents.py::TestAgentTree::test_register_with_unknown_parent_raises
+tests/agents/test_smolgents.py::TestAgentTree::test_parent_child_wiring
+tests/agents/test_smolgents.py::TestAgentTree::test_set_parent_called_on_registration
+tests/agents/test_smolgents.py::TestAgentTree::test_get_returns_none_for_missing
+tests/agents/test_smolgents.py::TestAgentTree::test_get_parent_returns_none_for_root
+tests/agents/test_smolgents.py::TestAgentTree::test_get_children_empty_for_leaf
+tests/agents/test_smolgents.py::TestAgentTree::test_list_agents
+tests/agents/test_smolgents.py::TestAgentTree::test_len
+tests/agents/test_smolgents.py::TestAgentTree::test_get_ancestors
+tests/agents/test_smolgents.py::TestAgentTree::test_get_ancestors_root_is_empty
+tests/agents/test_smolgents.py::TestAgentTree::test_get_descendants
+tests/agents/test_smolgents.py::TestAgentTree::test_to_dict
+tests/agents/test_smolgents.py::TestAgentTree::test_repr
+tests/agents/test_smolgents.py::TestSmolGentsE2E::test_orchestrator_delegates_to_specialist
+tests/agents/test_smolgents.py::TestSmolGentsE2E::test_delegation_chain
+tests/agents/test_smolgents.py::TestSmolGentsE2E::test_memory_persists_across_runs
+tests/agents/test_smolgents.py::TestSmolGentsE2E::test_tree_integration_with_delegation
+tests/agents/test_smolgents.py::TestSmolGentsE2E::test_smolAgent_run_conforms_to_agentrunner_interface
+
+=================================== ERRORS ====================================
+______________ ERROR collecting tests/agents/test_flash_agent.py ______________
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\agents\test_flash_agent.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\agents\test_flash_agent.py:15: in <module>
+    from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig, FlashAgentResult, flash
+src\thegent\agents\flash_agent.py:21: in <module>
+    import litellm
+E   ModuleNotFoundError: No module named 'litellm'
+_______________ ERROR collecting tests/agents/test_plangent.py ________________
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\agents\test_plangent.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\agents\test_plangent.py:16: in <module>
+    from thegent.agents.plangent import Plan, PlangentExecutor, PlangentPlanner, PlanNode
+src\thegent\agents\plangent.py:36: in <module>
+    from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig
+src\thegent\agents\flash_agent.py:21: in <module>
+    import litellm
+E   ModuleNotFoundError: No module named 'litellm'
+_______________ ERROR collecting tests/agents/test_registry.py ________________
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\agents\test_registry.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\agents\test_registry.py:24: in <module>
+    from thegent.agents.registry import (
+src\thegent\agents\registry.py:9: in <module>
+    from thegent.agents.codex_proxy import CodexProxyRunner
+src\thegent\agents\codex_proxy.py:23: in <module>
+    from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
+src\thegent\agents\resilience.py:22: in <module>
+    from pybreaker import STATE_OPEN, CircuitBreaker
+E   ModuleNotFoundError: No module named 'pybreaker'
+_________ ERROR collecting tests/agents/test_sub_agent_dispatcher.py __________
+ImportError while importing test module 'C:\Users\koosh\Dev\thegent\tests\agents\test_sub_agent_dispatcher.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\AppData\Local\Programs\Python\Python311\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\agents\test_sub_agent_dispatcher.py:16: in <module>
+    from thegent.agents.sub_agent_dispatcher import (
+src\thegent\agents\sub_agent_dispatcher.py:23: in <module>
+    from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig
+src\thegent\agents\flash_agent.py:21: in <module>
+    import litellm
+E   ModuleNotFoundError: No module named 'litellm'
+=========================== short test summary info ===========================
+ERROR tests/agents/test_flash_agent.py
+ERROR tests/agents/test_plangent.py
+ERROR tests/agents/test_registry.py
+ERROR tests/agents/test_sub_agent_dispatcher.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!
+109 tests collected, 4 errors in 11.20s

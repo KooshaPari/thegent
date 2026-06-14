@@ -15,6 +15,7 @@ from thegent.contracts.csm import CSMPhase, CanonicalStructuredMessage, CSMStatu
 
 CONTRACT_SCHEMA_VERSION = "1.0.0"
 
+
 def get_registry() -> ADAPTER_REGISTRY:
     """Get the global adapter registry instance.
 

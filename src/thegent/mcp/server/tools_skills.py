@@ -74,7 +74,9 @@ def thegent_activate_skill_impl(
         )
 
     return _ToolResult(
-        content=_json.dumps({"skill": {"name": skill_name, "content": f"# {skill_name}\nInstructions for {skill_name}"}}),
+        content=_json.dumps(
+            {"skill": {"name": skill_name, "content": f"# {skill_name}\nInstructions for {skill_name}"}}
+        ),
         structured_content={"skill": {"name": skill_name, "content": f"# {skill_name}\nInstructions for {skill_name}"}},
     )
 
@@ -91,6 +93,7 @@ def thegent_list_skills_impl(backend: Any | None = None) -> Any:
         content=_json.dumps({"skills": []}),
         structured_content={"skills": []},
     )
+
 
 class MCPSkillRegistry:
     """Registry for MCP server skills."""

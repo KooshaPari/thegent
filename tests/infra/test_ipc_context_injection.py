@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import stat
 from pathlib import Path
 
@@ -12,6 +13,9 @@ from thegent.infra.ipc import IPCMesh
 
 
 def test_tgnt_p11_1_ipc_mesh_creates_tmpfs_like_dirs_with_sticky_bit(tmp_path: Path) -> None:
+    if os.name == "nt":
+        pytest.skip("sticky-bit mode is not represented on Windows")
+
     mesh_root = tmp_path / "agent-mesh"
     IPCMesh(mesh_root=mesh_root)
 

@@ -13,6 +13,7 @@ import hashlib
 @dataclass
 class ZKProof:
     """Zero-knowledge proof structure."""
+
     commitment: str
     response: str
     challenge: str
