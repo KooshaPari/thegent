@@ -12,12 +12,23 @@ _log = logging.getLogger(__name__)
 class LedgerVerifier:
     """Verifies the integrity of the action ledger using rolling hashes."""
 
-    def __init__(self, ledger_path: Path) -> None:
+    def __init__(self, ledger_path: Path | Any) -> None:
         self.ledger_path = ledger_path
 
     def verify_integrity(self) -> dict[str, Any]:
         """Verify the rolling hash chain in the ledger."""
         report = {"valid": True, "count": 0, "errors": []}
+
+        # Handle file-like objects (e.g., StringIO)
+        if hasattr(self.ledger_path, "read"):
+            content = self.ledger_path.read()
+            if hasattr(self.ledger_path, "seek"):
+                self.ledger_path.seek(0)
+            lines = content.splitlines()
+            last_hash = ""
+            for i, line in enumerate(lines):
+                last_hash = self._process_ledger_line(line, i, last_hash, report)
+            return report
 
         if not self.ledger_path.exists():
             return report

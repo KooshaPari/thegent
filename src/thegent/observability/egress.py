@@ -27,8 +27,8 @@ class EgressEvent:
 class SIEMEgress:
     """Push governance events to an HTTP SIEM endpoint."""
 
-    def __init__(self, endpoint_url: str) -> None:
-        self.endpoint_url = endpoint_url.strip()
+    def __init__(self, endpoint_url: str | None) -> None:
+        self.endpoint_url = (endpoint_url or "").strip()
 
     def push_event(self, event: EgressEvent) -> bool:
         """Send an event to the configured SIEM endpoint."""
@@ -42,9 +42,15 @@ class SIEMEgress:
             _log.warning("SIEM egress failed: %s", exc)
             return False
 
+    def format_for_qradar(self, event: EgressEvent) -> str:
+        """Format an event for QRadar CEF export."""
+        payload = event.payload or ""
+        return f"CEF:0|thegent|{event.source}|1.0|{event.id}|{event.event_type}|{event.severity}|msg={payload}"
+
     def format_for_syslog(self, event: EgressEvent) -> str:
         """Render a compact syslog-style line for an event."""
+        payload = event.payload or ""
         return (
             f"{event.timestamp} thegent[{event.source}] "
-            f"{event.severity.upper()} {event.event_type} id={event.id} payload={event.payload}"
+            f"{event.severity.upper()} {event.event_type} id={event.id} payload={payload}"
         )

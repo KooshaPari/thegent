@@ -1,4 +1,4 @@
-"""Stub module."""
+"""Stub module for cost-aware objective selection."""
 from __future__ import annotations
 from dataclasses import dataclass
 
@@ -16,7 +16,7 @@ class Selector:
 
 
 class ObjectiveSelector:
-    """Selector for objectives."""
+    """Selector for cost-aware objectives."""
 
     def __init__(self) -> None:
         self._objectives: list = []
@@ -24,6 +24,27 @@ class ObjectiveSelector:
     def add_objective(self, objective: dict) -> None:
         """Add an objective."""
         self._objectives.append(objective)
+
+    def select(self, models: list[dict], profile: ObjectiveWeights) -> dict:
+        """Select the best model based on weighted profile.
+
+        Args:
+            models: List of model dicts with keys: id, latency, quality, cost
+            profile: ObjectiveWeights defining the selection criteria
+
+        Returns:
+            The model dict that best matches the profile.
+        """
+        if not models:
+            raise ValueError("No models provided")
+        best = models[0]
+        best_score = profile.score(best)
+        for model in models:
+            score = profile.score(model)
+            if score > best_score:
+                best = model
+                best_score = score
+        return best
 
     def select_next(self) -> dict | None:
         """Select the next objective."""
@@ -41,19 +62,36 @@ __all__ = ["Selector", "ObjectiveSelector", "ObjectiveWeights", "get_objective_p
 
 @dataclass
 class ObjectiveWeights:
-    """Weights for different objective criteria."""
-    priority: float = 1.0
-    urgency: float = 1.0
-    complexity: float = 1.0
-    dependencies: float = 0.5
-    resources: float = 0.3
+    """Weights for different objective criteria (cost-aware selection)."""
+
+    latency: float = 0.0
+    quality: float = 0.0
+    cost: float = 0.0
 
     def score(self, objective: dict) -> float:
-        """Calculate weighted score for an objective."""
+        """Calculate weighted score for an objective/model.
+
+        Args:
+            objective: Dict with keys: latency, quality, cost
+
+        Returns:
+            Weighted score (higher is better).
+        """
         score = 0.0
-        score += self.priority * objective.get("priority", 0)
-        score += self.urgency * objective.get("urgency", 0)
-        score += self.complexity * objective.get("complexity", 0)
+        # Lower latency is better (invert)
+        latency = objective.get("latency", 0)
+        if latency == 0:
+            score += self.latency * 1.0
+        else:
+            score += self.latency * (1.0 / latency)
+        # Higher quality is better
+        score += self.quality * objective.get("quality", 0)
+        # Lower cost is better (invert)
+        cost = objective.get("cost", 0)
+        if cost == 0:
+            score += self.cost * 1.0
+        else:
+            score += self.cost * (1.0 / cost)
         return score
 
 
@@ -61,14 +99,15 @@ def get_objective_profile(profile_name: str) -> ObjectiveWeights:
     """Get a predefined objective weight profile.
 
     Args:
-        profile_name: Name of the profile ("balanced", "speed", "quality").
+        profile_name: Name of the profile ("balanced", "speed", "quality", "cheapest").
 
     Returns:
         ObjectiveWeights instance.
     """
     profiles = {
-        "balanced": ObjectiveWeights(priority=1.0, urgency=1.0, complexity=1.0),
-        "speed": ObjectiveWeights(priority=0.5, urgency=2.0, complexity=0.5),
-        "quality": ObjectiveWeights(priority=1.0, urgency=0.5, complexity=2.0),
+        "balanced": ObjectiveWeights(latency=0.33, quality=0.33, cost=0.33),
+        "speed": ObjectiveWeights(latency=0.7, quality=0.2, cost=0.1),
+        "quality": ObjectiveWeights(latency=0.1, quality=0.7, cost=0.2),
+        "cheapest": ObjectiveWeights(latency=0.1, quality=0.3, cost=0.6),
     }
     return profiles.get(profile_name, ObjectiveWeights())

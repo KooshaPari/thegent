@@ -7,7 +7,7 @@ Verifies load_trend, serialize_trend, and window filtering behavior.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -40,7 +40,7 @@ def _write_jsonl(path: Path, metrics: list[SloMetric]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as fh:
         for m in metrics:
-            fh.write(json.dumps(asdict(m).decode(), sort_keys=True) + "\n")
+            fh.write(json.dumps(asdict(m), sort_keys=True) + "\n")
 
 
 class TestLoadTrend:
@@ -113,7 +113,7 @@ class TestLoadTrend:
         jsonl_path = tmp_path / "incomplete.jsonl"
         # Write a record with only some fields
         jsonl_path.write_text(
-            json.dumps({"file_loc": 100.0, "timestamp": datetime.now(UTC).decode().isoformat()}) + "\n",
+            json.dumps({"file_loc": 100.0, "timestamp": datetime.now(UTC).isoformat()}) + "\n",
             encoding="utf-8",
         )
         with pytest.raises(ValueError, match="missing fields"):

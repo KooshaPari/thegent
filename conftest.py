@@ -58,7 +58,7 @@ _GUARDRAIL_EXCLUDE_SEGMENTS = {
 }
 
 
-def _as_path(value: os.PathLike[str] | str) -> Path:
+def _as_path(value: os.PathLike[str]) -> Path:
     return Path(str(value)).resolve()
 
 
