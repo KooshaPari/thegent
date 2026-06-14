@@ -26,6 +26,7 @@ members = [
     "thegent-memory",
     "thegent-subprocess",
     "thegent-plugin-host",
+    "thegent-nvms",
 ]
 exclude = ["thegent-watcher"]
 

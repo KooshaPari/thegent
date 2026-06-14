@@ -5548,6 +5548,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "thegent-nvms"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "thegent-offload"
 version = "0.1.0"
 dependencies = [
