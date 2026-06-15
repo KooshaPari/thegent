@@ -2,10 +2,6 @@ permissions:
   contents: read
 
 name: cargo-deny
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
   push:
     branches: [main]
@@ -13,6 +9,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 9 * * 1"
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   cargo-deny:
     runs-on: ubuntu-24.04

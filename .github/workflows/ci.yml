@@ -2,15 +2,15 @@ permissions:
   contents: read
 
 name: CI
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   ci:
     uses: phenotype-dev/.github/workflows/rust-ci.yml@0000000000000000000000000000000000000000 # placeholder SHA; source 404s; no live equivalent (audit 2026-06-05 found no matching file in 15 live org repos; prior candidate phenotype-dev/.github/workflows/rust-ci.yml@0000000000000000000000000000000000000000 # placeholder SHA; source 404s; FORK from phenoShared/.github/workflows/reusable/rust-ci.yml@72b9c6cbdb24c49189b0e7c7395d874830d1ed87)
