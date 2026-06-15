@@ -1,11 +1,9 @@
-use std::os::unix::process::CommandExt;
 use std::path::Path;
-use std::process::Command;
+
+use crate::os_exec::exec_replace;
 
 pub fn exec_direct(cmd: &Path, args: &[&str]) -> ! {
-    let err = Command::new(cmd).args(args).exec();
-    eprintln!("exec {:?} failed: {}", cmd, err);
-    std::process::exit(127);
+    exec_replace(cmd, args);
 }
 
 pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {

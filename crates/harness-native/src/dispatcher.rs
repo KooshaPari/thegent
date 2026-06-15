@@ -12,11 +12,11 @@
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use harness_native::find_real;
+use harness_native::os_exec::exec_replace;
 use harness_native::strategies::{self, RuleOpts};
 use tracing::{debug, info, warn};
 
@@ -258,21 +258,40 @@ fn exec_bash_harness(harness_home: &Path, invoked_as: &str, args: &[String]) -> 
         harness_home.join("bin").join("harness")
     };
     let bash_path = bash_harness.to_string_lossy().into_owned();
-    // exec -a $invoked_as so harness sees correct INVOKED_AS in proxy mode
-    let err = Command::new("bash")
-        .arg(&bash_path)
+    // On Unix we exec-replace (preserves PID, lets harness read $0).
+    // On Windows exec doesn't exist, so we spawn+wait and exit with the
+    // child's code. HARNESS_INVOKED_AS is the portable way to tell bash
+    // what proxy name it was called with.
+    let mut cmd = Command::new("bash");
+    cmd.arg(&bash_path)
         .args(args)
         .env("HARNESS_HOME", harness_home)
-        .env("HARNESS_INVOKED_AS", invoked_as)
-        .exec();
-    eprintln!("helios-shield: exec bash failed: {}", err);
-    std::process::exit(127);
+        .env("HARNESS_INVOKED_AS", invoked_as);
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        let err = cmd.exec();
+        eprintln!("helios-shield: exec bash failed: {}", err);
+        std::process::exit(127);
+    }
+    #[cfg(not(unix))]
+    {
+        match cmd.status() {
+            Ok(status) => {
+                let code = status.code().unwrap_or(1);
+                std::process::exit(code);
+            }
+            Err(e) => {
+                eprintln!("helios-shield: spawn bash failed: {}", e);
+                std::process::exit(127);
+            }
+        }
+    }
 }
 
 fn exec_real(real: &Path, args: &[String]) -> ! {
-    let err = Command::new(real).args(args).exec();
-    eprintln!("helios-shield: exec {:?} failed: {}", real, err);
-    std::process::exit(127);
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    exec_replace(real, &arg_refs);
 }
 
 fn main() {
