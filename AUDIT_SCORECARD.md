@@ -5,31 +5,53 @@
 | Pillar | Score | Grade | Emoji |
 |--------|-------|-------|-------|
 | L1 Architecture | 40 | D- | 🔴 |
-| L2 Dev Loop | 80 | B+ | 🟡 |
+| L2 Dev Loop | 60 | C | 🟠 |
 | L3 Agent Loop | 40 | D- | 🔴 |
 | L4 Observability | 100 | A+ | 🟢 |
 | L5 Security | 100 | A+ | 🟢 |
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
+| L9 Complexity | 40 | D- | 🔴 |
+| L10 Type Safety | 100 | A+ | 🟢 |
+| L11 Dependencies | 70 | B- | 🟡 |
+| L12 Error Handling | 100 | A+ | 🟢 |
+| L13 Logging | 100 | A+ | 🟢 |
+| L14 Data Layer | 100 | A+ | 🟢 |
+| L15 API Surface | 50 | D+ | 🔴 |
+| L16 Frontend | 90 | A | 🟢 |
+| L17 I18n/A11y | 60 | C | 🟠 |
+| L18 Concurrency | 100 | A+ | 🟢 |
+| L19 Memory | 75 | B | 🟡 |
+| L20 Config | 85 | A- | 🟢 |
+| L21 Testing Depth | 100 | A+ | 🟢 |
+| L22 Fuzzing | 100 | A+ | 🟢 |
+| L23 Release | 100 | A+ | 🟢 |
+| L24 Migration | 50 | D+ | 🔴 |
+| L25 Vendor Lockin | 100 | A+ | 🟢 |
+| L26 Event Driven | 85 | A- | 🟢 |
+| L27 Infrastructure | 50 | D+ | 🔴 |
+| L28 Cost Efficiency | 100 | A+ | 🟢 |
+| L29 Monitoring | 100 | A+ | 🟢 |
+| L30 Onboarding | 75 | B | 🟡 |
 
 ## Details
 ### L1 Architecture — 40/100 (D-)
 2037 files, 77 over 500L, 78 over 350L.
 Top oversized:
 src/thegent/cliproxy_adapter.py:1275
-src/thegent_gitops/git.py:423
-src/thegent_gitops/lock_cleanup.py:356
-src/thegent_gitops/worktree.py:520
 src/thegent/mesh/git_parallelism.py:397
 src/thegent/mesh/smart_merge.py:619
 src/thegent/mesh/consensus.py:368
 src/thegent/infra/mojo_bridge.py:594
 src/thegent/infra/wasm_plugin.py:578
 src/thegent/infra/ipc.py:414
+src/thegent/infra/cache_v2.py:419
+src/thegent/infra/project_tenancy.py:429
+src/thegent/infra/multi_runtime_diagnostics.py:455
 
-### L2 Dev Loop — 80/100 (B+)
-1332 test files, 0 collected, 0 errors. (pytest collection timed out)
+### L2 Dev Loop — 60/100 (C)
+1332 test files, 0 collected, 0 errors.
 
 ### L3 Agent Loop — 40/100 (D-)
 CLI: MISSING. CI: 25 workflows.
@@ -49,6 +71,72 @@ Async defs: 362, awaits: 378.
 ### L8 Compliance — 100/100 (A+)
 Commits: 20. SSOT: True.
 
+### L9 Complexity — 40/100 (D-)
+Long funcs: 26, nested blocks: 18350, branches: 17640.
+
+### L10 Type Safety — 100/100 (A+)
+Type coverage: 11837/12008 (99%). Dataclasses: 971.
+
+### L11 Dependencies — 70/100 (B-)
+Lock: True, Requirements: False.
+
+### L12 Error Handling — 100/100 (A+)
+Try blocks: 1967, bare excepts: 0, custom exceptions: 117, retry: 10.
+
+### L13 Logging — 100/100 (A+)
+Logger imports: 489, structured: 532.
+
+### L14 Data Layer — 100/100 (A+)
+ORM: 0, Migrations: 0, Redis: 44, SQLite: 131.
+
+### L15 API Surface — 50/100 (D+)
+FastAPI: 0, Flask: 0, Endpoints: 0, OpenAPI: 0.
+
+### L16 Frontend — 90/100 (A)
+HTML: 463, JS: 3004, CSS: 58, Templates: 0, React: 6.
+
+### L17 I18n/A11y — 60/100 (C)
+Locale files: 0, gettext: 0, aria: 40.
+
+### L18 Concurrency — 100/100 (A+)
+Threading: 240, MP: 0, Locks: 82, Queue: 6.
+
+### L19 Memory — 75/100 (B)
+Context managers: 138, GC: 0, Weakref: 0, Cleanup: 62.
+
+### L20 Config — 85/100 (A-)
+Env refs: 436, Dotenv: 0, Pydantic: 24, Config files: 350.
+
+### L21 Testing Depth — 100/100 (A+)
+Parametrize: 112, Fixtures: 384, Mock: 351, Patch: 4279.
+
+### L22 Fuzzing — 100/100 (A+)
+Hypothesis: 28, Fuzzing: 40, Property tests: 112.
+
+### L23 Release — 100/100 (A+)
+Version file: True, Tags: 7, Semver: 7, Changelog: True.
+
+### L24 Migration — 50/100 (D+)
+Deprecated: 0, Warnings: 0, Migrations: 0.
+
+### L25 Vendor Lockin — 100/100 (A+)
+AWS: 0, Azure: 2, GCP: 0, Generic: 264.
+
+### L26 Event Driven — 85/100 (A-)
+Event bus: 34, Queue: 1491, Pubsub: 0, Kafka: 0, Celery: 0.
+
+### L27 Infrastructure — 50/100 (D+)
+Docker: 0, Compose: 2, K8s: 0, Terraform: 0.
+
+### L28 Cost Efficiency — 100/100 (A+)
+Batching: 540, N+1: 0, Bulk: 6, Pagination: 2390.
+
+### L29 Monitoring — 100/100 (A+)
+Prometheus: 28, Health: 3161, Tracing: 918, Metrics: 776, SLO: 952.
+
+### L30 Onboarding — 75/100 (B)
+Makefile: 0, Devcontainer: 1, Setup: 4, README: 1.
+
 ## Raw Data
 ```json
 {
@@ -58,9 +146,6 @@ Commits: 20. SSOT: True.
     "over_350": 78,
     "oversized_files": [
       "src/thegent/cliproxy_adapter.py:1275",
-      "src/thegent_gitops/git.py:423",
-      "src/thegent_gitops/lock_cleanup.py:356",
-      "src/thegent_gitops/worktree.py:520",
       "src/thegent/mesh/git_parallelism.py:397",
       "src/thegent/mesh/smart_merge.py:619",
       "src/thegent/mesh/consensus.py:368",
@@ -86,10 +171,30 @@ Commits: 20. SSOT: True.
       "src/thegent/agents/cliproxy_manager.py:1132",
       "src/thegent/agents/sub_agent_dispatcher.py:466",
       "src/thegent/agents/direct_agents.py:591",
+      "src/thegent/agents/crew/executor.py:396",
       "src/thegent/utils/linting_accelerator.py:445",
       "src/thegent/utils/borrow.py:585",
       "src/thegent/utils/path_utils.py:417",
+      "src/thegent/utils/routing_impl/cost_aware_router.py:582",
+      "src/thegent/utils/routing_impl/route_config.py:423",
+      "src/thegent/utils/routing_impl/pareto_router.py:611",
+      "src/thegent/utils/routing_impl/cache.py:480",
+      "src/thegent/utils/routing_impl/model_metadata.py:519",
+      "src/thegent/utils/routing_impl/circuit_breaker.py:411",
+      "src/thegent/utils/routing_impl/cel_router.py:556",
+      "src/thegent/utils/routing_impl/task_router.py:482",
+      "src/thegent/utils/routing_impl/semantic_cache.py:377",
+      "src/thegent/utils/routing_impl/litellm_responses_handler.py:867",
+      "src/thegent/utils/routing_impl/litellm_router.py:1017",
       "src/thegent/models/catalog.py:619",
+      "src/thegent/cli/governance/governance_policy_cmds.py:529",
+      "src/thegent/cli/commands/cli.py:486",
+      "src/thegent/cli/commands/impl.py:1194",
+      "src/thegent/cli/services/run_execution_core_helpers.py:1670",
+      "src/thegent/cli/services/run_observe_helpers.py:522",
+      "src/thegent/cli/services/observability.py:398",
+      "src/thegent/cli/services/work_stream_orchestration.py:385",
+      "src/thegent/cli/services/run_post_surface_helpers.py:686",
       "src/thegent/integrations/github_pr.py:438",
       "src/thegent/integrations/workstream_autosync_shared.py:1380",
       "src/thegent/integrations/gh_project_sync.py:996",
@@ -112,30 +217,13 @@ Commits: 20. SSOT: True.
       "src/thegent/governance/agent_hierarchy.py:778",
       "src/thegent/governance/native_governance_scan.py:423",
       "src/thegent/governance/federation.py:460",
-      "src/thegent/protocols/turn_submit_boundaries.py:602",
-      "src/thegent/protocols/jsonrpc_agent_server.py:1079",
       "src/thegent/govern/vetter/checks.py:890",
       "src/thegent/govern/vetter/orchestrator.py:407",
-      "src/thegent/cli/governance/governance_policy_cmds.py:529",
-      "src/thegent/cli/commands/cli.py:486",
-      "src/thegent/cli/commands/impl.py:1194",
-      "src/thegent/cli/services/run_execution_core_helpers.py:1670",
-      "src/thegent/cli/services/run_observe_helpers.py:522",
-      "src/thegent/cli/services/observability.py:398",
-      "src/thegent/cli/services/work_stream_orchestration.py:385",
-      "src/thegent/cli/services/run_post_surface_helpers.py:686",
-      "src/thegent/utils/routing_impl/cost_aware_router.py:582",
-      "src/thegent/utils/routing_impl/route_config.py:423",
-      "src/thegent/utils/routing_impl/pareto_router.py:611",
-      "src/thegent/utils/routing_impl/cache.py:480",
-      "src/thegent/utils/routing_impl/model_metadata.py:519",
-      "src/thegent/utils/routing_impl/circuit_breaker.py:411",
-      "src/thegent/utils/routing_impl/cel_router.py:556",
-      "src/thegent/utils/routing_impl/task_router.py:482",
-      "src/thegent/utils/routing_impl/semantic_cache.py:377",
-      "src/thegent/utils/routing_impl/litellm_responses_handler.py:867",
-      "src/thegent/utils/routing_impl/litellm_router.py:1017",
-      "src/thegent/agents/crew/executor.py:396",
+      "src/thegent/protocols/turn_submit_boundaries.py:602",
+      "src/thegent/protocols/jsonrpc_agent_server.py:1079",
+      "src/thegent_gitops/git.py:423",
+      "src/thegent_gitops/lock_cleanup.py:356",
+      "src/thegent_gitops/worktree.py:520",
       "src/thegent/cliproxy_adapter.py:1275",
       "src/thegent/mesh/git_parallelism.py:397",
       "src/thegent/mesh/smart_merge.py:619",
@@ -162,10 +250,30 @@ Commits: 20. SSOT: True.
       "src/thegent/agents/cliproxy_manager.py:1132",
       "src/thegent/agents/sub_agent_dispatcher.py:466",
       "src/thegent/agents/direct_agents.py:591",
+      "src/thegent/agents/crew/executor.py:396",
       "src/thegent/utils/linting_accelerator.py:445",
       "src/thegent/utils/borrow.py:585",
       "src/thegent/utils/path_utils.py:417",
+      "src/thegent/utils/routing_impl/cost_aware_router.py:582",
+      "src/thegent/utils/routing_impl/route_config.py:423",
+      "src/thegent/utils/routing_impl/pareto_router.py:611",
+      "src/thegent/utils/routing_impl/cache.py:480",
+      "src/thegent/utils/routing_impl/model_metadata.py:519",
+      "src/thegent/utils/routing_impl/circuit_breaker.py:411",
+      "src/thegent/utils/routing_impl/cel_router.py:556",
+      "src/thegent/utils/routing_impl/task_router.py:482",
+      "src/thegent/utils/routing_impl/semantic_cache.py:377",
+      "src/thegent/utils/routing_impl/litellm_responses_handler.py:867",
+      "src/thegent/utils/routing_impl/litellm_router.py:1017",
       "src/thegent/models/catalog.py:619",
+      "src/thegent/cli/governance/governance_policy_cmds.py:529",
+      "src/thegent/cli/commands/cli.py:486",
+      "src/thegent/cli/commands/impl.py:1194",
+      "src/thegent/cli/services/run_execution_core_helpers.py:1670",
+      "src/thegent/cli/services/run_observe_helpers.py:522",
+      "src/thegent/cli/services/observability.py:398",
+      "src/thegent/cli/services/work_stream_orchestration.py:385",
+      "src/thegent/cli/services/run_post_surface_helpers.py:686",
       "src/thegent/integrations/github_pr.py:438",
       "src/thegent/integrations/workstream_autosync_shared.py:1380",
       "src/thegent/integrations/gh_project_sync.py:996",
@@ -188,30 +296,10 @@ Commits: 20. SSOT: True.
       "src/thegent/governance/agent_hierarchy.py:778",
       "src/thegent/governance/native_governance_scan.py:423",
       "src/thegent/governance/federation.py:460",
-      "src/thegent/protocols/turn_submit_boundaries.py:602",
-      "src/thegent/protocols/jsonrpc_agent_server.py:1079",
       "src/thegent/govern/vetter/checks.py:890",
       "src/thegent/govern/vetter/orchestrator.py:407",
-      "src/thegent/cli/governance/governance_policy_cmds.py:529",
-      "src/thegent/cli/commands/cli.py:486",
-      "src/thegent/cli/commands/impl.py:1194",
-      "src/thegent/cli/services/run_execution_core_helpers.py:1670",
-      "src/thegent/cli/services/run_observe_helpers.py:522",
-      "src/thegent/cli/services/observability.py:398",
-      "src/thegent/cli/services/work_stream_orchestration.py:385",
-      "src/thegent/cli/services/run_post_surface_helpers.py:686",
-      "src/thegent/utils/routing_impl/cost_aware_router.py:582",
-      "src/thegent/utils/routing_impl/route_config.py:423",
-      "src/thegent/utils/routing_impl/pareto_router.py:611",
-      "src/thegent/utils/routing_impl/cache.py:480",
-      "src/thegent/utils/routing_impl/model_metadata.py:519",
-      "src/thegent/utils/routing_impl/circuit_breaker.py:411",
-      "src/thegent/utils/routing_impl/cel_router.py:556",
-      "src/thegent/utils/routing_impl/task_router.py:482",
-      "src/thegent/utils/routing_impl/semantic_cache.py:377",
-      "src/thegent/utils/routing_impl/litellm_responses_handler.py:867",
-      "src/thegent/utils/routing_impl/litellm_router.py:1017",
-      "src/thegent/agents/crew/executor.py:396"
+      "src/thegent/protocols/turn_submit_boundaries.py:602",
+      "src/thegent/protocols/jsonrpc_agent_server.py:1079"
     ]
   },
   "tests": {
@@ -855,11 +943,40 @@ Commits: 20. SSOT: True.
       "tests/ui/test_compositor_lifecycle.py",
       "tests/ui/test_cli_compositor.py",
       "tests/ui/__init__.py",
+      "tests/ui/compositor/test_basic.py",
+      "tests/ui/compositor/conftest.py",
+      "tests/ui/compositor/test_compositor_error_boundaries.py",
+      "tests/ui/compositor/test_session_state.py",
+      "tests/ui/compositor/test_phase1_lifecycle.py",
+      "tests/ui/compositor/test_pane_manager.py",
+      "tests/ui/compositor/test_ui_rendering.py",
+      "tests/ui/compositor/__init__.py",
+      "tests/ui/compositor/test_compositor_profiling.py",
+      "tests/ui/compositor/test_compositor_caching.py",
+      "tests/ui/compositor/test_app.py",
+      "tests/ui/compositor/test_terminal_pane.py",
       "tests/unit/test_specs_path.py",
       "tests/unit/test_resilience.py",
       "tests/unit/test_phenotype_cliproxy_models_check.py",
       "tests/unit/__init__.py",
       "tests/unit/test_git_parallelism.py",
+      "tests/unit/agents/test_reward_model.py",
+      "tests/unit/orchestration/test_hierarchical_dispatcher.py",
+      "tests/unit/governance/test_agent_hierarchy.py",
+      "tests/unit/governance/test_agent_hierarchy_validation.py",
+      "tests/unit/governance/test_worktree_legacy_remediation_report.py",
+      "tests/unit/governance/test_metrics.py",
+      "tests/unit/governance/test_worktree_governance_inventory.py",
+      "tests/unit/governance/test_providers.py",
+      "tests/unit/governance/test_heliosShield_bridge.py",
+      "tests/unit/governance/test_triggers.py",
+      "tests/unit/governance/test_scoring.py",
+      "tests/unit/governance/test_agileplus.py",
+      "tests/unit/governance/test_task_classifier.py",
+      "tests/unit/governance/test_adaptive_coordination.py",
+      "tests/unit/governance/test_govern_approve_cli_diff.py",
+      "tests/unit/governance/test_compliance.py",
+      "tests/unit/governance/test_govern_vet_service.py",
       "tests/evals/test_eval_pipeline.py",
       "tests/evals/__init__.py",
       "tests/infra/test_os_user_adapter.py",
@@ -932,6 +1049,13 @@ Commits: 20. SSOT: True.
       "tests/resources/test_distributed.py",
       "tests/thegent/__init__.py",
       "tests/thegent/test_doctor_fix.py",
+      "tests/thegent/utils/test_path_utils.py",
+      "tests/thegent/utils/__init__.py",
+      "tests/thegent/utils/test_batch_file_ops.py",
+      "tests/thegent/docgen/test_link_checker.py",
+      "tests/thegent/docgen/test_api_typescript.py",
+      "tests/thegent/docgen/test_edit_links.py",
+      "tests/thegent/session/test_conversation_dumper.py",
       "tests/cost/__init__.py",
       "tests/cost/test_cost_module.py",
       "tests/discovery/__init__.py",
@@ -990,6 +1114,7 @@ Commits: 20. SSOT: True.
       "tests/cli/test_cli_dag_extraction.py",
       "tests/cli/test_wl120_extraction_hardening.py",
       "tests/cli/test_impl_execution_extraction.py",
+      "tests/cli/services/test_run_event_helpers.py",
       "tests/observability/test_async_logger.py",
       "tests/observability/__init__.py",
       "tests/observability/test_prometheus.py",
@@ -1233,6 +1358,14 @@ Commits: 20. SSOT: True.
       "tests/routing/test_cache.py",
       "tests/routing/test_deployment_routing.py",
       "tests/routing/test_route_config_dynamic.py",
+      "tests/routing/guardrails/test_webhook.py",
+      "tests/routing/guardrails/__init__.py",
+      "tests/routing/guardrails/test_moderation.py",
+      "tests/routing/guardrails/test_dlp.py",
+      "tests/routing/guardrails/test_pii.py",
+      "tests/routing/guardrails/test_injection.py",
+      "tests/routing/guardrails/test_semantic_guard.py",
+      "tests/routing/guardrails/test_json_schema.py",
       "tests/bdd/steps.py",
       "tests/muxless/__init__.py",
       "tests/muxless/test_zmx_session.py",
@@ -1360,77 +1493,6 @@ Commits: 20. SSOT: True.
       "tests/e2e/test_next70_lane1.py",
       "tests/e2e/test_readme_direct_command_token_sanitizer.py",
       "tests/e2e/command_surface.py",
-      "tests/chaos/test_resilience.py",
-      "tests/chaos/__init__.py",
-      "tests/chaos/engine.py",
-      "tests/protocols/test_wl9830_wl9839_lane_c2.py",
-      "tests/protocols/test_wl10570_wl10579_lane_a.py",
-      "tests/protocols/test_wl9750_wl9759_lane_r.py",
-      "tests/protocols/test_wl10940_wl10949_lane_b2.py",
-      "tests/protocols/test_wl10680_wl10689_lane_a4.py",
-      "tests/protocols/test_wl11050_wl11059_lane_b10.py",
-      "tests/protocols/test_wl11060_wl11069_lane_b11.py",
-      "tests/protocols/test_wl11080_wl11089_lane_b12.py",
-      "tests/protocols/test_wl345_wl348_lane_gov.py",
-      "tests/protocols/test_wl10960_wl10969_lane_c4.py",
-      "tests/protocols/test_wl10740_wl10749_lane_a10.py",
-      "tests/protocols/test_wl10960_wl10969_lane_b4.py",
-      "tests/protocols/test_wl11020_wl11029_lane_b8.py",
-      "tests/protocols/test_wl9870_wl9879_lane_c.py",
-      "tests/protocols/test_wl9770_wl9779_lane_ab.py",
-      "tests/protocols/test_wl9690_wl9699_lane_k.py",
-      "tests/protocols/test_wl9800_wl9809_lane_z.py",
-      "tests/protocols/test_wl9790_wl9799_lane_v.py",
-      "tests/protocols/test_wl10980_wl10989_lane_c6.py",
-      "tests/protocols/test_a2a.py",
-      "tests/protocols/test_wl9740_wl9749_lane_p.py",
-      "tests/protocols/test_wl10730_wl10739_lane_a9.py",
-      "tests/protocols/test_wl10700_wl10709_lane_a6.py",
-      "tests/protocols/test_wl10750_wl10759_lane_a11.py",
-      "tests/protocols/test_wl11090_wl11099_lane_b13.py",
-      "tests/protocols/test_wl11040_wl11049_lane_b9.py",
-      "tests/protocols/test_wl9730_wl9739_lane_l.py",
-      "tests/protocols/test_wl11090_wl11099_lane_c13.py",
-      "tests/protocols/test_wl9740_wl9749_lane_q.py",
-      "tests/protocols/__init__.py",
-      "tests/protocols/test_wl9860_wl9869_lane_ae.py",
-      "tests/protocols/test_wl11010_wl11019_lane_b8.py",
-      "tests/protocols/test_wl11020_wl11029_lane_c10b.py",
-      "tests/protocols/test_wl10930_wl10939_lane_b.py",
-      "tests/protocols/test_wl10950_wl10959_lane_c3.py",
-      "tests/protocols/test_wl10950_wl10959_lane_b3.py",
-      "tests/protocols/test_wl10690_wl10699_lane_a5.py",
-      "tests/protocols/test_wl11100_wl11109_lane_b14.py",
-      "tests/protocols/test_wl10760_wl10769_lane_a12.py",
-      "tests/protocols/test_wl10970_wl10979_lane_c5.py",
-      "tests/protocols/test_wl10970_wl10979_lane_b5.py",
-      "tests/protocols/test_wl11030_wl11039_lane_b9.py",
-      "tests/protocols/test_wl9820_wl9829_lane_af.py",
-      "tests/protocols/test_wl11010_wl11019_lane_c10.py",
-      "tests/protocols/test_wl9760_wl9769_lane_w.py",
-      "tests/protocols/test_wl11000_wl11009_lane_b7.py",
-      "tests/protocols/test_wl11070_wl11079_lane_c12.py",
-      "tests/protocols/test_wl9740_wl9749_lane_o.py",
-      "tests/protocols/test_wl11100_wl11109_lane_c14.py",
-      "tests/protocols/test_wl10780_wl10789_lane_a14.py",
-      "tests/protocols/test_wl9810_wl9819_lane_ac.py",
-      "tests/protocols/test_wl10770_wl10779_lane_a13.py",
-      "tests/protocols/test_wl10990_wl10999_lane_c7.py",
-      "tests/protocols/test_wl10670_wl10679_lane_a3.py",
-      "tests/protocols/test_wl9760_wl9769_lane_x.py",
-      "tests/protocols/test_wl10720_wl10729_lane_a8.py",
-      "tests/protocols/test_wl10710_wl10719_lane_a7.py",
-      "tests/protocols/test_wl11030_wl11039_lane_c11.py",
-      "tests/protocols/test_wl10620_wl10629_lane_a2.py",
-      "tests/protocols/test_wl11000_wl11009_lane_c9.py",
-      "tests/protocols/test_jsonrpc_agent_server_contract.py",
-      "tests/test_acp/__init__.py",
-      "tests/test_harmonization/__init__.py",
-      "tests/rust_bindings/__init__.py",
-      "tests/rust_bindings/test_policy_pyo3.py",
-      "tests/session/test_zmx_backend.py",
-      "tests/session/__init__.py",
-      "tests/session/test_session_manager.py",
       "tests/e2e/templates/test_thegent_teammates_delegate.py",
       "tests/e2e/templates/test_thegent_govern_configure.py",
       "tests/e2e/templates/test_thegent_sync_health.py",
@@ -1507,58 +1569,84 @@ Commits: 20. SSOT: True.
       "tests/e2e/templates/test_thegent_scaffold_none.py",
       "tests/e2e/templates/test_thegent_reload.py",
       "tests/e2e/templates/test_thegent_orchestrate_run_diff.py",
-      "tests/routing/guardrails/test_webhook.py",
-      "tests/routing/guardrails/__init__.py",
-      "tests/routing/guardrails/test_moderation.py",
-      "tests/routing/guardrails/test_dlp.py",
-      "tests/routing/guardrails/test_pii.py",
-      "tests/routing/guardrails/test_injection.py",
-      "tests/routing/guardrails/test_semantic_guard.py",
-      "tests/routing/guardrails/test_json_schema.py",
-      "tests/cli/services/test_run_event_helpers.py",
-      "tests/thegent/utils/test_path_utils.py",
-      "tests/thegent/utils/__init__.py",
-      "tests/thegent/utils/test_batch_file_ops.py",
-      "tests/thegent/docgen/test_link_checker.py",
-      "tests/thegent/docgen/test_api_typescript.py",
-      "tests/thegent/docgen/test_edit_links.py",
-      "tests/thegent/session/test_conversation_dumper.py",
-      "tests/unit/agents/test_reward_model.py",
-      "tests/unit/orchestration/test_hierarchical_dispatcher.py",
-      "tests/unit/governance/test_agent_hierarchy.py",
-      "tests/unit/governance/test_agent_hierarchy_validation.py",
-      "tests/unit/governance/test_worktree_legacy_remediation_report.py",
-      "tests/unit/governance/test_metrics.py",
-      "tests/unit/governance/test_worktree_governance_inventory.py",
-      "tests/unit/governance/test_providers.py",
-      "tests/unit/governance/test_heliosShield_bridge.py",
-      "tests/unit/governance/test_triggers.py",
-      "tests/unit/governance/test_scoring.py",
-      "tests/unit/governance/test_agileplus.py",
-      "tests/unit/governance/test_task_classifier.py",
-      "tests/unit/governance/test_adaptive_coordination.py",
-      "tests/unit/governance/test_govern_approve_cli_diff.py",
-      "tests/unit/governance/test_compliance.py",
-      "tests/unit/governance/test_govern_vet_service.py",
-      "tests/ui/compositor/test_basic.py",
-      "tests/ui/compositor/conftest.py",
-      "tests/ui/compositor/test_compositor_error_boundaries.py",
-      "tests/ui/compositor/test_session_state.py",
-      "tests/ui/compositor/test_phase1_lifecycle.py",
-      "tests/ui/compositor/test_pane_manager.py",
-      "tests/ui/compositor/test_ui_rendering.py",
-      "tests/ui/compositor/__init__.py",
-      "tests/ui/compositor/test_compositor_profiling.py",
-      "tests/ui/compositor/test_compositor_caching.py",
-      "tests/ui/compositor/test_app.py",
-      "tests/ui/compositor/test_terminal_pane.py"
+      "tests/chaos/test_resilience.py",
+      "tests/chaos/__init__.py",
+      "tests/chaos/engine.py",
+      "tests/protocols/test_wl9830_wl9839_lane_c2.py",
+      "tests/protocols/test_wl10570_wl10579_lane_a.py",
+      "tests/protocols/test_wl9750_wl9759_lane_r.py",
+      "tests/protocols/test_wl10940_wl10949_lane_b2.py",
+      "tests/protocols/test_wl10680_wl10689_lane_a4.py",
+      "tests/protocols/test_wl11050_wl11059_lane_b10.py",
+      "tests/protocols/test_wl11060_wl11069_lane_b11.py",
+      "tests/protocols/test_wl11080_wl11089_lane_b12.py",
+      "tests/protocols/test_wl345_wl348_lane_gov.py",
+      "tests/protocols/test_wl10960_wl10969_lane_c4.py",
+      "tests/protocols/test_wl10740_wl10749_lane_a10.py",
+      "tests/protocols/test_wl10960_wl10969_lane_b4.py",
+      "tests/protocols/test_wl11020_wl11029_lane_b8.py",
+      "tests/protocols/test_wl9870_wl9879_lane_c.py",
+      "tests/protocols/test_wl9770_wl9779_lane_ab.py",
+      "tests/protocols/test_wl9690_wl9699_lane_k.py",
+      "tests/protocols/test_wl9800_wl9809_lane_z.py",
+      "tests/protocols/test_wl9790_wl9799_lane_v.py",
+      "tests/protocols/test_wl10980_wl10989_lane_c6.py",
+      "tests/protocols/test_a2a.py",
+      "tests/protocols/test_wl9740_wl9749_lane_p.py",
+      "tests/protocols/test_wl10730_wl10739_lane_a9.py",
+      "tests/protocols/test_wl10700_wl10709_lane_a6.py",
+      "tests/protocols/test_wl10750_wl10759_lane_a11.py",
+      "tests/protocols/test_wl11090_wl11099_lane_b13.py",
+      "tests/protocols/test_wl11040_wl11049_lane_b9.py",
+      "tests/protocols/test_wl9730_wl9739_lane_l.py",
+      "tests/protocols/test_wl11090_wl11099_lane_c13.py",
+      "tests/protocols/test_wl9740_wl9749_lane_q.py",
+      "tests/protocols/__init__.py",
+      "tests/protocols/test_wl9860_wl9869_lane_ae.py",
+      "tests/protocols/test_wl11010_wl11019_lane_b8.py",
+      "tests/protocols/test_wl11020_wl11029_lane_c10b.py",
+      "tests/protocols/test_wl10930_wl10939_lane_b.py",
+      "tests/protocols/test_wl10950_wl10959_lane_c3.py",
+      "tests/protocols/test_wl10950_wl10959_lane_b3.py",
+      "tests/protocols/test_wl10690_wl10699_lane_a5.py",
+      "tests/protocols/test_wl11100_wl11109_lane_b14.py",
+      "tests/protocols/test_wl10760_wl10769_lane_a12.py",
+      "tests/protocols/test_wl10970_wl10979_lane_c5.py",
+      "tests/protocols/test_wl10970_wl10979_lane_b5.py",
+      "tests/protocols/test_wl11030_wl11039_lane_b9.py",
+      "tests/protocols/test_wl9820_wl9829_lane_af.py",
+      "tests/protocols/test_wl11010_wl11019_lane_c10.py",
+      "tests/protocols/test_wl9760_wl9769_lane_w.py",
+      "tests/protocols/test_wl11000_wl11009_lane_b7.py",
+      "tests/protocols/test_wl11070_wl11079_lane_c12.py",
+      "tests/protocols/test_wl9740_wl9749_lane_o.py",
+      "tests/protocols/test_wl11100_wl11109_lane_c14.py",
+      "tests/protocols/test_wl10780_wl10789_lane_a14.py",
+      "tests/protocols/test_wl9810_wl9819_lane_ac.py",
+      "tests/protocols/test_wl10770_wl10779_lane_a13.py",
+      "tests/protocols/test_wl10990_wl10999_lane_c7.py",
+      "tests/protocols/test_wl10670_wl10679_lane_a3.py",
+      "tests/protocols/test_wl9760_wl9769_lane_x.py",
+      "tests/protocols/test_wl10720_wl10729_lane_a8.py",
+      "tests/protocols/test_wl10710_wl10719_lane_a7.py",
+      "tests/protocols/test_wl11030_wl11039_lane_c11.py",
+      "tests/protocols/test_wl10620_wl10629_lane_a2.py",
+      "tests/protocols/test_wl11000_wl11009_lane_c9.py",
+      "tests/protocols/test_jsonrpc_agent_server_contract.py",
+      "tests/test_acp/__init__.py",
+      "tests/test_harmonization/__init__.py",
+      "tests/rust_bindings/__init__.py",
+      "tests/rust_bindings/test_policy_pyo3.py",
+      "tests/session/test_zmx_backend.py",
+      "tests/session/__init__.py",
+      "tests/session/test_session_manager.py"
     ]
   },
   "collection": {
     "collected": 0,
     "errors": 0,
-    "timeout": true,
-    "raw_output": "TIMEOUT"
+    "timeout": false,
+    "raw_output": "/bin/sh: python: command not found\n"
   },
   "cli": {
     "exists": false,
@@ -1595,7 +1683,7 @@ Commits: 20. SSOT: True.
     "async_def": 362,
     "await": 378,
     "asyncio_import": 60,
-    "httpx_import": 52,
+    "httpx_import": 50,
     "aiohttp_import": 0
   },
   "pyproject": {
@@ -1643,6 +1731,137 @@ Commits: 20. SSOT: True.
       "scorecard.yml"
     ],
     "has_precommit": true
+  },
+  "complexity": {
+    "long_functions": 26,
+    "nested_blocks": 18350,
+    "branches": 17640
+  },
+  "type_safety": {
+    "annotated_funcs": 11837,
+    "total_funcs": 12008,
+    "dataclasses": 971,
+    "protocols": 0,
+    "typeddicts": 0,
+    "generics": 4
+  },
+  "dependencies": {
+    "has_lock": true,
+    "has_requirements": false,
+    "has_constraints": false,
+    "dep_count": 0
+  },
+  "error_handling": {
+    "try_blocks": 1967,
+    "bare_excepts": 0,
+    "custom_exceptions": 117,
+    "retry_decorators": 10
+  },
+  "logging": {
+    "logger_imports": 489,
+    "structured_logging": 532
+  },
+  "data_layer": {
+    "orm_refs": 0,
+    "migration_files": 0,
+    "redis_refs": 44,
+    "sqlite_refs": 131
+  },
+  "api_surface": {
+    "fastapi": 0,
+    "flask": 0,
+    "endpoints": 0,
+    "openapi": 0
+  },
+  "frontend": {
+    "html_files": 463,
+    "js_files": 3004,
+    "css_files": 58,
+    "templates": 0,
+    "react_components": 6
+  },
+  "i18n_a11y": {
+    "locale_files": 0,
+    "gettext_refs": 0,
+    "aria_refs": 40
+  },
+  "concurrency": {
+    "threading_refs": 240,
+    "multiprocessing_refs": 0,
+    "lock_refs": 82,
+    "queue_refs": 6
+  },
+  "memory": {
+    "context_managers": 138,
+    "gc_refs": 0,
+    "weakref_refs": 0,
+    "cleanup_refs": 62
+  },
+  "config": {
+    "env_refs": 436,
+    "dotenv_refs": 0,
+    "pydantic_settings": 24,
+    "config_files": 350
+  },
+  "testing_depth": {
+    "parametrize": 112,
+    "fixtures": 384,
+    "mock": 351,
+    "patch": 4279
+  },
+  "fuzzing": {
+    "hypothesis": 28,
+    "fuzzing": 40,
+    "property_tests": 112
+  },
+  "release": {
+    "has_version_file": true,
+    "tag_count": 7,
+    "semver_tags": 7,
+    "has_changelog": true
+  },
+  "migration": {
+    "deprecated_decorators": 0,
+    "warning_refs": 0,
+    "migration_scripts": 0
+  },
+  "vendor_lockin": {
+    "aws_refs": 0,
+    "azure_refs": 2,
+    "gcp_refs": 0,
+    "generic_refs": 264
+  },
+  "event_driven": {
+    "event_bus": 34,
+    "queue": 1491,
+    "pubsub": 0,
+    "kafka": 0,
+    "celery": 0
+  },
+  "infrastructure": {
+    "dockerfile": 0,
+    "docker_compose": 2,
+    "k8s_manifests": 0,
+    "terraform_files": 0
+  },
+  "cost_efficiency": {
+    "batching_refs": 540,
+    "n_plus_one_refs": 0,
+    "bulk_refs": 6,
+    "pagination_refs": 2390
+  },
+  "monitoring": {
+    "prometheus": 28,
+    "health_checks": 3161,
+    "tracing": 918,
+    "metrics": 776,
+    "slo": 952
+  },
+  "onboarding": {
+    "makefile": 0,
+    "devcontainer": 1,
+    "setup_scripts": 4,
+    "readme_setup": 1
   }
 }
 ```
