@@ -1,0 +1,101 @@
+---
+/**
+ * BaseLayout.astro — the single layout all Astro docsite pages must use.
+ *
+ * Responsibilities:
+ *   1. Set <html lang> and <html dir> from the active locale (AT4 + AT5).
+ *   2. Render a skip-link as the FIRST focusable element (AT2).
+ *   3. Mount the global sr-live and sr-alert containers (AT3).
+ *   4. Expose an accessible header (banner landmark) with the site nav.
+ *   5. Wrap the slot in <main id="main" tabindex="-1"> so the skip-link
+ *      target is programmatically focusable (AT2).
+ *   6. Apply the focus-ring + skip-link + sr-only styles from global.css.
+ *
+ * Pages render with:
+ *   <BaseLayout title="..." description="..." locale="en">
+ *     ...page content...
+ *   </BaseLayout>
+ */
+
+import "../styles/global.css";
+import "../styles/globals.css";
+import { isRtl, type Locale } from "../lib/rtl";
+import { useTranslations, type TranslationKey } from "../lib/i18n";
+
+export interface Props {
+  title: string;
+  description?: string;
+  locale?: Locale;
+  /** Optional override for the page <h1>. If omitted, the title is used. */
+  heading?: string;
+  /** Slot-level a11y label for landmark navigation. */
+  navLabel?: string;
+}
+
+const {
+  title,
+  description = "theGent — agent runtime and orchestration system for Phenotype",
+  locale = "en",
+  heading,
+  navLabel = "Primary",
+} = Astro.props as Props;
+
+const dir = isRtl(locale) ? "rtl" : "ltr";
+const t = useTranslations(locale);
+const pageHeading = heading ?? title;
+---
+
+<!doctype html>
+<html lang={locale} dir={dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark light" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    {/* ==== Skip link (AT2) ================================================= */}
+    {/* MUST be the first focusable element so a Tab from a cold load lands here. */}
+    <a href="#main" class="skip-link">{t("a11y.skipToContent")}</a>
+
+    {/* ==== Live regions (AT3) ============================================== */}
+    {/* aria-live=polite for non-critical updates (Saved, Copied, toast).     */}
+    {/* role=alert for errors (assertive, interrupts current speech).        */}
+    <div id="sr-live" aria-live="polite" aria-atomic="true"></div>
+    <div id="sr-alert" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+    {/* ==== Header / banner landmark ======================================= */}
+    <header role="banner">
+      <nav aria-label={navLabel}>
+        <ul>
+          <li><a href="/">{t("nav.home")}</a></li>
+          <li><a href="/guide/">{t("nav.guide")}</a></li>
+          <li><a href="/api/">{t("nav.api")}</a></li>
+          <li><a href="/qa">{t("nav.qa")}</a></li>
+        </ul>
+        <div class="locale-switcher" aria-label={t("a11y.localeSwitcher")}>
+          <a href="/en/" hreflang="en" lang="en" aria-current={locale === "en" ? "page" : undefined}>EN</a>
+          <a href="/es/" hreflang="es" lang="es" aria-current={locale === "es" ? "page" : undefined}>ES</a>
+        </div>
+      </nav>
+    </header>
+
+    {/* ==== Main content ==================================================== */}
+    {/* tabindex=-1 makes the target programmatically focusable so the         */}
+    {/* skip-link click moves focus, not just the viewport.                   */}
+    <main id="main" tabindex="-1">
+      <h1>{pageHeading}</h1>
+      <slot />
+    </main>
+
+    {/* ==== Complementary content (TOC, aside) ============================== */}
+    <slot name="aside" />
+
+    {/* ==== Footer ========================================================== */}
+    <footer role="contentinfo">
+      <p>&copy; {new Date().getFullYear()} theGent. {t("footer.rights")}</p>
+    </footer>
+  </body>
+</html>

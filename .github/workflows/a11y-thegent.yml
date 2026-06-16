@@ -1,0 +1,160 @@
+name: a11y-thegent
+
+# AT1–AT5 accessibility gate for the thegent repo.
+#
+# - Runs axe-core against the VitePress docsite (root) and the Astro landing
+#   (apps/landing) and the byteport dashboard (apps/byteport/frontend/web-next).
+# - Triggers on push to main, on PRs targeting main, and on a weekly cron
+#   so the gate runs even when no code has changed.
+# - Uses the same reusable-a11y.yml pattern that OmniRoute-3rd publishes at
+#   .github/workflows/reusable-a11y.yml so other repos in the fleet can
+#   consume it via workflow_call.
+#
+# Note: GitHub Actions billing is constrained (see global CLAUDE.md
+# "GitHub Actions Billing Policy"). This workflow is restricted to the
+# standard ubuntu-latest runner — no macOS / Windows / large runners.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+  schedule:
+    # Mondays at 06:17 UTC (avoids the :00 cron stampede).
+    - cron: "17 6 * * 1"
+
+# Avoid stampedes on push: cancel any in-flight run for the same ref.
+concurrency:
+  group: a11y-thegent-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # === Job 1: Astro landing + root thegent docsite =============================
+  docs:
+    name: a11y / landing + docsite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install landing deps
+        working-directory: apps/landing
+        run: bun install --frozen-lockfile
+
+      - name: Install root dev deps (for the cross-app e2e)
+        run: bun install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        id: cache-pw
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/bun.lock', 'apps/landing/bun.lock') }}
+
+      - name: Install Playwright browsers
+        if: steps.cache-pw.outputs.cache-hit != 'true'
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run axe (root + landing)
+        env:
+          DOCS_BASE_URL: http://localhost:4321
+          LANDING_BASE_URL: http://localhost:4322
+          PLAYWRIGHT_BASE_URL: http://localhost:4322
+        run: |
+          bunx playwright test e2e/a11y/wcag.spec.ts \
+            apps/landing/e2e/a11y/wcag.spec.ts \
+            apps/landing/e2e/a11y/skip-link.spec.ts \
+            --reporter=github
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-landing
+          path: apps/landing/playwright-report
+          retention-days: 7
+
+  # === Job 2: byteport dashboard (Next.js) =====================================
+  byteport:
+    name: a11y / byteport
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/byteport/frontend/web-next
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: apps/byteport/frontend/web-next/pnpm-lock.yaml
+
+      - name: Install byteport deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build byteport
+        run: pnpm build
+
+      - name: Run accessibility suite
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+        run: |
+          pnpm exec playwright test \
+            e2e/accessibility.spec.ts \
+            e2e/keyboard-trap.spec.ts \
+            --reporter=github
+
+      - name: Run alt-text vitest
+        run: pnpm exec vitest run e2e/alt-text.test.tsx
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-byteport
+          path: apps/byteport/frontend/web-next/playwright-report
+          retention-days: 7
+
+  # === Job 3: i18n key coverage ================================================
+  i18n:
+    name: a11y / i18n coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Verify Astro locale coverage
+        working-directory: apps/landing
+        run: node scripts/check-i18n-keys.mjs
+
+  # === Reusable entry point so other repos can call this workflow ==============
+  reusable:
+    name: a11y-thegent (reusable entry)
+    if: false  # Never runs on its own; here for workflow_call consumers.
+    uses: ./.github/workflows/a11y-thegent.yml
