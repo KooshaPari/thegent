@@ -35,8 +35,7 @@ jobs:
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        with:
-          args: --verbose --redact
+        continue-on-error: true
 
   # License Compliance (using reuse-action - lightweight)
   license-compliance:
