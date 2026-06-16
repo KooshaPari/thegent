@@ -1,0 +1,55 @@
+name: Release + SLSA Build Attestation
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., v1.6.8)"
+        required: true
+        type: string
+
+# SLSA Build L3 requirements:
+# - id-token: write (OIDC token for signing provenance)
+# - contents: read (read repo for the build)
+# - attestations: write (write the provenance attestation)
+# - All third-party actions SHA-pinned (no mutable refs)
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build + Attest
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@5c36c2bd2217afae63b1f50a93ca5b1ad7c3410d  # v6
+        with:
+          python-version: "3.13"
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@35a8f9717e7a2adb1c2c3b2ac88961ba9c230e98  # v1.3.0
+        with:
+          subject-name: ${{ github.repository }}
+          subject-digest: sha256:$(sha256sum dist/*.whl | awk '{print $1}')
+          push-to-registry: false
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd0de8ccd5686b70862  # v4.6.0
+        with:
+          name: ${{ github.event.inputs.version || github.ref_name }}-thegent
+          path: dist/
