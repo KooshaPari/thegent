@@ -32,6 +32,14 @@ Keep dependencies updated and review security advisories regularly.
 - Dependabot for automated updates
 - Security advisories from Safety DB
 
+## Threat Model
+
+thegent maintains a STRIDE-per-component threat model at
+[`docs/security/threat-model.md`](docs/security/threat-model.md). The model covers the
+agent loop / orchestrator, tool registry, LLM provider abstraction, Python package supply
+chain, CI workflows, MCP server, and Rust shim crates. It is reviewed on every major
+release, on the addition of any new external dependency, and quarterly at minimum.
+
 ---
 
 Thank you for helping keep the community secure!
