@@ -60,6 +60,7 @@ templates for 10+ language stacks.
 - [Templates](#templates)
 - [Performance](#performance)
 - [Development](#development)
+- [Security](#security)
 - [License](#license)
 
 ---
@@ -382,6 +383,12 @@ cargo clippy --workspace -- -D warnings
 | Cargo clippy | Rust lint | `cargo clippy --workspace` |
 | Cargo test | Rust tests | `cargo test --workspace` |
 | pytest | Python tests | `uv run pytest tests/` |
+
+---
+
+## Security
+
+See [`SECURITY.md`](SECURITY.md) for the security policy and [`docs/security/threat-model.md`](docs/security/threat-model.md) for the STRIDE-per-component threat model covering the agent loop, tool registry, LLM provider abstraction, Python package supply chain, CI workflows, MCP server, and Rust shim crates.
 
 ---
 
