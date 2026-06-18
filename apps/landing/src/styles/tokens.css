@@ -1,0 +1,50 @@
+/**
+ * Focus ring and a11y design tokens for the Astro landing docsite.
+ *
+ * The docsite is Tailwind-based; these tokens are exposed as CSS custom
+ * properties so they survive the build pipeline (Tailwind v4 keeps custom
+ * properties verbatim when used inside `theme.extend.colors` or via
+ * `var()` in arbitrary values).
+ *
+ * Why a separate tokens file (not inline in global.css)?
+ *   - Allows the skip-link and CodeBlock components to import only the
+ *     tokens without dragging in the full global stylesheet.
+ *   - Makes the a11y palette easy to audit (one file, one purpose).
+ */
+
+:root {
+  /* Focus ring — single source of truth */
+  --focus-ring-color: var(--accent, #7ebab5);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+
+  /* Skip link palette */
+  --skip-link-bg: var(--focus-ring-color);
+  --skip-link-fg: #0a0a0b;
+  --skip-link-z: 100;
+
+  /* Live region — visually hidden but announced by AT */
+  --sr-only-position: absolute;
+  --sr-only-clip: rect(0 0 0 0);
+  --sr-only-clip-path: inset(50%);
+  --sr-only-width: 1px;
+  --sr-only-height: 1px;
+  --sr-only-overflow: hidden;
+  --sr-only-white-space: nowrap;
+  --sr-only-border-width: 0;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --skip-link-fg: #ffffff;
+  }
+}
+
+/* High-contrast users get a thicker ring */
+@media (prefers-contrast: more) {
+  :root {
+    --focus-ring-width: 3px;
+    --focus-ring-offset: 3px;
+  }
+}

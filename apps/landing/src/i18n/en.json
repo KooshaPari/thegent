@@ -1,0 +1,75 @@
+{
+  "site": {
+    "title": "theGent",
+    "description": "Agent runtime and orchestration system for Phenotype",
+    "tagline": "Ship agents, not infrastructure."
+  },
+  "nav": {
+    "home": "Home",
+    "guide": "Guide",
+    "api": "API",
+    "qa": "QA",
+    "blog": "Blog",
+    "changelog": "Changelog"
+  },
+  "a11y": {
+    "skipToContent": "Skip to content",
+    "localeSwitcher": "Language",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "externalLink": "External link",
+    "codeBlock": "Code example",
+    "loading": "Loading",
+    "errorBoundary": "Something went wrong"
+  },
+  "home": {
+    "hero": {
+      "title": "An agent runtime that fits your stack",
+      "subtitle": "theGent is a Python agent runtime with a tool registry, provider abstraction, and orchestration layer for Phenotype automation.",
+      "cta": {
+        "primary": "Get started",
+        "secondary": "Read the docs"
+      }
+    },
+    "features": {
+      "title": "What you get",
+      "items": {
+        "registry": "Discoverable tool contracts for agent workflows",
+        "provider": "LLM provider abstraction across local and hosted models",
+        "orchestration": "Task execution, routing, and runtime coordination",
+        "governance": "QA, docs, and preview surfaces for release discipline"
+      }
+    }
+  },
+  "guide": {
+    "title": "Guide",
+    "intro": "Everything you need to install, configure, and run theGent in production.",
+    "sections": {
+      "install": "Install",
+      "configure": "Configure",
+      "deploy": "Deploy"
+    }
+  },
+  "api": {
+    "title": "API reference",
+    "intro": "Generated reference for every public surface.",
+    "search": "Search reference"
+  },
+  "qa": {
+    "title": "Quality Assurance",
+    "status": "All systems operational"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "links": {
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "github": "GitHub"
+    }
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "tryAgain": "Try again"
+  }
+}

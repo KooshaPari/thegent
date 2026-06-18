@@ -1,0 +1,144 @@
+/**
+ * Global accessibility styles — Astro landing docsite.
+ *
+ * Applies the focus-visible ring from tokens.css, suppresses the mouse-click
+ * focus ring, and defines the visually-hidden + skip-link classes consumed by
+ * BaseLayout.astro and the CodeBlock / ExternalLink components.
+ *
+ * Loaded via `import "../styles/global.css"` from each page (after tokens.css
+ * so the custom properties are defined when the rules below are evaluated).
+ *
+ * Order in BaseLayout.astro:
+ *   1. tokens.css
+ *   2. global.css  (this file)
+ *   3. globals.css (Tailwind, third-party overrides)
+ */
+
+@import "./tokens.css";
+
+/* ==== Focus ring ============================================================ */
+
+/* Show the keyboard-only focus ring. */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: 2px;
+}
+
+/* Suppress the focus ring on mouse / touch focus. */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Buttons and links that are explicitly focusable get a slightly stronger ring
+   so the focus state is unmistakable against the background. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="tab"]:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==== Skip link ============================================================= */
+
+.skip-link {
+  position: var(--sr-only-position);
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: var(--skip-link-z);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: var(--skip-link-bg);
+  color: var(--skip-link-fg);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 4px;
+  outline: var(--focus-ring-width) solid var(--skip-link-fg);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==== Visually hidden (sr-only) ============================================= */
+
+.sr-only {
+  position: var(--sr-only-position);
+  width: var(--sr-only-width);
+  height: var(--sr-only-height);
+  padding: 0;
+  margin: -1px;
+  overflow: var(--sr-only-overflow);
+  clip: var(--sr-only-clip);
+  clip-path: var(--sr-only-clip-path);
+  white-space: var(--sr-only-white-space);
+  border-width: var(--sr-only-border-width);
+}
+
+/* When an sr-only element receives keyboard focus, expose it. This is the
+   WCAG-recommended pattern for skip-links and "skip to search" affordances. */
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  clip: auto;
+  clip-path: none;
+  overflow: visible;
+  white-space: normal;
+}
+
+/* ==== Live region containers ================================================ */
+
+#sr-live,
+#sr-alert {
+  /* Live regions should NEVER be display:none — that prevents AT from
+     announcing updates. They live in the accessibility tree but are visually
+     hidden. */
+  position: var(--sr-only-position);
+  width: var(--sr-only-width);
+  height: var(--sr-only-height);
+  overflow: var(--sr-only-overflow);
+  clip: var(--sr-only-clip);
+  clip-path: var(--sr-only-clip-path);
+}
+
+/* ==== Reduced motion ======================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==== Forced colors (Windows High Contrast) ================================= */
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 3px solid CanvasText;
+  }
+  .skip-link:focus {
+    background: CanvasText;
+    color: Canvas;
+  }
+}

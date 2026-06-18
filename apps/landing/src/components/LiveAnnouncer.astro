@@ -1,0 +1,56 @@
+---
+/**
+ * LiveAnnouncer.astro — singleton client-side helper for writing to the
+ * sr-live / sr-alert regions declared in BaseLayout.astro.
+ *
+ * Usage from any page script:
+ *   <script>
+ *     import { announce } from "../components/LiveAnnouncer.astro";
+ *     announce("Saved", "polite");
+ *   </script>
+ *
+ * The component itself renders a tiny <script> tag that exposes
+ * `window.__thegentAnnounce` so legacy inline scripts can call it.
+ *
+ * AT3 acceptance: a single live region container + a typed helper that
+ * components can call without re-implementing the region lookup.
+ */
+
+export interface Props {
+  /** Initial message to populate the live region (useful for SSR). */
+  initial?: string;
+  /** Politeness level: "polite" (default) or "assertive". */
+  level?: 'polite' | 'assertive';
+}
+
+const { initial, level = 'polite' } = Astro.props as Props;
+const targetId = level === 'assertive' ? 'sr-alert' : 'sr-live';
+---
+
+<script is:inline define:vars={{ targetId, initial }}>
+  (function () {
+    function writeTo(id, message) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      // Clear then set so the same message twice still fires the event.
+      el.textContent = '';
+      // Use a microtask delay so AT picks up the change.
+      window.setTimeout(function () {
+        el.textContent = message;
+      }, 50);
+    }
+    window.__thegentAnnounce = function (message, lvl) {
+      var id = lvl === 'assertive' ? 'sr-alert' : 'sr-live';
+      writeTo(id, message);
+    };
+    if (initial) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          writeTo(targetId, initial);
+        });
+      } else {
+        writeTo(targetId, initial);
+      }
+    }
+  })();
+</script>

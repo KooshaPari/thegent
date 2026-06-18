@@ -1,0 +1,75 @@
+{
+  "site": {
+    "title": "theGent",
+    "description": "Sistema de runtime y orquestación de agentes para Phenotype",
+    "tagline": "Despliega agentes, no infraestructura."
+  },
+  "nav": {
+    "home": "Inicio",
+    "guide": "Guía",
+    "api": "API",
+    "qa": "Calidad",
+    "blog": "Blog",
+    "changelog": "Registro de cambios"
+  },
+  "a11y": {
+    "skipToContent": "Saltar al contenido",
+    "localeSwitcher": "Idioma",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "externalLink": "Enlace externo",
+    "codeBlock": "Ejemplo de código",
+    "loading": "Cargando",
+    "errorBoundary": "Algo salió mal"
+  },
+  "home": {
+    "hero": {
+      "title": "Un runtime de agentes que se adapta a tu stack",
+      "subtitle": "theGent es un runtime de agentes en Python con un registro de herramientas, abstracción de proveedores y capa de orquestación para automatización de Phenotype.",
+      "cta": {
+        "primary": "Comenzar",
+        "secondary": "Leer la documentación"
+      }
+    },
+    "features": {
+      "title": "Qué obtienes",
+      "items": {
+        "registry": "Contratos de herramientas descubribles para flujos de agentes",
+        "provider": "Abstracción de proveedores LLM locales y alojados",
+        "orchestration": "Ejecución de tareas, enrutamiento y coordinación de runtime",
+        "governance": "Superficies de QA, documentación y preview para disciplina de releases"
+      }
+    }
+  },
+  "guide": {
+    "title": "Guía",
+    "intro": "Todo lo que necesitas para instalar, configurar y ejecutar theGent en producción.",
+    "sections": {
+      "install": "Instalar",
+      "configure": "Configurar",
+      "deploy": "Desplegar"
+    }
+  },
+  "api": {
+    "title": "Referencia de API",
+    "intro": "Referencia generada para cada superficie pública.",
+    "search": "Buscar en la referencia"
+  },
+  "qa": {
+    "title": "Aseguramiento de calidad",
+    "status": "Todos los sistemas operativos"
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados.",
+    "links": {
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "github": "GitHub"
+    }
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "serverError": "Error del servidor",
+    "tryAgain": "Reintentar"
+  }
+}
