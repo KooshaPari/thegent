@@ -1,0 +1,58 @@
+{
+  "schema": "thegent-tier-0-71-pillar-baseline/v1",
+  "orchestrator": "orch-v12-s2-015",
+  "captured_at": "2026-06-20",
+  "branch": "orch-v12-s2-015/tier-0",
+  "base_commit": "0fad2079c",
+  "base_commit_subject": "chore(tier-0): orch-v10-016 hygiene",
+  "tier": 0,
+  "pillar_count_declared": 71,
+  "tier_0_files": {
+    "justfile": {"present": true, "bytes": 3659, "lines": 126},
+    "Justfile": {"present": true, "bytes": 3659, "lines": 126, "note": "duplicate of justfile; both kept for fleet compat"},
+    "CODEOWNERS": {"present": true, "bytes": 1460},
+    "deny.toml": {"present": true, "bytes": 1290},
+    ".editorconfig": {"present": true, "bytes": 262},
+    ".gitattributes": {"present": true, "bytes": 1466},
+    ".gitignore": {"present": true, "bytes": 2941},
+    "CODE_OF_CONDUCT.md": {"present": true, "bytes": 240},
+    "CONTRIBUTING.md": {"present": true, "bytes": 1291},
+    "SECURITY.md": {"present": true, "bytes": 975},
+    "CHANGELOG.md": {"present": true, "bytes": 4359},
+    "README.md": {"present": true, "bytes": 14822},
+    "LICENSE": {"present": true, "bytes": 1075}
+  },
+  "ci_workflows": [
+    ".github/workflows/audit.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/deny.yml",
+    ".github/workflows/python-ci.yml",
+    ".github/workflows/release.yml",
+    ".github/workflows/scorecard.yml"
+  ],
+  "issue_templates": [
+    ".github/ISSUE_TEMPLATE/bug-report.yml",
+    ".github/ISSUE_TEMPLATE/bug.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/ISSUE_TEMPLATE/feature-request.yml",
+    ".github/ISSUE_TEMPLATE/feature.yml"
+  ],
+  "pr_templates": [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/PULL_REQUEST_TEMPLATE_LEGACY.md"
+  ],
+  "missing": [],
+  "audit_result": "pass",
+  "notes": [
+    "All tier-0 hygiene pillars present at session start; no remediation required.",
+    "Working tree clean prior to baseline commit.",
+    "cargo check --workspace passed (Finished `dev` profile, 2m 09s); pre-existing profile warnings inherited, not introduced.",
+    "rust-toolchain pinned to stable with rustfmt + clippy components.",
+    "deny.toml carries two tracked temporary exceptions (RUSTSEC-2024-0436, RUSTSEC-2023-0071) with review dates 2026-09-30.",
+    "The ci.yml workflow pins phenotype-dev/.github/workflows/rust-ci.yml@0000... placeholder SHA (intentional — see in-file comment)."
+  ],
+  "toolchain": {
+    "rustc": "1.95.0 (59807616e 2026-04-14)",
+    "cargo": "1.95.0 (f2d3ce0bd 2026-03-21)"
+  }
+}
