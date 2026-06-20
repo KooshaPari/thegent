@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-tui — Phase 2 + Phase 3 + WL-052 + WL-031 TUI crate.
 //!
 //! Phase 2 provides:

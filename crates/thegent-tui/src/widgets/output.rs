@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! OutputWidget — scrollable text output pane with mouse-wheel support.
 //!
 //! Integrates `ScrollState` from the `mouse` module to provide smooth

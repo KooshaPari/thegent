@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Find wrapper with fd acceleration (safe execution via std::process::Command)
 //!
 //! Routes to fd for 2-5x speedup on directory traversal.

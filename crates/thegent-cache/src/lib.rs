@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Two-tier cache with L1 (LRU) for hot data and L2 (Moka) for warm data.
 //!
 //! Uses LRU cache for L1 (in-memory, fast access) and Moka for L2 (sync cache).

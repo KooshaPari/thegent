@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Hysteresis management for preventing route oscillation.
 //!
 //! This module implements damping logic to prevent tasks from switching routes

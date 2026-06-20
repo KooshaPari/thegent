@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Stop-reconcile hook binary
 //!
 //! Reads session state from stdin, checks git status, detects conflicts.

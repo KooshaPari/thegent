@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Integration tests for report functionality
 //!
 //! These tests verify hook execution reports are properly created,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-tui binary entry point.
 //!
 //! Launches the default CompositApp with sample data.

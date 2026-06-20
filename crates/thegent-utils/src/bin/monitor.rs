@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-monitor: Process monitoring utility
 //! Replaces scripts/monitor-process-count.sh
 

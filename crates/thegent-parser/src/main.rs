@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-02: thegent-parser CLI binary.
 //!
 //! Provides subprocess access to parsing functions for any Python interpreter.

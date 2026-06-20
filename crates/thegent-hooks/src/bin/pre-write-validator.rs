@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Pre-write-validator hook binary
 //!
 //! Validates files before they are written: encoding, size, syntax, etc.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use std::path::{Path, PathBuf};
 
 pub fn l1_path(harness_home: &Path, key: &str) -> PathBuf {

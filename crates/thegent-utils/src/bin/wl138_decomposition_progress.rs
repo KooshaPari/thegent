@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Emit WL-138 decomposition progress as machine-readable JSON.
 
 use std::{path::PathBuf, process::Command, time::Instant};

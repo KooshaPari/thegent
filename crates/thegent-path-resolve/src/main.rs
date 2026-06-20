@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use clap::{Parser, ValueEnum};
 use std::collections::HashMap;
 use thegent_path_resolve::PathResolver;

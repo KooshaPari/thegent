@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! harness-is-agent binary: detect if current process is an agent
 
 use std::env;

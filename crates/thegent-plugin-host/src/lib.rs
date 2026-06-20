@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! # thegent-plugin-host
 //!
 //! Plugin host and loader for thegent agent system.

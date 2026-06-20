@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Unified Runtime Dispatch Binary
 //! Consolidates all tool shims (find, grep, git, cat, ls, du, node, npm, npx, python, pip)
 //! with fork failure handling, circuit breaker, caching, and indexing.

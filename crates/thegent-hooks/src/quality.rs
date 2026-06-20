@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Quality metrics evaluator for lint output and coverage
 #![allow(
     clippy::needless_borrows_for_generic_args,

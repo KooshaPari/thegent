@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-wasm-tools — Zig SDK for building Wasm tools with Extism
 //!
 //! # Overview

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-grep: Safe grep wrapper that avoids alias/config issues
 //! Replaces scripts/safe-grep.sh
 

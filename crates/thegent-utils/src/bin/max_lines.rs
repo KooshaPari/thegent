@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-max-lines: fast max-lines gate across polyglot source files.
 
 use anyhow::{Context, Result};

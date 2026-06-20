@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Router core logic for task distribution based on risk assessment.
 //!
 //! Routes tasks between Lifecycle (low-risk, fast) and TheGent (high-risk, thorough)

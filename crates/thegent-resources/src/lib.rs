@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-01: Native resource sampling (FD, memory, load) for thegent.
 //! No subprocess spawns (lsof, vm_stat).
 

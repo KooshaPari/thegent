@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-maif — MAIF (Model-Aware Information Flow) Action Artifacts
 //!
 //! RSA key generation, signing, and verification for action artifact integrity.

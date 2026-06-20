@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! File discovery utilities migrated from hooks/lib/fd-wrapper.sh
 //! Provides fast file discovery using fd when available, with fallback to find
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Integration tests for Phase 1.5 changed-files enhancement
 //! Tests filtering, dependency analysis, and impact classification
 

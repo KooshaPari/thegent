@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! # In-Memory Adapters
 
 use crate::domain::entities::{Plugin, PluginId};

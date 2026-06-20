@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-06: thegent-git - Fast git operations via gix (pure Rust)
 
 #[cfg(all(feature = "python", not(test), not(debug_assertions)))]

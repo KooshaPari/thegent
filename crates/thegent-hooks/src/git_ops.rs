@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Git operations wrapper migrated from hooks/lib/git-wrapper.sh
 //! Handles index.lock contention, TTL caching, lock detection, and agent passthrough
 //!

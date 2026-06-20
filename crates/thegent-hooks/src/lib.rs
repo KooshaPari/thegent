@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 #![allow(
     clippy::needless_borrows_for_generic_args,
     clippy::explicit_counter_loop,

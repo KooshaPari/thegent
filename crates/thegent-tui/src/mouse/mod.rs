@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Mouse event handling for thegent TUI — WL-052.
 //!
 //! Provides:

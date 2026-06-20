@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-06: thegent-git CLI binary.
 //!
 //! Uses the unified lib.rs API which dispatches to the gix backend by default

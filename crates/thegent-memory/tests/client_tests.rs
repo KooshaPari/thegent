@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Integration tests for SupermemoryClient
 //!
 //! Combined tests from both supermemory-rs and thegent-memory implementations.

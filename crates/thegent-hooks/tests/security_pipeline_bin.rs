@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};

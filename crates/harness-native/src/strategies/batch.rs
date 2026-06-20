@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use std::path::Path;
 
 pub fn run(real_cmd: &Path, args: &[&str]) -> Result<i32, String> {

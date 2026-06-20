@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Pareto Frontier Visualization TUI Panel — WL-031.
 //!
 //! Reads routing audit records from `~/.thegent/routing_audit.jsonl` and

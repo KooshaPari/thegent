@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use clap::{Parser, Subcommand};
 use std::env;
 use std::fs::{self, OpenOptions};

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Policy engine and compliance evaluation for thegent.
 
 use serde::{Deserialize, Serialize};

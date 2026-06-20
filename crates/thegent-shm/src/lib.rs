@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use memmap2::MmapMut;
 use once_cell::sync::Lazy;
 use std::fs::OpenOptions;

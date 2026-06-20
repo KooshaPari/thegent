@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-docs: Markdown frontmatter/backmatter processor
 //!
 //! Provides fast, type-safe processing of markdown files with YAML frontmatter

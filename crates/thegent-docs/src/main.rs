@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-docs CLI: Markdown frontmatter processor and documentation tools
 
 use anyhow::{Context, Result};

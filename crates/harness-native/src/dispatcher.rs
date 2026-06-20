@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Helios Shield Rust dispatcher — hot path replacement for bin/harness.
 //!
 //! Handles:

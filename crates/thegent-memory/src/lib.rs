@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Supermemory integration client for thegent
 //!
 //! This crate provides a high-level Rust interface to Supermemory.ai,

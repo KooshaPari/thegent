@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use thegent_zmx::session::{Session, SessionState};
 
 /// @trace FR-ZMX-010

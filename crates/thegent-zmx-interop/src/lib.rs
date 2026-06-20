@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-zmx-interop — Zig-Rust C ABI interop POC
 //!
 //! # Overview
