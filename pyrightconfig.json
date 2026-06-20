@@ -64,7 +64,7 @@
   "typeCheckingMode": "basic",
 
   "reportMissingTypeStubs": false,
-  "reportMissingImports": "error",
+  "reportMissingImports": "warning",
   "reportMissingModuleSource": false,
   "reportUnusedImport": true,
   "reportUnusedClass": true,

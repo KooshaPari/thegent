@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload pytest report on failure
         if: failure()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd0de8ccd5686b70862
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.6.2
         with:
           name: pytest-e2e-report
           path: .pytest_cache/
