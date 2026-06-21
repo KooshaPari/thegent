@@ -97,7 +97,7 @@ check is enforcement-grade.
 | Stage | Behavior | Exit gate |
 | --- | --- | --- |
 | Drift 0: Spec only | This document exists and is linked from the audit. | Committed docs. |
-| Drift 1: Reporter | A script prints current violations with lane labels and allowlist hints. | Reporter output is stable in CI artifacts or local `task quality`. |
+| Drift 1: Reporter | `scripts/sharecli_boundary_drift_check.py` prints current violations with lane labels and allowlist hints. | Reporter output is stable in CI artifacts or local `task quality`. |
 | Drift 2: Lane warnings | Reporter exits non-zero only for new, unallowlisted violations in migrated lanes. | First migrated lane has adapter tests and sharecli owner tests. |
 | Drift 3: Full enforcement | All migrated surfaces fail on direct substrate imports or local implementation growth. | Native, queue, merge/worktree, and execution-safety lanes are complete. |
 | Drift 4: Recurring audit | CI/task quality runs the check and points to remediation docs. | Check is part of the default quality path. |
@@ -129,16 +129,26 @@ Minimum text summary:
 
 The check should become part of the quality path in this order:
 
-1. Local script under `tools/boundary/` or equivalent repo tooling.
-2. Targeted test under `tests/` that validates fixture imports and allowlist
-   behavior.
-3. `task quality` or the repo's existing quality aggregation.
-4. CI after the first migrated lane is complete.
+1. Local script: `scripts/sharecli_boundary_drift_check.py`.
+2. Allowlist: `config/sharecli_boundary_drift_allowlist.toml`.
+3. Targeted test: `tests/test_sharecli_boundary_drift_check.py`.
+4. Advisory quality task: `task quality:sharecli-boundary`.
+5. `task quality` runs the advisory reporter before existing Tach/Vale/Ruff
+   checks.
+6. CI after the first migrated lane is complete.
 
 The check must not attempt cleanup, process termination, git mutation, or
 automatic rewrites. It reports boundary drift only.
 
-## Next Implementation Slice
+## Reporter Commands
+
+| Command | Meaning |
+| --- | --- |
+| `python scripts/sharecli_boundary_drift_check.py --format summary-json` | Current advisory summary; used by `task quality:sharecli-boundary`. |
+| `python scripts/sharecli_boundary_drift_check.py --format json` | Full machine-readable payload with findings. |
+| `python scripts/sharecli_boundary_drift_check.py --enforce-lane native-harness --strict` | Example migrated-lane enforcement mode. |
+
+## Implemented Reporter Slice
 
 1. Add a minimal reporter that scans Python imports and `crates/harness-native`
    file changes.
@@ -147,3 +157,13 @@ automatic rewrites. It reports boundary drift only.
 3. Add fixture tests that prove allowed, warned, and failed imports are
    classified correctly.
 4. Keep enforcement in reporter mode until the first sharecli-owned lane lands.
+
+## Next Implementation Slice
+
+1. Pick the first migrated lane to enforce, likely `native-harness` because it
+   has no allowlisted source imports and its findings are ownership-growth
+   records.
+2. Move or mirror the native harness runtime into sharecli ownership with
+   owner-side tests.
+3. Set `native-harness` in `sharecli_boundary.enforced_lanes` only after the
+   sharecli owner tests and thegent adapter/shim tests pass.

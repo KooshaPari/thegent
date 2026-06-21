@@ -222,9 +222,10 @@ flowchart TD
 
 1. Mirror this audit in `sharecli/BOUNDARY.md` or an equivalent sharecli-side
    migration plan so the target repo owns the future surface.
-2. Implement the boundary drift reporter described in
-   `docs/specs/contracts/sharecli-boundary-drift-check.md`.
+2. Keep the boundary drift reporter in advisory mode through
+   `task quality:sharecli-boundary` until the first migrated lane lands.
 3. Turn the caller/test-owner map into four disjoint PR lanes: native harness,
    queue, merge/worktree/gitops, and thegent adapter cleanup.
-4. Only after the sharecli-side plan lands, start code movement in disjoint PRs:
-   native harness, queue, merge/worktree, and thegent adapter cleanup.
+4. Start the first code movement lane with `native-harness`: mirror or move the
+   runtime into sharecli ownership, add owner-side tests, then enforce the
+   `native-harness` drift lane.
