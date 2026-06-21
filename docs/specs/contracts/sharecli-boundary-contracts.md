@@ -238,7 +238,8 @@ Sunset can start only when:
 1. Contract tests exist on both producer and consumer sides.
 2. `thegent` imports adapters rather than implementation modules.
 3. `sharecli` has an owner-side boundary document or migration plan.
-4. CI or task quality has a boundary drift check.
+4. CI or task quality has the staged boundary drift check described in
+   `docs/specs/contracts/sharecli-boundary-drift-check.md`.
 
 ## Verification Matrix
 
@@ -248,5 +249,5 @@ Sunset can start only when:
 | Queue semantics preserved | Ported queue tests plus thegent shim tests. |
 | Merge semantics preserved | Ported smart merge tests plus evidence adapter tests. |
 | Worktree semantics preserved | Ported worktree/git-parallelism tests plus conflict queue tests. |
-| Execution safety split respected | Boundary test rejecting new direct execution-substrate imports in thegent governance/CLI. |
+| Execution safety split respected | Boundary drift reporter/test rejecting new direct execution-substrate imports in thegent governance/CLI after each lane's adapter lands. |
 | Compatibility sunset is trackable | Dedicated checklist in the audit and sharecli-side boundary doc. |

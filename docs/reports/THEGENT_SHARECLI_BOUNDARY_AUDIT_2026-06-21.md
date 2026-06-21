@@ -18,6 +18,7 @@ decision-complete before implementation.
 - Current code under `src/thegent/mesh/`, `src/thegent_gitops/`,
   `src/thegent/governance/heliosShield_bridge.py`, and `crates/harness-native/`
 - `docs/specs/contracts/sharecli-boundary-contracts.md`
+- `docs/specs/contracts/sharecli-boundary-drift-check.md`
 - `KooshaPari/sharecli`, cloned locally at `C:\Users\koosh\migration-work\sharecli`
 - `KooshaPari/thegent-sharecli`, cloned locally at
   `C:\Users\koosh\migration-work\thegent-sharecli`
@@ -179,7 +180,7 @@ flowchart TD
   F[Replace thegent internals with adapters]
   G[Deprecate thegent-sharecli and heliosShield compatibility names]
   H[Sunset thegent import shims]
-  I[Self-improve: add recurring boundary audit]
+  I[Self-improve: add recurring boundary drift check]
 
   A --> B
   B --> C
@@ -203,7 +204,7 @@ flowchart TD
 | Build 3: Python substrate movement | Move queue, smart merge, and git parallelism into sharecli package namespace. | Existing tests pass through compatibility shims. |
 | Build 4: thegent adapter cleanup | Replace direct mesh/harness imports in governance and CLI with sharecli adapters. | `rg "heliosShield|thegent-sharecli"` only finds compatibility docs or deprecation notes. |
 | Sunset 5: remove compatibility shims | Remove temporary thegent import shims after downstream callers are updated. | Import-boundary tests reject new substrate imports in thegent. |
-| Self-improve 6: recurring audit | Add a repo-boundary check to CI or task quality. | Boundary drift becomes a failing check with actionable output. |
+| Self-improve 6: recurring drift check | `docs/specs/contracts/sharecli-boundary-drift-check.md` defines staged reporter-to-fail behavior for import and implementation drift. | Boundary drift becomes a failing check with actionable output. |
 
 ## Open Questions for R&D
 
@@ -221,8 +222,8 @@ flowchart TD
 
 1. Mirror this audit in `sharecli/BOUNDARY.md` or an equivalent sharecli-side
    migration plan so the target repo owns the future surface.
-2. Add a boundary drift check that rejects new direct execution-substrate
-   imports in thegent governance and CLI paths once adapters exist.
+2. Implement the boundary drift reporter described in
+   `docs/specs/contracts/sharecli-boundary-drift-check.md`.
 3. Turn the caller/test-owner map into four disjoint PR lanes: native harness,
    queue, merge/worktree/gitops, and thegent adapter cleanup.
 4. Only after the sharecli-side plan lands, start code movement in disjoint PRs:
