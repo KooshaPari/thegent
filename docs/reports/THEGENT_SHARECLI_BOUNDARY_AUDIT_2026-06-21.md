@@ -17,6 +17,7 @@ decision-complete before implementation.
 - `docs/guides/COMPLETE_USER_GUIDE.md`
 - Current code under `src/thegent/mesh/`, `src/thegent_gitops/`,
   `src/thegent/governance/heliosShield_bridge.py`, and `crates/harness-native/`
+- `docs/specs/contracts/sharecli-boundary-contracts.md`
 - `KooshaPari/sharecli`, cloned locally at `C:\Users\koosh\migration-work\sharecli`
 - `KooshaPari/thegent-sharecli`, cloned locally at
   `C:\Users\koosh\migration-work\thegent-sharecli`
@@ -135,6 +136,37 @@ runtime or tool registry.
 | `thegent-sharecli/src/thegent_cli_share/*` | sunset/source evidence | Archived Python prototype; use for concept recovery only. |
 | `sharecli/src/*` | keep in sharecli | Active Rust canonical process manager. Extend here rather than in thegent. |
 
+## Caller and Test Owner Map
+
+This map turns the disposition backlog into implementation lanes. A row is not
+ready for code movement until its listed tests either move with the owner-side
+implementation or become explicit adapter/shim tests in `thegent`.
+
+| Surface | Direct callers and coupling | Test owner or gate |
+| --- | --- | --- |
+| `task_queue.py` | `src/thegent/mesh/mesh.py`, `src/thegent/mesh/cli.py`, `src/thegent/mesh/__init__.py`, process-detection tests. | `tests/mesh/test_task_queue.py`; adapter coverage in `tests/mesh/test_process_detection.py`. |
+| `smart_merge.py` | `src/thegent/mesh/git_parallelism.py`, `src/thegent_gitops/worktree.py`, `src/thegent/mesh/__init__.py`. | `tests/mesh/test_smart_merge.py`; integration rows using `WorktreePool`. |
+| `git_parallelism.py` | Smart-merge integration tests and public mesh imports. | `tests/mesh/test_git_parallelism.py`, `tests/unit/test_git_parallelism.py`, smart-merge integration cases. |
+| `worktree.py` | `src/thegent/mesh/isolation.py` lazy import. | `tests/mesh/test_worktree.py`, isolation adapter coverage. |
+| `merge.py` | Legacy smart-merge CLI/compat surface. | `tests/mesh/test_merge.py`. |
+| `cache.py` | Exported by `src/thegent/mesh/__init__.py`; internal substrate optimization. | `tests/mesh/test_cache.py`. |
+| `sandbox.py` | Execution safety mechanics. | `tests/mesh/test_sandboxing.py`; future sharecli execution-safety tests. |
+| `isolation.py` | Lazy worktree manager import; resource/worktree isolation split. | `tests/mesh/test_isolation.py`. |
+| `resources.py` | Process resource limits. | `tests/mesh/test_resources.py`; future sharecli limits tests. |
+| `process_detection.py` | `agent_patterns.py`, process discovery tests, agent registry/discovery docs. | `tests/mesh/test_process_detection.py`. |
+| `audit.py` | Audit manager surface only. | `tests/mesh/test_audit.py`; keep policy assertions in thegent. |
+| `observability.py` | `src/thegent/mesh/main.py` status command. | `tests/mesh/test_observability.py`; sharecli health contract tests. |
+| `cli.py` and `main.py` | User-visible Typer/CLI entrypoints; import `MeshManager`, detection, queue commands, and legacy `SmartMerge`. | `tests/mesh/test_main_discover.py` plus command smoke tests added during adapter stage. |
+| `mesh.py` | Owns `MaildirQueue` composition and process iteration. | `tests/mesh/test_process_detection.py`; queue/process adapter tests. |
+| `agent_patterns.py` | Imports `process_detection`; reads `.heliosShield/agents.conf`. | Process detection tests plus adapter tests for sharecli process inventory. |
+| `injection.py` | Shell/session subprocess operations. | `tests/mesh/test_injection.py`; review before move because UX policy may stay in thegent. |
+| `coordination.py` | File coordination, OCC, conflict prediction. | `tests/mesh/test_coordination.py`, `tests/mesh/test_file_coordination.py`; split only after merge/worktree contracts land. |
+| `consensus.py` | No current substrate caller found in the quick import pass. | Keep in thegent; add drift check if future process execution imports appear. |
+| `helios_bridge.py` and `git.py` | Legacy naming / thin re-export to `thegent_gitops.git`. | `tests/mesh/test_git.py`; deprecation tests before sunset. |
+| `src/thegent_gitops/*` | `src/thegent/mesh/git.py`, `src/thegent_gitops/__init__.py`, `src/thegent_gitops/worktree.py` type-only smart-merge import. | Move with worktree contract; preserve `tests/mesh/test_git.py` and worktree/smart-merge integrations. |
+| `src/thegent/governance/heliosShield_bridge.py` | `reward_model.py`, `teammates.py`, `mesh/cli.py`, teammate integration/unit tests. | `tests/test_integration_teammates_heliosShield.py`, `tests/unit/governance/test_heliosShield_bridge.py`, `tests/test_unit_teammates.py`. |
+| `crates/harness-native/*` | Listed in `crates/Cargo.toml`; owns dispatcher/cache/retry/throttle/jobserver strategies. | Move or mirror into sharecli first; Rust crate tests become sharecli gates. |
+
 ## Pre-Code Migration DAG
 
 ```mermaid
@@ -166,7 +198,7 @@ flowchart TD
 | Stage | Output | Gate |
 | --- | --- | --- |
 | R&D 0: Source recovery | Confirm local or remote `sharecli` and `thegent-sharecli` refs, branches, and commit logs. | Evidence list includes repo refs or states they are unavailable. |
-| R&D 1: Contract spec | Add queue, merge, worktree, harness health, process lifecycle, and execution safety contracts. | thegent can compile/import against contracts without moved implementations. |
+| R&D 1: Contract spec | `docs/specs/contracts/sharecli-boundary-contracts.md` defines queue, merge, worktree, harness health, process lifecycle, and execution safety contracts. | thegent can compile/import against contracts without moved implementations. |
 | Build 2: sharecli runtime home | Move or mirror `crates/harness-native` under canonical sharecli ownership. | Native crate tests pass in sharecli and callers still work through stable CLI/API. |
 | Build 3: Python substrate movement | Move queue, smart merge, and git parallelism into sharecli package namespace. | Existing tests pass through compatibility shims. |
 | Build 4: thegent adapter cleanup | Replace direct mesh/harness imports in governance and CLI with sharecli adapters. | `rg "heliosShield|thegent-sharecli"` only finds compatibility docs or deprecation notes. |
@@ -187,11 +219,11 @@ flowchart TD
 
 ## Next Concrete Work
 
-1. Draft `docs/specs/sharecli-boundary-contracts.md` with the shared
-   contracts above.
-2. Expand the file disposition backlog with import callers and test owners for
-   each `move`, `adapter`, `keep`, or `sunset` entry.
-3. Mirror this audit in `sharecli/BOUNDARY.md` or an equivalent sharecli-side
+1. Mirror this audit in `sharecli/BOUNDARY.md` or an equivalent sharecli-side
    migration plan so the target repo owns the future surface.
-4. Only after the contract spec lands, start code movement in disjoint PRs:
+2. Add a boundary drift check that rejects new direct execution-substrate
+   imports in thegent governance and CLI paths once adapters exist.
+3. Turn the caller/test-owner map into four disjoint PR lanes: native harness,
+   queue, merge/worktree/gitops, and thegent adapter cleanup.
+4. Only after the sharecli-side plan lands, start code movement in disjoint PRs:
    native harness, queue, merge/worktree, and thegent adapter cleanup.
