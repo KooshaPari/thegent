@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! TTL-based cache for git read-only operations
 //!
 //! Caches results from read-only git commands (status, diff, log, etc.)

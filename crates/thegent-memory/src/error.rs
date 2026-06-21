@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Error types for Supermemory client
 //!
 //! Unified error types from both supermemory-rs and thegent-memory implementations.

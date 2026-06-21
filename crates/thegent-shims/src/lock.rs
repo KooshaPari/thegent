@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Git index.lock contention handling
 //!
 //! Handles multi-tenant git lock conflicts with:

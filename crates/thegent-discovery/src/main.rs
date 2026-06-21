@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-discovery binary
 //!
 //! BKM-08: Consolidates N subprocess spawns (git, ps, tmux, which, npx) into

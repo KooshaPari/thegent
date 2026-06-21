@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Risk assessment engine for task routing decisions.
 //!
 //! Calculates composite risk scores based on complexity, cost, dependencies,

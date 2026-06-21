@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 /// Security scanning: secret detection and SAST integration
 use crate::types::{HookError, SecurityFinding, Severity};
 use regex::Regex;

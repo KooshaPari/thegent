@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Spec-verifier hook binary
 //!
 //! Scans test directories for FR (Functional Requirement) references.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 /// @trace FR-GOV-004
 #[test]
 fn test_compliance_check_cost_exceeded() {

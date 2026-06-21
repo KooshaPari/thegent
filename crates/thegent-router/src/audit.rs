@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Audit logging for routing decisions.
 //!
 //! Appends to `routing_audit.jsonl` with SHA-256 hash chaining

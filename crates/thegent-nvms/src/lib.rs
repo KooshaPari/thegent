@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-nvms — NVMS FFI bindings with pyo3 support
 //!
 //! Migrated from PhenoCompose `bindings/rust-ffi/` into the thegent workspace

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Tests for Python FFI bindings (manual integration tests without PyO3)
 //!
 //! These tests verify that the Python module can be imported and used.

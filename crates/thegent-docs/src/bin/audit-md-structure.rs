@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Rust replacement for scripts/audit-md-structure.sh
 //! Audits markdown files for proper structure (frontmatter, H1, See also)
 

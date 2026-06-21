@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! # Use Cases
 
 use crate::domain::entities::{Plugin, PluginId};

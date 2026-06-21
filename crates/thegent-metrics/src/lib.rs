@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! High-performance metrics collection for thegent.
 
 use dashmap::DashMap;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-05: thegent-shm CLI binary.
 //!
 //! Provides subprocess access to SHM state for any Python interpreter.

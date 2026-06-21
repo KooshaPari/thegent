@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Pareto routing engine with hysteresis for task distribution.
 //!
 //! This crate provides a risk-aware routing system that distributes tasks

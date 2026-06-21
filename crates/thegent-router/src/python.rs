@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Python FFI bindings for the Pareto routing engine.
 //!
 //! Exports Rust types and methods to Python via PyO3:

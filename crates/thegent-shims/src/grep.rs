@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Fast grep wrapper with ripgrep integration (safe execution)
 //!
 //! Routes to ripgrep for 2-10x speedup on recursive searches.

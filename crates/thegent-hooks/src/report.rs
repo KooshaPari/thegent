@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Hook Execution Reports
 //!
 //! This module handles generation and management of hook execution reports

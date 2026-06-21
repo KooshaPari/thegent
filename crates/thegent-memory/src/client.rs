@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Supermemory client implementation with MCP protocol support
 
 use crate::error::{Error, Result};

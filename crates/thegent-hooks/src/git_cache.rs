@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Git operation caching migrated from hooks/lib/git-cache.sh
 //! Provides TTL-based caching for git operations (70% reduction in git calls)
 

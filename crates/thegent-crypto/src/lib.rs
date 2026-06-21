@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-03: sign_artifact, verify_signature, artifact_hash for thegent.
 //! Expects canonical JSON bytes (sorted keys). Python uses orjson for canonical.
 

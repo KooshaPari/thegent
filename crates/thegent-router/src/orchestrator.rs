@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Routing Orchestrator: coordinates routing decisions across multiple concurrent agents.
 //!
 //! Manages multiple RouteExecutor instances and provides:

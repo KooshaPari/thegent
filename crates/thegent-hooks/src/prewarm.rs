@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Prewarm and Cache Precomputation
 //!
 //! This module handles prewarming of caches and shared data structures

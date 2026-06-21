@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Chart widgets for thegent TUI — Phase 3.
 //!
 //! Provides:

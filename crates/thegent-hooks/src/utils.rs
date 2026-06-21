@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Hook utility functions migrated from hooks/lib/common.sh
 //! Provides binary resolution, PATH handling, and tool detection
 

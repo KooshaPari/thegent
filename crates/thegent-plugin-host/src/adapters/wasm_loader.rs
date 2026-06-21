@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! WASM plugin loader - Loads and executes WASM plugins
 
 use wasmtime::{Engine, Module, Store, Instance};

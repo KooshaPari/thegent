@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use clap::{Parser, ValueEnum};
 use serde_json;
 use std::collections::HashMap;

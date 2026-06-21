@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Error types for the zmx interop crate.
 
 use std::str::Utf8Error;

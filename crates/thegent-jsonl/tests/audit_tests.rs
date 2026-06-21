@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use thegent_jsonl::audit::{AuditEntry, AuditLogger};
 
 /// @trace FR-AUD-001

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Route Executor: dispatches tasks to providers based on RoutingDecision.
 //!
 //! Integrates routing decisions from ParetoRouter with actual task execution

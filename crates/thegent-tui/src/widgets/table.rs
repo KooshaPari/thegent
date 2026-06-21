@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! TableWidget — sortable, selectable, paginated table for any `TableRow` type.
 //!
 //! Features:

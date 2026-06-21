@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 /// Policy engine for governance rule evaluation
 use crate::types::{HookError, PolicyOutcome, PolicyRule, RuleType};
 use dashmap::DashMap;

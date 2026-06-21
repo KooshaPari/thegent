@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-01: CLI for thegent-resources. Outputs JSON to stdout.
 
 fn main() {

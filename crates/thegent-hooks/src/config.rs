@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 /// Configuration loading and parsing
 use crate::types::{HookConfig, HookError, PolicyRule, QualityThresholds, SecurityRule};
 use serde_json::Value;

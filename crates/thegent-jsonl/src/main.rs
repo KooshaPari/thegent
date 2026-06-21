@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-10: thegent-jsonl CLI binary.
 //!
 //! Provides subcommands for counting, streaming, filtering, and sampling JSONL

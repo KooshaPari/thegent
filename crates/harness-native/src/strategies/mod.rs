@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Execution strategies: coalesce, queue, debounce, retry, etc.
 
 mod batch;

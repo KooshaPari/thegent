@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Enhanced changed-files detection with advanced filtering and impact analysis
 //!
 //! Features:

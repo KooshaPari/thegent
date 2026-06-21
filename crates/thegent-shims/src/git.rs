@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Git wrapper with thegent integration (safe execution)
 //!
 //! Handles:

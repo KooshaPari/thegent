@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Phase 3 integration tests: Executor, Orchestrator, Audit Logger.
 //!
 //! Traces to:

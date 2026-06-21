@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use std::fs;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Post-Edit Checker hook binary
 //!
 //! Detects AI-generated patterns (slop) and measures code complexity.

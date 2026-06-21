@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Ledger integrity verification module
 
 use serde::{Deserialize, Serialize};

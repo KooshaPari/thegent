@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Utility functions for shims
 
 use std::path::PathBuf;

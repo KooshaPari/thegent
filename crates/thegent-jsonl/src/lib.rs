@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-10: thegent-jsonl — streaming JSONL parser library.
 //!
 //! Provides zero-copy line-by-line iteration over JSON objects in JSONL

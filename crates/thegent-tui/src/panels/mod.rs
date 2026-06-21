@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! TUI panels — WL-031 and beyond.
 //!
 //! Panels are full-region composites that combine multiple widgets into a

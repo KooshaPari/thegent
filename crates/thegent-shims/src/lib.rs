@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-shims: High-performance Rust command shims for thegent
 //!
 //! Provides fast, reliable replacements for shell wrappers:

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Trust boundary checks module
 
 use serde::{Deserialize, Serialize};

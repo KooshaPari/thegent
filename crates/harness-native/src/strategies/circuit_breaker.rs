@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use std::path::Path;
 use std::process::Command;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Integration tests for affected tests detection
 //!
 //! These tests verify the full workflow of detecting affected tests

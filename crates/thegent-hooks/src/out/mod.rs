@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use crate::{CACHE_DIR, DEFAULT_TTL_SECS, VERSION};
 
 pub(crate) fn print_version() {

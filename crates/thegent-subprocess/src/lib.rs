@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! thegent-subprocess: Safe subprocess execution for thegent
 //!
 //! Provides safe subprocess execution patterns:

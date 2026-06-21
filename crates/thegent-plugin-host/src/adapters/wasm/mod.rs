@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! # WASM Adapter
 //!
 //! WebAssembly plugin loader.

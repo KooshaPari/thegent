@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Complexity Ratchet hook binary
 //!
 //! Enforces complexity limits and prevents regression.

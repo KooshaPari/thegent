@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 /// Cost estimation for various LLM providers
 use crate::types::{CostEstimate, HookError};
 use std::collections::HashMap;

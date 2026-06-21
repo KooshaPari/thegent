@@ -82,6 +82,44 @@ fmt:
 
 ci: install build test lint
 
+# Tier-0 hygiene: cargo-deny license/advisory/bans/sources check (no install).
+deny:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f crates/Cargo.toml ]; then
+        cargo deny check --manifest-path crates/Cargo.toml
+    elif [ -f Cargo.toml ]; then
+        cargo deny check
+    else
+        echo "no Cargo.toml found; skipping cargo deny"
+    fi
+
+# Tier-0 hygiene: cargo-audit (RustSec advisory database).
+audit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -f crates/Cargo.toml ]; then
+        cargo audit --manifest-path crates/Cargo.toml
+    elif [ -f Cargo.toml ]; then
+        cargo audit
+    else
+        echo "no Cargo.toml found; skipping cargo audit"
+    fi
+
+# Fleet compliance grade (placeholder hook — wired by Tier-0 lint harness).
+grade:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -x ./grade.sh ]; then
+        ./grade.sh
+    else
+        echo "no grade.sh; running denoised check suite as fallback"
+        just lint
+        just deny
+    fi
+
+quality: lint deny audit grade
+
 clean:
     #!/usr/bin/env bash
     set -euo pipefail

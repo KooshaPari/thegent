@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Task Completion Verifier hook binary
 //!
 //! Verifies task completion status and updates session ledger.

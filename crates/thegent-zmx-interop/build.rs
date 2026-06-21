@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! build.rs for thegent-zmx-interop
 //!
 //! When the `zmx-native` feature is enabled, this script attempts to locate

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 use crate::{ComplianceRule, EvaluationContext, EvaluationResult, PolicyConfig, PolicyError};
 use dashmap::DashMap;
 use std::sync::Arc;

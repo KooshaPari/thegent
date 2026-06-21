@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 /// @trace FR-GOV-001
 #[test]
 fn test_policy_engine_loads_config() {

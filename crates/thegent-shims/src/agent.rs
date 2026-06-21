@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Agent invocation shim with fallback routing (secure execution)
 //!
 //! Resolves agent binaries (codex, copilot, dex, claude, cursor)

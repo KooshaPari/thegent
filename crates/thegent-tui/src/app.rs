@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! CompositApp — default layout wiring Phase 2 widgets together.
 //!
 //! Layout:

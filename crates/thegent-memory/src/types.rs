@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Type definitions for Supermemory integration
 //!
 //! Provides request/response types, memory operations, and queries

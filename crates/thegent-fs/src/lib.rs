@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! BKM-??: thegent-fs — high-performance file operations library.
 //!
 //! Provides file operations that can replace Python's shutil module:
