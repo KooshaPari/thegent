@@ -1,0 +1,67 @@
+[sharecli_boundary]
+spec = "docs/specs/contracts/sharecli-boundary-drift-check.md"
+contract = "docs/specs/contracts/sharecli-boundary-contracts.md"
+enforced_lanes = []
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/mesh.py"
+symbol = "thegent.mesh.task_queue"
+lane = "queue"
+sunset_gate = "queue lane adapter tests pass and MaildirQueue implementation moves to sharecli"
+reason = "MeshManager still composes the local queue before the queue lane migrates."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/cli.py"
+symbol = "thegent.mesh.task_queue"
+lane = "queue"
+sunset_gate = "queue lane adapter tests pass and task commands delegate to sharecli"
+reason = "Current task CLI commands still import the local queue implementation."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/git_parallelism.py"
+symbol = "thegent.mesh.smart_merge"
+lane = "merge-worktree"
+sunset_gate = "merge/worktree lane tests pass through sharecli adapters"
+reason = "WorktreePool still wires SmartMerger before the merge/worktree lane migrates."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent_gitops/worktree.py"
+symbol = "thegent.mesh.smart_merge"
+lane = "merge-worktree"
+sunset_gate = "gitops worktree compatibility tests pass through sharecli adapters"
+reason = "thegent_gitops still type-checks SmartMerger before gitops migrates."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/git.py"
+symbol = "thegent_gitops.git"
+lane = "merge-worktree"
+sunset_gate = "legacy git re-export is removed after worktree contract migration"
+reason = "Legacy mesh git shim still re-exports thegent_gitops."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/agent_patterns.py"
+symbol = "thegent.mesh.process_detection"
+lane = "process-health"
+sunset_gate = "process inventory adapter tests pass through sharecli"
+reason = "Agent pattern detection still reads local process inventory."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/main.py"
+symbol = "thegent.mesh.observability"
+lane = "process-health"
+sunset_gate = "mesh status renders sharecli health contract records"
+reason = "Mesh entrypoint still renders local observability before health migration."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/mesh/isolation.py"
+symbol = "thegent.mesh.worktree"
+lane = "execution-safety"
+sunset_gate = "isolation adapter tests pass through sharecli worktree contract"
+reason = "ResourceIsolation still lazy-imports local WorktreeManager."
+
+[[sharecli_boundary.allow]]
+path = "src/thegent/governance/heliosShield_bridge.py"
+symbol = "thegent.mesh.mesh"
+lane = "execution-safety"
+sunset_gate = "governance bridge delegates harness operations through sharecli adapter"
+reason = "Legacy bridge still reaches MeshManager before adapter cleanup."

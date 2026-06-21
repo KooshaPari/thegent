@@ -478,6 +478,11 @@ tasks:
     cmds:
       - 'echo "[stub] quality:harness-model-contracts OK"'
 
+  quality:sharecli-boundary:
+    desc: Advisory thegent -> sharecli boundary drift reporter
+    cmds:
+      - python scripts/sharecli_boundary_drift_check.py --format summary-json
+
   quality:fast:
     desc: Tach + Vale only (pre-push quick gate)
     cmds:
@@ -485,9 +490,10 @@ tasks:
       - task: vale
 
   quality:
-    desc: Max-lines + Tach + Vale + ruff + phenotype cliproxy unit tests
+    desc: Max-lines + boundary drift + Tach + Vale + ruff + phenotype cliproxy unit tests
     cmds:
       - task: quality:max-lines
+      - task: quality:sharecli-boundary
       - task: tach
       - task: vale
       - task: ruff

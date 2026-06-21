@@ -33,7 +33,7 @@ See [ADR-006](docs/specs/argisroute/adr/006-deployment-topology.md). Single prim
 
 ## Top Gaps
 
-- `apps/api/` not present; only `apps/landing/` and `apps/byteport/` exist.
-- `/health.json` exists for landing only; service-tier crates lack health routes.
-- `release-drafter.yml` workflow missing.
-- ADR-006 still Proposed, not Accepted.
+- `apps/api/` is intentionally deferred; only `apps/landing/` and `apps/byteport/` exist.
+- `/health.json` exists for landing only; BytePort already owns `/api/v1/health`, and other service-tier crates still lack health routes.
+- `release-drafter.yml` workflow is present; keep the release automation wiring aligned with it.
+- ADR-006 is Accepted; keep the deployment topology doc and spec in sync with the accepted status.

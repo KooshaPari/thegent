@@ -1,6 +1,6 @@
 # ADR-006: Deployment Topology, Multi-Region, and Data Residency
 
-**Status**: Proposed (pending review) — 2026-06-08
+**Status**: Accepted — 2026-06-08
 
 ## Context
 
