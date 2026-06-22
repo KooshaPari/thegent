@@ -21,14 +21,13 @@ members = [
     "thegent-metrics",
     "thegent-fs",
     "thegent-offload",
-    "harness-native",
     "thegent-tui",
     "thegent-memory",
     "thegent-subprocess",
     "thegent-plugin-host",
     "thegent-nvms",
 ]
-exclude = ["thegent-watcher"]
+exclude = ["thegent-watcher", "harness-native"]
 
 [workspace.dependencies]
 # Pure-Rust git library (gitoxide). Preferred over git2/libgit2 for all new
