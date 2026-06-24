@@ -1,0 +1,53 @@
+---
+/**
+ * ExternalLink.astro — accessible external link with screen-reader hint.
+ *
+ * Renders an <a target="_blank" rel="noopener noreferrer"> with a visually
+ * hidden span "(opens in new tab)" that screen readers announce but sighted
+ * users do not see. Also sets a visible icon (visually) so the affordance
+ * is clear.
+ *
+ * AT3 acceptance: external links must announce "opens in new tab" to AT
+ * (at-baseline-spec §AT3 aria_patterns).
+ */
+
+export interface Props {
+  href: string;
+  text: string;
+  /** When true, the link opens in a new tab (default true for absolute URLs). */
+  newTab?: boolean;
+  /** Override the rel attribute (rare; default is noopener noreferrer). */
+  rel?: string;
+}
+
+const { href, text, newTab, rel = "noopener noreferrer" } = Astro.props as Props;
+
+const opensInNewTab = newTab ?? /^(https?:)?\/\//.test(href);
+---
+
+<a
+  href={href}
+  target={opensInNewTab ? "_blank" : undefined}
+  rel={opensInNewTab ? rel : undefined}
+  class="external-link"
+>
+  <span>{text}</span>
+  {opensInNewTab && (
+    <>
+      <span class="sr-only">(opens in new tab)</span>
+      <span aria-hidden="true" class="external-link__icon">↗</span>
+    </>
+  )}
+</a>
+
+<style>
+  .external-link {
+    color: var(--accent, #7ebab5);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .external-link__icon {
+    margin-inline-start: 0.15em;
+    font-size: 0.9em;
+  }
+</style>

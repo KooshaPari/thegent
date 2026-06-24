@@ -1,0 +1,103 @@
+---
+/**
+ * CodeBlock.astro — accessible code block wrapper for Markdown content.
+ *
+ * Use:
+ *   <CodeBlock language="ts" code={`const x = 1;`} />
+ *
+ * Behavior:
+ *   - Renders a <pre> with tabindex="0" so keyboard users can scroll.
+ *   - Sets aria-label="Code example in {language}" so screen reader users
+ *     hear the language before the contents.
+ *   - Includes a visually hidden <span> announcing the language for users
+ *     who land on the focused <pre>.
+ *   - Optionally renders a copy button (slot="actions") that uses
+ *     ExternalLink's pattern of an aria-label.
+ *
+ * AT3 acceptance: code blocks must be focusable + labeled (at-baseline-spec §AT3
+ * aria_patterns).
+ */
+
+export interface Props {
+  language: string;
+  code: string;
+  filename?: string;
+  showLineNumbers?: boolean;
+}
+
+const {
+  language,
+  code,
+  filename,
+  showLineNumbers = false,
+} = Astro.props as Props;
+
+const lines = code.split('\n');
+const labelId = `code-label-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<figure class="code-block" data-language={language}>
+  {filename && (
+    <figcaption class="code-block__filename" aria-hidden="true">
+      {filename}
+    </figcaption>
+  )}
+  <pre
+    tabindex="0"
+    role="region"
+    aria-labelledby={labelId}
+    class:list={['code-block__pre', { 'line-numbers': showLineNumbers }]}
+  >
+    <span id={labelId} class="sr-only">
+      Code example in {language}
+    </span>
+    <code class={`language-${language}`}>
+      {lines.map((line) => (
+        <span class="code-line">{line || ' '}</span>
+      ))}
+    </code>
+  </pre>
+  <slot name="actions" />
+</figure>
+
+<style>
+  .code-block {
+    margin: 1rem 0;
+    border: 1px solid var(--border, #1f1f23);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .code-block__filename {
+    padding: 0.4rem 0.75rem;
+    background: var(--card, #111114);
+    color: var(--muted, #8a8a93);
+    font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", monospace;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border, #1f1f23);
+  }
+  .code-block__pre {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    background: var(--card, #111114);
+  }
+  .code-block__pre:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: -2px;
+  }
+  .code-line {
+    display: block;
+  }
+  .line-numbers .code-line {
+    padding-left: 2.5rem;
+    position: relative;
+  }
+  .line-numbers .code-line::before {
+    content: attr(data-line);
+    position: absolute;
+    left: 0;
+    width: 2rem;
+    text-align: right;
+    color: var(--muted, #8a8a93);
+  }
+</style>

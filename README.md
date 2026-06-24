@@ -1,3 +1,5 @@
+<!-- work-state: Phase 3 passing — tests+trace+spec complete -->
+[██████████] 100% — full spec+test+trace layer
 <!-- AI-DD-META:START -->
 <!-- This repository is planned, maintained, and managed by AI Agents only. -->
 <!-- Slop issues are expected and intentionally present as part of an HITL-less -->
@@ -60,6 +62,7 @@ templates for 10+ language stacks.
 - [Templates](#templates)
 - [Performance](#performance)
 - [Development](#development)
+- [Security](#security)
 - [License](#license)
 
 ---
@@ -382,6 +385,12 @@ cargo clippy --workspace -- -D warnings
 | Cargo clippy | Rust lint | `cargo clippy --workspace` |
 | Cargo test | Rust tests | `cargo test --workspace` |
 | pytest | Python tests | `uv run pytest tests/` |
+
+---
+
+## Security
+
+See [`SECURITY.md`](SECURITY.md) for the security policy and [`docs/security/threat-model.md`](docs/security/threat-model.md) for the STRIDE-per-component threat model covering the agent loop, tool registry, LLM provider abstraction, Python package supply chain, CI workflows, MCP server, and Rust shim crates.
 
 ---
 

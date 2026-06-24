@@ -32,7 +32,7 @@ import io
 import sys
 import time
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
 if TYPE_CHECKING:
@@ -80,10 +80,10 @@ def _fast_config(**kwargs: object) -> KeepaliveConfig:
     defaults: dict[str, object] = {"interval_s": 0.05, "message": ".", "newline_every": 10, "enabled": True}
     defaults.update(kwargs)
     return KeepaliveConfig(
-        interval_s=float(defaults["interval_s"]),
-        message=str(defaults["message"]),
-        newline_every=int(defaults["newline_every"]),
-        enabled=bool(defaults["enabled"]),
+        interval_s=cast(float, defaults["interval_s"]),
+        message=cast(str, defaults["message"]),
+        newline_every=cast(int, defaults["newline_every"]),
+        enabled=cast(bool, defaults["enabled"]),
     )
 
 

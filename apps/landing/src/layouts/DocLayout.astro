@@ -1,0 +1,102 @@
+---
+/**
+ * DocLayout.astro — page layout for content pages (docs/, guide/, api/).
+ *
+ * Inherits everything from BaseLayout.astro (skip-link, live regions, dir
+ * handling, nav) and adds:
+ *   - An optional <aside> slot for the per-page table of contents.
+ *   - A <table> policy: docs use plain HTML <table> with <th scope="col">
+ *     so the AT3 acceptance ("Tables: associate <th scope=\"col\"> for column
+ *     headers") is enforced in the layout, not in every content file.
+ *   - Anchored headings with id="..." for skip-target semantics.
+ *
+ * AT3 acceptance: every doc page wraps content in <main id="main"> with
+ * <th scope="col"> for column headers. This layout is the easy button for
+ * both.
+ */
+
+import BaseLayout from "./BaseLayout.astro";
+import type { Locale } from "../lib/rtl";
+
+export interface Props {
+  title: string;
+  description?: string;
+  locale?: Locale;
+  /** When true, render the aside slot. */
+  showToc?: boolean;
+}
+
+const { title, description, locale = "en", showToc = true } = Astro.props as Props;
+---
+
+<BaseLayout title={title} description={description} locale={locale} navLabel="Documentation">
+  <div class="doc-layout" data-toc={showToc ? "true" : "false"}>
+    <article class="doc-layout__content">
+      <slot />
+    </article>
+    {showToc && (
+      <aside class="doc-layout__toc" aria-labelledby="toc-heading">
+        <h2 id="toc-heading" class="sr-only">On this page</h2>
+        <slot name="toc">
+          <p class="muted">No table of contents for this page.</p>
+        </slot>
+      </aside>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .doc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .doc-layout[data-toc="true"] {
+      grid-template-columns: minmax(0, 1fr) 220px;
+    }
+  }
+  .doc-layout__toc {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    font-size: 0.9rem;
+  }
+  .doc-layout__toc :global(ul) {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .doc-layout__toc :global(a) {
+    color: var(--muted, #8a8a93);
+    text-decoration: none;
+  }
+  .doc-layout__toc :global(a:hover) {
+    color: var(--accent, #7ebab5);
+  }
+  .muted {
+    color: var(--muted, #8a8a93);
+  }
+  /* Table defaults — enforce the AT3 scope=col rule at the layout level. */
+  .doc-layout__content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  .doc-layout__content :global(th),
+  .doc-layout__content :global(td) {
+    padding: 0.5rem 0.75rem;
+    text-align: start;
+    border-bottom: 1px solid var(--border, #1f1f23);
+  }
+  .doc-layout__content :global(th[scope="col"]) {
+    font-weight: 600;
+    background: var(--card, #111114);
+  }
+  .doc-layout__content :global(th[scope="row"]) {
+    font-weight: 600;
+  }
+</style>

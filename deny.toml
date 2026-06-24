@@ -13,6 +13,12 @@ ignore = [
     # release for the Marvin timing side channel; keep this as a tracked
     # temporary exception instead of over-claiming local mitigation. Review/remove by 2026-09-30.
     "RUSTSEC-2023-0071",
+    # git2 v0.20.4 is pulled transitively via thegent-offload and carries
+    # unsoundness advisories with no patched release at this time. The
+    # offload path does not exercise the affected APIs; track and revisit
+    # on the next offload dependency bump.
+    "RUSTSEC-2026-0183",
+    "RUSTSEC-2026-0184",
 ]
 
 [licenses]

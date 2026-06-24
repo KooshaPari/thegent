@@ -1,0 +1,79 @@
+/**
+ * RTL overrides for the Astro landing docsite.
+ *
+ * This file does NOT redefine margins/paddings per-component. Instead it
+ * sets the document-level direction and provides utility classes that
+ * components opt into. The page-level <html dir="rtl"> is the source of
+ * truth — `body[dir="rtl"]` selectors apply only when the dir attribute
+ * is set by BaseLayout.astro (i.e. when isRtl(locale) is true).
+ *
+ * Loaded by BaseLayout.astro AFTER global.css so the cascade order is
+ * tokens → global → rtl → page-specific.
+ */
+
+/* Flip directional icons that imply a left/right meaning. The list mirrors
+   the icons used in BaseLayout.astro (chevrons) and CodeBlock.astro. */
+body[dir="rtl"] .icon-flip,
+body[dir="rtl"] [data-flip-on-rtl="true"] {
+  transform: scaleX(-1);
+}
+
+/* Flex rows reverse in RTL so the visual order matches the source order. */
+body[dir="rtl"] .flex-row,
+body[dir="rtl"] [data-flex-row] {
+  flex-direction: row-reverse;
+}
+
+/* Space-between utility mirrors gap to the inline end. */
+body[dir="rtl"] .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+/* Logical text-align defaults — authors should use these in components. */
+body[dir="rtl"] .text-start {
+  text-align: right;
+}
+body[dir="rtl"] .text-end {
+  text-align: left;
+}
+body[dir="ltr"] .text-start {
+  text-align: left;
+}
+body[dir="ltr"] .text-end {
+  text-align: right;
+}
+
+/* Margin / padding helpers. These are deliberately spartan — the goal is
+   to make it easy to add a new locale without auditing every component. */
+.ms-0 { margin-inline-start: 0; }
+.ms-1 { margin-inline-start: 0.25rem; }
+.ms-2 { margin-inline-start: 0.5rem; }
+.ms-3 { margin-inline-start: 0.75rem; }
+.ms-4 { margin-inline-start: 1rem; }
+.me-0 { margin-inline-end: 0; }
+.me-1 { margin-inline-end: 0.25rem; }
+.me-2 { margin-inline-end: 0.5rem; }
+.me-3 { margin-inline-end: 0.75rem; }
+.me-4 { margin-inline-end: 1rem; }
+
+.ps-1 { padding-inline-start: 0.25rem; }
+.ps-2 { padding-inline-start: 0.5rem; }
+.ps-3 { padding-inline-start: 0.75rem; }
+.ps-4 { padding-inline-start: 1rem; }
+.pe-1 { padding-inline-end: 0.25rem; }
+.pe-2 { padding-inline-end: 0.5rem; }
+.pe-3 { padding-inline-end: 0.75rem; }
+.pe-4 { padding-inline-end: 1rem; }
+
+/* Underline-offset for links so RTL languages with diacritics still get
+   the same focus affordance. */
+body[dir="rtl"] a:focus-visible {
+  text-decoration-style: solid;
+}
+
+/* High-contrast: never reverse the focus ring in forced-colors mode. */
+@media (forced-colors: active) {
+  body[dir="rtl"] .icon-flip {
+    transform: none;
+  }
+}

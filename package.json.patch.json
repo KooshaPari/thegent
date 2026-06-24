@@ -1,0 +1,19 @@
+{
+  "_comment": "Patch for /Users/kooshapari/CodeProjects/Phenotype/repos/thegent/package.json — apply by adding the @axe-core/playwright devDependency and the test:a11y script. The full file is preserved; this is the diff. Generated 2026-06-16.",
+  "add_to_devDependencies": {
+    "@axe-core/playwright": "^4.10.2"
+  },
+  "add_to_scripts": {
+    "test:a11y": "playwright test e2e/a11y/wcag.spec.ts --reporter=github",
+    "test:a11y:apps": "playwright test e2e/a11y/wcag.spec.ts apps/landing/e2e/a11y apps/byteport/frontend/web-next/e2e/accessibility.spec.ts apps/byteport/frontend/web-next/e2e/keyboard-trap.spec.ts --reporter=github",
+    "test:a11y:strict": "A11Y_FAIL_ON_MODERATE=1 AT1_STRICT=1 playwright test e2e/a11y --reporter=github"
+  },
+  "add_to_overrides": {
+    "@axe-core/playwright": "^4.10.2"
+  },
+  "manual_steps": [
+    "Run `bun install` after applying this patch to materialize the dep.",
+    "Run `bunx playwright install --with-deps chromium` once so the test runner can launch the browser.",
+    "If a script `test:e2e` already exists in package.json, add the new a11y scripts adjacent to it rather than replacing the existing key."
+  ]
+}
