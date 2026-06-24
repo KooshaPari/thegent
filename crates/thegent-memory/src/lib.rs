@@ -29,6 +29,8 @@ pub mod client;
 pub mod error;
 pub mod types;
 
+pub mod v2;
+
 pub use client::SupermemoryClient;
 pub use error::{Error, Result};
 pub use types::{
@@ -45,5 +47,10 @@ pub mod prelude {
         AuthMethod, KnowledgeNode, MemoryData, MemoryId, MemoryOperation, MemoryQuery,
         MemoryResponse, MemoryResult, OperationType, QueryResult, Relationship, ResponseMetadata,
         SessionContext, SessionId,
+    };
+    pub use crate::v2::{
+        CogneeAdapter, CompositeAdapter, LettaAdapter, Mem0Adapter, MemoryError, MemoryPort,
+        MemoryProvider, MemoryQuery as V2MemoryQuery, MemoryRecord, MemoryScope, MemoryValue,
+        SupermemoryAdapter,
     };
 }
