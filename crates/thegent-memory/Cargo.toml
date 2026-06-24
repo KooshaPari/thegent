@@ -37,7 +37,13 @@ sonic = ["dep:sonic-rs"]
 mockito = "1.7.2"
 tokio-test = "0.4.5"
 tempfile = "3.17.1"
+tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
+uuid = { version = "1.21.0", features = ["v4"] }
 
 [[test]]
 name = "client_tests"
 path = "tests/client_tests.rs"
+
+[[test]]
+name = "trait_conformance"
+path = "tests/trait_conformance.rs"
