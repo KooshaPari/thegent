@@ -15,6 +15,17 @@ pub enum MemoryProvider {
     Letta,
     Cognee,
     Mem0,
+    /// Alternative: temporal KG (event time + ingestion time). Same
+    /// scope niche as Cognee (`ProjectKnowledge`) but with a different
+    /// ontology. See ADR-098.
+    Graphiti,
+    /// Alternative: per-user memory with explicit consent gating. Same
+    /// scope niche as Letta (`Identity`) but multi-tenant-safe. See ADR-098.
+    Hippo,
+    /// Alternative: episodic memory with dialogue-act classification.
+    /// Same scope niche as Supermemory (`Episodic`) but turn-type
+    /// metadata in recall. See ADR-098.
+    Zep,
     Composite,
 }
 
@@ -26,8 +37,24 @@ impl MemoryProvider {
             MemoryProvider::Letta => "letta",
             MemoryProvider::Cognee => "cognee",
             MemoryProvider::Mem0 => "mem0",
+            MemoryProvider::Graphiti => "graphiti",
+            MemoryProvider::Hippo => "hippo",
+            MemoryProvider::Zep => "zep",
             MemoryProvider::Composite => "composite",
         }
+    }
+
+    /// Returns `true` if this provider is a primary (in the default
+    /// composite scope routing). Returns `false` for the 3 ADR-098
+    /// alternatives and the `Composite` router itself.
+    pub fn is_primary(&self) -> bool {
+        matches!(
+            self,
+            MemoryProvider::Supermemory
+                | MemoryProvider::Letta
+                | MemoryProvider::Cognee
+                | MemoryProvider::Mem0
+        )
     }
 }
 
