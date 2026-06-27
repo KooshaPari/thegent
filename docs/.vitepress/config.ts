@@ -22,10 +22,16 @@ const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
 const algoliaIndexName = process.env.VITEPRESS_ALGOLIA_INDEX_NAME
 const hasAlgolia = Boolean(algoliaAppId && algoliaApiKey && algoliaIndexName)
 const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'thegent'
-const isPagesBuild = process.env.GITHUB_ACTIONS === 'true' || process.env.GITHUB_PAGES === 'true'
-const docsBaseOverride = process.env.VITEPRESS_BASE
-// Hardcode to /thegent/ for GitHub Pages deployment
-const docsBase = '/thegent/'
+
+function resolveDocsBase(): string {
+  const explicit = process.env.DOCS_BASE ?? process.env.VITEPRESS_BASE
+  if (explicit) return explicit.endsWith('/') ? explicit : `${explicit}/`
+  if (process.env.PHENOTYPE_CUSTOM_DOMAIN === 'true') return '/'
+  if (process.env.GITHUB_PAGES === 'true') return `/${repoName}/`
+  return '/'
+}
+
+const docsBase = resolveDocsBase()
 const faviconHref = `${docsBase}favicon.ico`
 
 // Supported locales: en, zh-CN, zh-TW, fa, fa-Latn
