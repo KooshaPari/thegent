@@ -8,6 +8,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from thegent.db_helpers import apply_connection_pragmas
+
 logger = logging.getLogger(__name__)
 
 
@@ -61,13 +63,14 @@ class WorkstreamDB:
             )
         """)
         conn.commit()
-    
+
     def _get_conn(self) -> sqlite3.Connection:
         """Get or create database connection."""
         if self._conn is None:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
-            self._conn = sqlite3.connect(str(self.db_path))
+            self._conn = sqlite3.connect(str(self.db_path), timeout=5.0)
             self._conn.row_factory = sqlite3.Row
+            apply_connection_pragmas(self._conn)
         return self._conn
     
     def upsert_item(
