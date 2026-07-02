@@ -77,6 +77,21 @@ impl From<serde_json::Value> for MemoryValue {
     }
 }
 
+impl MemoryValue {
+    /// Extract text content for eval/display purposes.
+    ///
+    /// - `Text(s)` → returns the inner string.
+    /// - `Json(v)` → returns the JSON as a compact string.
+    /// - `Binary(_)` → returns `"<binary:N bytes>"` (lossy placeholder).
+    pub fn value_text(&self) -> String {
+        match self {
+            MemoryValue::Text(s) => s.clone(),
+            MemoryValue::Json(v) => v.to_string(),
+            MemoryValue::Binary(b) => format!("<binary:{} bytes>", b.len()),
+        }
+    }
+}
+
 /// A recall query. The `text` field is the natural-language / keyword query
 /// that the backend's retriever matches against. `limit` caps the result
 /// count; `min_score` filters low-relevance hits (where supported).
