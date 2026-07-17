@@ -75,22 +75,22 @@ This removes the symlinks Stow created (it does **not** delete the files in
 
 ## Security
 
-`phenoforge-org-secrets.zsh` contains live credentials:
+`phenoforge-org-secrets.zsh` **sources secrets from a gitignored env file**:
+`~/.config/phenotype/org-secrets.env`. No literal credential values exist in
+this repo.
 
-- `OPENROUTER_API_KEY` (sk-or-v1-...)
-- `WORKOS_API_KEY` (sk_test_...)
-- `WORKOS_CLIENT_ID` (client_01...)
-- `AUTHKIT_DOMAIN` (URL)
+The env file contains (consult your local `~/.config/phenotype/org-secrets.env`):
 
-These are bundled **byte-identical** per the task's hard rule (no edits during
-copy). Before the bundle is shipped to a non-private fork, either:
+- `OPENROUTER_API_KEY`
+- `WORKOS_API_KEY`
+- `WORKOS_CLIENT_ID`
+- `AUTHKIT_DOMAIN`
 
-1. Strip secrets from `phenoforge-org-secrets.zsh` and replace with a template
-   (`<YOUR_OPENROUTER_KEY>`), **OR**
-2. Move this file out of `stow/` and source it from a private, gitignored
-   path, **OR**
-3. Ensure the target repo is private and these keys are scoped to a safe
-   environment.
+**Leak history.** The original commit in this PR branch included literal values.
+These were redacted in a follow-up commit on the same branch (2026-07-17).
+Leaked credentials should be rotated on the provider side (OpenRouter, WorkOS)
+since they remain in git history. The local env file was populated with the
+same values that were previously embedded, so shell behavior is unchanged.
 
 ## Files in this bundle were copied from
 
@@ -100,7 +100,10 @@ copy). Before the bundle is shipped to a non-private fork, either:
 | `zsh-fork-guardian.zsh`               | `~/.zsh_fork_guardian.zsh`                          |
 | `zsh-protected-processes.zsh`         | `~/.zsh_protected_processes.zsh`                    |
 | `zsh-safeguards.zsh`                  | `~/.zsh_safeguards.zsh`                             |
-| `phenoforge-org-secrets.zsh`          | `~/.config/phenotype/org-secrets.zsh`               |
+| `phenoforge-org-secrets.zsh`          | `~/.config/phenotype/org-secrets.zsh (secret-redacted)`  |
 | `phenoforge-refresh-zsh-cache.zsh`    | `~/bin/refresh_zsh_cache.zsh`                       |
 
-All copies are byte-identical (verified via `diff -q` + `shasum -a 256`).
+**Note**: `phenoforge-org-secrets.zsh` was **redacted** after bundling — literal
+API keys were replaced with `source ~/.config/phenotype/org-secrets.env` loaders.
+The other 5 scripts remain byte-identical to their sources (verified via `diff -q` +
+`shasum -a 256`).
