@@ -1,7 +1,30 @@
 #!/bin/zsh
+# phenoforge-org-secrets.zsh — loader for org-level service credentials.
+#
+# IMPORTANT: This file MUST NOT contain literal secret values. Secrets live
+# in a gitignored local env file (~/.config/phenotype/org-secrets.env or
+# ${PHENOFORGE_SECRETS_FILE}) and are loaded into the shell env at runtime.
+#
+# Recommended local setup (one-time, on each dev machine):
+#
+#   mkdir -p ~/.config/phenotype
+#   cat > ~/.config/phenotype/org-secrets.env <<'ENV'
+#   # values from the team's password manager (1Password vault: "Phenoforge")
+#   export AUTHKIT_DOMAIN="https://<your-authkit-domain>"
+#   export OPENROUTER_API_KEY="<key from 1Password>"
+#   export WORKOS_API_KEY="<key from 1Password>"
+#   export WORKOS_CLIENT_ID="<client id from 1Password>"
+#   ENV
+#   chmod 600 ~/.config/phenotype/org-secrets.env
+#
+# Optional override: set PHENOFORGE_SECRETS_FILE in your shell rc to point
+# at an alternate env file (e.g., a worktree-scoped override).
 
-# Shared org-level service environment for local agent clients.
-export AUTHKIT_DOMAIN="https://significant-vessel-93-staging.authkit.app"
-export OPENROUTER_API_KEY="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"
-export WORKOS_API_KEY="sk_test_a2V5XzAxSzRLWVpRSkFNUURWS0tWR0JZQVFGUkZWLGNsYmZHcTZmTVc0bFlicHA3bXNjMEpIVTE"
-export WORKOS_CLIENT_ID="client_01K4KYZR40RK7R9X3PPB5SEJ66"
+: "${PHENOFORGE_SECRETS_FILE:=${HOME}/.config/phenotype/org-secrets.env}"
+
+if [[ -r "${PHENOFORGE_SECRETS_FILE}" ]]; then
+  # shellcheck disable=SC1090
+  source "${PHENOFORGE_SECRETS_FILE}"
+elif [[ -n "${PHENOFORGE_SECRETS_DEBUG:-}" ]]; then
+  print -u2 "phenoforge-org-secrets: ${PHENOFORGE_SECRETS_FILE} not readable; secrets unset"
+fi
