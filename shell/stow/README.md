@@ -79,18 +79,10 @@ This removes the symlinks Stow created (it does **not** delete the files in
 `~/.config/phenotype/org-secrets.env`. No literal credential values exist in
 this repo.
 
-The env file contains (consult your local `~/.config/phenotype/org-secrets.env`):
-
-- `OPENROUTER_API_KEY`
-- `WORKOS_API_KEY`
-- `WORKOS_CLIENT_ID`
-- `AUTHKIT_DOMAIN`
-
-**Leak history.** The original commit in this PR branch included literal values.
-These were redacted in a follow-up commit on the same branch (2026-07-17).
-Leaked credentials should be rotated on the provider side (OpenRouter, WorkOS)
-since they remain in git history. The local env file was populated with the
-same values that were previously embedded, so shell behavior is unchanged.
+**Leak history.** The original commit in this PR branch included literal credential
+values which were redacted in a follow-up commit (2026-07-17). Consult your local
+`~/.config/phenotype/org-secrets.env` for the actual env vars. Leaked credentials
+should be rotated on the provider side since they remain in git history.
 
 ## Files in this bundle were copied from
 
