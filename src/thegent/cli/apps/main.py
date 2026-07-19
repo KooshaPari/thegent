@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import typer
 
-app = typer.Typer(help="thegent - Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows.")
+app = typer.Typer(
+    help="thegent - Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows."
+)
 
 
 @app.callback()
@@ -72,6 +74,11 @@ def logs_cmd(
 # Import sub-apps
 from thegent.cli.apps import govern, phench
 
+# Phase 3/4 hardening lane: cockpit + traffic + policy pre-check CLI.
+# Mounted as a Typer sub-app so `thegent cockpit ...` parses sub-commands
+# natively and respects `--help`, exit codes, and error handling.
+from thegent.ux.cli_cockpit import app as cockpit_app
+
 
 @app.command("govern", help="Governance operations.")
 def govern_cmd() -> None:
@@ -83,6 +90,11 @@ def govern_cmd() -> None:
 def phench_cmd() -> None:
     """Phenotyperench operations."""
     phench.app()
+
+
+# Register the cockpit sub-app so `thegent cockpit <sub> --flag value`
+# flows through to its native Typer parser.
+app.add_typer(cockpit_app, name="cockpit")
 
 
 if __name__ == "__main__":

@@ -403,8 +403,90 @@ denies without tailing the audit log.
   inline banner priority, end-to-end PolicyEngine→Cockpit.
 
 ### Unblocked Next
-
 - CLI surface for `cockpit render` / `traffic summary` / `policy pre-check`
   to expose the new bridge for operator testing.
 - JSONL appender so the cockpit → audit pipeline reuses the same
   DecisionNotice stream that the bridge emits.
+
+### Phase 3/4 Continuation — 2026-07-18 (Cockpit SOTA + Operator CLI + Audit Appender)
+
+Closed the two "Unblocked Next" items in a single commit; this is the
+formal hand-off for WP-3001 (governance pre-check CLI), WP-4001 (cockpit
+CLI), and the WP-Y7 (TRAFFIC KPI CLI) deliverables.
+
+#### Lane: Cockpit SOTA Hardening + Governance→UX Bridge (cont'd)
+
+1. **JSONL audit appender** — `thegent.ux.decision_audit` provides:
+   - `DecisionAuditAppender` — append-only JSONL writer with the same
+     surface as `OverrideEventEmitter` (`record`, `record_many`,
+     `tail_events`, `audit_path`, `set_clock`). Thread-safe under a
+     per-instance lock; rejects non-`DecisionNotice` input with
+     `TypeError` and (for `record_many`) **validates every item before
+     the first line is written** so a bad item never leaves a
+     half-written log.
+   - `DecisionAuditTailer` — daemon-thread background drain that
+     captures the cockpit's bounded `decision_notices` deque into
+     JSONL. `max_batch` caps a single drain so the thread never
+     blocks; idempotent `start()`; `stop(timeout_s=)` joins cleanly.
+   - Default log path `~/.thegent/cockpit_decisions.jsonl`, distinct
+     from `override_events` so SOTA replay tooling can ingest
+     decisions in isolation.
+
+2. **Operator CLI surface** — `thegent.ux.cli_cockpit` provides:
+   - `thegent cockpit render` — render the 4-pane operator cockpit
+     from `--runs` / `--overrides` JSON files (or empty snapshot);
+     `--clock <epoch>` pins the wall clock for deterministic SOTA
+     replays; `--json` emits the structured snapshot instead of text.
+   - `thegent cockpit traffic summary` — render the TRAFFIC KPI
+     dashboard from `--events` JSON; same `--clock` / `--json`
+     conventions.
+   - `thegent cockpit pre-check` — evaluate a `PolicyContext` against
+     the governance `PolicyEngine`. Defaults to `--dry-run` so
+     SOTA replay tooling can rehearse decisions without polluting
+     the policy cache; `--commit` opts in to the cached path. Exit
+     code 3 surfaces denies to shell pipelines without leaking
+     tracebacks; exit code 0 for allow/warn.
+   - `thegent cockpit audit tail` — read the JSONL audit log produced
+     by `DecisionAuditAppender` (`--lines`, `--path`).
+   - Mounted under `thegent cockpit …` in
+     `thegent.cli.apps.main` via `app.add_typer(cockpit_app,
+     name="cockpit")`, so Typer's native help, exit codes, and
+     sub-command parsing work end-to-end.
+
+#### Validation
+
+- `pytest tests/test_unit_ux_decision_audit.py
+  tests/test_unit_ux_cli_cockpit.py -q` → **34 passed** (16 audit
+  appender + 18 CLI).
+- Wider Phase 3/4 regression suite (cockpit, cockpit_bridge,
+  progress_emitter, explanations, traffic, policy_engine,
+  cockpit_clock_decisions, decision_audit, cli_cockpit) → **230
+  passed** (+34 vs 196 baseline, zero regressions).
+- `ruff check` and `ruff format --check` clean on all five touched
+  files.
+- End-to-end smoke test via `CliRunner` confirms `thegent cockpit
+  render`, `cockpit traffic summary`, and `cockpit --help` all
+  dispatch correctly through `main.py`.
+
+#### Files Touched
+
+- `src/thegent/ux/decision_audit.py` — **new** (302 lines).
+- `src/thegent/ux/cli_cockpit.py` — **new** (367 lines).
+- `src/thegent/cli/apps/main.py` — registers the cockpit Typer
+  sub-app under `cockpit`.
+- `tests/test_unit_ux_decision_audit.py` — **new** (267 lines,
+  16 tests).
+- `tests/test_unit_ux_cli_cockpit.py` — **new** (321 lines,
+  18 tests).
+
+### Unblocked Next
+- Wire `DecisionAuditTailer` into the live `OperatorCockpit` boot
+  path (`OperatorCockpit.__init__` should accept an optional
+  `audit_appender=…` so production deployments get free JSONL
+  persistence without manual wiring).
+- Extend `cockpit pre-check` with `--batch <path>` so SOTA audit
+  tooling can replay a corpus of `PolicyContext` JSON files in one
+  pass and emit a single combined decision log.
+- Surface `DecisionAuditAppender.tail_events` in the TUI as a
+  second history pane (mirrors the existing override-history
+  pane; same UX, different stream).
