@@ -467,3 +467,137 @@ class TestRegisterOverridePathTraversalGuard:
         # not be affected by the rejected override.
         d = engine.evaluate(PolicyContext(agent="cursor", environment="development", confidence=0.95))
         assert d.verdict == Verdict.ALLOW
+
+    # ------------------------------------------------------------------
+    # Engine guard parity with manager contract
+    # ------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("bad_id", "expected_substr"),
+        [
+            ("rule\x00with-nul", "NUL"),
+            ("trailing\x00", "NUL"),
+            ("\x00leading", "NUL"),
+            ("", "non-empty"),
+        ],
+    )
+    def test_register_override_rejects_nul_and_empty(
+        self,
+        engine: PolicyEngine,
+        bad_id: str,
+        expected_substr: str,
+    ) -> None:
+        """NUL bytes and empty strings are rejected at the engine boundary.
+
+        Closes the audit's "engine guard coverage gap" — the engine
+        previously delegated NUL/empty rejection to the manager. While
+        the manager still rejects these (defense-in-depth), the engine
+        now mirrors the contract so a refactor or direct caller cannot
+        open a hole. The engine raises ``PolicyEngineConfigError`` (its
+        own exception type) so callers get a consistent surface even if
+        the manager layer is ever bypassed.
+        """
+        with pytest.raises(PolicyEngineConfigError) as exc_info:
+            engine.register_override(
+                bad_id,
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+        assert expected_substr.lower() in str(exc_info.value).lower()
+
+    @pytest.mark.parametrize(
+        "non_string_id",
+        [123, 1.5, None, b"rule", ["rule"], {"rule": True}],
+    )
+    def test_register_override_rejects_non_string(
+        self,
+        engine: PolicyEngine,
+        non_string_id: object,
+    ) -> None:
+        """Non-string ``rule_id`` is rejected before the manager is touched.
+
+        Defense against config drift — a YAML/JSON load that yields
+        ``int`` or ``None`` must surface as ``PolicyEngineConfigError``
+        (not ``AttributeError`` deeper in the manager). The error
+        message includes the offending type so operators can diagnose
+        without reading source.
+        """
+        with pytest.raises(PolicyEngineConfigError) as exc_info:
+            engine.register_override(
+                non_string_id,  # type: ignore[arg-type]
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+        assert "string" in str(exc_info.value).lower()
+
+    def test_register_override_engine_guard_fires_before_manager(
+        self,
+        engine: PolicyEngine,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Engine guard fires first — manager is never invoked for bad input.
+
+        Belt-and-braces provenance test: monkeypatch the override_manager's
+        ``apply_override`` to raise a sentinel error. If the engine guard
+        fired first (which it must), the sentinel is never seen — only
+        ``PolicyEngineConfigError`` from the engine. If a future refactor
+        silently removes the engine guard, the manager's sentinel leaks
+        out and this test fails loudly.
+        """
+        from thegent.governance import overrides as overrides_module
+
+        sentinel = AssertionError("manager.apply_override should not be called for bad rule_id")
+        original_apply = engine.override_manager.apply_override
+        calls: list[str] = []
+
+        def spy_apply(*args: object, **kwargs: object) -> object:
+            calls.append(str(kwargs.get("policy_id")))
+            return original_apply(*args, **kwargs)  # pragma: no cover - not reached
+
+        monkeypatch.setattr(engine.override_manager, "apply_override", spy_apply)
+        monkeypatch.setattr(overrides_module, "_validate_policy_id", lambda _id: (_ for _ in ()).throw(sentinel))
+
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "rule\x00with-nul",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+        assert calls == [], f"manager.apply_override was invoked for a rejected rule_id: {calls}"
+
+    def test_register_override_engine_guard_fires_before_manager_on_empty(
+        self,
+        engine: PolicyEngine,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Empty-string rejection also happens before the manager is touched.
+
+        Companion to the NUL-byte provenance test — ensures the empty-string
+        branch also fires the engine guard before delegating, so a future
+        refactor that loosens the engine guard cannot silently route the
+        empty-string check through the manager only.
+        """
+        from thegent.governance import overrides as overrides_module
+
+        sentinel = AssertionError("manager.apply_override should not be called for empty rule_id")
+        original_apply = engine.override_manager.apply_override
+        calls: list[str] = []
+
+        def spy_apply(*args: object, **kwargs: object) -> object:
+            calls.append(str(kwargs.get("policy_id")))
+            return original_apply(*args, **kwargs)  # pragma: no cover - not reached
+
+        monkeypatch.setattr(engine.override_manager, "apply_override", spy_apply)
+        monkeypatch.setattr(overrides_module, "_validate_policy_id", lambda _id: (_ for _ in ()).throw(sentinel))
+
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+        assert calls == [], f"manager.apply_override was invoked for an empty rule_id: {calls}"

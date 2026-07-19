@@ -298,11 +298,28 @@ class PolicyEngine:
         Thin pass-through to :meth:`OverrideManager.apply_override` so callers
         do not need to reach into the override_manager directly. Callers are
         responsible for sanitising ``reason`` and ``by`` (PII).
+
+        The engine applies its **own** path-traversal guard before delegating
+        to the override_manager so the public API is fail-closed even if a
+        future refactor removes the manager-side check, or a direct caller
+        bypasses the manager entirely. The check matches the manager
+        contract in :func:`thegent.governance.overrides._validate_policy_id`:
+        empty strings, ``/``, ``\\``, ``..`` substrings, and NUL bytes are
+        all rejected with :class:`PolicyEngineConfigError` before any state
+        is mutated.
         """
-        # Reject path-traversal-shaped rule_ids before they reach the
-        # override_manager, which interpolates them into filenames.
-        if "/" in rule_id or "\\" in rule_id or ".." in rule_id:
-            raise PolicyEngineConfigError(f"rule_id contains path separators or '..': {rule_id!r}")
+        if not isinstance(rule_id, str):
+            # Defensive: surface config drift as PolicyEngineConfigError so
+            # callers get one consistent exception type at this boundary.
+            raise PolicyEngineConfigError(f"rule_id must be a string, got {type(rule_id).__name__}")
+        if not rule_id:
+            raise PolicyEngineConfigError("rule_id must be a non-empty string")
+        if "/" in rule_id or "\\" in rule_id:
+            raise PolicyEngineConfigError(f"rule_id contains path separator: {rule_id!r}")
+        if ".." in rule_id:
+            raise PolicyEngineConfigError(f"rule_id contains '..' sequence: {rule_id!r}")
+        if "\x00" in rule_id:
+            raise PolicyEngineConfigError(f"rule_id contains NUL byte: {rule_id!r}")
         with self._lock:
             self.override_manager.apply_override(
                 policy_id=rule_id,

@@ -955,3 +955,135 @@ change. This is the minimum forward-compatible shim.
   means the first such error halts the entire suite. A
   dedicated `chore(tests): repair wider regression
   collection` lane is the obvious next sprint.
+
+### Phase 3/4 Continuation — 2026-07-19 (Engine-Guard Parity + NUL/Empty Coverage)
+
+Closes Unblocked-Next #2 from the previous sprint at the
+engine-level. The audit had flagged that
+`PolicyEngine.register_override`'s path-traversal guard
+delegated NUL-byte and empty-string rejection to the
+underlying `OverrideManager.apply_override`. While the
+manager guard fired (defense-in-depth), the engine guard was
+narrower than the manager contract, so a refactor that
+removed the manager validation (or a direct caller that
+bypassed the manager) would have opened a hole. This commit
+brings the engine guard up to parity with the manager
+contract and pins the provenance with belt-and-braces
+monkeypatch tests.
+
+#### 1. Engine-level guard tightened
+
+`src/thegent/governance/policy_engine.py:287-332`:
+
+* Engine now applies its own guard chain before delegating
+  to `override_manager.apply_override`, mirroring the
+  manager contract in
+  `thegent.governance.overrides._validate_policy_id`:
+  1. `isinstance(rule_id, str)` defensive check
+     (`PolicyEngineConfigError("rule_id must be a string, got ...")`)
+  2. empty-string rejection (`"rule_id must be a non-empty string"`)
+  3. `"/"` or `"\\"` separator rejection
+  4. `".."` substring rejection
+  5. `"\x00"` NUL-byte rejection
+* All rejections raise `PolicyEngineConfigError` (the
+  engine's own exception type) so callers get a consistent
+  surface even if the manager layer is ever bypassed.
+* Lock is still acquired around the manager call so the
+  full guard + delegate sequence is atomic w.r.t. concurrent
+  `register_override` invocations.
+* Docstring rewritten to make the engine-side guard
+  contract explicit (the previous docstring described the
+  guard as "implemented at the public API surface" but did
+  not enumerate which shapes it covered).
+
+#### 2. Direct engine-guard tests (12 new tests)
+
+`tests/test_unit_policy_engine.py` — extends
+`TestRegisterOverridePathTraversalGuard` with:
+
+* `test_register_override_rejects_nul_and_empty` (4 cases
+  via parametrize) — NUL byte in middle / trailing / leading
+  + empty string each surface a `PolicyEngineConfigError`
+  whose message includes the rejection reason.
+* `test_register_override_rejects_non_string` (6 cases via
+  parametrize) — `int`, `float`, `None`, `bytes`, `list`,
+  `dict` are all rejected with `"string"` in the error
+  message so config drift cannot escape.
+* `test_register_override_engine_guard_fires_before_manager`
+  — monkeypatches the manager's `apply_override` and the
+  module-level `_validate_policy_id` to raise a sentinel
+  error; engine rejects NUL-bearing rule_id with
+  `PolicyEngineConfigError` and the manager is never
+  invoked. Provenance guard for the engine-side check.
+* `test_register_override_engine_guard_fires_before_manager_on_empty`
+  — companion to the NUL test for the empty-string branch.
+
+#### Validation
+
+* `pytest tests/test_unit_policy_engine.py -q
+  --override-ini="addopts=" -k
+  "TestRegisterOverridePathTraversalGuard"` → **20 passed**
+  (8 original + 12 new, zero regressions).
+* `pytest tests/test_unit_policy_engine.py
+  tests/test_unit_override_manager_path_guard.py
+  tests/test_unit_federated_policy_thread_safety.py -q
+  --override-ini="addopts="` → **92 passed**.
+* Wider Phase 3/4 regression suite (16 test files,
+  governance+UX+hardening) → **387 passed** (was 375 prior;
+  +12 net, zero regressions).
+* `ruff check` and `ruff format --check` clean on both
+  touched files
+  (`src/thegent/governance/policy_engine.py`,
+  `tests/test_unit_policy_engine.py`).
+* No secrets in the diff (gitleaks scan would pass).
+
+#### Files Touched
+
+* `src/thegent/governance/policy_engine.py` — engine-level
+  guard hardened to match the manager contract (5 explicit
+  rejection shapes + non-string type check); docstring
+  rewritten; ruff-formatted.
+* `tests/test_unit_policy_engine.py` — 12 new tests in
+  `TestRegisterOverridePathTraversalGuard` (4 parametrized
+  NUL/empty + 6 parametrized non-string + 2 manager
+  provenance monkeypatch tests).
+
+#### Resolved Worklog Items
+
+* Unblocked-Next #2 (`PoliCyEngine.register_override` direct
+  test) — closed. The engine guard now covers NUL bytes and
+  empty strings, and direct parametrized tests pin both
+  branches plus provenance (engine guard fires before
+  manager).
+* Unblocked-Next #1 (`cockpit replay --snapshot-format` /
+  `--report-format` shim) — closed in prior commit
+  `aacbff8`. The shim dispatches to `sota replay` whenever
+  `--snapshot-format != "json"` or
+  `--report-format != "text"`, and preserves the cockpit
+  contract (no sota tail line, `--json` produces pure JSON
+  envelope) via the `_render_tail=False` flag.
+
+#### Unblocked Next
+
+* **`tests/test_federated_policy.py` orjson repair** — the
+  pre-existing breakage at lines 242 / 261 (`json.dump(...)`
+  on an `orjson` module that only exposes `dumps`) costs 2
+  regressions in the wider suite under the new env. A
+  one-line fix (`import json as stdjson` plus `stdjson.dump`)
+  would repair them and unblock CI smoke tests that target
+  the full `tests/` tree.
+* **Wider Phase 3/4 cockpit polish** — the
+  `cockpit replay --exit-code-on-cap` /
+  `--snapshot-format` / `--report-format` flags and the
+  `cache_stats()` JSON contract (introduced in the prior
+  commit) have no operator-facing docs yet. A short
+  `docs/ux/cockpit-sota.md` companion that walks an
+  operator through `--json` + `--report-format=junitxml`
+  ingestion would close the docs gap.
+* **Repair the pre-existing 86 test-collection errors** —
+  the wider `tests/` tree is still broken under the
+  current env (was reported as 105 in the prior sprint;
+  re-counted as 86 after `pytest --collect-only`). A
+  dedicated `chore(tests): repair wider regression
+  collection` lane is the obvious next sprint and is the
+  CI-mergeability blocker.
