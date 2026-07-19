@@ -154,6 +154,12 @@ class PolicyEngine:
         use_federation: If True, evaluate the :class:`FederatedPolicyEngine`
             scope rules before the local checks. Off by default for back-compat
             with the existing execution-layer pipeline.
+        default_namespace: Default namespace handed to the
+            :class:`FederatedPolicyEngine` when ``use_federation=True``.
+            Defaults to ``"global"`` (the federated registry's own default)
+            so existing call-sites keep working unchanged. Used by the CLI
+            ``cockpit pre-check --default-policy`` / ``cockpit replay``
+            flags to pin the federated default per-invocation.
         cache_ttl_sec: TTL for the decision cache (default 5 min).
         cache_maxsize: Max entries in the decision cache.
     """
@@ -166,19 +172,24 @@ class PolicyEngine:
         settings: ThegentSettings | None = None,
         *,
         use_federation: bool = False,
+        default_namespace: str = "global",
         cache_ttl_sec: int = 300,
         cache_maxsize: int = 1000,
     ) -> None:
         self.settings = settings or ThegentSettings()
         self.use_federation = use_federation
+        # Carry the configured default namespace so callers (CLI ``cockpit
+        # pre-check --default-policy``, ``cockpit replay``) can plumb the
+        # federated registry's default without having to mutate ``settings``.
+        self.default_namespace = default_namespace
         self.override_manager = OverrideManager(settings=self.settings)
         self.trust_checker = TrustBoundaryChecker(self.settings, cache_ttl_sec=cache_ttl_sec)
         if use_federation:
-            # The settings object does not carry a default namespace; fall
-            # back to ``global`` which is the federated registry's default.
-            self.federated: FederatedPolicyEngine | None = FederatedPolicyEngine(
-                default_namespace=getattr(self.settings, "default_namespace", "global")
-            )
+            # Use the explicit ``default_namespace`` kwarg (rather than the
+            # historical ``getattr(settings, ...)`` fallback) so the CLI can
+            # pin the federated default per-invocation. ``global`` is the
+            # registry's default; we mirror it here for backward compat.
+            self.federated: FederatedPolicyEngine | None = FederatedPolicyEngine(default_namespace=default_namespace)
         else:
             self.federated = None
         # OPT-008: LRU + TTL decision cache (sub-50ms repeated evaluations)
@@ -282,9 +293,7 @@ class PolicyEngine:
         # Reject path-traversal-shaped rule_ids before they reach the
         # override_manager, which interpolates them into filenames.
         if "/" in rule_id or "\\" in rule_id or ".." in rule_id:
-            raise PolicyEngineConfigError(
-                f"rule_id contains path separators or '..': {rule_id!r}"
-            )
+            raise PolicyEngineConfigError(f"rule_id contains path separators or '..': {rule_id!r}")
         with self._lock:
             self.override_manager.apply_override(
                 policy_id=rule_id,
@@ -470,17 +479,14 @@ class PolicyEngine:
             return PolicyDecision(
                 verdict=Verdict.DENY,
                 reason=(
-                    f"confidence {ctx.confidence:.3f} below critical-lane "
-                    f"floor {self.CRITICAL_LANE_CONFIDENCE_MIN}"
+                    f"confidence {ctx.confidence:.3f} below critical-lane floor {self.CRITICAL_LANE_CONFIDENCE_MIN}"
                 ),
                 reason_code=ReasonCode.CRITICAL_LANE_LOW_CONFIDENCE,
                 rule_id="local.critical.confidence",
             )
         return None
 
-    def _check_unknown_agent_production(
-        self, ctx: PolicyContext, is_unknown: bool
-    ) -> PolicyDecision | None:
+    def _check_unknown_agent_production(self, ctx: PolicyContext, is_unknown: bool) -> PolicyDecision | None:
         if ctx.environment == "production" and is_unknown:
             return PolicyDecision(
                 verdict=Verdict.DENY,
@@ -490,9 +496,7 @@ class PolicyEngine:
             )
         return None
 
-    def _check_unknown_agent_critical(
-        self, ctx: PolicyContext, is_unknown: bool
-    ) -> PolicyDecision | None:
+    def _check_unknown_agent_critical(self, ctx: PolicyContext, is_unknown: bool) -> PolicyDecision | None:
         if ctx.lane == "critical" and is_unknown:
             return PolicyDecision(
                 verdict=Verdict.DENY,
@@ -512,9 +516,7 @@ class PolicyEngine:
             )
         return None
 
-    def _check_production_low_confidence(
-        self, ctx: PolicyContext, threshold: float
-    ) -> PolicyDecision | None:
+    def _check_production_low_confidence(self, ctx: PolicyContext, threshold: float) -> PolicyDecision | None:
         if ctx.environment == "production" and ctx.confidence is not None and ctx.confidence < threshold:
             return PolicyDecision(
                 verdict=Verdict.DENY,
@@ -527,9 +529,7 @@ class PolicyEngine:
     def _evaluate_local(self, ctx: PolicyContext) -> PolicyDecision:
         agent_or_model = (ctx.model or ctx.agent or "").lower()
         is_unknown = agent_or_model in ("", "unknown", "untrusted")
-        threshold = float(
-            getattr(self.settings, "trust_score_threshold", self.PRODUCTION_CONFIDENCE_MIN_DEFAULT)
-        )
+        threshold = float(getattr(self.settings, "trust_score_threshold", self.PRODUCTION_CONFIDENCE_MIN_DEFAULT))
         checks: list[PolicyDecision | None] = [
             self._check_critical_low_confidence(ctx),
             self._check_unknown_agent_production(ctx, is_unknown),
@@ -547,9 +547,7 @@ class PolicyEngine:
             rule_id="local.default.allow",
         )
 
-    def _apply_override(
-        self, ctx: PolicyContext, decision: PolicyDecision, *, rule_id: str | None
-    ) -> PolicyDecision:
+    def _apply_override(self, ctx: PolicyContext, decision: PolicyDecision, *, rule_id: str | None) -> PolicyDecision:
         """Apply a TTL-based override if one is active for ``rule_id``.
 
         WP-3003: overrides carry a reason and operator; they are logged

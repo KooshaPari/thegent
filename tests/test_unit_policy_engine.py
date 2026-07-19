@@ -289,3 +289,45 @@ class TestHelper:
         d = evaluate_pre_check(agent="cursor", environment="production", confidence=0.95)
         assert isinstance(d, PolicyDecision)
         assert d.verdict in (Verdict.ALLOW, Verdict.DENY, Verdict.WARN)
+
+
+# ---------------------------------------------------------------------------
+# Default-namespace kwarg (Lane 2 federation contract)
+# ---------------------------------------------------------------------------
+
+
+class TestDefaultNamespaceKwarg:
+    """``PolicyEngine(default_namespace=...)`` plumbs into the federated engine.
+
+    Phase 3/4 hardening lane, second "Unblocked Next" item: the CLI
+    ``cockpit pre-check --default-policy <name>`` flag must propagate to
+    ``FederatedPolicyEngine.default_namespace``. The default remains
+    ``"global"`` so existing call-sites (and ``cockpit replay``) keep
+    working unchanged.
+    """
+
+    def test_default_namespace_kwarg_propagates_to_federated_engine(self, settings: ThegentSettings) -> None:
+        """Explicit ``default_namespace="acme"`` flows into the federated engine."""
+        engine = PolicyEngine(settings=settings, use_federation=True, default_namespace="acme")
+        assert engine.federated is not None
+        assert engine.federated.default_namespace == "acme"
+        assert engine.default_namespace == "acme"
+
+    def test_default_namespace_default_is_global(self, settings: ThegentSettings) -> None:
+        """The default ``"global"`` is preserved for backward compatibility."""
+        engine = PolicyEngine(settings=settings, use_federation=True)
+        assert engine.federated is not None
+        assert engine.federated.default_namespace == "global"
+        assert engine.default_namespace == "global"
+
+    def test_default_namespace_without_federation_still_records_value(self, settings: ThegentSettings) -> None:
+        """``default_namespace`` is exposed on the engine even when federation is off."""
+        engine = PolicyEngine(settings=settings, use_federation=False, default_namespace="team-x")
+        assert engine.federated is None
+        assert engine.default_namespace == "team-x"
+
+    def test_default_namespace_explicit_global_still_propagates(self, settings: ThegentSettings) -> None:
+        """Passing ``"global"`` explicitly is equivalent to the implicit default."""
+        engine = PolicyEngine(settings=settings, use_federation=True, default_namespace="global")
+        assert engine.federated is not None
+        assert engine.federated.default_namespace == "global"

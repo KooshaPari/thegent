@@ -1,7 +1,7 @@
 """CLI surface for the operator cockpit (WP-4001), traffic KPIs (WP-Y7),
 and policy pre-checks (WP-3001).
 
-Three Typer sub-commands expose the Phase 3/4 governance+UX lane to
+Four Typer sub-commands expose the Phase 3/4 governance+UX lane to
 operators running outside the TUI:
 
 * ``thegent cockpit render`` — render the 4-pane operator cockpit for a
@@ -11,6 +11,10 @@ operators running outside the TUI:
 * ``thegent cockpit pre-check`` — evaluate a :class:`PolicyContext` against
   the governance :class:`PolicyEngine` and emit the resulting
   :class:`PolicyDecision` as either human-readable text or JSON.
+* ``thegent cockpit replay`` — replay a corpus of ``PolicyContext`` JSONs
+  through pre-check and validate the resulting decisions against an
+  expected snapshot line-by-line (Phase 3/4 SOTA hardening lane, third
+  "Unblocked Next" item from ``WORKLOG.md``).
 
 Each subcommand is intentionally side-effect-free: rendering does not
 mutate cockpit state, and ``pre-check`` defaults to ``--dry-run`` so
@@ -24,6 +28,7 @@ contract.
 from __future__ import annotations
 
 import json
+import time
 import sys
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -32,12 +37,14 @@ import typer
 from rich.console import Console
 
 from .cockpit import (
+    DecisionNotice,
     OperatorCockpit,
     OverrideEvent,
     RunEvent,
     RunState,
     render_cockpit,
 )
+from .decision_audit import DecisionAuditAppender
 from .kpis.traffic import TrafficDashboard, TrafficEvent, render_traffic
 
 console = Console()
@@ -176,7 +183,27 @@ def cockpit_pre_check(
     environment: str = typer.Option("development", "--env", help="Environment: development|staging|production"),
     confidence: Optional[float] = typer.Option(None, "--confidence", help="Confidence 0..1"),
     prompt: str = typer.Option("", "--prompt", help="Prompt (hashed into the cache key)"),
-    namespace: str = typer.Option("global", "--namespace", help="Federated policy namespace"),
+    namespace: str = typer.Option(
+        "global",
+        "--namespace",
+        help=(
+            "Federated policy namespace. With ``--batch``, this value pins every "
+            "corpus entry's namespace unless the entry explicitly carries its own "
+            "non-empty ``namespace``. Without ``--batch``, it overrides the "
+            "single-context ``PolicyContext.namespace``."
+        ),
+    ),
+    default_policy: Optional[str] = typer.Option(
+        None,
+        "--default-policy",
+        help=(
+            "Enable federated policy lookup with this default namespace. Passed "
+            "through to ``PolicyEngine(default_namespace=...)`` on ``--commit``; "
+            "ignored on the one-shot ``--dry-run`` path. When ``--batch`` is "
+            "used and ``--commit`` is set, this also auto-enables "
+            "``use_federation=True`` on the underlying engine."
+        ),
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emit JSON decision"),
     dry_run: bool = typer.Option(True, "--dry-run/--commit", help="Default dry-run; pass --commit to cache"),
     batch: Optional[Path] = typer.Option(
@@ -202,6 +229,11 @@ def cockpit_pre_check(
     files (each a list) and emits one combined decision log. The
     batch mode still honors ``--dry-run`` / ``--commit`` semantics:
     a deny on any item exits ``3`` after the full batch drains.
+
+    ``--namespace <name>`` and ``--default-policy <name>`` are the
+    Lane 2 federation-namespace pin: they let SOTA replay tooling
+    force every corpus entry to live in (and the engine to default to)
+    a single namespace without rewriting every JSON entry.
     """
     try:
         # Import lazily so the CLI does not pull the full governance
@@ -220,14 +252,26 @@ def cockpit_pre_check(
         # Batch mode takes precedence over the single-context path.
         # Both share the same dry-run / commit semantics.
         if batch is not None:
+            # ``--default-policy`` auto-enables federation on --commit so the
+            # caller does not have to know about ``use_federation`` to get
+            # the federated default-namespace pin to take effect.
+            use_federation = default_policy is not None
             exit_code = _run_pre_check_batch(
                 batch=batch,
-                engine_factory=lambda: PolicyEngine(),
+                engine_factory=lambda: PolicyEngine(
+                    use_federation=use_federation,
+                    default_namespace=default_policy or "global",
+                ),
                 use_engine=not dry_run,
                 appender_factory=lambda: DecisionAuditAppender(audit_path=audit_path),
-                persist_audit=audit_path is not None or True,
+                # Only persist when ``--audit-path`` is explicitly supplied.
+                # The historical ``or True`` accidentally wrote to the default
+                # ``~/.thegent/cockpit_decisions.jsonl`` even when the operator
+                # did not opt in — a SOTA replay-tooling footgun (P0 audit).
+                persist_audit=audit_path is not None,
                 append_audit=audit_append,
                 json_output=json_output,
+                namespace_override=namespace,
             )
             raise typer.Exit(exit_code)
 
@@ -242,11 +286,17 @@ def cockpit_pre_check(
         )
         # Use the one-shot helper for dry-run; only build a long-lived
         # PolicyEngine when the caller opts in. This keeps the read path
-        # cheap for SOTA replay tooling.
+        # cheap for SOTA replay tooling. ``--default-policy`` flows into
+        # the engine as both ``use_federation=True`` (when set) and the
+        # ``default_namespace`` kwarg; on the one-shot dry-run path it is
+        # a no-op (the federation lookup never fires).
         if dry_run:
             decision = evaluate_pre_check(ctx)
         else:
-            engine = PolicyEngine()
+            engine = PolicyEngine(
+                use_federation=default_policy is not None,
+                default_namespace=default_policy or "global",
+            )
             decision = engine.evaluate(ctx)
         if json_output:
             typer.echo(json.dumps(decision.to_dict(), indent=2, sort_keys=True))
@@ -274,6 +324,7 @@ def _run_pre_check_batch(
     persist_audit: bool,
     append_audit: bool,
     json_output: bool,
+    namespace_override: Optional[str] = None,
 ) -> int:
     """Replay a corpus of :class:`PolicyContext` JSONs through pre-check.
 
@@ -286,19 +337,23 @@ def _run_pre_check_batch(
 
     * a JSON file (list of context dicts, or a single context dict)
     * a directory containing ``*.json`` files (each: list or single dict)
-    """
-    from ..governance.policy_engine import (
-        PolicyContext,
-        evaluate_pre_check,
-    )
-    from .cockpit import DecisionNotice
 
-    contexts = _load_pre_check_corpus(batch)
+    ``namespace_override`` pins every entry's ``namespace`` to the given
+    value unless the entry already carries an explicit namespace (the
+    Lane 2 federation contract). Both ``pre-check`` and ``replay`` route
+    through this argument so they cannot drift apart on namespace
+    semantics.
+    """
+    contexts, decisions, notices = _build_batch_decision_log(
+        batch=batch,
+        engine_factory=engine_factory,
+        use_engine=use_engine,
+        namespace_override=namespace_override,
+    )
     if not contexts:
         err_console.print(f"[yellow]pre-check batch is empty:[/yellow] {batch}")
         return 0
 
-    engine = engine_factory() if use_engine else None
     appender = appender_factory() if persist_audit else None
     if appender is not None and not append_audit:
         # Overwrite the audit file on replay so SOTA runs are
@@ -307,17 +362,64 @@ def _run_pre_check_batch(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("", encoding="utf-8")
 
+    any_deny = any(d.verdict.value == "deny" for d in decisions)
+    if json_output:
+        for d in decisions:
+            typer.echo(json.dumps(d.to_dict(), indent=2, sort_keys=True))
+
+    if appender is not None and notices:
+        appender.record_many(notices)
+
+    summary = (
+        f"pre-check batch: items={len(notices)} deny={any_deny} audit={appender.audit_path() if appender else '-'}"
+    )
+    typer.echo(summary)
+    return 3 if any_deny else 0
+
+
+def _build_batch_decision_log(
+    *,
+    batch: Path,
+    engine_factory: Callable[[], Any],
+    use_engine: bool,
+    namespace_override: Optional[str] = None,
+) -> tuple[list[Any], list[Any], list[DecisionNotice]]:
+    """Shared batch pipeline used by ``pre-check --batch`` and ``replay``.
+
+    Returns a 3-tuple of ``(contexts, decisions, notices)`` after:
+
+    1. Loading the corpus via :func:`_load_pre_check_corpus` (which
+       applies ``namespace_override`` if supplied — Lane 2 federation
+       contract).
+    2. Running each context through either the long-lived
+       :class:`PolicyEngine` (``use_engine=True``) or the one-shot
+       :func:`evaluate_pre_check` helper, building a
+       :class:`DecisionNotice` for every verdict so the audit appender
+       gets a uniform stream regardless of the underlying engine.
+
+    This is the single point of truth for the load+evaluate+notice
+    pipeline so ``pre-check`` and ``replay`` cannot drift apart on
+    cache keys, return shape, or notice schema (Phase 3/4 hardening
+    lane, third "Unblocked Next" item). The function does NOT touch
+    the audit appender; that's the caller's responsibility (so both
+    ``pre-check`` and ``replay`` can persist the same notice stream
+    via their own ``DecisionAuditAppender`` factory).
+    """
+    from ..governance.policy_engine import evaluate_pre_check
+
+    contexts = _load_pre_check_corpus(batch, namespace_override=namespace_override)
+    if not contexts:
+        return [], [], []
+
+    engine = engine_factory() if use_engine else None
+    decisions: list[Any] = []
     notices: list[DecisionNotice] = []
-    any_deny = False
     for ctx in contexts:
         if use_engine and engine is not None:
             decision = engine.evaluate(ctx)
         else:
             decision = evaluate_pre_check(ctx)
-        if decision.verdict.value == "deny":
-            any_deny = True
-        # Always feed the audit pipeline so SOTA replay tooling sees
-        # the full decision stream regardless of verdict.
+        decisions.append(decision)
         notice = DecisionNotice(
             verdict=decision.verdict.value,
             reason_code=decision.reason_code.value,
@@ -328,27 +430,26 @@ def _run_pre_check_batch(
             reason=decision.reason,
         )
         notices.append(notice)
-        if json_output:
-            typer.echo(json.dumps(decision.to_dict(), indent=2, sort_keys=True))
-
-    if appender is not None and notices:
-        # Validate-then-append (matches ``record_many`` semantics).
-        appender.record_many(notices)
-
-    summary = (
-        f"pre-check batch: items={len(notices)} deny={any_deny} audit={appender.audit_path() if appender else '-'}"
-    )
-    typer.echo(summary)
-    return 3 if any_deny else 0
+    return contexts, decisions, notices
 
 
-def _load_pre_check_corpus(path: Path) -> list[Any]:
+def _load_pre_check_corpus(
+    path: Path,
+    namespace_override: Optional[str] = None,
+) -> list[Any]:
     """Load a ``--batch`` input into a flat list of ``PolicyContext``.
 
     Accepts:
         * a JSON file containing a list of context dicts
         * a JSON file containing a single context dict
         * a directory of ``*.json`` files, each shaped as above
+
+    ``namespace_override`` pins every entry's ``namespace`` to the
+    given value unless the entry already carries an explicit non-empty
+    namespace. This is the Lane 2 federation-namespace contract so
+    a CLI invocation like ``pre-check --namespace team-a`` forces every
+    corpus entry to live in that namespace without requiring callers
+    to rewrite every JSON.
 
     Empty / unreadable inputs raise ``ValueError`` with a useful
     message so the CLI surfaces it before draining the audit pipeline.
@@ -361,13 +462,18 @@ def _load_pre_check_corpus(path: Path) -> list[Any]:
     def _coerce(entry: Any, src: Path) -> PolicyContext:
         if not isinstance(entry, dict):
             raise ValueError(f"batch {src} entries must be objects, got {type(entry).__name__}: {entry!r}")
+        ns = str(entry.get("namespace", ""))
+        if namespace_override is not None and (not ns or ns == "global"):
+            ns = namespace_override
+        elif not ns:
+            ns = "global"
         return PolicyContext(
             agent=str(entry.get("agent", "")),
             model=str(entry.get("model", "")),
             lane=str(entry.get("lane", "standard")),
             confidence=entry.get("confidence"),
             environment=str(entry.get("environment", "development")),
-            namespace=str(entry.get("namespace", "global")),
+            namespace=ns,
             prompt=str(entry.get("prompt", "")),
         )
 
@@ -386,6 +492,312 @@ def _load_pre_check_corpus(path: Path) -> list[Any]:
                 out.append(_coerce(raw, child))
         return out
     raise ValueError(f"--batch path is neither file nor directory: {path}")
+
+
+# ---------------------------------------------------------------------------
+# cockpit replay (Phase 3/4 SOTA snapshot validator)
+# ---------------------------------------------------------------------------
+
+
+# Fields that must match for a snapshot entry to count as equal to the
+# engine's ``PolicyDecision.to_dict()`` output. ``cached`` and
+# ``evaluated_at`` are explicitly excluded because they're
+# runtime-dependent (the replay may run on a different wall clock than
+# the snapshot's author), and a leading/trailing whitespace difference
+# in ``reason`` is tolerated below.
+_REPLAY_COMPARE_FIELDS: tuple[str, ...] = (
+    "verdict",
+    "reason_code",
+    "rule_id",
+    "override_applied",
+)
+
+
+def _load_replay_snapshot(path: Path) -> list[dict[str, Any]]:
+    """Load the ``--compare`` snapshot into a list of decision dicts.
+
+    Accepts two top-level shapes:
+
+    * a JSON list of ``PolicyDecision``-shaped dicts, or
+    * a JSON object with a ``"decisions"`` key holding that same list.
+
+    Anything else surfaces a ``ValueError`` so the CLI can exit ``1``
+    with a useful message instead of crashing mid-diff.
+    """
+    raw: Any = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(raw, list):
+        snapshot = raw
+    elif isinstance(raw, dict) and isinstance(raw.get("decisions"), list):
+        snapshot = raw["decisions"]
+    else:
+        raise ValueError(
+            "compare snapshot must be a list or an object with a 'decisions' key, "
+            f"got {type(raw).__name__}" + (f" with keys {list(raw.keys())}" if isinstance(raw, dict) else "")
+        )
+    return snapshot
+
+
+def _compare_decision(
+    expected: dict[str, Any],
+    actual: dict[str, Any],
+) -> list[str]:
+    """Return the list of field names that disagree between two decision dicts.
+
+    Whitespace-only differences in ``reason`` are tolerated so author
+    edits (markdown line breaks, trailing newlines) don't false-positive.
+    All other fields use strict equality.
+    """
+    diffs: list[str] = []
+    for field in _REPLAY_COMPARE_FIELDS:
+        exp_val = expected.get(field)
+        act_val = actual.get(field)
+        if field == "rule_id":
+            # ``None`` and ``null`` (JSON's missing) are equivalent here.
+            if (exp_val is None or exp_val == "") and (act_val is None or act_val == ""):
+                continue
+        if exp_val != act_val:
+            diffs.append(field)
+    # Whitespace-tolerant reason comparison.
+    exp_reason = str(expected.get("reason", "")).strip()
+    act_reason = str(actual.get("reason", "")).strip()
+    if exp_reason != act_reason:
+        diffs.append("reason")
+    return diffs
+
+
+def _format_mismatch(
+    idx: int,
+    expected: Optional[dict[str, Any]],
+    actual: Optional[dict[str, Any]],
+    diff_fields: list[str],
+) -> str:
+    """Stable text format for one mismatch row: ``mismatch[i]: ...``.
+
+    When a field is in the diff list we render ``expected=X actual=Y``
+    for that field so the operator sees the exact disagreement.
+    """
+    parts: list[str] = []
+    if expected is None and actual is not None:
+        return f"mismatch[{idx}]: produced entry has no matching expected entry"
+    if actual is None and expected is not None:
+        return f"mismatch[{idx}]: expected entry has no matching produced entry"
+    if expected is None or actual is None:  # pragma: no cover - defensive
+        return f"mismatch[{idx}]: <unknown diff>"
+    for field in diff_fields:
+        exp_val = expected.get(field)
+        act_val = actual.get(field)
+        parts.append(f"{field} expected={exp_val} actual={act_val}")
+    if not parts:
+        # Field-level compare reported nothing, but the row is here —
+        # fall back to a generic message so the report is never empty.
+        parts.append("snapshot differs but no tracked field mismatched")
+    return f"mismatch[{idx}]: " + " ".join(parts)
+
+
+@app.command(
+    "replay",
+    help=(
+        "Replay a corpus against an expected PolicyDecision snapshot and report "
+        "line-by-line mismatches (Phase 3/4 hardening lane, third Unblocked Next item)."
+    ),
+)
+def cockpit_replay(
+    batch: Path = typer.Option(
+        ...,
+        "--batch",
+        help="Corpus of PolicyContext JSONs (file or dir of *.json) — same as pre-check --batch.",
+    ),
+    compare: Path = typer.Option(
+        ...,
+        "--compare",
+        help=(
+            "Expected snapshot JSON: either a list of PolicyDecision-shaped dicts "
+            "or an object with a ``decisions`` key holding the same list."
+        ),
+    ),
+    audit_path: Optional[Path] = typer.Option(
+        None,
+        "--audit-path",
+        help="Persist every replay decision to this JSONL file (defaults to cockpit appender's path).",
+    ),
+    audit_append: bool = typer.Option(
+        False,
+        "--audit-append/--audit-overwrite",
+        help="Append to the audit file (default: overwrite; useful for chained replays).",
+    ),
+    dry_run: bool = typer.Option(
+        True,
+        "--dry-run/--commit",
+        help="Default dry-run; pass --commit to cache decisions in the PolicyEngine.",
+    ),
+    namespace: str = typer.Option(
+        "global",
+        "--namespace",
+        help="Federated policy namespace (pinned unless an entry declares its own).",
+    ),
+    default_policy: Optional[str] = typer.Option(
+        None,
+        "--default-policy",
+        help="Enable federated policy lookup with this default namespace on --commit.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit a structured {matched, mismatches, decisions, audit} object instead of text.",
+    ),
+) -> None:
+    """Replay ``--batch`` through pre-check and validate against ``--compare``.
+
+    Exit codes:
+
+    * ``0`` — every decision matches the expected snapshot.
+    * ``4`` — at least one mismatch (mirrors the exit-code-3 convention
+      for ``deny`` but kept distinct so ``pre-check`` and ``replay`` can
+      signal different failure modes to shell pipelines).
+    * ``1`` — bad inputs (missing files, malformed snapshot, etc.).
+    """
+    try:
+        from ..governance.policy_engine import PolicyEngine
+    except Exception as exc:  # pragma: no cover - import guard
+        err_console.print(f"[red]governance unavailable:[/red] {exc}")
+        raise typer.Exit(2) from exc
+
+    try:
+        if not batch.exists():
+            err_console.print(f"[red]replay failed:[/red] batch path not found: {batch}")
+            raise typer.Exit(1)
+        if not compare.exists():
+            err_console.print(f"[red]replay failed:[/red] compare path not found: {compare}")
+            raise typer.Exit(1)
+        try:
+            expected_snapshot = _load_replay_snapshot(compare)
+        except ValueError as exc:
+            err_console.print(f"[red]replay failed:[/red] {exc}")
+            raise typer.Exit(1) from exc
+        except json.JSONDecodeError as exc:
+            err_console.print(f"[red]replay failed:[/red] compare file is not valid JSON: {exc}")
+            raise typer.Exit(1) from exc
+
+        use_federation = default_policy is not None
+        contexts, decisions, notices = _build_batch_decision_log(
+            batch=batch,
+            engine_factory=lambda: PolicyEngine(
+                use_federation=use_federation,
+                default_namespace=default_policy or "global",
+            ),
+            use_engine=not dry_run,
+            namespace_override=namespace,
+        )
+        if not contexts:
+            err_console.print(f"[yellow]replay batch is empty:[/yellow] {batch}")
+            # An empty corpus against a non-empty snapshot is a mismatch;
+            # against an empty snapshot it is a match. Either way, exit 0
+            # since there is no decision to validate.
+            _emit_replay_summary(
+                items=0,
+                matched=not expected_snapshot,
+                mismatches=[],
+                decisions=[],
+                audit_path=str(audit_path) if audit_path else None,
+                json_output=json_output,
+            )
+            raise typer.Exit(0)
+
+        produced = [d.to_dict() for d in decisions]
+        mismatches: list[dict[str, Any]] = []
+        max_len = max(len(produced), len(expected_snapshot))
+        for idx in range(max_len):
+            exp = expected_snapshot[idx] if idx < len(expected_snapshot) else None
+            act = produced[idx] if idx < len(produced) else None
+            if exp is None or act is None:
+                mismatches.append(
+                    {
+                        "index": idx,
+                        "fields": ["length"],
+                        "expected": exp,
+                        "actual": act,
+                        "text": (f"mismatch[{idx}]: length expected={len(expected_snapshot)} actual={len(produced)}"),
+                    }
+                )
+                continue
+            diff_fields = _compare_decision(exp, act)
+            if diff_fields:
+                mismatches.append(
+                    {
+                        "index": idx,
+                        "fields": diff_fields,
+                        "expected": exp,
+                        "actual": act,
+                        "text": _format_mismatch(idx, exp, act, diff_fields),
+                    }
+                )
+
+        # Persist decisions via the same appender pattern as pre-check
+        # so the JSONL shape stays identical (the spec's "replay
+        # writes a JSONL that matches the per-line appender output").
+        audit_str: Optional[str] = None
+        if audit_path is not None:
+            appender = DecisionAuditAppender(audit_path=audit_path)
+            if not audit_append:
+                path = appender.audit_path()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("", encoding="utf-8")
+            appender.record_many(notices)
+            audit_str = str(appender.audit_path())
+
+        matched = not mismatches
+        _emit_replay_summary(
+            items=len(produced),
+            matched=matched,
+            mismatches=mismatches,
+            decisions=produced,
+            audit_path=audit_str,
+            json_output=json_output,
+        )
+        if not matched:
+            raise typer.Exit(4)
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        err_console.print(f"[red]replay failed:[/red] {exc}")
+        raise typer.Exit(1) from exc
+
+
+def _emit_replay_summary(
+    *,
+    items: int,
+    matched: bool,
+    mismatches: list[dict[str, Any]],
+    decisions: list[dict[str, Any]],
+    audit_path: Optional[str],
+    json_output: bool,
+) -> None:
+    """Render the replay outcome (text or JSON) and write to stdout."""
+    if json_output:
+        typer.echo(
+            json.dumps(
+                {
+                    "matched": matched,
+                    "mismatches": [
+                        {
+                            "index": m["index"],
+                            "fields": m["fields"],
+                            "expected": m["expected"],
+                            "actual": m["actual"],
+                        }
+                        for m in mismatches
+                    ],
+                    "decisions": decisions,
+                    "audit": audit_path,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    typer.echo(f"replay: batch=? compare=? items={items} matched={matched} mismatches={len(mismatches)}")
+    for m in mismatches:
+        typer.echo(m["text"])
 
 
 # ---------------------------------------------------------------------------
@@ -419,6 +831,164 @@ def cockpit_audit_tail(
     except Exception as exc:
         err_console.print(f"[red]audit tail failed:[/red] {exc}")
         raise typer.Exit(1) from exc
+
+
+@audit_app.command(
+    "decision-tail",
+    help="Live-tail the JSONL decision audit log (--follow polls and emits new lines).",
+)
+def cockpit_audit_decision_tail(
+    follow: bool = typer.Option(
+        False,
+        "--follow",
+        "-f",
+        help="Poll the file and emit new lines as they appear (SIGINT exits cleanly).",
+    ),
+    interval: float = typer.Option(
+        1.0,
+        "--interval",
+        "-i",
+        help="Poll cadence in seconds when --follow is set.",
+    ),
+    audit_path: Optional[Path] = typer.Option(
+        None,
+        "--path",
+        help="Override the default ~/.thegent/cockpit_decisions.jsonl",
+    ),
+    max_events: int = typer.Option(
+        0,
+        "--max-events",
+        help="Stop after this many events (0 = unbounded). Useful for CI smoke tests.",
+    ),
+) -> None:
+    """Single-shot or live-tail the JSONL decision audit log.
+
+    Without ``--follow`` this is a thin wrapper over
+    :meth:`DecisionAuditAppender.tail_events` that prints the most
+    recent entries (default 20). With ``--follow`` the command polls
+    the JSONL file every ``--interval`` seconds and emits each new
+    line as it appears; ``SIGINT`` exits cleanly with code ``0`` so
+    operator ``tail -f`` style workflows stay ergonomic.
+
+    ``--max-events`` caps the total number of events emitted
+    (including the initial backlog on entry) and is intended for
+    CI / smoke tests that need to deterministically bound the run.
+    """
+    from ..ux.decision_audit import DEFAULT_TAIL_INTERVAL_S, DecisionAuditAppender
+
+    # Defensive: when ``--follow`` is set, fall back to the
+    # appender's canonical interval so operator UIs never see a
+    # 0s tight loop if the caller passes ``--interval 0``.
+    interval_s = float(interval) if interval > 0 else DEFAULT_TAIL_INTERVAL_S
+    cap = int(max_events) if max_events and max_events > 0 else 0
+
+    try:
+        appender = DecisionAuditAppender(audit_path=audit_path)
+    except Exception as exc:
+        err_console.print(f"[red]audit decision-tail failed:[/red] {exc}")
+        raise typer.Exit(1) from exc
+
+    if not follow:
+        # Single-shot path: identical semantics to ``audit tail`` so
+        # operators can switch between the two without surprises.
+        try:
+            n = 20 if cap == 0 else cap
+            events = appender.tail_events(n=n)
+            for ev in events:
+                typer.echo(json.dumps(ev, sort_keys=True))
+        except Exception as exc:
+            err_console.print(f"[red]audit decision-tail failed:[/red] {exc}")
+            raise typer.Exit(1) from exc
+        return
+
+    try:
+        _follow_audit_log(appender, interval_s=interval_s, max_events=cap)
+    except KeyboardInterrupt:
+        # SIGINT during a live tail is the operator pressing Ctrl-C;
+        # exit cleanly with code 0 so shells / shell pipelines don't
+        # treat it as an error.
+        raise typer.Exit(0) from None
+
+
+def _follow_audit_log(
+    appender: "DecisionAuditAppender",
+    *,
+    interval_s: float,
+    max_events: int,
+) -> int:
+    """Poll the appender's JSONL file and emit each new line as it appears.
+
+    Tracks a **byte offset** (not a line count) so we never re-emit
+    lines that were already seen on entry. Handles truncation by
+    re-anchoring to ``0`` whenever the file shrinks below the saved
+    offset (so log rotation / ``> file.jsonl`` workflows behave).
+
+    Args:
+        appender: A :class:`DecisionAuditAppender` whose
+            :meth:`audit_path` points at the JSONL to watch.
+        interval_s: Seconds to sleep between polls.
+        max_events: Optional cap on the number of events to emit
+            (``0`` = unbounded). When the cap is hit the helper
+            returns cleanly.
+
+    Returns:
+        The total number of events emitted.
+
+    Raises:
+        KeyboardInterrupt: Re-raised so callers can map SIGINT to a
+            clean exit code.
+    """
+    path = appender.audit_path()
+    # Make sure the parent directory exists; the appender does this on
+    # the first record, but a fresh follow on a never-written log still
+    # needs somewhere to land.
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Seed offset with the file's current size so we don't re-emit the
+    # existing backlog (operators who want the backlog should call
+    # ``cockpit audit tail`` first).
+    offset = path.stat().st_size if path.exists() else 0
+    emitted = 0
+    # ``max_events <= 0`` means unbounded.
+    cap = max_events if max_events and max_events > 0 else 0
+    # ``interval_s`` must be > 0 to avoid a tight loop on a typo.
+    sleep_s = max(interval_s, 0.01)
+
+    while True:
+        try:
+            current_size = path.stat().st_size
+        except FileNotFoundError:
+            # File momentarily missing (rotation, etc.); back off and
+            # retry on the next tick.
+            time.sleep(sleep_s)
+            continue
+
+        if current_size < offset:
+            # File was truncated / rotated; re-anchor to the start so
+            # we pick up whatever the writer put in its place.
+            offset = 0
+
+        if current_size > offset:
+            with path.open("r", encoding="utf-8") as fh:
+                fh.seek(offset)
+                chunk = fh.read(current_size - offset)
+            # Only advance the offset after a successful read so a
+            # transient IO error doesn't silently drop lines.
+            offset = current_size
+            for raw_line in chunk.splitlines():
+                line = raw_line.strip()
+                if not line:
+                    continue
+                typer.echo(line)
+                emitted += 1
+                if cap and emitted >= cap:
+                    return emitted
+
+        if cap and emitted >= cap:
+            return emitted
+        # ``sleep`` is interruptible so SIGINT bubbles up as
+        # ``KeyboardInterrupt`` promptly.
+        time.sleep(sleep_s)
 
 
 app.add_typer(audit_app, name="audit")

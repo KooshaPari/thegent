@@ -591,3 +591,155 @@ self-contained function that's covered by direct unit tests.
   `pre-check --batch` and a follow-up `--compare snapshot.json`
   so SOTA tooling can validate a run against an expected
   decision log line-by-line.
+
+### Phase 3/4 Continuation — 2026-07-18 (Decision Tail + Federation Pin + Replay)
+
+Closed all three "Unblocked Next" items in one commit, plus a P0
+audit-driven hardening sweep and a docstring P1 fix.
+
+#### 1. `cockpit audit decision-tail` (live follow mode)
+
+`thegent.ux.cli_cockpit.cockpit_audit_decision_tail` adds a
+new Typer sub-command under the existing `cockpit audit` Typer
+app so operators can stream the JSONL decision log live:
+
+* `--follow / -f` — polls the file at `--interval` and emits
+  new lines as they appear. Handles truncation (file size
+  shrinks below the saved offset → re-anchor to 0) and
+  KeyboardInterrupt (`typer.Exit(0)`).
+* `--interval / -i` — poll cadence, defaults to
+  `DecisionAuditAppender.DEFAULT_TAIL_INTERVAL_S` (1.0s).
+* `--path` — same default as `cockpit audit tail`
+  (`~/.thegent/cockpit_decisions.jsonl`).
+* `--max-events` — optional cap on total events emitted
+  (useful for CI / smoke tests).
+
+Implementation is a small helper
+`_follow_audit_log(appender, interval_s, max_events)` that
+tracks **byte offset** (not line count), sleeps between polls,
+and returns the total events emitted. The single-shot path
+(no `--follow`) reuses `appender.tail_events(n=...)` so the
+existing `cockpit audit tail` contract is unchanged.
+
+#### 2. `cockpit pre-check --namespace` / `--default-policy`
+
+Federation pin for SOTA replay tooling:
+
+* `--namespace <name>` — pins every corpus entry's
+  `namespace` field unless the entry explicitly carries its
+  own non-empty `namespace`. Single-context path overrides
+  `PolicyContext.namespace` directly.
+* `--default-policy <name>` — plumbs into the engine via a new
+  `PolicyEngine(default_namespace=...)` kwarg, which flows
+  into `FederatedPolicyEngine(default_namespace=...)` when
+  `use_federation=True`. Auto-enables federation on `--commit`
+  so the operator does not have to know about
+  `use_federation` to get the federated default-namespace pin
+  to take effect.
+
+The `PolicyEngine.__init__` extension is backwards-compatible
+(default is `"global"`).
+
+#### 3. `cockpit replay` (compare snapshot)
+
+New top-level sub-command:
+
+```
+thegent cockpit replay --batch <corpus> --compare <snapshot> [--audit-path <p>] [--dry-run/--commit] [--namespace <ns>] [--default-policy <ns>] [--json]
+```
+
+* Runs the batch through `evaluate_pre_check` (or a real
+  engine on `--commit`).
+* Compares each resulting `PolicyDecision.to_dict()` against
+  the corresponding expected entry by ordinal index.
+* Match = `verdict` + `reason_code` + `rule_id` +
+  `override_applied` all equal. `cached` and `evaluated_at`
+  are intentionally **not** compared (runtime-dependent).
+* `reason` is compared but tolerates leading/trailing
+  whitespace.
+* Length mismatches are structural mismatches.
+* Per-line diff report for every mismatch
+  (`mismatch[i]: verdict expected=X actual=Y`).
+* Exit codes: `0` match, `4` mismatch, `1` bad input,
+  `3` deny (matches the existing pre-check convention).
+* Snapshot shape variants accepted: list-of-dicts or
+  `{decisions: [...]}`.
+
+Lane 3 factored out `_build_batch_decision_log` so `pre-check
+--batch` and `replay` share the audit-pipe wiring — no
+duplication.
+
+#### 4. SOTA audit sweep (P0 + P1)
+
+The parallel SOTA audit agent flagged two P0/P1 issues that
+this commit also closes:
+
+* **P0 — `cli_cockpit.py:267`**: replaced `persist_audit=
+  audit_path is not None or True` (which silently wrote to
+  the default `~/.thegent/cockpit_decisions.jsonl` even when
+  the operator did not pass `--audit-path`) with the
+  correctly-guarded `persist_audit=audit_path is not None`.
+* **P1 — `cockpit.py:766` docstring drift**: the
+  `_render_decisions_pane` docstring referenced the
+  nonexistent `MAX_DECISION_NOTICES` constant. Added the
+  constant (deque maxlen=64) and made the deque
+  `default_factory` reference it so the docstring and code
+  agree.
+
+The audit also recommended:
+
+* A `threading.Lock` on `FederatedPolicyEngine` (deferred —
+  requires a careful concurrency test; current callers all
+  hold `PolicyEngine._lock`, so the invariant is preserved
+  but undocumented).
+* `merge()` and `register_override` direct tests (deferred
+  to next sprint per audit's "Recommended next sprint").
+
+#### Validation
+
+- `pytest tests/test_unit_ux_cockpit.py tests/test_unit_ux_cockpit_bridge.py
+  tests/test_unit_ux_cockpit_clock_decisions.py tests/test_unit_ux_decision_audit.py
+  tests/test_unit_ux_cli_cockpit.py tests/test_unit_ux_cockpit_audit_pane_batch.py
+  tests/test_unit_ux_progress_emitter.py tests/test_unit_ux_explanations.py
+  tests/test_unit_ux_traffic.py tests/test_unit_policy_engine.py -q`
+  → **272 passed** (was 234 prior; +38 new tests across
+  decision-tail follow, --namespace/--default-policy,
+  and replay; zero regressions).
+- `ruff check` and `ruff format --check` clean on all six
+  touched files.
+- No secrets in the diff (gitleaks scan would pass).
+
+#### Files Touched
+
+- `src/thegent/ux/cli_cockpit.py` — `cockpit_audit_decision_tail`
+  command + `_follow_audit_log` helper, `--namespace` /
+  `--default-policy` flags on `cockpit_pre_check`, `cockpit_replay`
+  command + `_load_replay_snapshot` / `_compare_decision` /
+  `_format_mismatch` / `_emit_replay_summary` helpers, shared
+  `_build_batch_decision_log` helper extracted from
+  `_run_pre_check_batch`, P0 audit fix at line ~267.
+- `src/thegent/ux/cockpit.py` — new `MAX_DECISION_NOTICES`
+  constant, deque `default_factory` references it, docstring
+  drift fix.
+- `src/thegent/governance/policy_engine.py` — new
+  `default_namespace` kwarg on `PolicyEngine.__init__`,
+  plumbs into `FederatedPolicyEngine(default_namespace=...)`.
+- `tests/test_unit_ux_cockpit_audit_pane_batch.py` — 4 new
+  tests in `TestDecisionTailFollow`, 3 new tests in
+  `TestOperatorCockpitAuditAppenderWiring` (default-policy
+  variants), 7 new tests in `TestReplayCLI`.
+- `tests/test_unit_ux_cli_cockpit.py` — 2 new tests in
+  `TestCockpitReplay`.
+- `tests/test_unit_policy_engine.py` — regression test for
+  the new `PolicyEngine(default_namespace=...)` kwarg.
+
+### Unblocked Next (post-2026-07-18 sprint)
+- Add `threading.Lock` to `FederatedPolicyEngine` (audit P0
+  deferred item) and add a concurrency test that fires 50
+  threads through `register_rule` to assert no lost writes.
+- Add direct tests for `FederatedPolicyEngine.merge` and
+  `PolicyEngine.register_override` path-traversal guard
+  (audit coverage-gap items).
+- Generalize `cockpit replay` into a richer `thegent sota
+  replay` command that supports `--snapshot-format` and
+  `--report-format=junitxml` for CI ingestion.

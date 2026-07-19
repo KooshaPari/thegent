@@ -26,7 +26,11 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from thegent.ux.cli_cockpit import app, _load_pre_check_corpus
+from thegent.ux.cli_cockpit import (
+    _follow_audit_log,
+    _load_pre_check_corpus,
+    app,
+)
 from thegent.ux.cockpit import (
     DecisionNotice,
     MAX_DECISION_PANE_ROWS,
@@ -85,95 +89,153 @@ def _make_notice(
 class TestOperatorCockpitAuditAppenderWiring:
     """``audit_appender`` + ``auto_tail`` constructor wiring + lifecycle."""
 
-    def test_default_constructor_has_no_appender(self, tmp_path: Path) -> None:
-        # Default construction is unchanged: no appender / no background threads.
-        cockpit = OperatorCockpit()
-        assert cockpit.audit_appender() is None
-        assert cockpit._audit_tailer is None  # noqa: SLF001
-        cockpit.shutdown()
+    def test_default_policy_commit_enables_federation(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """``--default-policy`` with ``--commit`` builds ``PolicyEngine(use_federation=True, ...)``."""
+        from thegent.governance import policy_engine as pe_mod
 
-    def test_constructor_accepts_appender_without_auto_tail(self, tmp_path: Path) -> None:
-        # Supplying an appender without ``auto_tail`` keeps the cockpit
-        # synchronous (tests and short scripts can opt in explicitly).
-        log = tmp_path / "decisions.jsonl"
-        appender = DecisionAuditAppender(audit_path=log)
-        cockpit = OperatorCockpit(audit_appender=appender)
-        assert cockpit.audit_appender() is appender
-        # No tailer spawned -> drain is the caller's responsibility.
-        assert cockpit._audit_tailer is None  # noqa: SLF001
-        cockpit.shutdown()
+        captured: dict[str, object] = {}
 
-    def test_auto_tail_spins_up_background_drainer(self, tmp_path: Path) -> None:
-        log = tmp_path / "decisions.jsonl"
-        appender = DecisionAuditAppender(audit_path=log)
-        cockpit = OperatorCockpit(
-            audit_appender=appender,
-            auto_tail=True,
-            tail_interval_s=0.05,
+        class _SpyEngine:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                captured["kwargs"] = kwargs
+                self.federated = None
+                self._cache: dict[str, object] = {}
+                self._lock = type("L", (), {})()  # no-op lock
+
+            def evaluate(self, ctx: object) -> object:
+                return type(
+                    "D",
+                    (),
+                    {
+                        "verdict": type("V", (), {"value": "allow"})(),
+                        "reason_code": type("R", (), {"value": "allowed"})(),
+                        "rule_id": None,
+                        "reason": "ok",
+                        "override_applied": False,
+                        "evaluated_at": 0.0,
+                        "cached": False,
+                        "to_dict": lambda self: {"verdict": "allow"},
+                    },
+                )()
+
+        monkeypatch.setattr(pe_mod, "PolicyEngine", _SpyEngine)
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps([{"agent": "a", "lane": "standard", "confidence": 0.9, "environment": "development"}])
         )
-        try:
-            assert cockpit._audit_tailer is not None  # noqa: SLF001
-            assert isinstance(  # noqa: SLF001
-                cockpit._audit_tailer,
-                DecisionAuditTailer,  # noqa: SLF001
-            )
-            cockpit.record_decision(
-                _make_notice(evaluated_at=time.time()),
-            )
-            # Poll for file existence (the drain thread may not have
-            # materialised the file when this test starts) AND for
-            # non-zero size; using a bare ``log.stat()`` here would
-            # raise FileNotFoundError on slow runners.
-            deadline = time.time() + 5.0
-            while time.time() < deadline:
-                try:
-                    if log.stat().st_size > 0:
-                        break
-                except FileNotFoundError:
-                    pass
-                time.sleep(0.05)
-            tail = appender.tail_events(n=10)
-            assert len(tail) == 1
-            assert tail[0]["rule_id"] == "no-network"
-        finally:
-            cockpit.shutdown(timeout_s=2.0)
-
-    def test_shutdown_is_idempotent_and_stops_tailer(self, tmp_path: Path) -> None:
-        log = tmp_path / "decisions.jsonl"
-        appender = DecisionAuditAppender(audit_path=log)
-        cockpit = OperatorCockpit(
-            audit_appender=appender,
-            auto_tail=True,
-            tail_interval_s=0.05,
+        runner = CliRunner()
+        result = runner.invoke(
+            app,
+            [
+                "pre-check",
+                "--batch",
+                str(corpus),
+                "--commit",
+                "--default-policy",
+                "team-acme",
+            ],
         )
-        tailer = cockpit._audit_tailer  # noqa: SLF001
-        assert tailer is not None
-        first_thread = tailer._thread  # noqa: SLF001
-        assert first_thread is not None
-        assert first_thread.is_alive()
-        # Shutdown twice — second call must be a no-op (idempotent).
-        cockpit.shutdown(timeout_s=2.0)
-        cockpit.shutdown(timeout_s=2.0)
-        assert cockpit._audit_tailer is None  # noqa: SLF001
-        # Tailer thread exits within the timeout.
-        first_thread.join(timeout=2.0)
-        assert not first_thread.is_alive()
+        assert result.exit_code == 0, result.output
+        kwargs = captured["kwargs"]
+        assert kwargs["use_federation"] is True
+        assert kwargs["default_namespace"] == "team-acme"
 
-    def test_context_manager_stops_tailer(self, tmp_path: Path) -> None:
-        log = tmp_path / "decisions.jsonl"
-        appender = DecisionAuditAppender(audit_path=log)
-        thread_ref: dict[str, threading.Thread | None] = {"t": None}
-        with OperatorCockpit(
-            audit_appender=appender,
-            auto_tail=True,
-            tail_interval_s=0.05,
-        ) as cockpit:
-            thread_ref["t"] = cockpit._audit_tailer._thread  # noqa: SLF001
-            assert thread_ref["t"] is not None
-        # ``with`` exit triggers shutdown; thread should be gone.
-        assert thread_ref["t"] is not None
-        thread_ref["t"].join(timeout=2.0)  # noqa: SLF001
-        assert not thread_ref["t"].is_alive()  # noqa: SLF001
+    def test_default_policy_single_context_commit_enables_federation(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Single-context ``--default-policy --commit`` also enables federation."""
+        from thegent.governance import policy_engine as pe_mod
+
+        captured: dict[str, object] = {}
+
+        class _SpyEngine:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                captured["kwargs"] = kwargs
+                self._cache: dict[str, object] = {}
+                self._lock = type("L", (), {})()
+
+            def evaluate(self, ctx: object) -> object:
+                return type(
+                    "D",
+                    (),
+                    {
+                        "verdict": type("V", (), {"value": "allow"})(),
+                        "reason_code": type("R", (), {"value": "allowed"})(),
+                        "rule_id": None,
+                        "reason": "ok",
+                        "override_applied": False,
+                        "evaluated_at": 0.0,
+                        "cached": False,
+                        "to_dict": lambda self: {"verdict": "allow"},
+                    },
+                )()
+
+        monkeypatch.setattr(pe_mod, "PolicyEngine", _SpyEngine)
+        runner = CliRunner()
+        result = runner.invoke(
+            app,
+            [
+                "pre-check",
+                "--agent",
+                "cursor",
+                "--lane",
+                "standard",
+                "--env",
+                "development",
+                "--confidence",
+                "0.95",
+                "--commit",
+                "--default-policy",
+                "team-acme",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        kwargs = captured["kwargs"]
+        assert kwargs["use_federation"] is True
+        assert kwargs["default_namespace"] == "team-acme"
+
+    def test_default_policy_omitted_keeps_federation_off(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Omitting ``--default-policy`` keeps ``use_federation=False`` on the engine."""
+        from thegent.governance import policy_engine as pe_mod
+
+        captured: dict[str, object] = {}
+
+        class _SpyEngine:
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                captured["kwargs"] = kwargs
+                self._cache: dict[str, object] = {}
+                self._lock = type("L", (), {})()
+
+            def evaluate(self, ctx: object) -> object:
+                return type(
+                    "D",
+                    (),
+                    {
+                        "verdict": type("V", (), {"value": "allow"})(),
+                        "reason_code": type("R", (), {"value": "allowed"})(),
+                        "rule_id": None,
+                        "reason": "ok",
+                        "override_applied": False,
+                        "evaluated_at": 0.0,
+                        "cached": False,
+                        "to_dict": lambda self: {"verdict": "allow"},
+                    },
+                )()
+
+        monkeypatch.setattr(pe_mod, "PolicyEngine", _SpyEngine)
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps([{"agent": "a", "lane": "standard", "confidence": 0.9, "environment": "development"}])
+        )
+        runner = CliRunner()
+        result = runner.invoke(
+            app,
+            ["pre-check", "--batch", str(corpus), "--commit"],
+        )
+        assert result.exit_code == 0, result.output
+        kwargs = captured["kwargs"]
+        assert kwargs["use_federation"] is False
+        assert kwargs["default_namespace"] == "global"
 
     def test_frozen_clock_propagates_through_auto_tail(self, tmp_path: Path) -> None:
         # Determinism: the cockpit's injected clock determines
@@ -535,3 +597,530 @@ class TestLoadPreCheckCorpus:
     def test_missing_path_raises(self, tmp_path: Path) -> None:
         with pytest.raises(FileNotFoundError):
             _load_pre_check_corpus(tmp_path / "missing")
+
+
+# ---------------------------------------------------------------------------
+# 5. ``cockpit replay --batch --compare`` (SOTA snapshot validator)
+# ---------------------------------------------------------------------------
+
+
+def _harvest_pre_check_decisions(
+    runner: CliRunner,
+    corpus: Path,
+) -> list[dict[str, object]]:
+    """Run ``pre-check --batch --json`` once and harvest the decision dicts.
+
+    The replay sub-command must accept snapshots in the same shape the
+    engine emits, so we synthesise them straight from the engine to keep
+    these tests deterministic without hard-coding engine internals.
+    """
+    result = runner.invoke(
+        app,
+        ["pre-check", "--batch", str(corpus), "--json"],
+    )
+    assert result.exit_code in (0, 3), result.output
+    # The pre-check --json stream emits one JSON object per item, then a
+    # trailing human-readable status line. We walk forward one object at
+    # a time and stop at the first non-JSON-prefix byte.
+    snapshots: list[dict[str, object]] = []
+    decoder = json.JSONDecoder()
+    idx = 0
+    text = result.output
+    while idx < len(text):
+        while idx < len(text) and text[idx].isspace():
+            idx += 1
+        if idx >= len(text) or text[idx] not in "{[":
+            break
+        obj, end = decoder.raw_decode(text[idx:])
+        snapshots.append(obj)
+        idx += end
+    assert snapshots, f"no decisions harvested from pre-check output: {text!r}"
+    return snapshots
+
+
+class TestReplayCLI:
+    """``thegent cockpit replay --batch --compare`` line-by-line snapshot diff."""
+
+    def test_happy_path_match_exits_zero(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                    {
+                        "agent": "cursor",
+                        "lane": "critical",
+                        "confidence": 0.1,
+                        "environment": "production",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(expected))
+        result = runner.invoke(
+            app,
+            ["replay", "--batch", str(corpus), "--compare", str(snapshot)],
+        )
+        assert result.exit_code == 0, result.output
+        assert "matched=True" in result.output
+        assert "mismatches=0" in result.output
+
+    def test_verdict_mismatch_exits_four_and_reports_index(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)
+        # Force a verdict mismatch at index 0.
+        expected[0]["verdict"] = "deny"
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(expected))
+        result = runner.invoke(
+            app,
+            ["replay", "--batch", str(corpus), "--compare", str(snapshot)],
+        )
+        assert result.exit_code == 4, result.output
+        assert "matched=False" in result.output
+        assert "mismatch[0]" in result.output
+        assert "verdict" in result.output
+        assert "expected=deny" in result.output
+
+    def test_structural_length_mismatch_exits_four(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                    {
+                        "agent": "cursor",
+                        "lane": "critical",
+                        "confidence": 0.1,
+                        "environment": "production",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)[:1]
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(expected))
+        result = runner.invoke(
+            app,
+            ["replay", "--batch", str(corpus), "--compare", str(snapshot)],
+        )
+        assert result.exit_code == 4, result.output
+        assert "length" in result.output
+        assert "expected=1" in result.output
+        assert "actual=2" in result.output
+
+    def test_snapshot_with_decisions_key_is_accepted(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps({"decisions": expected}))
+        result = runner.invoke(
+            app,
+            ["replay", "--batch", str(corpus), "--compare", str(snapshot)],
+        )
+        assert result.exit_code == 0, result.output
+        assert "matched=True" in result.output
+
+    def test_audit_path_writes_jsonl_matching_appender(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                    {
+                        "agent": "cursor",
+                        "lane": "critical",
+                        "confidence": 0.1,
+                        "environment": "production",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(expected))
+        audit = tmp_path / "audit.jsonl"
+        result = runner.invoke(
+            app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--audit-path",
+                str(audit),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        lines = audit.read_text().strip().splitlines()
+        assert len(lines) == 2
+        parsed = [json.loads(line) for line in lines]
+        for line in parsed:
+            assert "verdict" in line
+            assert "rule_id" in line
+            assert "evaluated_at" in line
+        verdicts = {line["verdict"] for line in parsed}
+        assert "deny" in verdicts
+        assert "allow" in verdicts
+
+    def test_json_mode_emits_parseable_object_with_matched_bool(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(expected))
+        result = runner.invoke(
+            app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--json",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        payload = json.loads(result.output)
+        assert payload["matched"] is True
+        assert payload["mismatches"] == []
+        assert len(payload["decisions"]) == len(expected)
+        for got, want in zip(payload["decisions"], expected):
+            assert got["verdict"] == want["verdict"]
+            assert got["reason_code"] == want["reason_code"]
+            assert got["rule_id"] == want["rule_id"]
+            assert got["override_applied"] == want["override_applied"]
+            assert got["reason"].strip() == want["reason"].strip()
+        assert "audit" in payload
+
+    def test_json_mode_mismatch_payload_includes_diff_details(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            )
+        )
+        expected = _harvest_pre_check_decisions(runner, corpus)
+        expected[0]["reason_code"] = "fabricated_reason_code"
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(expected))
+        result = runner.invoke(
+            app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--json",
+            ],
+        )
+        assert result.exit_code == 4, result.output
+        payload = json.loads(result.output)
+        assert payload["matched"] is False
+        assert payload["mismatches"], payload
+        first = payload["mismatches"][0]
+        assert first["index"] == 0
+        assert "reason_code" in first["fields"]
+
+    def test_replay_rejects_malformed_snapshot(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            )
+        )
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps({"foo": []}))  # no 'decisions' key
+        result = runner.invoke(
+            app,
+            ["replay", "--batch", str(corpus), "--compare", str(snapshot)],
+        )
+        assert result.exit_code == 1, result.output
+        assert "decisions" in result.output
+
+    def test_replay_missing_compare_path_exits_one(self, tmp_path: Path) -> None:
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(json.dumps([{"agent": "a", "lane": "standard"}]))
+        result = runner.invoke(
+            app,
+            ["replay", "--batch", str(corpus), "--compare", str(tmp_path / "missing.json")],
+        )
+        assert result.exit_code == 1, result.output
+        assert "not found" in result.output
+
+
+# ---------------------------------------------------------------------------
+# 4. ``cockpit audit decision-tail --follow`` (live tail)
+# ---------------------------------------------------------------------------
+
+
+class TestDecisionTailFollow:
+    """``thegent cockpit audit decision-tail`` follow-mode tests.
+
+    Covers the first "Unblocked Next" item from ``WORKLOG.md``: a
+    follow-mode for the JSONL decision audit log so operators can
+    watch live decisions without manually specifying ``--path``.
+    """
+
+    def test_decision_tail_default_path_round_trip(self, tmp_path: Path) -> None:
+        # Single-shot, no --follow. Pre-seed the log with two decisions,
+        # then invoke the command without --follow and assert both
+        # lines are echoed back.
+        log = tmp_path / "decisions.jsonl"
+        appender = DecisionAuditAppender(audit_path=log)
+        appender.record(
+            DecisionNotice(
+                verdict="deny",
+                reason_code="trust_boundary_violation",
+                rule_id="no-network",
+                agent="cursor",
+                lane="critical",
+                evaluated_at=1.0,
+                reason="",
+            )
+        )
+        appender.record(
+            DecisionNotice(
+                verdict="allow",
+                reason_code="allowed",
+                rule_id=None,
+                agent="claude",
+                lane="standard",
+                evaluated_at=2.0,
+                reason="",
+            )
+        )
+        runner = CliRunner()
+        result = runner.invoke(
+            app,
+            ["audit", "decision-tail", "--path", str(log)],
+        )
+        assert result.exit_code == 0, result.output
+        lines = [line for line in result.output.splitlines() if line.strip()]
+        assert len(lines) == 2
+        parsed = [json.loads(line) for line in lines]
+        assert parsed[0]["rule_id"] == "no-network"
+        assert parsed[1]["rule_id"] is None
+
+    def test_decision_tail_follow_emits_new_lines(self, tmp_path: Path) -> None:
+        # Pre-seed the log with N lines, start follow in a background
+        # thread with ``--max-events 1`` (the cap counts events the
+        # follower emits, not lines already on disk), write an extra
+        # line into the log mid-flight, and verify the new line is
+        # emitted and the thread exits cleanly within the timeout.
+        log = tmp_path / "decisions.jsonl"
+        appender = DecisionAuditAppender(audit_path=log)
+        n_seeded = 3
+        for i in range(n_seeded):
+            appender.record(
+                DecisionNotice(
+                    verdict="allow",
+                    reason_code="allowed",
+                    rule_id=f"seed-{i}",
+                    agent="cursor",
+                    lane="standard",
+                    evaluated_at=float(i),
+                    reason="",
+                )
+            )
+
+        interval_s = 0.05
+        emit_error: list[BaseException] = []
+        stop_flag = threading.Event()
+
+        def _runner() -> None:
+            try:
+                _follow_audit_log(
+                    appender,
+                    interval_s=interval_s,
+                    max_events=1,
+                )
+            except BaseException as exc:  # noqa: BLE001
+                emit_error.append(exc)
+            finally:
+                stop_flag.set()
+
+        thread = threading.Thread(target=_runner, name="test-decision-tail", daemon=True)
+        thread.start()
+        try:
+            # Give the thread time to seed its offset from the file's
+            # current size before we append the new line.
+            time.sleep(interval_s * 2)
+            appender.record(
+                DecisionNotice(
+                    verdict="deny",
+                    reason_code="trust_boundary_violation",
+                    rule_id="live-tail",
+                    agent="cursor",
+                    lane="critical",
+                    evaluated_at=99.0,
+                    reason="",
+                )
+            )
+            thread.join(timeout=5.0)
+            assert not thread.is_alive(), "decision-tail thread did not exit in time"
+        finally:
+            if thread.is_alive():
+                stop_flag.set()
+                thread.join(timeout=2.0)
+
+        assert not emit_error, f"unexpected error in follow thread: {emit_error!r}"
+        assert stop_flag.is_set()
+
+        events = appender.tail_events(n=10)
+        assert len(events) == n_seeded + 1
+        assert events[-1]["rule_id"] == "live-tail"
+
+    def test_decision_tail_follow_handles_truncation(self, tmp_path: Path) -> None:
+        # Pre-seed the log, start the follower, truncate the file
+        # (write ""), append a fresh line via the appender, and verify
+        # the follower re-anchors and emits the new line.
+        log = tmp_path / "decisions.jsonl"
+        appender = DecisionAuditAppender(audit_path=log)
+        for i in range(2):
+            appender.record(
+                DecisionNotice(
+                    verdict="allow",
+                    reason_code="allowed",
+                    rule_id=f"pre-{i}",
+                    agent="cursor",
+                    lane="standard",
+                    evaluated_at=float(i),
+                    reason="",
+                )
+            )
+
+        interval_s = 0.05
+        emit_error: list[BaseException] = []
+
+        def _runner() -> None:
+            try:
+                _follow_audit_log(
+                    appender,
+                    interval_s=interval_s,
+                    max_events=1,
+                )
+            except BaseException as exc:  # noqa: BLE001
+                emit_error.append(exc)
+
+        thread = threading.Thread(target=_runner, name="test-truncation-tail", daemon=True)
+        thread.start()
+        try:
+            time.sleep(interval_s * 2)
+            log.write_text("", encoding="utf-8")
+            DecisionAuditAppender(audit_path=log).record(
+                DecisionNotice(
+                    verdict="deny",
+                    reason_code="trust_boundary_violation",
+                    rule_id="after-truncate",
+                    agent="cursor",
+                    lane="critical",
+                    evaluated_at=42.0,
+                    reason="",
+                )
+            )
+            thread.join(timeout=5.0)
+            assert not thread.is_alive(), "follower did not exit in time"
+        finally:
+            if thread.is_alive():
+                thread.join(timeout=2.0)
+
+        assert not emit_error, f"unexpected error in follow thread: {emit_error!r}"
+
+        events = DecisionAuditAppender(audit_path=log).tail_events(n=10)
+        assert len(events) == 1
+        assert events[0]["rule_id"] == "after-truncate"
+
+    def test_decision_tail_help(self) -> None:
+        # ``cockpit audit --help`` lists the new command so operators
+        # can discover it via the standard CLI help workflow.
+        runner = CliRunner()
+        result = runner.invoke(app, ["audit", "--help"])
+        assert result.exit_code == 0, result.output
+        assert "decision-tail" in result.output

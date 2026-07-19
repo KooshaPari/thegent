@@ -298,6 +298,71 @@ class TestCockpitAudit:
 
 
 # ---------------------------------------------------------------------------
+# cockpit replay (Phase 3/4 SOTA snapshot validator)
+# ---------------------------------------------------------------------------
+
+
+class TestCockpitReplay:
+    """Smoke test for the ``cockpit replay`` sub-command (WP-3001 SOTA lane)."""
+
+    def test_replay_happy_path_dispatches_and_matches(self, tmp_path: Path) -> None:
+        # Build a small corpus and harvest the expected decisions via
+        # ``pre-check --batch --json`` so the snapshot stays in lockstep
+        # with whatever the engine emits.
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        # First pass: snapshot the engine's decisions.
+        harvest = runner.invoke(
+            cockpit_app,
+            ["pre-check", "--batch", str(corpus), "--json"],
+        )
+        assert harvest.exit_code == 0
+        snapshots: list[dict[str, object]] = []
+        decoder = json.JSONDecoder()
+        idx = 0
+        text = harvest.output
+        while idx < len(text):
+            while idx < len(text) and text[idx].isspace():
+                idx += 1
+            if idx >= len(text) or text[idx] not in "{[":
+                break
+            obj, end = decoder.raw_decode(text[idx:])
+            snapshots.append(obj)
+            idx += end
+        assert snapshots, harvest.output
+
+        snapshot = tmp_path / "snapshot.json"
+        snapshot.write_text(json.dumps(snapshots), encoding="utf-8")
+
+        # Second pass: replay the corpus and confirm the snapshot matches.
+        result = runner.invoke(
+            cockpit_app,
+            ["replay", "--batch", str(corpus), "--compare", str(snapshot)],
+        )
+        assert result.exit_code == 0, result.output
+        assert "matched=True" in result.output
+
+    def test_replay_help_lists_command_description(self) -> None:
+        result = runner.invoke(cockpit_app, ["replay", "--help"])
+        assert result.exit_code == 0
+        # Match the description string rather than flag names (the
+        # rendered help has ANSI codes that confuse substring matching).
+        assert "Replay a corpus against an expected PolicyDecision snapshot" in result.output
+
+
+# ---------------------------------------------------------------------------
 # main.py wiring (smoke)
 # ---------------------------------------------------------------------------
 

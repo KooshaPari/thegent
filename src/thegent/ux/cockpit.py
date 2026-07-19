@@ -61,6 +61,10 @@ _log = logging.getLogger(__name__)
 DEFAULT_DAG_TICK_MS = 1000
 MAX_RUNS_PANE_ROWS = 14
 MAX_OVERRIDE_PANE_ROWS = 6
+# Maximum number of decision notices kept in the bounded deque. Older
+# notices roll off silently; full history is reachable via the JSONL
+# audit log (``DecisionAuditAppender``).
+MAX_DECISION_NOTICES = 64
 # Cap on rendered rows in the decision-history pane. Slightly smaller
 # than the bounded deque size (64) so the inline pane stays scannable;
 # older notices are reachable through the JSONL audit log.
@@ -225,7 +229,9 @@ class _CockpitState:
     overrides: dict[str, OverrideEvent] = field(default_factory=dict)
     confidence_history: deque[float] = field(default_factory=lambda: deque(maxlen=1024))
     override_notices: deque[OverrideExpiryNotice] = field(default_factory=lambda: deque(maxlen=32))
-    decision_notices: deque[DecisionNotice] = field(default_factory=lambda: deque(maxlen=64))
+    decision_notices: deque[DecisionNotice] = field(
+        default_factory=lambda: deque(maxlen=MAX_DECISION_NOTICES),
+    )
     last_progress: tuple[int, int] = (0, 0)  # (done, total)
 
 
@@ -763,7 +769,7 @@ class OperatorCockpit:
         :class:`DecisionNotice` events with verdict glyph, rule_id (12),
         agent (8), lane (8), and age (4s). Mirrors the existing
         override-banner UX so operators learn one pattern. Bounded by
-        ``MAX_DECISION_NOTICES`` (deque maxlen=64) so long sessions
+        ``MAX_DECISION_NOTICES`` (deque maxlen, ``cockpit.py:67``) so long sessions
         can't blow up the renderer's memory.
 
         Empty panes render a single neutral line so the cockpit always
