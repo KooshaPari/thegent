@@ -4726,3 +4726,231 @@ Net diff: **4 files modified + 1 file created = 5 files,
   directive. Other worktree
   (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
   preserved and untouched.
+
+## Phase 3/4 Continuation — AUDIT-N+4 — governance observability + perf hardening lane (2026-07-19)
+
+### Lane: expose `audit_stats()` + harden the AUDIT-25 byte-tail path
+
+**Goal:** expose the `DecisionAuditAppender.audit_stats()`
+snapshot to operators via a new flat CLI command and extract a
+byte-budget read helper to harden the AUDIT-25 perf path.
+
+### What Changed
+
+#### New flat CLI command — `thegent.cli.commands.cli.audit_stats_cmd`
+
+* `src/thegent/cli/commands/cli.py:298-377` — new
+  `audit_stats_cmd(audit_path: Path | None = None,
+  json_output: bool = False) -> int` function that resolves
+  `audit_path` via the same path-resolution pattern as
+  `cli_cockpit.py:420-439` (uses
+  `~/.local/state/thegent/decisions.jsonl` as the XDG-state-
+  hierarchy default; allows operator override via
+  `--audit-path`), constructs a `DecisionAuditAppender` against
+  that path and calls `appender.audit_stats()` to get the
+  snapshot.
+* JSON output mode (`json_output=True`): prints the snapshot as
+  `json.dumps(..., indent=2, sort_keys=True)`.
+* Human mode (`json_output=False`, the default): prints as a
+  sorted key-value table (one `key: value` line per snapshot
+  entry).
+* Returns `0` on success, `1` if the audit log file does not
+  exist yet (a freshly-installed machine with no cockpit
+  activity). The missing-file envelope routes through
+  `safe_echo("audit_stats: log file not found:", str(resolved),
+  err=True)` per the AUDIT-N+1..N+3 contract — no raw
+  `typer.echo(f"...")` shape for untrusted path strings.
+* `__all__` updated to include `"audit_stats_cmd"`.
+
+#### New perf-hardening helper — `DecisionAuditAppender._read_file_with_byte_budget`
+
+* `src/thegent/ux/decision_audit.py:363-410` — new
+  `_read_file_with_byte_budget(self, fp: Path, byte_window: int)
+  -> list[str]` (private, but tested via the public path) that
+  uses `fp.stat().st_size` to decide between whole-file read
+  (`size <= byte_window`) and tail-byte read (`size >
+  byte_window` via `seek(size - byte_window)`). The byte-tail
+  path discards the partial first line (everything up to the
+  first `\n`) so the line counter aligns with whole lines.
+* Mirrors the AUDIT-25 pattern already in `tail_events()` lines
+  406-431, but extracted to a helper so a future call site
+  (e.g. `tail_events(use_byte_tail=True)` for the cockpit
+  snapshot) can reuse it.
+* The inline `tail_events()` byte-tail code (decision_audit.py
+  pre-refactor lines 406-431) is replaced with a call to this
+  new helper, preserving identical behaviour. All 16 pre-existing
+  decision-audit tests continue to pass (parity regression
+  guard, plus the new explicit parity tests in
+  `TestTailEventsByteBudgetParity`).
+
+#### Test surface (27 new tests)
+
+`tests/test_unit_cli_audit_stats_parity.py` (**new**, 823
+lines, 27 tests, 8 test classes):
+
+* `TestAuditStatsCmdImport` (3 tests) — `cli.py.audit_stats_cmd`
+  is importable, bound in the module namespace, and exported via
+  `__all__`.
+* `TestAuditStatsCmdJsonOutput` (4 tests) — JSON output is
+  well-formed, contains all 8 expected keys (`line_count`,
+  `bytes_written`, `rotation_count`, `fsync`, `fsync_every_n`,
+  `max_bytes`, `max_lines`, `max_backups`), keys are sorted
+  (`sort_keys=True`), values match `appender.audit_stats()`,
+  and `indent=2` pretty-print is honoured.
+* `TestAuditStatsCmdHumanOutput` (3 tests) — human mode emits
+  `key: value` lines, one per key, sorted, no JSON braces;
+  exact-line `capsys` assertion pins the rendered output.
+* `TestAuditStatsCmdPathOverride` (2 tests) — `--audit-path`
+  override is honored; resolves the override correctly even when
+  the default XDG-state-hierarchy path does not exist (uses
+  monkeypatched `_DEFAULT_AUDIT_STATS_PATH` to confirm the
+  override bypasses the default-path existence check).
+* `TestAuditStatsCmdMissingFile` (3 tests) — missing-file path
+  returns exit code `1`; emits a single error envelope via
+  `safe_echo` (no `typer.echo(f"...")` shape); envelope includes
+  the resolved audit-path filename plus an `audit_stats` prefix
+  token.
+* `TestAuditStatsCmdRichmarkupSafetyEndToEnd` (3 tests) —
+  render-safety contract: an audit path with `[red]` brackets
+  in its filename renders escaped in the missing-file envelope
+  (via `capsys` literal-token preservation of `\[red]pwned\[/red]`).
+  Also pins the `cli.safe_echo is cli_errors.safe_echo`
+  identity-pin.
+* `TestReadFileWithByteBudget` (5 tests) — the helper correctly
+  handles the whole-file path (size ≤ window), the byte-tail
+  path (size > window), the partial-first-line discard
+  invariant, empty files (`size = 0`), the exact-byte-window
+  boundary (size = window takes the whole-file path), and the
+  1-byte boundary.
+* `TestTailEventsByteBudgetParity` (2 tests) — parity
+  regression guard: `tail_events(n=20)` continues to produce
+  identical output before and after the refactor (10-record
+  fixture returns all 10 records in order; missing-file
+  appender still returns `[]`).
+* `test_module_imports_cleanly` (1 test) — sanity check: both
+  source files (`cli.py` + `decision_audit.py`) import cleanly
+  after the AUDIT-N+4 migration.
+
+### Validation
+
+* `pytest tests/test_unit_cli_audit_stats_parity.py -v
+  --override-ini="addopts=" --no-header` → **27 passed in 0.28s**.
+* Combined `cli_commands_agents_envelope_parity` +
+  `cli_audit_stats_parity` suite → **50 passed in 0.28s**
+  (≥ 43 target).
+* Combined audit envelope parity suite (`govern_error_envelope_
+  parity` + `apps_envelope_parity` + `govern_infra_mesh_envelope_
+  parity` + `commands_agents_envelope_parity` +
+  `audit_stats_parity`) → **116 passed, 4 skipped, 4
+  pre-existing failures** (≥ 109 target; the 4 failures are the
+  documented AUDIT-N+2 baseline: `CliRunner` API drift on the
+  `vet` envelope + 3 `thegent.adapters.execution_io` import
+  errors on `run_execution_core_helpers` — unrelated to
+  AUDIT-N+4).
+* Phase 3/4 hardening regression (13 test files) → **297
+  passed, 2 pre-existing failures** (the AUDIT-N+3 baseline;
+  the 2 failures are the documented F-15 baseline
+  `TestHelpOutputSanity` failures on the `cockpit --help` /
+  `sota --help` paths — typer/click API drift, unrelated to
+  AUDIT-N+4).
+* `ruff check` clean on all 3 touched files
+  (`src/thegent/ux/decision_audit.py`,
+  `src/thegent/cli/commands/cli.py`,
+  `tests/test_unit_cli_audit_stats_parity.py`).
+* `ruff format --check` clean on all 3 touched files.
+* `python3 -m py_compile` clean on all 3 touched files.
+* Secret scan (`api_key|secret|token|password|passwd|bearer|
+  aws_access|private_key`) → **0 real matches** (the
+  `idempotency_token` CLI arg is a parameter name, not a
+  secret, and is not present in either source file).
+* Bundle-zsh-scripts worktree at
+  `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+  preserved untouched (HEAD still `830d7af86`, working tree
+  clean).
+* Function-length invariant (`≤ 40 lines/function`):
+  `audit_stats_cmd` body is 32 lines; the new
+  `_read_file_with_byte_budget` helper body is 24 lines; both
+  are well under the limit.
+
+### Files Touched
+
+* `src/thegent/ux/decision_audit.py` —
+  `_read_file_with_byte_budget` helper added (48 lines
+  including docstring); `tail_events()` refactored to delegate
+  the byte-tail / whole-file branching to the helper (the
+  inline 26-line block was replaced with a single
+  `raw_lines.extend(self._read_file_with_byte_budget(fp,
+  byte_window))` call).
+* `src/thegent/cli/commands/cli.py` — `audit_stats_cmd` flat
+  command added (80 lines including docstring); `__all__`
+  updated to export `"audit_stats_cmd"`;
+  `_DEFAULT_AUDIT_STATS_PATH` module constant added.
+* `tests/test_unit_cli_audit_stats_parity.py` — **new**
+  (823 lines, 27 tests, 8 test classes).
+* `WORKLOG.md` — this hand-off.
+
+Net diff: **2 files modified + 1 file created = 3 files,
++969 insertions, -20 deletions**.
+
+### Resolved Worklog Items
+
+* **AUDIT-N+4** — closed. The
+  `DecisionAuditAppender.audit_stats()` observability snapshot
+  is now reachable from operator shells via the new flat
+  `audit_stats_cmd` CLI surface (JSON + human output modes,
+  Rich-markup-safe missing-file envelope). The AUDIT-25
+  byte-tail perf path is hardened via the extracted
+  `_read_file_with_byte_budget` helper, ready for reuse by
+  future call sites (e.g. `tail_events(use_byte_tail=True)` for
+  the cockpit snapshot).
+
+### Carry-forward (not in this hand-off)
+
+* **`run_execution_core_helpers.py` shim creation** — still
+  blocks 3 tests across the active lane (the
+  `thegent.adapters.execution_io` missing module). A focused
+  lane that creates the `thegent.adapters.execution_io`
+  package (mirroring `thegent.use_cases.execute_task`) would
+  unblock those tests without touching the broader
+  decomposition work.
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still
+  blocked by `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. The CLI surface is now envelope-safe
+  on the governance, run, plan, infra, mesh, and CLI-services
+  paths, plus the new `audit_stats_cmd` observability
+  surface; the L1 Stabilize → V4-1.2.x lane is the next-horizon
+  entry once the archive unblocks.
+
+### Cockpit Progress Bar + DAG Tick:
+
+* **Cockpit progress bar**: **100%** (saturated — the
+  twentieth closure pass on top of the Five-Day Goal
+  envelope + the prior 19 closure lanes; the bar cannot
+  exceed saturation).
+* **DAG tick**: **`+1`** (this hand-off on top of the
+  AUDIT-N+3 cli/commands+agents+tools envelope sweep).
+* **Closed this lane**: AUDIT-N+4 governance observability +
+  perf hardening — `audit_stats_cmd` CLI surface (27 tests,
+  8 test classes); `_read_file_with_byte_budget` perf helper
+  extracted from `tail_events()`; F-15 / GOV-1 / AUDIT-N+1 /
+  AUDIT-N+2 / AUDIT-N+3 render-safety contract preserved
+  end-to-end across the new `audit_stats_cmd` envelope
+  (Rich-markup-safe `safe_echo` for the missing-file path).
+* **Cumulative closed (19 prior lanes + this)**:
+  AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+  CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225
+  plan-workstream thicken, diskcache-skip-guard
+  collection-repair, CachePreWarmer FR-CACHE-003 contract
+  closure, F-15 + UX polish, GOV-1 governance
+  error-envelope parity, AUDIT-N+1 run sub-app envelope
+  sweep, AUDIT-N+2 governance+infra+mesh+services envelope
+  sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+  sweep, plus this AUDIT-N+4 governance observability +
+  perf hardening lane.
+* **Local commit**: `4dc7b1489` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **51 commits
+  ahead of `main`** after this commit. **Not pushed** to
+  the archived upstream `KooshaPari/thegent.git` per the
+  directive. Other worktree
+  (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
+  preserved and untouched.
