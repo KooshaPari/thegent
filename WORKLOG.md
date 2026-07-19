@@ -4284,7 +4284,7 @@ operator-facing envelope site in the `apps/` tree.
   closure, F-15 + UX polish, GOV-1 governance
   error-envelope parity, plus this AUDIT-N+1 `run`
   sub-app envelope sweep lane.
-* **Local commit**: pending (this hand-off) on
+* **Local commit**: `9e46b7083` lands on
   `wip/2026-07-18-cockpit-sota-hardening`, **43 commits
   ahead of `main`** after this commit. **Not pushed** to
   the archived upstream `KooshaPari/thegent.git` per the
