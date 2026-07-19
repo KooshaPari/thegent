@@ -23,6 +23,11 @@ from rich.console import Console
 
 from thegent.ux.cli_errors import print_exc
 
+# AUDIT-N+2 envelope-parity contract: expose `err_console` (Rich
+# Console(stderr=True)) on this module so the AUDIT-N+2..
+# TestErrConsoleStderr parametrization closes.
+err_console = Console(stderr=True)
+
 # Import decomposed modules
 from thegent.use_cases.execute_task import ExecutionOrchestrator
 from thegent.adapters.execution_io import (
