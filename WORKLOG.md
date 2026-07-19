@@ -3680,3 +3680,124 @@ the sub-app to the real implementation logic.
   `wip/2026-07-18-cockpit-sota-hardening`, **34 commits ahead of
   `main`** after this commit. **Not pushed** to the archived upstream
   `KooshaPari/thegent.git` per the directive.
+
+## Lane Hand-off (2026-07-19) — CachePreWarmer FR-CACHE-003 contract closure
+
+* **Scope**: The diskcache-skip-guard lane's "Unblocked Next" enumerated
+  the pre-existing `tests/cache/test_pre_warmer.py` signature-mismatch
+  as a separate follow-up. That file had **44 tests collected** but
+  **15 failed + 29 errored** at runtime because the source
+  `thegent.cache.pre_warmer.CachePreWarmer` was a thin 64-line stub
+  (only `__init__() / add_key() / warm()`), while the test suite
+  exercised the full FR-CACHE-003 contract: `__init__(cache)`,
+  `register_strategy(WarmingStrategy(...))`, `unregister_strategy`,
+  `warm_key(key, load_fn) -> bool`, `warm_all() -> dict[str, bool]`,
+  `get_stats()`, background daemon (`start_background / stop_background /
+  is_running`), `_should_run(state, now)`, built-in
+  `model_list_strategy` / `session_list_strategy` factories, and
+  `WarmingStrategy` validation (empty name + non-positive schedule).
+* **What landed (`<pending>`)**:
+  * `src/thegent/cache/pre_warmer/__init__.py` — full rewrite of the
+    module from a 64-line stub into a 338-line FR-CACHE-003
+    implementation. New surface:
+    * `WarmingStrategy` is now a frozen dataclass with `__post_init__`
+      validation (`name` non-empty, `schedule_seconds > 0`); default
+      `schedule_seconds=300.0`. Validation messages match the
+      pytest.raises matchers exactly (`"name must not be empty"`,
+      `"schedule_seconds must be positive"`).
+    * `_StrategyState` dataclass (`strategy`, `warm_count`, `error_count`,
+      `last_run`) — the per-strategy mutable state the tests reach into
+      from `TestShouldRun`.
+    * `_should_run(state, now) -> bool` — True when `last_run is None`
+      or elapsed `>= schedule_seconds`.
+    * `model_list_strategy(load_fn, model_keys=None, schedule_seconds=300.0)`
+      and `session_list_strategy(load_fn, session_keys=None,
+      schedule_seconds=300.0)` factory functions that build the
+      canonical `WarmingStrategy` instances (`name="model_list"` /
+      `"session_list"`, default keys
+      `["models:list","models:available"]` /
+      `["sessions:active","sessions:recent"]`).
+    * `CachePreWarmer(cache)` — thread-safe registry + warmer
+      (`threading.RLock` guards `_states`, `_warm_count`, `_last_run`,
+      `_bg_thread`). New methods: `register_strategy`,
+      `unregister_strategy`, `warm_key(key, load_fn) -> bool`,
+      `warm_all() -> dict[str, bool]` (per-strategy `predict_fn` /
+      `load_fn` invocation, per-strategy `warm_count`/`error_count`
+      increments, per-strategy `last_run` set after each run), and
+      `get_stats() -> dict` (snapshot of `strategies`, `warm_count`,
+      `last_run`, `background_running`, `strategy_stats`).
+    * Background daemon: `start_background()` (idempotent),
+      `stop_background(timeout=5.0) -> bool`, `is_running` property.
+      A `daemon=True` `threading.Thread` ticks every 50ms and warms
+      each `_should_run` strategy; `threading.Event` shutdown with
+      `wait(timeout)` so stop is prompt and safe.
+* **Validation**:
+  * `pytest tests/cache/test_pre_warmer.py -v` — **44 passed in 0.34s**
+    (was 15 failed + 29 errored).
+  * `pytest tests/cache/` — **44 passed, 3 skipped in 0.46s** (the 3
+    skips are the diskcache-gated modules from the prior lane — no
+    regression).
+  * Phase 3/4 + WL-prefix regression (11 files):
+    **596 passed, 0 failed in 5.23s** — identical to the prior lane's
+    baseline.
+  * Cross-language + cache regression (4 dirs):
+    **290 passed, 320 skipped, 0 failures in 3.79s** — no regression
+    on `tests/agents`, `tests/tools`, `tests/unit/agents`,
+    `tests/unit/governance`.
+  * `pytest tests/ --collect-only` — **19166 tests collected, 0 errors**.
+  * `uvx ruff check src/thegent/cache/pre_warmer/__init__.py` —
+    **All checks passed** (auto-fixed trailing newline).
+  * `uvx ruff format --check src/thegent/cache/pre_warmer/__init__.py`
+    — **1 file already formatted** (auto-formatted).
+  * `python3 -m py_compile src/thegent/cache/pre_warmer/__init__.py`
+    — clean.
+  * Secret scan (`api_key|secret|token|password|passwd|bearer|
+    aws_access|private_key`): **0 matches**.
+  * Function-length invariant (`≤ 40 lines/function`): all functions
+    under 40 lines (longest is `warm_all` at 37 lines).
+  * Pre-existing failures in `tests/test_unit_mcp_pre_work_gate.py`
+    (2 tests, MCP-server wiring) confirmed unrelated to this lane —
+    the file was last touched by `1b3067098` (PR #1151), pre-existed
+    the prior diskcache lane baseline.
+  * Bundle-zsh-scripts worktree at
+    `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+    preserved untouched (HEAD still `830d7af86`, working tree clean).
+
+### Unblocked Next (after this lane)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. Cache pre-warming contract (FR-CACHE-003) is
+  now closed end-to-end; the only remaining Phase 3/4 lane is the V4
+  Rust upgrade.
+* **F-15 + UX polish** — sub-command help text normalization +
+  consistent error envelopes (continuing from AUDIT-2 fix); cheap
+  follow-up lane.
+* **MCP pre-work gate failures** — the 2 pre-existing failures in
+  `tests/test_unit_mcp_pre_work_gate.py` are a separate lane (MCP-server
+  wiring — likely a fixture / module path drift). Not addressed here.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (still saturated; the fifteenth
+  closure pass on top of the Five-Day Goal envelope + the prior 14
+  closure lanes; the bar cannot exceed saturation).
+* **DAG tick**: **`+1`** (this hand-off on top of the diskcache
+  skip-guard collection-repair).
+* **Closed this lane**: FR-CACHE-003 CachePreWarmer contract — full
+  replacement of the 64-line stub with a 338-line thread-safe
+  implementation covering `WarmingStrategy` dataclass +
+  validation, register/unregister, `warm_key` / `warm_all`,
+  `get_stats`, background daemon with stop semantics, built-in
+  model-list / session-list strategies, and `_should_run` /
+  `_StrategyState` helpers. **44/44 contract tests now green** (was
+  0/44 green — 15 fail + 29 error).
+* **Cumulative closed (15 prior lanes + this)**: AUDIT-1/2/4/6/9/19/
+  22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1, KA-1..6, A11Y-1,
+  CLI-1..5, TEST-1, WL-224/WL-225 plan-workstream thicken,
+  diskcache-skip-guard collection-repair, plus this
+  CachePreWarmer FR-CACHE-003 contract closure.
+* **Local commit**: `<pending>` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **36 commits ahead of
+  `main`** after this commit. **Not pushed** to the archived upstream
+  `KooshaPari/thegent.git` per the directive.
