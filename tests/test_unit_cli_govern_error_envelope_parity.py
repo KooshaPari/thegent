@@ -462,7 +462,9 @@ class TestGovernErrorEnvelopeFunctional:
                 "thegent.cli.governance.governance.govern_vet_impl",
                 side_effect=ValueError("[red]malicious[/red] boom"),
             ):
-                runner = CliRunner(mix_stderr=False)
+                # Click 8.2+ removed `mix_stderr`; stderr is always separated.
+                # Capture both stdout and stderr explicitly via result.
+                runner = CliRunner()
                 result = runner.invoke(
                     govern_mod.app,
                     ["vet", "fake-run-id", "--policy", "default"],
