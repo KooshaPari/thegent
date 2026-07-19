@@ -475,18 +475,119 @@ CLI), and the WP-Y7 (TRAFFIC KPI CLI) deliverables.
 - `src/thegent/cli/apps/main.py` — registers the cockpit Typer
   sub-app under `cockpit`.
 - `tests/test_unit_ux_decision_audit.py` — **new** (267 lines,
-  16 tests).
 - `tests/test_unit_ux_cli_cockpit.py` — **new** (321 lines,
   18 tests).
 
+### Phase 3/4 Continuation — 2026-07-18 (Audit Wiring + Batch Pre-Check + Decision Pane)
+
+Closed all three "Unblocked Next" items in one commit. This is the
+formal hand-off for WP-3001 (governance pre-check batch tooling),
+WP-4001 (cockpit audit wiring), and a third pane layer that mirrors
+the existing override-history UX on the governance decision stream.
+
+#### 1. `OperatorCockpit(audit_appender=..., auto_tail=...)`
+
+`thegent.ux.cockpit` now accepts an optional
+:class:`DecisionAuditAppender` and an `auto_tail=True` flag.
+Production deployments can construct the cockpit once at boot,
+get free JSONL persistence for every `record_decision()` call,
+and free the daemon thread cleanly via the new
+:meth:`OperatorCockpit.shutdown` method (also wired through
+`__exit__` and a `weakref.finalize` so test suites and short
+scripts that forget to call `shutdown` still don't leak
+threads).
+
+* `audit_appender` is owned by the caller (so multi-cockpit
+  deployments can share a single file handle).
+* `auto_tail` defaults to `False` to keep the cockpit free of
+  background threads in tests and short-lived scripts.
+* `tail_interval_s` defaults to `1.0` to match
+  `DEFAULT_TAIL_INTERVAL_S`.
+
+#### 2. `cockpit pre-check --batch <path>`
+
+`thegent.ux.cli_cockpit` gained `--batch <path>`,
+`--audit-path <path>`, and `--audit-append/--audit-overwrite`
+flags. SOTA replay tooling can now point a single CLI invocation
+at a JSON file (list of `PolicyContext` dicts) or a directory of
+`*.json` files and get:
+
+* one combined decision log emitted to stdout or `--audit-path`
+  JSONL;
+* exit code `3` if any item yielded `deny` (matches the existing
+  single-context denial convention);
+* a summary line `pre-check batch: items=N deny=Bool audit=path`.
+
+The batch path honours `--dry-run/--commit` so the existing
+caching semantics stay one knob.
+
+A new module-level helper `_load_pre_check_corpus` accepts:
+
+* a JSON file containing a list of context dicts;
+* a JSON file containing a single context dict;
+* a directory of `*.json` files, each shaped as above.
+
+Empty corpora emit a `[yellow]pre-check batch is empty[/yellow]`
+notice and exit `0`. Bad entries surface a useful `must be
+objects` error and exit `1`.
+
+#### 3. Decision-history pane (full-width)
+
+`OperatorCockpit._render_decisions_pane` is a new full-width row
+under the 2x2 grid. It surfaces every recorded
+:class:`DecisionNotice` with:
+
+* verdict glyph — `\u2713` allow, `\u2717` deny, `!` warn, `-`
+  no-clock;
+* rule_id (12), agent (8), lane (8), age (4s), truncated
+  reason_code (16).
+
+Mirrors the existing override-banner UX (same row layout, same
+columns, same truncation policy) so operators learn one
+pattern. The row is always present in `render()` (even when the
+queue is empty) so operators can tell at a glance that the audit
+pipeline is idle.
+
+A second module-level helper `_format_decision_row` and
+`_decision_glyph` lock the column contract in a small,
+self-contained function that's covered by direct unit tests.
+
+#### Validation
+
+- `pytest tests/test_unit_ux_cockpit_audit_pane_batch.py -q`
+  → **25 passed** (5 audit-wiring + 8 pane + 6 CLI batch + 2
+  corpus-loader).
+- Wider Phase 3/4 regression suite (cockpit, cockpit_bridge,
+  progress_emitter, explanations, traffic, policy_engine,
+  cockpit_clock_decisions, decision_audit, cli_cockpit,
+  **cockpit_audit_pane_batch**) → **234 passed** (+25 vs prior
+  209 baseline, zero regressions).
+- `ruff check` and `ruff format --check` clean on all four
+  touched files.
+
+#### Files Touched
+
+- `src/thegent/ux/cockpit.py` — `audit_appender` / `auto_tail`
+  ctor args, `_start_audit_tailer`, `shutdown`,
+  `_finalize_cockpit` (weakref finaliser), 5th-grid
+  `_render_decisions_pane`, `_decision_glyph`,
+  `_format_decision_row`, `MAX_DECISION_PANE_ROWS`,
+  `weakref` import.
+- `src/thegent/ux/cli_cockpit.py` — `--batch <path>`, `--audit-path`,
+  `--audit-append/--audit-overwrite`, `_run_pre_check_batch`,
+  `_load_pre_check_corpus` helpers.
+- `tests/test_unit_ux_cockpit_audit_pane_batch.py` — **new**
+  (540 lines, 25 tests).
+
 ### Unblocked Next
-- Wire `DecisionAuditTailer` into the live `OperatorCockpit` boot
-  path (`OperatorCockpit.__init__` should accept an optional
-  `audit_appender=…` so production deployments get free JSONL
-  persistence without manual wiring).
-- Extend `cockpit pre-check` with `--batch <path>` so SOTA audit
-  tooling can replay a corpus of `PolicyContext` JSON files in one
-  pass and emit a single combined decision log.
-- Surface `DecisionAuditAppender.tail_events` in the TUI as a
-  second history pane (mirrors the existing override-history
-  pane; same UX, different stream).
+- Add `cockpit decision tail` sub-command under the existing
+  `cockpit audit` Typer app that reads `tail_events()` from a
+  live `DecisionAuditAppender` so operators don't need to know
+  the JSONL path to inspect decisions.
+- Extend `cockpit pre-check --batch` with a `--namespace` /
+  `--default-policy` flag so replay runs can pin the federated
+  namespace and policy-stack resolution.
+- Add a `cockpit replay` sub-command that combines
+  `pre-check --batch` and a follow-up `--compare snapshot.json`
+  so SOTA tooling can validate a run against an expected
+  decision log line-by-line.

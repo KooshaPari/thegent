@@ -179,8 +179,30 @@ def cockpit_pre_check(
     namespace: str = typer.Option("global", "--namespace", help="Federated policy namespace"),
     json_output: bool = typer.Option(False, "--json", help="Emit JSON decision"),
     dry_run: bool = typer.Option(True, "--dry-run/--commit", help="Default dry-run; pass --commit to cache"),
+    batch: Optional[Path] = typer.Option(
+        None,
+        "--batch",
+        help="Replay a corpus of PolicyContext JSONs in one pass (file or dir of *.json).",
+    ),
+    audit_path: Optional[Path] = typer.Option(
+        None,
+        "--audit-path",
+        help="Persist every batch decision to this JSONL file (defaults to the cockpit appender's path).",
+    ),
+    audit_append: bool = typer.Option(
+        False,
+        "--audit-append/--audit-overwrite",
+        help="Append to the audit file (default: overwrite; useful for replay runs).",
+    ),
 ) -> None:
-    """Evaluate a :class:`PolicyContext` and emit the resulting decision."""
+    """Evaluate a :class:`PolicyContext` and emit the resulting decision.
+
+    With ``--batch <path>`` (WP-3001 SOTA replay tooling) the command
+    consumes a JSON file (list of contexts) or a directory of ``*.json``
+    files (each a list) and emits one combined decision log. The
+    batch mode still honors ``--dry-run`` / ``--commit`` semantics:
+    a deny on any item exits ``3`` after the full batch drains.
+    """
     try:
         # Import lazily so the CLI does not pull the full governance
         # module chain on commands that don't need it.
@@ -189,10 +211,26 @@ def cockpit_pre_check(
             PolicyEngine,
             evaluate_pre_check,
         )
+        from .cockpit import DecisionNotice
+        from .decision_audit import DecisionAuditAppender
     except Exception as exc:  # pragma: no cover - import guard
         err_console.print(f"[red]governance unavailable:[/red] {exc}")
         raise typer.Exit(2) from exc
     try:
+        # Batch mode takes precedence over the single-context path.
+        # Both share the same dry-run / commit semantics.
+        if batch is not None:
+            exit_code = _run_pre_check_batch(
+                batch=batch,
+                engine_factory=lambda: PolicyEngine(),
+                use_engine=not dry_run,
+                appender_factory=lambda: DecisionAuditAppender(audit_path=audit_path),
+                persist_audit=audit_path is not None or True,
+                append_audit=audit_append,
+                json_output=json_output,
+            )
+            raise typer.Exit(exit_code)
+
         ctx = PolicyContext(
             agent=agent,
             model=model,
@@ -225,6 +263,129 @@ def cockpit_pre_check(
     except Exception as exc:
         err_console.print(f"[red]pre-check failed:[/red] {exc}")
         raise typer.Exit(1) from exc
+
+
+def _run_pre_check_batch(
+    *,
+    batch: Path,
+    engine_factory: Callable[[], Any],
+    use_engine: bool,
+    appender_factory: Callable[[], DecisionAuditAppender],
+    persist_audit: bool,
+    append_audit: bool,
+    json_output: bool,
+) -> int:
+    """Replay a corpus of :class:`PolicyContext` JSONs through pre-check.
+
+    Returns the process exit code: ``3`` if any item yielded ``deny``,
+    ``0`` otherwise. The function never raises for individual deny
+    verdicts (so a single deny does not abort the run) — SOTA tooling
+    can keep draining the corpus and inspect the combined audit log.
+
+    ``batch`` may be:
+
+    * a JSON file (list of context dicts, or a single context dict)
+    * a directory containing ``*.json`` files (each: list or single dict)
+    """
+    from ..governance.policy_engine import (
+        PolicyContext,
+        evaluate_pre_check,
+    )
+    from .cockpit import DecisionNotice
+
+    contexts = _load_pre_check_corpus(batch)
+    if not contexts:
+        err_console.print(f"[yellow]pre-check batch is empty:[/yellow] {batch}")
+        return 0
+
+    engine = engine_factory() if use_engine else None
+    appender = appender_factory() if persist_audit else None
+    if appender is not None and not append_audit:
+        # Overwrite the audit file on replay so SOTA runs are
+        # self-contained.
+        path = appender.audit_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("", encoding="utf-8")
+
+    notices: list[DecisionNotice] = []
+    any_deny = False
+    for ctx in contexts:
+        if use_engine and engine is not None:
+            decision = engine.evaluate(ctx)
+        else:
+            decision = evaluate_pre_check(ctx)
+        if decision.verdict.value == "deny":
+            any_deny = True
+        # Always feed the audit pipeline so SOTA replay tooling sees
+        # the full decision stream regardless of verdict.
+        notice = DecisionNotice(
+            verdict=decision.verdict.value,
+            reason_code=decision.reason_code.value,
+            rule_id=decision.rule_id or "",
+            agent=ctx.agent,
+            lane=ctx.lane,
+            evaluated_at=decision.evaluated_at if hasattr(decision, "evaluated_at") else 0.0,
+            reason=decision.reason,
+        )
+        notices.append(notice)
+        if json_output:
+            typer.echo(json.dumps(decision.to_dict(), indent=2, sort_keys=True))
+
+    if appender is not None and notices:
+        # Validate-then-append (matches ``record_many`` semantics).
+        appender.record_many(notices)
+
+    summary = (
+        f"pre-check batch: items={len(notices)} deny={any_deny} audit={appender.audit_path() if appender else '-'}"
+    )
+    typer.echo(summary)
+    return 3 if any_deny else 0
+
+
+def _load_pre_check_corpus(path: Path) -> list[Any]:
+    """Load a ``--batch`` input into a flat list of ``PolicyContext``.
+
+    Accepts:
+        * a JSON file containing a list of context dicts
+        * a JSON file containing a single context dict
+        * a directory of ``*.json`` files, each shaped as above
+
+    Empty / unreadable inputs raise ``ValueError`` with a useful
+    message so the CLI surfaces it before draining the audit pipeline.
+    """
+    from ..governance.policy_engine import PolicyContext
+
+    if not path.exists():
+        raise FileNotFoundError(f"batch path not found: {path}")
+
+    def _coerce(entry: Any, src: Path) -> PolicyContext:
+        if not isinstance(entry, dict):
+            raise ValueError(f"batch {src} entries must be objects, got {type(entry).__name__}: {entry!r}")
+        return PolicyContext(
+            agent=str(entry.get("agent", "")),
+            model=str(entry.get("model", "")),
+            lane=str(entry.get("lane", "standard")),
+            confidence=entry.get("confidence"),
+            environment=str(entry.get("environment", "development")),
+            namespace=str(entry.get("namespace", "global")),
+            prompt=str(entry.get("prompt", "")),
+        )
+
+    if path.is_file():
+        raw: Any = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(raw, list):
+            return [_coerce(e, path) for e in raw]
+        return [_coerce(raw, path)]
+    if path.is_dir():
+        out: list[Any] = []
+        for child in sorted(path.glob("*.json")):
+            raw = json.loads(child.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                out.extend(_coerce(e, child) for e in raw)
+            else:
+                out.append(_coerce(raw, child))
+        return out
+    raise ValueError(f"--batch path is neither file nor directory: {path}")
 
 
 # ---------------------------------------------------------------------------

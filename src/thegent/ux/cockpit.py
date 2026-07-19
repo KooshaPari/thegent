@@ -43,6 +43,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
+import weakref
 from collections import Counter, deque
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -60,6 +61,10 @@ _log = logging.getLogger(__name__)
 DEFAULT_DAG_TICK_MS = 1000
 MAX_RUNS_PANE_ROWS = 14
 MAX_OVERRIDE_PANE_ROWS = 6
+# Cap on rendered rows in the decision-history pane. Slightly smaller
+# than the bounded deque size (64) so the inline pane stays scannable;
+# older notices are reachable through the JSONL audit log.
+MAX_DECISION_PANE_ROWS = 8
 SPARKLINE_CHARS = "▁▂▃▄▅▆▇█"
 # How long an OverrideExpiryNotice stays visible in the inline banner
 # before fading out. 30s matches the cockpit tick cadence and gives the
@@ -318,7 +323,35 @@ class OperatorCockpit:
         config: CockpitConfig | None = None,
         *,
         clock: Callable[[], float] | None = None,
+        audit_appender: "DecisionAuditAppender | None" = None,
+        auto_tail: bool = False,
+        tail_interval_s: float = 1.0,
     ) -> None:
+        """Build the operator cockpit.
+
+        Args:
+            config: Optional :class:`CockpitConfig`; defaults to a fresh config.
+            clock: Injectable wall-clock. Default ``time.time``. Useful for
+                deterministic audit replays.
+            audit_appender: Optional :class:`DecisionAuditAppender`. When
+                provided *and* ``auto_tail`` is ``True``, the cockpit spins
+                up a :class:`DecisionAuditTailer` so every
+                :meth:`record_decision` call lands in the JSONL audit log
+                without manual wiring. Production deployments should pass
+                their own appender (so audit-path / cache / clock are
+                controlled at boot); tests can pass an appender with a
+                tmp_path and ``auto_tail=False`` for synchronous drains.
+            auto_tail: Start a background :class:`DecisionAuditTailer`
+                against ``audit_appender``. Ignored when no appender is
+                supplied. Default ``False`` keeps the cockpit free of
+                background threads in tests and short-lived scripts.
+            tail_interval_s: Drain cadence for the background tailer.
+                Same default as :data:`DEFAULT_TAIL_INTERVAL_S`.
+
+        The cockpit owns the tailer for the lifetime of the instance; it
+        is stopped on :meth:`shutdown` (and on garbage collection as a
+        safety net so test sessions don't leak threads).
+        """
         self.config = config or CockpitConfig()
         self._state = _CockpitState()
         # counters
@@ -331,6 +364,59 @@ class OperatorCockpit:
         # metrics. Injected for deterministic audit replays; defaults to
         # ``time.time``. Monotonicity is the caller's responsibility.
         self._clock: Callable[[], float] = clock or _DEFAULT_CLOCK
+
+        # Optional JSONL audit wiring. The appender is owned by the
+        # caller (so multi-cockpit deployments can share one file
+        # handle); the tailer is owned by the cockpit so the lifetime
+        # matches the cockpit.
+        self._audit_appender = audit_appender
+        self._audit_tailer: "DecisionAuditTailer | None" = None
+        self._tail_interval_s = float(tail_interval_s)
+        if audit_appender is not None and auto_tail:
+            self._start_audit_tailer()
+
+        # Track whether ``shutdown`` was explicitly invoked so the
+        # finaliser doesn't double-stop the tailer in production.
+        self._shutdown_called = False
+        weakref.finalize(self, _finalize_cockpit, self)
+
+    # ------------------------------------------------------------- audit wiring
+
+    def _start_audit_tailer(self) -> None:
+        """Idempotently start the JSONL audit tailer, if configured.
+
+        A no-op when ``audit_appender`` was not supplied at construction.
+        Re-entrant (e.g. after a manual stop) — restarts a fresh thread.
+        """
+        if self._audit_appender is None:
+            return
+        from .decision_audit import DecisionAuditTailer  # local import to avoid cycle
+
+        tailer = DecisionAuditTailer(
+            cockpit=self,
+            appender=self._audit_appender,
+            interval_s=self._tail_interval_s,
+        )
+        tailer.start()
+        self._audit_tailer = tailer
+
+    def audit_appender(self) -> "DecisionAuditAppender | None":
+        """Return the JSONL audit appender the cockpit is wired to (or ``None``)."""
+        return self._audit_appender
+
+    def shutdown(self, timeout_s: float = 5.0) -> None:
+        """Stop the background audit tailer (idempotent, safe to call twice).
+
+        Production deployments should invoke this on graceful shutdown so
+        the daemon :class:`DecisionAuditTailer` thread exits cleanly and
+        no notices are lost mid-drain. Tests can lean on the finaliser
+        registered in ``__init__``.
+        """
+        self._shutdown_called = True
+        tailer = self._audit_tailer
+        if tailer is not None:
+            tailer.stop(timeout_s=timeout_s)
+            self._audit_tailer = None
 
     # --------------------------------------------------------------- mutators
 
@@ -539,7 +625,13 @@ class OperatorCockpit:
             left = conf_lines[i] if i < len(conf_lines) else ""
             right = ovr_lines[i] if i < len(ovr_lines) else ""
             body_lines.append(f"{left:<46}│ {right}")
-        body = "\n".join(body_lines)
+        # 5. Third row: decision-history pane (full-width). Mirrors the
+        #    existing override-history UX (different stream): every
+        #    recorded ``DecisionNotice`` shows up with verdict glyph +
+        #    age so operators can trace governance denies without
+        #    tailing the JSONL.
+        decisions_lines = self._render_decisions_pane()
+        body = "\n".join(body_lines) + "\n" + "\n".join(decisions_lines)
 
         if banner:
             return f"{header}\n{banner}\n{body}"
@@ -664,6 +756,39 @@ class OperatorCockpit:
         lines.append("└──────────────────────────────────────┘")
         return lines
 
+    def _render_decisions_pane(self) -> list[str]:
+        """Render the decision-history stream (WP-3001 -> WP-4001 inline view).
+
+        Full-width row sitting under the 2x2 grid. Shows the most recent
+        :class:`DecisionNotice` events with verdict glyph, rule_id (12),
+        agent (8), lane (8), and age (4s). Mirrors the existing
+        override-banner UX so operators learn one pattern. Bounded by
+        ``MAX_DECISION_NOTICES`` (deque maxlen=64) so long sessions
+        can't blow up the renderer's memory.
+
+        Empty panes render a single neutral line so the cockpit always
+        reserves the row and operators can tell the audit pipeline is
+        idle at a glance.
+        """
+        with self._lock:
+            decisions: list[DecisionNotice] = list(self._state.decision_notices)
+        lines: list[str] = ["┌─ Decision History ──────────────────────────────┐"]
+        if not decisions:
+            lines.append("│  (no policy decisions recorded yet)            │")
+            lines.append("│                                                 │")
+        else:
+            now = self._clock()
+            newest = list(reversed(decisions[-MAX_DECISION_PANE_ROWS:]))
+            for d in newest:
+                glyph = _decision_glyph(d)
+                age = max(0.0, now - d.evaluated_at) if d.evaluated_at > 0 else 0.0
+                lines.append(f"│ {glyph} {_format_decision_row(d, age):<47} │")
+            total = len(decisions)
+            if total > MAX_DECISION_PANE_ROWS:
+                lines.append(f"│  … {total - MAX_DECISION_PANE_ROWS} older decisions hidden       │")
+        lines.append("└─────────────────────────────────────────────────┘")
+        return lines
+
     @staticmethod
     def _percentile(values: Sequence[float], pct: float) -> float:
         """Return the ``pct`` percentile of ``values`` (0..1).
@@ -682,8 +807,35 @@ class OperatorCockpit:
         return self
 
     def __exit__(self, *exc: Any) -> None:
-        # No resources to release; defined so callers can use ``with``.
-        return None
+        # Best-effort stop of the background tailer (if any) so the
+        # daemon thread exits cleanly when used as ``with OperatorCockpit(...)``.
+        self.shutdown(timeout_s=0.1)
+
+
+# ---------------------------------------------------------------------------
+# Module-level helpers (lifecycle)
+# ---------------------------------------------------------------------------
+
+
+def _finalize_cockpit(cockpit: "OperatorCockpit") -> None:
+    """Finaliser that stops the audit tailer at garbage-collection time.
+
+    Registered via :func:`weakref.finalize` so that test suites and
+    short-lived scripts that forget to call :meth:`OperatorCockpit.shutdown`
+    still exit their daemon threads and don't leave the JSONL file half
+    written. Idempotent with explicit ``shutdown()`` because the tailer
+    keeps its own state.
+    """
+    try:
+        tailer = cockpit._audit_tailer  # noqa: SLF001 — finaliser contract
+    except AttributeError:
+        return
+    if tailer is not None:
+        try:
+            tailer.stop(timeout_s=0.5)
+        except Exception:  # noqa: BLE001 — finaliser must never raise
+            pass
+        cockpit._audit_tailer = None  # noqa: SLF001
 
 
 # ---------------------------------------------------------------------------
@@ -748,6 +900,41 @@ def _render_decision_deny_banner(notice: DecisionNotice, now: float) -> str:
     if notice.reason:
         head = f"{head}  {notice.reason}"
     return head
+
+
+def _decision_glyph(notice: DecisionNotice) -> str:
+    """Glyph used in the decision-history pane for a given verdict.
+
+    Same vocabulary as the deny banner (``\u2717`` = ballot-x) so the
+    pane and the banner read identically. ``allow`` gets a check mark;
+    ``warn`` gets a bang. ``evaluated_at == 0`` (no clock yet) is
+    represented as a dash to avoid displaying nonsense ages.
+    """
+    if notice.is_deny():
+        return "\u2717"
+    if notice.is_warn():
+        return "!"
+    if notice.evaluated_at <= 0:
+        return "-"
+    return "\u2713"
+
+
+def _format_decision_row(notice: DecisionNotice, age: float) -> str:
+    """Format one row of the decision-history pane.
+
+    Columns (fixed-width):
+        rule_id (12) | agent (8) | lane (8) | age (4s) | reason_code
+    The reason is omitted to keep the row readable on 80-col consoles;
+    operators wanting the full message read the JSONL audit log via
+    ``thegent cockpit audit tail``.
+    """
+    age_text = f"{age:.0f}s" if notice.evaluated_at > 0 else "   -"
+    rule = _truncate(notice.rule_id or "-", 12)
+    agent = _truncate(notice.agent or "-", 8)
+    lane = _truncate(notice.lane or "-", 8)
+    code = notice.reason_code or ""
+    code = _truncate(code, 16)
+    return f"{rule:<12}  {agent:<8}  {lane:<8}  {age_text:>4}  {code}"
 
 
 __all__ = [
