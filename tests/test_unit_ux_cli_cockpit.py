@@ -361,6 +361,328 @@ class TestCockpitReplay:
         # rendered help has ANSI codes that confuse substring matching).
         assert "Replay a corpus against an expected PolicyDecision snapshot" in result.output
 
+    def test_replay_help_documents_shim_flags(self) -> None:
+        """The help text advertises the ``--snapshot-format`` / ``--report-format`` shim."""
+        import re
+
+        result = runner.invoke(cockpit_app, ["replay", "--help"])
+        assert result.exit_code == 0
+        # Strip ANSI escape codes before searching — Rich's help renderer
+        # inserts zero-width styling codes between characters of the
+        # flag name (e.g. ``--sn[bold]apshot-format``) which breaks a
+        # naive substring search.
+        clean = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", result.output)
+        assert "--snapshot-format" in clean
+        assert "--report-format" in clean
+        # The shim language must be visible so operators discover the
+        # delegation without reading the source.
+        assert "sota replay" in clean.lower()
+
+    def test_replay_default_path_unchanged(self, tmp_path: Path) -> None:
+        """Default ``--snapshot-format json`` + ``--report-format text`` still works.
+
+        Backwards-compat: the historical ``cockpit replay`` contract
+        (text output, JSON snapshot, exit 4 on mismatch) must survive
+        the shim addition.
+        """
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        harvest = runner.invoke(
+            cockpit_app,
+            ["pre-check", "--batch", str(corpus), "--json"],
+        )
+        assert harvest.exit_code == 0
+        decoder = json.JSONDecoder()
+        snapshots: list[dict[str, object]] = []
+        idx = 0
+        text = harvest.output
+        while idx < len(text):
+            while idx < len(text) and text[idx].isspace():
+                idx += 1
+            if idx >= len(text) or text[idx] not in "{[":
+                break
+            obj, end = decoder.raw_decode(text[idx:])
+            snapshots.append(obj)
+            idx += end
+        assert snapshots
+        snapshot = tmp_path / "snap.json"
+        snapshot.write_text(json.dumps(snapshots), encoding="utf-8")
+        # No shim flags; should still work via the legacy path.
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert "matched=True" in result.output
+
+    def test_replay_report_format_json_delegates_to_sota(self, tmp_path: Path) -> None:
+        """``--report-format json`` triggers the sota shim and emits the JSON envelope."""
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        # Snapshot is JSON; we exercise the report-format dispatch.
+        harvest = runner.invoke(
+            cockpit_app,
+            ["pre-check", "--batch", str(corpus), "--json"],
+        )
+        assert harvest.exit_code == 0
+        decoder = json.JSONDecoder()
+        snapshots: list[dict[str, object]] = []
+        idx = 0
+        text = harvest.output
+        while idx < len(text):
+            while idx < len(text) and text[idx].isspace():
+                idx += 1
+            if idx >= len(text) or text[idx] not in "{[":
+                break
+            obj, end = decoder.raw_decode(text[idx:])
+            snapshots.append(obj)
+            idx += end
+        assert snapshots
+        snapshot = tmp_path / "snap.json"
+        snapshot.write_text(json.dumps(snapshots), encoding="utf-8")
+        # Pass --report-format json to trigger the shim; verify the
+        # JSON envelope is emitted (sota replay's structured output
+        # always starts with ``{`` after the leading ``sota replay:``
+        # envelope marker).
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--report-format",
+                "json",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        # sota replay's JSON envelope always contains a top-level
+        # ``matched`` key and a ``decisions`` list.  The envelope is
+        # emitted regardless of the trailing ``sota replay: matched=...``
+        # tail line that sota appends for operator visibility.
+        assert '"matched"' in result.output
+        assert '"decisions"' in result.output
+        # The presence of the JSON envelope confirms the shim path ran;
+        # the legacy cockpit text ``replay: items=`` shape must NOT
+        # appear (it would mean we hit the legacy code path).
+        assert "replay: items=" not in result.output
+
+    def test_replay_json_flag_translates_to_report_format_json(self, tmp_path: Path) -> None:
+        """The legacy ``--json`` flag is honoured via the sota shim path."""
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        harvest = runner.invoke(
+            cockpit_app,
+            ["pre-check", "--batch", str(corpus), "--json"],
+        )
+        assert harvest.exit_code == 0
+        decoder = json.JSONDecoder()
+        snapshots: list[dict[str, object]] = []
+        idx = 0
+        text = harvest.output
+        while idx < len(text):
+            while idx < len(text) and text[idx].isspace():
+                idx += 1
+            if idx >= len(text) or text[idx] not in "{[":
+                break
+            obj, end = decoder.raw_decode(text[idx:])
+            snapshots.append(obj)
+            idx += end
+        assert snapshots
+        snapshot = tmp_path / "snap.json"
+        snapshot.write_text(json.dumps(snapshots), encoding="utf-8")
+        # ``--json`` (legacy cockpit flag) maps to ``--report-format json``
+        # in the sota shim and emits the JSON envelope.
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--json",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        assert '"matched"' in result.output
+        assert '"decisions"' in result.output
+
+    def test_replay_snapshot_format_yaml_delegates_to_sota(self, tmp_path: Path) -> None:
+        """``--snapshot-format yaml`` triggers the sota shim and reads YAML."""
+        runner = CliRunner()
+        try:
+            import yaml  # noqa: F401
+        except ImportError:  # pragma: no cover
+            pytest.skip("PyYAML not installed")
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        harvest = runner.invoke(
+            cockpit_app,
+            ["pre-check", "--batch", str(corpus), "--json"],
+        )
+        assert harvest.exit_code == 0
+        decoder = json.JSONDecoder()
+        snapshots: list[dict[str, object]] = []
+        idx = 0
+        text = harvest.output
+        while idx < len(text):
+            while idx < len(text) and text[idx].isspace():
+                idx += 1
+            if idx >= len(text) or text[idx] not in "{[":
+                break
+            obj, end = decoder.raw_decode(text[idx:])
+            snapshots.append(obj)
+            idx += end
+        assert snapshots
+        snapshot = tmp_path / "snap.yaml"
+        snapshot.write_text(yaml.safe_dump(snapshots, sort_keys=True), encoding="utf-8")
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--snapshot-format",
+                "yaml",
+                "--report-format",
+                "text",
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        # ``--report-path not set`` means sota writes the report to stdout.
+        # For YAML snapshots the sota text envelope is one line:
+        # ``sota replay: items=N matched=True/False mismatches=M``.
+        # We confirm the shim path ran (vs the legacy cockpit path
+        # which would emit ``replay: batch=? compare=? items=...``) by
+        # checking for the sota-specific marker.
+        assert "sota replay: items=" in result.output
+        # No standalone ``sota replay: matched=`` tail line — the shim
+        # suppresses it so the cockpit output ends with the report
+        # body line only (no double operator summary).
+        lines = result.output.splitlines()
+        tail_lines = [ln for ln in lines if ln.startswith("sota replay: matched=")]
+        assert not tail_lines, f"unexpected sota tail lines: {tail_lines}"
+
+    def test_replay_report_format_junitxml_delegates_to_sota(self, tmp_path: Path) -> None:
+        """``--report-format junitxml`` triggers the sota shim and emits XML."""
+        runner = CliRunner()
+        corpus = tmp_path / "corpus.json"
+        corpus.write_text(
+            json.dumps(
+                [
+                    {
+                        "agent": "cursor",
+                        "lane": "standard",
+                        "confidence": 0.95,
+                        "environment": "development",
+                    },
+                ]
+            ),
+            encoding="utf-8",
+        )
+        harvest = runner.invoke(
+            cockpit_app,
+            ["pre-check", "--batch", str(corpus), "--json"],
+        )
+        assert harvest.exit_code == 0
+        decoder = json.JSONDecoder()
+        snapshots: list[dict[str, object]] = []
+        idx = 0
+        text = harvest.output
+        while idx < len(text):
+            while idx < len(text) and text[idx].isspace():
+                idx += 1
+            if idx >= len(text) or text[idx] not in "{[":
+                break
+            obj, end = decoder.raw_decode(text[idx:])
+            snapshots.append(obj)
+            idx += end
+        assert snapshots
+        snapshot = tmp_path / "snap.json"
+        snapshot.write_text(json.dumps(snapshots), encoding="utf-8")
+        # ``--report-path`` writes the junitxml to disk; we read it back.
+        report = tmp_path / "report.xml"
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(corpus),
+                "--compare",
+                str(snapshot),
+                "--report-format",
+                "junitxml",
+                "--report-path",
+                str(report),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+        # Report file exists and contains a testsuite element.
+        assert report.exists()
+        content = report.read_text(encoding="utf-8")
+        assert "<testsuite" in content
+        assert "decision[0]" in content
+
 
 # ---------------------------------------------------------------------------
 # main.py wiring (smoke)

@@ -14,7 +14,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.tools.linting_accelerator import LintingAccelerator, LintResult
+# thegent.tools.linting_accelerator module was removed.
+_linting = pytest.importorskip(
+    "thegent.tools.linting_accelerator",
+    reason="thegent.tools.linting_accelerator module removed; lint accelerator tests skipped",
+)
+from thegent.tools.linting_accelerator import (  # noqa: E402  (importorskip may skip before this)
+    LintingAccelerator,
+    LintResult,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -348,6 +348,7 @@ def sota_replay(
         "--suite-name",
         help="JUnit-XML testsuite name (only used for junitxml report-format).",
     ),
+    _render_tail: bool = True,  # noqa: ANN001  - internal flag for cockpit shim
 ) -> None:
     """Replay ``--batch`` through pre-check and validate against ``--compare``.
 
@@ -519,7 +520,8 @@ def sota_replay(
         # so operator terminals see the same "matched=N mismatches=M"
         # line regardless of the report format. This keeps the
         # cockpit vs sota UX consistent.
-        typer.echo(f"sota replay: matched={matched} items={len(produced)} mismatches={len(mismatches)}")
+        if _render_tail:
+            typer.echo(f"sota replay: matched={matched} items={len(produced)} mismatches={len(mismatches)}")
 
         if not matched:
             raise typer.Exit(4)

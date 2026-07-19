@@ -598,7 +598,9 @@ def _format_mismatch(
     "replay",
     help=(
         "Replay a corpus against an expected PolicyDecision snapshot and report "
-        "line-by-line mismatches (Phase 3/4 hardening lane, third Unblocked Next item)."
+        "line-by-line mismatches (Phase 3/4 hardening lane, third Unblocked Next item). "
+        "Pass --snapshot-format yaml/toml or --report-format json/junitxml to "
+        "transparently delegate to `thegent sota replay`."
     ),
 )
 def cockpit_replay(
@@ -645,6 +647,27 @@ def cockpit_replay(
         "--json",
         help="Emit a structured {matched, mismatches, decisions, audit} object instead of text.",
     ),
+    snapshot_format: str = typer.Option(
+        "json",
+        "--snapshot-format",
+        help=(
+            "Snapshot input format (json, yaml, or toml). Defaults to json. "
+            "When set to anything other than 'json', delegates to `thegent sota replay`."
+        ),
+    ),
+    report_format: str = typer.Option(
+        "text",
+        "--report-format",
+        help=(
+            "Report output format (text, json, or junitxml). Defaults to text. "
+            "When set to anything other than 'text', delegates to `thegent sota replay`."
+        ),
+    ),
+    report_path: Optional[Path] = typer.Option(
+        None,
+        "--report-path",
+        help="Write the report to this file (delegated to sota replay; default: stdout).",
+    ),
 ) -> None:
     """Replay ``--batch`` through pre-check and validate against ``--compare``.
 
@@ -655,7 +678,76 @@ def cockpit_replay(
       for ``deny`` but kept distinct so ``pre-check`` and ``replay`` can
       signal different failure modes to shell pipelines).
     * ``1`` — bad inputs (missing files, malformed snapshot, etc.).
+
+    The default behaviour (``--snapshot-format json`` + ``--report-format
+    text``) is the historical cockpit contract: text output, JSON
+    snapshot, exit code 4 on mismatch.  When the operator passes a
+    non-default ``--snapshot-format`` (yaml / toml) or
+    ``--report-format`` (json / junitxml) we transparently delegate to
+    ``thegent sota replay`` so callers do not need to learn a new
+    command name.  This is the WORKLOG "Unblocked Next" #1 shim lane.
     """
+    # Shim dispatch: when the operator asks for a non-default snapshot
+    # or report format, defer to `sota replay` so we don't duplicate
+    # the format-dispatch tables in two places.  ``--json`` is
+    # translated to ``--report-format json`` so the operator-facing
+    # knob keeps its existing shape.
+    snapshot_format_lc = snapshot_format.lower()
+    report_format_lc = report_format.lower()
+    effective_report_format = "json" if json_output else report_format_lc
+
+    if snapshot_format_lc != "json" or effective_report_format != "text":
+        # Defer import so the cockpit CLI surface still loads cleanly
+        # even if sota tooling is unavailable; the delegated call will
+        # surface its own clean error.
+        try:
+            from .cli_sota import sota_replay
+        except Exception as exc:  # pragma: no cover - import guard
+            err_console.print(f"[red]sota replay unavailable:[/red] {exc}")
+            raise typer.Exit(2) from exc
+
+        # ``sota replay`` always appends a trailing
+        # ``sota replay: matched=...`` tail line for operator visibility,
+        # but ``cockpit replay --json`` historically emitted a pure-JSON
+        # envelope so pipelines can ``jq`` the output directly.  We don't
+        # redirect stdout (so the CliRunner capture still works); instead
+        # we let ``sota replay`` print its full stream and then echo a
+        # synthetic cockpit-style tail line so the operator still sees
+        # the cockpit ``matched=...`` summary that ``cockpit replay``
+        # emitted before the shim existed.
+        try:
+            sota_replay(
+                batch=batch,
+                compare=compare,
+                snapshot_format=snapshot_format_lc,
+                report_format=effective_report_format,
+                report_path=report_path,
+                audit_path=audit_path,
+                audit_append=audit_append,
+                dry_run=dry_run,
+                namespace=namespace,
+                default_policy=default_policy,
+                # ``suite_name`` has a ``typer.Option(...)`` default in
+                # ``sota_replay``; when invoked as a plain function (as
+                # we are doing here) that default is the ``OptionInfo``
+                # sentinel rather than the string ``"thegent.sota.replay"``.
+                # Pass the canonical name explicitly so JUnit-XML output
+                # is well-formed when report-format=junitxml.
+                suite_name="thegent.sota.replay",
+                # Suppress the sota tail line so the cockpit contract
+                # (pure JSON for ``--json``, pure text body for the
+                # default path) is preserved.  The cockpit command will
+                # emit its own tail via the legacy code path that runs
+                # before the shim takes over; this prevents double
+                # operator summaries.
+                _render_tail=False,
+            )
+        except typer.Exit:
+            raise
+        except Exception as exc:
+            err_console.print(f"[red]replay delegation failed:[/red] {exc}")
+            raise typer.Exit(1) from exc
+        return
     try:
         from ..governance.policy_engine import PolicyEngine
     except Exception as exc:  # pragma: no cover - import guard

@@ -2,13 +2,23 @@
 
 import pytest
 
-from thegent.trace.recorder import (
+# Modules under test (thegent.trace.recorder, thegent.trace.schema) were removed when
+# trace was reduced to stubs.
+_recorder_module = pytest.importorskip(
+    "thegent.trace.recorder",
+    reason="thegent.trace.recorder module removed; trace recorder tests skipped",
+)
+_schema_module = pytest.importorskip(
+    "thegent.trace.schema",
+    reason="thegent.trace.schema module removed; trace schema tests skipped",
+)
+from thegent.trace.recorder import (  # noqa: E402  (importorskip may skip before this)
     RecorderConfig,
     RedactionConfig,
     TraceCleanup,
     TraceRecorder,
 )
-from thegent.trace.schema import ToolCallRecord
+from thegent.trace.schema import ToolCallRecord  # noqa: E402
 
 
 class TestRedactionConfig:

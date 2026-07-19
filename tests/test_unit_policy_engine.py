@@ -12,6 +12,7 @@ from thegent.governance.policy_engine import (
     PolicyContext,
     PolicyDecision,
     PolicyEngine,
+    PolicyEngineConfigError,
     ReasonCode,
     Verdict,
     evaluate_pre_check,
@@ -331,3 +332,138 @@ class TestDefaultNamespaceKwarg:
         engine = PolicyEngine(settings=settings, use_federation=True, default_namespace="global")
         assert engine.federated is not None
         assert engine.federated.default_namespace == "global"
+
+
+# ---------------------------------------------------------------------------
+# register_override path-traversal guard (direct tests)
+# ---------------------------------------------------------------------------
+
+
+class TestRegisterOverridePathTraversalGuard:
+    """``PolicyEngine.register_override`` rejects path-traversal-shaped rule_ids.
+
+    The audit (and the WORKLOG "Unblocked Next" item #2) flagged that the
+    path-traversal guard on ``PolicyEngine.register_override`` (implemented
+    in ``policy_engine.py`` at the public-API surface) was only indirectly
+    exercised via the federated-policy thread-safety suite. These direct
+    tests pin the contract at the policy-engine layer so a future refactor
+    of ``register_override`` cannot silently weaken it.
+
+    Rejection shapes covered:
+
+    * ``/`` — POSIX path separator (Unix absolute or relative traversal)
+    * ``\\`` — Windows path separator
+    * ``..`` — parent-directory reference, even without a separator
+
+    The guard is intentionally applied *before* the call reaches the
+    override_manager (which interpolates rule_id into filenames), so
+    each rejected call must surface a ``PolicyEngineConfigError`` and
+    leave no override registered on the engine.
+    """
+
+    def test_register_override_rejects_forward_slash(self, engine: PolicyEngine) -> None:
+        """A ``/`` in ``rule_id`` is rejected before the override_manager is called."""
+        with pytest.raises(PolicyEngineConfigError) as exc_info:
+            engine.register_override(
+                "no-network/prod",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+        # Error message must mention either '..' or 'path' so operators
+        # can diagnose the rejection without reading source.
+        msg = str(exc_info.value).lower()
+        assert ".." in str(exc_info.value) or "path" in msg
+
+    def test_register_override_rejects_backslash(self, engine: PolicyEngine) -> None:
+        """A ``\\`` (Windows separator) in ``rule_id`` is rejected."""
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "no-network\\prod",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+
+    def test_register_override_rejects_double_dot_sequence(self, engine: PolicyEngine) -> None:
+        """A bare ``..`` substring (without separators) is rejected."""
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "rule..with..dots",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+
+    def test_register_override_rejects_absolute_path(self, engine: PolicyEngine) -> None:
+        """A leading ``/etc/passwd`` style traversal is rejected."""
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "/etc/passwd",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+
+    def test_register_override_rejects_parent_traversal(self, engine: PolicyEngine) -> None:
+        """A ``../foo`` parent-directory escape is rejected."""
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "../escape",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+
+    def test_register_override_accepts_clean_rule_id(self, engine: PolicyEngine) -> None:
+        """A rule_id with only ``[A-Za-z0-9_-]`` is accepted.
+
+        This is the negative control: if the guard over-rejects, this
+        test catches it. We don't assert anything about the override
+        being active (that's the override_manager's contract, covered
+        elsewhere) — only that the guard does not raise on a clean id.
+        """
+        # Should not raise.
+        engine.register_override(
+            "no-network-prod",
+            reason="hotfix",
+            by="sre",
+            duration_minutes=1,
+        )
+
+    def test_register_override_rejects_even_with_federation_enabled(self, federated_engine: PolicyEngine) -> None:
+        """The guard fires regardless of ``use_federation=True``.
+
+        Some refactors might gate the guard behind the federated-engine
+        branch (since only the federated override_manager interpolates
+        filenames). This test pins the contract: the public ``PolicyEngine``
+        API rejects bad inputs no matter how the engine is configured.
+        """
+        with pytest.raises(PolicyEngineConfigError):
+            federated_engine.register_override(
+                "rule/with/slashes",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=1,
+            )
+
+    def test_register_override_rejected_does_not_register_override(self, engine: PolicyEngine) -> None:
+        """A rejected call leaves no override behind on the override_manager.
+
+        Guards must fail closed: a bad ``rule_id`` must not partially
+        register an override that later evaluates and fires. We assert
+        by attempting to evaluate a context that would normally be denied
+        by the just-registered override; if the guard ever silently lets
+        a bad rule_id through, this assertion catches it.
+        """
+        with pytest.raises(PolicyEngineConfigError):
+            engine.register_override(
+                "no-cursor-prod/../etc",
+                reason="hotfix",
+                by="sre",
+                duration_minutes=60,
+            )
+        # No partial state — a clean evaluate on the same agent must
+        # not be affected by the rejected override.
+        d = engine.evaluate(PolicyContext(agent="cursor", environment="development", confidence=0.95))
+        assert d.verdict == Verdict.ALLOW

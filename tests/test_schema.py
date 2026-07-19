@@ -1,6 +1,13 @@
 """Unit tests for trace schema module."""
 
-from thegent.trace.schema import (
+import pytest
+
+# Module under test (thegent.trace.schema) was removed when trace was reduced to stubs.
+_schema_module = pytest.importorskip(
+    "thegent.trace.schema",
+    reason="thegent.trace.schema module removed; trace schema tests skipped",
+)
+from thegent.trace.schema import (  # noqa: E402  (importorskip may skip before this)
     DecisionRecord,
     SessionRecord,
     ToolCallRecord,

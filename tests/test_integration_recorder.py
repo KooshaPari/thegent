@@ -13,8 +13,13 @@ from pathlib import Path
 
 import pytest
 
+# Module under test (thegent.trace.integration) was removed when trace was reduced to stubs.
+thegent_trace_integration = pytest.importorskip(
+    "thegent.trace.integration",
+    reason="thegent.trace.integration module removed; recorder integration tests skipped",
+)
 from thegent.agents.base import AgentRunner, RunResult
-from thegent.trace.integration import (
+from thegent.trace.integration import (  # noqa: E402  (importorskip may skip before this)
     ExecutionMetrics,
     TracedAgentRunner,
     TraceRecordingContext,

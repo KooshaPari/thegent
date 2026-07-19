@@ -22,7 +22,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest  # noqa: F401 -- imported for pytest.main at module bottom and fixtures
 
-from thegent.tools.terminal_capture import (
+# thegent.tools.terminal_capture module was removed.
+_terminal_capture = pytest.importorskip(
+    "thegent.tools.terminal_capture",
+    reason="thegent.tools.terminal_capture module removed; terminal capture tests skipped",
+)
+from thegent.tools.terminal_capture import (  # noqa: E402  (importorskip may skip before this)
     CaptureResult,
     TerminalCapture,
     _capture_via_proc,

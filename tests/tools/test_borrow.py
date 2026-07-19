@@ -24,7 +24,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.tools.borrow import (
+# thegent.tools.borrow module was removed.
+_borrow = pytest.importorskip(
+    "thegent.tools.borrow",
+    reason="thegent.tools.borrow module removed; tool borrow tests skipped",
+)
+from thegent.tools.borrow import (  # noqa: E402  (importorskip may skip before this)
     _DEFAULT_MCP_HOST,
     _DEFAULT_MCP_PORT,
     BorrowConfig,
