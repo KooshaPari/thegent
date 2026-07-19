@@ -633,15 +633,18 @@ from thegent.cli.commands.plan_cmds import (  # noqa: E402,F401
     plan_do_next_cmd,
     plan_get_next_cmd,
     plan_incorporate_cmd,
+    plan_lint_workstream_cmd,
     plan_loop_cmd,
+    plan_normalize_workstream_cmd,
     plan_progress_cmd,
+    plan_verify_workstream_cmd,
     plan_wait_next_cmd,
     workstream_dashboard_cmd,
     workstream_dependencies_cmd,
     workstream_launch_cmd,
     workstream_query_cmd,
     workstream_stats_cmd,
-)
+)  # noqa: E501
 from thegent.cli.commands.model_cmds import (  # noqa: E402,F401
     _list_antigravity_models,
     _list_claude_models,
