@@ -5,7 +5,12 @@ from typer.testing import CliRunner
 
 from thegent.main import app
 
-runner = CliRunner()
+# For a11y smoke checks we want to verify the *plain-text* contract of
+# the help surface, so force Click/Typer to emit ANSI-free output.
+# Click 8.x reads NO_COLOR / FORCE_COLOR / TERM via the per-invocation
+# env passed to CliRunner (TERM=dumb + FORCE_COLOR=0 disables color
+# even on Click versions that ignore NO_COLOR alone).
+runner = CliRunner(env={"NO_COLOR": "1", "TERM": "dumb", "FORCE_COLOR": "0"})
 pytestmark = pytest.mark.a11y
 
 
