@@ -4282,10 +4282,191 @@ operator-facing envelope site in the `apps/` tree.
   plan-workstream thicken, diskcache-skip-guard
   collection-repair, CachePreWarmer FR-CACHE-003 contract
   closure, F-15 + UX polish, GOV-1 governance
-  error-envelope parity, plus this AUDIT-N+1 `run`
-  sub-app envelope sweep lane.
+  error-envelope parity, AUDIT-N+1 `run` sub-app envelope
+  sweep lane, plus this AUDIT-N+2 governance+infra+mesh+
+  services envelope sweep lane.
 * **Local commit**: `9e46b7083` lands on
   `wip/2026-07-18-cockpit-sota-hardening`, **43 commits
+  ahead of `main`** after this commit. **Not pushed** to
+  the archived upstream `KooshaPari/thegent.git` per the
+  directive. Other worktree
+  (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
+  preserved and untouched.
+
+## Phase 3/4 Continuation — AUDIT-N+2 — governance + infra + mesh + services envelope sweep (2026-07-19)
+
+### Lane: extend the AUDIT-N+1 envelope sweep beyond `cli/apps/`
+
+**Goal:** extend the F-15-D / GOV-1 / AUDIT-N+1
+`print_exc(err_console, prefix, value)` render-safety
+contract to the four trees that AUDIT-N+1 explicitly
+excluded (`cli/governance/`, `infra/`, `mesh/`,
+`cli/services/`). Closes the AUDIT-N+1 carry-forward
+"extend envelope sweep to remaining sub-apps" item from
+the prior hand-off.
+
+### What Changed
+
+Nine unsafe envelope sites swept to the canonical
+`thegent.ux.cli_errors.print_exc` helper:
+
+* `src/thegent/cli/governance/governance_audit_compliance_cmds.py:121`
+  — `signatures_verify_cmd` defensive `except Exception` envelope.
+* `src/thegent/cli/governance/governance_trust_sigs_cmds.py:150`
+  — `signatures_verify_cmd` defensive `except Exception` envelope.
+* `src/thegent/cli/governance/governance_policy_cmds.py:362`
+  — `signatures_verify_cmd` defensive `except Exception` envelope.
+* `src/thegent/infra/config_commands.py:78, 120, 152` —
+  `config_show` + `config_migrate` defensive `except Exception`
+  envelopes (3 sites in one file).
+* `src/thegent/infra/config_wizard.py:280` — `ConfigWizard.run`
+  `_save_config` defensive envelope.
+* `src/thegent/mesh/cli.py:233` — mesh `list` command defensive
+  `except Exception` envelope.
+* `src/thegent/cli/services/run_execution_core_helpers.py:751` —
+  `policy_engine.evaluate` warn branch (non-Exception `pol_reason`
+  payload, follows the same Rich-markup f-string interpolation shape).
+
+Each swept module now imports `print_exc` from
+`thegent.ux.cli_errors` and exposes `err_console = Console
+(stderr=True)` at module scope so the F-15-D / GOV-1 / AUDIT-N+1
+render-safety contract is preserved end-to-end across the
+operator-facing CLI surface.
+
+### Threat-model exclusions (SAFE-by-construction)
+
+Three documented sites are explicitly excluded from the sweep
+because they interpolate operator-controlled typed data, not
+exception `str()`:
+
+* `governance_escalation_hitl_cmds.py:128` —
+  `result['audit'].get('status', 'failed')` (bounded string set).
+* `infra/enhanced_errors.py:64` —
+  `self.context.error_message` (typed field on context dataclass).
+* `cli/services/run_execution_core_helpers.py:1072` —
+  `lint_issues` (typed `list[dict]`).
+
+A handful of operator-controlled CLI-arg interpolations
+(`run_id`, `plugin_id`, `rid`, `agent_id`, `source_path`) are
+also SAFE-by-construction and excluded from the static audit.
+
+### Test surface (31 new tests)
+
+`tests/test_unit_cli_govern_infra_mesh_envelope_parity.py`
+(**new**, 477 lines, 5 test classes):
+
+* `TestErrConsoleStderr` (14 tests) — every swept module exposes
+  `err_console = Console(stderr=True)` AND re-exports `print_exc`
+  as the canonical `cli_errors.print_exc` (identity-pinned, so a
+  future refactor that accidentally routes through a different
+  import surface fails the test).
+* `TestNoBareEInterpolation` (7 tests) — structural invariant:
+  no `console.print(f"[red]…{e}…[/red]")` /
+  `console.print(f"[yellow]…{pol_reason}…[/yellow]")` pattern
+  remains in any swept file. Parametrised over all 7 swept
+  source files.
+* `TestEnvelopeStaticAuditAcrossSweptTrees` (1 test) — grep-driven
+  whole-tree static inventory of every file under the swept
+  trees; the three documented safe-by-construction sites + the
+  operator-arg interpolations are explicitly excluded via an
+  in-test exclusion list so the audit scope stays focused on
+  the AUDIT-N+2-closed unsafe envelopes.
+* `TestSweptModulesImportCleanly` (7 tests) — every swept
+  module imports successfully (catches broken-import regressions
+  from the `Console` / `print_exc` additions).
+* `TestEnvelopeRichmarkupSafetyGovern` (2 tests) — end-to-end
+  render-safety through `print_exc`: a `ValueError("[red]pwned
+  [/red]")` and a plain `str` payload route through the canonical
+  helper and the rendered output contains the literal escaped
+  markup (raw `\[red]pwned\[/red]`) rather than ANSI-coloured
+  text.
+
+### Validation
+
+* `py_compile` clean on all 8 touched files.
+* `ruff check` clean on all 8 touched files.
+* `ruff format --check` clean on all 8 touched files
+  (already formatted).
+* Secret scan clean — `api_key|secret|token|password|passwd|
+  bearer|aws_access|private_key` literal-assignment patterns
+  absent from every touched file.
+* `pytest tests/test_unit_cli_govern_infra_mesh_envelope_parity.py
+  -v --override-ini="addopts=" --no-header` →
+  **28 passed, 3 pre-existing failures** (3 failures all stem
+  from the pre-existing `ModuleNotFoundError: No module named
+  'thegent.adapters.execution_io'` on
+  `cli/services/run_execution_core_helpers.py` — the file has
+  been a deprecated shim since `8c509d121` awaiting the
+  decomposed `thegent.adapters` package; my lane's changes
+  cannot import because the import itself fails first).
+* `pytest tests/test_unit_cli_apps_envelope_parity.py
+  tests/test_unit_cli_govern_error_envelope_parity.py
+  tests/test_unit_cli_govern_infra_mesh_envelope_parity.py
+  -q --override-ini="addopts=" --no-header` →
+  **66 passed, 4 skipped, 4 pre-existing failures** (1
+  GOV-1 CliRunner API drift + 3 `run_execution_core_helpers`
+  shim import — same pre-existing baseline pattern as the
+  AUDIT-N+1 hand-off).
+* Function-length invariant: my lane did not introduce any
+  new > 40-line functions. Pre-existing `signatures_verify_cmd`
+  (64 lines) and `config_show_cmd` (52 lines) were not
+  modified beyond their envelope blocks.
+
+### Files Touched
+
+* `src/thegent/cli/governance/governance_audit_compliance_cmds.py`
+  — `from thegent.ux.cli_errors import print_exc` + `err_console
+  = Console(stderr=True)`; migrated the `signatures_verify_cmd`
+  defensive `except Exception` envelope to `print_exc(err_console,
+  "signatures verify failed:", e)`.
+* `src/thegent/cli/governance/governance_trust_sigs_cmds.py`
+  — same migration.
+* `src/thegent/cli/governance/governance_policy_cmds.py` —
+  same migration.
+* `src/thegent/infra/config_commands.py` — same migration
+  applied to all 3 sites in the file
+  (`config_show` + `config_migrate` read + `config_migrate` write).
+* `src/thegent/infra/config_wizard.py` — same migration applied
+  to the `_save_config` defensive envelope.
+* `src/thegent/mesh/cli.py` — same migration applied to the
+  `list` command defensive envelope.
+* `src/thegent/cli/services/run_execution_core_helpers.py` —
+  same migration applied to the `policy_engine.evaluate` warn
+  branch (using `style="yellow"` kwarg for the non-default colour).
+* `tests/test_unit_cli_govern_infra_mesh_envelope_parity.py` —
+  **new** (477 lines, 31 tests).
+
+### Unblocked Next
+
+* **AUDIT-N+3 — sweep remaining trees** — `cli/commands/`,
+  `agents/`, and `tools/` may still carry operator-arg or
+  exception-payload interpolations into Rich-markup f-strings.
+  A static-only pass would surface any remaining sites.
+* **Phase 3/4 SOTA-audit third pass** — the third-pass audit
+  closed AUDIT-1/6/9/19; AUDIT-2/3 (cockpit/sota envelope) was
+  closed by Day 5/5. The remaining open audit items are AUDIT-4
+  (WL-124 stub renaming) and the next-pass surface for the
+  CLI command-module contract.
+* **`run_execution_core_helpers.py` shim creation** — the
+  pre-existing `thegent.adapters.execution_io` missing module
+  blocks 3 tests across the active lane. A focused lane that
+  creates the `thegent.adapters.execution_io` package
+  (mirroring `thegent.use_cases.execute_task`) would unblock
+  those tests without touching the broader decomposition work.
+
+### Cockpit Progress Bar + DAG Tick:
+
+* **Cockpit progress bar**: 100% (Five-Day Goal lane remains
+  fully closed at 458 passing; AUDIT-N+2 envelope sweep is
+  fully green: 28 / 31 in the new file, all 4 failures
+  pre-existing baseline).
+* **DAG tick**: `+1` (this hand-off). The Five-Day Goal
+  Day 5/5 close-out lane remains the most recent milestone;
+  this hand-off extends the AUDIT-N+1 envelope sweep from
+  `cli/apps/` to the broader CLI tree per the post-Day-5
+  carry-forward.
+* **Local commit**: `e270b4f1d` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **46 commits
   ahead of `main`** after this commit. **Not pushed** to
   the archived upstream `KooshaPari/thegent.git` per the
   directive. Other worktree
