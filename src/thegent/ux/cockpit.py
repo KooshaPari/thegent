@@ -61,6 +61,10 @@ DEFAULT_DAG_TICK_MS = 1000
 MAX_RUNS_PANE_ROWS = 14
 MAX_OVERRIDE_PANE_ROWS = 6
 SPARKLINE_CHARS = "▁▂▃▄▅▆▇█"
+# How long an OverrideExpiryNotice stays visible in the inline banner
+# before fading out. 30s matches the cockpit tick cadence and gives the
+# operator enough time to glance up between DAG ticks.
+OVERRIDE_BANNER_MAX_AGE_S = 30.0
 
 
 class CockpitPane(StrEnum):
@@ -131,6 +135,33 @@ class OverrideEvent:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class OverrideExpiryNotice:
+    """A single most-recent override-expiry event surfaced to the operator.
+
+    Bridges WP-3003 (``OverrideEventEmitter`` writes the
+    ``governance.override.expired`` JSONL line) to the WP-4001 cockpit UX
+    surface. Operators can connect an :class:`OverrideExpiryMonitor` (or
+    any tail-reader of the JSONL log) and call
+    :meth:`OperatorCockpit.record_override_event` to surface recent
+    expiry lines inline in the cockpit header.
+
+    Attributes:
+        rule_id: Policy rule whose override expired (e.g. ``"no-network"``).
+        owner: Principal who applied the override.
+        reason: Free-form reason text (``"ttl_elapsed"`` by default).
+        expired_at: Unix timestamp of expiry.
+        age_s: Seconds since expiry at render time. Updated lazily on
+            every render so an old notice naturally fades out.
+    """
+
+    rule_id: str
+    owner: str
+    reason: str
+    expired_at: float
+    age_s: float = 0.0
+
+
 # ---------------------------------------------------------------------------
 # Internal state containers
 # ---------------------------------------------------------------------------
@@ -140,14 +171,18 @@ class OverrideEvent:
 class _CockpitState:
     """Mutable internal state of the cockpit (single source of truth).
 
-    ``confidence_history`` is a bounded ``deque`` to prevent unbounded memory
-    growth across a long-running operator session.
+    ``confidence_history`` and ``override_notices`` are bounded ``deque``
+    collections to prevent unbounded memory growth across a long-running
+    operator session.
     """
 
     last_tick_at: float = 0.0
     runs: dict[str, RunEvent] = field(default_factory=dict)
     overrides: dict[str, OverrideEvent] = field(default_factory=dict)
     confidence_history: deque[float] = field(default_factory=lambda: deque(maxlen=1024))
+    override_notices: deque[OverrideExpiryNotice] = field(
+        default_factory=lambda: deque(maxlen=32)
+    )
     last_progress: tuple[int, int] = (0, 0)  # (done, total)
 
 
@@ -287,6 +322,26 @@ class OperatorCockpit:
             self._frame_count = 0
             self._last_render_ms = 0.0
 
+    def record_override_event(self, notice: OverrideExpiryNotice) -> None:
+        """Push a most-recent override-expiry notice into the cockpit.
+
+        Designed to be called from an :class:`OverrideExpiryMonitor`
+        callback (WP-3003) so the operator sees expiry events inline in
+        the cockpit header as soon as they fire.
+
+        The notice deque is bounded (``maxlen=32``); the oldest notice is
+        silently dropped once full. ``age_s`` is recomputed against the
+        current wall clock on every render so the banner naturally
+        fades.
+        """
+        if not isinstance(notice, OverrideExpiryNotice):  # defensive — surface config drift
+            raise TypeError(
+                f"record_override_event expects OverrideExpiryNotice, got "
+                f"{type(notice).__name__}"
+            )
+        with self._lock:
+            self._state.override_notices.append(notice)
+
     # -------------------------------------------------------------- snapshots
 
     def snapshot(self) -> dict[str, Any]:
@@ -314,6 +369,12 @@ class OperatorCockpit:
                               "metadata": dict(o.metadata)} for o in overrides],
                 "progress": self._state.last_progress,
                 "confidence_history": list(self._state.confidence_history),
+                "override_notices": [
+                    {"rule_id": n.rule_id, "owner": n.owner,
+                     "reason": n.reason, "expired_at": n.expired_at,
+                     "age_s": max(0.0, time.time() - n.expired_at)}
+                    for n in self._state.override_notices
+                ],
                 "last_render_ms": self._last_render_ms,
             }
 
@@ -348,13 +409,19 @@ class OperatorCockpit:
         # 1. Header — title + progress bar (P-081)
         header = self._render_header()
 
-        # 2. The four panes
+        # 2. Optional override-expiry banner (WP-3003 -> WP-4001 bridge).
+        #    Surfaces the most recent governance.override.expired events
+        #    inline so operators see TTL expirations as they fire rather
+        #    than waiting for the next JSONL tail.
+        banner = self._render_override_banner()
+
+        # 3. The four panes
         runs_lines = self._render_runs_pane()
         lanes_lines = self._render_lanes_pane()
         conf_lines = self._render_confidence_pane()
         ovr_lines = self._render_overrides_pane()
 
-        # 3. Compose into 2x2 grid
+        # 4. Compose into 2x2 grid
         body_lines: list[str] = []
         for i in range(max(len(runs_lines), len(lanes_lines))):
             left = runs_lines[i] if i < len(runs_lines) else ""
@@ -366,7 +433,37 @@ class OperatorCockpit:
             body_lines.append(f"{left:<46}│ {right}")
         body = "\n".join(body_lines)
 
+        if banner:
+            return f"{header}\n{banner}\n{body}"
         return f"{header}\n{body}"
+
+    def _render_override_banner(self) -> str:
+        """Render an inline banner for the most-recent override-expiry event.
+
+        Reads the most recent :class:`OverrideExpiryNotice` from the bounded
+        notice deque under the cockpit lock, recomputes its ``age_s`` against
+        the wall clock, and returns a single-line banner. Returns ``""``
+        when there are no notices or the most recent one has aged past
+        ``OVERRIDE_BANNER_MAX_AGE_S`` (so the banner naturally fades).
+        """
+        now = time.time()
+        with self._lock:
+            if not self._state.override_notices:
+                return ""
+            notice = self._state.override_notices[-1]
+        age = max(0.0, now - notice.expired_at)
+        if age > OVERRIDE_BANNER_MAX_AGE_S:
+            return ""
+        reason = notice.reason or "ttl_elapsed"
+        glyph = "✓" if age < 1.0 else "!"
+        # Fixed-width columns: rule_id (12), owner (8), age (4), reason (32).
+        return (
+            f"  {glyph} override expired: "
+            f"{_truncate(notice.rule_id, 12):<12}  "
+            f"by {_truncate(notice.owner, 8):<8}  "
+            f"{age:4.0f}s ago  "
+            f"{_truncate(reason, 32)}"
+        )
 
     def _render_header(self) -> str:
         cfg = self.config
@@ -499,6 +596,7 @@ __all__ = [
     "CockpitPane",
     "OperatorCockpit",
     "OverrideEvent",
+    "OverrideExpiryNotice",
     "RunEvent",
     "RunState",
     "render_cockpit",

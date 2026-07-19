@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from thegent.ux.cockpit import (
@@ -9,6 +11,7 @@ from thegent.ux.cockpit import (
     CockpitPane,
     OperatorCockpit,
     OverrideEvent,
+    OverrideExpiryNotice,
     RunEvent,
     RunState,
     render_cockpit,
@@ -379,3 +382,105 @@ class TestPerformance:
         for _ in range(5):
             c.render()
             assert c.last_render_ms() < 50
+
+
+# ---------------------------------------------------------------------------
+# Override-expiry banner (WP-3003 -> WP-4001 bridge)
+# ---------------------------------------------------------------------------
+
+
+class TestOverrideExpiryBanner:
+    """WP-3003 OverrideEventEmitter feeds the cockpit's inline banner."""
+
+    def test_no_banner_when_no_notices(self) -> None:
+        c = OperatorCockpit()
+        c.tick(runs=_sample_runs(), overrides=_sample_overrides(), progress=(1, 1))
+        out = c.render()
+        assert "override expired" not in out
+
+    def test_record_override_event_appears_in_render(self) -> None:
+        c = OperatorCockpit()
+        notice = OverrideExpiryNotice(
+            rule_id="net-block",  # short enough to fit the 12-char banner column
+            owner="sre",
+            reason="ttl_elapsed",
+            expired_at=time.time(),
+        )
+        c.record_override_event(notice)
+        out = c.render()
+        assert "override expired" in out
+        assert "net-block" in out
+        assert "sre" in out
+        assert "ttl_elapsed" in out
+
+    def test_banner_fades_past_max_age(self) -> None:
+        """Notices older than ``OVERRIDE_BANNER_MAX_AGE_S`` are not shown."""
+        from thegent.ux.cockpit import OVERRIDE_BANNER_MAX_AGE_S
+
+        c = OperatorCockpit()
+        # Push a notice that has already expired long ago.
+        stale = OverrideExpiryNotice(
+            rule_id="stale-rule",
+            owner="bob",
+            reason="old",
+            expired_at=time.time() - (OVERRIDE_BANNER_MAX_AGE_S + 5.0),
+        )
+        c.record_override_event(stale)
+        out = c.render()
+        assert "override expired" not in out
+
+    def test_banner_uses_most_recent_notice(self) -> None:
+        """When multiple notices arrive, only the latest is surfaced."""
+        c = OperatorCockpit()
+        c.record_override_event(
+            OverrideExpiryNotice(
+                rule_id="old-rule", owner="alice", reason="old",
+                expired_at=time.time() - 5.0,
+            )
+        )
+        c.record_override_event(
+            OverrideExpiryNotice(
+                rule_id="new-rule", owner="bob", reason="fresh",
+                expired_at=time.time(),
+            )
+        )
+        out = c.render()
+        assert "new-rule" in out
+        assert "old-rule" not in out
+
+    def test_record_override_event_rejects_wrong_type(self) -> None:
+        """Defensive type guard against config drift / malformed callbacks."""
+        c = OperatorCockpit()
+        with pytest.raises(TypeError):
+            c.record_override_event({"rule_id": "x"})  # type: ignore[arg-type]
+
+    def test_override_notices_deque_is_bounded(self) -> None:
+        """Bounded-memory contract: maxlen=32 means old notices are evicted."""
+        c = OperatorCockpit()
+        for i in range(40):
+            c.record_override_event(
+                OverrideExpiryNotice(
+                    rule_id=f"r{i:03d}",
+                    owner="u",
+                    reason="ttl",
+                    expired_at=time.time(),
+                )
+            )
+        # Most-recent 32 are kept (deque is bounded); oldest 8 evicted.
+        assert len(c._state.override_notices) == 32
+        assert c._state.override_notices[-1].rule_id == "r039"
+        assert c._state.override_notices[0].rule_id == "r008"
+
+    def test_snapshot_includes_override_notices(self) -> None:
+        """The structured snapshot should expose notices for downstream consumers."""
+        c = OperatorCockpit()
+        c.record_override_event(
+            OverrideExpiryNotice(
+                rule_id="snap-rule", owner="ci", reason="r",
+                expired_at=time.time(),
+            )
+        )
+        snap = c.snapshot()
+        # Override notices are surfaced as a list (immutable snapshot pattern).
+        assert "override_notices" in snap
+        assert snap["override_notices"][0]["rule_id"] == "snap-rule"
