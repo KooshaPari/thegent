@@ -45,6 +45,7 @@ from .cli_cockpit import (
     _apply_snapshot_flips,
     _build_batch_decision_log,
     _compare_decision,
+    _exc_text,
     _load_replay_snapshot,
     _normalise_snapshot_flip_fields,
     err_console,
@@ -439,16 +440,16 @@ def sota_replay(
     snapshot_format_lc = snapshot_format.lower()
     if snapshot_format_lc not in _SNAPSHOT_LOADERS:
         err_console.print(
-            f"[red]sota replay failed:[/red] unknown --snapshot-format {snapshot_format!r}; "
-            f"supported: {sorted(_SNAPSHOT_LOADERS.keys())}"
+            f"[red]sota replay failed:[/red] unknown --snapshot-format {_exc_text(snapshot_format)!r}; "
+            f"supported: {_exc_text(str(sorted(_SNAPSHOT_LOADERS.keys())))}"
         )
         raise typer.Exit(1)
 
     report_format_lc = report_format.lower()
     if report_format_lc not in _REPORT_RENDERERS:
         err_console.print(
-            f"[red]sota replay failed:[/red] unknown --report-format {report_format!r}; "
-            f"supported: {sorted(_REPORT_RENDERERS.keys())}"
+            f"[red]sota replay failed:[/red] unknown --report-format {_exc_text(report_format)!r}; "
+            f"supported: {_exc_text(str(sorted(_REPORT_RENDERERS.keys())))}"
         )
         raise typer.Exit(1)
 
@@ -456,24 +457,24 @@ def sota_replay(
     try:
         from ..governance.policy_engine import PolicyEngine
     except Exception as exc:  # pragma: no cover - import guard
-        err_console.print(f"[red]governance unavailable:[/red] {exc}")
+        err_console.print(f"[red]governance unavailable:[/red] {_exc_text(exc)}")
         raise typer.Exit(2) from exc
 
     try:
         if not batch.exists():
-            err_console.print(f"[red]sota replay failed:[/red] batch path not found: {batch}")
+            err_console.print(f"[red]sota replay failed:[/red] batch path not found: {_exc_text(str(batch))}")
             raise typer.Exit(1)
         if not compare.exists():
-            err_console.print(f"[red]sota replay failed:[/red] compare path not found: {compare}")
+            err_console.print(f"[red]sota replay failed:[/red] compare path not found: {_exc_text(str(compare))}")
             raise typer.Exit(1)
 
         try:
             expected_snapshot = _SNAPSHOT_LOADERS[snapshot_format_lc](compare)
         except (ValueError, RuntimeError) as exc:
-            err_console.print(f"[red]sota replay failed:[/red] {exc}")
+            err_console.print(f"[red]sota replay failed:[/red] {_exc_text(exc)}")
             raise typer.Exit(1) from exc
         except json.JSONDecodeError as exc:
-            err_console.print(f"[red]sota replay failed:[/red] compare file is not valid JSON: {exc}")
+            err_console.print(f"[red]sota replay failed:[/red] compare file is not valid JSON: {_exc_text(exc)}")
             raise typer.Exit(1) from exc
 
         # SOTA canary workflow: ``--snapshot-flip <field>`` (optionally
@@ -499,7 +500,7 @@ def sota_replay(
         )
         if not contexts:
             # Mirror ``cockpit replay`` empty-corpus semantics.
-            err_console.print(f"[yellow]sota replay batch is empty:[/yellow] {batch}")
+            err_console.print(f"[yellow]sota replay batch is empty:[/yellow] {_exc_text(str(batch))}")
             matched_empty = not expected_snapshot
             renderer = _REPORT_RENDERERS[report_format_lc]
             if report_format_lc == "junitxml":
@@ -614,7 +615,7 @@ def sota_replay(
     except typer.Exit:
         raise
     except Exception as exc:
-        err_console.print(f"[red]sota replay failed:[/red] {exc}")
+        err_console.print(f"[red]sota replay failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
 

@@ -178,6 +178,51 @@ from .kpis.traffic import TrafficDashboard, TrafficEvent, render_traffic
 console = Console()
 err_console = Console(stderr=True)
 
+
+def _render_cli_error(console_obj: Console, prefix: str, exc: BaseException) -> None:
+    """Render a [red]…[/red]-prefixed error line with Rich-safe payload escaping.
+
+    AUDIT-9 (Phase 3/4 third-pass hardening): the prior pattern was
+    ``err_console.print(f"[red]…:[/red] {exc}")``. When ``str(exc)`` contained
+    a square bracket (JSONPath, regex, or filename with ``[``/``]``), Rich's
+    default console interpreted the inline markup and either dropped
+    characters or rendered escape noise. This helper threads the payload
+    through :func:`rich.markup.escape` (also exposed module-level as
+    ``_exc_text`` for legacy ``{exc}`` interpolation sites) so operators see
+    the literal message regardless of content.
+
+    ``console_obj`` is the target ``Console`` (stderr or stdout); the helper
+    preserves the existing call-site shape (``err_console.print(...)`` →
+    ``_render_cli_error(err_console, prefix, exc)``).
+    """
+    from rich.markup import escape as _escape
+
+    console_obj.print(f"[red]{_escape(prefix)}[/red] {_escape(str(exc))}")
+
+
+def _render_cli_warn(console_obj: Console, prefix: str, payload: str) -> None:
+    """Render a [yellow]…[/yellow] warning line with Rich-safe escaping.
+
+    AUDIT-9 sibling of :func:`_render_cli_error`. ``payload`` may include
+    arbitrary user input (paths, JSON values) so it is escaped the same way.
+    """
+    from rich.markup import escape as _escape
+
+    console_obj.print(f"[yellow]{_escape(prefix)}[/yellow] {_escape(payload)}")
+
+
+# AUDIT-9: module-level single import so the existing call-sites can
+# use ``_escape(...)`` and ``_exc_text(exc)`` as direct drop-ins. This
+# avoids the per-call ``from rich.markup import escape`` cost while
+# still keeping the helpers composable for tests.
+from rich.markup import escape as _escape  # noqa: E402
+
+
+def _exc_text(exc: BaseException) -> str:
+    """AUDIT-9: render ``str(exc)`` with Rich markup escaped."""
+    return _escape(str(exc))
+
+
 app = typer.Typer(
     help="Operator cockpit + traffic KPI + policy pre-check surface (WP-3001/WP-4001/WP-Y7).",
     no_args_is_help=True,
@@ -250,7 +295,7 @@ def cockpit_render(
             )
         )
     except Exception as exc:
-        err_console.print(f"[red]cockpit render failed:[/red] {exc}")
+        err_console.print(f"[red]cockpit render failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
 
@@ -291,7 +336,7 @@ def cockpit_traffic_summary(
             return
         typer.echo(render_traffic(dashboard))
     except Exception as exc:
-        err_console.print(f"[red]traffic summary failed:[/red] {exc}")
+        err_console.print(f"[red]traffic summary failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
 
@@ -374,7 +419,7 @@ def cockpit_pre_check(
         from .cockpit import DecisionNotice
         from .decision_audit import DecisionAuditAppender
     except Exception as exc:  # pragma: no cover - import guard
-        err_console.print(f"[red]governance unavailable:[/red] {exc}")
+        err_console.print(f"[red]governance unavailable:[/red] {_exc_text(exc)}")
         raise typer.Exit(2) from exc
     try:
         # Batch mode takes precedence over the single-context path.
@@ -439,7 +484,7 @@ def cockpit_pre_check(
     except typer.Exit:
         raise
     except Exception as exc:
-        err_console.print(f"[red]pre-check failed:[/red] {exc}")
+        err_console.print(f"[red]pre-check failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
 
@@ -479,7 +524,7 @@ def _run_pre_check_batch(
         namespace_override=namespace_override,
     )
     if not contexts:
-        err_console.print(f"[yellow]pre-check batch is empty:[/yellow] {batch}")
+        err_console.print(f"[yellow]pre-check batch is empty:[/yellow] {_escape(str(batch))}")
         return 0
 
     appender = appender_factory() if persist_audit else None
@@ -1022,8 +1067,8 @@ def cockpit_replay(
         try:
             from .cli_sota import sota_replay
         except Exception as exc:  # pragma: no cover - import guard
-            err_console.print(f"[red]sota replay unavailable:[/red] {exc}")
-            raise typer.Exit(2) from exc
+            err_console.print(f"[red]sota replay unavailable:[/red] {_exc_text(exc)}")
+            raise typer.Exit(1) from exc
 
         # ``sota replay`` always appends a trailing
         # ``sota replay: matched=...`` tail line for operator visibility,
@@ -1066,29 +1111,29 @@ def cockpit_replay(
         except typer.Exit:
             raise
         except Exception as exc:
-            err_console.print(f"[red]replay delegation failed:[/red] {exc}")
+            err_console.print(f"[red]replay delegation failed:[/red] {_exc_text(exc)}")
             raise typer.Exit(1) from exc
         return
     try:
         from ..governance.policy_engine import PolicyEngine
     except Exception as exc:  # pragma: no cover - import guard
-        err_console.print(f"[red]governance unavailable:[/red] {exc}")
+        err_console.print(f"[red]governance unavailable:[/red] {_exc_text(exc)}")
         raise typer.Exit(2) from exc
 
     try:
         if not batch.exists():
-            err_console.print(f"[red]replay failed:[/red] batch path not found: {batch}")
+            err_console.print(f"[red]replay failed:[/red] batch path not found: {_escape(str(batch))}")
             raise typer.Exit(1)
         if not compare.exists():
-            err_console.print(f"[red]replay failed:[/red] compare path not found: {compare}")
+            err_console.print(f"[red]replay failed:[/red] compare path not found: {_escape(str(compare))}")
             raise typer.Exit(1)
         try:
             expected_snapshot = _load_replay_snapshot(compare)
         except ValueError as exc:
-            err_console.print(f"[red]replay failed:[/red] {exc}")
+            err_console.print(f"[red]replay failed:[/red] {_exc_text(exc)}")
             raise typer.Exit(1) from exc
         except json.JSONDecodeError as exc:
-            err_console.print(f"[red]replay failed:[/red] compare file is not valid JSON: {exc}")
+            err_console.print(f"[red]replay failed:[/red] compare file is not valid JSON: {_exc_text(exc)}")
             raise typer.Exit(1) from exc
 
         # SOTA canary workflow: when the operator passes
@@ -1113,7 +1158,7 @@ def cockpit_replay(
             namespace_override=namespace,
         )
         if not contexts:
-            err_console.print(f"[yellow]replay batch is empty:[/yellow] {batch}")
+            err_console.print(f"[yellow]replay batch is empty:[/yellow] {_escape(str(batch))}")
             # An empty corpus against a non-empty snapshot is a mismatch;
             # against an empty snapshot it is a match. Either way, exit 0
             # since there is no decision to validate.
@@ -1196,7 +1241,7 @@ def cockpit_replay(
     except typer.Exit:
         raise
     except Exception as exc:
-        err_console.print(f"[red]replay failed:[/red] {exc}")
+        err_console.print(f"[red]replay failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
 
@@ -1289,7 +1334,7 @@ def cockpit_audit_tail(
         for ev in events:
             typer.echo(json.dumps(ev, sort_keys=True))
     except Exception as exc:
-        err_console.print(f"[red]audit tail failed:[/red] {exc}")
+        err_console.print(f"[red]audit tail failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
 
@@ -1366,7 +1411,7 @@ def cockpit_audit_decision_tail(
     try:
         appender = DecisionAuditAppender(audit_path=audit_path)
     except Exception as exc:
-        err_console.print(f"[red]audit decision-tail failed:[/red] {exc}")
+        err_console.print(f"[red]audit decision-tail failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
 
     if not follow:
@@ -1378,7 +1423,7 @@ def cockpit_audit_decision_tail(
             for ev in events:
                 typer.echo(json.dumps(ev, sort_keys=True))
         except Exception as exc:
-            err_console.print(f"[red]audit decision-tail failed:[/red] {exc}")
+            err_console.print(f"[red]audit decision-tail failed:[/red] {_exc_text(exc)}")
             raise typer.Exit(1) from exc
         return
 

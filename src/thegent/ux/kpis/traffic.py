@@ -89,16 +89,31 @@ class TrafficWindow:
 
     ``clock`` (``-> float``) defaults to ``time.time`` and can be injected
     via ``TrafficWindow(clock=...)`` to make audit replays deterministic.
+
+    AUDIT-19 (Phase 3/4 third-pass hardening): the deque is bounded by
+    ``maxlen`` so a flood of events cannot OOM the process, and eviction
+    also drops **future** events (relative to ``now``) so a backwards
+    wall-clock jump (NTP step, audit replay with negative ``time.sleep``,
+    mis-configured test clock) cannot leak events past the window
+    boundary.  ``maxlen`` defaults to ``int(window_s / bucket_s) * 8`` —
+    enough headroom for bursty traffic at 1s granularity without
+    requiring every caller to plumb a magic number.
     """
 
     window_s: float = DEFAULT_WINDOW_SECONDS
     bucket_s: float = DEFAULT_BUCKET_SECONDS
+    maxlen: int = 0  # 0 → auto-derive from window_s / bucket_s * 8
 
     _events: deque[TrafficEvent] = field(default_factory=deque)
 
     def __post_init__(self) -> None:
         self._lock = threading.Lock()
         self._clock: Callable[[], float] = time.time
+        if self.maxlen <= 0:
+            self.maxlen = max(int(self.window_s / max(self.bucket_s, 1e-9)) * 8, 64)
+        # Replace the deque with a bounded one; dataclass field default is
+        # a fresh deque each instance so this mutation is safe.
+        self._events = deque(self._events, maxlen=self.maxlen)
 
     def set_clock(self, clock: Callable[[], float]) -> None:
         """Override the wall clock used for eviction and zero-init fallback."""
@@ -113,9 +128,23 @@ class TrafficWindow:
             self._evict(event.ts)
 
     def _evict(self, now: float) -> None:
-        cutoff = now - self.window_s
-        while self._events and self._events[0].ts < cutoff:
+        """Drop events outside ``[now - window_s, now]``.
+
+        AUDIT-19: also drops events with ``ts > now`` so a backwards
+        wall-clock jump cannot leak stale future events.  The deque's
+        ``maxlen`` then caps absolute memory under burst pressure.
+        """
+        low = now - self.window_s
+        # First pass: stale events older than the window.
+        while self._events and self._events[0].ts < low:
             self._events.popleft()
+        # Second pass: future events leaked by a clock step / mis-set
+        # ``event.ts``.  Limited to the deque head so we don't loop
+        # forever on a corrupted monotonic clock.
+        safety = len(self._events)
+        while self._events and self._events[0].ts > now and safety > 0:
+            self._events.popleft()
+            safety -= 1
 
     def summary(self, *, now: float | None = None) -> dict[str, Any]:
         """Return ``{count, by_lane, by_status, rps, error_rate, p50_ms, p95_ms}``.
@@ -229,9 +258,10 @@ class TrafficDashboard:
         window_s: float = DEFAULT_WINDOW_SECONDS,
         bucket_s: float = DEFAULT_BUCKET_SECONDS,
         trend_width: int = DEFAULT_TREND_WIDTH,
+        maxlen: int = 0,
         clock: Callable[[], float] | None = None,
     ) -> None:
-        self.window = TrafficWindow(window_s=window_s, bucket_s=bucket_s)
+        self.window = TrafficWindow(window_s=window_s, bucket_s=bucket_s, maxlen=maxlen)
         if clock is not None:
             self.window.set_clock(clock)
         self.trend_width = trend_width

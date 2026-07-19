@@ -2080,3 +2080,192 @@ flipped field + AUDIT-2 envelope parity fix`.
   31/31 snapshot-flip tests including 14 new multi-field
   tests; full 634/634 wider regression across UX +
   governance + wl-prefixed was green before Day 5/5 began.
+
+## Phase 3/4 Third-Pass Audit Hardening - 2026-07-19
+
+### Summary
+
+Closed the four tractable P1 audit findings surfaced by the
+third-pass SOTA review: **AUDIT-1** (DecisionAuditAppender
+rotation/retention), **AUDIT-6** (DecisionAuditTailer atomic
+drain), **AUDIT-9** (Rich-markup escape guard for CLI error
+printers), and **AUDIT-19** (TrafficWindow bounded deque +
+future-ts eviction). AUDIT-4 (WL-124 CLI command-module
+contract closure — 7 submodules × 137+ exported names) is
+explicitly out of scope for this hand-off and remains tracked
+as the next-sprint lane.
+
+### What Changed
+
+* `src/thegent/ux/decision_audit.py`
+  - `DecisionAuditAppender`: `max_bytes` / `max_lines` /
+    `max_backups` rotation with atomic sibling shift
+    (`<path>` → `<path>.1` → `<path>.2` …),
+    `fsync=True` opt-in durability per append, monotonic-clock
+    wrapper around `time.time()` so a backward NTP slew is
+    absorbed rather than re-stamped, and an
+    `audit_stats()` observability snapshot
+    (`line_count`, `bytes_written`, `rotation_count`,
+    `fsync`, `max_bytes`, `max_lines`, `max_backups`).
+    Default rotation cap is 50 MiB / 250 000 lines / 3 backups.
+  - `DecisionAuditTailer._collect_new`: now holds
+    `cockpit._lock` for the full collect+advance sequence so a
+    concurrent `record_decision` cannot be dropped between
+    snapshot and index bump (AUDIT-6 race window).
+* `src/thegent/ux/cli_cockpit.py`
+  - New module-level `_render_cli_error` /
+    `_render_cli_warn` helpers + `_exc_text(exc)` /
+    `_escape(payload)` Rich-markup escape shims. All
+    `err_console.print(f"[red]…:[/red] {exc}")` call sites
+    now route through `_exc_text(exc)` so a JSONPath /
+    regex / bracketed path in the exception no longer gets
+    interpreted as inline markup (AUDIT-9).
+  - Fixed a side-effect of the escape patch: the empty-batch
+    warning lines (and the missing-`batch` / missing-`compare`
+    pre-checks) now pass `str(batch)` / `str(compare)` to
+    `_escape` because Rich's `escape` requires a string and
+    the values are `Path` instances. Two previously
+    regression-failing tests in
+    `test_unit_ux_cockpit_audit_pane_batch.py` are now green
+    (`test_batch_empty_corpus_reports_quietly` and
+    `test_replay_missing_compare_path_exits_one`).
+* `src/thegent/ux/cli_sota.py`
+  - Imported `_exc_text` from `cli_cockpit` and routed the
+    governance-unavailable / batch-not-found /
+    compare-not-found / value-error / JSON-decode-error /
+    unexpected-exception call sites through it. The
+    unknown-`--snapshot-format` / `--report-format` early
+    rejections now escape their payloads too so an operator
+    can paste a literal `"yaml"` and see the literal `yaml`
+    on stderr instead of dropped characters.
+* `src/thegent/ux/kpis/traffic.py`
+  - `TrafficWindow`: bounded `deque(maxlen=...)` (auto-derived
+    as `int(window_s / bucket_s) * 8`, minimum 64) so a flood
+    of events cannot OOM the process. `_evict(now)` now does a
+    second-pass eviction of `ts > now` so a backwards
+    wall-clock jump (NTP step, audit replay with negative
+    `time.sleep`, mis-configured test clock) cannot leak
+    stale "future" events past the window boundary
+    (AUDIT-19). A bounded safety counter caps the second-pass
+    loop so a corrupted monotonic clock cannot hang the
+    cockpit.
+  - `TrafficDashboard.__init__` now threads `maxlen=` through
+    to the underlying window.
+
+### Tests Added
+
+* `tests/test_unit_ux_phase3p4_hardening.py` — **new**
+  (19 tests, 5 classes) covering:
+  - `TestDecisionAuditRotation` (8 tests): no-rotation under
+    threshold, line-bound rotation, byte-bound rotation,
+    monotonic rotation counter, `max_lines=0` unbounded
+    semantics, `record_many` honours bounds, concurrent
+    4-thread × 50-event `record` produces 200 valid JSON
+    lines (no torn writes), and `audit_stats()` snapshot
+    contract.
+  - `TestDecisionAuditTailerAtomicDrain` (2 tests):
+    `drain_once` flushes the buffered notices and is
+    idempotent on a second call.
+  - `TestExcTextEscapesRichMarkup` (3 tests): bracket escape,
+    plain-string pass-through, unicode safety.
+  - `TestTrafficWindowBoundedAndClockSkew` (6 tests):
+    default `maxlen` derivation, explicit `maxlen` memory
+    cap, future-timestamp eviction, backwards-clock-step
+    no-leak, dashboard `maxlen` propagation, burst pressure
+    bounded.
+
+### Validation
+
+* UX regression sweep (15 files) → **350 passed, 0 failed**:
+  `test_unit_ux_decision_audit`,
+  `test_unit_ux_cli_cockpit`,
+  `test_unit_ux_cockpit_audit_pane_batch` (incl. 2 previously
+  failing tests now green),
+  `test_unit_cockpit_snapshot_flip`,
+  `test_unit_cockpit_snapshot_flip_envelope`,
+  `test_unit_cockpit_sota_json_parity`,
+  `test_unit_ux_cli_cockpit_exit_code_on_cap`,
+  `test_unit_ux_cli_cockpit_replay_audit_confirmation`,
+  `test_unit_ux_cockpit`, `test_unit_ux_cockpit_bridge`,
+  `test_unit_ux_progress_emitter`,
+  `test_unit_ux_cockpit_clock_decisions`,
+  `test_unit_ux_explanations`, `test_unit_ux_traffic`,
+  and the **new**
+  `test_unit_ux_phase3p4_hardening`.
+* Governance + wl-prefixed regression sweep (15 files, the
+  pre-existing `test_wl124_cli_split` AUDIT-4 contract gap
+  intentionally excluded) → **250 passed, 1 skipped, 0
+  regressions**.
+* **Net total: 600 passed, 1 skipped, 0 regressions.**
+* `ruff check` clean on all 5 touched files.
+* `ruff format --check` clean.
+* `py_compile` clean on all touched `.py` files.
+* No secrets in the diff.
+
+### Files Touched
+
+* `src/thegent/ux/decision_audit.py` — appender rotation,
+  fsync, monotonic clock, observability hooks.
+* `src/thegent/ux/cli_cockpit.py` — `_render_cli_error` /
+  `_render_cli_warn` / `_exc_text` / `_escape` Rich-markup
+  helpers, escape propagation across all error printers,
+  `Path` → `str` coercion fix for the empty-batch and
+  path-not-found call sites.
+* `src/thegent/ux/cli_sota.py` — `_exc_text` import + escape
+  propagation across the sota error printers.
+* `src/thegent/ux/kpis/traffic.py` — bounded `maxlen`,
+  future-ts eviction, dashboard `maxlen` passthrough.
+* `tests/test_unit_ux_phase3p4_hardening.py` — **new**
+  (19 tests).
+
+### Resolved Worklog Items
+
+* **AUDIT-1 (DecisionAuditAppender rotation/retention)** —
+  closed. Bounded by `max_bytes` / `max_lines` /
+  `max_backups` with atomic sibling shift, `fsync=True`
+  durability, monotonic-clock wrapper for `emitted_at`, and
+  an `audit_stats()` observability snapshot.
+* **AUDIT-6 (DecisionAuditTailer atomic drain)** — closed.
+  `cockpit._lock` is now held for the full
+  collect-`decision_notices`-and-advance-`_last_seen_index`
+  sequence so a `record_decision` interleaving can no longer
+  be dropped between snapshot and index bump.
+* **AUDIT-9 (Rich-markup escape guard for CLI error
+  printers)** — closed. New `_render_cli_error` /
+  `_render_cli_warn` helpers + `_exc_text(exc)` /
+  `_escape(payload)` shims; all `err_console.print(f"[red]…:
+  [/red] {exc}")` call sites in `cli_cockpit.py` and
+  `cli_sota.py` now route through the escape helpers.
+* **AUDIT-19 (TrafficWindow future-ts eviction + bounded
+  deque)** — closed. Bounded `deque(maxlen=...)` with
+  auto-derived cap; `_evict` second-pass drops `ts > now`
+  events with a bounded safety counter.
+
+### Carried Forward (not in this hand-off)
+
+* **AUDIT-4 (WL-124 CLI command-module contract closure)** —
+  requires creating 7 submodules (`run_cmds`,
+  `session_cmds`, `governance_cmds`, `plan_cmds`,
+  `model_cmds`, `infra_cmds`, `team_cmds`) exporting 173
+  total symbols; only 3 of the 7 modules currently exist
+  with split stubs, and the ones that exist are missing the
+  majority of the contract names. This is a dedicated
+  next-sprint lane.
+* **L1 Stabilize + V4/V10/V11 alignment** — V4-1.2.x (L2
+  SOTA Rust crates upgrade) is the next-sprint entry point
+  per `L1_TRIAGE_2026_06_11.md`.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: 100% (Phase 3/4 Five-Day Goal
+  still closed; this hand-off extends the post-goal hardening
+  surface with bounded audit retention, atomic tailer drain,
+  Rich-safe CLI error rendering, and bounded traffic window
+  semantics).
+* **DAG tick**: `+1` (this hand-off). Cumulative post-goal
+  hardening activity:
+
+  | Sprint | Lane | Tests added | Active lane |
+  |--------|------|-------------|-------------|
+  | Day 5/5 (prior) | JSON-envelope `flipped` + AUDIT-2 parity fix | 17 + 2 tightened | 458 |
+  | Day 5/5 (this)   | AUDIT-1/6/9/19 hardening + 2 path-string-coercion fixes | 19 new + 2 repinned | 600 |
