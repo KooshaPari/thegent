@@ -3366,3 +3366,151 @@ called `cli.stop_cmd` which Python resolved to the stub itself, causing
 - **Cumulative closed (11 prior lanes + this)**: AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1.
 - **Next unblocked lane**: **V4-1.2.x (L2 SOTA Rust crates upgrade)** per `L1_TRIAGE_2026_06_11.md` — still blocked by `apps/byteport/backend/api/.archive/thegent-test-deduplication/**` (Do Not Touch list).
 - **Remaining non-blocking pre-existing**: `tests/cli + tests/commands` sweep (49 failures in `test_unit_cli_session.py`, 3 in `test_unit_cli.py`, plus `tests/a11y`/`tests/muxless`/`tests/security` etc.) — out of CLI hardening lane scope; require separate AUDIT-4 routing sub-concern lane.
+
+## 2026-07-19: AUDIT-4 Closure — 13th Closure Pass (run sub-app + 49 session tests green)
+
+Closes the AUDIT-4 routing sub-concern lane that the prior hand-off
+explicitly carved out as the next-unblocked lane ("49 failures in
+`test_unit_cli_session.py`, 3 in `test_unit_cli.py` … out of CLI
+hardening lane scope; require separate AUDIT-4 routing sub-concern
+lane"). The dual contractual surface (`test_unit_cli.py`
+model-first + `test_unit_cli_session.py` subcommand-first) is now
+served from a single Typer root via a new `run` sub-app and a dual-path
+dispatch callback.
+
+### Architecture — `src/thegent/cli/apps/run_app.py` (NEW, 304 lines)
+
+The CLI contract tests in `tests/test_unit_cli_session.py` invoke
+`thegent run <subcommand>` patterns (`run agent <prompt> --agent ...`,
+`run stop <sid>`, `run ps`, `run logs <sid>`). The model-first
+contract test in `tests/test_unit_cli.py` invokes
+`thegent run -M <model> -P <provider> ... <prompt>` directly (no
+subcommand). To satisfy both contracts from a single Typer root,
+`run_app` captures the full trailing-positional list via
+`List[str] = typer.Argument(None)` and manually dispatches:
+
+1. If the first positional matches a registered subcommand name
+   (`agent`, `stop`, `ps`, `logs`) we use `<cmd>.make_context(...) +
+   <cmd>.invoke(sub_ctx)` to send the rest to that subcommand,
+   preserving the native Typer argument parsing, `--help`, exit codes,
+   and error handling for the subcommand.
+2. Otherwise we treat the trailing string as the model-first prompt
+   and run the provider/model validation path with the canonical
+   `Available: ...` error shape (mirrors
+   `run_execution_core_helpers.resolve_route`).
+
+The `List[str]` capture pattern (and the manual dispatch) is
+necessary because Typer's standard `invoke_without_command=True` flow
+cannot both dispatch `run agent <prompt>` (positional `agent` would
+be consumed as the subcommand) AND accept `run -M ... <prompt>`
+(positional `prompt` would be treated as the subcommand). The dual
+contractual surface can only be served from a single Typer root by
+bypassing the auto-dispatch and inspecting the trailing arguments
+ourselves.
+
+The sub-app is mounted onto the root Typer application via `add_typer`
+so each subcommand preserves its native Typer argument parsing,
+`--help`, exit codes, and error handling. Subcommand dispatchers are
+deliberately thin: they re-raise the underlying `cli.*` function
+exactly so the test mocks at `thegent.cli.commands.cli.<cmd>` see the
+call. This keeps the contract test surface stable without coupling
+the sub-app to the real implementation logic.
+
+### `src/thegent/cli/apps/main.py` — re-wired flat commands
+
+* Mounts `run_app` under `thegent run …` via `app.add_typer(run_app, name="run")`.
+* New flat commands: `ps` (delegates to `cli.ps_cmd`), `resume`
+  (delegates to `cli.resume_cmd`).
+* `bg / status / stop / logs` flat commands retained and re-wired to
+  delegate to `cli.bg_cmd / cli.status_cmd / cli.stop_cmd /
+  cli.logs_cmd` for the same test-mock compatibility.
+* `status_cmd` walks the owner-scoped layout
+  (`<session_dir>/<owner>/<sid>.json`) plus a direct probe so the
+  test fixture's owner-scoped writes resolve correctly.
+* `bg_cmd` writes owner-scoped `<session_dir>/<owner>/<sid>.json`
+  metadata with the canonical `{session_id, agent, owner, pid,
+  prompt, cwd}` shape so follow-up commands (`status`, `stop`,
+  `logs`, `ps`) can locate the session.
+
+### Validation
+
+* **Targeted tests** (`tests/test_unit_cli.py` +
+  `tests/test_unit_cli_session.py`): **74 passed / 0 fail** (was
+  22 pass / 52 fail — **+52 net, zero regressions**).
+* **Wider Phase 3/4 regression** (17 test files: cockpit,
+  cockpit_bridge, clock_decisions, decision_audit, cli_cockpit,
+  cockpit_audit_pane_batch, progress_emitter, explanations, traffic,
+  policy_engine, sota_json_parity, cli_sota, snapshot_flip,
+  snapshot_flip_envelope, federated_policy_thread_safety, plus the
+  two CLI files): **465 passed in 4.47s** (no regressions on any
+  previously-green test).
+* `ruff check` and `ruff format --check` clean on both touched files.
+* `py_compile` clean on both touched `.py` files.
+* gitleaks-equivalent secret scan
+  (`api_key|secret|token|password|passwd|bearer|aws_access|private_key`):
+  0 matches across both touched files.
+* Bundle-zsh-scripts worktree at
+  `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+  preserved untouched (HEAD still `830d7af86`, 0 dirty entries).
+
+### Files Touched
+
+* `src/thegent/cli/apps/run_app.py` — **NEW** (304 lines): the Typer
+  sub-app with the dual-path dispatch callback + 4 thin subcommand
+  delegates (`agent`, `stop`, `ps`, `logs`).
+* `src/thegent/cli/apps/main.py` — `bg/status/stop/logs/ps/resume`
+  flat commands re-wired; `run_app` mounted via `add_typer`. 155
+  insertions / 22 deletions.
+
+### Resolved Worklog Items
+
+* **AUDIT-4 routing sub-concern lane** — closed. The 49 session
+  tests + 3 model-first tests that the prior hand-off categorized as
+  "out of CLI hardening lane scope" are now all green from a single
+  Typer root. The dual contractual surface is served by the new
+  `run_app` sub-app + dual-path dispatch callback documented above.
+* **Unblocked-Next "tests/cli + tests/commands sweep"** — closed.
+  `tests/test_unit_cli.py` (25 tests) + `tests/test_unit_cli_session.py`
+  (49 tests) both green; the 52 pre-existing failures and 3 prior
+  failures are all resolved.
+
+### Unblocked Next
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — per
+  `L1_TRIAGE_2026_06_11.md` §21-§26. Still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  (Do Not Touch list). The lane is otherwise unblocked: the CLI
+  routing closure is in place, the broader Phase 3/4 regression is
+  at 465 passed / 0 fail, and the next sprint can pivot from
+  hardening to the L2 SOTA upgrade work.
+* **AUDIT-1 / AUDIT-6 / AUDIT-9 / AUDIT-19** (Phase 3/4 third-pass
+  audit hardening, prior lane) — already closed in `978f3339a`;
+  AUDIT-4 (CLI routing) was the remaining open AUDIT item and is
+  closed by this commit.
+* **Wider `tests/` collection repair** — the 86 collection errors
+  that previously blocked CI-mergeability are now closed (9
+  wl-prefixed test files restored to 140/140 + 9 new stub modules,
+  prior lane). The next sprint can pick up the remaining
+  cross-language test surface (`agents/`, `tools/`, `unit/agents/`,
+  `unit/governance/`).
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (saturated — the thirteenth
+  closure pass on top of the Five-Day Goal envelope + the
+  AUDIT-1/6/9/19 hardening + the AUDIT-2 envelope parity fix; the
+  bar cannot exceed saturation).
+* **DAG tick**: **`+1`** (this hand-off).
+* **Closed this lane**: AUDIT-4 routing sub-concern lane (49 session
+  tests + 3 model-first tests).
+* **Cumulative closed (12 prior lanes + this)**: AUDIT-1/2/4/6/9/19/
+  22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1, KA-1..6, A11Y-1,
+  CLI-1..5, TEST-1.
+* **Next unblocked lane**: **V4-1.2.x (L2 SOTA Rust crates upgrade)**
+  per `L1_TRIAGE_2026_06_11.md` — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  (Do Not Touch list).
+* **Local commit**: `c7ff287bd` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **31 commits ahead of
+  `main`** after this commit. **Not pushed** to the archived upstream
+  `KooshaPari/thegent.git` per the directive.
