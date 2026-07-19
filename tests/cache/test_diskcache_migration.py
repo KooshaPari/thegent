@@ -19,10 +19,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache
+# Module-level skip guard: tests require the optional `diskcache` dependency.
+# Converting from `pytest.fail` to `pytest.importorskip` lets the file collect
+# cleanly when diskcache is absent (CI may not always install every optional
+# dep) while still skipping every test when diskcache is missing.
+pytest.importorskip("diskcache", reason="diskcache dependency is required for diskcache migration tests")
 
-if not _DISKCACHE_AVAILABLE:
-    pytest.fail("diskcache dependency is required for diskcache migration tests", pytrace=False)
+from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache
 
 # ---------------------------------------------------------------------------
 # Helpers
