@@ -314,9 +314,23 @@ def logs_cmd(
     session_dir = get_session_dir()
     log_file = session_dir / f"{session_id}.stdout.log"
 
+    # Owner-scoped probe: log files live under
+    # ``session_dir / <owner_with_colons_replaced>`` alongside the meta
+    # file. If the direct path doesn't exist, walk one level deep.
     if not log_file.exists():
-        typer.echo(f"Log file not found: {log_file}", err=True)
-        return 1
+        try:
+            for child in session_dir.iterdir():
+                if not child.is_dir():
+                    continue
+                candidate = child / f"{session_id}.stdout.log"
+                if candidate.exists():
+                    log_file = candidate
+                    break
+        except OSError:
+            pass
+        if not log_file.exists():
+            typer.echo(f"Log file not found: {log_file}", err=True)
+            return 1
 
     # Read and display logs
     lines = log_file.read_text().splitlines()
@@ -339,7 +353,7 @@ def logs_cmd(
 
             if _is_pid_running(_get_session_pid(session_id, session_dir)):
                 if time.time() - start_time > timeout:
-                    return 124
+                    raise typer.Exit(124)
             else:
                 break
 
@@ -386,9 +400,23 @@ def stop_cmd(
     session_dir = get_session_dir()
     meta_file = session_dir / f"{session_id}.json"
 
+    # Owner-scoped probe: session files live under
+    # ``session_dir / <owner_with_colons_replaced>``. If the direct path
+    # doesn't exist, walk one level deep to find the meta file.
     if not meta_file.exists():
-        typer.echo(f"Session not found: {session_id}", err=True)
-        raise typer.Exit(1)
+        try:
+            for child in session_dir.iterdir():
+                if not child.is_dir():
+                    continue
+                candidate = child / f"{session_id}.json"
+                if candidate.exists():
+                    meta_file = candidate
+                    break
+        except OSError:
+            pass
+        if not meta_file.exists():
+            typer.echo(f"Session not found: {session_id}", err=True)
+            raise typer.Exit(1)
 
     import json
 
@@ -521,7 +549,6 @@ from thegent.cli.commands.session_cmds import (  # noqa: E402,F401
     inbox_list_cmd,
     inbox_wait_cmd,
     inspect_cmd,
-    logs_cmd,
     pause_cmd,
     ps_cmd,
     resume_cmd,
@@ -535,9 +562,16 @@ from thegent.cli.commands.session_cmds import (  # noqa: E402,F401
     session_fork_cmd,
     session_rollback_cmd,
     status_cmd,
-    stop_cmd,
     wait_cmd,
 )
+
+# NOTE: `logs_cmd` and `stop_cmd` are intentionally NOT re-exported from
+# session_cmds. session_cmds.logs_cmd / session_cmds.stop_cmd are thin shims
+# that delegate back into this module, which causes import-time name
+# shadowing (the shim replaces the real definition in this module's
+# namespace, then the shim's delegation call resolves to the shadowed
+# shim → infinite recursion). Keep the real `logs_cmd` (line 295) and
+# `stop_cmd` (line 370) as the canonical implementations.
 from thegent.cli.commands.governance_cmds import (  # noqa: E402,F401
     audit_verify_cmd,
     compliance_plugin_check_cmd,

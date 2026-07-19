@@ -88,10 +88,23 @@ def wait_cmd(*args: Any, **kwargs: Any) -> int:
 
 
 def stop_cmd(*args: Any, **kwargs: Any) -> None:
-    """Stop a running session. Stub delegating to cli.stop_cmd when available."""
-    from .cli import stop_cmd as _stop
+    """Stop a running session. Thin shim delegating to cli.stop_cmd.
 
-    return _stop(*args, **kwargs)
+    NOTE: We look up `cli.stop_cmd` via ``sys.modules`` at call time rather
+    than ``from .cli import stop_cmd`` to avoid import-time circular
+    references: cli.py re-exports many of the names in this module, and
+    `stop_cmd` is the canonical implementation in cli.py (NOT a stub).
+    Resolving at call time ensures we always reach the real implementation,
+    never a stale shim or recursive shadow.
+    """
+    import sys
+
+    cli_mod = sys.modules.get("thegent.cli.commands.cli")
+    if cli_mod is None:
+        # Fallback: explicit import if cli.py not yet loaded.
+        from . import cli as cli_mod  # type: ignore[assignment]
+
+    return cli_mod.stop_cmd(*args, **kwargs)
 
 
 def pause_cmd(*args: Any, **kwargs: Any) -> int:

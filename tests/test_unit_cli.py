@@ -296,7 +296,11 @@ class TestSessionCommands:
                     with patch("thegent.cli.commands.cli.time.sleep"):
                         with patch("thegent.cli.commands.cli.time.time", side_effect=[0.0, 0.3, 0.7, 1.2]):
                             stop_cmd(sid, force=False, wind_down=True, grace=1)
-                            killpg.assert_called_once()
+                            # Wind-down sends SIGTERM then, after the grace
+                            # period elapses, escalates to SIGKILL.
+                            assert killpg.call_count == 2
+                            killpg.assert_any_call(54321, 15)  # SIGTERM
+                            killpg.assert_any_call(54321, 9)  # SIGKILL
 
     def test_logs_follow_times_out_without_pid_completion(self, tmp_path: Path) -> None:
         # @trace FR-CLI-004

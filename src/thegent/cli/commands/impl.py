@@ -27,9 +27,11 @@ _EAGAIN_ERRNOS = {errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR}
 # Health payload schema version
 HEALTH_PAYLOAD_SCHEMA_VERSION = "1.0"
 
+
 # Retry if eagain decorator
 def _retry_if_eagain(func: Any) -> Any:
     """Retry function if EAGAIN error occurs."""
+
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         max_retries = 3
         for attempt in range(max_retries):
@@ -37,17 +39,18 @@ def _retry_if_eagain(func: Any) -> Any:
                 return func(*args, **kwargs)
             except OSError as e:
                 if e.errno in _EAGAIN_ERRNOS and attempt < max_retries - 1:
-                    time.sleep(0.1 * (2 ** attempt))
+                    time.sleep(0.1 * (2**attempt))
                     continue
                 raise
         return None
+
     return wrapper
 
 
 # Backoff delay function
 def _backoff_delay(attempt: int, base: float = 1.0, max_delay: float = 60.0) -> float:
     """Calculate exponential backoff delay."""
-    return min(base * (2 ** attempt), max_delay)
+    return min(base * (2**attempt), max_delay)
 
 
 # Atomic write function
@@ -55,8 +58,10 @@ def _atomic_write(path: Path, content: str) -> None:
     """Atomically write content to a file."""
     import tempfile
     import os
+
     path_str = str(path)
     from pathlib import Path
+
     with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=str(Path(path_str).parent) or ".") as f:
         f.write(content)
         temp_path = f.name
@@ -67,13 +72,14 @@ def _atomic_write(path: Path, content: str) -> None:
 def _spawn_with_eagain_retry(cmd: list[str], **kwargs: Any) -> Any:
     """Spawn process with EAGAIN retry logic."""
     import subprocess
+
     max_retries = 3
     for attempt in range(max_retries):
         try:
             return subprocess.run(cmd, **kwargs)
         except OSError as e:
             if e.errno in _EAGAIN_ERRNOS and attempt < max_retries - 1:
-                time.sleep(0.1 * (2 ** attempt))
+                time.sleep(0.1 * (2**attempt))
                 continue
             raise
     return None
@@ -87,6 +93,7 @@ def _append_observe_summary_snapshot(snapshots: list, snapshot: dict[str, Any]) 
 def _validate_image_capability(image_path: str) -> bool:
     """Validate that image capability is available."""
     from pathlib import Path
+
     return Path(image_path).exists()
 
 
@@ -217,6 +224,7 @@ def _default_owner_tag(cwd: Path) -> str:
 def _write_session_state(session_dir: Path, state: dict[str, Any]) -> None:
     """Write session state to disk."""
     import json
+
     state_file = session_dir / "session_state.json"
     state_file.write_text(json.dumps(state))
 
@@ -224,6 +232,7 @@ def _write_session_state(session_dir: Path, state: dict[str, Any]) -> None:
 def _normalize_image_paths(paths: list[str]) -> list[str]:
     """Normalize image paths."""
     from pathlib import Path
+
     return [str(Path(p).expanduser().resolve()) for p in paths]
 
 
@@ -300,12 +309,24 @@ def observe_summary_impl(
     )
 
     # Get escalations
-    pending = escalation_queue.list_pending(limit=top_escalations)
-    past_sla = escalation_queue.list_pending(past_sla_only=True, limit=top_escalations)
+    # `top_escalations` is a *display* cap (how many records to show), not a
+    # *count* limit — using it for `list_pending(limit=...)` would silently
+    # undercount backlog size when top_escalations < actual backlog. Use a
+    # generous count-only limit (max(top_escalations, _COUNT_CAP)) for the
+    # count queries, then slice for the display list.
+    _count_cap = max(top_escalations, 100)
+    pending = escalation_queue.list_pending(limit=_count_cap)
+    past_sla = escalation_queue.list_pending(past_sla_only=True, limit=_count_cap)
 
     # Determine status
+    # Status precedence (highest to lowest):
+    #   1. "critical" if drift is over budget OR if any escalation is past
+    #      its SLA (operator action required — same severity class).
+    #   2. "degraded" if fallback rate exceeds the 10% warning threshold.
+    #   3. "warning" if any pending escalations exist.
+    #   4. "ok" otherwise.
     status = "ok"
-    if drift.get("within_budget") is not True:
+    if drift.get("within_budget") is not True or past_sla:
         status = "critical"
     elif kpis.get("fallback_rate", 0) > 0.1:
         status = "degraded"
@@ -547,6 +568,7 @@ def _compact_health_snapshot_log(log_path: str, max_entries: int = 1000) -> int:
 def _session_state_path(session_id: str) -> str:
     """Get session state path for session."""
     import os
+
     base = os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions")
     return str(Path(base) / session_id / "session_state.json")
 
@@ -668,6 +690,7 @@ def _dag_path(dag_id: str) -> str:
     """
     from pathlib import Path
     import os
+
     base_dir = os.environ.get("THGENT_DAG_DIR", "/tmp/thegent/dags")
     return str(Path(base_dir) / f"{dag_id}.json")
 
@@ -732,6 +755,7 @@ def _ensure_dag_file(dag_path: str, **kwargs: Any) -> bool:
         True if file exists or was created.
     """
     from pathlib import Path
+
     path = Path(dag_path)
     if path.exists():
         return True
@@ -796,6 +820,7 @@ def _hash_health_payload(payload: dict[str, Any]) -> str:
     """
     import hashlib
     import json
+
     content = json.dumps(payload, sort_keys=True)
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
@@ -824,6 +849,7 @@ def _hash_observe_summary_payload(payload: dict[str, Any]) -> str:
     """
     import hashlib
     import json
+
     content = json.dumps(payload, sort_keys=True)
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
@@ -838,6 +864,7 @@ def _load_previous_health_snapshot(session_dir: Path) -> dict[str, Any] | None:
         Previous health snapshot dictionary or None.
     """
     import json
+
     snapshot_file = session_dir / "health_snapshot.json"
     if snapshot_file.exists():
         return json.loads(snapshot_file.read_text())
@@ -855,6 +882,7 @@ def _hash_observe_summary_trend_scope(trend_scope: dict[str, Any]) -> str:
     """
     import hashlib
     import json
+
     content = json.dumps(trend_scope, sort_keys=True)
     return hashlib.sha256(content.encode()).hexdigest()[:16]
 
@@ -873,6 +901,7 @@ def _observe_summary_freshness_bucket(timestamp: float) -> str:
         Freshness bucket string (e.g., "fresh", "stale", "expired").
     """
     import time
+
     age = time.time() - timestamp
     if age < 300:  # 5 minutes
         return "fresh"
@@ -892,6 +921,7 @@ def _parse_dag_full(dag_content: str) -> dict[str, Any]:
         Parsed DAG dictionary.
     """
     import json
+
     return json.loads(dag_content)
 
 
@@ -909,6 +939,7 @@ def _load_observe_summary_snapshots(
         List of observe summary snapshots.
     """
     import json
+
     snapshots = []
     snapshots_dir = session_dir / "observe_snapshots"
     if snapshots_dir.exists():
@@ -991,6 +1022,7 @@ def _parse_observe_summary_env_float(
         Parsed float value.
     """
     import os
+
     try:
         return float(os.environ.get(env_var, default))
     except (ValueError, TypeError):
@@ -1011,6 +1043,7 @@ def _parse_observe_summary_env_int(
         Parsed int value.
     """
     import os
+
     try:
         return int(os.environ.get(env_var, default))
     except (ValueError, TypeError):
@@ -1028,8 +1061,10 @@ def _serialize_dag(dag: dict[str, Any], format: str = "json") -> str:
         Serialized DAG string.
     """
     import json
+
     if format == "yaml":
         import yaml
+
         return yaml.dump(dag)
     return json.dumps(dag, indent=2)
 
@@ -1066,6 +1101,7 @@ def _parse_observe_summary_timestamp(ts: str | float | None) -> float:
         Unix timestamp as float.
     """
     import time
+
     if ts is None:
         return time.time()
     if isinstance(ts, float):
@@ -1088,7 +1124,8 @@ def _validate_task_id(task_id: str) -> bool:
         True if valid, False otherwise.
     """
     import re
-    return bool(re.match(r'^[a-zA-Z0-9_-]+$', task_id))
+
+    return bool(re.match(r"^[a-zA-Z0-9_-]+$", task_id))
 
 
 def _resolve_agent_model(model: str | None = None) -> str:
@@ -1101,6 +1138,7 @@ def _resolve_agent_model(model: str | None = None) -> str:
         Resolved model name.
     """
     import os
+
     if model:
         return model
     return os.environ.get("THGENT_DEFAULT_MODEL", "claude-sonnet-4-5")
@@ -1120,6 +1158,7 @@ def _resolve_prompt(prompt: str | None = None, prompt_file: str | None = None) -
         return prompt
     if prompt_file:
         from pathlib import Path
+
         return Path(prompt_file).read_text()
     return ""
 
@@ -1144,6 +1183,7 @@ def _session_scope_dirs(session_id: str) -> dict[str, Path]:
         Dictionary of scope name to directory path.
     """
     import os
+
     base = Path(os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
     session_dir = base / session_id
     return {
@@ -1164,6 +1204,7 @@ def _session_status_for(session_id: str) -> str:
         Session status string (running, completed, failed, unknown).
     """
     import os
+
     base = Path(os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
     session_dir = base / session_id
     lock_file = session_dir / ".lock"
