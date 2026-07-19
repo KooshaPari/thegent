@@ -1257,3 +1257,88 @@ silently breaking the operator dashboard.
   (1024 confidence samples + 64 decision notices + 32
   override notices + 14 run rows) would close the P-090
   SLO gap and prevent silent latency regression.
+
+
+## 2026-07-19: P-090 SLO closure + bounded-cap integration + JSON-shape parity
+
+### Actions Taken
+
+* **P-090 SLO closure** — Added
+  `tests/test_unit_ux_cockpit.py::TestRenderPerformance` (4 tests)
+  that pin `cockpit.render() < 50ms` for the worst-case bounded state
+  (1024 confidence samples + 64 decision notices + 32 override
+  notices + 14 runs). Also pins `last_render_ms < 50ms` and the
+  bounded maxlen shape so a future refactor that raises a deque cap
+  has to re-justify the SLO. 50ms leaves ~20x headroom over the
+  measured ~1-3 ms cost on dev hardware, matches 5% of the 1s DAG
+  tick cadence, and is well clear of CI noise.
+* **Bounded-cap integration hardening** — Added
+  `tests/test_unit_ux_cli_cockpit_exit_code_on_cap.py::TestBoundedCapAuditIntegration`
+  (2 tests) that pin the end-to-end contract between
+  `--max-events`, `--exit-code-on-cap`, and the audit appender:
+  capped run emits `<= N` lines, exit code propagates, and the JSONL
+  file contains at least one line. Closes the gap the prior sprint
+  left between the isolated leg tests.
+* **SOTA audit JSON-shape parity** — New
+  `tests/test_unit_cockpit_sota_json_parity.py` (4 tests) pins the
+  JSON envelope shape parity between `cockpit replay --json` and
+  `sota replay --report-format json`. Both envelopes MUST expose
+  `matched` (bool) and `mismatches` (list of `{index, fields,
+  expected, actual}`); the per-row sub-key contract is asserted for
+  both positive and negative paths.
+* **Docs gap closure** — Extended the `cli_cockpit.py` module
+  docstring with an "Operator walkthrough" section that walks an
+  operator through the three stable replay output shapes
+  (`--json`, `--report-format=json`, `--report-format=junitxml`)
+  with concrete CLI invocations and the exit-code contract (0 =
+  match, 4 = mismatch).
+
+### Validation
+
+* Full active lane: **456 passed in 17.34s** (started at 432; +24
+  net, 0 regressions). 18 test files covered.
+* No secrets in the diff (gitleaks scan clean — `api_key|secret|
+  token|password|passwd|bearer|aws_access` patterns absent from
+  every touched file).
+* 3 files modified + 1 file added, +622 net lines, all additive.
+* Committed locally on
+  `wip/2026-07-18-cockpit-sota-hardening` as
+  `9e284b481 harden(ux,sota): P-090 perf pin + bounded-cap
+  integration + JSON-shape parity`. No force-push to upstream.
+
+### Resolved Worklog Items
+
+* **Performance hardening on `cockpit.render()`** — closed. P-090
+  SLO pinned at 50ms for worst-case state; future latency regressions
+  will fail in CI rather than ship silently.
+* **Wider Phase 3/4 cockpit polish** — partially closed. The
+  operator walkthrough lives in `cli_cockpit.py`'s module docstring
+  (reachable via `help(cli_cockpit)` and discoverable from a code
+  search). A separate `docs/ux/cockpit-sota.md` markdown file is
+  still an option but the inline docstring closes the operator-facing
+  gap for now.
+
+### Unblocked Next
+
+* **Repair the pre-existing 86 test-collection errors** — still the
+  CI-mergeability blocker. This sprint stayed inside the wip branch's
+  lane (governance + cockpit UX + SOTA replay parity) and did not
+  touch the wider `tests/` collection errors (mostly
+  `ModuleNotFoundError` for moved modules under `agents/`, `tools/`,
+  `unit/agents/`, `unit/governance/` + `FileNotFoundError` for files
+  that moved). A dedicated `chore(tests): repair wider regression
+  collection` lane remains the obvious next sprint.
+* **Add a `docs/ux/cockpit-sota.md` companion** — the inline
+  docstring is sufficient for code-discoverability but a short
+  operator-facing markdown would let external SOTA consumers find
+  the contract without grepping the source. A 1-page doc walking
+  an operator through `--json` + `--report-format=junitxml`
+  ingestion end-to-end (with sample outputs) would close the
+  remaining docs gap.
+* **Federated policy: add a `--replay-flip` flag** — the parity
+  test covers `cockpit replay --json` mismatch output shape but
+  not the intentional "what if we deliberately invert a snapshot
+  field to force a mismatch" workflow. A short follow-up could
+  add a `--snapshot-flip <field>` flag to cockpit replay for
+  SOTA canary runs that want to verify the diff machinery is wired
+  correctly without hand-editing snapshots.
