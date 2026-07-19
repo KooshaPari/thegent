@@ -3514,3 +3514,74 @@ the sub-app to the real implementation logic.
   `wip/2026-07-18-cockpit-sota-hardening`, **31 commits ahead of
   `main`** after this commit. **Not pushed** to the archived upstream
   `KooshaPari/thegent.git` per the directive.
+
+## Lane Hand-off (2026-07-19) — WL-224/WL-225 plan workstream stub thickening
+
+* **Scope**: The AUDIT-4 closure hand-off's "Unblocked Next" lane
+  enumerated "Wider `tests/` collection repair" as the next pick-up;
+  the last remaining collection error was
+  `tests/test_plan_verify_workstream_cmd.py` failing at module-import
+  time because `plan_lint_workstream_cmd` / `plan_normalize_workstream_cmd`
+  / `plan_verify_workstream_cmd` were missing from `plan_cmds.py`.
+* **What landed (`f42752eae`)**:
+  * `src/thegent/cli/commands/plan_cmds.py` — added the three real
+    command implementations with WORK_STREAM.md parsing
+    (`## ` section + pipe-table schema, ID-column detection, overlap
+    detection for the verify invariant), idempotent normalize
+    (collapsed consecutive blank lines), and missing-file
+    error paths.
+  * `src/thegent/cli/commands/cli.py` — re-exported the three new
+    names so the WL-124 stable import surface continues to match
+    `thegent.cli.commands.<name>`.
+  * `src/thegent/cli/apps/plan/__init__.py` — registered the three
+    Typer sub-commands `verify-workstream`, `lint-workstream`,
+    `normalize-workstream` (with `--cd` option) backed by the
+    real plan_cmds implementations.
+* **Validation**:
+  * `pytest tests/test_plan_verify_workstream_cmd.py` — **5 passed**.
+  * `pytest tests/ --collect-only` — **0 collection errors**
+    (19271 tests collected, up from prior 19266).
+  * `pytest tests/test_plan_verify_workstream_cmd.py tests/test_wl124_cli_split.py
+    tests/test_unit_cli.py tests/test_unit_cli_session.py
+    tests/test_unit_ux_sota_third_pass.py tests/test_unit_ux_sota_fourth_pass.py
+    tests/test_unit_ux_sota_second_pass.py tests/test_unit_ux_phase3p4_hardening.py
+    tests/test_unit_cockpit_snapshot_flip.py tests/test_unit_cockpit_snapshot_flip_envelope.py
+    tests/test_unit_cockpit_sota_json_parity.py` — **596 passed,
+    0 failed** (Phase 3/4 lane no regression).
+  * `ruff check` + `ruff format --check` — clean.
+  * Function-length invariant (`≤ 40 lines/function`) holds across
+    the new code in `plan_cmds.py`.
+
+### Unblocked Next (after this lane)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. Otherwise unblocked: tests collection is now
+  fully green at 19271.
+* **Wider `tests/` collection cross-language lane** — `tests/agents/`,
+  `tests/tools/`, `tests/unit/agents/`, `tests/unit/governance/` remain
+  as the next collection-repair sweep (no errors in
+  the current sweep though — the prior 86 → 1 → 0 trend continues).
+* **F-15 + UX polish** — sub-command help text normalization,
+  consistent error envelopes (continuing from the AUDIT-2 fix).
+* **Code-quality follow-ups surfaced by the WL-224/WL-225 test
+  contract** — `tests/test_workstream_ops.py::TestWorkStreamOps`
+  exercises `thegent.utils.workstream_ops.WorkStreamOps` (different
+  schema: `### [WL-N]` line markers, pipe-tables have `Claimed At`
+  column name) — still uses the WL-124 stable surface; the
+  `plan_*_workstream_cmd` thicken is orthogonal to that path.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (still saturated).
+* **DAG tick**: **`+1`** (this hand-off on top of the AUDIT-4 closure).
+* **Closed this lane**: Last remaining test collection error
+  (`tests/test_plan_verify_workstream_cmd.py`, 5 contract tests now
+  green) + 3 thin-shim stubs thickened into real implementations.
+* **Cumulative closed (13 prior lanes + this)**: AUDIT-1/2/4/6/9/19/
+  22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1, KA-1..6, A11Y-1,
+  CLI-1..5, TEST-1, plus this WL-224/WL-225 plan-workstream thicken.
+* **Local commit**: `f42752eae` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **32 commits ahead of
+  `main`** after this commit. **Not pushed** to the archived upstream
+  `KooshaPari/thegent.git` per the directive.
