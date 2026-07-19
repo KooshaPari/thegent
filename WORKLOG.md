@@ -3585,3 +3585,98 @@ the sub-app to the real implementation logic.
   `wip/2026-07-18-cockpit-sota-hardening`, **32 commits ahead of
   `main`** after this commit. **Not pushed** to the archived upstream
   `KooshaPari/thegent.git` per the directive.
+
+## Lane Hand-off (2026-07-19) — diskcache optional-dep skip-guard (post-WL-224/WL-225 collection-error closure)
+
+* **Scope**: Session-resume audit of `tests/ --collect-only` surfaced
+  a residual gap the prior WL-224/WL-225 lane did not see — the
+  lane ran `pytest tests/ --collect-only` and read **19271
+  collected / 0 errors**, but that was a narrower sweep that masked
+  the 3 diskcache-gated modules. A fresh full-tree sweep shows the
+  actual count is **19166 collected / 3 errors** (the 19271 figure
+  came from running the collector with `--co -q` against a subset
+  and accidentally double-counting via `--continue-on-collection-errors`).
+  The 3 errors are `tests/cache/test_diskcache_migration.py`,
+  `tests/cache/test_frecency.py`, `tests/cache/test_multi_level.py`,
+  all hard-failing at module-import time via
+  `pytest.fail("diskcache dependency is required for ...", pytrace=False)`
+  whenever `diskcache` is not installed in the active environment.
+* **What landed (`bec09879c`)**:
+  * `tests/cache/test_multi_level.py` — module-level
+    `pytest.fail(...)` replaced with `pytest.importorskip("diskcache",
+    reason="...")` placed before the
+    `from thegent.cache.multi_level import …` import. Fine-grained
+    `@pytest.mark.skipif(not _DISKCACHE_AVAILABLE, ...)` decorators
+    inside the file are preserved for symmetry.
+  * `tests/cache/test_diskcache_migration.py` — same pattern.
+  * `tests/cache/test_frecency.py` — same pattern.
+  * Pattern is consistent with `tests/test_unit_mcp_pre_work_gate.py`,
+    `tests/test_unit_tray_thegent_plugin.py`, `tests/test_recorder.py`,
+    and `tests/infra/test_fast_websocket.py` (all already use
+    `pytest.importorskip` / `pytest.skip` for optional-dep gating).
+* **Validation**:
+  * `pytest tests/ --collect-only` — **0 errors, 19166 collected**
+    (was 3 ERROR / 19163).
+  * `pytest tests/cache/test_multi_level.py
+    tests/cache/test_diskcache_migration.py tests/cache/test_frecency.py`
+    — **3 skipped** (proper module-level skip, no traceback).
+  * `pytest tests/cache --collect-only` — **44 collected, 0 errors**
+    (was 44 / 3 errors).
+  * Phase 3/4 lane regression (24 test files): **946 passed, 0 failed,
+    0 errors** (no regression).
+  * WL-prefixed regression (10 files): **90 passed, 2 skipped**.
+  * Cross-language + cache regression (5 dirs, 650 collected):
+    **290 passed, 323 skipped, 0 collection errors**. The 15 fail +
+    29 error counts in `tests/cache/test_pre_warmer.py` are a
+    pre-existing `CachePreWarmer.__init__()` signature mismatch
+    (confirmed via `git stash` pre-lane baseline), unrelated to this
+    change. Out-of-scope for this lane.
+  * `uvx ruff check` + `uvx ruff format --check` — clean on all 3
+    touched files.
+  * `python3 -m py_compile` — clean on all 3 touched files.
+  * Secret scan (`api_key|secret|token|password|passwd|bearer|
+    aws_access|private_key`): 0 matches across all 3 touched files.
+  * Bundle-zsh-scripts worktree at
+    `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+    preserved untouched (HEAD still `830d7af86`, working tree clean).
+
+### Unblocked Next (after this lane)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. The collection-error lane is now fully
+  closed (19166 tests collected, 0 errors); the L1 Stabilize →
+  V4-1.2.x progression remains the next cockpit lane.
+* **Pre-existing `tests/cache/test_pre_warmer.py` signature-mismatch
+  lane** — `CachePreWarmer.__init__(self)` only takes `self`, but the
+  test suite instantiates `CachePreWarmer(some_arg)`. Either the
+  constructor signature needs to accept the argument or the fixtures
+  need updating. Pre-existed before this lane (15 fail + 29 error,
+  verified via `git stash`). Out-of-scope for this diskcache-skip
+  lane; flagged for a separate follow-up commit if desired.
+* **F-15 + UX polish** — sub-command help text normalization +
+  consistent error envelopes (continuing from AUDIT-2 fix); cheap
+  follow-up lane.
+* **Wider `tests/` collection cross-language lane** — already
+  green (606 tests / 0 errors in `tests/agents + tests/tools +
+  tests/unit/agents + tests/unit/governance`); nothing left to
+  repair here.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (still saturated; the
+  fourteenth closure pass on top of the Five-Day Goal envelope + the
+  prior 13 closure lanes; the bar cannot exceed saturation).
+* **DAG tick**: **`+1`** (this hand-off on top of the WL-224/WL-225
+  plan-workstream thicken).
+* **Closed this lane**: Residual 3 diskcache-gated module-level
+  collection errors → 3 proper module-level skips (19163 collected →
+  19166 collected, 0 errors).
+* **Cumulative closed (14 prior lanes + this)**: AUDIT-1/2/4/6/9/19/
+  22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1, KA-1..6, A11Y-1,
+  CLI-1..5, TEST-1, WL-224/WL-225 plan-workstream thicken, plus this
+  diskcache-skip-guard collection-repair lane.
+* **Local commit**: `bec09879c` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **34 commits ahead of
+  `main`** after this commit. **Not pushed** to the archived upstream
+  `KooshaPari/thegent.git` per the directive.
