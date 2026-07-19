@@ -50,8 +50,8 @@ without rewriting parsers:
        thegent cockpit replay --batch corpus/ --compare snap.json \\
            --report-format=json
 
-   Same envelope **shape** (matched / mismatches keys present, mismatches
-   list shape stable) — see
+   Same envelope **shape** (matched / items / mismatches keys present,
+   mismatches list shape stable) — see
    ``tests/test_unit_cockpit_sota_json_parity.py`` for the parity
    contract. Use this when you want the sota-side report-format
    dispatch table to win (handy when wiring into a sota-wide ingest
@@ -73,6 +73,36 @@ Replay exits ``0`` on match, ``4`` on mismatch (mirrors the
 pipelines can branch on the two failure modes independently). For
 structured ingestion prefer ``--json`` over text-grepping the default
 output — the text path is intended for humans only.
+
+------------------------------------------------------------------------
+Operator walkthrough: ``flipped`` field in the JSON envelope
+------------------------------------------------------------------------
+
+When the operator composes ``--snapshot-flip <field>`` (or
+``--snapshot-flip-all``) the replay walks the mismatch path on
+purpose, but downstream SOTA tooling still needs to know *which*
+fields were inverted so the diff report can be triaged. The ``--json``
+and ``--report-format=json`` envelopes now expose a top-level
+``flipped`` array listing the resolved flip fields (deduplicated,
+first-seen order preserved). When no flip flag is set, ``flipped``
+is the empty list ``[]`` so the schema is stable::
+
+    # Force a mismatch on ``verdict`` and inspect which fields the
+    # envelope reports as flipped.
+    thegent cockpit replay --batch corpus/ --compare snap.json \\
+        --snapshot-flip verdict --snapshot-flip override_applied --json \\
+        | jq '{matched, items, flipped, mismatches: (.mismatches | length)}'
+
+    # Same envelope key on the sota side:
+    thegent sota replay --batch corpus/ --compare snap.json \\
+        --snapshot-flip-all --report-format=json \\
+        | jq '.flipped'   # -> ["verdict", "override_applied", "cached"]
+
+The ``flipped`` key is part of the JSON-envelope contract pinned by
+``tests/test_unit_cockpit_sota_json_parity.py`` and the dedicated
+``tests/test_unit_cockpit_snapshot_flip_envelope.py`` (Day 5/5).
+Operators who do not pass any ``--snapshot-flip*`` flag still get
+the empty array, so the schema never has to be checked twice.
 
 ------------------------------------------------------------------------
 Operator walkthrough: ``--snapshot-flip`` SOTA canary workflow
@@ -1094,6 +1124,7 @@ def cockpit_replay(
                 decisions=[],
                 audit_path=str(audit_path) if audit_path else None,
                 json_output=json_output,
+                flipped=list(flip_fields),
             )
             raise typer.Exit(0)
 
@@ -1147,6 +1178,7 @@ def cockpit_replay(
             decisions=produced,
             audit_path=audit_str,
             json_output=json_output,
+            flipped=list(flip_fields),
         )
         # Operator confirmation: when an audit file was written, tell
         # the operator whether the run **appended** to an existing
@@ -1176,13 +1208,35 @@ def _emit_replay_summary(
     decisions: list[dict[str, Any]],
     audit_path: Optional[str],
     json_output: bool,
+    flipped: Optional[list[str]] = None,
 ) -> None:
-    """Render the replay outcome (text or JSON) and write to stdout."""
+    """Render the replay outcome (text or JSON) and write to stdout.
+
+    JSON envelope contract (Day 5/5 hardening lane):
+
+    * ``matched`` (bool) — every decision matched the snapshot.
+    * ``items`` (int) — total number of decisions evaluated; mirrors the
+      sota-side envelope (``_render_report_json`` in ``cli_sota.py``) so
+      a downstream consumer that reads both outputs sees one stable
+      contract. Closes the JSON-envelope drift gap surfaced by the
+      Phase 3/4 SOTA audit second pass (P1-3 / AUDIT-2).
+    * ``mismatches`` (list of ``{index, fields, expected, actual}``) —
+      the diff report.
+    * ``decisions`` (list) — the produced ``PolicyDecision.to_dict()``
+      list (used by SOTA tooling that wants to re-run the compare
+      itself).
+    * ``audit`` (str | null) — JSONL path when ``--audit-path`` was set.
+    * ``flipped`` (list[str]) — the resolved ``--snapshot-flip`` +
+      ``--snapshot-flip-all`` field set, deduped and in first-seen
+      order. Always present (``[]`` when no flip flag was set) so the
+      schema never has to be checked twice.
+    """
     if json_output:
         typer.echo(
             json.dumps(
                 {
                     "matched": matched,
+                    "items": items,
                     "mismatches": [
                         {
                             "index": m["index"],
@@ -1194,6 +1248,7 @@ def _emit_replay_summary(
                     ],
                     "decisions": decisions,
                     "audit": audit_path,
+                    "flipped": list(flipped or []),
                 },
                 indent=2,
                 sort_keys=True,

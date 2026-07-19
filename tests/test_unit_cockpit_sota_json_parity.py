@@ -118,7 +118,15 @@ class TestCockpitSotaJsonParityPositive:
     """Both envelopes expose ``matched=True`` + empty ``mismatches``."""
 
     def test_cockpit_json_envelope_shape(self, tmp_path: Path) -> None:
-        """``cockpit replay --json``: 4 top-level keys + per-mismatch sub-keys."""
+        """``cockpit replay --json``: 6 top-level keys + per-mismatch sub-keys.
+
+        Day 5/5 hardening lane pins the new ``items`` and ``flipped``
+        keys in addition to the historical ``matched``/``mismatches``/
+        ``decisions``/``audit`` contract. The Phase 3/4 SOTA audit
+        second pass surfaced the drift where ``cockpit replay --json``
+        was missing ``items`` (and the parity test used a ``>=``
+        superset check that masked the gap); both surfaces now agree.
+        """
         runner = CliRunner()
         batch = tmp_path / "batch.json"
         compare = tmp_path / "compare.json"
@@ -141,15 +149,37 @@ class TestCockpitSotaJsonParityPositive:
         )
         assert result.exit_code == 0, result.output
         envelope = json.loads(result.output)
-        assert set(envelope.keys()) >= {"matched", "mismatches", "decisions", "audit"}
+        # Tight equality (Day 5/5 hardening lane + AUDIT-2): the
+        # envelope must carry exactly these 6 keys so a downstream
+        # consumer can rely on the contract without checking for
+        # missing-or-extra fields.
+        assert set(envelope.keys()) == {
+            "matched",
+            "items",
+            "mismatches",
+            "decisions",
+            "audit",
+            "flipped",
+        }, envelope.keys()
         assert envelope["matched"] is True
+        assert envelope["items"] == 2
         assert envelope["mismatches"] == []
         assert isinstance(envelope["decisions"], list)
         assert len(envelope["decisions"]) == 2
         assert envelope["audit"] == str(audit)
+        # No flip flags were passed; the envelope must report an empty
+        # flip set so the schema is stable.
+        assert envelope["flipped"] == []
 
     def test_sota_json_envelope_shape(self, tmp_path: Path) -> None:
-        """``sota replay --report-format json``: matched (bool) + mismatches (list)."""
+        """``sota replay --report-format json``: matched (bool) + mismatches (list).
+
+        Day 5/5 hardening lane: also pins the new ``items`` and
+        ``flipped`` keys for parity with the cockpit-side envelope.
+        The Phase 3/4 SOTA audit second pass surfaced a key-set drift
+        between the two surfaces (cockpit was missing ``items``);
+        both now expose exactly the same 6 keys.
+        """
         runner = CliRunner()
         batch = tmp_path / "batch.json"
         compare = tmp_path / "compare.json"
@@ -171,10 +201,20 @@ class TestCockpitSotaJsonParityPositive:
             ],
         )
         envelope = _extract_last_json_object(result.output)
+        assert set(envelope.keys()) == {
+            "matched",
+            "items",
+            "mismatches",
+            "decisions",
+            "audit",
+            "flipped",
+        }, envelope.keys()
         assert isinstance(envelope.get("matched"), bool)
         assert envelope["matched"] is True
         assert isinstance(envelope.get("mismatches"), list)
         assert envelope["mismatches"] == []
+        assert envelope["items"] == 2
+        assert envelope["flipped"] == []
 
 
 # ---------------------------------------------------------------------------

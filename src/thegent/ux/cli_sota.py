@@ -148,8 +148,15 @@ def _render_report_text(
     mismatches: list[dict[str, Any]],
     decisions: list[dict[str, Any]],
     audit_path: Optional[str],
+    flipped: Optional[list[str]] = None,
 ) -> str:
-    """Plain-text report — identical contract to ``cockpit replay``."""
+    """Plain-text report — identical contract to ``cockpit replay``.
+
+    ``flipped`` is unused on the text path but accepted for parity
+    with the JSON / JUnit-XML renderers so all three renderers share
+    the same call signature.
+    """
+    del flipped  # text renderer intentionally ignores the flip set
     out: list[str] = [f"sota replay: items={items} matched={matched} mismatches={len(mismatches)}"]
     for m in mismatches:
         out.append(m["text"])
@@ -165,8 +172,17 @@ def _render_report_json(
     mismatches: list[dict[str, Any]],
     decisions: list[dict[str, Any]],
     audit_path: Optional[str],
+    flipped: Optional[list[str]] = None,
 ) -> str:
-    """JSON envelope — same shape as ``cockpit replay --json``."""
+    """JSON envelope — same shape as ``cockpit replay --json``.
+
+    Day 5/5 hardening lane: also exposes the resolved
+    ``--snapshot-flip`` + ``--snapshot-flip-all`` field set under the
+    top-level ``flipped`` key, so downstream SOTA tooling can trace
+    which fields were inverted without re-running the compare.
+    Always present (empty list ``[]`` when no flip flag was set) so
+    the schema never has to be checked twice.
+    """
     return json.dumps(
         {
             "matched": matched,
@@ -182,6 +198,7 @@ def _render_report_json(
             ],
             "decisions": decisions,
             "audit": audit_path,
+            "flipped": list(flipped or []),
         },
         indent=2,
         sort_keys=True,
@@ -196,6 +213,7 @@ def _render_report_junitxml(
     decisions: list[dict[str, Any]],
     audit_path: Optional[str],
     suite_name: str,
+    flipped: Optional[list[str]] = None,
 ) -> str:
     """JUnit-XML report for CI ingestion.
 
@@ -204,6 +222,13 @@ def _render_report_junitxml(
     the diff text.  Aggregate counters (``tests``, ``failures``,
     ``errors``) let CI runners show a single badge instead of
     parsing individual cases.
+
+    When the operator passed ``--snapshot-flip*`` flags the resolved
+    flip set is exposed as ``<properties><property name="flipped"
+    value="..."/></properties>`` on the ``<testsuite>`` root — the
+    canonical JUnit-XML extension point for arbitrary key/value
+    metadata.  CI runners that don't recognise the extension ignore
+    the properties element, so the addition is back-compat safe.
 
     The output is pretty-printed so operators can ``cat`` the
     report and read it; CI runners parse the XML, not the text, so
@@ -218,6 +243,22 @@ def _render_report_junitxml(
             "errors": "0",
         },
     )
+    # Expose the resolved ``--snapshot-flip*`` field set on the
+    # testsuite root via the standard JUnit-XML ``<properties>``
+    # extension.  CI consumers that don't know about this property
+    # simply ignore it; consumers that do (thegent SOTA tooling) can
+    # introspect the flip set without re-running the compare.
+    flipped_list = list(flipped or [])
+    if flipped_list:
+        properties = ET.SubElement(testsuite, "properties")
+        ET.SubElement(
+            properties,
+            "property",
+            attrib={
+                "name": "flipped",
+                "value": ",".join(flipped_list),
+            },
+        )
     # Index mismatches by ordinal for O(1) lookup.
     mismatch_by_idx: dict[int, dict[str, Any]] = {m["index"]: m for m in mismatches}
 
@@ -469,6 +510,7 @@ def sota_replay(
                     decisions=[],
                     audit_path=None,
                     suite_name=suite_name,
+                    flipped=list(flip_fields),
                 )
             else:
                 report = renderer(
@@ -477,6 +519,7 @@ def sota_replay(
                     mismatches=[],
                     decisions=[],
                     audit_path=None,
+                    flipped=list(flip_fields),
                 )
             if report_path is not None:
                 report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -541,6 +584,7 @@ def sota_replay(
                 decisions=produced,
                 audit_path=audit_str,
                 suite_name=suite_name,
+                flipped=list(flip_fields),
             )
         else:
             report = renderer(
@@ -549,6 +593,7 @@ def sota_replay(
                 mismatches=mismatches,
                 decisions=produced,
                 audit_path=audit_str,
+                flipped=list(flip_fields),
             )
         if report_path is not None:
             report_path.parent.mkdir(parents=True, exist_ok=True)
