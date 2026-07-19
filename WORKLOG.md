@@ -3981,3 +3981,209 @@ future `ruff --fix` run cannot reintroduce it.
   directive. Other worktree
   (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
   preserved and untouched.
+
+## 2026-07-19: Phase 3/4 Continuation — GOV-1 governance error-envelope parity
+
+**Scope.** Closes the next-unblocked UX + governance hardening lane:
+the four `thegent govern <sub>` error envelopes (`approve`,
+`reject`, `vet`, `register-host`) interpolated exception payloads
+directly into Rich-markup f-strings, so a malicious or buggy
+exception containing `[red]…[/red]` re-applied markup to the
+operator's terminal. The lane extracts the canonical escape
+helper into a dedicated module, adds a new end-to-end-safe
+render helper (`print_exc`), migrates all four envelopes, and
+pins the contract with a fresh 28-test suite.
+
+### Root cause
+
+The `cockpit` and `sota` surfaces were already hardened in the
+AUDIT-9 closure (third-pass audit): every envelope routed
+through `_exc_text(exc)` which produces a `rich.markup.escape`-d
+string. But that pre-escaped string, when concatenated into an
+f-string and passed back through `Console.print(markup=True)`
+(the default), was **re-interpreted** by Rich's parser — the
+`\[red]` escape became `[red]` again and the markup was applied.
+
+Two layered fixes were required:
+
+1. A dedicated `thegent.ux.cli_errors` module so any CLI sub-app
+   (governance, run, plan, …) can import the escape helper
+   without dragging the cockpit dependency graph.
+2. A new `print_exc(console, prefix, value)` helper that builds
+   the envelope as a `rich.text.Text` so the user-data section
+   is treated as literal text and survives `Console.print`
+   re-interpretation end-to-end.
+
+### What landed
+
+* `src/thegent/ux/cli_errors.py` — **new** (35 lines):
+  * `exc_text(value: object) -> str` — accepts any value
+    (`BaseException`, `Path`, `str`, `int`, `None`), coerces
+    to `str`, runs `rich.markup.escape`. The widened signature
+    collapses the prior `_escape(str(batch))` /
+    `_exc_text(exc)` two-helper pattern into one.
+  * `print_exc(console, prefix, value, *, style="red",
+    highlight=False)` — assembles a `Text` with the styled
+    prefix + `Text(esc, style="default")` so the user-data
+    section is treated as literal text and never re-parsed as
+    markup. `highlight=False` suppresses Rich's syntax
+    highlighter from interpreting `[red]` as a regex match
+    token.
+* `src/thegent/ux/cli_cockpit.py` — `cli_cockpit.py` re-exports
+  `_exc_text` and `_rich_escape` for backward compatibility with
+  the F-15 closure (`test_unit_ux_sota_fifth_pass.py` pins
+  these names as part of the public API). The local definition
+  is removed; the imports now resolve through `cli_errors`.
+* `src/thegent/cli/apps/govern.py` — the four envelopes
+  (`approve`, `reject`, `vet`, `register-host`) migrate from
+  `err_console.print(f"[red]…:[/red] {exc}")` to
+  `print_exc(err_console, "govern <sub> failed:", exc)`. The
+  `name="govern"` + `@app.callback(help=…)` flags from F-15-D/F
+  are also applied so `thegent govern --help` renders
+  `Usage: govern` with the canonical description.
+* `tests/test_unit_cli_govern_error_envelope_parity.py` —
+  **new** (28 tests, 6 classes):
+  * `TestGovernErrorEnvelope` (12 tests) — structural
+    invariants: every envelope routes through `print_exc`, no
+    naked `{exc}` interpolation remains, every envelope uses
+    the `govern <sub> failed:` prefix convention, and every
+    site uses `err_console` (not `console`).
+  * `TestExcTextAndPrintExc` (6 tests) — direct
+    `exc_text` / `print_exc` API contract: bracket escape,
+    unicode passthrough, non-string coercion (Path, int,
+    BaseException), `print_exc` builds a `Text` with styled
+    prefix + unstyled user-data section.
+  * `TestGovernAppNameAndCallbackHelp` (3 tests) — Typer
+    `app.info.name == "govern"`, `app.info.help` matches
+    `Governance operations…`, `--help` exits 0 and renders
+    `Usage: govern`.
+  * `TestGovernSubcommandHelp` (4 tests) — every registered
+    sub-command (`approve`, `reject`, `vet`, `register-host`)
+    exposes a `--help` that exits 0 and contains `Usage:`.
+  * `TestGovernErrorEnvelopeFunctional` (2 tests) — full
+    end-to-end render through a `StringIO`-backed `Console`
+    + `force_terminal=True` confirms the malicious payload
+    `[red]boom[/red]` renders as `\[red]boom\[/red]` (escaped)
+    and not as ANSI-coloured text. The `vet` sub-command is
+    exercised because it is the only one with a working
+    importable inner impl (`govern_vet_impl` from
+    `thegent.cli.governance.governance`).
+  * `TestGovernCliBinarySmoke` (4 tests, all skipped in
+    dev env where the `thegent` binary is not on `$PATH`).
+  * Backward-compat alias check ensures `cli_cockpit._exc_text`
+    and `cli_cockpit._rich_escape` are still importable.
+
+### Regression caught mid-lane
+
+The first render-safety test exposed the deeper Rich-escape
+bug. The earlier F-15 closure tested the `_exc_text` output
+as a raw string but never ran the result through
+`Console.print`, so the `[red]` re-interpretation slip went
+un-noticed for two closure passes. The new
+`TestGovernErrorEnvelopeFunctional::test_vet_envelope_does_not_inject_console_markup`
+catches it end-to-end via a `force_terminal=True`
+`StringIO`-backed Console — exactly the operator-terminal
+rendering path.
+
+### Validation
+
+* `pytest tests/test_unit_cli_govern_error_envelope_parity.py -v` →
+  **28 passed, 4 skipped** (4 CLI-binary smoke tests skip cleanly
+  when `thegent` is not on `$PATH`).
+* Wider Phase 3/4 hardening sweep (14 test files including the
+  new parity suite + the prior AUDIT-9 / F-15 closures):
+  **300 passed, 4 skipped, 0 failed**.
+* `pytest tests/test_unit_cli_commands_b.py
+  tests/test_unit_cli_commands_a.py tests/test_unit_cli.py
+  tests/test_unit_cli_dag.py tests/test_unit_cli_session.py`
+  (the files that pre-lane had 172 fail / 74 pass / 41 skip due
+  to a pre-existing `thegent.cli` circular-import on this env)
+  → **identical 172 fail / 74 pass / 41 skip pre- and
+  post-lane** — zero regression introduced. The pre-existing
+  failures are unrelated to GOV-1 (verified via `git stash`
+  pre-lane baseline).
+* `uvx ruff check src/thegent/ux/cli_errors.py
+  src/thegent/ux/cli_cockpit.py src/thegent/cli/apps/govern.py
+  tests/test_unit_cli_govern_error_envelope_parity.py` →
+  **All checks passed**.
+* `uvx ruff format --check` on the 4 touched files →
+  **clean** (3 reformatting passes during the lane).
+* `python3 -m py_compile` on all touched `.py` files →
+  clean.
+* Secret scan (`api_key|secret|token|password|passwd|bearer|
+  aws_access|private_key`) on the 4 touched files →
+  **0 matches**.
+* Function-length invariant (`≤ 40 lines/function`): longest
+  function in the lane is `print_exc` at 11 lines.
+* `bundle-zsh-scripts` worktree at
+  `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+  preserved untouched (HEAD still `830d7af86`, working tree
+  clean).
+
+### Files Touched
+
+* `src/thegent/ux/cli_errors.py` — **new** (35 lines): `exc_text`
+  + `print_exc`.
+* `src/thegent/ux/cli_cockpit.py` — local `_exc_text` /
+  `_rich_escape` definitions removed; module re-exports them
+  from `cli_errors` for backward compat. F-15-tested names
+  preserved.
+* `src/thegent/cli/apps/govern.py` — 4 envelopes migrated to
+  `print_exc`; `name="govern"` + `@app.callback(help=…)` added
+  (F-15-D + F-15-F applied to the governance surface).
+* `tests/test_unit_cli_govern_error_envelope_parity.py` —
+  **new** (28 tests, 6 classes, ~430 lines).
+
+### Resolved Worklog Items
+
+* **GOV-1 (governance CLI error-envelope injection)** —
+  closed. The four envelope sites are now structurally pinned
+  to route through `print_exc`, the user-data section is
+  rendered as a `Text` (no re-parse), and an end-to-end
+  render-safety test exercises the actual operator-terminal
+  path via `force_terminal=True` + `StringIO`.
+* **F-15-D + F-15-F (govern sub-app metadata)** — closed.
+  `thegent govern --help` now renders `Usage: govern …` with
+  the canonical description. The fifth-pass test suite covered
+  cockpit + sota but had not yet been applied to governance;
+  this lane closes the gap.
+
+### Carry-forward (not in this hand-off)
+
+* **AUDIT-N+1 — sweep the remaining sub-apps for the same
+  envelope pattern**. The lane was scoped to `govern` per the
+  user-facing next-unblocked item, but `cli/apps/` has 6 more
+  Typer sub-apps (`run`, `plan`, `team`, `infra`, `model`,
+  `session`). A follow-up `chore(cli): sweep CLI sub-app error
+  envelopes` lane should migrate them all to `print_exc` for
+  the same render-safety contract.
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. The CLI surface is now envelope-safe
+  on the governance path; the L1 Stabilize → V4-1.2.x lane is
+  the next-horizon entry once the archive unblocks.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (saturated — the
+  seventeenth closure pass on top of the Five-Day Goal envelope
+  + the prior 16 closure lanes; the bar cannot exceed
+  saturation in this lane).
+* **DAG tick**: **`+1`** (this hand-off on top of the F-15 +
+  UX polish lane).
+* **Closed this lane**: GOV-1 governance error-envelope
+  injection + F-15-D/F applied to the governance sub-app.
+* **Cumulative closed (16 prior lanes + this)**: AUDIT-1/2/4/
+  6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1,
+  KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225
+  plan-workstream thicken, diskcache-skip-guard
+  collection-repair, CachePreWarmer FR-CACHE-003 contract
+  closure, F-15 + UX polish, plus this GOV-1
+  governance error-envelope parity lane.
+* **Local commit**: `80ce0a97c` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **42 commits
+  ahead of `main`** after this commit. **Not pushed** to the
+  archived upstream `KooshaPari/thegent.git` per the
+  directive. Other worktree
+  (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
+  preserved and untouched.
