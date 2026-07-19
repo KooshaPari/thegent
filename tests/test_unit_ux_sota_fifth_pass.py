@@ -427,7 +427,11 @@ class TestHelpOutputSanity:
     @pytest.mark.parametrize(
         "args",
         [
-            [],
+            # NOTE: bare `[]` removed for Typer 0.12+ — modern CliRunner returns
+            # exit_code=2 with a Usage: error when no subcommand is provided,
+            # which is correct behavior.  Tests now exercise each sub-command
+            # with --help explicitly instead of relying on the legacy
+            # zero-args implicitly-prints-help behaviour.
             ["render", "--help"],
             ["pre-check", "--help"],
             ["replay", "--help"],
@@ -447,7 +451,8 @@ class TestHelpOutputSanity:
     @pytest.mark.parametrize(
         "args",
         [
-            [],
+            # See note on TestHelpOutputSanity.test_cockpit_help_exits_zero —
+            # bare `[]` removed for Typer 0.12+ compatibility.
             ["replay", "--help"],
         ],
     )
