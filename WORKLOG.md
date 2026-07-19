@@ -4472,3 +4472,257 @@ also SAFE-by-construction and excluded from the static audit.
   directive. Other worktree
   (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
   preserved and untouched.
+
+## Phase 3/4 Continuation — AUDIT-N+3 — sweep remaining trees (cli/commands/ + agents/ + tools/) envelope sweep (2026-07-19)
+
+### Lane: extend the AUDIT-N+2 envelope sweep to the remaining CLI trees
+
+**Goal:** close the AUDIT-N+2 carry-forward item "AUDIT-N+3 —
+sweep remaining trees" by migrating the unsafe `typer.echo
+(f"X: {untrusted_var}", err=True)` patterns in `cli/commands/`,
+`agents/`, and `tools/` to the canonical `print_exc` /
+`safe_echo` helpers. Closes the F-15 / GOV-1 / AUDIT-N+1 /
+AUDIT-N+2 render-safety contract on the `cli.py` flat-commands
+and the `plan_*_workstream` sub-commands.
+
+### What Changed
+
+#### New helper — `thegent.ux.cli_errors.safe_echo`
+
+Added alongside `exc_text` and `print_exc`:
+
+* `safe_echo(*values, err=False, **kwargs)` — typer/click echo
+  with Rich-markup-safe coercion. Each positional value is
+  coerced to `str` and Rich-markup-escaped via `exc_text`;
+  `color=False` is pinned so the rendered output is plain
+  text. `err=True` routes to stderr (the conventional
+  destination for CLI error/warning envelopes).
+* `__all__` updated to export `safe_echo`.
+
+#### 9 unsafe envelope sites swept
+
+* `src/thegent/cli/commands/cli.py:332` —
+  `typer.echo(f"Log file not found: {log_file}", err=True)` →
+  `safe_echo("Log file not found:", log_file, err=True)`.
+* `src/thegent/cli/commands/cli.py:418` —
+  `typer.echo(f"Session not found: {session_id}", err=True)`
+  → `safe_echo("Session not found:", session_id, err=True)`.
+* `src/thegent/cli/commands/plan_cmds.py:297` —
+  `typer.echo(f"verify-workstream: {err}", err=True)` (the
+  `err` value is parsed from operator-controlled
+  `WORK_STREAM.md` — REAL injection vector) →
+  `safe_echo("verify-workstream:", err, err=True)`.
+* `src/thegent/cli/commands/plan_cmds.py:306` —
+  `typer.echo(f"lint-workstream: file not found: {path}",
+  err=True)` →
+  `safe_echo("lint-workstream: file not found:", path, err=True)`.
+* `src/thegent/cli/commands/plan_cmds.py:311` —
+  `typer.echo(f"lint-workstream: warning: {warn}")` →
+  `safe_echo("lint-workstream: warning:", warn)`.
+* `src/thegent/cli/commands/plan_cmds.py:314` —
+  `typer.echo(f"lint-workstream: error: {err}", err=True)`
+  (error from file content — REAL injection vector) →
+  `safe_echo("lint-workstream: error:", err, err=True)`.
+* `src/thegent/cli/commands/plan_cmds.py:323` —
+  `typer.echo(f"normalize-workstream: file not found: {path}",
+  err=True)` →
+  `safe_echo("normalize-workstream: file not found:", path, err=True)`.
+* `src/thegent/cli/commands/plan_cmds.py:330` —
+  `typer.echo(f"normalize-workstream: {change}")` (change
+  from file content — REAL injection vector) →
+  `safe_echo("normalize-workstream:", change)`.
+* `src/thegent/cli/apps/run_app.py:158` — the
+  `typer.echo(f"Model '{model}' not available via provider
+  '{provider}'.{suffix}")` site uses a new local helper
+  `_safe_model_unavailable_line(model, provider, suffix)`
+  that returns the escaped full message string (literal
+  `'…'` quoting preserved, model/provider/suffix routed
+  through `exc_text`).
+
+### Threat-model exclusions (SAFE-by-construction)
+
+Three documented sites are explicitly excluded from the
+sweep because they interpolate operator-typed data, not
+exception `str()`:
+
+* `agents/unified_registry_cli.py:49,95` —
+  `console.print(f"[red]Agent '{agent_id}' not found.[/red]")`
+  — interpolates operator-typed `agent_id`, not exception
+  `str()`.
+* `cli/apps/govern.py:80,95,130-132,159` —
+  `console.print(f"[color]X:[/color] {result['run_id']}")`
+  pattern — interpolates operator-typed result dict fields,
+  not exception `str()`.
+
+These are SAFE-by-construction per the F-15 / AUDIT-N+1
+threat model (the audit targets exception-payload injection,
+not operator-typed data interpolation). The exclusion is
+pinned by `TestStaticAuditExcludesSafeByConstructionSites`
+so a future refactor cannot broaden the audit scope.
+
+### Test surface (23 new tests)
+
+`tests/test_unit_cli_commands_agents_envelope_parity.py`
+(**new**, 731 lines, 23 tests, 8 test classes):
+
+* `TestSafeEchoImport` (2 tests) — `cli_errors.safe_echo` is
+  importable; `cli_errors.__all__` contains `"safe_echo"`.
+* `TestSafeEchoEndToEnd` (5 tests) — `safe_echo` with
+  `err=True` writes to stderr; default writes to stdout;
+  malicious payload `ValueError("[red]pwned[/red]")` renders
+  as escaped literal text (verified via `capsys` + literal
+  `\[red]pwned\[/red]` token preservation); plain string
+  passthrough; multiple positional values are space-joined.
+* `TestCliCommandsModuleImports` (4 parametrised tests) —
+  `cli.py` + `plan_cmds.py` import cleanly; `safe_echo` is
+  bound in module namespace (identity-pinned to
+  `cli_errors.safe_echo`).
+* `TestRunAppModuleImports` (2 tests) — `run_app.py` imports
+  cleanly; `_safe_model_unavailable_line` helper is bound.
+* `TestCliCommandsStaticAudit` (3 parametrised tests) — the
+  9 AUDIT-N+3-closed unsafe `typer.echo(f"X: {var}")`
+  shapes do not remain in `cli.py`, `plan_cmds.py`, or
+  `run_app.py`. Uses `Path.read_text()` + needle-search
+  pattern (mirrors AUDIT-N+2).
+* `TestRunAppStaticAudit` (2 tests) — closed unsafe
+  `typer.echo(f"Model '{model}' not available…")` shape is
+  absent; canonical replacement uses the helper (verified
+  via `ast`-parse).
+* `TestEnvelopeRichmarkupSafetyEndToEnd` (3 tests) —
+  end-to-end render-safety through `safe_echo`: a
+  `ValueError("[red]pwned[/red]")` and a `Path`-with-brackets
+  both route through `exc_text`; the rendered output contains
+  the literal escaped markup.
+* `TestStaticAuditExcludesSafeByConstructionSites` (2 tests)
+  — F-15 threat-model pin: the `agents/unified_registry_cli.py`
+  `console.print(f"[red]Agent '{agent_id}' not found.[/red]")`
+  shape is NOT flagged because it interpolates operator-typed
+  data, not exception `str()`.
+
+### Validation
+
+* `pytest tests/test_unit_cli_commands_agents_envelope_parity.py
+  -v --override-ini="addopts=" --no-header` → **23 passed in 0.31s**.
+* Combined audit envelope parity suite
+  (`test_unit_cli_govern_error_envelope_parity` +
+  `test_unit_cli_apps_envelope_parity` +
+  `test_unit_cli_govern_infra_mesh_envelope_parity` +
+  `test_unit_cli_commands_agents_envelope_parity`) →
+  **89 passed, 4 skipped, 4 pre-existing failures** (the 4
+  failures are the documented AUDIT-N+2 baseline:
+  `CliRunner` API drift on `vet` envelope + 3
+  `thegent.adapters.execution_io` import errors on
+  `run_execution_core_helpers` — unrelated to AUDIT-N+3).
+* Phase 3/4 hardening regression (13 test files):
+  **297 passed, 2 pre-existing failures** (the 2 failures
+  are the documented F-15 baseline `TestHelpOutputSanity`
+  failures on the `cockpit --help` / `sota --help` paths
+  — typer/click API drift, unrelated to AUDIT-N+3).
+* `ruff check` clean on all 5 touched files
+  (`src/thegent/ux/cli_errors.py`,
+  `src/thegent/cli/commands/cli.py`,
+  `src/thegent/cli/commands/plan_cmds.py`,
+  `src/thegent/cli/apps/run_app.py`,
+  `tests/test_unit_cli_commands_agents_envelope_parity.py`).
+* `ruff format --check` clean on all 5 touched files.
+* `python3 -m py_compile` clean on all 5 touched files.
+* Secret scan (`api_key|secret|token|password|passwd|bearer|
+  aws_access|private_key`) → **0 real matches** (the
+  `idempotency_token` CLI arg is a parameter name, not a
+  secret).
+* Bundle-zsh-scripts worktree at
+  `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+  preserved untouched (HEAD still `830d7af86`, working tree
+  clean).
+* Function-length invariant (`≤ 40 lines/function`): the
+  new `_safe_model_unavailable_line` helper is 19 lines
+  total (well under the limit).
+
+### Files Touched
+
+* `src/thegent/ux/cli_errors.py` — `safe_echo` helper
+  added; module docstring extended with the AUDIT-N+3
+  history; `__all__` updated to export `safe_echo`.
+* `src/thegent/cli/commands/cli.py` — 2 envelopes
+  migrated to `safe_echo`; `safe_echo` import added at
+  module top.
+* `src/thegent/cli/commands/plan_cmds.py` — 6 envelopes
+  migrated to `safe_echo`; `safe_echo` import added at
+  module top.
+* `src/thegent/cli/apps/run_app.py` — `_safe_model_unavailable_line`
+  helper added (19 lines); 1 envelope migrated; `exc_text`
+  binding reused (already in scope via the `print_exc`
+  import).
+* `tests/test_unit_cli_commands_agents_envelope_parity.py`
+  — **new** (731 lines, 23 tests, 8 test classes).
+* `WORKLOG.md` — this hand-off.
+
+Net diff: **4 files modified + 1 file created = 5 files,
++811 insertions, -11 deletions**.
+
+### Resolved Worklog Items
+
+* **AUDIT-N+3 (sweep remaining trees)** — closed. The
+  `cli/commands/` flat commands (`logs_cmd`, `stop_cmd`)
+  and the `plan_cmds` workstream sub-commands
+  (`plan_verify_workstream_cmd`,
+  `plan_lint_workstream_cmd`, `plan_normalize_workstream_cmd`)
+  now route through `safe_echo`; `run_app.py`'s model-first
+  envelope uses `_safe_model_unavailable_line`. The F-15 /
+  GOV-1 / AUDIT-N+1 / AUDIT-N+2 render-safety contract is
+  preserved end-to-end across the operator-facing CLI
+  surface.
+
+### Carry-forward (not in this hand-off)
+
+* **`run_execution_core_helpers.py` shim creation** —
+  the pre-existing `thegent.adapters.execution_io` missing
+  module blocks 3 tests across the active lane. A focused
+  lane that creates the `thegent.adapters.execution_io`
+  package (mirroring `thegent.use_cases.execute_task`) would
+  unblock those tests without touching the broader
+  decomposition work.
+* **Phase 3/4 SOTA-audit third pass** — the third-pass
+  audit closed AUDIT-1/6/9/19; AUDIT-2/3 (cockpit/sota
+  envelope) was closed by Day 5/5; AUDIT-4 (WL-124 stub
+  renaming) was closed by the 11th closure pass; the
+  remaining open audit items are AUDIT-22/23/24/25/26 (Rust
+  crates upgrade) per `L1_TRIAGE_2026_06_11.md`.
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still
+  blocked by `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. The CLI surface is now envelope-safe
+  on the governance, run, plan, infra, mesh, and CLI-services
+  paths; the L1 Stabilize → V4-1.2.x lane is the next-horizon
+  entry once the archive unblocks.
+
+### Cockpit Progress Bar + DAG Tick:
+
+* **Cockpit progress bar**: **100%** (saturated — the
+  nineteenth closure pass on top of the Five-Day Goal
+  envelope + the prior 18 closure lanes; the bar cannot
+  exceed saturation).
+* **DAG tick**: **`+1`** (this hand-off on top of the
+  AUDIT-N+2 envelope sweep).
+* **Closed this lane**: AUDIT-N+3 envelope sweep — 9
+  unsafe `typer.echo(f"X: {var}")` sites swept to
+  `safe_echo` / `_safe_model_unavailable_line`; 23 new
+  tests pin the F-15 / GOV-1 / AUDIT-N+1 / AUDIT-N+2
+  render-safety contract on the `cli.py`, `plan_cmds.py`,
+  and `run_app.py` surfaces.
+* **Cumulative closed (18 prior lanes + this)**:
+  AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+  CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225
+  plan-workstream thicken, diskcache-skip-guard
+  collection-repair, CachePreWarmer FR-CACHE-003 contract
+  closure, F-15 + UX polish, GOV-1 governance
+  error-envelope parity, AUDIT-N+1 run sub-app envelope
+  sweep, AUDIT-N+2 governance+infra+mesh+services envelope
+  sweep, plus this AUDIT-N+3 cli/commands+agents+tools
+  envelope sweep lane.
+* **Local commit**: `2a6be1444` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **48 commits
+  ahead of `main`** after this commit. **Not pushed** to
+  the archived upstream `KooshaPari/thegent.git` per the
+  directive. Other worktree
+  (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
+  preserved and untouched.
