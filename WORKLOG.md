@@ -5463,3 +5463,121 @@ This invariant is now **fully achieved** for the first time in the
 branch's history.  Any new failure from this point forward is
 strictly a regression requiring immediate triage — there are no more
 pre-existing baseline failures.
+
+---
+
+## AUDIT-N+9 — WL-120 full observability_impl extraction
+
+**Lane:** AUDIT-N+9 (continuation from AUDIT-N+5 carry-forward item 3)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Close the third AUDIT-N+5 carry-forward item: complete the WL-120
+full extraction of the observability / health / escalation /
+governance surface from `:mod:thegent.cli.commands.impl` into
+`:mod:thegent.cli.commands.observability_impl`. AUDIT-N+5 only
+exposed `escalate_add_impl`, `err_console`, `print_exc` as a thin
+shim; AUDIT-N+9 promotes the module to canonical home of the full
+23-helper surface.
+
+### Files touched
+
+* `src/thegent/cli/commands/observability_impl.py` — grew from
+  91 lines (AUDIT-N+5 thin shim) to 572 lines (AUDIT-N+9 full
+  extraction). All 23 helpers defined here, each with its own
+  docstring + signature pinned by the parity test.
+* `src/thegent/cli/commands/impl.py` — 23 moved helpers removed
+  from inline definitions; a re-export block after `__all__` keeps
+  every legacy `from thegent.cli.commands.impl import X` call-site
+  green. 449 net line reduction.
+* `src/thegent/cli/commands/infra_cmds.py` — `observe_summary_cmd`
+  lazy-import rewritten from `.impl` to `.observability_impl`
+  (1 line).
+* `tests/test_unit_cli_coverage_c.py` — patch target updated
+  from `thegent.cli.commands.impl.observe_summary_impl` to
+  `thegent.cli.commands.observability_impl.observe_summary_impl`
+  (1 line).
+* `tests/test_unit_mcp.py` — patch target updated (1 line).
+* `tests/test_unit_mcp_tools.py` — 3 patch targets updated (3
+  lines).
+* `tests/test_unit_audit_n9_observability_impl_extraction_parity.py`
+  — **new**, 662 lines, 51 tests across 11 classes. Pins:
+  1. observability_impl module loads clean + has the canonical
+     export.
+  2. All 23 moved helpers exist as first-class attributes on
+     observability_impl (with `__module__` pointing back to it).
+  3. Identity: `impl.<moved> is observability_impl.<moved>` for
+     all 23 helpers (proves re-export is a real alias, not a
+     wrapper).
+  4. `infra_cmds.observe_summary_cmd` delegates to
+     `observability_impl.observe_summary_impl`, not
+     `impl.observe_summary_impl` (source + bytecode inspection).
+  5. Each moved helper preserves its public signature (parameter
+     names + default values pinned).
+  6. Round-trip: audio metadata → time-constraint → run-event
+     works through the new location, plus 14 other helper
+     behaviors (hash determinism, freshness buckets, env parsers,
+     health policy, snapshot loading, image validation, timestamp
+     parsing).
+  7. Backward compat: legacy `impl.<moved>` paths still resolve
+     for all 23 helpers.
+  8. Escalation path: AUDIT-N+5 surface (`escalate_add_impl`,
+     `_escalation_log`, `err_console`, `print_exc`) still works
+     post-AUDIT-N+9.
+  9. Re-export structure: impl.py has NO `def <moved>(...)` lines,
+     contains the `AUDIT-N+9: re-export observability surface`
+     comment marker, and `__all__` lists `observe_summary_impl`.
+  10. `escalate_add_impl` and `print_exc` are *not* double-exposed
+      on impl (per AUDIT-N+5 design — observability_impl owns them).
+  11. Trend scope hashes round-trip deterministically.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_audit_n9_observability_impl_extraction_parity.py` | **51 passed in 0.37s** (new pinning test, 11 classes) |
+| Combined audit envelope parity (10 files) | **237 passed + 4 skipped + 0 failed** |
+| Phase 3/4 hardening regression (6 files) | **156 passed + 0 failed** |
+| `ruff check` + `ruff format --check` | Clean on all 7 touched files |
+| Secret scan | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, clean tree) |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+9)
+
+All three AUDIT-N+5 carry-forward items are now closed:
+
+1. ~~**`vet` CliRunner API drift**~~ — closed by AUDIT-N+7
+2. ~~**V4-1.2.x (L2 SOTA Rust crates upgrade)**~~ — still
+   blocked by `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+   per the Do-Not-Touch list (out of Phase 3/4 scope).
+3. ~~**WL-120 full observability_impl extraction**~~ — closed
+   by AUDIT-N+9 (this lane).
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **237 passed + 4 skipped + 0 failed** as
+of this hand-off. There are no remaining pre-existing baseline
+failures.
+
+### Cumulative closed (24 prior lanes + AUDIT-N+9 = 25)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+**AUDIT-N+9 WL-120 full observability extraction (new)**.
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+8 (this hand-off).
