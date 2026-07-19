@@ -383,7 +383,7 @@ class TestObserveSummaryCmdRich:
             },
             "generated_query": {"owner": "ci"},
         }
-        with patch("thegent.cli.commands.impl.observe_summary_impl", return_value=result):
+        with patch("thegent.cli.commands.observability_impl.observe_summary_impl", return_value=result):
             from thegent.cli import observe_summary_cmd
 
             observe_summary_cmd(limit=100, drift_window=50, format=None, provider=None)

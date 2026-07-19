@@ -216,7 +216,7 @@ class TestObserveSummaryMCPContracts:
             captured.update(kwargs)
             return payload
 
-        with patch("thegent.mcp.server.observe_summary_impl", side_effect=_fake_impl):
+        with patch("thegent.cli.commands.observability_impl.observe_summary_impl", side_effect=_fake_impl):
             raw = resource_observe_summary(
                 limit=25,
                 drift_window=9,

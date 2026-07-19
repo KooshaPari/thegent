@@ -56,7 +56,7 @@ def purge_cmd(*args: Any, **kwargs: Any) -> int:
 
 def observe_summary_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
     """Show observe summary. Thin shim over observe_summary_impl."""
-    from .impl import observe_summary_impl
+    from .observability_impl import observe_summary_impl
 
     return observe_summary_impl(*args, **kwargs)
 

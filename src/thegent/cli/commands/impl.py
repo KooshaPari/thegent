@@ -85,46 +85,6 @@ def _spawn_with_eagain_retry(cmd: list[str], **kwargs: Any) -> Any:
     return None
 
 
-def _append_observe_summary_snapshot(snapshots: list, snapshot: dict[str, Any]) -> None:
-    """Append observe summary snapshot to list."""
-    snapshots.append(snapshot)
-
-
-def _validate_image_capability(image_path: str) -> bool:
-    """Validate that image capability is available."""
-    from pathlib import Path
-
-    return Path(image_path).exists()
-
-
-def _resolve_audio_transcript_for_output(transcript: dict[str, Any]) -> dict[str, Any]:
-    """Resolve audio transcript for output."""
-    return {
-        "transcript": transcript.get("text", ""),
-        "duration": transcript.get("duration", 0.0),
-    }
-
-
-def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str, Any]]:
-    """Resolve grounding sources for output."""
-    return [{"source": s.get("source", ""), "content": s.get("content", "")[:100]} for s in sources]
-
-
-def _inject_time_constraint(prompt: str, timeout: int) -> str:
-    """Inject time constraint into prompt.
-
-    Args:
-        prompt: The prompt to inject constraint into.
-        timeout: Timeout in seconds.
-
-    Returns:
-        Prompt with time constraint injected.
-    """
-    tool_calls = max(1, round(timeout / 2.3))
-    constraint = f"\n\nTIME CONSTRAINT: Complete in {timeout}s (~{tool_calls} tool calls).\n"
-    return prompt + constraint
-
-
 def _resolve_cwd(cwd: Path | None) -> Path | None:
     """Resolve the working directory for the CLI.
 
@@ -234,144 +194,6 @@ def _normalize_image_paths(paths: list[str]) -> list[str]:
     from pathlib import Path
 
     return [str(Path(p).expanduser().resolve()) for p in paths]
-
-
-def _build_audio_summary_metadata(duration: float, format: str = "wav") -> dict[str, Any]:
-    """Build audio summary metadata."""
-    return {
-        "duration": duration,
-        "format": format,
-        "sample_rate": 16000,
-    }
-
-
-def _build_run_event_details(event: dict[str, Any]) -> dict[str, Any]:
-    """Build run event details."""
-    return {
-        "event": event,
-        "timestamp": time.time(),
-    }
-
-
-def _append_health_snapshot(snapshots: list, snapshot: dict[str, Any]) -> None:
-    """Append health snapshot to list."""
-    snapshots.append(snapshot)
-
-
-def observe_summary_impl(
-    limit: int = 500,
-    drift_window: int = 50,
-    structural_budget_pct: float = 5.0,
-    semantic_budget_pct: float = 10.0,
-    provider: str | None = None,
-    top_escalations: int = 5,
-    trend_samples: int | None = None,
-    **kwargs: Any,
-) -> dict[str, Any]:
-    """Implementation for observe summary command.
-
-    Args:
-        limit: Maximum number of events to analyze.
-        drift_window: Window size for drift detection.
-        structural_budget_pct: Budget for structural drift.
-        semantic_budget_pct: Budget for semantic drift.
-        provider: Optional provider filter.
-        top_escalations: Number of top escalations to show.
-        trend_samples: Number of trend samples to include.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Summary result dictionary.
-    """
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import EscalationQueue
-    from pathlib import Path
-
-    # Initialize telemetry and escalation queue
-    session_dir = Path(__import__("os").getenv("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
-
-    telemetry = ContractTelemetry(session_dir)
-    escalation_queue = EscalationQueue(session_dir)
-
-    # Get KPIs
-    kpis = telemetry.get_fallback_kpis(
-        limit=limit,
-        structural_budget_pct=structural_budget_pct,
-        semantic_budget_pct=semantic_budget_pct,
-        provider=provider,
-    )
-
-    # Get drift status
-    drift = telemetry.get_drift_budget_status(
-        structural_budget_pct=structural_budget_pct,
-        semantic_budget_pct=semantic_budget_pct,
-        limit=limit,
-    )
-
-    # Get escalations
-    # `top_escalations` is a *display* cap (how many records to show), not a
-    # *count* limit — using it for `list_pending(limit=...)` would silently
-    # undercount backlog size when top_escalations < actual backlog. Use a
-    # generous count-only limit (max(top_escalations, _COUNT_CAP)) for the
-    # count queries, then slice for the display list.
-    _count_cap = max(top_escalations, 100)
-    pending = escalation_queue.list_pending(limit=_count_cap)
-    past_sla = escalation_queue.list_pending(past_sla_only=True, limit=_count_cap)
-
-    # Determine status
-    # Status precedence (highest to lowest):
-    #   1. "critical" if drift is over budget OR if any escalation is past
-    #      its SLA (operator action required — same severity class).
-    #   2. "degraded" if fallback rate exceeds the 10% warning threshold.
-    #   3. "warning" if any pending escalations exist.
-    #   4. "ok" otherwise.
-    status = "ok"
-    if drift.get("within_budget") is not True or past_sla:
-        status = "critical"
-    elif kpis.get("fallback_rate", 0) > 0.1:
-        status = "degraded"
-    elif pending:
-        status = "warning"
-
-    # Generate alerts
-    alerts = []
-    if status == "critical":
-        alerts.append("Escalation backlog critical")
-    elif status == "degraded":
-        alerts.append("Fallback rate above threshold")
-
-    result = {
-        "status": status,
-        "kpis": {
-            "total_events": kpis.get("total", 0),
-            "fallback_rate": kpis.get("fallback_rate", 0),
-            "success_rate": kpis.get("success_rate", 0),
-            "avg_confidence": kpis.get("avg_confidence", 0),
-        },
-        "drift": drift,
-        "escalation": {
-            "backlog_count": len(pending),
-            "past_sla_count": len(past_sla),
-            "top_escalations_count": top_escalations,
-            "top_escalations": past_sla[:top_escalations],
-        },
-        "alerts": alerts,
-    }
-
-    # Handle trend samples
-    if trend_samples is not None:
-        result["trend_summary"] = {
-            "enabled": True,
-            "trend_samples_requested": trend_samples,
-            "trend_effective_samples": trend_samples,
-            "history_sample_count": 0,
-            "trend_snapshot_health": "good",
-        }
-        result["generated_query"] = {
-            "trend_samples": trend_samples,
-        }
-
-    return result
 
 
 class DagDocument:
@@ -578,17 +400,33 @@ __all__ = [
 ]
 
 
-def _compact_health_snapshot_log(log_path: str, max_entries: int = 1000) -> int:
-    """Compact health snapshot log by keeping only recent entries.
-
-    Args:
-        log_path: Path to the log file.
-        max_entries: Maximum number of entries to keep.
-
-    Returns:
-        Number of entries removed.
-    """
-    return 0
+# AUDIT-N+9: re-export observability surface for backward compat with
+# external callers that still import from thegent.cli.commands.impl
+from thegent.cli.commands.observability_impl import (  # noqa: F401
+    observe_summary_impl,
+    _inject_time_constraint,
+    _append_observe_summary_snapshot,
+    _append_health_snapshot,
+    _classify_observe_summary_trend_health,
+    _compact_health_snapshot_log,
+    _hash_health_payload,
+    _hash_observe_summary_payload,
+    _hash_observe_summary_trend_scope,
+    _load_observe_summary_snapshots,
+    _load_previous_health_snapshot,
+    _observe_summary_freshness_bucket,
+    _parse_observe_summary_env_float,
+    _parse_observe_summary_env_int,
+    _parse_observe_summary_timestamp,
+    _resolve_audio_transcript_for_output,
+    _resolve_grounding_sources_for_output,
+    _resolve_health_policy,
+    _run_background_session_observer,
+    _validate_image_capability,
+    _build_audio_summary_metadata,
+    _build_run_event_details,
+    _health_scope_key,
+)
 
 
 # Session state path helper
@@ -610,20 +448,6 @@ def _coerce_issue_types(issues: list[dict[str, Any]]) -> list[str]:
         List of issue type strings.
     """
     return [issue.get("type", "unknown") for issue in issues]
-
-
-def _classify_observe_summary_trend_health(
-    trend_data: dict[str, Any],
-) -> str:
-    """Classify the health of observe summary trend data.
-
-    Args:
-        trend_data: Trend data dictionary.
-
-    Returns:
-        Health classification string.
-    """
-    return "healthy"
 
 
 def _check_dag_cycles(dag: dict[str, Any]) -> list[list[str]]:
@@ -836,106 +660,8 @@ def _get_ready_task_ids(dag: dict[str, Any]) -> list[str]:
     return [r for r in ready if r]
 
 
-def _hash_health_payload(payload: dict[str, Any]) -> str:
-    """Generate hash of a health payload.
-
-    Args:
-        payload: Health payload dictionary.
-
-    Returns:
-        Hash string.
-    """
-    import hashlib
-    import json
-
-    content = json.dumps(payload, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-
-def _health_scope_key(session_id: str, scope: str) -> str:
-    """Generate health scope key.
-
-    Args:
-        session_id: The session ID.
-        scope: The scope string.
-
-    Returns:
-        Scoped key string.
-    """
-    return f"health:{session_id}:{scope}"
-
-
-def _hash_observe_summary_payload(payload: dict[str, Any]) -> str:
-    """Generate hash of an observe summary payload.
-
-    Args:
-        payload: Observe summary payload dictionary.
-
-    Returns:
-        Hash string.
-    """
-    import hashlib
-    import json
-
-    content = json.dumps(payload, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-
-def _load_previous_health_snapshot(session_dir: Path) -> dict[str, Any] | None:
-    """Load the previous health snapshot from session directory.
-
-    Args:
-        session_dir: The session directory path.
-
-    Returns:
-        Previous health snapshot dictionary or None.
-    """
-    import json
-
-    snapshot_file = session_dir / "health_snapshot.json"
-    if snapshot_file.exists():
-        return json.loads(snapshot_file.read_text())
-    return None
-
-
-def _hash_observe_summary_trend_scope(trend_scope: dict[str, Any]) -> str:
-    """Generate hash of observe summary trend scope.
-
-    Args:
-        trend_scope: Trend scope dictionary.
-
-    Returns:
-        Hash string.
-    """
-    import hashlib
-    import json
-
-    content = json.dumps(trend_scope, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-
 # Constants for health snapshot management
 _health_snapshot_max_lines = 1000
-
-
-def _observe_summary_freshness_bucket(timestamp: float) -> str:
-    """Determine freshness bucket for observe summary timestamp.
-
-    Args:
-        timestamp: Unix timestamp.
-
-    Returns:
-        Freshness bucket string (e.g., "fresh", "stale", "expired").
-    """
-    import time
-
-    age = time.time() - timestamp
-    if age < 300:  # 5 minutes
-        return "fresh"
-    elif age < 3600:  # 1 hour
-        return "stale"
-    else:
-        return "expired"
 
 
 def _parse_dag_full(dag_content: str) -> dict[str, Any]:
@@ -950,32 +676,6 @@ def _parse_dag_full(dag_content: str) -> dict[str, Any]:
     import json
 
     return json.loads(dag_content)
-
-
-def _load_observe_summary_snapshots(
-    session_dir: Path,
-    limit: int = 100,
-) -> list[dict[str, Any]]:
-    """Load observe summary snapshots from session directory.
-
-    Args:
-        session_dir: The session directory path.
-        limit: Maximum number of snapshots to load.
-
-    Returns:
-        List of observe summary snapshots.
-    """
-    import json
-
-    snapshots = []
-    snapshots_dir = session_dir / "observe_snapshots"
-    if snapshots_dir.exists():
-        for f in sorted(snapshots_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
-            try:
-                snapshots.append(json.loads(f.read_text()))
-            except Exception:
-                pass
-    return snapshots
 
 
 def _parse_depends_on(depends_on: str | list[str] | None) -> list[str]:
@@ -1013,68 +713,6 @@ def _normalize_output_format(format: str) -> str:
     if format in ("md", "markdown"):
         return "md"
     return format
-
-
-def _resolve_health_policy(policy_name: str | None = None) -> dict[str, Any]:
-    """Resolve health policy by name.
-
-    Args:
-        policy_name: Name of the health policy (or None for default).
-
-    Returns:
-        Health policy dictionary.
-    """
-    if policy_name is None:
-        policy_name = "default"
-    return {
-        "name": policy_name,
-        "thresholds": {
-            "fallback_rate": 0.1,
-            "success_rate": 0.95,
-        },
-    }
-
-
-def _parse_observe_summary_env_float(
-    env_var: str,
-    default: float,
-) -> float:
-    """Parse observe summary environment variable as float.
-
-    Args:
-        env_var: Environment variable name.
-        default: Default value if not set or invalid.
-
-    Returns:
-        Parsed float value.
-    """
-    import os
-
-    try:
-        return float(os.environ.get(env_var, default))
-    except (ValueError, TypeError):
-        return default
-
-
-def _parse_observe_summary_env_int(
-    env_var: str,
-    default: int,
-) -> int:
-    """Parse observe summary environment variable as int.
-
-    Args:
-        env_var: Environment variable name.
-        default: Default value if not set or invalid.
-
-    Returns:
-        Parsed int value.
-    """
-    import os
-
-    try:
-        return int(os.environ.get(env_var, default))
-    except (ValueError, TypeError):
-        return default
 
 
 def _serialize_dag(dag: dict[str, Any], format: str = "json") -> str:
@@ -1116,29 +754,6 @@ def _validate_dag(dag: dict[str, Any]) -> list[str]:
                 if dep not in task_ids:
                     errors.append(f"Task '{task.get('id')}' depends on unknown task '{dep}'")
     return errors
-
-
-def _parse_observe_summary_timestamp(ts: str | float | None) -> float:
-    """Parse observe summary timestamp.
-
-    Args:
-        ts: Timestamp string, float, or None.
-
-    Returns:
-        Unix timestamp as float.
-    """
-    import time
-
-    if ts is None:
-        return time.time()
-    if isinstance(ts, float):
-        return ts
-    if isinstance(ts, str):
-        try:
-            return float(ts)
-        except ValueError:
-            pass
-    return time.time()
 
 
 def _validate_task_id(task_id: str) -> bool:
@@ -1188,16 +803,6 @@ def _resolve_prompt(prompt: str | None = None, prompt_file: str | None = None) -
 
         return Path(prompt_file).read_text()
     return ""
-
-
-def _run_background_session_observer(session_id: str, **kwargs: Any) -> None:
-    """Run background session observer.
-
-    Args:
-        session_id: Session ID to observe.
-        **kwargs: Additional keyword arguments.
-    """
-    # Stub: observer runs in background
 
 
 def _session_scope_dirs(session_id: str) -> dict[str, Path]:
