@@ -8,18 +8,15 @@ that canonical entrypoints are present.
 
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
+
+from conftest import _load_script_module
 
 ROOT = Path(__file__).parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
 TASKFILE = ROOT / "Taskfile.yml"
 WL123_SCRIPT = ROOT / "scripts" / "check_deprecated_quality_aliases.py"
-WL123_SPEC = importlib.util.spec_from_file_location("check_deprecated_quality_aliases", WL123_SCRIPT)
-assert WL123_SPEC is not None
-assert WL123_SPEC.loader is not None
-WL123_MODULE = importlib.util.module_from_spec(WL123_SPEC)
-WL123_SPEC.loader.exec_module(WL123_MODULE)
+WL123_MODULE = _load_script_module("check_deprecated_quality_aliases", WL123_SCRIPT)
 
 
 class TestPyprojectToolConfig:

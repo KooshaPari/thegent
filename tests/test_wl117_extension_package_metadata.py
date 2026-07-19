@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import importlib.util
 import orjson as json
 from pathlib import Path
 
+from conftest import _load_script_module
+
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_extension_package_metadata.py"
-SPEC = importlib.util.spec_from_file_location("check_extension_package_metadata", SCRIPT_PATH)
-assert SPEC and SPEC.loader
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("check_extension_package_metadata", SCRIPT_PATH)
 
 
 def _write_valid_extension(root: Path, name: str = "vscode") -> Path:

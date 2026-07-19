@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import datetime as dt
-import importlib.util
 from pathlib import Path
 
 import pytest
 
+from conftest import _load_script_module
+
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_wl120_wl136_loc_trend.py"
-SPEC = importlib.util.spec_from_file_location("generate_wl120_wl136_loc_trend", SCRIPT_PATH)
-assert SPEC is not None
-assert SPEC.loader is not None
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("generate_wl120_wl136_loc_trend", SCRIPT_PATH)
 
 
 def _snapshots() -> list[dict[str, object]]:

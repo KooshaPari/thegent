@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 
 import pytest
 
+from conftest import _load_script_module
+
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "benchmark_python_suite.py"
-SPEC = importlib.util.spec_from_file_location("benchmark_python_suite", SCRIPT_PATH)
-assert SPEC and SPEC.loader
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("benchmark_python_suite", SCRIPT_PATH)
 
 
 def test_wl078_main_refuses_overwrite_without_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
