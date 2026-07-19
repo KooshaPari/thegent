@@ -41,11 +41,13 @@ Traces to: FR-015 (progressive disclosure), FR-039 (transport hints),
 from __future__ import annotations
 
 import logging
+import threading
 import time
-from collections import Counter
+from collections import Counter, deque
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 _log = logging.getLogger(__name__)
 
@@ -136,12 +138,16 @@ class OverrideEvent:
 
 @dataclass
 class _CockpitState:
-    """Mutable internal state of the cockpit (single source of truth)."""
+    """Mutable internal state of the cockpit (single source of truth).
+
+    ``confidence_history`` is a bounded ``deque`` to prevent unbounded memory
+    growth across a long-running operator session.
+    """
 
     last_tick_at: float = 0.0
     runs: dict[str, RunEvent] = field(default_factory=dict)
     overrides: dict[str, OverrideEvent] = field(default_factory=dict)
-    confidence_history: list[float] = field(default_factory=list)
+    confidence_history: deque[float] = field(default_factory=lambda: deque(maxlen=1024))
     last_progress: tuple[int, int] = (0, 0)  # (done, total)
 
 
@@ -188,11 +194,16 @@ def _sparkline(values: Sequence[float], width: int) -> str:
 
 
 def _truncate(text: str, limit: int) -> str:
-    """Truncate ``text`` to ``limit`` chars, appending an ellipsis when needed."""
+    """Truncate ``text`` to ``limit`` chars, appending an ellipsis when needed.
+
+    A non-positive ``limit`` returns the empty string.
+    """
+    if limit <= 0:
+        return ""
     if len(text) <= limit:
         return text
-    if limit <= 1:
-        return text[:limit]
+    if limit == 1:
+        return text[:1]
     return text[: limit - 1] + "…"
 
 
@@ -235,6 +246,9 @@ class OperatorCockpit:
         # counters
         self._frame_count = 0
         self._last_render_ms = 0.0
+        # State mutators (tick/reset) run concurrently with readers (render/
+        # snapshot); serialise with an RLock so render can re-enter safely.
+        self._lock = threading.RLock()
 
     # --------------------------------------------------------------- mutators
 
@@ -252,27 +266,26 @@ class OperatorCockpit:
         ``progress``: ``(done, total)`` for the header progress bar.
         """
         now = time.time()
-        self._state.last_tick_at = now
-
-        if runs is not None:
-            self._state.runs = {ev.run_id: ev for ev in runs}
-
-        if overrides is not None:
-            self._state.overrides = {ev.rule_id: ev for ev in overrides}
-
-        if progress is not None:
-            self._state.last_progress = progress
-
-        # Update confidence sparkline history with newest run confidence (if any).
-        for ev in self._state.runs.values():
-            if ev.confidence is not None:
-                self._state.confidence_history.append(ev.confidence)
+        with self._lock:
+            self._state.last_tick_at = now
+            if runs is not None:
+                self._state.runs = {ev.run_id: ev for ev in runs}
+            if overrides is not None:
+                self._state.overrides = {ev.rule_id: ev for ev in overrides}
+            if progress is not None:
+                self._state.last_progress = progress
+            # Update confidence sparkline history with newest run confidence.
+            # The deque is bounded (maxlen=1024) so this cannot grow unbounded.
+            for ev in self._state.runs.values():
+                if ev.confidence is not None and -1e-6 <= ev.confidence <= 1.0 + 1e-6:
+                    self._state.confidence_history.append(ev.confidence)
 
     def reset(self) -> None:
         """Reset cockpit state (used between sessions / tests)."""
-        self._state = _CockpitState()
-        self._frame_count = 0
-        self._last_render_ms = 0.0
+        with self._lock:
+            self._state = _CockpitState()
+            self._frame_count = 0
+            self._last_render_ms = 0.0
 
     # -------------------------------------------------------------- snapshots
 
@@ -280,20 +293,29 @@ class OperatorCockpit:
         """Return a structured snapshot for downstream consumers (logs, JSON).
 
         Frontends that want plain text should use :meth:`render` instead.
+        The snapshot is a consistent point-in-time copy under the cockpit's
+        internal lock to avoid torn reads.
         """
-        runs = list(self._state.runs.values())
-        overrides = list(self._state.overrides.values())
-        lanes = Counter(ev.lane for ev in runs)
-        return {
-            "title": self.config.title,
-            "tick_at": self._state.last_tick_at,
-            "frame_count": self._frame_count,
-            "runs": [r.__dict__ | {"state": r.state.value} for r in runs],
-            "lanes": dict(lanes),
-            "overrides": [o.__dict__ | {"metadata": dict(o.metadata)} for o in overrides],
-            "progress": self._state.last_progress,
-            "confidence_history": list(self._state.confidence_history),
-        }
+        with self._lock:
+            runs = list(self._state.runs.values())
+            overrides = list(self._state.overrides.values())
+            lanes = Counter(ev.lane for ev in runs)
+            return {
+                "title": self.config.title,
+                "tick_at": self._state.last_tick_at,
+                "frame_count": self._frame_count,
+                "runs": [{"run_id": r.run_id, "state": r.state.value,
+                         "lane": r.lane, "agent": r.agent,
+                         "confidence": r.confidence, "elapsed_s": r.elapsed_s,
+                         "note": r.note} for r in runs],
+                "lanes": dict(lanes),
+                "overrides": [{"rule_id": o.rule_id, "by": o.by,
+                              "reason": o.reason, "expires_in_s": o.expires_in_s,
+                              "metadata": dict(o.metadata)} for o in overrides],
+                "progress": self._state.last_progress,
+                "confidence_history": list(self._state.confidence_history),
+                "last_render_ms": self._last_render_ms,
+            }
 
     def progress_bar(self) -> str:
         """Return the current progress bar (``P-081``)."""
@@ -388,7 +410,12 @@ class OperatorCockpit:
 
     def _render_confidence_pane(self) -> list[str]:
         cfg = self.config
-        history = self._state.confidence_history
+        # ``confidence_history`` is a bounded ``deque`` to prevent unbounded
+        # memory growth. Materialise once into a plain list so the helpers
+        # below can slice/index it without relying on ``collections.deque``
+        # slice semantics (which Python 3.14 + abstract ``Sequence[float]``
+        # typing can refuse at runtime).
+        history: list[float] = list(self._state.confidence_history)
         p50 = self._percentile(history, 0.5)
         p95 = self._percentile(history, 0.95)
         lines = [f"┌─ {cfg.pane_labels[CockpitPane.CONFIDENCE]} ─┐"]

@@ -154,7 +154,15 @@ class TestTick:
                 RunEvent(run_id="r2", state=RunState.QUEUED, confidence=0.9),
             ]
         )
-        assert c._state.confidence_history == [0.7, 0.9]
+        # ``confidence_history`` is a bounded ``deque`` (unbounded-memory
+        # hardening); compare via ``list(...)`` so the assertion stays
+        # order-/value-equivalent rather than type-strict.
+        assert list(c._state.confidence_history) == [0.7, 0.9]
+        # Bounded behaviour: appending past maxlen must evict the oldest.
+        c._state.confidence_history.extend([1.0] * (1024 + 5))
+        assert len(c._state.confidence_history) == 1024
+        # The most recent 1024 entries are preserved, oldest evicted.
+        assert c._state.confidence_history[-1] == 1.0
 
 
 # ---------------------------------------------------------------------------

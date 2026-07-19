@@ -20,10 +20,12 @@ Traces to: OPS-001 (request rate), OPS-002 (error rate), OPS-003 (latency
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from collections import Counter, deque
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 _log = logging.getLogger(__name__)
 
@@ -77,9 +79,9 @@ class TrafficEvent:
 class TrafficWindow:
     """A sliding time window of events with per-bucket counts.
 
-    The window is a fixed-size ring buffer of :class:`TrafficEvent`s plus a
-    secondary bucketed map for fast retrieval.  Buckets are coarse (``bucket_s``
-    seconds) to amortize the cost of summarization.
+    The window is a fixed-size ring buffer of :class:`TrafficEvent`s.  Reads
+    and writes are serialised through ``self._lock`` so the dashboard is safe
+    to share across threads.
     """
 
     window_s: float = DEFAULT_WINDOW_SECONDS
@@ -87,12 +89,16 @@ class TrafficWindow:
 
     _events: deque[TrafficEvent] = field(default_factory=deque)
 
+    def __post_init__(self) -> None:
+        self._lock = threading.Lock()
+
     def record(self, event: TrafficEvent) -> None:
         """Append ``event`` and evict anything outside the window."""
         if event.ts <= 0:
             event.ts = time.time()
-        self._events.append(event)
-        self._evict(event.ts)
+        with self._lock:
+            self._events.append(event)
+            self._evict(event.ts)
 
     def _evict(self, now: float) -> None:
         cutoff = now - self.window_s
@@ -102,8 +108,9 @@ class TrafficWindow:
     def summary(self, *, now: float | None = None) -> dict[str, Any]:
         """Return ``{count, by_lane, by_status, rps, error_rate, p50_ms, p95_ms}``."""
         now = now if now is not None else time.time()
-        self._evict(now)
-        events = list(self._events)
+        with self._lock:
+            self._evict(now)
+            events = list(self._events)
         count = len(events)
         if count == 0:
             return {
@@ -138,8 +145,9 @@ class TrafficWindow:
         }
 
     def events(self) -> Sequence[TrafficEvent]:
-        """Return a snapshot of current events (read-only)."""
-        return list(self._events)
+        """Return a snapshot of current events (read-only, thread-safe)."""
+        with self._lock:
+            return tuple(self._events)
 
 
 # ---------------------------------------------------------------------------
@@ -231,9 +239,15 @@ class TrafficDashboard:
         return render_trend(self._rps_trend, width=self.trend_width)
 
     def progress_bar(self) -> str:
-        """Render the canonical progress bar (P-081)."""
+        """Render the canonical progress bar (P-081).
+
+        ``done`` is the current event count and ``total`` is the configured
+        window seconds.  The bar's denominator is the window size, not the
+        number of seconds — meaningful for a "rotating window" view.  Pass
+        ``total=1`` for an unbounded count indicator.
+        """
         snap = self.window.summary()
-        return progress_bar(snap["count"], int(snap.get("duration_ms_window", 60)))
+        return progress_bar(snap["count"], max(int(self.window.window_s), 1))
 
 
 # ---------------------------------------------------------------------------
