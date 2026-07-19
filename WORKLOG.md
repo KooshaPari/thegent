@@ -3974,9 +3974,10 @@ future `ruff --fix` run cannot reintroduce it.
   collection-repair, CachePreWarmer FR-CACHE-003 contract
   closure, plus this F-15 + UX polish lane.
 * **Local commit**: this hand-off on
-  `wip/2026-07-18-cockpit-sota-hardening`, **39 commits ahead
-  of `main`** after this commit lands. **Not pushed** to the
-  archived upstream `KooshaPari/thegent.git` per the
+  `wip/2026-07-18-cockpit-sota-hardening`, **41 commits ahead
+  of `main`** after this commit lands (implementation
+  `fa4bd9261` + count stamp `87c06d088`). **Not pushed** to
+  the archived upstream `KooshaPari/thegent.git` per the
   directive. Other worktree
   (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
   preserved and untouched.
