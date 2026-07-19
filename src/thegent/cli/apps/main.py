@@ -79,6 +79,12 @@ from thegent.cli.apps import govern, phench
 # natively and respects `--help`, exit codes, and error handling.
 from thegent.ux.cli_cockpit import app as cockpit_app
 
+# Phase 3/4 hardening lane: SOTA audit-replay CLI.
+# Adds `thegent sota replay` with multi-format snapshot ingestion
+# (json/yaml/toml) and structured report emission (text/json/junitxml)
+# so CI pipelines can ingest replay diffs natively.
+from thegent.ux.cli_sota import app as sota_app
+
 
 @app.command("govern", help="Governance operations.")
 def govern_cmd() -> None:
@@ -95,6 +101,10 @@ def phench_cmd() -> None:
 # Register the cockpit sub-app so `thegent cockpit <sub> --flag value`
 # flows through to its native Typer parser.
 app.add_typer(cockpit_app, name="cockpit")
+
+# Register the SOTA replay sub-app so `thegent sota replay --batch ... --compare ...`
+# flows through to its native Typer parser.
+app.add_typer(sota_app, name="sota")
 
 
 if __name__ == "__main__":

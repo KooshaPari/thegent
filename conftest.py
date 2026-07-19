@@ -13,13 +13,16 @@ import pytest
 # thegent project root (where conftest.py lives)
 _THGENT_ROOT = Path(__file__).parent.resolve()
 
+
 # Normalize path helper
 def normalize_path(p):
     return Path(p).resolve()
 
+
 # Safe join helper
 def safe_join(base, *parts):
     return base / "/".join(str(p) for p in parts)
+
 
 # Ensure src/ is on sys.path for imports during test collection
 # This must happen before any test modules are imported
@@ -82,9 +85,14 @@ def _collection_item_key(item: pytest.Item) -> tuple[str, int, str]:
     return (str(item.location[0]), item.location[1], item.location[2])
 
 
-def pytest_ignore_collect(path: Path, config: pytest.Config) -> bool:
-    """Skip non-runtime trees before pytest recurses into them."""
-    return _matches_collection_guardrails(path)
+def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool:
+    """Skip non-runtime trees before pytest recurses into them.
+
+    Note: pytest 9.1 renamed the hookspec argument from ``path`` to
+    ``collection_path``. We accept the new name and keep the body
+    parameter-agnostic so callers don't observe the rename.
+    """
+    return _matches_collection_guardrails(collection_path)
 
 
 def _sort_collection_items(items: list[pytest.Item]) -> None:
