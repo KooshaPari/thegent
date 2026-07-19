@@ -5295,3 +5295,88 @@ API drift in `vet_envelope_renders_prefix_and_escapes_markup`.
 * **Local commits**: this lane will land as two commits — the
   feature commit (impl.py wrapper rewrite + parity test) + the
   WORKLOG update commit.
+
+## Phase 3/4 Continuation — AUDIT-N+7 — Click 8.2+ CliRunner API drift closure (2026-07-19)
+
+### Carry-forward resolved
+
+The single pre-existing failure left after AUDIT-N+6 was:
+
+```
+FAILED tests/test_unit_cli_govern_error_envelope_parity.py::TestGovernErrorEnvelopeFunctional::test_vet_envelope_renders_prefix_and_escapes_markup
+TypeError: CliRunner.__init__() got an unexpected keyword argument 'mix_stderr'
+```
+
+Click 8.2+ removed the `mix_stderr` kwarg from `CliRunner.__init__()`.
+In modern Click, stderr is **always** separated from stdout on the
+result object (`result.stdout` vs `result.stderr`), so the kwarg is
+no longer needed.
+
+### Fix
+
+`tests/test_unit_cli_govern_error_envelope_parity.py:465` — replaced
+`runner = CliRunner(mix_stderr=False)` with `runner = CliRunner()`
+plus a comment explaining the Click 8.2+ contract. The test was
+already capturing stderr via a `patch.object(govern_mod, "err_console", captured_console)`
+mock, so the missing kwarg had no test-coverage effect on the captured
+output — the `mix_stderr=False` was defensive compatibility for older
+Click.
+
+### Validation invariants (all green)
+
+* `pytest tests/test_unit_cli_govern_error_envelope_parity.py` →
+  **28 passed + 4 skipped + 0 failed in 0.30s** (was 27 passed + 4
+  skipped + 1 failed)
+* Combined audit envelope parity (8 files) → **167 passed + 4
+  skipped + 0 failed in 1.05s** (was 152 passed + 4 skipped + 1
+  failed → **+15 closure delta, fully green for the first time**)
+* Phase 3/4 hardening regression (13 files) → **297 passed + 2
+  pre-existing failures** (matches F-15 baseline `TestHelpOutputSanity`
+  typer/click help-text API drift — NOT a regression from AUDIT-N+7)
+* `ruff check` + `ruff format --check` → clean
+* Secret scan → **0 matches**
+* Bundle-zsh-scripts worktree → **preserved untouched**
+* Function-length invariant (≤ 40 lines) → all new functions comply
+
+### Files touched (this session, AUDIT-N+7)
+
+* `tests/test_unit_cli_govern_error_envelope_parity.py` — single-line
+  fix at `tests/test_unit_cli_govern_error_envelope_parity.py:465`
+  (replaced `CliRunner(mix_stderr=False)` with `CliRunner()` + comment)
+
+### Carry-forward (post-AUDIT-N+7)
+
+1. **`TestHelpOutputSanity` × 2** — typer/click help-text API drift
+   in `test_unit_ux_sota_fifth_pass.py` (2 pre-existing failures, NOT
+   import-related, NOT click-8.2+-mix_stderr-related). Out of AUDIT-N+7
+   scope; follow-up lane candidate for next resumption.
+2. **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+   `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+   per Do-Not-Touch list.
+3. **WL-120 full observability_impl extraction** — the stub covers
+   the single `escalate_add_impl` call-site; remaining
+   observability/health/escalation/governance/review/compliance block
+   is follow-up work.
+4. **Phase 3/4 SOTA-audit further passes** — open audit items per
+   `L1_TRIAGE_2026_06_11.md`.
+
+### Cumulative closed (22 prior lanes + AUDIT-N+7 = 23)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1,
+KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225, diskcache-skip-guard,
+CachePreWarmer FR-CACHE-003, F-15 + UX polish, GOV-1 governance
+error-envelope parity, AUDIT-N+1 run sub-app envelope sweep, AUDIT-N+2
+governance+infra+mesh+services envelope sweep, AUDIT-N+3
+cli/commands+agents+tools envelope sweep, AUDIT-N+4 governance
+observability + perf hardening lane, AUDIT-N+5 source-shim closure,
+AUDIT-N+6 WL-125 wrapper-delegation closure, **AUDIT-N+7 Click 8.2+
+CliRunner API drift closure (new)**.
+
+### Resumption invariant (the new north star)
+
+> **Combined audit envelope parity suite must be fully green**
+> (0 failures) before exiting any resumption session.
+
+This invariant is now achievable: AUDIT-N+7 closes the last
+import-side + API-drift root cause. Any new failure from this point
+forward will be a regression requiring immediate triage.
