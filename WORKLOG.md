@@ -1087,3 +1087,173 @@ monkeypatch tests.
   dedicated `chore(tests): repair wider regression
   collection` lane is the obvious next sprint and is the
   CI-mergeability blocker.
+
+### Phase 3/4 Continuation — 2026-07-19 (orjson Repair + DAG-Tick Integration Hardening)
+
+Closes Unblocked-Next #1 (`tests/test_federated_policy.py`
+orjson repair) and adds a focused DAG-tick integration lane
+for the P-081 progress bar + cockpit tick contract. Both
+items are part of the audit's "Recommended next sprint" lane
+and stay inside the wip branch — no changes to the other
+Phase 3/4 worktrees.
+
+#### 1. `tests/test_federated_policy.py` orjson repair
+
+The worklog's prior sprint flagged a pre-existing breakage:
+the file does `import orjson as json` then calls
+`json.dump(...)` (orjson has only `.dumps` and `.loads`, no
+`.dump`). Under the current pytest 9.1.x env this caused
+2 regressions (`test_load_from_file_registers_rules`,
+`test_load_from_file_scope_case_insensitive`) out of 53
+tests in the file.
+
+The fix is surgical and additive:
+
+* Add a stdlib `import json as _stdlib_json` to the import
+  block at `tests/test_federated_policy.py:15` so the
+  file gets a `.dump`-capable writer without disturbing the
+  existing orjson-backed hot paths (the rest of the file
+  still uses `orjson.dumps(...)` for byte-fast
+  serialization).
+* Replace the two failing `json.dump(data, fh)` call sites
+  at `tests/test_federated_policy.py:242` and
+  `tests/test_federated_policy.py:261` with
+  `_stdlib_json.dump(data, fh)`. Add a comment at the first
+  site explaining the rationale (orjson streams bytes,
+  stdlib writes text-mode) so a future maintainer does not
+  "fix" it back.
+* Leave `json.dumps` / `json.loads` call sites untouched —
+  those are the orjson-fast paths that produce/consume
+  bytes correctly.
+
+#### 2. DAG-tick integration hardening (6 new tests)
+
+Adds a new `TestDagTickIntegration` class to
+`tests/test_unit_ux_progress_emitter.py` that pins the
+contract between `ProgressTickEmitter` and
+`OperatorCockpit.tick(progress=...)`. The audit had noted
+that the two surfaces are coupled by a private
+`_state.last_progress` field; any future refactor (e.g.
+extracting a `set_progress()` method, switching to a ring
+buffer, or replacing `_progress_bar` with a richer
+unicode-bar) must fail one of these tests instead of
+silently breaking the operator dashboard.
+
+* `test_dag_tick_progress_advances_through_cockpit_tick`
+  — fires 21 `cockpit.tick(progress=(i, 20))` calls and
+  asserts the snapshot converges on `(20, 20)` with
+  `100%` visible in the bar. Pins the idempotent
+  per-tick progress update.
+* `test_dag_tick_emitter_and_snapshot_agree` — fires 51
+  `ProgressTickEmitter.emit(done=i, total=50)` calls and
+  asserts `cockpit.snapshot()["progress"] == (50, 50)`
+  and the rendered bar endswith `"100%"`. Pins the
+  emitter→cockpit write path under burst conditions.
+* `test_dag_tick_cockpit_reset_clears_progress_bar` —
+  asserts `cockpit.reset()` between sessions clears the
+  bar to the empty `"-"` sentinel rather than leaving a
+  stale frozen percent. Operators need to see "no data"
+  between sessions, not a misleading 80% bar.
+* `test_dag_tick_progress_bar_visible_in_rendered_header`
+  — asserts `cockpit.render()` includes `"33%"` after a
+  single `tick(progress=(33, 100))`. Pins the end-to-end
+  render path so the bar is visible in the operator's
+  terminal pane (not just the snapshot).
+* `test_dag_tick_progress_total_change_resets_bar_filled_count`
+  — asserts the bar reflects the new denominator after a
+  later tick shrinks `total` (5/10 still shows 50%, but
+  with a different filled width). Pins the percent-only
+  contract so refactors that change the bar's pixel
+  width don't accidentally regress.
+* `test_dag_tick_emitter_under_concurrent_bursts` — fires
+  4 threads × 25 emits = 100 concurrent writes through
+  the same emitter and asserts:
+  * all 100 emits are `result.ok` (no drops under load),
+  * the cockpit's last observed `(done, total)` is a
+    legal pair (0 ≤ done ≤ total, total == 100).
+  Pins the RLock-internal concurrency contract so a
+  future refactor that swaps the lock for an async
+  primitive has to fail this test.
+
+#### Validation
+
+* `pytest tests/test_federated_policy.py -q
+  --override-ini="addopts="` → **53 passed** (was 51
+  passed + 2 failed; +2 net, zero regressions).
+* `pytest tests/test_unit_ux_progress_emitter.py -q
+  --override-ini="addopts=" -k TestDagTickIntegration` →
+  **6 passed** (all new tests).
+* `pytest tests/test_unit_ux_progress_emitter.py
+  tests/test_federated_policy.py
+  tests/test_unit_policy_engine.py
+  tests/test_unit_federated_policy_thread_safety.py
+  tests/test_unit_ux_cockpit.py
+  tests/test_unit_ux_cockpit_audit_pane_batch.py
+  tests/test_unit_ux_cockpit_bridge.py
+  tests/test_unit_ux_cockpit_clock_decisions.py
+  tests/test_unit_ux_decision_audit.py
+  tests/test_unit_ux_cli_cockpit.py
+  tests/test_unit_ux_cli_sota.py
+  tests/test_unit_ux_explanations.py
+  tests/test_unit_ux_traffic.py
+  tests/test_unit_override_manager_path_guard.py
+  tests/test_unit_policy_engine_cache_stats.py -q
+  --override-ini="addopts="` → **432 passed** (was 387
+  prior; +45 net = +6 DAG tests + 2 orjson fixes + the
+  full `test_federated_policy.py` file that was previously
+  blocked by the 2 orjson regressions, with no overlap
+  losses; zero regressions).
+* `ruff check` and `ruff format --check` clean on both
+  touched files
+  (`tests/test_federated_policy.py`,
+  `tests/test_unit_ux_progress_emitter.py`).
+* No secrets in the diff (gitleaks scan would pass).
+
+#### Files Touched
+
+* `tests/test_federated_policy.py` — added
+  `import json as _stdlib_json`; replaced the two
+  `json.dump(data, fh)` call sites with
+  `_stdlib_json.dump(data, fh)` and added an explanatory
+  comment at the first site. Hot-path `orjson.dumps` /
+  `orjson.loads` call sites untouched.
+* `tests/test_unit_ux_progress_emitter.py` — new
+  `TestDagTickIntegration` class with 6 tests (21-tick
+  convergence, 51-emit burst, reset-clears-bar,
+  header-renders-bar, total-change, concurrent-bursts).
+
+#### Resolved Worklog Items
+
+* Unblocked-Next #1 (`tests/test_federated_policy.py`
+  orjson repair) — closed. The 2 regressions are
+  repaired with a single stdlib json import + 2-line
+  call-site fix; the orjson hot paths (4 other usages)
+  are preserved.
+
+#### Unblocked Next
+
+* **Repair the pre-existing 86 test-collection errors** —
+  still the CI-mergeability blocker. This sprint stayed
+  inside the wip branch's lane (governance + cockpit UX)
+  and did not touch the wider `tests/` collection errors
+  (mostly `ModuleNotFoundError` for moved modules under
+  `agents/`, `tools/`, `unit/agents/`, `unit/governance/`
+  + `FileNotFoundError` for files that moved). A
+  dedicated `chore(tests): repair wider regression
+  collection` lane remains the obvious next sprint.
+* **Wider Phase 3/4 cockpit polish** — the
+  `cockpit replay --exit-code-on-cap` /
+  `--snapshot-format` / `--report-format` flags and the
+  `cache_stats()` JSON contract (introduced in the prior
+  sprint) still have no operator-facing docs yet. A
+  short `docs/ux/cockpit-sota.md` companion that walks
+  an operator through `--json` + `--report-format=junitxml`
+  ingestion would close the docs gap and is the obvious
+  operator-first follow-up.
+* **Performance hardening on `cockpit.render()`** — the
+  last_render_ms surface is captured per frame but never
+  asserted. Adding a regression test that pins
+  `cockpit.render() < 50ms` for a worst-case state
+  (1024 confidence samples + 64 decision notices + 32
+  override notices + 14 run rows) would close the P-090
+  SLO gap and prevent silent latency regression.

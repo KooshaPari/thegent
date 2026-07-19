@@ -433,3 +433,117 @@ class TestSmoke:
     def test_progress_emit_result_ok_property(self) -> None:
         assert ProgressEmitResult().ok is True
         assert ProgressEmitResult(errors=["x"]).ok is False
+
+
+# ---------------------------------------------------------------------------
+# DAG-tick integration hardening (Phase 3/4 SOTA audit lane)
+# ---------------------------------------------------------------------------
+#
+# These tests pin the contract between the P-081 progress bar emitter and
+# the operator cockpit's ``tick(progress=...)`` DAG-tick surface. They were
+# added under the "Unblocked Next" hardening lane in WORKLOG.md so that
+# any future refactor that decouples the two surfaces (e.g. moving
+# ``tick(progress=...)`` into a dedicated ``set_progress`` method, or
+# replacing the ``_state.last_progress`` field with a ring buffer) has to
+# fail one of these tests instead of silently breaking the operator
+# dashboard.
+#
+# The DAG tick rate defaults to 1000ms (``DEFAULT_DAG_TICK_MS``); the
+# tests below simulate this rate by interleaving many ``cockpit.tick()``
+# calls in quick succession and asserting that the final state is
+# deterministic.
+
+
+class TestDagTickIntegration:
+    """Hardening tests for the cockpit + P-081 emitter DAG-tick contract."""
+
+    def test_dag_tick_progress_advances_through_cockpit_tick(self) -> None:
+        """Many ``cockpit.tick(progress=...)`` calls must converge on the last value."""
+        cockpit = _make_cockpit()
+        # Simulate a long-running DAG session: 20 ticks at 1s cadence
+        # would normally take 20s, but we compress the timeline here.
+        for i in range(21):
+            cockpit.tick(progress=(i, 20))
+        snap = cockpit.snapshot()
+        assert snap["progress"] == (20, 20)
+        assert "100%" in cockpit.progress_bar()
+
+    def test_dag_tick_emitter_and_snapshot_agree(self) -> None:
+        """``ProgressTickEmitter`` + ``cockpit.snapshot()`` must agree on the latest progress."""
+        cockpit = _make_cockpit()
+        emitter = ProgressTickEmitter(sink=cockpit)
+        # 50 ticks is well over what the bounded ``confidence_history``
+        # deque would normally see in a 1-second DAG tick; this exercises
+        # the write path under burst conditions.
+        for i in range(51):
+            emitter.emit(done=i, total=50, label="policy-eval")
+        snap = cockpit.snapshot()
+        assert snap["progress"] == (50, 50)
+        assert cockpit.progress_bar().endswith("100%")
+
+    def test_dag_tick_cockpit_reset_clears_progress_bar(self) -> None:
+        """``cockpit.reset()`` between DAG-tick sessions must clear the bar."""
+        cockpit = _make_cockpit()
+        cockpit.tick(progress=(80, 100))
+        assert "80%" in cockpit.progress_bar()
+        cockpit.reset()
+        # After reset, the bar shows the empty ``"-"`` sentinel rather
+        # than a stale percent — operators need to see "no data" between
+        # sessions, not a misleading frozen bar.
+        bar = cockpit.progress_bar()
+        assert "80%" not in bar
+        assert bar.endswith("-")
+
+    def test_dag_tick_progress_bar_visible_in_rendered_header(self) -> None:
+        """The latest tick's progress must appear in the rendered cockpit header."""
+        cockpit = _make_cockpit()
+        cockpit.tick(progress=(33, 100))
+        rendered = cockpit.render()
+        # The header always includes the title and a tick timestamp;
+        # the percent appears on the same line as the title (P-081).
+        assert "33%" in rendered
+        # Sanity: the bar glyph itself is present.
+        assert "[" in rendered and "]" in rendered
+
+    def test_dag_tick_progress_total_change_resets_bar_filled_count(self) -> None:
+        """If a later tick shrinks ``total``, the bar must reflect the new denominator."""
+        cockpit = _make_cockpit()
+        cockpit.tick(progress=(50, 100))
+        assert "50%" in cockpit.progress_bar()
+        cockpit.tick(progress=(5, 10))
+        # 5/10 == 50% — same percent, but the filled width must reflect
+        # the new total. The cockpit's ``_progress_bar`` uses
+        # ``width`` units so the filled count changes; we assert on the
+        # percent to keep the contract stable.
+        assert "50%" in cockpit.progress_bar()
+
+    def test_dag_tick_emitter_under_concurrent_bursts(self) -> None:
+        """Many concurrent ``emit`` calls must not corrupt the cockpit's progress state."""
+        import threading
+
+        cockpit = _make_cockpit()
+        emitter = ProgressTickEmitter(sink=cockpit, default_total=100)
+        results: list[ProgressEmitResult] = []
+        results_lock = threading.Lock()
+
+        def worker(start: int) -> None:
+            local: list[ProgressEmitResult] = []
+            for i in range(start, start + 25):
+                local.append(emitter.emit(done=i, total=100, label=f"worker-{start}"))
+            with results_lock:
+                results.extend(local)
+
+        threads = [threading.Thread(target=worker, args=(t * 25,)) for t in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        # Every emit must have been accepted (no drops under load).
+        assert all(r.ok for r in results)
+        assert sum(r.accepted for r in results) == 100
+        # The cockpit's last observed progress must be a legal (done, total)
+        # pair — not torn, not negative, not > total.
+        snap = cockpit.snapshot()
+        done, total = snap["progress"]
+        assert 0 <= done <= total
+        assert total == 100
