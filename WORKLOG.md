@@ -4187,3 +4187,107 @@ rendering path.
   directive. Other worktree
   (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
   preserved and untouched.
+
+## 2026-07-19 — AUDIT-N+1: sweep CLI sub-app error envelopes (run)
+
+The GOV-1 hand-off carried forward AUDIT-N+1: sweep the
+remaining `cli/apps/` sub-apps for the same
+`{exc}`-interpolation pattern the governance envelope helper
+(`print_exc` / `exc_text`) was created to neutralise. This
+lane scopes the carry-forward to the `run` Typer sub-app
+(`src/thegent/cli/apps/run_app.py`) — the only remaining
+operator-facing envelope site in the `apps/` tree.
+
+### Closed this hand-off
+
+* **AUDIT-N+1 (run sub-app envelope injection)** — closed.
+  `run_app.py:151` previously shipped a
+  `typer.echo(f"run: provider validation failed: {exc}")`
+  call inside the defensive `except Exception` branch of the
+  model-first callback. A `ValueError` whose `str()` contained
+  Rich markup would render as colour through `typer.echo`'s
+  default ANSI path on operator terminals that enable colours
+  by default. The site now routes through
+  `print_exc(err_console, "run: provider validation failed:", exc)`,
+  which assembles the prefix as Rich `Text` (no markup
+  re-parse) and the payload as a literal `rich.markup.escape`
+  output via `Console.print(markup=False)`. The render-safety
+  contract GOV-1 pinned for `govern.py` is now preserved
+  end-to-end on the `run` surface.
+* **AUDIT-N+1 (envelope parity test surface)** — closed.
+  `tests/test_unit_cli_apps_envelope_parity.py` covers the
+  swept `run` site end-to-end:
+  * `TestRunAppName` — pins the F-15-D contract that
+    `thegent run --help` renders `Usage: run agent …` (not
+    Typer's `Usage: root …` fallback).
+  * `TestRunAppErrConsoleStderr` — pins that
+    `run_app.err_console.stderr is True` and that
+    `run_app.print_exc is cli_errors.print_exc` (no local
+    copy that could drift out of sync).
+  * `TestRunAppErrorEnvelopeConvention` — pins the
+    structural invariant that no `typer.echo(f"… {exc}")`
+    pattern remains in `run_app.py` and that the canonical
+    `print_exc(err_console, …)` replacement IS present.
+  * `TestRunAppErrorEnvelopeRichmarkupSafety` — exercises
+    the actual operator-terminal render path:
+    `CliRunner`-invoked `run -M gpt-4o -P openai hello`
+    with a monkey-patched `resolve_route` that raises
+    `ValueError("[red]pwned[/red]")`; the rendered text
+    surfaces the literal `\[red]pwned\[/red]` (escaped) on
+    the merged stdout+stderr, proving the Rich markup
+    re-parse bug is closed end-to-end.
+  * `TestCliAppsEnvelopeStaticAudit` — `grep`-driven static
+    inventory of every `src/thegent/cli/apps/*.py` file:
+    no `{exc}` / `{str(exc)}` interpolation into a
+    Rich-markup f-string or a styled `typer.echo` remains.
+    A future refactor that introduces the unsafe pattern
+    fails the test before it can ship.
+  * `TestExcTextImportFromCliApps` — pins the canonical
+    import surface (`from thegent.ux.cli_errors import
+    print_exc`) for `run_app` and `govern` so every
+    future sub-app follows the same contract.
+
+### Carry-forward (not in this hand-off)
+
+* **AUDIT-N+2 — extend envelope sweep to sub-apps beyond
+  `run`**. The remaining `cli/apps/` sub-apps (`plan`,
+  `team`, `infra`, `model`, `session`) either raise
+  `typer.BadParameter(str(exc))` (no Rich-markup injection
+  vector) or are stubs that don't ship an operator-facing
+  envelope at this stage of the Five-Day Goal. They are
+  excluded from this lane so the audit scope stays focused.
+  When a sub-app grows a defensive `except Exception`
+  envelope, it must route through `print_exc` per the
+  static-audit invariant introduced here.
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked
+  by `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per Do Not Touch list. The CLI surface is now
+  envelope-safe on both the `govern` and `run` paths; the
+  L1 Stabilize → V4-1.2.x lane is the next-horizon entry
+  once the archive unblocks.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (saturated — the
+  eighteenth closure pass on top of the Five-Day Goal
+  envelope + the prior 17 closure lanes; the bar cannot
+  exceed saturation in this lane).
+* **DAG tick**: **`+1`** (this AUDIT-N+1 hand-off on top
+  of the GOV-1 governance error-envelope parity lane).
+* **Closed this lane**: AUDIT-N+1 `run` sub-app envelope
+  parity + render-safety contract re-pinned end-to-end.
+* **Cumulative closed (17 prior lanes + this)**: AUDIT-1/2/
+  4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+  CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225
+  plan-workstream thicken, diskcache-skip-guard
+  collection-repair, CachePreWarmer FR-CACHE-003 contract
+  closure, F-15 + UX polish, GOV-1 governance
+  error-envelope parity, plus this AUDIT-N+1 `run`
+  sub-app envelope sweep lane.
+* **Local commit**: pending (this hand-off) on
+  `wip/2026-07-18-cockpit-sota-hardening`, **43 commits
+  ahead of `main`** after this commit. **Not pushed** to
+  the archived upstream `KooshaPari/thegent.git` per the
+  directive. Other worktree
+  (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
+  preserved and untouched.

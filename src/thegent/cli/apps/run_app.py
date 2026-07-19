@@ -46,6 +46,18 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
+from rich.console import Console
+
+from thegent.ux.cli_errors import print_exc
+
+# AUDIT-N+1 (Phase 3/4 sweep lane): every CLI error envelope in
+# ``src/thegent/cli/apps/`` must route through ``print_exc`` (or the
+# ``exc_text`` escape helper for non-Rich ``typer.echo`` paths) so a
+# malicious or buggy exception payload containing Rich markup
+# (``[red]…[/red]``) cannot inject colour into an operator terminal.
+# ``run_app`` uses a stderr-backed Rich ``Console`` so we get the
+# same end-to-end render-safety contract that ``govern`` already has.
+err_console = Console(stderr=True)
 
 # Re-export the canonical command functions from ``cli`` so the sub-app
 # dispatches to them via the same import path the contract tests mock.
@@ -148,7 +160,10 @@ def _run_callback(
         except typer.Exit:
             raise
         except Exception as exc:  # pragma: no cover - defensive
-            typer.echo(f"run: provider validation failed: {exc}")
+            # AUDIT-N+1: route through ``print_exc`` so a malicious
+            # exception payload (``[red]pwned[/red]``) cannot inject
+            # Rich markup into the operator's terminal.
+            print_exc(err_console, "run: provider validation failed:", exc)
             raise typer.Exit(1) from exc
 
     # Resolve cwd (best-effort) and dispatch to run_cmd with the
