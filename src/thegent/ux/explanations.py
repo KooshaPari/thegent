@@ -274,105 +274,176 @@ def _render_concise(exp: DecisionExplanation, *, width: int) -> str:
     return f"{badge} {summary}"
 
 
-def _render_summary(exp: DecisionExplanation, *, width: int) -> str:
-    lines = [
+def _core_attribute_lines(
+    exp: DecisionExplanation,
+    *,
+    label_width: int,
+    align: bool = True,
+    include_source: bool = True,
+) -> list[str]:
+    """Render the per-level ``reason / reason_code / rule_id / confidence / source`` block.
+
+    NEW-23 (SOTA fourth-pass): extracted from the three level-specific
+    renderers (``_render_summary``, ``_render_detailed``,
+    ``_render_deepdive``) so the column-padding contract lives in one
+    place. Two modes:
+
+    * ``align=True`` (DETAILED/DEEPDIVE): every label is padded with
+      spaces so values start at column ``label_width`` regardless of
+      label length.
+    * ``align=False`` (SUMMARY compact): every label is followed by
+      exactly one space — the historical "single-space" SUMMARY form
+      pinned by ``test_summary_includes_rule`` in
+      ``tests/test_unit_ux_explanations.py``.
+
+    SUMMARY also historically omits ``source:`` (the original
+    ``_render_summary`` only emitted reason / reason_code / rule_id /
+    confidence), so ``include_source`` defaults to ``True`` for
+    DETAILED/DEEPDIVE and is set to ``False`` by SUMMARY to preserve
+    byte-for-byte output.
+
+    Each level passes its own ``label_width`` (SUMMARY=0,
+    DETAILED=14, DEEPDIVE=17) so the visual hierarchy is preserved;
+    the lines themselves are byte-identical to the previous
+    per-renderer copies, which keeps downstream SOTA regression
+    tests pinned.
+    """
+    lines: list[str] = []
+    pairs: list[tuple[str, str]] = []
+    if exp.reason:
+        pairs.append(("reason:", exp.reason))
+    if exp.reason_code:
+        pairs.append(("reason_code:", exp.reason_code))
+    if exp.rule_id:
+        pairs.append(("rule_id:", exp.rule_id))
+    if exp.confidence is not None:
+        pairs.append(("confidence:", f"{exp.confidence:.2f}"))
+    if include_source and exp.source:
+        pairs.append(("source:", exp.source))
+    for label, value in pairs:
+        if align:
+            padding = max(1, label_width - len(label))
+            lines.append(f"{label}{' ' * padding}{value}")
+        else:
+            lines.append(f"{label} {value}")
+    return lines
+
+
+def _header_lines(exp: DecisionExplanation, *, width: int) -> list[str]:
+    """Render the title + verdict badge + ``=`` separator shared by all levels.
+
+    NEW-23 (SOTA fourth-pass): extracted from the three level-specific
+    renderers so the title-row alignment contract (``width - 6`` for
+    the title padding) is enforced in one place.
+    """
+    return [
         f"{_pad(exp.title, width - 6)} {_badge(exp.verdict)}",
         _hr(width, "="),
     ]
-    if exp.reason:
-        lines.append(f"reason: {exp.reason}")
-    if exp.reason_code:
-        lines.append(f"reason_code: {exp.reason_code}")
-    if exp.rule_id:
-        lines.append(f"rule_id: {exp.rule_id}")
-    if exp.confidence is not None:
-        lines.append(f"confidence: {exp.confidence:.2f}")
-    if exp.actions:
-        lines.append("suggested actions:")
-        for action in exp.actions:
-            lines.append(f"  - {action}")
+
+
+def _actions_lines(exp: DecisionExplanation) -> list[str]:
+    """Render the optional ``suggested actions:`` block (shared by all levels)."""
+    if not exp.actions:
+        return []
+    out = ["suggested actions:"]
+    out.extend(f"  - {action}" for action in exp.actions)
+    return out
+
+
+def _citations_lines(exp: DecisionExplanation) -> list[str]:
+    """Render the optional ``citations:`` block (DETAILED + DEEPDIVE)."""
+    if not exp.citations:
+        return []
+    out = ["citations:"]
+    out.extend(f"  - {c}" for c in exp.citations)
+    return out
+
+
+def _chain_lines(exp: DecisionExplanation, *, width: int) -> list[str]:
+    """Render the optional ``reasoning chain:`` block (DETAILED + DEEPDIVE)."""
+    if not exp.chain:
+        return []
+    out = [_hr(width, "-"), "reasoning chain:"]
+    out.extend(f"  {i}. {step}" for i, step in enumerate(exp.chain, 1))
+    return out
+
+
+def _metadata_lines(exp: DecisionExplanation, *, width: int) -> list[str]:
+    """Render the optional ``metadata:`` block (DETAILED + DEEPDIVE)."""
+    if not exp.metadata:
+        return []
+    out = [_hr(width, "-"), "metadata:"]
+    out.extend(f"  {k}: {v}" for k, v in sorted(exp.metadata.items()))
+    return out
+
+
+def _rationale_lines(exp: DecisionExplanation, *, width: int) -> list[str]:
+    """Render the optional ``rationale:`` block (DEEPDIVE only)."""
+    if not exp.rationale_steps:
+        return []
+    out = [_hr(width, "-"), "rationale:"]
+    out.extend(f"  [{i}] {step}" for i, step in enumerate(exp.rationale_steps, 1))
+    return out
+
+
+def _audit_refs_lines(exp: DecisionExplanation, *, width: int) -> list[str]:
+    """Render the optional ``audit:`` block (DEEPDIVE only)."""
+    if not exp.audit_refs:
+        return []
+    out = [_hr(width, "-"), "audit:"]
+    out.extend(f"  - {r}" for r in exp.audit_refs)
+    return out
+
+
+def _render_summary(exp: DecisionExplanation, *, width: int) -> str:
+    """SUMMARY level: title + verdict + a handful of attributes + actions.
+
+    NEW-23 (SOTA fourth-pass): delegates to :func:`_header_lines` and
+    :func:`_core_attribute_lines` (``align=False`` for the historical
+    single-space SUMMARY layout pinned by SOTA regression tests) so
+    the column-padding contract is shared with DETAILED and DEEPDIVE.
+    """
+    lines = _header_lines(exp, width=width)
+    lines.extend(_core_attribute_lines(exp, label_width=0, align=False, include_source=False))
+    lines.extend(_actions_lines(exp))
     return "\n".join(lines)
 
 
 def _render_detailed(exp: DecisionExplanation, *, width: int) -> str:
-    lines = [
-        f"{_pad(exp.title, width - 6)} {_badge(exp.verdict)}",
-        _hr(width, "="),
-    ]
-    if exp.reason:
-        lines.append(f"reason:       {exp.reason}")
-    if exp.reason_code:
-        lines.append(f"reason_code:  {exp.reason_code}")
-    if exp.rule_id:
-        lines.append(f"rule_id:      {exp.rule_id}")
-    if exp.confidence is not None:
-        lines.append(f"confidence:   {exp.confidence:.2f}")
-    if exp.source:
-        lines.append(f"source:       {exp.source}")
-    if exp.citations:
-        lines.append("citations:")
-        for c in exp.citations:
-            lines.append(f"  - {c}")
-    if exp.actions:
-        lines.append("suggested actions:")
-        for action in exp.actions:
-            lines.append(f"  - {action}")
-    if exp.chain:
-        lines.append(_hr(width, "-"))
-        lines.append("reasoning chain:")
-        for i, step in enumerate(exp.chain, 1):
-            lines.append(f"  {i}. {step}")
-    if exp.metadata:
-        lines.append(_hr(width, "-"))
-        lines.append("metadata:")
-        for k, v in sorted(exp.metadata.items()):
-            lines.append(f"  {k}: {v}")
+    """DETAILED level: SUMMARY + source + citations + chain + metadata.
+
+    NEW-23 (SOTA fourth-pass): delegates the shared blocks to the
+    helper family so the per-level composition reads top-to-bottom and
+    the column-padding contract is single-sourced. ``label_width=14``
+    reproduces the historical DETAILED alignment (values start at
+    column 14 — e.g. ``reason:       value`` is 7 + 7 spaces = 14).
+    """
+    lines = _header_lines(exp, width=width)
+    lines.extend(_core_attribute_lines(exp, label_width=14))
+    lines.extend(_citations_lines(exp))
+    lines.extend(_actions_lines(exp))
+    lines.extend(_chain_lines(exp, width=width))
+    lines.extend(_metadata_lines(exp, width=width))
     return "\n".join(lines)
 
 
 def _render_deepdive(exp: DecisionExplanation, *, width: int) -> str:
-    lines = [
-        f"{_pad(exp.title, width - 6)} {_badge(exp.verdict)}",
-        _hr(width, "="),
-    ]
-    if exp.reason:
-        lines.append(f"reason:          {exp.reason}")
-    if exp.reason_code:
-        lines.append(f"reason_code:     {exp.reason_code}")
-    if exp.rule_id:
-        lines.append(f"rule_id:         {exp.rule_id}")
-    if exp.confidence is not None:
-        lines.append(f"confidence:      {exp.confidence:.2f}")
-    if exp.source:
-        lines.append(f"source:          {exp.source}")
-    if exp.citations:
-        lines.append("citations:")
-        for c in exp.citations:
-            lines.append(f"  - {c}")
-    if exp.actions:
-        lines.append("suggested actions:")
-        for action in exp.actions:
-            lines.append(f"  - {action}")
-    if exp.chain:
-        lines.append(_hr(width, "-"))
-        lines.append("reasoning chain:")
-        for i, step in enumerate(exp.chain, 1):
-            lines.append(f"  {i}. {step}")
-    if exp.rationale_steps:
-        lines.append(_hr(width, "-"))
-        lines.append("rationale:")
-        for i, step in enumerate(exp.rationale_steps, 1):
-            lines.append(f"  [{i}] {step}")
-    if exp.audit_refs:
-        lines.append(_hr(width, "-"))
-        lines.append("audit:")
-        for r in exp.audit_refs:
-            lines.append(f"  - {r}")
-    if exp.metadata:
-        lines.append(_hr(width, "-"))
-        lines.append("metadata:")
-        for k, v in sorted(exp.metadata.items()):
-            lines.append(f"  {k}: {v}")
+    """DEEPDIVE level: DETAILED + rationale + audit_refs.
+
+    NEW-23 (SOTA fourth-pass): adds the rationale / audit-only blocks
+    via the dedicated helpers. ``label_width=17`` reproduces the
+    historical DEEPDIVE alignment (values start at column 17 — e.g.
+    ``reason:          value`` is 7 + 10 spaces = 17).
+    """
+    lines = _header_lines(exp, width=width)
+    lines.extend(_core_attribute_lines(exp, label_width=17))
+    lines.extend(_citations_lines(exp))
+    lines.extend(_actions_lines(exp))
+    lines.extend(_chain_lines(exp, width=width))
+    lines.extend(_rationale_lines(exp, width=width))
+    lines.extend(_audit_refs_lines(exp, width=width))
+    lines.extend(_metadata_lines(exp, width=width))
     return "\n".join(lines)
 
 

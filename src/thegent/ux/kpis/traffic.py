@@ -345,7 +345,14 @@ class TrafficDashboard:
         self.trend_width = trend_width
         # RPS trend is appended on every record() call; consumers can
         # render a sparkline of it via :meth:`rps_trend`.
-        self._rps_trend: deque[float] = deque(maxlen=trend_width * 2)
+        # NEW-12 (SOTA fourth-pass): the trend deque is now wrapped in
+        # a ``_Trend`` helper that owns its own ``Lock`` so concurrent
+        # ``record()`` producers and ``summary()``/``rps_trend()``/
+        # ``render_traffic()``/``progress_bar()`` readers can race
+        # without corrupting the bounded deque (the previous inline
+        # ``deque`` had no lock; ``TrafficWindow._lock`` only covers
+        # ``_events``, not the dashboard-level trend).
+        self._rps_trend = _Trend(maxlen=trend_width * 2)
 
     def set_clock(self, clock: Callable[[], float]) -> None:
         """Pin the wall clock on the underlying :class:`TrafficWindow`."""
@@ -377,12 +384,12 @@ class TrafficDashboard:
     def summary(self) -> dict[str, Any]:
         """Aggregate summary combining window and trend stats."""
         snap = self.window.summary()
-        snap["rps_trend"] = render_trend(self._rps_trend, width=self.trend_width)
+        snap["rps_trend"] = render_trend(self._rps_trend.values(), width=self.trend_width)
         return snap
 
     def rps_trend(self) -> str:
         """Return just the RPS sparkline (e.g., for embedding in logs)."""
-        return render_trend(self._rps_trend, width=self.trend_width)
+        return render_trend(self._rps_trend.values(), width=self.trend_width)
 
     def progress_bar(self) -> str:
         """Render the canonical progress bar (P-081).
@@ -436,6 +443,54 @@ def render_traffic(
         f"overrides active: {snap['override_count']}\n"
         f"{snap.get('rps_trend', '·' * dashboard.trend_width)} (rps trend)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Trend helper (NEW-12, SOTA fourth-pass)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True)
+class _Trend:
+    """Bounded, thread-safe trend deque for the dashboard-level RPS sparkline.
+
+    Wraps :class:`collections.deque` in a per-instance ``Lock`` so concurrent
+    ``TrafficDashboard.record()`` producers and ``summary()`` / ``rps_trend()``
+    / ``render_traffic()`` / ``progress_bar()`` readers can race without
+    corrupting the bounded deque. The previous inline ``deque`` had no lock
+    (``TrafficWindow._lock`` only covers ``_events``, not the dashboard-level
+    trend) — under load the bounded deque could raise ``IndexError`` mid-iter
+    when ``popleft()`` interleaved with the consumer's ``list(...)`` snapshot.
+
+    Public surface intentionally minimal so the call sites stay short:
+
+    * ``append(value)`` — single-writer API (called from ``record()``).
+    * ``values()`` — read-only snapshot for :func:`render_trend`.
+    """
+
+    maxlen: int
+    _events: deque[float] = field(default_factory=deque)
+    _lock: threading.Lock = field(default_factory=threading.Lock)
+
+    def __post_init__(self) -> None:
+        if self.maxlen <= 0:
+            self.maxlen = 64
+        self._events = deque(self._events, maxlen=self.maxlen)
+
+    def append(self, value: float) -> None:
+        """Append a single trend sample under the lock."""
+        with self._lock:
+            self._events.append(value)
+
+    def values(self) -> list[float]:
+        """Return a snapshot list of trend values (caller may iterate freely)."""
+        with self._lock:
+            return list(self._events)
+
+    def __len__(self) -> int:
+        """Snapshot length so legacy probes (``len(d._rps_trend)``) keep working."""
+        with self._lock:
+            return len(self._events)
 
 
 # ---------------------------------------------------------------------------

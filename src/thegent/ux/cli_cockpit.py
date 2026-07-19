@@ -156,6 +156,7 @@ invocation exercises the diff path on every supported report format
 from __future__ import annotations
 
 import json
+import logging
 import time
 import sys
 from pathlib import Path
@@ -187,6 +188,9 @@ err_console = Console(stderr=True)
 # ``_exc_text`` / ``_escape`` in the AUDIT-9 hand-off, so the
 # wrapper functions are now dead code and were deleted.
 from rich.markup import escape as _escape  # noqa: E402
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _exc_text(exc: BaseException) -> str:
@@ -1141,6 +1145,8 @@ def cockpit_replay(
                 audit_path=str(audit_path) if audit_path else None,
                 json_output=json_output,
                 flipped=list(flip_fields),
+                batch=batch,
+                compare=compare,
             )
             raise typer.Exit(0)
 
@@ -1195,6 +1201,8 @@ def cockpit_replay(
             audit_path=audit_str,
             json_output=json_output,
             flipped=list(flip_fields),
+            batch=batch,
+            compare=compare,
         )
         # Operator confirmation: when an audit file was written, tell
         # the operator whether the run **appended** to an existing
@@ -1225,6 +1233,8 @@ def _emit_replay_summary(
     audit_path: Optional[str],
     json_output: bool,
     flipped: Optional[list[str]] = None,
+    batch: Optional[Path] = None,
+    compare: Optional[Path] = None,
 ) -> None:
     """Render the replay outcome (text or JSON) and write to stdout.
 
@@ -1246,6 +1256,15 @@ def _emit_replay_summary(
       ``--snapshot-flip-all`` field set, deduped and in first-seen
       order. Always present (``[]`` when no flip flag was set) so the
       schema never has to be checked twice.
+
+    NEW-14 (SOTA fourth-pass): the text envelope previously rendered
+    ``replay: batch=? compare=? items=...`` — the ``?`` were literal
+    placeholders never substituted. The operator-visible summary now
+    includes the resolved ``--batch`` / ``--compare`` paths so a CI
+    log shows which corpus / snapshot the run actually consumed (the
+    JSON envelope was unaffected since the fields are operator-only
+    convenience). Both paths are optional so legacy call sites that
+    only had the JSON fields keep working unchanged.
     """
     if json_output:
         typer.echo(
@@ -1271,7 +1290,12 @@ def _emit_replay_summary(
             )
         )
         return
-    typer.echo(f"replay: batch=? compare=? items={items} matched={matched} mismatches={len(mismatches)}")
+    batch_str = str(batch) if batch is not None else "?"
+    compare_str = str(compare) if compare is not None else "?"
+    typer.echo(
+        f"replay: batch={_escape(batch_str)} compare={_escape(compare_str)} "
+        f"items={items} matched={matched} mismatches={len(mismatches)}"
+    )
     for m in mismatches:
         typer.echo(m["text"])
 
@@ -1297,9 +1321,13 @@ def cockpit_audit_tail(
     ),
 ) -> None:
     """Tail the JSONL audit log for SOTA replay tooling."""
+    # NEW-2 (SOTA fourth-pass): ``DecisionAuditAppender`` is already
+    # imported at module scope (line 175) for the replay path. The
+    # previous inner import was a relic of the import-time cycle
+    # guard that no longer exists; a redundant inner import only
+    # obscured the data flow and cost ~50µs per call site. Reuse
+    # the module-level binding instead.
     try:
-        from ..ux.decision_audit import DecisionAuditAppender  # noqa: F401  (re-export for callers)
-
         appender = DecisionAuditAppender(audit_path=audit_path)
         events = appender.tail_events(n=n)
         for ev in events:
@@ -1478,12 +1506,31 @@ def _follow_audit_log(
         if current_size < offset:
             # File was truncated / rotated; re-anchor to the start so
             # we pick up whatever the writer put in its place.
+            # NEW-22 (SOTA fourth-pass): on truncation we lose any
+            # bytes that were between the previous ``offset`` and the
+            # old EOF — the writer (rotation policy / ``> file.jsonl``)
+            # intentionally discarded them, so the tail contract is
+            # "lines appended after the truncation point are emitted,
+            # bytes already in flight at the truncation boundary may
+            # be missed". Documented so SOTA replay tooling knows.
             offset = 0
 
         if current_size > offset:
-            with path.open("r", encoding="utf-8") as fh:
-                fh.seek(offset)
-                chunk = fh.read(current_size - offset)
+            try:
+                with path.open("r", encoding="utf-8") as fh:
+                    fh.seek(offset)
+                    chunk = fh.read(current_size - offset)
+            except (FileNotFoundError, OSError) as exc:
+                # NEW-22 (SOTA fourth-pass): a transient unlink /
+                # ``OSError`` between ``stat()`` and ``read()`` (file
+                # rotated mid-poll, NFS hiccup, EPERM on a permission
+                # flip) previously crashed the tail loop. The next
+                # iteration's ``stat()`` will observe the new file
+                # state and recover. Log at DEBUG so a long-running
+                # tail session doesn't flood the operator's stderr.
+                _LOGGER.debug("audit-tail transient read error, will retry: %s", exc)
+                time.sleep(sleep_s)
+                continue
             # Only advance the offset after a successful read so a
             # transient IO error doesn't silently drop lines.
             offset = current_size

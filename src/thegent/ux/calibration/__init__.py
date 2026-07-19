@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class ConfidenceCalibrator:
     """Calibrator for confidence scores."""
+
     threshold: float = 0.5
 
     def calibrate(self, score: float) -> float:

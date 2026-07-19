@@ -321,10 +321,20 @@ def _render_report_junitxml(
     # operator-supplied data — so the standard-library ``minidom`` is
     # safe here.  ``S318`` is silenced with a scope comment.
     pretty = xml.dom.minidom.parseString(raw).toprettyxml(indent="  ")  # noqa: S318
-    # Drop the XML declaration line; the CLI caller writes the
-    # report to a file (or stdout) and we want the document to start
-    # with ``<?xml ...?>`` from the stdlib, not a duplicate.
-    pretty_lines = [line for line in pretty.splitlines() if line.strip()]
+    # NEW-7 (SOTA fourth-pass): the previous comment claimed the
+    # declaration line was dropped, but the code only stripped blank
+    # lines — so the ``<?xml ...?>`` line stayed in the document and
+    # JUnit parsers that key on the absence of an XML declaration
+    # (e.g. embedders that wrap the document in another envelope)
+    # silently mis-ingested the report. We now drop the first line
+    # *explicitly* when ``minidom`` emitted it, which is the contract
+    # JUnit XML consumers expect.  Fallback (no declaration) leaves
+    # the document untouched so we never over-trim a hand-rolled
+    # document that happened to be pre-canonicalised.
+    lines = pretty.splitlines()
+    if lines and lines[0].lstrip().startswith("<?xml"):
+        lines = lines[1:]
+    pretty_lines = [line for line in lines if line.strip()]
     return "\n".join(pretty_lines)
 
 

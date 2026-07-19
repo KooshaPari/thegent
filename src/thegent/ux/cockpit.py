@@ -642,13 +642,25 @@ class OperatorCockpit:
             }
 
     def progress_bar(self) -> str:
-        """Return the current progress bar (``P-081``)."""
-        done, total = self._state.last_progress
+        """Return the current progress bar (``P-081``).
+
+        NEW-19 (SOTA fourth-pass): reads ``self._state.last_progress``
+        under ``self._lock`` so a concurrent ``tick`` cannot land a
+        torn ``(done, total)`` tuple into the operator's progress bar.
+        """
+        with self._lock:
+            done, total = self._state.last_progress
         return _progress_bar(done, total)
 
     def last_render_ms(self) -> float:
-        """How long the most recent ``render()`` call took, in milliseconds."""
-        return self._last_render_ms
+        """How long the most recent ``render()`` call took, in milliseconds.
+
+        NEW-19 (SOTA fourth-pass): reads ``self._last_render_ms`` under
+        ``self._lock`` so a concurrent ``render`` call cannot tear the
+        float read with the write in the ``finally`` block.
+        """
+        with self._lock:
+            return self._last_render_ms
 
     # ----------------------------------------------------------------- render
 
@@ -657,17 +669,38 @@ class OperatorCockpit:
 
         The render is plain ASCII/Unicode, with one pane per line, four panes
         laid out as a 2x2 grid.  Returns ``""`` if the cockpit is empty.
+
+        NEW-19 (SOTA fourth-pass): ``render`` and the private ``_render_*_pane``
+        methods now run under ``self._lock`` so a concurrent ``tick`` /
+        ``record_decision`` cannot land a torn snapshot into the operator's
+        terminal. The previous implementation read ``self._state`` without
+        the lock and updated ``self._frame_count`` / ``self._last_render_ms``
+        outside it; a concurrent ``tick`` could replace ``self._state.runs``
+        mid-render and a concurrent render could lose ``_frame_count``
+        increments to a read-modify-write race. The frame counter is now
+        bumped under the lock, and each pane renderer takes the lock for
+        the duration of its read so a ``tick`` interleaved between two
+        pane calls still sees consistent per-render state.
         """
-        t0 = self._clock()
-        try:
-            text = self._render_grid()
-        finally:
-            dt = (self._clock() - t0) * 1000.0
-            self._last_render_ms = dt
-            self._frame_count += 1
+        with self._lock:
+            t0 = self._clock()
+            try:
+                text = self._render_grid_locked()
+            finally:
+                dt = (self._clock() - t0) * 1000.0
+                self._last_render_ms = dt
+                self._frame_count += 1
         return text
 
-    def _render_grid(self) -> str:
+    def _render_grid_locked(self) -> str:
+        """Inner renderer — caller must hold ``self._lock``.
+
+        Kept separate from :meth:`render` so the lock contract is explicit
+        at the call boundary (NEW-19). All pane renderers are themselves
+        lock-aware and may be invoked from tests / debug utilities
+        without the outer lock; the production ``render`` path is the
+        only one that locks.
+        """
         cfg = self.config
         # 1. Header — title + progress bar (P-081)
         header = self._render_header()
@@ -714,9 +747,19 @@ class OperatorCockpit:
         within ``OVERRIDE_BANNER_MAX_AGE_S``, then picks the freshest.
         Returns ``""`` when nothing qualifies so the banner naturally
         fades between DAG ticks.
+
+        NEW-20 (SOTA fourth-pass): ``now`` is sampled inside the same
+        critical section that copies the notice pointers, so the age
+        deltas are computed against the *same* clock value that was
+        visible to the locked snapshot. The previous implementation
+        read the state under the lock and then sampled ``self._clock``
+        outside it — a clock swap (the exact scenario NEW-18 fixed in
+        ``tick``) between the locked read and the unlocked ``now``
+        could land a banner whose age was computed against a different
+        clock than the timestamp it was compared to.
         """
-        now = self._clock()
         with self._lock:
+            now = self._clock()
             last_override: OverrideExpiryNotice | None = (
                 self._state.override_notices[-1] if self._state.override_notices else None
             )
@@ -744,42 +787,70 @@ class OperatorCockpit:
         return _render_decision_deny_banner(last_deny, now)  # type: ignore[arg-type]
 
     def _render_header(self) -> str:
-        cfg = self.config
-        done, total = self._state.last_progress
+        """Render the header line (title + progress bar + tick clock).
+
+        NEW-19 (SOTA fourth-pass): reads ``self._state.last_progress``,
+        ``self._state.last_tick_at``, and ``self._frame_count`` under
+        ``self._lock`` so a concurrent ``tick`` / ``render`` cannot
+        tear the values into the operator's title bar.
+
+        NEW-21 (SOTA fourth-pass): the F-13 docstring previously
+        claimed this function "uses ``self._clock``" but it actually
+        formats the *stored* ``self._state.last_tick_at`` value (which
+        is already populated via ``self._clock()`` under the lock by
+        :meth:`tick` — see NEW-18). The misleading F-13 comment block
+        has been removed; the clock-injection contract is now stated
+        once and accurately.
+        """
+        with self._lock:
+            cfg = self.config
+            done, total = self._state.last_progress
+            frame_idx = self._frame_count
+            last_tick_at = self._state.last_tick_at
         bar = _progress_bar(done, total)
-        # F-13 (SOTA third-pass): use ``self._clock`` so a clock-injected
-        # cockpit (deterministic audit replay, frozen-clock tests) gets
-        # the same timestamp in the header as everywhere else. The
-        # previous direct ``time.localtime(self._state.last_tick_at)``
-        # call bypassed the injection so a frozen-clock test would see
-        # the wall clock in the header while every other pane saw the
-        # injected clock — operators running a replay audit would see
-        # two different timestamps in the same frame.
-        ts = time.strftime("%H:%M:%S", time.localtime(self._state.last_tick_at))
-        return f"  {cfg.title}   {cfg.progress_label}: {bar}   tick={ts} (#{self._frame_count + 1})"
+        ts = time.strftime("%H:%M:%S", time.localtime(last_tick_at))
+        return f"  {cfg.title}   {cfg.progress_label}: {bar}   tick={ts} (#{frame_idx + 1})"
 
     def _render_runs_pane(self) -> list[str]:
+        """Render the live-runs pane rows.
+
+        NEW-19 (SOTA fourth-pass): copies ``self._state.runs`` under
+        ``self._lock`` so a concurrent ``tick`` cannot replace the dict
+        mid-iteration and tear a row that the operator sees in their
+        terminal.
+        """
         cfg = self.config
-        lines = [f"┌─ {cfg.pane_labels[CockpitPane.RUNS]} ───────────────┐"]
-        runs = sorted(
-            self._state.runs.values(),
-            key=lambda ev: (ev.state.value, ev.run_id),
-        )
+        with self._lock:
+            runs = sorted(
+                self._state.runs.values(),
+                key=lambda ev: (ev.state.value, ev.run_id),
+            )
+            total_runs = len(self._state.runs)
+            pane_label = cfg.pane_labels[CockpitPane.RUNS]
+        lines = [f"┌─ {pane_label} ───────────────┐"]
         if not runs:
             lines.append("│  (no active runs)                    │")
             lines.append("│                                      │")
         else:
             for ev in runs[:MAX_RUNS_PANE_ROWS]:
                 lines.append(f"│ {_format_run_row(ev):<38} │")
-            if len(runs) > MAX_RUNS_PANE_ROWS:
-                lines.append(f"│  … {len(runs) - MAX_RUNS_PANE_ROWS} more            │")
+            if total_runs > MAX_RUNS_PANE_ROWS:
+                lines.append(f"│  … {total_runs - MAX_RUNS_PANE_ROWS} more            │")
         lines.append("└──────────────────────────────────────┘")
         return lines
 
     def _render_lanes_pane(self) -> list[str]:
+        """Render the lane-distribution pane rows.
+
+        NEW-19 (SOTA fourth-pass): copies ``self._state.runs`` under
+        ``self._lock`` so a concurrent ``tick`` cannot replace the dict
+        between ``list(...)`` and ``Counter(...)``.
+        """
         cfg = self.config
-        lines = [f"┌─ {cfg.pane_labels[CockpitPane.LANES]} ───────────────┐"]
-        runs = list(self._state.runs.values())
+        with self._lock:
+            runs = list(self._state.runs.values())
+            pane_label = cfg.pane_labels[CockpitPane.LANES]
+        lines = [f"┌─ {pane_label} ───────────────┐"]
         if not runs:
             lines.append("│  (idle)                              │")
             lines.append("│                                      │")
@@ -792,16 +863,25 @@ class OperatorCockpit:
         return lines
 
     def _render_confidence_pane(self) -> list[str]:
+        """Render the confidence (P50/P95) sparkline pane rows.
+
+        NEW-19 (SOTA fourth-pass): copies ``self._state.confidence_history``
+        under ``self._lock`` so a concurrent ``tick`` cannot append to
+        the bounded deque between the materialise-to-list step and
+        the percentile computation.
+        """
         cfg = self.config
         # ``confidence_history`` is a bounded ``deque`` to prevent unbounded
         # memory growth. Materialise once into a plain list so the helpers
         # below can slice/index it without relying on ``collections.deque``
         # slice semantics (which Python 3.14 + abstract ``Sequence[float]``
         # typing can refuse at runtime).
-        history: list[float] = list(self._state.confidence_history)
+        with self._lock:
+            history: list[float] = list(self._state.confidence_history)
+            pane_label = cfg.pane_labels[CockpitPane.CONFIDENCE]
         p50 = self._percentile(history, 0.5)
         p95 = self._percentile(history, 0.95)
-        lines = [f"┌─ {cfg.pane_labels[CockpitPane.CONFIDENCE]} ─┐"]
+        lines = [f"┌─ {pane_label} ─┐"]
         lines.append(f"│ P50={p50:.2f}   P95={p95:.2f}   n={len(history):3d}     │")
         if cfg.show_sparkline:
             spark = _sparkline(history, cfg.sparkline_width)
@@ -816,20 +896,29 @@ class OperatorCockpit:
         return lines
 
     def _render_overrides_pane(self) -> list[str]:
+        """Render the active-overrides pane rows.
+
+        NEW-19 (SOTA fourth-pass): copies ``self._state.overrides``
+        under ``self._lock`` so a concurrent ``tick`` cannot replace
+        the dict mid-iteration.
+        """
         cfg = self.config
-        lines = [f"┌─ {cfg.pane_labels[CockpitPane.OVERRIDES]} ───────────┐"]
-        ovrs = sorted(
-            self._state.overrides.values(),
-            key=lambda ev: ev.expires_in_s,
-        )
+        with self._lock:
+            ovrs = sorted(
+                self._state.overrides.values(),
+                key=lambda ev: ev.expires_in_s,
+            )
+            total_ovrs = len(self._state.overrides)
+            pane_label = cfg.pane_labels[CockpitPane.OVERRIDES]
+        lines = [f"┌─ {pane_label} ───────────┐"]
         if not ovrs:
             lines.append("│  (no active overrides)               │")
             lines.append("│                                      │")
         else:
             for ev in ovrs[:MAX_OVERRIDE_PANE_ROWS]:
                 lines.append(f"│ {_format_override_row(ev):<38} │")
-            if len(ovrs) > MAX_OVERRIDE_PANE_ROWS:
-                lines.append(f"│  … {len(ovrs) - MAX_OVERRIDE_PANE_ROWS} more            │")
+            if total_ovrs > MAX_OVERRIDE_PANE_ROWS:
+                lines.append(f"│  … {total_ovrs - MAX_OVERRIDE_PANE_ROWS} more            │")
         lines.append("└──────────────────────────────────────┘")
         return lines
 
@@ -846,15 +935,22 @@ class OperatorCockpit:
         Empty panes render a single neutral line so the cockpit always
         reserves the row and operators can tell the audit pipeline is
         idle at a glance.
+
+        NEW-20 (SOTA fourth-pass): both the ``decision_notices`` snapshot
+        and the ``self._clock()`` sample are now taken under the same
+        ``self._lock`` critical section so a clock swap between the two
+        reads cannot compute ages against a different clock than the
+        one used to write the ``evaluated_at`` timestamp (same family
+        as NEW-18 + NEW-20 on ``_render_override_banner``).
         """
         with self._lock:
+            now = self._clock()
             decisions: list[DecisionNotice] = list(self._state.decision_notices)
         lines: list[str] = ["┌─ Decision History ──────────────────────────────┐"]
         if not decisions:
             lines.append("│  (no policy decisions recorded yet)            │")
             lines.append("│                                                 │")
         else:
-            now = self._clock()
             newest = list(reversed(decisions[-MAX_DECISION_PANE_ROWS:]))
             for d in newest:
                 glyph = _decision_glyph(d)
