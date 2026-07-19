@@ -345,3 +345,66 @@ crates/
 |----|------|------|---|------|--------|--------|--------|--------|-------|
 | V20-1.1 | 2026-06-12 | thegent | L4 | pheno-domain integration | e999c6d9ae | n/a | merged | koosha-ai | domain primitives consume from pheno-domain |
 | V20-1.2 | 2026-06-12 | thegent | L4 | vibecoding-guard adoption | pending | n/a | planned | koosha-ai | pre-commit hook for agent drift detection |
+
+## Phase 3/4 Hardening — 2026-07-18 (Five-Day Goal Resumed)
+
+### Lane: Cockpit SOTA Hardening + Governance→UX Bridge
+
+**Goal:** harden the operator cockpit for deterministic audit replay and wire
+governance policy decisions into the inline banner so operators see fresh
+denies without tailing the audit log.
+
+### Implementation
+
+1. **Clock injection** — `OperatorCockpit.__init__(clock=…)` and
+   `TrafficDashboard.set_clock(clock)` now accept an injectable
+   `Callable[[], float]`. Default is `time.time`, so all call sites stay
+   backwards compatible. `cockpit_bridge.render_cockpit` also threads
+   the clock through. SOTA audit replays can now produce
+   byte-identical renders across runs.
+2. **DecisionNotice + record_decision** — new dataclass
+   `thegent.ux.cockpit.DecisionNotice` captures `PolicyDecision` as a
+   typed event in the bounded `decision_notices` deque on `_CockpitState`.
+   `OperatorCockpit.record_decision(...)` validates type, applies the
+   same `MAX_DECISION_NOTICES` cap, and stamps `evaluated_at` via the
+   injected clock when callers pass `0` (or omit it).
+3. **DecisionNoticeBridge** — `thegent.ux.cockpit_bridge.DecisionNoticeBridge`
+   is the canonical seam from `PolicyEngine.evaluate()` to the cockpit.
+   It is the formal WP-3001 → WP-4001 connector and accepts any
+   PolicyDecision-shaped object (real class, mapping, or duck-typed)
+   so test and prod paths share one code path.
+4. **Inline banner** — `_render_override_banner` now walks both
+   `override_notices` (existing) and `decision_notices` (new), picks the
+   freshest qualifying event within `OVERRIDE_BANNER_MAX_AGE_S`, and
+   renders a deny banner that surfaces `rule_id` first so it survives
+   Rich's default console width truncation.
+
+### Validation
+
+- `pytest tests/test_unit_ux_cockpit.py tests/test_unit_ux_cockpit_bridge.py
+   tests/test_unit_ux_progress_emitter.py tests/test_unit_ux_explanations.py
+   tests/test_unit_ux_traffic.py tests/test_unit_policy_engine.py
+   tests/test_unit_ux_cockpit_clock_decisions.py -q`
+   → **196 passed** (was 168 before; +28 new tests)
+- `ruff check` and `ruff format --check` clean on all four touched files.
+
+### Files Touched
+
+- `src/thegent/ux/cockpit.py` — clock ctor arg, `_CockpitState.decision_notices`,
+  `DecisionNotice` dataclass, `OperatorCockpit.record_decision`,
+  `_render_override_banner` extended, `_render_decision_deny_banner`.
+- `src/thegent/ux/cockpit_bridge.py` — `DecisionNoticeBridge`,
+  `_decision_notice_for(...)` adapter, `BridgeResult` returned from
+  `feed_many`.
+- `src/thegent/ux/kpis/traffic.py` — `TrafficDashboard.set_clock`,
+  `TrafficWindow.__init__(clock=…)`, `TrafficDashboard.summary(now=…)`.
+- `tests/test_unit_ux_cockpit_clock_decisions.py` — 28 new tests
+  covering clock determinism, DecisionNotice lifecycle, bridge feed,
+  inline banner priority, end-to-end PolicyEngine→Cockpit.
+
+### Unblocked Next
+
+- CLI surface for `cockpit render` / `traffic summary` / `policy pre-check`
+  to expose the new bridge for operator testing.
+- JSONL appender so the cockpit → audit pipeline reuses the same
+  DecisionNotice stream that the bridge emits.

@@ -26,6 +26,7 @@ from typing import Any, Callable, Iterable, Iterator, Mapping, Sequence
 
 from ..governance.override_events import OverrideExpiredEvent
 from ..ux.cockpit import (
+    DecisionNotice,
     OperatorCockpit,
     OverrideExpiryNotice,
 )
@@ -306,8 +307,106 @@ def install_default_bridges(
     return OverrideExpiryBridge(cockpit), traffic_bridge
 
 
+# ---------------------------------------------------------------------------
+# Decision bridge (WP-3001 -> WP-4001)
+# ---------------------------------------------------------------------------
+
+
+# Decision verdicts that should be surfaced as an inline banner.
+# ``allow`` verdicts are common and would create banner noise; we only
+# surface denies inline and accumulate the rest into the bounded deque.
+_BANNER_VERDICTS = frozenset({"deny"})
+
+
+def _decision_notice_for(
+    decision: Any,
+    *,
+    agent: str = "",
+    lane: str = "standard",
+    now_epoch: float | None = None,
+) -> DecisionNotice:
+    """Build a :class:`DecisionNotice` from a :class:`PolicyDecision`-like object.
+
+    Duck-typed: accepts anything with ``verdict``, ``reason_code``,
+    ``rule_id``, and ``reason`` attributes (or keys). The mapping is
+    deterministic so audit-log replays produce stable output.
+    """
+    now = now_epoch if now_epoch is not None else _time.time()
+    if isinstance(decision, Mapping):
+        verdict = decision.get("verdict", "allow")
+        reason_code = decision.get("reason_code", "")
+        rule_id = decision.get("rule_id")
+        reason = decision.get("reason", "")
+    else:
+        verdict = getattr(decision, "verdict", "allow")
+        reason_value = getattr(decision, "reason_code", "")
+        reason_code = reason_value.value if hasattr(reason_value, "value") else str(reason_value)
+        rule_id = getattr(decision, "rule_id", None)
+        reason = getattr(decision, "reason", "")
+        # PolicyDecision's evaluated_at timestamp drives the cockpit's
+        # age-fade semantics; for duck-typed callers without it we fall
+        # back to the supplied clock so the notice still surfaces.
+        evaluated_at = getattr(decision, "evaluated_at", 0.0) or 0.0
+    verdict_str = verdict.value if hasattr(verdict, "value") else str(verdict)
+    evaluated_at = getattr(decision, "evaluated_at", 0.0) if not isinstance(decision, Mapping) else 0.0
+    if evaluated_at <= 0.0:
+        evaluated_at = now
+    return DecisionNotice(
+        verdict=verdict_str,
+        reason_code=str(reason_code),
+        rule_id=rule_id,
+        agent=str(agent),
+        lane=str(lane),
+        evaluated_at=float(evaluated_at),
+        reason=str(reason or ""),
+    )
+
+
+class DecisionNoticeBridge:
+    """Adapter pumping :class:`PolicyDecision` records into ``OperatorCockpit``.
+
+    Bridges WP-3001 (``PolicyEngine.evaluate``) into the WP-4001 4-pane
+    cockpit so verdicts appear inline as the runtime produces them.
+
+    The bridge is stateless aside from the captured cockpit reference; it is
+    safe to reuse across threads because
+    :meth:`OperatorCockpit.record_decision` is implemented with a lock.
+    """
+
+    def __init__(self, cockpit: OperatorCockpit) -> None:
+        self._cockpit = cockpit
+
+    def feed(self, decision: Any, *, agent: str = "", lane: str = "standard") -> BridgeResult:
+        """Push a single ``PolicyDecision``-like object through the cockpit."""
+        try:
+            notice = _decision_notice_for(decision, agent=agent, lane=lane)
+            self._cockpit.record_decision(notice)
+        except Exception as exc:  # noqa: BLE001 - bridge never raises.
+            _LOGGER.warning("decision bridge rejected decision %s: %s", decision, exc)
+            return BridgeResult(errors=[str(exc)])
+        return BridgeResult(accepted=1)
+
+    def feed_many(self, decisions: Iterable[Any], *, agent: str = "", lane: str = "standard") -> BridgeResult:
+        """Push a sequence of decisions and aggregate the bridge result."""
+        result = BridgeResult()
+        for decision in decisions:
+            sub = self.feed(decision, agent=agent, lane=lane)
+            result.accepted += sub.accepted
+            result.dropped += sub.dropped
+            result.errors.extend(sub.errors)
+        return result
+
+    def surface_banner_verdicts(self) -> frozenset[str]:
+        """Return the verdict set the bridge treats as banner-worthy.
+
+        Exposed so callers / tests can assert the contract stays stable.
+        """
+        return _BANNER_VERDICTS
+
+
 __all__ = [
     "BridgeResult",
+    "DecisionNoticeBridge",
     "ExplanationCompanion",
     "OverrideExpiryBridge",
     "TrafficCockpitBridge",

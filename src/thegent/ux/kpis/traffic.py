@@ -12,6 +12,10 @@ module provides:
 All values are thread-safe *per-dashboard* in single-threaded usage.  Designed
 to embed in CI captures, ``rich.live.Live``, and the operator cockpit.
 
+The dashboard accepts an optional ``clock`` callable (``-> float``) so audit
+replays and CI snapshots can pin the wall clock deterministically; by default
+``time.time`` is used.
+
 Traces to: OPS-001 (request rate), OPS-002 (error rate), OPS-003 (latency
             p95), P-081 (progress bar), P-090 (cockpit latency SLO),
             WP-Y7 (TRAFFIC real-time view).
@@ -23,7 +27,7 @@ import logging
 import threading
 import time
 from collections import Counter, deque
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -82,6 +86,9 @@ class TrafficWindow:
     The window is a fixed-size ring buffer of :class:`TrafficEvent`s.  Reads
     and writes are serialised through ``self._lock`` so the dashboard is safe
     to share across threads.
+
+    ``clock`` (``-> float``) defaults to ``time.time`` and can be injected
+    via ``TrafficWindow(clock=...)`` to make audit replays deterministic.
     """
 
     window_s: float = DEFAULT_WINDOW_SECONDS
@@ -91,11 +98,16 @@ class TrafficWindow:
 
     def __post_init__(self) -> None:
         self._lock = threading.Lock()
+        self._clock: Callable[[], float] = time.time
+
+    def set_clock(self, clock: Callable[[], float]) -> None:
+        """Override the wall clock used for eviction and zero-init fallback."""
+        self._clock = clock
 
     def record(self, event: TrafficEvent) -> None:
         """Append ``event`` and evict anything outside the window."""
         if event.ts <= 0:
-            event.ts = time.time()
+            event.ts = self._clock()
         with self._lock:
             self._events.append(event)
             self._evict(event.ts)
@@ -106,8 +118,12 @@ class TrafficWindow:
             self._events.popleft()
 
     def summary(self, *, now: float | None = None) -> dict[str, Any]:
-        """Return ``{count, by_lane, by_status, rps, error_rate, p50_ms, p95_ms}``."""
-        now = now if now is not None else time.time()
+        """Return ``{count, by_lane, by_status, rps, error_rate, p50_ms, p95_ms}``.
+
+        ``now`` overrides the wall clock for deterministic replay; defaults
+        to ``self._clock()`` when omitted.
+        """
+        now = now if now is not None else self._clock()
         with self._lock:
             self._evict(now)
             events = list(self._events)
@@ -202,6 +218,9 @@ class TrafficDashboard:
     :meth:`summary` or :meth:`render` to read the current state.
 
     The dashboard is single-threaded; concurrent callers must serialize.
+
+    Pass ``clock=`` to the constructor (or call ``set_clock``) to pin the
+    wall clock for deterministic audit replays and CI snapshots.
     """
 
     def __init__(
@@ -210,12 +229,19 @@ class TrafficDashboard:
         window_s: float = DEFAULT_WINDOW_SECONDS,
         bucket_s: float = DEFAULT_BUCKET_SECONDS,
         trend_width: int = DEFAULT_TREND_WIDTH,
+        clock: Callable[[], float] | None = None,
     ) -> None:
         self.window = TrafficWindow(window_s=window_s, bucket_s=bucket_s)
+        if clock is not None:
+            self.window.set_clock(clock)
         self.trend_width = trend_width
         # RPS trend is appended on every record() call; consumers can
         # render a sparkline of it via :meth:`rps_trend`.
         self._rps_trend: deque[float] = deque(maxlen=trend_width * 2)
+
+    def set_clock(self, clock: Callable[[], float]) -> None:
+        """Pin the wall clock on the underlying :class:`TrafficWindow`."""
+        self.window.set_clock(clock)
 
     def record(self, event: TrafficEvent) -> None:
         """Record a single traffic event (defaulted helpers attached)."""

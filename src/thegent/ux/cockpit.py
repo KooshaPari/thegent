@@ -44,7 +44,7 @@ import logging
 import threading
 import time
 from collections import Counter, deque
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -65,6 +65,9 @@ SPARKLINE_CHARS = "▁▂▃▄▅▆▇█"
 # before fading out. 30s matches the cockpit tick cadence and gives the
 # operator enough time to glance up between DAG ticks.
 OVERRIDE_BANNER_MAX_AGE_S = 30.0
+# Default wall-clock function (overridable per-cockpit for deterministic
+# audit replays; see ``OperatorCockpit(clock=...)``).
+_DEFAULT_CLOCK: Callable[[], float] = staticmethod(time.time)
 
 
 class CockpitPane(StrEnum):
@@ -162,6 +165,42 @@ class OverrideExpiryNotice:
     age_s: float = 0.0
 
 
+@dataclass(frozen=True)
+class DecisionNotice:
+    """A governance decision surfaced to the operator cockpit (WP-3001 -> WP-4001).
+
+    Bridges :class:`thegent.governance.policy_engine.PolicyDecision` into the
+    cockpit UX so verdicts (allow / deny / warn), reason codes, and the
+    matched ``rule_id`` are visible inline as the runtime produces them.
+
+    Attributes:
+        verdict: One of ``"allow"``, ``"deny"``, ``"warn"`` (matches
+            ``thegent.governance.policy_engine.Verdict`` values).
+        reason_code: Machine-readable reason code (``ReasonCode`` value).
+        rule_id: Matched policy rule (or ``None`` when no rule matched).
+        agent: Originating agent name (truncated for display).
+        lane: Originating lane (e.g. ``"critical"``).
+        evaluated_at: Unix timestamp of decision; used for stale-decay.
+        reason: Free-form human-readable reason string.
+    """
+
+    verdict: str
+    reason_code: str
+    rule_id: str | None
+    agent: str = ""
+    lane: str = "standard"
+    evaluated_at: float = 0.0
+    reason: str = ""
+
+    def is_deny(self) -> bool:
+        """Whether the decision blocked the request."""
+        return self.verdict == "deny"
+
+    def is_warn(self) -> bool:
+        """Whether the decision emitted a warning (admissible but flagged)."""
+        return self.verdict == "warn"
+
+
 # ---------------------------------------------------------------------------
 # Internal state containers
 # ---------------------------------------------------------------------------
@@ -180,9 +219,8 @@ class _CockpitState:
     runs: dict[str, RunEvent] = field(default_factory=dict)
     overrides: dict[str, OverrideEvent] = field(default_factory=dict)
     confidence_history: deque[float] = field(default_factory=lambda: deque(maxlen=1024))
-    override_notices: deque[OverrideExpiryNotice] = field(
-        default_factory=lambda: deque(maxlen=32)
-    )
+    override_notices: deque[OverrideExpiryNotice] = field(default_factory=lambda: deque(maxlen=32))
+    decision_notices: deque[DecisionNotice] = field(default_factory=lambda: deque(maxlen=64))
     last_progress: tuple[int, int] = (0, 0)  # (done, total)
 
 
@@ -275,7 +313,12 @@ class OperatorCockpit:
         print(cockpit.render())
     """
 
-    def __init__(self, config: CockpitConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: CockpitConfig | None = None,
+        *,
+        clock: Callable[[], float] | None = None,
+    ) -> None:
         self.config = config or CockpitConfig()
         self._state = _CockpitState()
         # counters
@@ -284,6 +327,10 @@ class OperatorCockpit:
         # State mutators (tick/reset) run concurrently with readers (render/
         # snapshot); serialise with an RLock so render can re-enter safely.
         self._lock = threading.RLock()
+        # Clock function used for tick timestamps, banner age, render-time
+        # metrics. Injected for deterministic audit replays; defaults to
+        # ``time.time``. Monotonicity is the caller's responsibility.
+        self._clock: Callable[[], float] = clock or _DEFAULT_CLOCK
 
     # --------------------------------------------------------------- mutators
 
@@ -300,7 +347,7 @@ class OperatorCockpit:
         ``overrides``: full replacement set of active overrides (idempotent).
         ``progress``: ``(done, total)`` for the header progress bar.
         """
-        now = time.time()
+        now = self._clock()
         with self._lock:
             self._state.last_tick_at = now
             if runs is not None:
@@ -335,12 +382,40 @@ class OperatorCockpit:
         fades.
         """
         if not isinstance(notice, OverrideExpiryNotice):  # defensive — surface config drift
-            raise TypeError(
-                f"record_override_event expects OverrideExpiryNotice, got "
-                f"{type(notice).__name__}"
-            )
+            raise TypeError(f"record_override_event expects OverrideExpiryNotice, got {type(notice).__name__}")
         with self._lock:
             self._state.override_notices.append(notice)
+
+    def record_decision(self, notice: DecisionNotice) -> None:
+        """Push a governance-decision notice into the cockpit (WP-3001 -> WP-4001).
+
+        Surfaces :class:`thegent.governance.policy_engine.PolicyDecision`
+        payloads inline so operators can see verdicts / reason codes
+        appear as the runtime produces them. ``deny`` verdicts are
+        rendered as a focused banner (similar to override expiry); all
+        other verdicts accumulate into a bounded ``decision_notices``
+        deque and can be read out via :meth:`snapshot` for downstream
+        consumers (CI hooks, log shippers).
+
+        The deque is bounded (``maxlen=64``) so a long-lived operator
+        session cannot grow unbounded. ``evaluated_at == 0`` is filled
+        with the cockpit's clock for ergonomic zero-init.
+        """
+        if not isinstance(notice, DecisionNotice):
+            raise TypeError(f"record_decision expects DecisionNotice, got {type(notice).__name__}")
+        with self._lock:
+            payload = notice
+            if payload.evaluated_at <= 0.0:
+                payload = DecisionNotice(
+                    verdict=payload.verdict,
+                    reason_code=payload.reason_code,
+                    rule_id=payload.rule_id,
+                    agent=payload.agent,
+                    lane=payload.lane,
+                    evaluated_at=self._clock(),
+                    reason=payload.reason,
+                )
+            self._state.decision_notices.append(payload)
 
     # -------------------------------------------------------------- snapshots
 
@@ -352,6 +427,7 @@ class OperatorCockpit:
         internal lock to avoid torn reads.
         """
         with self._lock:
+            now = self._clock()
             runs = list(self._state.runs.values())
             overrides = list(self._state.overrides.values())
             lanes = Counter(ev.lane for ev in runs)
@@ -359,21 +435,53 @@ class OperatorCockpit:
                 "title": self.config.title,
                 "tick_at": self._state.last_tick_at,
                 "frame_count": self._frame_count,
-                "runs": [{"run_id": r.run_id, "state": r.state.value,
-                         "lane": r.lane, "agent": r.agent,
-                         "confidence": r.confidence, "elapsed_s": r.elapsed_s,
-                         "note": r.note} for r in runs],
+                "runs": [
+                    {
+                        "run_id": r.run_id,
+                        "state": r.state.value,
+                        "lane": r.lane,
+                        "agent": r.agent,
+                        "confidence": r.confidence,
+                        "elapsed_s": r.elapsed_s,
+                        "note": r.note,
+                    }
+                    for r in runs
+                ],
                 "lanes": dict(lanes),
-                "overrides": [{"rule_id": o.rule_id, "by": o.by,
-                              "reason": o.reason, "expires_in_s": o.expires_in_s,
-                              "metadata": dict(o.metadata)} for o in overrides],
+                "overrides": [
+                    {
+                        "rule_id": o.rule_id,
+                        "by": o.by,
+                        "reason": o.reason,
+                        "expires_in_s": o.expires_in_s,
+                        "metadata": dict(o.metadata),
+                    }
+                    for o in overrides
+                ],
                 "progress": self._state.last_progress,
                 "confidence_history": list(self._state.confidence_history),
                 "override_notices": [
-                    {"rule_id": n.rule_id, "owner": n.owner,
-                     "reason": n.reason, "expired_at": n.expired_at,
-                     "age_s": max(0.0, time.time() - n.expired_at)}
+                    {
+                        "rule_id": n.rule_id,
+                        "owner": n.owner,
+                        "reason": n.reason,
+                        "expired_at": n.expired_at,
+                        "age_s": max(0.0, now - n.expired_at),
+                    }
                     for n in self._state.override_notices
+                ],
+                "decision_notices": [
+                    {
+                        "verdict": d.verdict,
+                        "reason_code": d.reason_code,
+                        "rule_id": d.rule_id,
+                        "agent": d.agent,
+                        "lane": d.lane,
+                        "evaluated_at": d.evaluated_at,
+                        "age_s": max(0.0, now - d.evaluated_at) if d.evaluated_at > 0 else 0.0,
+                        "reason": d.reason,
+                    }
+                    for d in self._state.decision_notices
                 ],
                 "last_render_ms": self._last_render_ms,
             }
@@ -395,11 +503,11 @@ class OperatorCockpit:
         The render is plain ASCII/Unicode, with one pane per line, four panes
         laid out as a 2x2 grid.  Returns ``""`` if the cockpit is empty.
         """
-        t0 = time.time()
+        t0 = self._clock()
         try:
             text = self._render_grid()
         finally:
-            dt = (time.time() - t0) * 1000.0
+            dt = (self._clock() - t0) * 1000.0
             self._last_render_ms = dt
             self._frame_count += 1
         return text
@@ -438,32 +546,41 @@ class OperatorCockpit:
         return f"{header}\n{body}"
 
     def _render_override_banner(self) -> str:
-        """Render an inline banner for the most-recent override-expiry event.
+        """Render an inline banner for the freshest operationally-relevant event.
 
-        Reads the most recent :class:`OverrideExpiryNotice` from the bounded
-        notice deque under the cockpit lock, recomputes its ``age_s`` against
-        the wall clock, and returns a single-line banner. Returns ``""``
-        when there are no notices or the most recent one has aged past
-        ``OVERRIDE_BANNER_MAX_AGE_S`` (so the banner naturally fades).
+        Walks both :attr:`_CockpitState.override_notices` and
+        :attr:`_CockpitState.decision_notices` for any event whose age is
+        within ``OVERRIDE_BANNER_MAX_AGE_S``, then picks the freshest.
+        Returns ``""`` when nothing qualifies so the banner naturally
+        fades between DAG ticks.
         """
-        now = time.time()
+        now = self._clock()
         with self._lock:
-            if not self._state.override_notices:
-                return ""
-            notice = self._state.override_notices[-1]
-        age = max(0.0, now - notice.expired_at)
-        if age > OVERRIDE_BANNER_MAX_AGE_S:
+            last_override: OverrideExpiryNotice | None = (
+                self._state.override_notices[-1] if self._state.override_notices else None
+            )
+            last_deny: DecisionNotice | None = None
+            for n in reversed(self._state.decision_notices):
+                if n.is_deny():
+                    last_deny = n
+                    break
+        candidates: list[tuple[float, str]] = []
+        if last_override is not None:
+            o_age = max(0.0, now - last_override.expired_at)
+            if o_age <= OVERRIDE_BANNER_MAX_AGE_S:
+                candidates.append((o_age, "override"))
+        if last_deny is not None and last_deny.evaluated_at > 0:
+            d_age = max(0.0, now - last_deny.evaluated_at)
+            if d_age <= OVERRIDE_BANNER_MAX_AGE_S:
+                candidates.append((d_age, "deny"))
+        if not candidates:
             return ""
-        reason = notice.reason or "ttl_elapsed"
-        glyph = "✓" if age < 1.0 else "!"
-        # Fixed-width columns: rule_id (12), owner (8), age (4), reason (32).
-        return (
-            f"  {glyph} override expired: "
-            f"{_truncate(notice.rule_id, 12):<12}  "
-            f"by {_truncate(notice.owner, 8):<8}  "
-            f"{age:4.0f}s ago  "
-            f"{_truncate(reason, 32)}"
-        )
+        # Freshest wins.
+        candidates.sort(key=lambda item: item[0])
+        kind = candidates[0][1]
+        if kind == "override":
+            return _render_override_banner_text(last_override, now)
+        return _render_decision_deny_banner(last_deny, now)  # type: ignore[arg-type]
 
     def _render_header(self) -> str:
         cfg = self.config
@@ -580,20 +697,63 @@ def render_cockpit(
     *,
     progress: tuple[int, int] | None = None,
     config: CockpitConfig | None = None,
+    clock: Callable[[], float] | None = None,
 ) -> str:
     """One-shot convenience renderer.
 
     Equivalent to building an ``OperatorCockpit``, calling ``tick(...)`` once,
-    and returning ``render()``.
+    and returning ``render()``. ``clock`` lets callers pin the wall clock for
+    deterministic audit replays.
     """
-    cockpit = OperatorCockpit(config=config)
+    cockpit = OperatorCockpit(config=config, clock=clock)
     cockpit.tick(runs=runs, overrides=overrides, progress=progress)
     return cockpit.render()
+
+
+# ---------------------------------------------------------------------------
+# Internal banner helpers (extracted so audit replays are byte-identical)
+# ---------------------------------------------------------------------------
+
+
+def _render_override_banner_text(notice: OverrideExpiryNotice, now: float) -> str:
+    """Format the override-expiry banner line; deterministic given (notice, now)."""
+    age = max(0.0, now - notice.expired_at)
+    reason = notice.reason or "ttl_elapsed"
+    glyph = "✓" if age < 1.0 else "!"
+    # Fixed-width columns: rule_id (12), owner (8), age (4), reason (32).
+    return (
+        f"  {glyph} override expired: "
+        f"{_truncate(notice.rule_id, 12):<12}  "
+        f"by {_truncate(notice.owner, 8):<8}  "
+        f"{age:4.0f}s ago  "
+        f"{_truncate(reason, 32)}"
+    )
+
+
+def _render_decision_deny_banner(notice: DecisionNotice, now: float) -> str:
+    """Render a single-line banner highlighting a recent policy deny.
+
+    The rule_id is shown first so it survives Rich's default console
+    width truncation on operators' terminals — operators triaging a deny
+    always have the offending rule in view, even on 80-col consoles.
+    """
+    age = max(0.0, now - notice.evaluated_at)
+    age_text = f"{age:.0f}s"
+    head = f"\u2717 policy deny: {notice.rule_id}"
+    if notice.lane:
+        head = f"{head}  lane={notice.lane}"
+    head = f"{head}  {age_text} ago"
+    if notice.reason_code:
+        head = f"{head}  ({notice.reason_code})"
+    if notice.reason:
+        head = f"{head}  {notice.reason}"
+    return head
 
 
 __all__ = [
     "CockpitConfig",
     "CockpitPane",
+    "DecisionNotice",
     "OperatorCockpit",
     "OverrideEvent",
     "OverrideExpiryNotice",
