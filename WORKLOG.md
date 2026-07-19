@@ -743,3 +743,215 @@ The audit also recommended:
 - Generalize `cockpit replay` into a richer `thegent sota
   replay` command that supports `--snapshot-format` and
   `--report-format=junitxml` for CI ingestion.
+
+### Phase 3/4 Continuation — 2026-07-18 (SOTA Replay + FederatedPolicyEngine Lock + Test-Runner Repair)
+
+Closed all three "Unblocked Next (post-2026-07-18 sprint)" items
+plus a P0 test-runner repair that was discovered mid-flight. This
+is the formal hand-off for the audit's two deferred P0 items
+(lock + direct tests) and the `thegent sota replay` generalization.
+
+Commit: `34cfb25` — `feat(governance,ux): sota replay command +
+federated-policy thread-safety hardening`.
+
+#### 1. `FederatedPolicyEngine` internal lock + path-traversal guard
+
+Closes the SOTA audit's two deferred items.
+
+`src/thegent/governance/federated_policy.py`:
+
+* New `threading.RLock` instance attribute `_lock`, acquired by
+  `register()`, `load_from_file()`, `merge()`, `evaluate()`, and
+  `expose_to()`. `merge()` re-enters the lock on both engines
+  (left first, then right) via `RLock` so two-way merges
+  between two engines that share a lock-ancestor stay safe.
+* Idempotent re-registration semantics: same `rule_id` now
+  replaces the prior entry rather than dropping it silently
+  (the audit flagged the prior behaviour as undocumented).
+  `load_from_file()` now also treats re-loading the same
+  rule_id as a replace (idempotent for repeated calls).
+* Path-traversal guard on `rule_id`:
+  * rejects values containing `..`, `/`, `\`, or NUL bytes;
+  * raises `ValueError` with a clear, actionable message
+    before any state is mutated;
+  * applies to both `register()` and `load_from_file()` (the
+    JSON path validates on every entry, not in bulk).
+
+The previous invariant (no lost writes under concurrent load)
+was only preserved because all production callers hold
+`PolicyEngine._lock`. Now the lock is documented and enforced
+inside the engine itself, so direct consumers (governance
+importers, SOTA replay tools, federated-policy dashboards) get
+the same guarantees without needing to know about the upstream
+serialisation.
+
+#### 2. Direct tests for `merge()` and path-traversal guard
+
+New file `tests/test_unit_federated_policy_thread_safety.py`
+(14 tests, ~360 lines). Traces to FR-GOV-001, FR-GOV-002, and
+the SOTA audit's coverage-gap items.
+
+* `TestFederatedPolicyEngineLock` (6 tests) — fire N threads
+  (8 readers + 4 writers) through `register()` /
+  `load_from_file()` / `merge()` / `evaluate()` and assert:
+  * final rule count matches the union of all writes;
+  * `_lock` is the same instance as `engine._lock`;
+  * `_lock` is `reentrant` (so `merge(a, b)` can hold both
+    locks without deadlocking);
+  * `_namespaces` is mutated only under the lock (a
+    single-threaded counter via `len(_namespaces)` matches
+    `register()` calls).
+* `TestFederatedPolicyEnginePathTraversalGuard` (5 tests) —
+  every entry-point (`register`, `load_from_file`) and every
+  poisoned string shape (`..`, `../escape`, `a/b`, `a\\b`,
+  `a\0b`) raises `ValueError` before mutating state. Confirms
+  `_namespaces` is empty after each rejected call.
+* `TestFederatedPolicyEngineMergeInvariants` (3 tests) —
+  `merge()` is non-destructive (originals unchanged),
+  scope-precedence (GLOBAL > REGIONAL > LOCAL) holds, and the
+  `_lock` is held for the entire merge call (verified by a
+  concurrent reader that can never observe a half-merged
+  state).
+
+#### 3. `thegent sota replay` (generalize cockpit replay)
+
+New top-level Typer sub-app `src/thegent/ux/cli_sota.py`
+(~520 lines, 17 tests in
+`tests/test_unit_ux_cli_sota.py`). Backed by the same
+`_load_replay_snapshot` / `_compare_decision` /
+`_emit_replay_summary` helpers that `cockpit replay` already
+exposes (re-used via direct module-level import, no
+duplication).
+
+```
+thegent sota replay \
+    --batch <corpus> \
+    --compare <snapshot> \
+    [--snapshot-format json|yaml|toml] \
+    [--report-format junitxml|text|json] \
+    [--report-path <p>] \
+    [--audit-path <p>] \
+    [--namespace <ns>] \
+    [--default-policy <ns>] \
+    [--dry-run|--commit] \
+    [--json]
+```
+
+* `--snapshot-format` parses the snapshot as JSON, YAML, or
+  TOML. JSON is the default and matches the existing
+  cockpit-replay contract.
+* `--report-format junitxml` emits a CI-friendly JUnit XML
+  report to `--report-path` (or stdout). XML is well-formed
+  (round-trip-parseable), one `<testcase>` per corpus entry,
+  with `<failure>` for mismatches and `<skipped>` for empty
+  corpora. Suitable for ingestion by GitHub Actions,
+  Buildkite, GitLab, and most other CI runners.
+* `--report-format text` re-uses the existing
+  `_emit_replay_summary` output (one diff line per mismatch
+  plus a final aggregate).
+* `--report-format json` emits a structured envelope
+  `{total, matched, mismatched, denies, results: [...]}` so
+  downstream SOTA tooling can re-parse without re-implementing
+  the diff logic.
+* Typer-group promotion: the new `app` declares a no-op
+  callback so Typer keeps it as a `TyperGroup` even with one
+  registered sub-command (without the callback, Typer
+  demotes single-command `Typer` instances to `TyperCommand`,
+  which breaks `thegent sota replay …` invocation).
+* Registered at `thegent sota …` in
+  `thegent.cli.apps.main`.
+
+#### 4. P0 test-runner repair (discovered mid-flight)
+
+While running the new tests I discovered
+`conftest.py:pytest_ignore_collect` uses the pytest ≤9.0
+signature (`path: Path`) but the installed pytest is 9.1.x,
+which renamed the parameter to `collection_path`. This
+**broke every `pytest` run** in the repo (the test runner
+crashed at collection time before any test could execute).
+WORKLOG entries that reported `272 passed` etc. were
+written under the prior pytest; the new env cannot reproduce
+those numbers without this fix.
+
+The fix is a single-parameter rename in `conftest.py:57`:
+`path: Path` → `collection_path: Path`. No behavioural
+change. This is the minimum forward-compatible shim.
+
+#### Validation
+
+* `pytest -c pytest-pr.ini
+  tests/test_unit_federated_policy_thread_safety.py
+  tests/test_unit_ux_cli_sota.py
+  tests/test_unit_policy_engine.py
+  tests/test_unit_ux_cockpit_audit_pane_batch.py
+  tests/test_unit_ux_cockpit.py --override-ini="addopts=…"`
+  → **130 passed** in 5.83s (zero regressions).
+* `ruff check` and `ruff format --check` clean on all six
+  touched files
+  (`src/thegent/governance/federated_policy.py`,
+  `src/thegent/ux/cli_sota.py`,
+  `src/thegent/cli/apps/main.py`, `conftest.py`,
+  `tests/test_unit_federated_policy_thread_safety.py`,
+  `tests/test_unit_ux_cli_sota.py`).
+* XML/JUnit output round-trips through
+  `xml.etree.ElementTree.fromstring` (covered by direct test).
+* No secrets in the diff.
+
+#### Files Touched
+
+* `src/thegent/governance/federated_policy.py` — internal
+  `_lock`, path-traversal guard, idempotent re-register
+  semantics, doc comments on the locking invariants.
+* `src/thegent/ux/cli_sota.py` — **new** (~520 lines):
+  `sota_replay` Typer sub-command, snapshot-format parser,
+  report-format renderers (text/json/junitxml),
+  `--report-path`, `--audit-path`, `--namespace`,
+  `--default-policy`, no-op Typer-group callback.
+* `src/thegent/cli/apps/main.py` — registers the new `sota`
+  Typer sub-app under `thegent sota`.
+* `conftest.py` — `pytest_ignore_collect` signature fix
+  (`path` → `collection_path`) for pytest 9.1.x compatibility.
+* `tests/test_unit_federated_policy_thread_safety.py` —
+  **new** (~360 lines, 14 tests).
+* `tests/test_unit_ux_cli_sota.py` — **new** (~530 lines,
+  17 tests).
+
+#### Known Pre-Existing Issues (NOT addressed in this commit)
+
+* `tests/test_federated_policy.py` line 15 imports `orjson as
+  json` then calls `json.dump(...)` on line 242 — orjson has
+  no `.dump` method (only `.dumps`). Pre-existing, not
+  touched in this commit. 9 tests in that file fail at
+  collection time under the new env.
+* 105 collection errors across the wider `tests/` tree
+  (missing deps, missing files, etc.) — all pre-existing,
+  unrelated to this commit. The targeted regression above
+  (130/130 passing) covers every file this commit touches
+  plus their immediate neighbours.
+
+#### Unblocked Next
+
+* **Wire the remaining `cockpit replay` consumers to `sota
+  replay`** — `cockpit replay` still exists for backwards
+  compatibility, but the `--snapshot-format` /
+  `--report-format=junitxml` superpower lives on the new
+  command. Add a `cockpit replay --snapshot-format` /
+  `--report-format` shim that delegates to `sota replay` so
+  operators get the new formats without learning a new
+  command name.
+* **`PoliCyEngine.register_override` direct test** — the
+  audit also flagged the override path-traversal guard
+  (which is implemented in `policy_engine.py`, not
+  `federated_policy.py`). The audit's coverage-gap item is
+  only half-closed: merge() and the federated path-traversal
+  guard are now covered; the policy-engine-level override
+  guard still has no direct unit test.
+* **Repair the 105 pre-existing test-collection errors** —
+  the wider `tests/` tree is broken under the current env.
+  Many are missing imports (`agents/`, `tools/`,
+  `unit/agents/`, `unit/governance/`); some are
+  `FileNotFoundError` for files that moved. This blocks
+  CI-mergeability and the `--exitfirst` from `pytest-pr.ini`
+  means the first such error halts the entire suite. A
+  dedicated `chore(tests): repair wider regression
+  collection` lane is the obvious next sprint.
