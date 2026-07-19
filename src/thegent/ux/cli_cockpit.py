@@ -846,6 +846,17 @@ def cockpit_replay(
             audit_path=audit_str,
             json_output=json_output,
         )
+        # Operator confirmation: when an audit file was written, tell
+        # the operator whether the run **appended** to an existing
+        # file or **overwrote** it. CI/nightly harnesses that re-run
+        # the same snapshot nightly need to know whether their prior
+        # audit trail was preserved (append) or zeroed (overwrite)
+        # so they can detect accidental truncation. Only emitted in
+        # text mode; ``--json`` consumers parse the structured
+        # envelope and would treat this line as noise.
+        if audit_str is not None and not json_output:
+            mode = "append" if audit_append else "overwrite"
+            typer.echo(f"replay: audit={audit_str} mode={mode} lines={len(produced)}")
         if not matched:
             raise typer.Exit(4)
     except typer.Exit:
@@ -952,6 +963,15 @@ def cockpit_audit_decision_tail(
         "--max-events",
         help="Stop after this many events (0 = unbounded). Useful for CI smoke tests.",
     ),
+    exit_code_on_cap: int = typer.Option(
+        0,
+        "--exit-code-on-cap",
+        help=(
+            "Exit code to use when --max-events is reached (only applies when "
+            "--follow is set; 0 = silent, recommended non-zero for CI smoke tests, "
+            "e.g. 75 to distinguish from generic errors). Default 0 (current behaviour)."
+        ),
+    ),
 ) -> None:
     """Single-shot or live-tail the JSONL decision audit log.
 
@@ -965,6 +985,13 @@ def cockpit_audit_decision_tail(
     ``--max-events`` caps the total number of events emitted
     (including the initial backlog on entry) and is intended for
     CI / smoke tests that need to deterministically bound the run.
+    When the cap is reached during a ``--follow`` session, the
+    process exits with ``--exit-code-on-cap`` (default ``0``) so
+    shell pipelines / smoke harnesses can detect the bounded
+    completion without parsing stderr. Operators who want the
+    historical "success" semantics can leave the flag at its
+    default; CI consumers should pass a non-zero value such as
+    ``75`` to distinguish "capped and stopped" from "errored out".
     """
     from ..ux.decision_audit import DEFAULT_TAIL_INTERVAL_S, DecisionAuditAppender
 
@@ -973,6 +1000,11 @@ def cockpit_audit_decision_tail(
     # 0s tight loop if the caller passes ``--interval 0``.
     interval_s = float(interval) if interval > 0 else DEFAULT_TAIL_INTERVAL_S
     cap = int(max_events) if max_events and max_events > 0 else 0
+    # Exit codes are 0-255; clamp negatives / oversize values so a
+    # typo doesn't accidentally return a noisy traceback.
+    exit_code = int(exit_code_on_cap) if exit_code_on_cap else 0
+    if exit_code < 0 or exit_code > 255:
+        raise typer.BadParameter(f"--exit-code-on-cap must be in [0, 255], got {exit_code_on_cap!r}")
 
     try:
         appender = DecisionAuditAppender(audit_path=audit_path)
@@ -994,12 +1026,19 @@ def cockpit_audit_decision_tail(
         return
 
     try:
-        _follow_audit_log(appender, interval_s=interval_s, max_events=cap)
+        emitted = _follow_audit_log(appender, interval_s=interval_s, max_events=cap)
     except KeyboardInterrupt:
         # SIGINT during a live tail is the operator pressing Ctrl-C;
         # exit cleanly with code 0 so shells / shell pipelines don't
         # treat it as an error.
         raise typer.Exit(0) from None
+
+    # If the operator asked for a bounded run AND the cap was hit AND
+    # they wired a non-zero exit code, propagate it so CI smoke
+    # harnesses can detect "ran to completion under the cap" without
+    # scraping stderr.
+    if cap and emitted >= cap and exit_code:
+        raise typer.Exit(exit_code) from None
 
 
 def _follow_audit_log(

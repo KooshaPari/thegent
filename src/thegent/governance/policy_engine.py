@@ -198,6 +198,15 @@ class PolicyEngine:
         # evaluate() can re-enter via _apply_override safely).
         self._lock = threading.RLock()
         self._cache: TTLCache[str, PolicyDecision] = TTLCache(maxsize=cache_maxsize, ttl=cache_ttl_sec)
+        # OPT-008 observability: hit / miss counters incremented under
+        # ``_lock`` so SOTA tooling and operator dashboards can assert
+        # cache wiring without reaching into the underlying TTLCache.
+        # ``_cache_hits`` / ``_cache_misses`` are counters (not gauges),
+        # so a long-running process that wants a hit-rate over the last
+        # N evals needs to snapshot both via ``cache_stats()`` and
+        # diff them.
+        self._cache_hits = 0
+        self._cache_misses = 0
 
     # ------------------------------------------------------------------ registry
 
@@ -327,6 +336,10 @@ class PolicyEngine:
         key = _cache_key(ctx)
         with self._lock:
             cached = self._cache.get(key)
+            if cached is not None:
+                self._cache_hits += 1
+            else:
+                self._cache_misses += 1
         if cached is not None:
             return PolicyDecision(
                 verdict=cached.verdict,
@@ -586,13 +599,58 @@ class PolicyEngine:
     # ------------------------------------------------------------------ helpers
 
     def invalidate_cache(self) -> None:
-        """Drop all cached decisions (e.g., after a rule change)."""
+        """Drop all cached decisions (e.g., after a rule change).
+
+        Also resets the hit/miss counters so a "fresh observation
+        window" starts cleanly — SOTA tooling that snapshots stats
+        before and after a config change can rely on the diff being
+        purely post-change.
+        """
         with self._lock:
             self._cache.clear()
+            self._cache_hits = 0
+            self._cache_misses = 0
 
     def cache_size(self) -> int:
         with self._lock:
             return len(self._cache)
+
+    def cache_stats(self) -> dict[str, Any]:
+        """Return a snapshot of the OPT-008 decision-cache observability surface.
+
+        The snapshot is taken under :attr:`_lock` so the counters and
+        ``size`` are consistent with each other (a concurrent
+        ``evaluate`` can't bump a counter between the two reads). The
+        returned mapping is safe to JSON-serialize and is the shape
+        ``thegent cockpit …`` dashboards consume.
+
+        Keys:
+
+        * ``size`` — current number of entries in the bounded
+          ``TTLCache`` (``0 <= size <= cache_maxsize``).
+        * ``maxsize`` — the configured ceiling.
+        * ``hits`` — monotonic counter; reset on :meth:`invalidate_cache`
+          and on construction.
+        * ``misses`` — monotonic counter; reset on :meth:`invalidate_cache`
+          and on construction.
+        * ``total`` — ``hits + misses``.
+        * ``hit_rate`` — ``hits / total`` when ``total > 0`` else ``0.0``.
+          Useful as a single-line gauge on operator dashboards.
+        """
+        with self._lock:
+            hits = self._cache_hits
+            misses = self._cache_misses
+            size = len(self._cache)
+        total = hits + misses
+        hit_rate = (hits / total) if total > 0 else 0.0
+        return {
+            "size": size,
+            "maxsize": self._cache.maxsize,
+            "hits": hits,
+            "misses": misses,
+            "total": total,
+            "hit_rate": hit_rate,
+        }
 
 
 def evaluate_pre_check(
