@@ -61,7 +61,13 @@ from .cli_cockpit import (
 # triage the failure fast.
 _SUITE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
 
+# F-15 (SOTA fifth-pass): ``name="sota"`` so ``Usage: sota`` renders
+# in --help output instead of Typer's "root" fallback when invoked via
+# ``python -m thegent.ux.cli_sota``. The same ``app`` is mounted into
+# the parent ``thegent`` group by the all-things entry point; the
+# parent group supplies its own name so the standalone case still works.
 app = typer.Typer(
+    name="sota",
     help="SOTA audit-replay tooling (Phase 3/4 hardening lane).",
     no_args_is_help=True,
     add_completion=False,
@@ -73,7 +79,11 @@ app = typer.Typer(
 # this, Typer collapses single-command apps into a ``TyperCommand``
 # and ``runner.invoke(app, ["replay", ...])`` interprets the second
 # ``replay`` as an extra positional argument.
-@app.callback()
+# F-15 (SOTA fifth-pass): ``help=`` kwarg on the callback so Typer
+# surfaces the root description alongside the sub-commands in
+# ``thegent sota --help``. (Without ``help=`` only the Typer-level
+# ``help=`` renders; the callback docstring is silently ignored.)
+@app.callback(help="SOTA audit-replay tooling root (see ``replay`` sub-command).")
 def _sota_root() -> None:
     """SOTA audit-replay tooling root (see ``replay`` sub-command)."""
 
@@ -350,11 +360,16 @@ _REPORT_RENDERERS: dict[str, Any] = {
 # ---------------------------------------------------------------------------
 
 
+# F-15 (SOTA fifth-pass): collapse the multi-sentence help into a
+# single imperative sentence ending in a period (matching the
+# convention of the sibling ``cockpit replay`` sub-command), and
+# move the lane annotation into the function docstring that Typer
+# renders as the ``--help`` extended description.
 @app.command(
     "replay",
     help=(
-        "Replay a corpus against an expected PolicyDecision snapshot and emit "
-        "a structured report (text / json / junitxml). SOTA audit hardening lane."
+        "Replay a corpus against an expected PolicyDecision snapshot "
+        "(WP-3003/WP-4002, FR-GOV-005, Phase 3/4 hardening lane)."
     ),
 )
 def sota_replay(

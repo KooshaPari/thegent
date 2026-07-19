@@ -181,24 +181,46 @@ err_console = Console(stderr=True)
 
 
 # AUDIT-9 (Phase 3/4 third-pass hardening): module-level single
-# import so the existing call-sites can use ``_escape(...)`` and
-# ``_exc_text(exc)`` as direct drop-ins. F-1 (SOTA second-pass):
+# import of Rich's escape so the existing call-sites can use
+# ``_exc_text(...)`` as a direct drop-in. F-1 (SOTA second-pass):
 # ``_render_cli_error`` / ``_render_cli_warn`` were the first
 # iteration of the escape shims; every call site was migrated to
 # ``_exc_text`` / ``_escape`` in the AUDIT-9 hand-off, so the
 # wrapper functions are now dead code and were deleted.
-from rich.markup import escape as _escape  # noqa: E402
+#
+# F-15 (SOTA fifth-pass): ``_exc_text`` accepts any ``object`` (not
+# just ``BaseException``) and coerces via ``str(obj)`` internally.
+# The previous ``_exc_text(exc: BaseException)`` typing forced
+# call-sites to write ``_escape(str(batch))`` for path strings,
+# which meant two helper names for the same operation. Widening the
+# signature to ``object`` collapses the two helpers into one and
+# aligns with how the cli_sota module already calls the helper for
+# non-exception values (``_exc_text(snapshot_format)!r``, etc.).
+from rich.markup import escape as _rich_escape  # noqa: E402
 
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _exc_text(exc: BaseException) -> str:
-    """AUDIT-9: render ``str(exc)`` with Rich markup escaped."""
-    return _escape(str(exc))
+def _exc_text(value: object) -> str:
+    """Render ``value`` with Rich markup escaped.
+
+    AUDIT-9 contract: every CLI error / warning string that
+    interpolates user-influenced data MUST route through this
+    helper so an attacker cannot inject Rich markup (e.g.
+    ``[red] injected[/red]``) into stderr. The widening from
+    ``BaseException`` to ``object`` is F-15.
+    """
+    return _rich_escape(str(value))
 
 
+# F-15 (SOTA fifth-pass): ``name="cockpit"`` so ``Usage: cockpit`` renders
+# in --help output instead of Typer's "root" fallback when invoked via
+# ``python -m thegent.ux.cli_cockpit``. The same ``app`` is mounted into
+# the parent ``thegent`` group by the all-things entry point; the
+# parent group supplies its own name so the standalone case still works.
 app = typer.Typer(
+    name="cockpit",
     help="Operator cockpit + traffic KPI + policy pre-check surface (WP-3001/WP-4001/WP-Y7).",
     no_args_is_help=True,
 )
@@ -279,7 +301,11 @@ def cockpit_render(
 # ---------------------------------------------------------------------------
 
 
+# F-15 (SOTA fifth-pass): ``name="traffic"`` for symmetry with the
+# ``audit_app`` sub-app and so ``cockpit traffic --help`` renders
+# cleanly under the parent ``cockpit`` group.
 traffic_app = typer.Typer(
+    name="traffic",
     help="TRAFFIC KPI dashboard (WP-Y7, OPS-001/002/003, P-081).",
     no_args_is_help=True,
 )
@@ -499,7 +525,7 @@ def _run_pre_check_batch(
         namespace_override=namespace_override,
     )
     if not contexts:
-        err_console.print(f"[yellow]pre-check batch is empty:[/yellow] {_escape(str(batch))}")
+        err_console.print(f"[yellow]pre-check batch is empty:[/yellow] {_exc_text(batch)}")
         return 0
 
     appender = appender_factory() if persist_audit else None
@@ -906,13 +932,17 @@ def _format_mismatch(
     return f"mismatch[{idx}]: " + " ".join(parts)
 
 
+# F-15 (SOTA fifth-pass): collapse the multi-sentence help into a
+# single imperative sentence ending in a period (matching the
+# convention of every other sub-command), and move the lane /
+# delegation guidance into the function docstring that Typer renders
+# as the ``--help`` extended description. The lane tag now mirrors
+# the ``(WP-XXXX, FR-UX-NNN)`` style used by sibling sub-commands.
 @app.command(
     "replay",
     help=(
-        "Replay a corpus against an expected PolicyDecision snapshot and report "
-        "line-by-line mismatches (Phase 3/4 hardening lane, third Unblocked Next item). "
-        "Pass --snapshot-format yaml/toml or --report-format json/junitxml to "
-        "transparently delegate to `thegent sota replay`."
+        "Replay a corpus against an expected PolicyDecision snapshot "
+        "(WP-3003/WP-4002, FR-GOV-005, Phase 3/4 hardening lane)."
     ),
 )
 def cockpit_replay(
@@ -1097,10 +1127,10 @@ def cockpit_replay(
 
     try:
         if not batch.exists():
-            err_console.print(f"[red]replay failed:[/red] batch path not found: {_escape(str(batch))}")
+            err_console.print(f"[red]replay failed:[/red] batch path not found: {_exc_text(batch)}")
             raise typer.Exit(1)
         if not compare.exists():
-            err_console.print(f"[red]replay failed:[/red] compare path not found: {_escape(str(compare))}")
+            err_console.print(f"[red]replay failed:[/red] compare path not found: {_exc_text(compare)}")
             raise typer.Exit(1)
         try:
             expected_snapshot = _load_replay_snapshot(compare)
@@ -1133,7 +1163,7 @@ def cockpit_replay(
             namespace_override=namespace,
         )
         if not contexts:
-            err_console.print(f"[yellow]replay batch is empty:[/yellow] {_escape(str(batch))}")
+            err_console.print(f"[yellow]replay batch is empty:[/yellow] {_exc_text(batch)}")
             # An empty corpus against a non-empty snapshot is a mismatch;
             # against an empty snapshot it is a match. Either way, exit 0
             # since there is no decision to validate.
@@ -1293,7 +1323,7 @@ def _emit_replay_summary(
     batch_str = str(batch) if batch is not None else "?"
     compare_str = str(compare) if compare is not None else "?"
     typer.echo(
-        f"replay: batch={_escape(batch_str)} compare={_escape(compare_str)} "
+        f"replay: batch={_exc_text(batch_str)} compare={_exc_text(compare_str)} "
         f"items={items} matched={matched} mismatches={len(mismatches)}"
     )
     for m in mismatches:
@@ -1305,7 +1335,11 @@ def _emit_replay_summary(
 # ---------------------------------------------------------------------------
 
 
+# F-15 (SOTA fifth-pass): ``name="audit"`` for symmetry with the
+# ``traffic_app`` sub-app and so ``cockpit audit --help`` renders
+# cleanly under the parent ``cockpit`` group.
 audit_app = typer.Typer(
+    name="audit",
     help="Tail or replay the JSONL audit log produced by DecisionAuditAppender.",
     no_args_is_help=True,
 )
@@ -1374,7 +1408,7 @@ def cockpit_audit_decision_tail(
         ),
     ),
 ) -> None:
-    """Single-shot or live-tail the JSONL decision audit log.
+    """Live-tail the JSONL decision audit log (or print a one-shot backlog).
 
     Without ``--follow`` this is a thin wrapper over
     :meth:`DecisionAuditAppender.tail_events` that prints the most

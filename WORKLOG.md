@@ -3803,3 +3803,180 @@ the sub-app to the real implementation logic.
   `3cdd4b8fa` (impl) + `b1ec041e6` (SHA stamp) + `071e3fd51` (count
   stamp) land. **Not pushed** to the archived upstream
   `KooshaPari/thegent.git` per the directive.
+
+## 2026-07-19: Phase 3/4 Continuation — F-15 + UX polish lane (sub-command help + error envelopes)
+
+**Scope.** Continuation lane on
+`wip/2026-07-18-cockpit-sota-hardening` to close the F-15 + UX
+polish carry-forward item from the prior hand-off: normalize
+Typer sub-command help text + unify the error-envelope helper
+split that had lingered since the AUDIT-9 closure. A focused
+diff with no behaviour change to operators beyond a cleaner
+`--help` surface and tighter error envelopes.
+
+### What changed
+
+* `src/thegent/ux/cli_cockpit.py` — **F-15-D** the root
+  `typer.Typer(...)` is now `typer.Typer(name="cockpit", ...)`
+  so `python -m thegent.ux.cli_cockpit --help` renders
+  `Usage: cockpit ...` instead of Typer's `Usage: root ...`
+  fallback. **F-15-E** the two sub-apps (`traffic_app`,
+  `audit_app`) get the matching `name="traffic"` / `name="audit"`
+  so `cockpit traffic --help` and `cockpit audit --help` render
+  clean usage lines. **F-15-A** the `replay` sub-command's
+  multi-sentence help is collapsed to a single imperative
+  sentence ending in a period (`(WP-3003/WP-4002, FR-GOV-005,
+  Phase 3/4 hardening lane).`), with the lane / delegation
+  guidance moved into the function docstring (Typer renders the
+  docstring as the extended `--help` description). **F-15-B**
+  `cockpit_audit_decision_tail`'s docstring was rewritten from a
+  non-imperative description ("Single-shot or live-tail the
+  JSONL decision audit log.") to an imperative one ("Live-tail
+  the JSONL decision audit log (or print a one-shot backlog).").
+  **F-15-G** the import
+  `from rich.markup import escape as _escape` was renamed to
+  `_rich_escape` and the helper signature was widened from
+  `_exc_text(exc: BaseException) -> str` to
+  `_exc_text(value: object) -> str` so the previously duplicated
+  `_escape(str(batch))` pattern at every `Path`-shaped call
+  site collapses to a single `_exc_text(batch)` (and the
+  `Path` → `str` coercion now happens inside the helper). All
+  four `_escape(str(...))` call sites in `cli_cockpit.py` were
+  migrated. **UX-1** every `err_console.print(f"[red]... failed:
+  [/red] ...")` envelope in `cli_cockpit.py` is now uniform
+  with the `[red]<sub-command> failed:[/red] <escaped-detail>`
+  prefix convention; the four `cli_cockpit.py` envelopes that
+  were missing the `failed:` prefix now match.
+* `src/thegent/ux/cli_sota.py` — **F-15-E** the root
+  `typer.Typer(...)` is now `typer.Typer(name="sota", ...)` so
+  `Usage: sota ...` renders correctly. **F-15-F** the missing
+  `@app.callback()` decorator on `cli_sota.py` is now
+  `@app.callback(help="State-of-the-Art audit + replay
+  commands (WP-3001/WP-4001/WP-Y7).")` so Typer renders the
+  description alongside the sub-commands instead of suppressing
+  it (the prior code relied on the `help=` kwarg on the root
+  `typer.Typer()` alone, which Typer's `add_completion=False`
+  default path drops when no callback is registered).
+* `tests/test_unit_ux_sota_fifth_pass.py` — **new** (29 tests,
+  6 classes) covering:
+  * `TestCockpitAppName` — `cockpit --help` renders
+    `Usage: cockpit` and the `app.info.name` is `"cockpit"`.
+  * `TestSotaAppName` — `sota --help` renders `Usage: sota`,
+    the `app.info.name` is `"sota"`, and the new
+    `@app.callback(help=...)` actually surfaces the root
+    description (verified by scanning for the
+    `State-of-the-Art audit + replay commands` substring in the
+    stripped help output).
+  * `TestHelpTextPeriodConvention` — every cockpit + sota
+    sub-command help string is a single imperative sentence
+    ending in a period. The two longest multi-sentence helps
+    (cockpit `replay` / sota `replay`) are verified to have
+    collapsed to a single sentence, with continuation lines
+    correctly joined.
+  * `TestDecisionTailDocstringConvention` — the
+    `cockpit_audit_decision_tail` docstring starts with the
+    imperative mood ("Live-tail…") rather than the prior
+    description-style ("Single-shot or live-tail…").
+  * `TestExcTextWidenedSignature` — `_exc_text` accepts
+    `BaseException`, `Path`, `str`, and `int`; the rendered
+    Rich output neutralises bracket markup so
+    `_exc_text("[red]injection[/red]")` renders as plain text
+    (verified by `Console().render(...).plain` not containing
+    the raw `[red]` token). The unified-helper invariant is
+    also pinned (no `_escape(` call sites remain in either
+    `cli_cockpit.py` or `cli_sota.py`).
+  * `TestErrorEnvelopeConvention` — all `err_console.print(...)`
+    call sites in `cli_cockpit.py` + `cli_sota.py` route
+    through `_exc_text(...)` (no naked `{exc}` or
+    `{str(x)}` interpolation into Rich-markup f-strings).
+    Help-text renders correctly for every known sub-command
+    (`render`, `pre-check`, `replay`, `traffic summary`,
+    `audit tail`, `audit decision-tail`).
+  * `TestHelpOutputSanity` — every parametrized `--help`
+    invocation exits zero, prints `Usage:`, and never prints a
+    `Traceback`.
+  * `TestCockpitReplayErrorEnvelope` (regression guard for the
+    silent dual-error case found mid-lane) — `cockpit replay
+    --batch <missing> --compare <present>` exits `1` and
+    prints **exactly one** `replay failed:` line; no
+    `Traceback`, no `NameError`. Same for
+    `--batch <present> --compare <missing>` and
+    `--batch <missing> --compare <missing>`. The three tests
+    together pin the contract that a missing input path
+    produces a single envelope, not a stale `from exc` raising
+    `NameError: cannot access local variable 'exc' where it is
+    not associated with a value` on the second line.
+
+### Regression caught and fixed mid-lane
+
+While validating `test_cockpit_help_exits_zero` with a
+`--batch <missing>` smoke invocation, the second error line
+revealed a latent bug: `ruff --fix` had auto-injected
+`raise typer.Exit(1) from exc` at the `not batch.exists()`
+branch of `cockpit_replay`, but `exc` was not bound in that
+scope (the prior `except Exception as exc:` had already
+returned). The CLI exited `1` with the correct first envelope,
+but a second `replay failed: cannot access local variable 'exc'
+where it is not associated with a value` line was emitted on
+stderr. Fixed by removing the spurious `from exc` at
+`src/thegent/ux/cli_cockpit.py:1131` and added the three
+`TestCockpitReplayErrorEnvelope` regression guards so a
+future `ruff --fix` run cannot reintroduce it.
+
+### Validation
+
+* UX/SOTA targeted regression (19 files including the new
+  fifth-pass suite) → **442 passed in 8.72s** (+29 from the
+  prior 413 baseline).
+* Full Phase 3/4 hardening sweep (15 files incl. AUDIT-1/6/9/19
+  closure suite + the new fifth-pass suite) →
+  **334 passed in 10.13s**.
+* `uvx ruff check src/thegent/ux/cli_cockpit.py
+  src/thegent/ux/cli_sota.py
+  tests/test_unit_ux_sota_fifth_pass.py` →
+  **All checks passed**.
+* `uvx ruff format --check` → **3 files already formatted**.
+* `python3 -m py_compile` clean on all touched `.py` files.
+* Secret scan (`api_key|secret|token|password|passwd|bearer|
+  aws_access|private_key`) → **0 matches** in the diff.
+* `pyproject.toml` cognitive-complexity / function-length
+  invariants: all touched functions under 40 lines (longest
+  is `_exc_text` at 7 lines).
+* Pre-existing failures (`tests/test_unit_session_tui.py`
+  6 `AttributeError`s on `SessionTUI`; `tests/test_unit_mcp_pre_work_gate.py`
+  2 MCP-server-wiring failures) confirmed unrelated —
+  `git stash` + retest on the prior commit
+  (`35c897b0c`) reproduces the same failure pattern with
+  zero changes from this lane.
+* Bundle-zsh-scripts worktree at
+  `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/bundle-zsh-scripts`
+  preserved untouched (HEAD still `830d7af86`, working tree
+  clean).
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (still saturated; the
+  sixteenth closure pass on top of the Five-Day Goal envelope
+  + the prior 15 closure lanes; the bar cannot exceed
+  saturation in this lane).
+* **DAG tick**: **`+1`** (this hand-off on top of the
+  CachePreWarmer FR-CACHE-003 closure).
+* **Closed this lane**: F-15 + UX polish — Typer sub-command
+  help-text normalisation (single-sentence imperative +
+  trailing-period convention + app-name + callback help),
+  `_exc_text` / `_escape` helper consolidation, error-envelope
+  prefix uniformity, and a regression-guard for the
+  silent-dual-error case on missing input paths.
+* **Cumulative closed (16 prior lanes + this)**: AUDIT-1/2/4/
+  6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1,
+  KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225
+  plan-workstream thicken, diskcache-skip-guard
+  collection-repair, CachePreWarmer FR-CACHE-003 contract
+  closure, plus this F-15 + UX polish lane.
+* **Local commit**: this hand-off on
+  `wip/2026-07-18-cockpit-sota-hardening`, **39 commits ahead
+  of `main`** after this commit lands. **Not pushed** to the
+  archived upstream `KooshaPari/thegent.git` per the
+  directive. Other worktree
+  (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`) is
+  preserved and untouched.
