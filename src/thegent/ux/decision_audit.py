@@ -360,6 +360,55 @@ class DecisionAuditAppender:
             self._append(record)
         return count
 
+    def _read_file_with_byte_budget(self, fp: Path, byte_window: int) -> list[str]:
+        """Read ``fp`` honouring a byte-budget tail (AUDIT-N+4 perf helper).
+
+        AUDIT-N+4 (Phase 3/4 governance observability + perf hardening):
+        the legacy :meth:`tail_events` byte-tail path lived inline inside
+        the per-file loop. A future call site (e.g. ``tail_events
+        (use_byte_tail=True)`` for the cockpit snapshot) needs the same
+        shape, so the helper is extracted here to keep the perf invariant
+        in one place.
+
+        Contract:
+
+        * When ``fp.stat().st_size <= byte_window`` the whole file is
+          read once via ``fp.read_text(...).splitlines()`` (cheap path;
+          the canonical 0.5–50 MiB JSONL stays resident).
+        * When the file is larger than ``byte_window``, only the trailing
+          ``byte_window`` bytes are read via ``seek(size - byte_window)``.
+          The partial first line (everything up to the first ``\n``) is
+          discarded so the line counter aligns with whole lines.
+        * An empty file (size 0) returns ``[]`` — the legacy inline path
+          had the same short-circuit (``if size_now <= 0: continue``).
+        * A file whose size exactly equals ``byte_window`` takes the
+          whole-file path; the byte-tail path is for strictly-larger
+          files.
+
+        The caller is responsible for assembling the returned lines into
+        a chronological / tail-windowed view; this helper is intentionally
+        line-shape-agnostic.
+        """
+        if not fp.exists():
+            return []
+        size_now = fp.stat().st_size
+        if size_now <= 0:
+            return []
+        if size_now <= byte_window:
+            # Whole file fits in the window; cheap path.
+            return fp.read_text(encoding="utf-8").splitlines()
+        # AUDIT-25: tail only the trailing ``byte_window`` bytes.
+        # ``seek(size_now - byte_window)`` lands on a partial first line;
+        # we discard everything up to the first newline so the line
+        # counter aligns.
+        with fp.open("rb") as fh:
+            fh.seek(size_now - byte_window)
+            chunk = fh.read().decode("utf-8", errors="replace")
+        partial = chunk.split("\n", 1)
+        if len(partial) == 2:
+            chunk = partial[1]
+        return chunk.splitlines()
+
     def tail_events(self, n: int = 20) -> list[dict[str, object]]:
         """Read the last ``n`` persisted events from the JSONL log.
 
@@ -381,6 +430,12 @@ class DecisionAuditAppender:
         default ``use_byte_tail=False`` keeps the legacy behaviour of
         ``read_text().splitlines()`` so callers that rely on the
         simple path see no change.
+
+        AUDIT-N+4: the byte-tail logic was extracted into
+        :meth:`_read_file_with_byte_budget` so a future
+        ``use_byte_tail=True`` call site can reuse the same helper
+        without duplicating the partial-line / size-zero / exact-
+        window boundary handling.
         """
         files: list[Path] = []
         files.append(self._path)
@@ -409,26 +464,10 @@ class DecisionAuditAppender:
             byte_window = max(avg_line * max(n, 1), 4096)
             raw_lines: list[str] = []
             for fp in chronological:
-                if not fp.exists():
-                    continue
-                size_now = fp.stat().st_size
-                if size_now <= 0:
-                    continue
-                if size_now <= byte_window:
-                    # Whole file fits in the window; cheap path.
-                    raw_lines.extend(fp.read_text(encoding="utf-8").splitlines())
-                else:
-                    # AUDIT-25: tail only the trailing ``byte_window``
-                    # bytes. ``seek(size_now - byte_window)`` lands on
-                    # a partial first line; we discard everything up to
-                    # the first newline so the line counter aligns.
-                    with fp.open("rb") as fh:
-                        fh.seek(size_now - byte_window)
-                        chunk = fh.read().decode("utf-8", errors="replace")
-                    partial = chunk.split("\n", 1)
-                    if len(partial) == 2:
-                        chunk = partial[1]
-                    raw_lines.extend(chunk.splitlines())
+                # AUDIT-N+4: delegate the byte-tail / whole-file
+                # branching to the extracted helper so the boundary
+                # handling lives in one place.
+                raw_lines.extend(self._read_file_with_byte_budget(fp, byte_window))
             for line in raw_lines[-n:]:
                 line = line.strip()
                 if not line:

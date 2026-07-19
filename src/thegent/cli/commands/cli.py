@@ -88,6 +88,7 @@ def _format_context_usage_line(usage: dict) -> str:
 
 
 __all__ = [
+    "audit_stats_cmd",
     "logs_cmd",
     "stop_cmd",
     "team_create_cmd",
@@ -292,6 +293,88 @@ def _is_pid_running(pid: int) -> bool:
         return True
     except OSError:
         return False
+
+
+# AUDIT-N+4 (Phase 3/4 governance observability + perf hardening
+# lane): the canonical default audit-path for the new flat CLI
+# command. Lives in the XDG state-hierarchy root so the
+# ``~/.local/state/thegent/`` convention (already used by other
+# tooling) is preserved. ``DecisionAuditAppender`` will lazily
+# ``expanduser()`` it on construction, so the value is stored as a
+# plain ``str`` until the caller wires it through.
+_DEFAULT_AUDIT_STATS_PATH = Path("~/.local/state/thegent/decisions.jsonl")
+
+
+def audit_stats_cmd(
+    audit_path: Path | None = None,
+    json_output: bool = False,
+) -> int:
+    """Surface the ``DecisionAuditAppender.audit_stats()`` snapshot.
+
+    AUDIT-N+4 — operators running SOTA replay tooling have been
+    asking for a CLI surface to read the rotation / durability
+    observability counters without spinning up a Python REPL. This
+    command wraps :meth:`thegent.ux.decision_audit.
+    DecisionAuditAppender.audit_stats` and emits the snapshot either
+    as JSON (machine-readable; ``--json``) or as a sorted key-value
+    table (operator-readable; default).
+
+    Path resolution mirrors ``cli_cockpit.py:420-439`` — the
+    ``DecisionAuditAppender(audit_path=audit_path)`` constructor
+    pattern. ``audit_path`` overrides the XDG-state-hierarchy
+    default (``~/.local/state/thegent/decisions.jsonl``); the
+    appender itself performs ``expanduser()`` so an operator can
+    pass ``--audit-path ~/my-audit.jsonl`` without pre-expansion.
+
+    Errors render through :func:`thegent.ux.cli_errors.safe_echo`
+    (per the AUDIT-N+1..N+3 envelope contract) so a malicious /
+    buggy audit-path string containing Rich markup cannot inject
+    colour tags into the operator's terminal.
+
+    Args:
+        audit_path: Optional override for the JSONL path. ``None``
+            falls back to the XDG-state-hierarchy default.
+        json_output: When ``True``, emit the snapshot as
+            ``json.dumps(..., indent=2, sort_keys=True)`` JSON on
+            stdout. When ``False`` (the default), emit a sorted
+            ``key: value`` table.
+
+    Returns:
+        ``0`` on success, ``1`` if the audit log file does not exist
+        yet (a freshly-installed machine with no cockpit activity).
+    """
+    # Lazy imports so the flat CLI module's import graph stays
+    # bounded — ``decision_audit`` is only needed by the
+    # ``audit_stats`` / ``audit_tail`` surface, not by every
+    # command that re-exports symbols through this module.
+    from thegent.ux.cli_errors import safe_echo
+    from thegent.ux.decision_audit import DecisionAuditAppender
+
+    resolved: Path = (audit_path or _DEFAULT_AUDIT_STATS_PATH).expanduser()
+    if not resolved.exists():
+        # AUDIT-N+1..N+3 envelope contract: route through ``safe_echo``
+        # so the operator-supplied / filesystem-supplied ``resolved``
+        # path (which could contain Rich markup) is Rich-markup-
+        # escaped end-to-end. The path is coerced via ``str(...)`` so
+        # ``safe_echo``'s ``exc_text`` branch handles it correctly.
+        safe_echo("audit_stats: log file not found:", str(resolved), err=True)
+        return 1
+    appender = DecisionAuditAppender(audit_path=resolved)
+    snapshot: dict[str, int | bool] = appender.audit_stats()
+    if json_output:
+        import json
+
+        typer.echo(json.dumps(snapshot, indent=2, sort_keys=True))
+    else:
+        # Human mode: one ``key: value`` line per snapshot entry,
+        # sorted by key for stable operator output. Use
+        # ``typer.echo`` directly here — the snapshot keys /
+        # values are produced by ``DecisionAuditAppender.audit_stats``
+        # (bounded identifiers + numeric / bool primitives), not
+        # operator-supplied data, so no Rich-escape shim is needed.
+        for key in sorted(snapshot):
+            typer.echo(f"{key}: {snapshot[key]}")
+    return 0
 
 
 def logs_cmd(
