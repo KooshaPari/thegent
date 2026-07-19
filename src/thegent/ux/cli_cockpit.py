@@ -179,42 +179,13 @@ console = Console()
 err_console = Console(stderr=True)
 
 
-def _render_cli_error(console_obj: Console, prefix: str, exc: BaseException) -> None:
-    """Render a [red]…[/red]-prefixed error line with Rich-safe payload escaping.
-
-    AUDIT-9 (Phase 3/4 third-pass hardening): the prior pattern was
-    ``err_console.print(f"[red]…:[/red] {exc}")``. When ``str(exc)`` contained
-    a square bracket (JSONPath, regex, or filename with ``[``/``]``), Rich's
-    default console interpreted the inline markup and either dropped
-    characters or rendered escape noise. This helper threads the payload
-    through :func:`rich.markup.escape` (also exposed module-level as
-    ``_exc_text`` for legacy ``{exc}`` interpolation sites) so operators see
-    the literal message regardless of content.
-
-    ``console_obj`` is the target ``Console`` (stderr or stdout); the helper
-    preserves the existing call-site shape (``err_console.print(...)`` →
-    ``_render_cli_error(err_console, prefix, exc)``).
-    """
-    from rich.markup import escape as _escape
-
-    console_obj.print(f"[red]{_escape(prefix)}[/red] {_escape(str(exc))}")
-
-
-def _render_cli_warn(console_obj: Console, prefix: str, payload: str) -> None:
-    """Render a [yellow]…[/yellow] warning line with Rich-safe escaping.
-
-    AUDIT-9 sibling of :func:`_render_cli_error`. ``payload`` may include
-    arbitrary user input (paths, JSON values) so it is escaped the same way.
-    """
-    from rich.markup import escape as _escape
-
-    console_obj.print(f"[yellow]{_escape(prefix)}[/yellow] {_escape(payload)}")
-
-
-# AUDIT-9: module-level single import so the existing call-sites can
-# use ``_escape(...)`` and ``_exc_text(exc)`` as direct drop-ins. This
-# avoids the per-call ``from rich.markup import escape`` cost while
-# still keeping the helpers composable for tests.
+# AUDIT-9 (Phase 3/4 third-pass hardening): module-level single
+# import so the existing call-sites can use ``_escape(...)`` and
+# ``_exc_text(exc)`` as direct drop-ins. F-1 (SOTA second-pass):
+# ``_render_cli_error`` / ``_render_cli_warn`` were the first
+# iteration of the escape shims; every call site was migrated to
+# ``_exc_text`` / ``_escape`` in the AUDIT-9 hand-off, so the
+# wrapper functions are now dead code and were deleted.
 from rich.markup import escape as _escape  # noqa: E402
 
 
@@ -544,7 +515,7 @@ def _run_pre_check_batch(
         appender.record_many(notices)
 
     summary = (
-        f"pre-check batch: items={len(notices)} deny={any_deny} audit={appender.audit_path() if appender else '-'}"
+        f"pre-check batch: items={len(notices)} deny={any_deny} audit={appender.audit_path_str() if appender else '-'}"
     )
     typer.echo(summary)
     return 3 if any_deny else 0
@@ -1213,7 +1184,7 @@ def cockpit_replay(
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("", encoding="utf-8")
             appender.record_many(notices)
-            audit_str = str(appender.audit_path())
+            audit_str = appender.audit_path_str()
 
         matched = not mismatches
         _emit_replay_summary(
@@ -1628,4 +1599,10 @@ def main() -> None:  # pragma: no cover - convenience entry point
 
 
 if __name__ == "__main__":  # pragma: no cover
-    main()
+    # NEW-4 (SOTA second-pass): ``sys.exit(main())`` so non-zero
+    # return codes from typer surface to shell pipelines. ``app()``
+    # already raises ``typer.Exit`` on the failure paths, but a
+    # bare ``main()`` call returns ``None`` which Python's
+    # interpreter treats as exit 0 — silently swallowing failures
+    # for one-shot ``python -m thegent.ux.cli_cockpit …`` runs.
+    sys.exit(main() or 0)

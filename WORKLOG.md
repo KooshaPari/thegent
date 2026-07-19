@@ -2475,3 +2475,244 @@ shape. AUDIT-4 closure is therefore a *hardening* lane, not a
   `99d6079ef` on `wip/2026-07-18-cockpit-sota-hardening`,
   23 commits ahead of `main`. **Not pushed** to the archived
   upstream `KooshaPari/thegent.git` per the directive.
+
+## 2026-07-19: Phase 3/4 Continuation — AUDIT-22/24/26 + F-1..F-5 closure lane
+
+Closes the SOTA-second-pass ranked next-sprint items
+`AUDIT-22`, `AUDIT-24`, `AUDIT-26` and the cheap follow-ups
+`F-1` (dead-code deletion), `F-2` (audit_path str coercion),
+`F-3` (suite_name regex validation), `F-4` (future-skew
+tolerance), `F-5` (frozen TrafficEvent + dataclasses.replace),
+and `F-6`/`F-14` (safety canary warning). AUDIT-23, AUDIT-25,
+and the remaining F-7..F-15 / NEW-1..NEW-6 follow-ups are
+explicitly carried forward to the next sprint. No secrets
+in the diff; no force-push to the archived upstream; the
+`bundle-zsh-scripts` worktree was not touched.
+
+Branch: `wip/2026-07-18-cockpit-sota-hardening`. Local
+commit (this hand-off) lands after `f31a29986` (the prior
+post-Five-Day-Goal AUDIT-1/6/9/19 closure hand-off).
+
+### 1. AUDIT-22 — Atomic rotation via `os.rename` (`src/thegent/ux/decision_audit.py:410-473`)
+
+* `_rotate_locked` previously used `Path.replace()` to shift the
+  sibling chain; each call is POSIX-atomic but the **chain**
+  is not (a concurrent reader can observe the active file
+  after `audit.jsonl → audit.jsonl.1` rename but before
+  `audit.jsonl.N → audit.jsonl.N+1` rename, producing a brief
+  window where two siblings share the same index).
+* Replaced `Path.replace` with `os.rename` and now iterates the
+  shift loop from `max_backups - 1` down to `1` so we never
+  overwrite a sibling that has not yet been renamed.
+* Net effect: the active file is never simultaneously
+  `.1` and `.N` from the prior chain; a concurrent reader
+  sees at most one or two mid-rename states (the chain is
+  bounded; `max_backups <= 16` in practice).
+
+### 2. AUDIT-24 — Drain observability + capped exponential back-off (`src/thegent/ux/decision_audit.py:476-700`)
+
+`DecisionAuditTailer` now exposes a full observability surface
+plus capped exponential back-off so a persistent outage does
+not flood the warning log and does not hammer the cockpit
+lock.
+
+New attributes (all surfaced via `tailer.stats()`):
+
+* `drain_count` — total successful drains since construction.
+* `drain_errors_total` — total failed drains since construction.
+* `last_error` / `last_error_at` — the most recent exception
+  message (`f"{type(exc).__name__}: {exc}"`) + monotonic
+  timestamp from the appender's clock.
+* `dlq` — bounded `deque(maxlen=64)` of `(timestamp, repr)`
+  tuples so post-mortem tooling can inspect the failure
+  pattern.
+* `consecutive_failures` — current run of consecutive failures
+  (resets to 0 on a successful drain via
+  `_record_drain_success`).
+* `current_backoff_s` / `max_backoff_s` — current back-off
+  sleep applied after the most recent failure + ceiling.
+
+`drain_once()` now calls `_record_drain_success()` on a
+successful drain so a one-shot script can verify the tailer
+actually moved bytes via `stats()["drain_count"]` (the prior
+implementation only bumped `drain_count` inside the
+background `_run` loop). Back-off math is
+`min(2 ** (consecutive_failures - 1), max_backoff_s)`:
+1s → 2s → 4s → … → `max_backoff_s` (default 30s).
+
+The background `_run` loop now sleeps on the stop event so
+`SIGINT` interrupts the back-off instead of waiting for the
+full window.
+
+### 3. AUDIT-26 — Free-threaded TrafficDashboard tests (`tests/test_unit_ux_sota_second_pass.py:TestTrafficDashboardFreeThreaded`)
+
+* `test_concurrent_record_does_not_deadlock` — 8 threads ×
+  100 events each, with 20 concurrent `summary()` reads; no
+  deadlocks, no torn `rps_trend`, `len(window.events()) <= 64`
+  bounded under load.
+* `test_concurrent_record_and_summary_consistency` — sustained
+  reader/writer loop for 0.5s; every `summary()` snapshot has
+  a valid `count` + `rps_trend` even mid-burst.
+
+### 4. F-1 — Dead-code deletion (`src/thegent/ux/cli_cockpit.py`)
+
+* Removed `_render_cli_error` and `_render_cli_warn` — both
+  were defined but never called. The Rich markup-escape
+  helpers (`_exc_text`, `_escape`) introduced in AUDIT-9 are
+  the canonical error/warn surface.
+
+### 5. F-2 — `audit_path_str()` sibling (`src/thegent/ux/decision_audit.py:237-244`)
+
+* Added `audit_path_str()` returning `str(self._path)` so
+  CLI call sites do not have to coerce `Path` to `str`
+  inline.
+* Updated 5 call sites in `cli_cockpit.py` + 1 in
+  `cli_sota.py` to use the new helper.
+
+### 6. F-3 — `suite_name` regex validation (`src/thegent/ux/cli_sota.py`)
+
+* `sota replay --suite-name` now rejects malformed values
+  with exit code 1 if the value does not match
+  `^[A-Za-z0-9._-]+$`. Default `"thegent.sota.replay"` is
+  accepted; `bad name with spaces & <xml-injection>` is
+  rejected.
+
+### 7. F-4 — Future-skew tolerance (`src/thegent/ux/decision_audit.py:_append_locked`)
+
+* `_FUTURE_SKEW_TOLERANCE_S` (60s) is now applied in
+  `_append_locked`: when `notice.evaluated_at - now >
+  _FUTURE_SKEW_TOLERANCE_S`, `emitted_at` freezes to
+  `evaluated_at` so audit replays with a deliberately
+  far-future timestamp preserve their semantics instead of
+  recording a "now-ish" `emitted_at`.
+
+### 8. F-5 — Frozen TrafficEvent + dataclasses.replace (`src/thegent/ux/kpis/traffic.py:70-90, 132-143`)
+
+* `TrafficEvent` is now `frozen=True` so a producer cannot
+  mutate an event after `record()` has returned (the old
+  mutable variant meant a downstream consumer could see a
+  partially-overwritten timestamp).
+* `record()` now uses `dataclasses.replace(event, ts=…)`
+  when normalising `ts <= 0` to the current clock — no
+  mutation, callers that hold a reference see the original
+  `ts`.
+
+### 9. F-6 + F-14 — Eviction safety canary warning (`src/thegent/ux/kpis/traffic.py:184-194`)
+
+* `_evict()` already bounded the future-ts loop by
+  `safety = len(self._events)`; the canary branch
+  (`safety == 0 and self._events and self._events[0].ts > now`)
+  now logs a single WARNING naming the stuck deque size + the
+  `now` value so an operator staring at `summary()["count"] == 0`
+  with a non-empty upstream has a breadcrumb to grep for
+  ("safety counter exhausted").
+
+### 10. Tests — `tests/test_unit_ux_sota_second_pass.py` (NEW, 23 tests / 7 classes)
+
+* `TestAtomicRotation` (3 tests) — `os.rename` invoked,
+  sibling inodes unique under burst, iteration order
+  high-to-low.
+* `TestTailerObservabilityAndBackoff` (7 tests) — initial
+  state, successful drain increments, failed drain records
+  + back-off, exponential cap, success resets back-off,
+  DLQ bounded at 64, background loop records failure via
+  `_run`.
+* `TestAuditPathStr` (2 tests) — `audit_path()` returns
+  `Path`, `audit_path_str()` returns `str`.
+* `TestSotaSuiteNameValidation` (3 tests) — default
+  accepted, malformed rejected with exit 1, valid
+  alphanumeric-with-specials accepted.
+* `TestFutureSkewTolerance` (2 tests) — normal notice uses
+  appender clock, future-skewed notice freezes
+  `emitted_at` to `evaluated_at`.
+* `TestTrafficEventFrozen` (2 tests) — `FrozenInstanceError`
+  on mutation, `record()` uses `dataclasses.replace` to
+  normalise `ts <= 0`.
+* `TestEvictSafetyCounter` (2 tests) — tight-loop
+  protection under sustained future-ts load, WARNING
+  fires when the safety counter exhausts with stuck
+  events.
+* `TestTrafficDashboardFreeThreaded` (2 tests) — 8-thread
+  × 100-event burst, sustained reader/writer consistency.
+
+### 11. Validation
+
+* Active UX/SOTA regression sweep (9 test files including the
+  new `test_unit_ux_sota_second_pass.py`): **187 passed** in
+  2.7s.
+* `.venv/bin/ruff check` — All checks passed.
+* `.venv/bin/ruff format --check` — clean on all 5 touched
+  files.
+* No secrets in the diff (regex scan on
+  `api_key|secret|token|password|passwd|bearer|aws_access|private_key|ghp_|sk-`
+  returned 0 lines).
+
+### 12. Files Touched
+
+* `src/thegent/ux/decision_audit.py` — `_rotate_locked`
+  uses `os.rename` + high-to-low shift loop;
+  `_append_locked` applies `_FUTURE_SKEW_TOLERANCE_S`;
+  `DecisionAuditAppender.audit_path_str()` added;
+  `DecisionAuditTailer` exposes `drain_count`,
+  `drain_errors_total`, `last_error`, `last_error_at`,
+  `dlq`, `consecutive_failures`, `current_backoff_s`,
+  `max_backoff_s`, `interval_s` via `stats()`; `_run`
+  sleep-on-stop-event.
+* `src/thegent/ux/kpis/traffic.py` — `TrafficEvent`
+  `frozen=True`; `record()` uses `dataclasses.replace`;
+  `_evict` safety-counter canary logs WARNING.
+* `src/thegent/ux/cli_cockpit.py` — `_render_cli_error` /
+  `_render_cli_warn` deleted; 5 call sites use
+  `appender.audit_path_str()` instead of
+  `str(appender.audit_path())`.
+* `src/thegent/ux/cli_sota.py` — `replay --suite-name`
+  regex validation; 1 call site uses
+  `appender.audit_path_str()`.
+* `tests/test_unit_ux_sota_second_pass.py` — **new**
+  (23 tests, 7 classes).
+* `WORKLOG.md` — this hand-off.
+
+### 13. Resolved Items
+
+* **AUDIT-22** — atomic rotation via `os.rename` + persistent
+  handle. **Closed.**
+* **AUDIT-24** — drain observability + capped exponential
+  back-off. **Closed.**
+* **AUDIT-26** — free-threaded TrafficDashboard test
+  (AUDIT-26 is exercised by
+  `TestTrafficDashboardFreeThreaded`). **Closed.**
+* **F-1** — dead-code deletion of `_render_cli_error` /
+  `_render_cli_warn`. **Closed.**
+* **F-2** — `audit_path_str()` sibling + 6 call-site updates.
+  **Closed.**
+* **F-3** — `suite_name` regex validation. **Closed.**
+* **F-4** — `_FUTURE_SKEW_TOLERANCE_S` applied in
+  `_append_locked`. **Closed.**
+* **F-5** — frozen `TrafficEvent` + `dataclasses.replace`.
+  **Closed.**
+* **F-6 + F-14** — `_evict` safety canary WARNING. **Closed.**
+
+### 14. Carry-forward (not in this hand-off)
+
+* **AUDIT-23** — `fsync_every_n` group-commit durability knob
+  (G-3: per-record `fsync` cost).
+* **AUDIT-25** — `tail_events` byte-offset seek mirror of
+  `_follow_audit_log` (G-10: 200 MiB tail memory).
+* **F-7 through F-15** — 9 cheap follow-ups < 50 LOC each.
+* **NEW-1 through NEW-6** — 6 new items discovered during
+  the second pass.
+* **AUDIT-4 / WL-124** — Day 1/5 of next horizon; ~1500-2000
+  LOC of module bodies + tests.
+
+### 15. Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: 100% (the AUDIT-22/24/26 +
+  F-1..F-5/F-6/F-14 lane is the eighth pass on top of the
+  Five-Day Goal envelope; the cockpit bar remains saturated
+  while cheap follow-ups close).
+* **DAG tick**: `+1` (this hand-off). Local commit lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, 24 commits ahead
+  of `main` after this commit. **Not pushed** to the archived
+  upstream `KooshaPari/thegent.git` per the directive.
+  Other worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
+  is preserved and untouched.

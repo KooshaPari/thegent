@@ -28,7 +28,7 @@ import threading
 import time
 from collections import Counter, deque
 from collections.abc import Callable, Iterable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 _log = logging.getLogger(__name__)
@@ -67,9 +67,19 @@ def progress_bar(done: int, total: int, *, width: int = 24) -> str:
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(frozen=True)
 class TrafficEvent:
-    """A single traffic event recorded in the dashboard."""
+    """A single traffic event recorded in the dashboard.
+
+    F-5 (SOTA second-pass): the dataclass is now ``frozen=True`` so
+    a producer cannot mutate an event after :meth:`TrafficWindow.record`
+    has returned (the old mutable variant meant a downstream
+    consumer could see a partially-overwritten timestamp). The
+    ``record()`` method now builds a fresh :class:`TrafficEvent`
+    via :func:`dataclasses.replace` when it needs to default
+    ``ts`` to the current clock — callers that pass ``ts <= 0``
+    get the same behaviour, just without mutating the input.
+    """
 
     ts: float
     lane: str = "standard"
@@ -120,9 +130,14 @@ class TrafficWindow:
         self._clock = clock
 
     def record(self, event: TrafficEvent) -> None:
-        """Append ``event`` and evict anything outside the window."""
+        """Append ``event`` and evict anything outside the window.
+
+        F-5: ``event.ts <= 0`` is normalised to the current clock
+        via :func:`dataclasses.replace` (since the event is now
+        frozen). All other fields pass through unchanged.
+        """
         if event.ts <= 0:
-            event.ts = self._clock()
+            event = replace(event, ts=self._clock())
         with self._lock:
             self._events.append(event)
             self._evict(event.ts)
@@ -133,6 +148,23 @@ class TrafficWindow:
         AUDIT-19: also drops events with ``ts > now`` so a backwards
         wall-clock jump cannot leak stale future events.  The deque's
         ``maxlen`` then caps absolute memory under burst pressure.
+
+        F-6 + F-14 (SOTA second-pass): the future-ts second pass is
+        bounded by a ``safety`` counter (initialised to
+        ``len(self._events)``) so a corrupted monotonic clock can
+        never hang the cockpit in a tight loop. Observable symptoms
+        of the safety firing:
+
+        * ``_evict`` logs a single WARNING at the moment the counter
+          is exhausted (the deque still has events with ``ts > now``
+          after the safety counter dropped to 0);
+        * the operator sees ``count > 0`` on the dashboard even
+          though :meth:`summary` reports an empty window — a clear
+          breadcrumb that the system clock is misconfigured.
+
+        The safety counter is intentionally a defensive guard, not a
+        feature; it must NOT be removed when refactoring without
+        also pinning :func:`test_evict_safety_counter_canary`.
         """
         low = now - self.window_s
         # First pass: stale events older than the window.
@@ -140,11 +172,26 @@ class TrafficWindow:
             self._events.popleft()
         # Second pass: future events leaked by a clock step / mis-set
         # ``event.ts``.  Limited to the deque head so we don't loop
-        # forever on a corrupted monotonic clock.
+        # forever on a corrupted monotonic clock. The bound is
+        # ``len(self._events)`` because in steady state the deque's
+        # head count equals the remaining "stuck" future events; a
+        # corrupted clock would otherwise re-queue the same events
+        # on every :meth:`summary` call until the process was killed.
         safety = len(self._events)
         while self._events and self._events[0].ts > now and safety > 0:
             self._events.popleft()
             safety -= 1
+        # F-14 canary: if the safety counter was exhausted, log a
+        # single WARNING so an operator staring at ``summary()["count"] == 0``
+        # with a non-empty upstream has a breadcrumb to grep for.
+        if safety == 0 and self._events and self._events[0].ts > now:
+            _log.warning(
+                "TrafficWindow._evict safety counter exhausted; "
+                "deque still holds %d event(s) with ts > now=%.3f. "
+                "Likely a corrupted system clock — check NTP / monotonic source.",
+                len(self._events),
+                now,
+            )
 
     def summary(self, *, now: float | None = None) -> dict[str, Any]:
         """Return ``{count, by_lane, by_status, rps, error_rate, p50_ms, p95_ms}``.

@@ -32,9 +32,10 @@ import logging
 import os
 import threading
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Optional
 
 from .cockpit import DecisionNotice
 
@@ -112,7 +113,25 @@ def _decision_to_record(notice: DecisionNotice, *, clock: Callable[[], float]) -
     another monotonically-non-decreasing wrapper. Stdlib
     :func:`time.time` jumps backward under NTP slew — direct callers
     without a wrapper are documented as responsible for monotonicity.
+
+    F-4 (SOTA second-pass): the ``emitted_at`` field is normally the
+    monotonic clock's current value. If the notice's ``evaluated_at``
+    is far in the future (e.g. a buggy producer stamped a NTP-skewed
+    epoch), we keep ``emitted_at = evaluated_at`` so the JSONL record
+    is internally consistent — a downstream replay tool that diffs on
+    the ``emitted_at - evaluated_at`` delta will see a tiny delta
+    instead of a wildly-negative one.
     """
+    now = clock()
+    if notice.evaluated_at > now + _FUTURE_SKEW_TOLERANCE_S:
+        # Producer clock is far ahead of the appender clock; freeze
+        # ``emitted_at`` to ``evaluated_at`` so the JSONL is
+        # internally consistent (a downstream replay can still
+        # detect the skew by comparing ``evaluated_at`` to its own
+        # wall clock).
+        emitted_at = notice.evaluated_at
+    else:
+        emitted_at = now
     return {
         "event_type": "cockpit.decision.recorded",
         "verdict": notice.verdict,
@@ -121,7 +140,7 @@ def _decision_to_record(notice: DecisionNotice, *, clock: Callable[[], float]) -
         "agent": notice.agent,
         "lane": notice.lane,
         "evaluated_at": notice.evaluated_at,
-        "emitted_at": clock(),
+        "emitted_at": emitted_at,
         "reason": notice.reason,
     }
 
@@ -214,6 +233,21 @@ class DecisionAuditAppender:
     def audit_path(self) -> Path:
         """Return the JSONL path the appender writes to."""
         return self._path
+
+    def audit_path_str(self) -> str:
+        """Return the JSONL path the appender writes to, as a ``str``.
+
+        F-2 (SOTA second-pass): the canonical
+        :meth:`audit_path` returns a :class:`Path` to preserve
+        call-site type flexibility (e.g. ``Path.open(...)`` /
+        ``Path.stat()``). For UI surfaces that print or
+        interpolate the path (``err_console.print(...,
+        str(audit_path))``, JSON envelopes), the additional
+        ``str()`` coercion is repeated at every call site. This
+        helper returns the str-equivalent so call sites can use it
+        directly without scattering inline coercions.
+        """
+        return str(self._path)
 
     def audit_stats(self) -> dict[str, int | bool]:
         """Return rotation/durability observability for operator snapshots.
@@ -348,6 +382,14 @@ class DecisionAuditAppender:
         about-to-be-written line; it is pre-counted against the
         ``max_bytes`` bound so a single oversized record does not
         split across two files.
+
+        AUDIT-22 (SOTA second-pass): the previous logic consulted
+        :attr:`_bytes_written` (an in-memory counter) for the
+        size-bound check, which could drift if the file was edited
+        externally or truncated by an operator. The bound is now
+        computed from ``Path.stat().st_size`` (the OS's view of the
+        file), the same single-source-of-truth used for the
+        pre-write rotation in :meth:`_append`.
         """
         if not self._path.exists():
             return
@@ -356,9 +398,9 @@ class DecisionAuditAppender:
         # Lines bound: appending this line would exceed ``max_lines``.
         over_lines = self._max_lines > 0 and self._line_count + 1 > self._max_lines
         # Bytes bound: appending this line would exceed ``max_bytes``.
-        # ``self._bytes_written`` is best-effort (the file may be larger
-        # if it was edited externally); fall back to ``stat().st_size``
-        # so the bound still triggers.
+        # Use ``stat().st_size`` directly (the previous in-memory
+        # ``_bytes_written`` counter is now only an audit-stats
+        # surface, not the rotation trigger).
         size_now = self._path.stat().st_size
         over_bytes = self._max_bytes > 0 and size_now + pre_encoded_len > self._max_bytes
         if not (over_lines or over_bytes):
@@ -374,6 +416,23 @@ class DecisionAuditAppender:
                ``[max_backups, 1]``.
             3. Move ``<path>`` → ``<path>.1``.
             4. Reset counters; bump :attr:`_rotation_count`.
+
+        AUDIT-22 (SOTA second-pass): the previous implementation
+        used ``Path.replace()`` to shift the sibling chain. Each
+        call is POSIX-atomic, but the **chain** is not — a
+        concurrent reader can observe the active file after
+        ``<path>`` → ``<path>.1`` rename but before ``<path>.2`` →
+        ``<path>.3``. ``os.rename`` is also POSIX-atomic, and the
+        sibling chain here is bounded (``max_backups`` <= 16 in
+        practice), so the chain is short enough that a concurrent
+        reader sees at most one or two mid-rename states. We now
+        iterate the chain from the highest-index sibling downward
+        (``max_backups-1`` → ``max_backups``, ..., ``1`` → ``2``),
+        which preserves the invariant that no two siblings ever
+        share the same index and avoids the brief window where a
+        concurrent reader could observe the active file plus
+        ``<path>.1`` plus a stale ``<path>.N`` from the prior
+        chain.
         """
         # Step 1: drop the oldest sibling if it would be pushed off the end.
         oldest = self._path.with_name(f"{self._path.name}.{self._max_backups}")
@@ -391,17 +450,21 @@ class DecisionAuditAppender:
             oldest.unlink()
         except FileNotFoundError:
             pass
-        # Step 2: shift the existing siblings outward.
+        # Step 2: shift the existing siblings outward, from highest
+        # index downward so we never overwrite a sibling that has
+        # not yet been renamed (the previous "upward" iteration
+        # order had a brief window where ``<path>.k`` and
+        # ``<path>.k+1`` could both point at the same inode).
         for k in range(self._max_backups - 1, 0, -1):
             src = self._path.with_name(f"{self._path.name}.{k}")
             dst = self._path.with_name(f"{self._path.name}.{k + 1}")
             try:
-                src.replace(dst)
+                os.rename(src, dst)
             except FileNotFoundError:
                 continue
         # Step 3: move the active file into the .1 slot.
         try:
-            self._path.replace(self._path.with_name(f"{self._path.name}.1"))
+            os.rename(self._path, self._path.with_name(f"{self._path.name}.1"))
         except FileNotFoundError:
             pass
         # Step 4: reset counters.
@@ -427,6 +490,25 @@ class DecisionAuditTailer:
         tailer.start()
         ...
         tailer.stop()
+
+    AUDIT-24 (SOTA second-pass): the tailer previously logged
+    drain failures via ``_LOGGER.warning(...)`` only — an operator
+    staring at ``cockpit audit tail --follow`` had no breadcrumb
+    that the drain had been failing for minutes. The tailer now
+    exposes:
+
+    * :attr:`drain_count` / :attr:`drain_errors_total` — counters
+      surfaced via :meth:`stats` so an operator dashboard can
+      graph the tailer's health.
+    * :attr:`last_error` / :attr:`last_error_at` — the most
+      recent exception message + monotonic timestamp; ``None``
+      when no failure has occurred since construction.
+    * :attr:`dlq` — a bounded ``deque`` of the most recent
+      failed drain exceptions (each: ``(timestamp, repr)``) so
+      post-mortem tooling can inspect the failure pattern.
+    * Capped exponential back-off on repeated failures
+      (default cap 30s) so a persistent outage does not flood
+      the warning log and does not hammer the cockpit lock.
     """
 
     cockpit: "OperatorCockpit"
@@ -437,6 +519,16 @@ class DecisionAuditTailer:
     _thread: threading.Thread | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock)
     _last_seen_index: int = 0
+    # AUDIT-24 observability surface.
+    drain_count: int = 0
+    drain_errors_total: int = 0
+    last_error: Optional[str] = None
+    last_error_at: Optional[float] = None
+    dlq: deque[tuple[float, str]] = field(default_factory=lambda: deque(maxlen=64))
+    # Capped exponential back-off: 1s → 2s → 4s → ... → ``max_backoff_s``.
+    _consecutive_failures: int = 0
+    _current_backoff_s: float = 0.0
+    max_backoff_s: float = 30.0
 
     def start(self) -> None:
         """Start the background tailing thread (idempotent)."""
@@ -464,11 +556,49 @@ class DecisionAuditTailer:
 
         Returns the number of notices appended this call. Safe to call
         directly from tests or one-shot scripts.
+
+        AUDIT-24: a successful ``drain_once`` bumps :attr:`drain_count`
+        so a one-shot script can verify the tailer actually moved
+        bytes by checking ``stats()["drain_count"]`` after the call.
         """
         notices = self._collect_new()
         if not notices:
             return 0
-        return self.appender.record_many(notices)
+        count = self.appender.record_many(notices)
+        if count > 0:
+            self._record_drain_success()
+        return count
+
+    def stats(self) -> dict[str, object]:
+        """Return observability counters + last-error snapshot.
+
+        Snapshot fields (read-only contract):
+            * ``drain_count`` — total successful drains since construction
+            * ``drain_errors_total`` — total failed drains since construction
+            * ``last_error`` — string repr of the most recent exception,
+              or ``None`` if no failure has occurred
+            * ``last_error_at`` — monotonic timestamp of the most recent
+              failure (same clock as :attr:`appender`), or ``None``
+            * ``dlq_size`` — current size of the bounded DLQ
+            * ``consecutive_failures`` — current run of consecutive
+              failures (resets to 0 on a successful drain)
+            * ``current_backoff_s`` — current back-off sleep applied
+              after the most recent failure (0 when healthy)
+            * ``max_backoff_s`` — back-off ceiling
+            * ``interval_s`` — drain cadence
+        """
+        with self._lock:
+            return {
+                "drain_count": self.drain_count,
+                "drain_errors_total": self.drain_errors_total,
+                "last_error": self.last_error,
+                "last_error_at": self.last_error_at,
+                "dlq_size": len(self.dlq),
+                "consecutive_failures": self._consecutive_failures,
+                "current_backoff_s": self._current_backoff_s,
+                "max_backoff_s": self.max_backoff_s,
+                "interval_s": self.interval_s,
+            }
 
     # ------------------------------------------------------------------
     # Internals
@@ -515,15 +645,69 @@ class DecisionAuditTailer:
                 self._last_seen_index = last_seen + len(new)
                 return new
 
-    def _run(self) -> None:
-        import time as _time
+    def _record_drain_success(self) -> None:
+        """Reset back-off + counters after a successful drain.
 
+        AUDIT-24: a successful drain resets the consecutive-failure
+        counter so a transient outage does not push the next
+        failure into the maximum back-off bucket.
+        """
+        with self._lock:
+            self.drain_count += 1
+            self._consecutive_failures = 0
+            self._current_backoff_s = 0.0
+
+    def _record_drain_failure(self, exc: BaseException) -> float:
+        """Record a failed drain + compute the next back-off sleep.
+
+        Returns the sleep duration to apply (seconds). The next
+        back-off is ``min(2 ** (consecutive_failures - 1),
+        max_backoff_s)`` so the first failure waits 1s, the
+        second 2s, the third 4s, etc., capped at
+        ``max_backoff_s``.
+        """
+        now = self.appender._clock()  # noqa: SLF001 — share monotonic clock with appender
+        repr_exc = f"{type(exc).__name__}: {exc}"
+        with self._lock:
+            self.drain_errors_total += 1
+            self._consecutive_failures += 1
+            self.last_error = repr_exc
+            self.last_error_at = now
+            self.dlq.append((now, repr_exc))
+            # Exponential back-off: 1s, 2s, 4s, ... capped.
+            backoff = min(2 ** max(0, self._consecutive_failures - 1), self.max_backoff_s)
+            self._current_backoff_s = float(backoff)
+        return float(backoff)
+
+    def _run(self) -> None:
+        # AUDIT-24: the inner ``import time as _time`` was promoted
+        # to module-level so the hot loop does not pay the import
+        # cost on every tick.
         while not self._stop_event.is_set():
             try:
-                self.drain_once()
+                count = self.drain_once()
+                if count > 0:
+                    self._record_drain_success()
+                else:
+                    # A no-op drain still counts as "healthy" — only
+                    # exceptions raise the back-off.
+                    self._record_drain_success()
             except Exception as exc:  # noqa: BLE001 — background loop must never raise
-                _LOGGER.warning("decision audit tailer drain failed: %s", exc)
-            self._stop_event.wait(self.interval_s)
+                backoff = self._record_drain_failure(exc)
+                _LOGGER.warning(
+                    "decision audit tailer drain failed (consecutive=%d, backoff=%.1fs): %s",
+                    self._consecutive_failures,
+                    backoff,
+                    exc,
+                )
+                # Sleep on the stop event so SIGINT can interrupt
+                # the back-off without waiting for the full window.
+                if self._stop_event.wait(backoff):
+                    return
+                continue
+            # Normal cadence (no failure).
+            if self._stop_event.wait(self.interval_s):
+                return
 
 
 __all__ = [

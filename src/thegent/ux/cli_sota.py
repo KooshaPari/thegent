@@ -32,6 +32,7 @@ Exit codes match ``cockpit replay``:
 from __future__ import annotations
 
 import json
+import re
 import sys
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
@@ -50,6 +51,15 @@ from .cli_cockpit import (
     _normalise_snapshot_flip_fields,
     err_console,
 )
+
+# F-3 (SOTA second-pass): ``suite_name`` flows verbatim into
+# ``<testsuite name="...">`` and ``<testsuites name="...">`` so a
+# malicious / malformed value could inject XML (XML injection
+# class — CWE-91). Restrict to the safe POSIX-style identifier
+# character class the JUnit-XML spec assumes, and reject anything
+# outside it with a clear ``typer.BadParameter`` so a CI run can
+# triage the failure fast.
+_SUITE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
 
 app = typer.Typer(
     help="SOTA audit-replay tooling (Phase 3/4 hardening lane).",
@@ -445,6 +455,18 @@ def sota_replay(
         )
         raise typer.Exit(1)
 
+    # F-3 (SOTA second-pass): reject ``--suite-name`` values that
+    # could inject XML markup into the JUnit-XML report. The
+    # ``<testsuite name="...">`` attribute is the only consumer, so
+    # a single regex gate covers every report-format dispatch path
+    # (text/json/junitxml).
+    if not _SUITE_NAME_PATTERN.fullmatch(suite_name):
+        err_console.print(
+            f"[red]sota replay failed:[/red] --suite-name must match {_exc_text(_SUITE_NAME_PATTERN.pattern)!r}; "
+            f"got {_exc_text(suite_name)!r}"
+        )
+        raise typer.Exit(1)
+
     report_format_lc = report_format.lower()
     if report_format_lc not in _REPORT_RENDERERS:
         err_console.print(
@@ -573,7 +595,7 @@ def sota_replay(
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_text("", encoding="utf-8")
             appender.record_many(notices)
-            audit_str = str(appender.audit_path())
+            audit_str = appender.audit_path_str()
 
         matched = not mismatches
         renderer = _REPORT_RENDERERS[report_format_lc]
