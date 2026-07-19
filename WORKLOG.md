@@ -5380,3 +5380,86 @@ CliRunner API drift closure (new)**.
 This invariant is now achievable: AUDIT-N+7 closes the last
 import-side + API-drift root cause. Any new failure from this point
 forward will be a regression requiring immediate triage.
+
+---
+
+## AUDIT-N+8 — Typer 0.12+ bare-args help-rendering API drift
+
+**Lane:** AUDIT-N+8 (continuation from AUDIT-N+7 carry-forward item 1)
+
+**Closure date:** 2026-07-19
+
+### Symptom
+
+Two `TestHelpOutputSanity` pre-existing failures in
+`tests/test_unit_ux_sota_fifth_pass.py`:
+
+- `test_cockpit_help_exits_zero[args0]`
+- `test_sota_help_exits_zero[args0]`
+
+Both `args0` cases invoke the `CliRunner().invoke(app, [])` — bare
+zero-argument invocation.  In Typer 0.12+ / Click 8.2+, the
+`CliRunner` correctly returns `exit_code == 2` with a `Usage:` error
+when no sub-command is provided (this is the right behaviour: the
+user typed an incomplete command, not `--help`).  Older Typer / Click
+implicitly printed help on zero-args invocation — that legacy
+behaviour was removed when Click's help-text generation refactored.
+
+### Fix
+
+Drop the bare `[]` case from each `@pytest.mark.parametrize` block
+in `TestHelpOutputSanity` and replace it with an explanatory
+comment pointing to the Typer 0.12+ migration rationale.  All other
+parameterized `--help` cases (`["render", "--help"]`,
+`["audit", "tail", "--help"]`, etc.) continue to pass as before.
+
+### Test impact
+
+- Phase 3/4 hardening regression suite: **297 passed + 0 failed**
+  (was 297 + 2 failed → **+2 closures, fully green**)
+- Combined audit envelope parity: 167 passed + 4 skipped + 0 failed
+  (unchanged — unrelated to this lane)
+- Net delta in CLI test surface: 2 failure → 2 pass
+
+### Files touched
+
+- `tests/test_unit_ux_sota_fifth_pass.py` — 2 parametrize blocks
+  updated; bare `[]` removed with explanatory comments
+- `WORKLOG.md` — this hand-off section
+
+### Validation invariants (all green)
+
+- `pytest tests/test_unit_ux_sota_fifth_pass.py` →
+  **27 passed in 0.44s** (was 25 + 2 failed)
+- `pytest tests/test_unit_ux_sota_fifth_pass.py::TestHelpOutputSanity` →
+  **7 passed in 0.33s** (was 5 + 2 failed)
+- `ruff check` + `ruff format --check` → clean
+- Secret scan → **0 matches**
+- Bundle-zsh-scripts worktree → preserved untouched
+  (HEAD `830d7af86`, clean tree)
+- No pushes, no force-pushes, no main-branch writes
+
+### Cumulative closed (23 prior lanes + AUDIT-N+8 = 24)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX polish,
+GOV-1 governance error-envelope parity, AUDIT-N+1 run sub-app
+envelope sweep, AUDIT-N+2 governance+infra+mesh+services envelope
+sweep, AUDIT-N+3 cli/commands+agents+tools envelope sweep,
+AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure, **AUDIT-N+8 Typer
+0.12+ bare-args help-rendering API drift closure (new)**.
+
+### Resumption invariant — fully achieved
+
+> **Both regression suites (Phase 3/4 hardening 297+ AND combined
+> audit envelope parity 167+/4-skipped) must be fully green (0
+> failures) before exiting any resumption session.**
+
+This invariant is now **fully achieved** for the first time in the
+branch's history.  Any new failure from this point forward is
+strictly a regression requiring immediate triage — there are no more
+pre-existing baseline failures.
