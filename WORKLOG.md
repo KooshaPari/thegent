@@ -3696,7 +3696,7 @@ the sub-app to the real implementation logic.
   is_running`), `_should_run(state, now)`, built-in
   `model_list_strategy` / `session_list_strategy` factories, and
   `WarmingStrategy` validation (empty name + non-positive schedule).
-* **What landed (`<pending>`)**:
+* **What landed (`3cdd4b8fa`)**:
   * `src/thegent/cache/pre_warmer/__init__.py` — full rewrite of the
     module from a 64-line stub into a 338-line FR-CACHE-003
     implementation. New surface:
@@ -3797,7 +3797,7 @@ the sub-app to the real implementation logic.
   CLI-1..5, TEST-1, WL-224/WL-225 plan-workstream thicken,
   diskcache-skip-guard collection-repair, plus this
   CachePreWarmer FR-CACHE-003 contract closure.
-* **Local commit**: `<pending>` lands on
+* **Local commit**: `3cdd4b8fa` lands on
   `wip/2026-07-18-cockpit-sota-hardening`, **36 commits ahead of
   `main`** after this commit. **Not pushed** to the archived upstream
   `KooshaPari/thegent.git` per the directive.
