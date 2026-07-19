@@ -172,6 +172,18 @@ def thegent_session_contract_health_trend(
     }
 
 
+def _cache_elicitation_key(elicitation_id: str) -> str:
+    """Backward-compatible alias for ``server_elicitation_cache_key``.
+
+    Some legacy scripts (notably ``scripts/benchmark_python_suite.py``,
+    restored from the wave-79 finalization) still import this private
+    name. The public re-export is ``server_elicitation_cache_key``; the
+    alias keeps the legacy import path working without forcing a
+    script-side change.
+    """
+    return f"elicitation:{elicitation_id}"
+
+
 def _server_tools_workstream_lsp(
     workstream_id: str,
     params: dict | None = None,

@@ -34,9 +34,32 @@ def server_elicitation_cache_key(elicitation_id: str) -> str:
     return f"elicitation:{elicitation_id}"
 
 
+def server_error_result(message: str, **kwargs: Any) -> dict[str, Any]:
+    """Return a stable JSON error envelope (WL-126 import surface)."""
+    return {"ok": False, "error": message, **kwargs}
+
+
 def server_get_cached_elicitation(elicitation_id: str) -> dict[str, Any] | None:
     """Get cached elicitation data by ID."""
     return None
+
+
+def server_load_module(name: str) -> Any:
+    """Dynamically load a module by dotted path (WL-126 import surface)."""
+    import importlib
+
+    return importlib.import_module(name)
+
+
+def server_stable_json(payload: Any) -> str:
+    """Serialise *payload* deterministically (sorted keys, indent=2) for hashing/audit.
+
+    Returns a JSON string with sorted keys so callers can hash the bytes
+    and get a stable digest across runs.
+    """
+    import json as _json
+
+    return _json.dumps(payload, sort_keys=True, indent=2, default=str)
 
 
 def server_tools_workstream_lsp() -> dict[str, Any]:
@@ -59,9 +82,14 @@ __all__ = [
     "server_default_cwd_from_context",
     "server_default_owner_from_context",
     "server_elicitation_cache_key",
+    "server_error_result",
+    "server_get_cached_elicitation",
+    "server_load_module",
     "_server_tools_workstream_lsp",
     "server_resolve_cwd_elicitation",
     "server_resolve_owner_elicitation",
+    "server_stable_json",
+    "server_tools_workstream_lsp",
     "hotreload",
 ]
 

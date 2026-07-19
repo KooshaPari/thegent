@@ -8,7 +8,7 @@ from __future__ import annotations
 
 def plan_list_cmd() -> list[dict]:
     """List all plans.
-    
+
     Returns:
         List of plan dictionaries.
     """
@@ -17,11 +17,11 @@ def plan_list_cmd() -> list[dict]:
 
 def plan_create_cmd(name: str, **kwargs) -> dict:
     """Create a new plan.
-    
+
     Args:
         name: Plan name.
         **kwargs: Additional options.
-        
+
     Returns:
         Created plan dictionary.
     """
@@ -67,6 +67,16 @@ def plan_normalize_workstream_cmd(workstream_id: str, **kwargs) -> dict:
     return {"workstream_id": workstream_id, "normalized": True, "changes": []}
 
 
+def workstream_query_cmd(workstream_id: str, **kwargs) -> dict:
+    """WL-124 stable import surface: alias for plan_lint_workstream_cmd."""
+    return plan_lint_workstream_cmd(workstream_id, **kwargs)
+
+
+def workstream_stats_cmd(workstream_id: str, **kwargs) -> dict:
+    """WL-124 stable import surface: alias for plan_normalize_workstream_cmd."""
+    return plan_normalize_workstream_cmd(workstream_id, **kwargs)
+
+
 __all__ = [
     "plan_list_cmd",
     "plan_create_cmd",
@@ -74,6 +84,8 @@ __all__ = [
     "plan_lint_workstream_cmd",
     "plan_normalize_workstream_cmd",
     "plan_verify_workstream_cmd",
+    "workstream_query_cmd",
+    "workstream_stats_cmd",
 ]
 
 

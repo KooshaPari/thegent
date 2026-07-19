@@ -2,6 +2,13 @@
 from __future__ import annotations
 
 
+#: Public schema version used by contract payloads surfaced through
+#: ``get_server_meta_impl``. Defined here so the registries module remains the
+#: single import surface for contract-versioning constants; callers should
+#: treat this as the canonical contract schema version string.
+CONTRACT_SCHEMA_VERSION: str = "contract-schema-v1"
+
+
 class ContractRegistry:
     """Registry for contracts."""
 
@@ -32,4 +39,4 @@ class ContractVersion:
         return (self.major, self.minor, self.patch)
 
 
-__all__ = ["ContractRegistry", "ContractVersion"]
+__all__ = ["CONTRACT_SCHEMA_VERSION", "ContractRegistry", "ContractVersion"]
