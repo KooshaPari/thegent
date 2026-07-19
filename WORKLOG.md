@@ -1746,8 +1746,7 @@ to register the same bad rule.
   the names the test contract requires but delegate to the
   legacy `impl` module. A follow-up sprint could move the
   implementation bodies into the split modules proper.
-
-### Cockpit Progress Bar + DAG Tick
+### Cockpit Progress Bar + DAG Tick:
 
 * **Cockpit progress bar**: 100% (Day 2/5 cockpit lane remains
   fully closed; Day 3/5 governance + hardening lane is fully
@@ -1757,3 +1756,150 @@ to register the same bad rule.
   closed; `Day 4 / 5` opens on the next unblocked lane (the
   granular `--snapshot-flip-field <field>` canary or the
   Phase 3/4 SOTA-audit second pass).
+
+## 2026-07-19: Phase 3/4 Continuation — Day 4/5 — multi-field `--snapshot-flip` canary + convenience preset
+
+Closes the granular `--snapshot-flip-field <field>` follow-up from the
+prior hand-off in a single focused commit. The lane extends
+`--snapshot-flip` to a multi-field surface and adds a new
+`--snapshot-flip-all` convenience preset so operators can exercise the
+diff machinery on every tracked field at once. Backwards-compatible:
+single-flag invocations still work as before (Typer delivers
+`--snapshot-flip <field>` as `Optional[list[str]]` and the helper
+collapses it cleanly).
+
+### Lane A — Multi-field `--snapshot-flip` extension (commit forthcoming)
+
+* **`--snapshot-flip` becomes `Optional[list[str]]`** — the option is
+  declared with `typer.Option(..., help="…")` and Typer's `multiple=True`
+  semantics deliver a Python list. Operators can pass the flag multiple
+  times (`--snapshot-flip verdict --snapshot-flip override_applied`) to
+  compose flips across fields.
+* **New `--snapshot-flip-all` boolean preset** — flips the canonical
+  `(verdict, override_applied, cached)` triple on every entry. Designed
+  to be the smallest set that is guaranteed to disagree with every
+  possible engine output (verdict is the headline deny/allow bit,
+  override_applied is the override flag, cached is the OPT-008 cache-hit
+  bit).
+* **New helpers in `cli_cockpit.py`**:
+  * `_all_snapshot_flip_fields() -> tuple[str, ...]` — returns the
+    canonical preset tuple.
+  * `_apply_snapshot_flips(snapshot, fields)` — applies each flip
+    sequentially so distinct fields are independent and repeated fields
+    compose (allow→deny→allow).
+  * `_normalise_snapshot_flip_fields(snapshot_flip, snapshot_flip_all)`
+    — collapses `Optional[str | list[str]]` and the boolean preset into
+    a single de-duplicated list with first-seen order preserved. Typer
+    delivers repeated flags as `list[str]`; single invocations arrive as
+    `Optional[str]`. The normaliser handles both shapes.
+* **`cli_sota.py` mirrors the surface** — `sota_replay` accepts the
+  same multi-field flag and the same convenience preset; the
+  cockpit→sota shim forwards both transparently. The `_apply_snapshot_flips`
+  helper is imported from `cli_cockpit` so the inversion logic stays
+  one source of truth.
+* **Module docstring extended** — the existing `Operator walkthrough:
+  --snapshot-flip SOTA canary workflow` section now documents the
+  multi-field recipe and the convenience preset.
+
+### Lane B — Targeted tests (14 new tests in `test_unit_cockpit_snapshot_flip.py`)
+
+* **`TestSnapshotFlipMultiField`** (5 tests) — end-to-end CLI coverage:
+  * repeated `--snapshot-flip verdict --snapshot-flip override_applied`
+    surfaces both fields in the per-row `fields` list,
+  * repeated `--snapshot-flip verdict --snapshot-flip verdict` is
+    deduped to a single flip (the normaliser guards against template
+    substitution bugs),
+  * `--snapshot-flip-all` walks the mismatch path with exit code 4,
+  * `--snapshot-flip-all --snapshot-flip verdict` is observably
+    equivalent to `--snapshot-flip-all` alone (preset deduplicates
+    against explicit fields),
+  * `--snapshot-flip-all` propagates through the cockpit→sota shim
+    and surfaces as `<failure>` rows in the JUnit-XML report.
+* **`TestSnapshotFlipMultiFieldHelpers`** (9 tests) — direct
+  helper coverage pinning the composition semantics:
+  * `_all_snapshot_flip_fields()` returns the canonical triple,
+  * `_apply_snapshot_flips` keeps distinct fields independent,
+  * repeated fields round-trip back (allow→deny→allow),
+  * empty fields are skipped, empty list is a no-op,
+  * the normaliser handles `Optional[str]`, de-dupes lists, appends
+    the preset when requested, and does not duplicate preset fields
+    against explicit entries.
+
+### Validation
+
+* `pytest tests/test_unit_cockpit_snapshot_flip.py -q
+  --override-ini="addopts="` → **31 passed** (was 17; +14 net, zero
+  regressions on the single-field surface).
+* Wider Phase 3/4 + governance + wl-prefixed regression (29 test
+  files: UX cockpit, cockpit_bridge, progress_emitter, explanations,
+  traffic, decision_audit, cli_cockpit, cockpit_audit_pane_batch,
+  cockpit_sota_json_parity, snapshot_flip, cli_cockpit_exit_code_on_cap,
+  cli_cockpit_replay_audit_confirmation, cli_sota, policy_engine,
+  federated_policy_thread_safety, override_manager_path_guard,
+  policy_engine_cache_stats, federated_policy, policy_engine_evaluate_end_to_end_concurrency,
+  and 9 wl-prefixed files) → **634 passed** (was 475 prior;
+  +14 net from the snapshot-flip extension, +145 from the previously
+  blocked lanes we re-validated end-to-end, zero regressions).
+* `pytest tests/ --collect-only -q --override-ini="addopts="` →
+  **19158 collected, 0 errors** (the earlier 18 collection errors
+  were the venv missing `orjson` / `diskcache` / `litellm` /
+  `pytest-asyncio` / `hypothesis`; all installed into `.venv-resume`).
+* `ruff check` and `ruff format --check` clean on all three touched
+  files (`src/thegent/ux/cli_cockpit.py`, `src/thegent/ux/cli_sota.py`,
+  `tests/test_unit_cockpit_snapshot_flip.py`).
+* No secrets in the diff (gitleaks scan would pass; `api_key|secret|
+  token|password|passwd|bearer|aws_access|private_key` patterns
+  absent from every touched file).
+* 3 files modified + 0 added, +455 net lines, all additive.
+
+### Files Touched
+
+* `src/thegent/ux/cli_cockpit.py` — `_all_snapshot_flip_fields`,
+  `_apply_snapshot_flips`, `_normalise_snapshot_flip_fields` helpers;
+  `cockpit_replay` signature accepts `Optional[list[str]]` for
+  `--snapshot-flip` plus the new `--snapshot-flip-all` boolean; legacy
+  path + shim call sites updated to thread the normaliser; module
+  docstring extended with multi-field canary recipe.
+* `src/thegent/ux/cli_sota.py` — imports the three new helpers;
+  `sota_replay` signature accepts the multi-field flag + boolean
+  preset; call site updated to thread the normaliser.
+* `tests/test_unit_cockpit_snapshot_flip.py` — two new test classes
+  (`TestSnapshotFlipMultiField`, `TestSnapshotFlipMultiFieldHelpers`)
+  adding 14 targeted tests.
+
+### Resolved Worklog Items
+
+* **Follow-Up #1 (granular `--snapshot-flip-field <field>` per-field
+  flip)** — closed. Operators now compose multiple `--snapshot-flip
+  <field>` flags in a single invocation. A `--snapshot-flip-all`
+  convenience preset is also available for the canonical
+  `(verdict, override_applied, cached)` triple. 14 new tests pin
+  every composition edge case (distinct fields, repeated fields,
+  empty fields, preset dedupe, shim forwarding).
+
+### Unblocked Next (post-Day 4/5)
+
+* **Phase 3/4 SOTA-audit second pass** — the SOTA tooling now has a
+  31-test canary (`test_unit_cockpit_snapshot_flip.py`) and a 7-test
+  federated-policy concurrency integration (`test_unit_policy_engine_evaluate_end_to_end_concurrency.py`).
+  A second audit pass would re-baseline against the new test surface
+  and is the recommended Day 5/5 closer.
+* **`cockpit replay` JSON envelope: surface the applied flip set**
+  — operators who compose `--snapshot-flip verdict --snapshot-flip override_applied`
+  currently see only the diff report. A `flipped: ["verdict", "override_applied"]`
+  key in the `--json` envelope would let downstream SOTA tooling
+  trace which fields were inverted without grepping the diff rows.
+* **WL-124 / WL-125 / WL-126 implementation-grade hardening** —
+  the WL-124 split stubs and the WL-126 re-export stubs still
+  delegate to the legacy `impl` module. A follow-up sprint could
+  move the implementation bodies into the split modules proper.
+
+### Cockpit Progress Bar + DAG Tick:
+
+* **Cockpit progress bar**: 100% (Day 3/5 cockpit + governance lane
+  remains fully closed; Day 4/5 SOTA audit hardening lane is fully
+  green: 31/31 snapshot-flip tests including 14 new multi-field tests,
+  full 634/634 wider regression across UX + governance + wl-prefixed).
+* **DAG tick**: `+1` (this hand-off). Five-Day Goal `Day 4 / 5`
+  closed; `Day 5 / 5` opens on the Phase 3/4 SOTA-audit second pass
+  or the JSON-envelope `flipped` field extension.

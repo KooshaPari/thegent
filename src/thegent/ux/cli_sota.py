@@ -42,9 +42,11 @@ import typer
 
 from .cli_cockpit import (
     _apply_snapshot_flip,
+    _apply_snapshot_flips,
     _build_batch_decision_log,
     _compare_decision,
     _load_replay_snapshot,
+    _normalise_snapshot_flip_fields,
     err_console,
 )
 
@@ -349,16 +351,31 @@ def sota_replay(
         "--suite-name",
         help="JUnit-XML testsuite name (only used for junitxml report-format).",
     ),
-    snapshot_flip: Optional[str] = typer.Option(
+    snapshot_flip: Optional[list[str]] = typer.Option(
         None,
         "--snapshot-flip",
         help=(
             "SOTA canary workflow: invert the value of <field> on every entry of "
             "the loaded --compare snapshot in memory (e.g. 'verdict' or "
             "'override_applied') so the replay walks the mismatch path without "
-            "the operator having to hand-edit the snapshot file. Useful for "
-            "exercising the diff machinery + report formats + exit code 4 contract "
-            "end-to-end on every CI run."
+            "the operator having to hand-edit the snapshot file. Pass the flag "
+            "multiple times to compose flips across fields (``--snapshot-flip "
+            "verdict --snapshot-flip override_applied``). Useful for "
+            "exercising the diff machinery + report formats + exit code 4 "
+            "contract end-to-end on every CI run."
+        ),
+    ),
+    snapshot_flip_all: bool = typer.Option(
+        False,
+        "--snapshot-flip-all",
+        help=(
+            "Convenience preset: flip the canonical ``(verdict, "
+            "override_applied, cached)`` triple on every entry so the replay "
+            "exercises the mismatch path on every tracked field at once. "
+            "Equivalent to passing ``--snapshot-flip verdict --snapshot-flip "
+            "override_applied --snapshot-flip cached``. Composes with any "
+            "explicit ``--snapshot-flip <field>`` invocations without "
+            "duplication."
         ),
     ),
     _render_tail: bool = True,  # noqa: ANN001  - internal flag for cockpit shim
@@ -418,14 +435,16 @@ def sota_replay(
             err_console.print(f"[red]sota replay failed:[/red] compare file is not valid JSON: {exc}")
             raise typer.Exit(1) from exc
 
-        # SOTA canary workflow: ``--snapshot-flip <field>`` inverts the
-        # named field on every snapshot entry **in memory** so the replay
-        # walks the mismatch path without the operator having to
+        # SOTA canary workflow: ``--snapshot-flip <field>`` (optionally
+        # multiple times) or the ``--snapshot-flip-all`` preset inverts
+        # each named field on every snapshot entry **in memory** so the
+        # replay walks the mismatch path without the operator having to
         # hand-edit the --compare file. The flag is honoured on every
         # snapshot format (json / yaml / toml) because the flip is
         # applied after the format loader returns.
-        if snapshot_flip:
-            expected_snapshot = _apply_snapshot_flip(expected_snapshot, snapshot_flip)
+        flip_fields = _normalise_snapshot_flip_fields(snapshot_flip, snapshot_flip_all)
+        if flip_fields:
+            expected_snapshot = _apply_snapshot_flips(expected_snapshot, flip_fields)
 
         use_federation = default_policy is not None
         contexts, decisions, notices = _build_batch_decision_log(

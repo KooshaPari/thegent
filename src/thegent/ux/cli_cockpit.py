@@ -104,7 +104,20 @@ Example::
     thegent cockpit replay --batch corpus/ --compare snap.json \\
         --snapshot-flip verdict --json | jq '.matched, .mismatches'
 
-The same flag is honoured by ``thegent sota replay`` (it is forwarded
+Multi-field canary recipe (Day 4/5 hardening lane):
+
+    # Compose multiple ``--snapshot-flip`` flags to invert several
+    # fields at once. Each flip is independent so the diff machinery
+    # surfaces every flipped field in the per-row ``fields`` list.
+    thegent cockpit replay --batch corpus/ --compare snap.json \\
+        --snapshot-flip verdict --snapshot-flip override_applied
+
+    # Or use the convenience preset that flips the canonical
+    # ``(verdict, override_applied, cached)`` triple on every entry:
+    thegent cockpit replay --batch corpus/ --compare snap.json \\
+        --snapshot-flip-all --report-format junitxml --report-path report.xml
+
+The same flags are honoured by ``thegent sota replay`` (forwarded
 through the cockpit→sota shim transparently) so a single canary
 invocation exercises the diff path on every supported report format
 (``--json``, ``--junitxml``) without rewriting the snapshot.
@@ -685,6 +698,83 @@ def _apply_snapshot_flip(
     return flipped
 
 
+def _all_snapshot_flip_fields() -> tuple[str, ...]:
+    """Return the canonical preset list of flip fields for ``--snapshot-flip-all``.
+
+    The preset is the smallest set that, when flipped together, is
+    guaranteed to disagree with every possible engine output:
+
+    * ``verdict`` — flips the headline deny/allow bit.
+    * ``override_applied`` — flips the override flag.
+    * ``cached`` — flips the OPT-008 cache-hit bit.
+
+    Operators who want to exercise the diff machinery on a wider set of
+    fields can still pass ``--snapshot-flip <field>`` multiple times;
+    the preset is purely a convenience for the most common canary
+    pattern.
+    """
+    return ("verdict", "override_applied", "cached")
+
+
+def _apply_snapshot_flips(
+    snapshot: list[dict[str, Any]],
+    fields: list[str],
+) -> list[dict[str, Any]]:
+    """Apply each flip in ``fields`` sequentially to ``snapshot``.
+
+    Composition semantics:
+
+    * Distinct fields are independent — flipping ``verdict`` then
+      ``override_applied`` produces a snapshot whose ``verdict`` and
+      ``override_applied`` are both inverted relative to the input.
+    * Repeated fields compose — passing ``["verdict", "verdict"]`` is
+      equivalent to a no-op for ``verdict`` (allow→deny→allow). This
+      matches the SOTA audit's recommended "force-mismatch" workflow
+      where an operator may want to layer multiple canary signals on
+      the same snapshot.
+    * Empty / falsy entries in ``fields`` are skipped so an operator
+      who accidentally passes ``--snapshot-flip ""`` does not crash.
+
+    Returns a fresh list of copies so the input snapshot is never
+    mutated.
+    """
+    if not fields:
+        return snapshot
+    out: list[dict[str, Any]] = snapshot
+    for field in fields:
+        if not field:
+            continue
+        out = _apply_snapshot_flip(out, field)
+    return out
+
+
+def _normalise_snapshot_flip_fields(
+    snapshot_flip: Optional[str | list[str]],
+    snapshot_flip_all: bool,
+) -> list[str]:
+    """Reduce ``--snapshot-flip`` + ``--snapshot-flip-all`` into a single list.
+
+    Typer delivers repeated ``--snapshot-flip`` flags as a ``list[str]``,
+    but a single invocation arrives as ``Optional[str]``. This helper
+    collapses both into a ``list[str]`` (de-duplicated while preserving
+    first-seen order so the composition semantics in
+    :func:`_apply_snapshot_flips` stay deterministic) and appends the
+    ``--snapshot-flip-all`` preset if requested.
+    """
+    fields: list[str] = []
+    if isinstance(snapshot_flip, str) and snapshot_flip:
+        fields.append(snapshot_flip)
+    elif isinstance(snapshot_flip, list):
+        for entry in snapshot_flip:
+            if entry and entry not in fields:
+                fields.append(entry)
+    if snapshot_flip_all:
+        for entry in _all_snapshot_flip_fields():
+            if entry not in fields:
+                fields.append(entry)
+    return fields
+
+
 def _load_replay_snapshot(path: Path) -> list[dict[str, Any]]:
     """Load the ``--compare`` snapshot into a list of decision dicts.
 
@@ -840,16 +930,31 @@ def cockpit_replay(
         "--report-path",
         help="Write the report to this file (delegated to sota replay; default: stdout).",
     ),
-    snapshot_flip: Optional[str] = typer.Option(
+    snapshot_flip: Optional[list[str]] = typer.Option(
         None,
         "--snapshot-flip",
         help=(
             "SOTA canary workflow: invert the value of <field> on every entry of "
             "the loaded --compare snapshot in memory (e.g. 'verdict' or "
             "'override_applied') so the replay walks the mismatch path without "
-            "the operator having to hand-edit the snapshot file. Useful for "
-            "exercising the diff machinery + JSON envelope + exit code 4 contract "
+            "the operator having to hand-edit the snapshot file. Pass the flag "
+            "multiple times to compose flips across fields (``--snapshot-flip "
+            "verdict --snapshot-flip override_applied``). Useful for exercising "
+            "the diff machinery + JSON envelope + exit code 4 contract "
             "end-to-end on every CI run."
+        ),
+    ),
+    snapshot_flip_all: bool = typer.Option(
+        False,
+        "--snapshot-flip-all",
+        help=(
+            "Convenience preset: flip the canonical ``(verdict, "
+            "override_applied, cached)`` triple on every entry so the replay "
+            "exercises the mismatch path on every tracked field at once. "
+            "Equivalent to passing ``--snapshot-flip verdict --snapshot-flip "
+            "override_applied --snapshot-flip cached``. Composes with any "
+            "explicit ``--snapshot-flip <field>`` invocations without "
+            "duplication."
         ),
     ),
 ) -> None:
@@ -926,6 +1031,7 @@ def cockpit_replay(
                 # operator summaries.
                 _render_tail=False,
                 snapshot_flip=snapshot_flip,
+                snapshot_flip_all=snapshot_flip_all,
             )
         except typer.Exit:
             raise
@@ -956,13 +1062,15 @@ def cockpit_replay(
             raise typer.Exit(1) from exc
 
         # SOTA canary workflow: when the operator passes
-        # ``--snapshot-flip <field>`` we invert that field on every
-        # snapshot entry **in memory** so the replay walks the mismatch
-        # path without the operator having to hand-edit the --compare
-        # file on disk. See ``_apply_snapshot_flip`` for the inversion
-        # semantics.
-        if snapshot_flip:
-            expected_snapshot = _apply_snapshot_flip(expected_snapshot, snapshot_flip)
+        # ``--snapshot-flip <field>`` (optionally multiple times) or the
+        # ``--snapshot-flip-all`` preset, we invert each named field on
+        # every snapshot entry **in memory** so the replay walks the
+        # mismatch path without the operator having to hand-edit the
+        # --compare file on disk. See ``_apply_snapshot_flips`` for the
+        # composition semantics.
+        flip_fields = _normalise_snapshot_flip_fields(snapshot_flip, snapshot_flip_all)
+        if flip_fields:
+            expected_snapshot = _apply_snapshot_flips(expected_snapshot, flip_fields)
 
         use_federation = default_policy is not None
         contexts, decisions, notices = _build_batch_decision_log(

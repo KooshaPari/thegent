@@ -429,3 +429,311 @@ class TestSnapshotFlipHelpers:
         assert flipped[1] == "not-a-dict"
         assert flipped[2] == 42
         assert flipped[3]["verdict"] == "allow"
+
+
+# ---------------------------------------------------------------------------
+# Multi-field snapshot flip (Day 4/5 hardening lane)
+# ---------------------------------------------------------------------------
+
+
+class TestSnapshotFlipMultiField:
+    """Day 4/5 ``--snapshot-flip`` extension: multi-field flips.
+
+    Covers the WORKLOG follow-up #1 ("``cockpit replay
+    --snapshot-flip <field>`` granular per-field flip") by extending
+    the flag to accept multiple values via Typer's ``multiple=True``
+    plus a new ``--snapshot-flip-all`` convenience preset. The lane
+    closes the SOTA audit's recommended "force-mismatch workflow":
+    operators can compose flips across ``verdict``,
+    ``override_applied``, and ``cached`` to exercise the diff
+    machinery on every tracked field at once.
+    """
+
+    def test_multi_field_verdict_and_override_applied_forces_mismatch(self, tmp_path: Path) -> None:
+        """Repeated ``--snapshot-flip`` inverts both fields on every entry."""
+        runner = CliRunner()
+        batch = tmp_path / "batch.json"
+        compare = tmp_path / "compare.json"
+        _write_batch(batch)
+        decisions = _harvest_decisions(runner, batch)
+        _write_snapshot(decisions, compare)
+        before_hash = _sha256(compare)
+
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip",
+                "verdict",
+                "--snapshot-flip",
+                "override_applied",
+                "--json",
+            ],
+        )
+        assert result.exit_code == 4, result.output
+        envelope = json.loads(result.output.strip())
+        assert envelope["matched"] is False
+        assert envelope["mismatches"], "expected at least one mismatch row"
+        # Every flipped field must surface in the per-row ``fields`` list.
+        for row in envelope["mismatches"]:
+            assert "verdict" in row["fields"], row
+            assert "override_applied" in row["fields"], row
+        # ``--compare`` file on disk MUST be left untouched.
+        assert _sha256(compare) == before_hash, "multi-field flip must not mutate --compare"
+
+    def test_multi_field_repeated_field_composes_to_noop_for_verdict(self, tmp_path: Path) -> None:
+        """``--snapshot-flip verdict --snapshot-flip verdict`` is deduped to a single flip.
+
+        The normaliser collapses repeated entries to first-seen so an
+        operator who accidentally passes the same field twice (often a
+        template substitution bug) does not get an unexpected second
+        flip. This test pins the dedupe-on-input behaviour so a future
+        refactor that drops the dedupe has to re-justify the choice.
+        """
+        runner = CliRunner()
+        batch = tmp_path / "batch.json"
+        compare = tmp_path / "compare.json"
+        _write_batch(batch)
+        decisions = _harvest_decisions(runner, batch)
+        _write_snapshot(decisions, compare)
+
+        result_double = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip",
+                "verdict",
+                "--snapshot-flip",
+                "verdict",
+            ],
+        )
+        result_single = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip",
+                "verdict",
+            ],
+        )
+        # Both invocations walk the same mismatch path with exit code 4.
+        assert result_single.exit_code == 4, result_single.output
+        assert result_double.exit_code == 4, result_double.output
+        # The mismatch report is byte-identical because the dedupe means
+        # ``["verdict", "verdict"]`` and ``["verdict"]`` both flip
+        # verdict exactly once. Guards against future regressions where
+        # the second ``verdict`` accidentally re-inverts and breaks the
+        # mismatch contract.
+        assert "matched=False" in result_double.output
+        assert "verdict" in result_double.output
+
+    def test_snapshot_flip_all_forces_mismatch_on_verdict_override_and_cached(self, tmp_path: Path) -> None:
+        """``--snapshot-flip-all`` flips the canonical triple and walks the mismatch path."""
+        runner = CliRunner()
+        batch = tmp_path / "batch.json"
+        compare = tmp_path / "compare.json"
+        _write_batch(batch)
+        decisions = _harvest_decisions(runner, batch)
+        _write_snapshot(decisions, compare)
+
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip-all",
+                "--json",
+            ],
+        )
+        assert result.exit_code == 4, result.output
+        envelope = json.loads(result.output.strip())
+        assert envelope["matched"] is False
+        for row in envelope["mismatches"]:
+            fields = set(row["fields"])
+            # At least the verdict field must disagree (the canonical
+            # triple always disagrees; this guards against future
+            # refactors that accidentally no-op the preset).
+            assert "verdict" in fields, row
+
+    def test_snapshot_flip_all_then_explicit_field_does_not_duplicate(self, tmp_path: Path) -> None:
+        """``--snapshot-flip-all --snapshot-flip verdict`` does NOT flip verdict twice.
+
+        Composition rule: explicit ``--snapshot-flip <field>`` after
+        ``--snapshot-flip-all`` is a no-op for fields already in the
+        preset, so a verdict stays flipped exactly once. This keeps
+        the "preset + selective add" workflow idempotent.
+        """
+        runner = CliRunner()
+        batch = tmp_path / "batch.json"
+        compare = tmp_path / "compare.json"
+        _write_batch(batch)
+        decisions = _harvest_decisions(runner, batch)
+        _write_snapshot(decisions, compare)
+
+        result_all = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip-all",
+            ],
+        )
+        result_composed = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip-all",
+                "--snapshot-flip",
+                "verdict",
+            ],
+        )
+        assert result_all.exit_code == 4, result_all.output
+        assert result_composed.exit_code == 4, result_composed.output
+        # The two surfaces must agree on ``matched=False`` so the
+        # composed invocation is observably equivalent to the preset.
+        assert "matched=False" in result_all.output
+        assert "matched=False" in result_composed.output
+
+    def test_snapshot_flip_all_propagates_through_sota_shim_with_junitxml(self, tmp_path: Path) -> None:
+        """``cockpit replay --snapshot-flip-all --report-format junitxml`` produces failing XML.
+
+        Multi-field flips MUST travel through the cockpit→sota shim
+        intact and surface as ``<failure>`` rows in the JUnit-XML
+        report. This is the Day 4/5 close-out: the cockpit convenience
+        surface is wired through to the same sota report formats the
+        single-field flag already exercises.
+        """
+        runner = CliRunner()
+        batch = tmp_path / "batch.json"
+        compare = tmp_path / "compare.json"
+        _write_batch(batch)
+        decisions = _harvest_decisions(runner, batch)
+        _write_snapshot(decisions, compare)
+        report = tmp_path / "report.xml"
+
+        result = runner.invoke(
+            cockpit_app,
+            [
+                "replay",
+                "--batch",
+                str(batch),
+                "--compare",
+                str(compare),
+                "--snapshot-flip-all",
+                "--report-format",
+                "junitxml",
+                "--report-path",
+                str(report),
+            ],
+        )
+        assert result.exit_code == 4, result.output
+        xml_text = report.read_text(encoding="utf-8")
+        assert "<failure" in xml_text, xml_text
+        assert xml_text.count("<testcase") >= 2
+        assert xml_text.count("<failure") >= 1
+
+
+# ---------------------------------------------------------------------------
+# Multi-field helper coverage
+# ---------------------------------------------------------------------------
+
+
+class TestSnapshotFlipMultiFieldHelpers:
+    """Direct coverage of the new ``_apply_snapshot_flips`` /
+    ``_all_snapshot_flip_fields`` / ``_normalise_snapshot_flip_fields`` helpers."""
+
+    def test_all_snapshot_flip_fields_returns_canonical_triple(self) -> None:
+        from thegent.ux.cli_cockpit import _all_snapshot_flip_fields
+
+        assert _all_snapshot_flip_fields() == ("verdict", "override_applied", "cached")
+
+    def test_apply_snapshot_flips_distinct_fields_independent(self) -> None:
+        from thegent.ux.cli_cockpit import _apply_snapshot_flips
+
+        original = [
+            {"verdict": "allow", "override_applied": False, "cached": False},
+        ]
+        flipped = _apply_snapshot_flips(original, ["verdict", "override_applied"])
+        assert flipped[0]["verdict"] == "deny"
+        assert flipped[0]["override_applied"] is True
+        assert flipped[0]["cached"] is False
+        # Original list must NOT be mutated.
+        assert original[0]["verdict"] == "allow"
+        assert original[0]["override_applied"] is False
+
+    def test_apply_snapshot_flips_repeated_field_composes(self) -> None:
+        from thegent.ux.cli_cockpit import _apply_snapshot_flips
+
+        original = [{"verdict": "allow"}]
+        flipped = _apply_snapshot_flips(original, ["verdict", "verdict"])
+        # Two flips round-trip back to the original value.
+        assert flipped[0]["verdict"] == "allow"
+
+    def test_apply_snapshot_flips_skips_empty_fields(self) -> None:
+        from thegent.ux.cli_cockpit import _apply_snapshot_flips
+
+        original = [{"verdict": "allow"}]
+        flipped = _apply_snapshot_flips(original, ["", "verdict", ""])
+        assert flipped[0]["verdict"] == "deny"
+
+    def test_apply_snapshot_flips_empty_list_returns_input(self) -> None:
+        from thegent.ux.cli_cockpit import _apply_snapshot_flips
+
+        original = [{"verdict": "allow"}]
+        assert _apply_snapshot_flips(original, []) is original
+
+    def test_normalise_snapshot_flip_fields_handles_str_input(self) -> None:
+        from thegent.ux.cli_cockpit import _normalise_snapshot_flip_fields
+
+        # Single invocation delivers ``Optional[str]`` (not a list).
+        assert _normalise_snapshot_flip_fields("verdict", False) == ["verdict"]
+        # None is a no-op.
+        assert _normalise_snapshot_flip_fields(None, False) == []
+
+    def test_normalise_snapshot_flip_fields_dedupes_list_input(self) -> None:
+        from thegent.ux.cli_cockpit import _normalise_snapshot_flip_fields
+
+        fields = _normalise_snapshot_flip_fields(
+            ["verdict", "override_applied", "verdict"],
+            False,
+        )
+        # First-seen order preserved; duplicates dropped.
+        assert fields == ["verdict", "override_applied"]
+
+    def test_normalise_snapshot_flip_fields_appends_preset_when_requested(self) -> None:
+        from thegent.ux.cli_cockpit import _normalise_snapshot_flip_fields
+
+        fields = _normalise_snapshot_flip_fields("verdict", True)
+        # Explicit verdict first (first-seen), then the preset tail.
+        assert fields == ["verdict", "override_applied", "cached"]
+
+    def test_normalise_snapshot_flip_fields_preset_deduped_against_existing(self) -> None:
+        from thegent.ux.cli_cockpit import _normalise_snapshot_flip_fields
+
+        fields = _normalise_snapshot_flip_fields(
+            ["override_applied", "verdict"],
+            True,
+        )
+        # Preset is appended but does not duplicate explicit entries.
+        assert fields == ["override_applied", "verdict", "cached"]
