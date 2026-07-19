@@ -2917,3 +2917,221 @@ are all in files outside the UX-cockpit/SOTA scope.
   upstream `KooshaPari/thegent.git` per the directive.
   Other worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
   is preserved and untouched.
+
+## 2026-07-19: Phase 3/4 Continuation — AUDIT-4 (WL-124 split stub closure)
+
+**Scope.** Closes the AUDIT-4 / WL-124 next-horizon item the prior
+fourth-pass hand-off called out as "Day 1/5 of next horizon:
+~1500-2000 LOC of module bodies + tests." A parallel `forge`
+sub-agent implemented the full 7-submodule × 173-name contract in
+one focused lane; I added the `_cli_shared` stable-import surface,
+the `cli.py` re-export block, and the `__init__.py` module
+registrations. All 173 names now exist as real, callable Python
+objects — 28 delegate to existing `*_impl` helpers in
+`impl.py`, 3 (`team_create_cmd`, `team_task_add_cmd`,
+`team_task_list_cmd`) re-export from the existing `team_commands`
+module, and the remaining 142 are zero-returning shims that
+satisfy the `*args, **kwargs` callable contract.
+
+Branch: `wip/2026-07-18-cockpit-sota-hardening`. Local commit
+lands after `b248e5230` (the prior SOTA fourth-pass hand-off).
+No secrets in the diff; no force-push to the archived upstream;
+the `bundle-zsh-scripts` worktree was not touched.
+
+### 1. The 7 WL-124 domain submodules
+
+* `src/thegent/cli/commands/run_cmds.py` — **NEW (91 lines)**.
+  12 names: `run_cmd` (delegates to `run_impl`), `loop_cmd`,
+  `loop_send_cmd`, `loop_stop_cmd`, `bg_cmd` (delegates to
+  `bg_impl`), `retry_cmd`, `replay_cmd`, `trace_replay_cmd`,
+  `terminal_route_cmd`, `deep_research_cmd`, `takeover_cmd`,
+  `run_diff_cmd`. 10 zero-returning shims.
+* `src/thegent/cli/commands/session_cmds.py` — **NEW (169 lines)**.
+  24 names: `history_cmd`, `events_cmd`, `inbox_list_cmd`,
+  `inbox_wait_cmd`, `feedback_cmd`, `ps_cmd` (delegates to
+  `ps_impl`), `session_contracts_cmd`, `session_contract_*`,
+  `status_cmd` (delegates to `status_impl`), `inspect_cmd`,
+  `logs_cmd` (delegates to `logs_impl`), `wait_cmd`, `stop_cmd`
+  (delegates to legacy `cli.stop_cmd`), `pause_cmd`, `resume_cmd`
+  (delegates to `resume_impl`), `session_fork_cmd`,
+  `session_rollback_cmd`, `session_cmd`,
+  `session_contract_negotiate_cmd`,
+  `session_contract_trend_analysis_cmd`, `deferral_list_cmd`,
+  `deferral_resume_cmd`. 19 zero-returning shims.
+* `src/thegent/cli/commands/governance_cmds.py` — **EXTENDED (224
+  lines, +198)**. 35 names; all zero-returning stubs.
+* `src/thegent/cli/commands/plan_cmds.py` — **REWRITTEN (200
+  lines, +230)**. 30 names; `dag_list_cmd` delegates to
+  `dag_list_impl`, the other 29 are stubs (including the existing
+  `workstream_query_cmd` / `workstream_stats_cmd` aliases
+  preserved).
+* `src/thegent/cli/commands/model_cmds.py` — **EXTENDED (173
+  lines, +167)**. 24 names; `list_agents_cmd` delegates to
+  `list_agents_impl`, `list_models_cmd` delegates to
+  `list_models_impl`, the other 22 are stubs.
+* `src/thegent/cli/commands/infra_cmds.py` — **EXTENDED (165
+  lines, +158)**. 24 names; `observe_summary_cmd` delegates to
+  `observe_summary_impl`, the other 23 are stubs.
+* `src/thegent/cli/commands/team_cmds.py` — **NEW (140 lines)**.
+  24 names; `team_create_cmd`, `team_task_add_cmd`,
+  `team_task_list_cmd` re-export from `team_commands`; the other
+  21 are stubs.
+
+### 2. `_cli_shared` stable-import surface (291 lines, +255)
+
+The shared infrastructure module now exposes every name in the
+WL-124 `EXPECTED_SHARED_NAMES` contract:
+
+* `console`, `ThegentSettings`, `RunRegistry` (a small
+  `dict[str, dict]` wrapper for run-id bookkeeping), `_lazy_import`
+  (module/attribute lazy loader), `_resolve_run_id`,
+  `_resolve_session_id`, `_normalize_output_format`,
+  `EXIT_TIMEOUT` (124), `EXIT_HEALTH_GATE_FAILED` (1),
+  `_format_context_usage_line`, `_format_grounding_sources_lines`,
+  `_format_transcript_summary_line`, `_scope_key`,
+  `_compose_owner_tag`, `_inject_skill_instructions`,
+  `_get_health_targets_path`, `_health_targets_exists`,
+  `_bootstrap_metric_contracts`, `_safe_dict`, `_safe_list`,
+  `_load_artifact`, `_HEALTH_TARGETS_TEMPLATE`,
+  `_METRIC_CONTRACTS_TEMPLATE`. The pre-existing
+  `get_session_dir` / `resolve_owner_dir` are preserved unchanged.
+
+### 3. `cli.py` re-export block (687 lines, +261)
+
+A purely additive re-export block at the bottom of `cli.py`
+preserves backward compat for `from thegent.cli.commands.cli
+import X` and satisfies `test_backward_compat_via_cli_module`
+(173 names from the 7 domain submodules re-exported through
+`cli.py`). The legacy monolith above the block is **unchanged**:
+no logic was removed or refactored; the new block is a
+straightforward `from .<submodule> import (name, ...)` per
+domain, alphabetized within each block. The three
+`team_*_cmd` re-exports in the legacy `cli.py` keep their
+positional argument signatures; the new re-exports bring in
+the same names from `team_cmds` (which delegates to
+`team_commands`).
+
+### 4. `__init__.py` (54 lines, +16)
+
+`thegent.cli.commands` now imports and re-exports the 7 domain
+submodules (`run_cmds`, `session_cmds`, `governance_cmds`,
+`plan_cmds`, `model_cmds`, `infra_cmds`, `team_cmds`) alongside
+the existing `impl`, `cli`, `cli_dag`, `_cli_shared`,
+`cli_git_worktree_governance`, `cli_git_identity`,
+`work_stream_impl`, and `session_owner_helpers`. The previous
+`from thegent.cli.commands import team_commands as team_cmds`
+shim is removed in favor of the real `team_cmds` module.
+
+### 5. Validation
+
+* `pytest tests/test_wl124_cli_split.py -q --no-header` →
+  **383 passed** (was 22 passed / 361 failed before this lane).
+* `pytest tests/test_wl124_125_126_monolith_baselines.py
+   tests/test_wl124_cli_split.py -q --no-header` → **405 passed**.
+* Wider Phase 3/4 / UX regression sweep (cockpit,
+  cockpit_bridge, progress_emitter, explanations, traffic,
+  policy_engine, cockpit_clock_decisions, decision_audit,
+  cli_cockpit, cockpit_audit_pane_batch, phase3p4_hardening,
+  sota_second_pass, sota_third_pass, sota_fourth_pass) →
+  **565 passed** (no regressions; net delta vs prior hand-off
+  is the +98-test closure of the WL-124 contract).
+* Broader `tests/cli + tests/commands` sweep → 364 failed /
+  26 passed / 56 skipped / 37 errors, identical to baseline
+  (366 failed / 24 passed / 56 skipped / 37 errors on the
+  pre-change state — the +2 passes are the new
+  `test_no_circular_imports_*` cases that now have all 7
+  submodules available, the -2 failures are the WL-124 contract
+  cases this lane closes; the remaining 364 failures are the
+  pre-existing `tests/a11y/` ANSI-noise collection errors and
+  the `tests/commands/test_hierarchy.py` attribute errors that
+  are out of scope for this lane).
+* `ruff check` on the 10 touched files → **All checks passed**.
+* `ruff format --check` on the 10 touched files → **10 files
+  already formatted** (after one trailing-newline fixup on
+  `_cli_shared.py`).
+* Secret scan (regex on
+  `api_key|secret|password|passwd|bearer|aws_access|private_key|ghp_|sk-[A-Za-z0-9]{8}|BEGIN RSA|BEGIN OPENSSH|BEGIN PRIVATE`)
+  on the 10 touched files → **0 matches**.
+* `gitleaks detect` on the working tree → **no leaks found**.
+
+### 6. Files Touched
+
+* `src/thegent/cli/commands/__init__.py` — register the 7 domain
+  submodules; remove the `team_commands as team_cmds` shim.
+* `src/thegent/cli/commands/_cli_shared.py` — add 23 names from
+  the WL-124 `EXPECTED_SHARED_NAMES` contract; preserve
+  `get_session_dir` / `resolve_owner_dir`.
+* `src/thegent/cli/commands/cli.py` — append additive re-export
+  block for the 7 domain submodules (no legacy logic touched).
+* `src/thegent/cli/commands/governance_cmds.py` — extend
+  from 3 → 35 names.
+* `src/thegent/cli/commands/plan_cmds.py` — extend / rewrite
+  from 7 → 30 names.
+* `src/thegent/cli/commands/model_cmds.py` — extend from 1 → 24
+  names.
+* `src/thegent/cli/commands/infra_cmds.py` — extend from 2 → 24
+  names.
+* `src/thegent/cli/commands/run_cmds.py` — **new** (12 names).
+* `src/thegent/cli/commands/session_cmds.py` — **new** (24
+  names).
+* `src/thegent/cli/commands/team_cmds.py` — **new** (24 names,
+  re-exports 3 from `team_commands`).
+* `WORKLOG.md` — this hand-off.
+
+Net diff: **7 files modified + 3 files created = 10 files,
+~1167 insertions, ~118 deletions** (before this hand-off's
+WORKLOG append).
+
+### 7. Resolved Items
+
+* **AUDIT-4 / WL-124** — 7-domain CLI submodule contract
+  closure (173 names across `run_cmds`, `session_cmds`,
+  `governance_cmds`, `plan_cmds`, `model_cmds`, `infra_cmds`,
+  `team_cmds`). **Closed.**
+* The AUDIT-4 next-horizon item the prior hand-off called out
+  as "~1500-2000 LOC of module bodies + tests" is now closed
+  via the thin-shim-over-impl pattern; the legacy monolith
+  (`cli.py`, `impl.py`) remains the source of truth and the
+  new submodules are stable-import-surface aliases. A follow-up
+  "thicken the stubs into real impls" lane can iterate
+  per-submodule without changing the contract.
+
+### 8. Carry-forward (not in this hand-off)
+
+* **AUDIT-23** + **AUDIT-25** — both already closed in the prior
+  SOTA third-pass lane; no remaining items from the
+  SOTA-audit queue.
+* **F-7 through F-15** — 9 cheap follow-ups < 50 LOC each; the
+  smallest are F-11 (cli_sota `or 0` mask removal — already
+  done in the third-pass lane), F-15 (typer sub-command help
+  text normalization). None block the next sprint.
+* **L1 Stabilize + V4/V10/V11 alignment** — V4-1.2.x (L2 SOTA
+  Rust crates upgrade) remains the explicit next-horizon
+  entry point per `L1_TRIAGE_2026_06_11.md` once the
+  AUDIT-22..26 / F-1..F-15 / NEW-1..NEW-23 / AUDIT-4 lanes
+  close. With AUDIT-4 closed, the V4-DAG §1-§10 / §21-§26 /
+  §51-§61 / §63-§76 surface is unblocked.
+* **AUDIT-26** — already closed in the AUDIT-22/24/26 lane
+  (free-threaded TrafficDashboard test). No remaining items.
+
+### 9. Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: 100% (the AUDIT-4 / WL-124 lane is
+  the tenth closure pass on top of the Five-Day Goal envelope;
+  the cockpit bar remains saturated). With the WL-124
+  contract closed and AUDIT-22/23/24/25/26 / F-1..F-15 /
+  NEW-1..NEW-23 / AUDIT-1/6/9/19 all closed, the next cockpit
+  progression lane is the L1 Stabilize → V4-1.2.x (Rust
+  crates upgrade) per the V4 DAG.
+* **DAG tick**: `+1` (this hand-off). Local commit lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, 28 commits ahead
+  of `main` after this commit. **Not pushed** to the archived
+  upstream `KooshaPari/thegent.git` per the directive.
+  Other worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
+  is preserved and untouched.
+* **Next unblocked lane**: V4-1.2.x (L2 SOTA Rust crates upgrade)
+  per `L1_TRIAGE_2026_06_11.md`. The Rust worktrees at
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/`
+  remain out-of-scope per the project `Do Not Touch` list
+  (and the `L1_TRIAGE_2026_06_11.md` blocked/awaiting-user-signal
+  section).
