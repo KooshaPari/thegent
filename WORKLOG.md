@@ -4719,8 +4719,8 @@ Net diff: **4 files modified + 1 file created = 5 files,
   sweep, AUDIT-N+2 governance+infra+mesh+services envelope
   sweep, plus this AUDIT-N+3 cli/commands+agents+tools
   envelope sweep lane.
-* **Local commit**: `2a6be1444` lands on
-  `wip/2026-07-18-cockpit-sota-hardening`, **48 commits
+* **Local commit**: `ed5e950ff` lands on
+  `wip/2026-07-18-cockpit-sota-hardening`, **49 commits
   ahead of `main`** after this commit. **Not pushed** to
   the archived upstream `KooshaPari/thegent.git` per the
   directive. Other worktree
