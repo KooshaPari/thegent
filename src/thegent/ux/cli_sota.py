@@ -41,6 +41,7 @@ from typing import Any, Optional
 import typer
 
 from .cli_cockpit import (
+    _apply_snapshot_flip,
     _build_batch_decision_log,
     _compare_decision,
     _load_replay_snapshot,
@@ -348,6 +349,18 @@ def sota_replay(
         "--suite-name",
         help="JUnit-XML testsuite name (only used for junitxml report-format).",
     ),
+    snapshot_flip: Optional[str] = typer.Option(
+        None,
+        "--snapshot-flip",
+        help=(
+            "SOTA canary workflow: invert the value of <field> on every entry of "
+            "the loaded --compare snapshot in memory (e.g. 'verdict' or "
+            "'override_applied') so the replay walks the mismatch path without "
+            "the operator having to hand-edit the snapshot file. Useful for "
+            "exercising the diff machinery + report formats + exit code 4 contract "
+            "end-to-end on every CI run."
+        ),
+    ),
     _render_tail: bool = True,  # noqa: ANN001  - internal flag for cockpit shim
 ) -> None:
     """Replay ``--batch`` through pre-check and validate against ``--compare``.
@@ -404,6 +417,15 @@ def sota_replay(
         except json.JSONDecodeError as exc:
             err_console.print(f"[red]sota replay failed:[/red] compare file is not valid JSON: {exc}")
             raise typer.Exit(1) from exc
+
+        # SOTA canary workflow: ``--snapshot-flip <field>`` inverts the
+        # named field on every snapshot entry **in memory** so the replay
+        # walks the mismatch path without the operator having to
+        # hand-edit the --compare file. The flag is honoured on every
+        # snapshot format (json / yaml / toml) because the flip is
+        # applied after the format loader returns.
+        if snapshot_flip:
+            expected_snapshot = _apply_snapshot_flip(expected_snapshot, snapshot_flip)
 
         use_federation = default_policy is not None
         contexts, decisions, notices = _build_batch_decision_log(

@@ -73,6 +73,41 @@ Replay exits ``0`` on match, ``4`` on mismatch (mirrors the
 pipelines can branch on the two failure modes independently). For
 structured ingestion prefer ``--json`` over text-grepping the default
 output — the text path is intended for humans only.
+
+------------------------------------------------------------------------
+Operator walkthrough: ``--snapshot-flip`` SOTA canary workflow
+------------------------------------------------------------------------
+
+The ``--snapshot-flip <field>`` flag is a SOTA canary knob: it
+deliberately inverts one field on every loaded snapshot entry **in
+memory** so the replay walks the mismatch path without the operator
+having to hand-edit the ``--compare`` file. This is useful for CI
+runs that want to exercise the diff machinery + JSON envelope + exit
+code 4 contract end-to-end on every replay (rather than only when a
+real regression happens to land).
+
+Supported fields and their invert semantics:
+
+* ``verdict`` — ``allow`` ↔ ``deny``; ``warn`` and unknown verdicts
+  flip to ``deny`` (always disagrees with the engine's actual verdict).
+* ``override_applied`` / ``cached`` — bool negation (with
+  string-bool coercion so yaml/toml snapshots still invert cleanly).
+* any other field — best-effort bool/numeric inversion, or a stable
+  ``<flipped:<value>>`` string sentinel so the compare step still
+  records a mismatch.
+
+Example::
+
+    # Force a mismatch on every entry's ``verdict`` so the replay
+    # exercise the exit-4 + diff machinery end-to-end. The
+    # ``--compare`` file on disk is left untouched.
+    thegent cockpit replay --batch corpus/ --compare snap.json \\
+        --snapshot-flip verdict --json | jq '.matched, .mismatches'
+
+The same flag is honoured by ``thegent sota replay`` (it is forwarded
+through the cockpit→sota shim transparently) so a single canary
+invocation exercises the diff path on every supported report format
+(``--json``, ``--junitxml``) without rewriting the snapshot.
 """
 
 from __future__ import annotations
@@ -563,6 +598,93 @@ _REPLAY_COMPARE_FIELDS: tuple[str, ...] = (
 )
 
 
+# Dispatch table for the ``--snapshot-flip <field>`` SOTA canary workflow.
+# Each entry knows how to invert one value of the given field so the
+# compare step records a guaranteed mismatch on that field without the
+# operator having to hand-edit the snapshot file on disk.
+#
+# Unknown fields fall through to a generic bool/not-string swap that
+# covers the common cases without raising — the flip is a *canary*, not
+# a strict guarantee; downstream ``_compare_decision`` is still the
+# source of truth for whether the inverted snapshot actually disagrees
+# with the engine's output.
+def _invert_snapshot_value(field: str, value: Any) -> Any:
+    """Return the inverted form of ``value`` for the SOTA ``--snapshot-flip`` flag.
+
+    Recognised semantics:
+
+    * ``verdict``: ``allow`` ↔ ``deny`` (and ``warn`` ↔ ``deny`` as a
+      sensible canary default — flipping a warn to a deny is a strict
+      mismatch against the engine's actual output).
+    * ``override_applied``: bool negation.
+    * ``cached``: bool negation (mirror of ``override_applied``).
+    * any other field: bool negation when the value is a ``bool``,
+      otherwise a stable "string-flipped" sentinel so the compare step
+      records a mismatch without losing the field's type.
+
+    The function is intentionally tolerant of ``None``/missing fields
+    so a flip on an absent field is a no-op rather than a crash.
+    """
+    if value is None:
+        return value
+    if field == "verdict":
+        text = str(value).strip().lower()
+        if text == "allow":
+            return "deny"
+        if text == "deny":
+            return "allow"
+        # ``warn`` and any unrecognised verdict flip to ``deny`` so the
+        # canary always disagrees with the engine's actual verdict.
+        return "deny"
+    if field in ("override_applied", "cached"):
+        if isinstance(value, bool):
+            return not value
+        # Coerce string-shaped bools ("true"/"false") so yaml/toml
+        # snapshots still get inverted cleanly.
+        text = str(value).strip().lower()
+        if text in ("true", "1", "yes"):
+            return False
+        if text in ("false", "0", "no"):
+            return True
+        return not bool(value)
+    # Generic fallback: if the field is bool-shaped, negate; if string,
+    # return a sentinel that the compare step will flag as a mismatch.
+    if isinstance(value, bool):
+        return not value
+    if isinstance(value, (int, float)):
+        # Pick a value clearly different from any sane decision output;
+        # use the negation when non-zero, otherwise a clearly-out-of-band
+        # sentinel that still respects the field's numeric type.
+        return -value if value != 0 else -1
+    return f"<flipped:{value}>"
+
+
+def _apply_snapshot_flip(
+    snapshot: list[dict[str, Any]],
+    field: str,
+) -> list[dict[str, Any]]:
+    """Return a copy of ``snapshot`` with ``field`` inverted on every entry.
+
+    Mirrors the on-disk ``_write_snapshot(..., flip=True)`` pattern from
+    ``tests/test_unit_cockpit_sota_json_parity.py`` but operates in
+    memory so the operator's ``--compare`` file is left untouched. This
+    is the SOTA canary workflow: deliberately force the replay into the
+    mismatch path so the diff machinery + JSON envelope + exit code
+    contract get exercised end-to-end on every CI run.
+    """
+    if not field:
+        return snapshot
+    flipped: list[dict[str, Any]] = []
+    for entry in snapshot:
+        if not isinstance(entry, dict):
+            flipped.append(entry)
+            continue
+        new_entry = dict(entry)
+        new_entry[field] = _invert_snapshot_value(field, entry.get(field))
+        flipped.append(new_entry)
+    return flipped
+
+
 def _load_replay_snapshot(path: Path) -> list[dict[str, Any]]:
     """Load the ``--compare`` snapshot into a list of decision dicts.
 
@@ -718,6 +840,18 @@ def cockpit_replay(
         "--report-path",
         help="Write the report to this file (delegated to sota replay; default: stdout).",
     ),
+    snapshot_flip: Optional[str] = typer.Option(
+        None,
+        "--snapshot-flip",
+        help=(
+            "SOTA canary workflow: invert the value of <field> on every entry of "
+            "the loaded --compare snapshot in memory (e.g. 'verdict' or "
+            "'override_applied') so the replay walks the mismatch path without "
+            "the operator having to hand-edit the snapshot file. Useful for "
+            "exercising the diff machinery + JSON envelope + exit code 4 contract "
+            "end-to-end on every CI run."
+        ),
+    ),
 ) -> None:
     """Replay ``--batch`` through pre-check and validate against ``--compare``.
 
@@ -791,6 +925,7 @@ def cockpit_replay(
                 # before the shim takes over; this prevents double
                 # operator summaries.
                 _render_tail=False,
+                snapshot_flip=snapshot_flip,
             )
         except typer.Exit:
             raise
@@ -819,6 +954,15 @@ def cockpit_replay(
         except json.JSONDecodeError as exc:
             err_console.print(f"[red]replay failed:[/red] compare file is not valid JSON: {exc}")
             raise typer.Exit(1) from exc
+
+        # SOTA canary workflow: when the operator passes
+        # ``--snapshot-flip <field>`` we invert that field on every
+        # snapshot entry **in memory** so the replay walks the mismatch
+        # path without the operator having to hand-edit the --compare
+        # file on disk. See ``_apply_snapshot_flip`` for the inversion
+        # semantics.
+        if snapshot_flip:
+            expected_snapshot = _apply_snapshot_flip(expected_snapshot, snapshot_flip)
 
         use_federation = default_policy is not None
         contexts, decisions, notices = _build_batch_decision_log(
