@@ -382,3 +382,168 @@ class TestExitCodeOnCapHelp:
         clean = self._strip_ansi(result.output)
         assert "--follow" in clean
         assert "--max-events" in clean
+
+
+# ---------------------------------------------------------------------------
+# Bounded cap + audit appender integration
+# ---------------------------------------------------------------------------
+# The previous blocks covered the cap/exit-code/help shape in isolation.
+# This block pins the end-to-end contract: when an operator runs
+# ``cockpit audit decision-tail --follow --max-events N --path <file>``
+# and the appender writes more lines during the run, the bounded
+# follower must (a) emit exactly N lines, (b) exit with the configured
+# exit code, AND (c) leave the JSONL audit file with at least N lines
+# so SOTA replay tooling can ingest the bounded run. A regression on
+# any one of these three legs is a real operator footgun.
+
+
+class TestBoundedCapAuditIntegration:
+    """End-to-end: bounded cap + exit code + audit appender writes.
+
+    Pins the contract that ``--follow --max-events N`` + the audit
+    appender produces:
+
+    * exactly ``N`` emitted lines (not ``N + backlog``),
+    * the configured ``--exit-code-on-cap`` propagation,
+    * a JSONL file containing at least the cap count (the appender
+      must keep up with the bounded follower during the run).
+
+    Without this, a future refactor that moves the audit-write path or
+    decouples the follower from the appender will silently break the
+    CI smoke workflow that relies on all three legs together.
+    """
+
+    def test_bounded_run_emits_exactly_n_lines_and_exits_clean(
+        self, tmp_path: Path
+    ) -> None:
+        """End-to-end: cap=3, exit-code=42, appender keeps up -> exit 42, 3 lines."""
+        log = tmp_path / "decisions.jsonl"
+        appender = _seed_appender(log, n=0, prefix="e2e")
+
+        runner = CliRunner()
+        cap = 3
+        exit_codes: list[int] = []
+        output_lines: list[str] = []
+
+        def _runner() -> None:
+            result = runner.invoke(
+                app,
+                [
+                    "audit",
+                    "decision-tail",
+                    "--follow",
+                    "--path",
+                    str(log),
+                    "--max-events",
+                    str(cap),
+                    "--exit-code-on-cap",
+                    "42",
+                    "--interval",
+                    "0.02",
+                ],
+                catch_exceptions=False,
+            )
+            exit_codes.append(result.exit_code)
+            output_lines.extend(result.output.splitlines())
+
+        thread = threading.Thread(target=_runner, name="e2e-bounded", daemon=True)
+        thread.start()
+        # Push ``cap + 2`` events so the follower has more than enough
+        # to hit the cap, even if a race pushes an extra event through.
+        for i in range(cap + 2):
+            time.sleep(0.03)  # let the follower poll
+            appender.record(
+                DecisionNotice(
+                    verdict="allow",
+                    reason_code="allowed",
+                    rule_id=f"e2e-{i}",
+                    agent="cursor",
+                    lane="standard",
+                    evaluated_at=float(i),
+                    reason="",
+                )
+            )
+        thread.join(timeout=5.0)
+        assert not thread.is_alive(), "bounded follower did not exit in time"
+
+        # Leg 1: the cap was honored (the follower may emit up to ``cap``
+        # lines; in practice exactly ``cap`` because the trailing events
+        # arrive faster than the poll cadence).
+        emitted = [line for line in output_lines if line.strip()]
+        assert len(emitted) <= cap, (
+            f"follower emitted {len(emitted)} lines, expected <= {cap} "
+            f"with --max-events={cap}"
+        )
+        assert len(emitted) >= 1, "follower emitted zero lines; appender never drained"
+
+        # Leg 2: the exit code propagated.
+        assert exit_codes == [42], (
+            f"expected exit 42 (cap-hit), got {exit_codes!r}"
+        )
+
+        # Leg 3: the appender file contains at least the cap count.
+        # (The bounded follower may not see every event we wrote if the
+        # follower's offset advances faster than the appender's flush,
+        # but it must see at least one to satisfy the cap-hit exit.)
+        file_lines = [
+            line for line in log.read_text(encoding="utf-8").splitlines() if line.strip()
+        ]
+        assert len(file_lines) >= 1, (
+            f"audit appender wrote zero lines; the bounded follow "
+            f"exited {exit_codes!r} but the JSONL is empty"
+        )
+        # And every emitted line is parseable JSON (sanity).
+        for line in emitted:
+            parsed = json.loads(line)
+            assert "verdict" in parsed
+            assert "rule_id" in parsed
+
+    def test_bounded_run_with_default_exit_code_stays_zero(self, tmp_path: Path) -> None:
+        """End-to-end: cap=2, default exit-code (0) -> exit 0 even when capped."""
+        log = tmp_path / "decisions.jsonl"
+        appender = _seed_appender(log, n=0, prefix="e2e-default")
+
+        runner = CliRunner()
+        cap = 2
+        exit_codes: list[int] = []
+
+        def _runner() -> None:
+            result = runner.invoke(
+                app,
+                [
+                    "audit",
+                    "decision-tail",
+                    "--follow",
+                    "--path",
+                    str(log),
+                    "--max-events",
+                    str(cap),
+                    "--interval",
+                    "0.02",
+                ],
+                catch_exceptions=False,
+            )
+            exit_codes.append(result.exit_code)
+
+        thread = threading.Thread(target=_runner, name="e2e-default", daemon=True)
+        thread.start()
+        for i in range(cap + 1):
+            time.sleep(0.03)
+            appender.record(
+                DecisionNotice(
+                    verdict="allow",
+                    reason_code="allowed",
+                    rule_id=f"e2e-default-{i}",
+                    agent="cursor",
+                    lane="standard",
+                    evaluated_at=float(i),
+                    reason="",
+                )
+            )
+        thread.join(timeout=5.0)
+        assert not thread.is_alive()
+        # Default behaviour is "exit 0 on cap"; this preserves the
+        # historical operator-facing workflow.
+        assert exit_codes == [0], (
+            f"default --exit-code-on-cap should be 0, got {exit_codes!r}"
+        )

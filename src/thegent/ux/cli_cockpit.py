@@ -23,6 +23,56 @@ operators can rehearse decisions without polluting the policy cache.
 These commands complete the WORKLOG.md "Unblocked Next" backlog for the
 Phase 3/4 hardening lane and give SOTA audit tooling a stable CLI
 contract.
+
+------------------------------------------------------------------------
+Operator walkthrough: ``--json`` + ``--report-format=junitxml`` ingestion
+------------------------------------------------------------------------
+
+SOTA replay tooling can consume replay output three ways. The three
+shapes are guaranteed-stable so CI harnesses can switch between them
+without rewriting parsers:
+
+1. ``cockpit replay --json`` (default snapshot format, JSON envelope)::
+
+       thegent cockpit replay --batch corpus/ --compare snapshot.json --json
+
+   Emits a single JSON object on stdout with keys ``matched`` (bool),
+   ``mismatches`` (list of ``{index, fields, expected, actual}`` dicts),
+   ``decisions`` (the produced :class:`PolicyDecision` list), and
+   ``audit`` (the JSONL path written when ``--audit-path`` is set).
+   Suitable for ``jq``-based pipelines::
+
+       thegent cockpit replay --batch corpus/ --compare snap.json --json \\
+           | jq '.matched, .mismatches | length'
+
+2. ``cockpit replay --report-format=json`` (delegated to sota replay)::
+
+       thegent cockpit replay --batch corpus/ --compare snap.json \\
+           --report-format=json
+
+   Same envelope **shape** (matched / mismatches keys present, mismatches
+   list shape stable) — see
+   ``tests/test_unit_cockpit_sota_json_parity.py`` for the parity
+   contract. Use this when you want the sota-side report-format
+   dispatch table to win (handy when wiring into a sota-wide ingest
+   pipeline that already routes by ``--report-format``).
+
+3. ``cockpit replay --report-format=junitxml`` (CI-friendly)::
+
+       thegent cockpit replay --batch corpus/ --compare snap.json \\
+           --report-format=junitxml --report-path report.xml
+
+   Emits JUnit-XML so Jenkins / GitHub Actions / Buildkite can ingest
+   the replay as a test suite. Each mismatch becomes a ``<failure>``
+   entry; a clean replay becomes a passing ``<testsuite>``. The
+   ``--report-path`` flag routes the XML to disk; omit it to print to
+   stdout (handy for ``tee`` into a build log).
+
+Replay exits ``0`` on match, ``4`` on mismatch (mirrors the
+``pre-check`` ``3 = deny`` convention but kept distinct so shell
+pipelines can branch on the two failure modes independently). For
+structured ingestion prefer ``--json`` over text-grepping the default
+output — the text path is intended for humans only.
 """
 
 from __future__ import annotations
