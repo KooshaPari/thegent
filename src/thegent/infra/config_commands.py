@@ -10,8 +10,18 @@ from rich.console import Console
 
 from thegent.infra.config_validator import validate_config
 from thegent.infra.config_wizard import run_wizard
+from thegent.ux.cli_errors import print_exc
 
 console = Console()
+
+# AUDIT-N+2 (Phase 3/4 nineteenth closure pass): the three infra
+# config envelope sites (``config_show``, ``config_migrate``) now route
+# through :func:`thegent.ux.cli_errors.print_exc` so a malicious or
+# buggy exception payload (``[red]pwned[/red]``) cannot inject Rich
+# markup into an operator terminal. Same end-to-end render-safety
+# contract GOV-1 pinned for ``govern.py`` + AUDIT-N+1 pinned for
+# ``run_app.py``.
+err_console = Console(stderr=True)
 
 
 def config_validate_cmd(
@@ -75,7 +85,10 @@ def config_show_cmd(
 
         console.print(table)
     except Exception as e:
-        console.print(f"[red]Error loading configuration: {e}[/red]")
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # exception payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal.
+        print_exc(err_console, "config show failed:", e)
         raise typer.Exit(1)
 
 
@@ -117,7 +130,10 @@ def config_migrate_cmd(
     try:
         source_content = source_path.read_text()
     except Exception as e:
-        console.print(f"[red]Error reading source configuration: {e}[/red]")
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # exception payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal.
+        print_exc(err_console, "config migrate read failed:", e)
         raise typer.Exit(1)
 
     # Parse and migrate
@@ -149,5 +165,8 @@ def config_migrate_cmd(
             if not is_valid:
                 console.print("[yellow]⚠ Migrated configuration has validation errors. Please review.[/yellow]")
         except Exception as e:
-            console.print(f"[red]Error writing target configuration: {e}[/red]")
+            # AUDIT-N+2: route through ``print_exc`` so a malicious
+            # exception payload (``[red]pwned[/red]``) cannot inject
+            # Rich markup into the operator's terminal.
+            print_exc(err_console, "config migrate write failed:", e)
             raise typer.Exit(1)

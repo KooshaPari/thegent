@@ -14,8 +14,17 @@ from rich.table import Table
 
 from thegent.config import ThegentSettings
 from thegent.infra.progress import print_section, print_status, print_step
+from thegent.ux.cli_errors import print_exc
 
 console = Console()
+
+# AUDIT-N+2 (Phase 3/4 nineteenth closure pass): the wizard ``save``
+# step defensive envelope now routes through
+# :func:`thegent.ux.cli_errors.print_exc` so a malicious or buggy
+# exception payload (``[red]pwned[/red]``) cannot inject Rich markup
+# into an operator terminal. Same end-to-end render-safety contract
+# GOV-1 pinned for ``govern.py`` + AUDIT-N+1 pinned for ``run_app.py``.
+err_console = Console(stderr=True)
 
 
 class ConfigWizard:
@@ -277,7 +286,10 @@ class ConfigWizard:
             print_status(f"Configuration saved to {self.config_path}", "success")
             return True
         except Exception as e:
-            console.print(f"[red]Error saving configuration: {e}[/red]")
+            # AUDIT-N+2: route through ``print_exc`` so a malicious
+            # exception payload (``[red]pwned[/red]``) cannot inject
+            # Rich markup into the operator's terminal.
+            print_exc(err_console, "config wizard save failed:", e)
             return False
 
     def _save_config(self) -> None:

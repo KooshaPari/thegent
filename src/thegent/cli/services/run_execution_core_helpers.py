@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any
 import structlog
 from rich.console import Console
 
+from thegent.ux.cli_errors import print_exc
+
 # Import decomposed modules
 from thegent.use_cases.execute_task import ExecutionOrchestrator
 from thegent.adapters.execution_io import (
@@ -748,7 +750,12 @@ def run_impl_core(
         }
 
     if pol_res == "warn":
-        console.print(f"[yellow]Policy Warning: {pol_reason}[/yellow]")
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # policy-engine payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal. The helper
+        # accepts any ``object`` (not just ``Exception``) per F-15's
+        # signature widening.
+        print_exc(console, "Policy Warning:", pol_reason, style="yellow")
 
     registry.register_start(run_meta)
     maif_runner.record_run_start(
