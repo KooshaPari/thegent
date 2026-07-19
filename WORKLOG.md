@@ -5188,3 +5188,110 @@ on this lane).
   `830d7af86`, working tree clean).
 * **Local commits**: this lane will land as two commits — the
   feature commit (shim + test) + the WORKLOG update commit.
+
+## Phase 3/4 Continuation — AUDIT-N+6 — WL-125 run_impl/bg_impl wrapper-delegation closure (2026-07-19)
+
+### Goal
+
+Close the 2 remaining WL-125 carry-forward assertion failures from the
+AUDIT-N+2..N+5 baseline. The `tests/test_wl125_run_execution_core_helpers_parity.py`
+tests assert that:
+
+* `thegent.cli.commands.impl.run_impl` delegates to
+  `thegent.cli.services.run_execution_core_helpers.run_impl_core`,
+  forwarding `prompt` + all caller kwargs verbatim, AND
+* `thegent.cli.commands.impl.bg_impl` delegates to
+  `thegent.cli.services.run_execution_core_helpers.bg_impl_core`
+  with the same contract, AND
+* in both cases, `impl_ns` is injected and equals the literal
+  `thegent.cli.commands.impl` module object so the AUDIT-N+2
+  envelope-parity contract (`_bind_impl_namespace(impl_ns)`) closes.
+
+The pre-AUDIT-N+6 baseline had `run_impl` and `bg_impl` as static
+dict stubs that **never called** the helper. AUDIT-N+6 rewrites
+them as thin lazy-importing delegates.
+
+### Files touched
+
+* `src/thegent/cli/commands/impl.py` — `run_impl` (lines 402-429,
+  28 lines) and `bg_impl` (lines 508-531, 24 lines) rewritten as
+  lazy-import delegates. Both function lengths ≤ 40 lines (project
+  invariant).
+* `tests/test_unit_audit_n6_wrapper_delegation_parity.py` — **new**
+  (279 lines, 14 tests, 1 class-less module). Pins:
+  1. `run_impl` returns whatever `run_impl_core` returns (real
+     delegation, not a stub).
+  2. `bg_impl` returns whatever `bg_impl_core` returns.
+  3. `prompt` is forwarded both positionally and as kwarg.
+  4. `impl_ns is impl` (and `is sys.modules["thegent.cli.commands.impl"]`).
+  5. Arbitrary CLI kwargs (`task_id`, `lock`, `remote`, `debug`,
+     `shadow`, `idempotency_token`, `speculative`, `continue_from`,
+     `continuation_include_stderr`, `failover`, `routing`) all
+     forward verbatim.
+  6. Idempotent across multiple calls (no helper-state leak).
+  7. Helper exceptions propagate (no silent swallowing — preserves
+     AUDIT-N+2 envelope-parity contract).
+  8. Lazy import — helper module is NOT in `impl.__dict__` at
+     module load time.
+  9. `inspect.signature` confirms `prompt` positional + `**kwargs`.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_wl125_run_execution_core_helpers_parity.py` | **2 passed in 0.36s** (both wrapper-delegation tests close) |
+| `tests/test_unit_audit_n6_wrapper_delegation_parity.py` | **14 passed in 0.37s** (new pinning tests) |
+| Combined audit envelope parity (7 files) | **152 passed + 4 skipped + 1 failed** (the 1 failure is the pre-existing AUDIT-N+2 baseline `vet_envelope_renders_prefix_and_escapes_markup` CliRunner API drift — NOT a regression from AUDIT-N+6) |
+| Phase 3/4 hardening regression (13 files) | **297 passed + 2 failed** (matches the documented F-15 baseline `TestHelpOutputSanity` — NOT a regression from AUDIT-N+6) |
+| `ruff check` + `ruff format --check` | Clean on both touched files |
+| Secret scan | 0 matches |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, working tree clean) |
+
+### Carry-forward (post-AUDIT-N+6)
+
+The 5 pre-AUDIT-N+5 baseline failures reduced from 5 → 3 after
+AUDIT-N+5 (import-side closure). AUDIT-N+6 closes the remaining 2
+WL-125 assertion failures via wrapper-delegation rewrite. The
+remaining pre-existing failure is the unrelated `CliRunner.mix_std...`
+API drift in `vet_envelope_renders_prefix_and_escapes_markup`.
+
+1. **`vet` CliRunner API drift** — Click API upgrade carry-forward.
+2. **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+   `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+   per the Do-Not-Touch list.
+3. **WL-120 full observability_impl extraction** — the stub covers
+   the single `escalate_add_impl` call-site. The remaining
+   observability / health / escalation / governance / review /
+   compliance block is tracked as follow-up work.
+4. **Phase 3/4 SOTA-audit further passes** — open audit items per
+   `L1_TRIAGE_2026_06_11.md`.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (saturated — twenty-second
+  closure pass on top of the Five-Day Goal envelope + the prior
+  21 closure lanes).
+* **DAG tick**: **`+1`** (this hand-off on top of AUDIT-N+5
+  import-surface shim closure).
+* **Closed this lane**: AUDIT-N+6 — WL-125 wrapper-delegation
+  closure (14 new tests + 0 regressions). Both `run_impl` and
+  `bg_impl` now properly delegate to the extracted cores with
+  `impl_ns=thegent.cli.commands.impl` injection. The 2 visible
+  WL-125 assertion failures close.
+* **Cumulative closed (21 prior lanes + this)**: AUDIT-1/2/4/6/9/
+  19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23, CAL-1, KA-1..6,
+  A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225 plan-workstream
+  thicken, diskcache-skip-guard collection-repair, CachePreWarmer
+  FR-CACHE-003 contract closure, F-15 + UX polish, GOV-1
+  governance error-envelope parity, AUDIT-N+1 run sub-app
+  envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+  envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+  sweep, AUDIT-N+4 governance observability + perf hardening
+  lane, AUDIT-N+5 run/bg orchestrator import-surface shim
+  closure, plus this AUDIT-N+6 WL-125 wrapper-delegation
+  closure.
+* **Bundle-zsh-scripts worktree**: preserved untouched (HEAD
+  `830d7af86`, working tree clean).
+* **Local commits**: this lane will land as two commits — the
+  feature commit (impl.py wrapper rewrite + parity test) + the
+  WORKLOG update commit.
