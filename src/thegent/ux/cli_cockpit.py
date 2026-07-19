@@ -1410,7 +1410,15 @@ def cockpit_audit_decision_tail(
     # they wired a non-zero exit code, propagate it so CI smoke
     # harnesses can detect "ran to completion under the cap" without
     # scraping stderr.
-    if cap and emitted >= cap and exit_code:
+    # F-11 (SOTA third-pass): the previous ``if cap and emitted >=
+    # cap and exit_code`` branch was a tautology — ``exit_code`` is
+    # already validated to be ``0..255`` upstream, and the
+    # ``exit_code`` truthiness check silently masked the case where
+    # an operator wired ``--exit-code-on-cap 0`` (the canonical "no
+    # special exit" value). The branch now checks ``exit_code != 0``
+    # so ``0`` correctly short-circuits to the "no special exit"
+    # path even when ``cap and emitted >= cap``.
+    if cap and emitted >= cap and exit_code != 0:
         raise typer.Exit(exit_code) from None
 
 

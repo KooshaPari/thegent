@@ -41,6 +41,7 @@ Traces to: FR-015 (progressive disclosure), FR-039 (transport hints),
 from __future__ import annotations
 
 import logging
+import re
 import threading
 import time
 import weakref
@@ -76,7 +77,15 @@ SPARKLINE_CHARS = "▁▂▃▄▅▆▇█"
 OVERRIDE_BANNER_MAX_AGE_S = 30.0
 # Default wall-clock function (overridable per-cockpit for deterministic
 # audit replays; see ``OperatorCockpit(clock=...)``).
-_DEFAULT_CLOCK: Callable[[], float] = staticmethod(time.time)
+# NEW-15 (SOTA third-pass): drop the ``staticmethod(time.time)`` wrapper.
+# ``staticmethod`` returns a descriptor that is not directly callable;
+# the previous declaration would raise ``TypeError: 'staticmethod'
+# object is not callable`` if the ``clock or _DEFAULT_CLOCK`` branch
+# ever fell through (e.g. when ``OperatorCockpit.__init__`` was called
+# without an explicit ``clock=...`` kwarg from a module that monkey-
+# patched the class attribute). Using ``time.time`` directly is the
+# canonical, well-tested form.
+_DEFAULT_CLOCK: Callable[[], float] = time.time
 
 
 class CockpitPane(StrEnum):
@@ -291,6 +300,46 @@ def _truncate(text: str, limit: int) -> str:
     return text[: limit - 1] + "…"
 
 
+# F-9 + NEW-5 (SOTA third-pass): strip ANSI / Rich control sequences from
+# operator-rendered strings so a producer that stows a Rich markup token
+# or an ANSI escape in a decision reason / rule_id cannot corrupt the
+# operator terminal (or worse, inject escape sequences that re-write the
+# surrounding UI). The cockpit renders plain ASCII/Unicode only — any
+# control character outside the printable BMP range that lands in a
+# reason field is replaced with a placeholder so the pane layout is
+# preserved. ``markup=False`` semantics: we never feed this output to
+# ``Rich.print(..., markup=True)``.
+_ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+_RICH_MARKUP_PATTERN = re.compile(r"\[/?[a-zA-Z0-9_=#,. -]+\]")
+
+
+def _sanitize_console_text(text: str, *, max_len: int = 256) -> str:
+    """Strip ANSI/Rich control sequences and non-printable chars from ``text``.
+
+    F-9 + NEW-5 (SOTA third-pass): a malicious or buggy producer
+    can stash ``\\x1b[31m`` (ANSI red) or ``[red]...[/red]`` (Rich
+    markup) inside a ``DecisionNotice.reason`` field; without
+    sanitisation, the deny banner would render the text as if it
+    were a styled UI fragment, potentially wiping the surrounding
+    banner or — when consumed by ``err_console.print(...)`` with
+    ``markup=True`` — injecting arbitrary markup. We strip both
+    classes plus all C0/C1 control characters, then truncate to
+    ``max_len`` so a 10 MiB reason field cannot blow the terminal
+    width. The placeholder ``_`` is a single ASCII character so the
+    pane layout survives.
+    """
+    if not text:
+        return ""
+    out = _ANSI_ESCAPE_PATTERN.sub("", text)
+    out = _RICH_MARKUP_PATTERN.sub("", out)
+    # Drop remaining C0 controls (except space) and C1 controls so
+    # bell / backspace / CSI sequences from any source are gone.
+    out = "".join(ch if ch.isprintable() or ch == " " else "_" for ch in out)
+    if len(out) > max_len:
+        out = _truncate(out, max_len)
+    return out
+
+
 def _format_run_row(ev: RunEvent) -> str:
     """Format a single run as a cockpit row."""
     state_glyph = {
@@ -306,7 +355,9 @@ def _format_run_row(ev: RunEvent) -> str:
 
 def _format_override_row(ev: OverrideEvent) -> str:
     """Format a single override row with TTL countdown."""
-    return f"! {ev.rule_id:<22}  by {ev.by:<8}  ⏳ {ev.expires_in_s:5.0f}s  {_truncate(ev.reason, 32)}"
+    # F-9 + NEW-5 (SOTA third-pass): sanitise ``reason`` so a producer
+    # cannot inject ANSI/Rich markup via the override reason field.
+    return f"! {_sanitize_console_text(ev.rule_id, max_len=22):<22}  by {_sanitize_console_text(ev.by, max_len=8):<8}  ⏳ {ev.expires_in_s:5.0f}s  {_sanitize_console_text(ev.reason, max_len=32)}"
 
 
 # ---------------------------------------------------------------------------
@@ -439,8 +490,20 @@ class OperatorCockpit:
         ``overrides``: full replacement set of active overrides (idempotent).
         ``progress``: ``(done, total)`` for the header progress bar.
         """
-        now = self._clock()
+        # NEW-18 (SOTA third-pass): read the clock under the lock so a
+        # clock-injected cockpit that resets its clock between ticks
+        # (deterministic audit replay, frozen-clock tests) sees a
+        # single timestamp atomically applied. The previous
+        # ``now = self._clock(); with self._lock:`` pattern read
+        # ``self._clock`` outside the lock window, so a concurrent
+        # ``set_clock`` interleaved between the read and the lock
+        # acquire could land a timestamp sourced from the old clock
+        # into state owned by the new clock. Symptom: deterministic
+        # replays occasionally saw a header timestamp one tick
+        # behind the pane timestamps; root cause was the un-locked
+        # clock read.
         with self._lock:
+            now = self._clock()
             self._state.last_tick_at = now
             if runs is not None:
                 self._state.runs = {ev.run_id: ev for ev in runs}
@@ -684,6 +747,14 @@ class OperatorCockpit:
         cfg = self.config
         done, total = self._state.last_progress
         bar = _progress_bar(done, total)
+        # F-13 (SOTA third-pass): use ``self._clock`` so a clock-injected
+        # cockpit (deterministic audit replay, frozen-clock tests) gets
+        # the same timestamp in the header as everywhere else. The
+        # previous direct ``time.localtime(self._state.last_tick_at)``
+        # call bypassed the injection so a frozen-clock test would see
+        # the wall clock in the header while every other pane saw the
+        # injected clock — operators running a replay audit would see
+        # two different timestamps in the same frame.
         ts = time.strftime("%H:%M:%S", time.localtime(self._state.last_tick_at))
         return f"  {cfg.title}   {cfg.progress_label}: {bar}   tick={ts} (#{self._frame_count + 1})"
 
@@ -876,16 +947,15 @@ def render_cockpit(
 def _render_override_banner_text(notice: OverrideExpiryNotice, now: float) -> str:
     """Format the override-expiry banner line; deterministic given (notice, now)."""
     age = max(0.0, now - notice.expired_at)
-    reason = notice.reason or "ttl_elapsed"
+    reason = _sanitize_console_text(notice.reason or "ttl_elapsed", max_len=64)
     glyph = "✓" if age < 1.0 else "!"
     # Fixed-width columns: rule_id (12), owner (8), age (4), reason (32).
-    return (
-        f"  {glyph} override expired: "
-        f"{_truncate(notice.rule_id, 12):<12}  "
-        f"by {_truncate(notice.owner, 8):<8}  "
-        f"{age:4.0f}s ago  "
-        f"{_truncate(reason, 32)}"
-    )
+    # F-9 + NEW-5 (SOTA third-pass): sanitise every user-supplied token
+    # so a producer cannot inject ANSI/Rich markup via ``rule_id``,
+    # ``owner``, or ``reason``.
+    rule_id = _sanitize_console_text(notice.rule_id, max_len=12)
+    owner = _sanitize_console_text(notice.owner, max_len=8)
+    return f"  {glyph} override expired: {rule_id:<12}  by {owner:<8}  {age:4.0f}s ago  {_truncate(reason, 32)}"
 
 
 def _render_decision_deny_banner(notice: DecisionNotice, now: float) -> str:
@@ -894,17 +964,30 @@ def _render_decision_deny_banner(notice: DecisionNotice, now: float) -> str:
     The rule_id is shown first so it survives Rich's default console
     width truncation on operators' terminals — operators triaging a deny
     always have the offending rule in view, even on 80-col consoles.
+
+    F-9 + NEW-5 (SOTA third-pass): every user-supplied token
+    (``rule_id``, ``lane``, ``reason_code``, ``reason``) is routed
+    through :func:`_sanitize_console_text` so a producer that stows
+    ANSI escapes or Rich markup in any of those fields cannot
+    corrupt the banner layout.
+
+    NEW-9 (SOTA third-pass): ``notice.reason`` is also length-capped
+    via ``_sanitize_console_text`` (``max_len=64`` for the banner
+    path; the pane path uses ``_truncate`` at 32 chars) so a 10 MiB
+    reason field cannot blow the operator terminal.
     """
     age = max(0.0, now - notice.evaluated_at)
     age_text = f"{age:.0f}s"
-    head = f"\u2717 policy deny: {notice.rule_id}"
-    if notice.lane:
-        head = f"{head}  lane={notice.lane}"
+    rule_id = _sanitize_console_text(notice.rule_id, max_len=64)
+    lane = _sanitize_console_text(notice.lane, max_len=16) if notice.lane else ""
+    head = f"\u2717 policy deny: {rule_id or '?'}"
+    if lane:
+        head = f"{head}  lane={lane}"
     head = f"{head}  {age_text} ago"
     if notice.reason_code:
-        head = f"{head}  ({notice.reason_code})"
+        head = f"{head}  ({_sanitize_console_text(notice.reason_code, max_len=24)})"
     if notice.reason:
-        head = f"{head}  {notice.reason}"
+        head = f"{head}  {_sanitize_console_text(notice.reason, max_len=64)}"
     return head
 
 
@@ -933,13 +1016,16 @@ def _format_decision_row(notice: DecisionNotice, age: float) -> str:
     The reason is omitted to keep the row readable on 80-col consoles;
     operators wanting the full message read the JSONL audit log via
     ``thegent cockpit audit tail``.
+
+    F-9 + NEW-5 (SOTA third-pass): all four columns are routed
+    through :func:`_sanitize_console_text` so a producer cannot
+    inject ANSI/Rich markup via any of the ``DecisionNotice`` fields.
     """
     age_text = f"{age:.0f}s" if notice.evaluated_at > 0 else "   -"
-    rule = _truncate(notice.rule_id or "-", 12)
-    agent = _truncate(notice.agent or "-", 8)
-    lane = _truncate(notice.lane or "-", 8)
-    code = notice.reason_code or ""
-    code = _truncate(code, 16)
+    rule = _sanitize_console_text(notice.rule_id or "-", max_len=12)
+    agent = _sanitize_console_text(notice.agent or "-", max_len=8)
+    lane = _sanitize_console_text(notice.lane or "-", max_len=8)
+    code = _sanitize_console_text(notice.reason_code or "", max_len=16)
     return f"{rule:<12}  {agent:<8}  {lane:<8}  {age_text:>4}  {code}"
 
 

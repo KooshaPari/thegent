@@ -81,9 +81,10 @@ def _notice_for(
     The ``age_s`` on the notice is computed against the supplied clock
     (``now_epoch``) — when omitted, wall-clock at call time is used.
     """
-
-    now = now_epoch if now_epoch is not None else _time.time()
-    age_s = max(0.0, now - event.expired_at)
+    # NEW-3 (SOTA third-pass): route through ``_notice_age_s`` so the
+    # age-fade contract (``negative deltas clamp to 0``) is enforced
+    # in one place instead of being duplicated across modules.
+    age_s = _notice_age_s(event.expired_at, now_epoch=now_epoch)
     return OverrideExpiryNotice(
         rule_id=event.override_id,
         owner=event.owner,
@@ -318,6 +319,21 @@ def install_default_bridges(
 _BANNER_VERDICTS = frozenset({"deny"})
 
 
+def _notice_age_s(notice_ts: float, *, now_epoch: float | None = None) -> float:
+    """Return ``max(0, now - notice_ts)`` for age-fade semantics.
+
+    NEW-3 (SOTA third-pass): the inline ``max(0.0, now - ts)``
+    computation was duplicated in :func:`_notice_for`,
+    :func:`_decision_notice_for`, and the cockpit's banner / pane
+    renderers. We centralise it here so the contract (``negative
+    deltas clamp to 0``, ``now`` defaults to wall clock) is enforced
+    in one place and tests can pin the behaviour without rebuilding
+    the same expression across modules.
+    """
+    now = now_epoch if now_epoch is not None else _time.time()
+    return max(0.0, now - notice_ts)
+
+
 def _decision_notice_for(
     decision: Any,
     *,
@@ -331,12 +347,15 @@ def _decision_notice_for(
     ``rule_id``, and ``reason`` attributes (or keys). The mapping is
     deterministic so audit-log replays produce stable output.
     """
-    now = now_epoch if now_epoch is not None else _time.time()
     if isinstance(decision, Mapping):
         verdict = decision.get("verdict", "allow")
         reason_code = decision.get("reason_code", "")
         rule_id = decision.get("rule_id")
         reason = decision.get("reason", "")
+        # Mapping callers rarely carry an evaluated_at; default to 0 so
+        # the post-mapping ``if evaluated_at <= 0.0`` branch stamps
+        # ``now`` (the supplied ``now_epoch`` or wall clock).
+        evaluated_at_raw: float = 0.0
     else:
         verdict = getattr(decision, "verdict", "allow")
         reason_value = getattr(decision, "reason_code", "")
@@ -346,18 +365,27 @@ def _decision_notice_for(
         # PolicyDecision's evaluated_at timestamp drives the cockpit's
         # age-fade semantics; for duck-typed callers without it we fall
         # back to the supplied clock so the notice still surfaces.
-        evaluated_at = getattr(decision, "evaluated_at", 0.0) or 0.0
+        # NEW-2 (SOTA third-pass): the previous implementation called
+        # ``getattr(decision, "evaluated_at", 0.0)`` twice — once here
+        # and once again on the post-mapping line — which (a) wasted a
+        # descriptor lookup, and (b) made the fallback ``or 0.0``
+        # ambiguous (the second call would never see the original).
+        # We capture it once into ``evaluated_at_raw`` and reuse it.
+        evaluated_at_raw = getattr(decision, "evaluated_at", 0.0) or 0.0
     verdict_str = verdict.value if hasattr(verdict, "value") else str(verdict)
-    evaluated_at = getattr(decision, "evaluated_at", 0.0) if not isinstance(decision, Mapping) else 0.0
+    evaluated_at = float(evaluated_at_raw)
     if evaluated_at <= 0.0:
-        evaluated_at = now
+        # ``_notice_age_s`` defaults to wall clock when ``now_epoch`` is
+        # ``None``, so the inline fallback stays consistent with the
+        # helper used by the banner/pane renderers.
+        evaluated_at = now_epoch if now_epoch is not None else _time.time()
     return DecisionNotice(
         verdict=verdict_str,
         reason_code=str(reason_code),
         rule_id=rule_id,
         agent=str(agent),
         lane=str(lane),
-        evaluated_at=float(evaluated_at),
+        evaluated_at=evaluated_at,
         reason=str(reason or ""),
     )
 

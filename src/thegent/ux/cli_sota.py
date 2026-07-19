@@ -676,4 +676,13 @@ __all__ = ["app", "sota_replay"]
 
 
 if __name__ == "__main__":  # pragma: no cover
-    main()
+    # NEW-4 (SOTA second-pass): ``sys.exit(main())`` so non-zero
+    # return codes from typer surface to shell pipelines. ``app()``
+    # already raises ``typer.Exit`` on the failure paths, but a
+    # bare ``main()`` call returns ``None`` which Python's
+    # interpreter treats as exit 0 — silently swallowing failures
+    # for one-shot ``python -m thegent.ux.cli_sota …`` runs.
+    # The sibling ``cli_cockpit.py`` ``__main__`` block carries the
+    # identical fix (mirrored here to keep the two surfaces in
+    # lock-step).
+    sys.exit(main() or 0)

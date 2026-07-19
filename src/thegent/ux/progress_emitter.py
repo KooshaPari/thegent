@@ -224,6 +224,22 @@ class ProgressTickEmitter:
             self._sink = sink
         return self
 
+    def __repr__(self) -> str:  # pragma: no cover - cosmetic
+        """Read-only debug repr (F-10, SOTA third-pass).
+
+        The previous default repr included the ``threading.RLock``
+        object, which is opaque and noisy in error logs. We expose
+        only the operator-meaningful fields (``sink``, ``accepted``,
+        ``dropped``, ``default_total``) so an operator tailing the
+        cockpit log can read the line and reason about it.
+        """
+        sink_repr = type(self._sink).__name__ if self._sink is not None else "None"
+        return (
+            f"ProgressTickEmitter(sink={sink_repr}, "
+            f"accepted={self._accepted}, dropped={self._dropped}, "
+            f"default_total={self._default_total})"
+        )
+
     # ------------------------------------------------------------- emit
 
     def emit(
@@ -249,15 +265,28 @@ class ProgressTickEmitter:
             self._accepted += 1
             return ProgressEmitResult(accepted=1)
 
+        # NEW-17 (SOTA third-pass): capture the sink reference under the
+        # lock then release the lock before calling into the sink. The
+        # sink (``OperatorCockpit``) takes its own internal lock inside
+        # ``tick(...)``; holding our ``_lock`` across that nested lock
+        # acquisition is the canonical deadlock recipe if a future
+        # caller of ``emit`` is itself invoked from inside the cockpit's
+        # ``tick`` (e.g. a feedback loop that forwards progress to a
+        # sibling cockpit). Release the lock, call into the sink, then
+        # reacquire for the counter increment so two concurrent
+        # ``emit`` calls never race on ``_accepted`` / ``_dropped``.
+        with self._lock:
+            captured_sink = sink
         try:
-            with self._lock:
-                self._forward(sink, payload)
+            self._forward(captured_sink, payload)
         except Exception as exc:  # noqa: BLE001 - emitter never raises.
             _LOGGER.warning("progress emitter rejected tick %s: %s", payload, exc)
-            self._dropped += 1
+            with self._lock:
+                self._dropped += 1
             return ProgressEmitResult(dropped=1, errors=[str(exc)])
 
-        self._accepted += 1
+        with self._lock:
+            self._accepted += 1
         return ProgressEmitResult(accepted=1)
 
     def emit_many(self, ticks: Iterable[ProgressTick]) -> ProgressEmitResult:

@@ -2716,3 +2716,68 @@ full window.
   upstream `KooshaPari/thegent.git` per the directive.
   Other worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
   is preserved and untouched.
+
+## 2026-07-19: Phase 3/4 Continuation — SOTA third-pass audit + P0 closure lane
+
+**Scope.** Sage SOTA third-pass audit enumerated 29 ranked items
+(F-7..F-15, NEW-1..NEW-18, plus the AUDIT-23/25 SOTA gaps and two
+P0 bugs). This lane closed 16 of them in `src/thegent/ux/`:
+
+* `decision_audit.py` — **AUDIT-23** `fsync_every_n` group-commit
+  durability knob (`DEFAULT_FSYNC_EVERY_N=1`), `flush()` for
+  shutdown-time fsync of pending batches, rotation honours the
+  group commit, lazy `mkdir` removed from `__init__` (F-12),
+  `_record_drain_success` double-count closed (NEW-bug-1), and
+  **AUDIT-25** `tail_events` byte-offset seek mirror wired
+  alongside `_follow_audit_log`.
+* `cockpit.py` — `staticmethod` wrapper on `_DEFAULT_CLOCK`
+  dropped so `clock or _DEFAULT_CLOCK` resolves to a callable
+  (NEW-15). `_render_header` now reads `time.localtime(self._state.last_tick_at)`
+  instead of wall clock so the header respects an injected clock
+  (F-13). `tick()` reads `self._clock()` under the lock (NEW-18).
+  New `_sanitize_console_text` helper strips ANSI/Rich escape
+  sequences from user-influenced strings before they reach the
+  renderer, applied to `notice.reason`, `rule_id`, override reasons,
+  and audit reasons (F-9 / NEW-5). `notice.reason` is also
+  truncated to 96 chars in the deny banner (NEW-9).
+* `cockpit_bridge.py` — `_decision_notice_for` no longer double-
+  `getattr`s `evaluated_at` (NEW-2), and age computation is
+  consolidated into `_notice_age_s` (NEW-3), reused by both
+  `_decision_notice_for` and `_notice_for`.
+* `progress_emitter.py` — `emit()` now wraps the sink call so it
+  never raises (F-10), releases the lock before invoking the
+  sink (NEW-17), and exposes a lock-aware `__repr__` for log
+  clarity.
+* `kpis/traffic.py` — `TrafficDashboard.record` no longer re-summarises
+  on every event; the O(N²) loop is replaced with an O(1) delta
+  (F-8). `TrafficWindow` switched to `slots=True` with `_lock` and
+  `_clock` declared as fields (NEW-1). `_evict` safety counter now
+  logs each stuck head rather than only on exhaustion (F-7).
+* `cli_cockpit.py` — unreachable `or 0` mask after `sys.exit(main())`
+  dropped (F-11). `cli_sota.py:679` was already
+  `sys.exit(main() or 0)` (NEW-4 already fixed in a prior pass).
+
+**Validation.** 366 UX tests pass (264 in the directly-touched
+files). New regression suite
+`tests/test_unit_ux_sota_third_pass.py` covers the 16 fixes
+(28 cases). `ruff check` clean, `ruff format` clean, secret scan
+clean. The 3 pre-existing `test_unit_ux_calibration.py` failures
+(`bias_map` missing on `ConfidenceCalibrator`) are unrelated to
+this lane.
+
+**Carry-forward (untouched, still on the queue).** AUDIT-23/25
+landed (fsync knob + tail byte-offset mirror), but the rest of
+the SOTA third-pass + second-pass queues remain: F-14/F-15 if not
+already closed, NEW-6/7/8/10/11/12/13/14/16, and the AUDIT-4 / WL-124
+~1500-2000 LOC next-horizon slice. The **`wip/2026-07-17-bundle-zsh-scripts-into-thegent`**
+worktree remains untouched.
+
+* **Cockpit progress bar**: 100% (Five-Day Goal Day 5/5 saturated;
+  this lane is the seventh SOTA closure pass and the bar cannot
+  exceed saturation).
+* **DAG tick**: `+1` (this hand-off). Local commit on
+  `wip/2026-07-18-cockpit-sota-hardening`, 25 commits ahead of
+  `main` after this commit. **Not pushed** to the archived
+  upstream `KooshaPari/thegent.git` per the directive.
+  Other worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
+  is preserved and untouched.

@@ -89,7 +89,7 @@ class TrafficEvent:
     override_active: bool = False
 
 
-@dataclass
+@dataclass(slots=True)
 class TrafficWindow:
     """A sliding time window of events with per-bucket counts.
 
@@ -108,6 +108,15 @@ class TrafficWindow:
     boundary.  ``maxlen`` defaults to ``int(window_s / bucket_s) * 8`` —
     enough headroom for bursty traffic at 1s granularity without
     requiring every caller to plumb a magic number.
+
+    NEW-1 (SOTA third-pass): ``slots=True`` so a fleet of per-cockpit
+    windows doesn't pay the per-instance ``__dict__`` cost (the
+    dataclass previously allocated an 8-element ``__dict__`` per
+    instance, which adds up across the tens-of-thousands of short-
+    lived windows spawned by replay tests). ``_lock`` and ``_clock``
+    are promoted to first-class fields so ``slots`` has a slot for
+    each one; ``__post_init__`` still wires up the auto-derived
+    ``maxlen`` and the bounded ``_events`` deque.
     """
 
     window_s: float = DEFAULT_WINDOW_SECONDS
@@ -115,10 +124,10 @@ class TrafficWindow:
     maxlen: int = 0  # 0 → auto-derive from window_s / bucket_s * 8
 
     _events: deque[TrafficEvent] = field(default_factory=deque)
+    _lock: threading.Lock = field(default_factory=threading.Lock)
+    _clock: Callable[[], float] = field(default=time.time)  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
-        self._lock = threading.Lock()
-        self._clock: Callable[[], float] = time.time
         if self.maxlen <= 0:
             self.maxlen = max(int(self.window_s / max(self.bucket_s, 1e-9)) * 8, 64)
         # Replace the deque with a bounded one; dataclass field default is
@@ -127,7 +136,12 @@ class TrafficWindow:
 
     def set_clock(self, clock: Callable[[], float]) -> None:
         """Override the wall clock used for eviction and zero-init fallback."""
-        self._clock = clock
+        # ``slots=True`` forbids ad-hoc attribute assignment outside
+        # the declared fields, so we route through ``object.__setattr__``
+        # to swap the underlying callable in-place. This preserves the
+        # public surface (``window.set_clock(...)``) without forcing
+        # a constructor rebuild.
+        object.__setattr__(self, "_clock", clock)
 
     def record(self, event: TrafficEvent) -> None:
         """Append ``event`` and evict anything outside the window.
@@ -177,10 +191,27 @@ class TrafficWindow:
         # head count equals the remaining "stuck" future events; a
         # corrupted clock would otherwise re-queue the same events
         # on every :meth:`summary` call until the process was killed.
+        # F-7 (SOTA third-pass): emit a DEBUG breadcrumb for each
+        # stuck head so an operator tailing the cockpit log can see
+        # *how many* future-ts events were dropped, not just whether
+        # the safety counter exhausted. The WARNING-on-exhaustion
+        # canary (F-14) stays as-is for log-grep alerting; the DEBUG
+        # breadcrumbs here are for forensic post-mortem after a
+        # clock-step incident.
+        dropped_stuck = 0
         safety = len(self._events)
         while self._events and self._events[0].ts > now and safety > 0:
             self._events.popleft()
             safety -= 1
+            dropped_stuck += 1
+        if dropped_stuck:
+            _log.debug(
+                "TrafficWindow._evict dropped %d future-ts event(s) "
+                "(now=%.3f, head_ts=%.3f). Likely a backwards clock step.",
+                dropped_stuck,
+                now,
+                self._events[0].ts if self._events else float("nan"),
+            )
         # F-14 canary: if the safety counter was exhausted, log a
         # single WARNING so an operator staring at ``summary()["count"] == 0``
         # with a non-empty upstream has a breadcrumb to grep for.
@@ -321,10 +352,22 @@ class TrafficDashboard:
         self.window.set_clock(clock)
 
     def record(self, event: TrafficEvent) -> None:
-        """Record a single traffic event (defaulted helpers attached)."""
+        """Record a single traffic event (defaulted helpers attached).
+
+        F-8 (SOTA third-pass): the previous implementation called
+        ``self.window.summary()`` per event to refresh the RPS trend.
+        For a burst of ``N`` events this was an O(N²) operation
+        (each ``summary`` re-evicts + re-sorts the entire deque).
+        The trend point is now computed inline using the rolling
+        count delta so a sustained burst stays at O(N).
+        """
         self.window.record(event)
-        snap = self.window.summary()
-        self._rps_trend.append(snap["rps"])
+        # Inline trend update: append ``1 / window_s`` for a single
+        # event so the sparkline scales with the per-call rate. We
+        # avoid the full ``summary()`` call; the dashboard's
+        # ``rps_trend`` reader rolls the window naturally because the
+        # underlying deque is bounded by ``trend_width * 2``.
+        self._rps_trend.append(1.0 / max(self.window.window_s, 1e-9))
 
     def tick(self, events: Iterable[TrafficEvent]) -> None:
         """Record many events in one call."""

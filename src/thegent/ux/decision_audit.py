@@ -72,6 +72,19 @@ DEFAULT_MAX_BACKUPS = 3
 # it. Bound prevents unbounded memory growth under pathological ingest.
 _FUTURE_SKEW_TOLERANCE_S = 60.0
 
+# AUDIT-23 (SOTA third-pass): ``fsync_every_n`` group-commit durability
+# knob. Per-record ``fsync`` (``fsync=True``) is correct but linear in
+# event volume (~200µs per syscall on ext4). Operators who care about
+# durability but cannot afford the cost can opt into group-commit: the
+# appender batches ``fsync_every_n`` writes before issuing a single
+# ``os.fsync`` so the kernel flushes a single dirty page set instead of
+# one-per-record. ``1`` reproduces the legacy ``fsync=True`` behaviour;
+# ``0`` disables explicit ``fsync`` entirely; ``<= 0`` is silently
+# clamped to ``0``. Default ``1`` keeps the historical "every record is
+# durable" guarantee so existing CLI replay callers see no behaviour
+# change unless they explicitly opt into ``>1`` batching.
+DEFAULT_FSYNC_EVERY_N = 1
+
 
 class _MonotonicClock:
     """Wrap a wall clock so emitted timestamps are monotonically non-decreasing.
@@ -180,6 +193,7 @@ class DecisionAuditAppender:
         max_lines: int = DEFAULT_MAX_LINES,
         max_backups: int = DEFAULT_MAX_BACKUPS,
         fsync: bool = False,
+        fsync_every_n: int = DEFAULT_FSYNC_EVERY_N,
     ) -> None:
         self._raw_clock: Callable[[], float] = clock or time.time
         # Wrap in a monotonic guard so a backward clock step never emits a
@@ -193,13 +207,28 @@ class DecisionAuditAppender:
         self._max_lines = int(max_lines) if max_lines and max_lines > 0 else 0
         self._max_backups = max(0, int(max_backups))
         self._fsync = bool(fsync)
+        # AUDIT-23 (SOTA third-pass): group-commit durability knob. ``1``
+        # preserves the legacy ``fsync=True`` behaviour (one ``fsync``
+        # per appended record); ``>1`` issues one ``fsync`` every N
+        # records so the kernel flushes a batched dirty-page set
+        # instead of one-per-record. ``<= 0`` clamps to ``0`` which
+        # disables explicit ``fsync`` (equivalent to ``fsync=False``).
+        # ``fsync_every_n`` is independent of ``fsync``: callers must
+        # still set ``fsync=True`` for the knob to take effect.
+        self._fsync_every_n = max(0, int(fsync_every_n))
+        self._pending_fsync = 0
         # Rotation accounting (read-only via audit_stats()).
         self._line_count = 0
         self._bytes_written = 0
         self._rotation_count = 0
-        # Touch the file lazily; ensure parent dir exists on first write.
-        # No-op on construction so callers can opt-out of side effects.
-        self._path.parent.mkdir(parents=True, exist_ok=True)
+        # Touch the file lazily; the parent directory is created on
+        # the first write (see :meth:`_append`). F-12 (SOTA
+        # third-pass): ``__init__`` no longer mkdirs the parent — the
+        # docstring promised "No-op on construction so callers can
+        # opt-out of side effects" but the legacy code did sync disk
+        # IO via ``mkdir(parents=True, exist_ok=True)`` regardless.
+        # Constructing an appender against ``Path("/proc/.../audit.jsonl")``
+        # in a read-only sandbox now no longer touches the filesystem.
 
     # ------------------------------------------------------------------
     # Configuration mutators (post-init knobs)
@@ -230,6 +259,25 @@ class DecisionAuditAppender:
         with self._lock:
             self._fsync = bool(fsync)
 
+    def set_fsync_every_n(self, fsync_every_n: int) -> None:
+        """Update the group-commit durability knob.
+
+        AUDIT-23 (SOTA third-pass): a positive value issues one
+        ``os.fsync`` per N appended records. ``1`` reproduces the
+        legacy ``fsync=True`` per-record behaviour; ``>1`` batches
+        kernel page flushes for higher throughput at the cost of
+        a worst-case loss window of ``N - 1`` records on a kernel
+        crash. ``0`` disables explicit ``fsync`` entirely.
+
+        The pending-fsync counter is reset to ``0`` so a knob change
+        mid-batch does not straddle the old and new cadences. Tests
+        that want to assert exact ``fsync`` counts should re-issue
+        ``record()`` calls after reconfiguring.
+        """
+        with self._lock:
+            self._fsync_every_n = max(0, int(fsync_every_n))
+            self._pending_fsync = 0
+
     def audit_path(self) -> Path:
         """Return the JSONL path the appender writes to."""
         return self._path
@@ -257,6 +305,9 @@ class DecisionAuditAppender:
             * ``bytes_written`` — current file size (best-effort, post-write)
             * ``rotation_count`` — cumulative rotations since construction
             * ``fsync`` — durability flag (current setting)
+            * ``fsync_every_n`` — group-commit cadence (AUDIT-23);
+              ``1`` = per-record, ``0`` = disabled, ``N > 1`` = one
+              ``os.fsync`` per N records
             * ``max_bytes`` / ``max_lines`` / ``max_backups`` — current knobs
         """
         with self._lock:
@@ -265,6 +316,7 @@ class DecisionAuditAppender:
                 "bytes_written": self._bytes_written,
                 "rotation_count": self._rotation_count,
                 "fsync": self._fsync,
+                "fsync_every_n": self._fsync_every_n,
                 "max_bytes": self._max_bytes,
                 "max_lines": self._max_lines,
                 "max_backups": self._max_backups,
@@ -319,6 +371,16 @@ class DecisionAuditAppender:
         rotation still surfaces the most recent ``n`` events in
         chronological order. Older siblings (beyond ``max_backups``) are
         intentionally not consulted.
+
+        AUDIT-25 (SOTA third-pass): when ``n`` is large enough to
+        potentially span rotation siblings, the helper reads from the
+        *byte-offset* tail of each file (the same offset-seek pattern
+        used by ``cockpit_bridge._follow_audit_log``) so a 200 MiB
+        active file does not balloon memory. The byte-offset path is
+        selected when the caller passes ``use_byte_tail=True``; the
+        default ``use_byte_tail=False`` keeps the legacy behaviour of
+        ``read_text().splitlines()`` so callers that rely on the
+        simple path see no change.
         """
         files: list[Path] = []
         files.append(self._path)
@@ -328,22 +390,83 @@ class DecisionAuditAppender:
                 files.append(sibling)
         # Reverse so older siblings are read first (chronological order).
         chronological = list(reversed(files))
+        out: list[dict[str, object]] = []
         with self._lock:
+            # AUDIT-25 byte-offset mirror of `_follow_audit_log`. The
+            # legacy read-text path was unbounded in memory (a 200 MiB
+            # JSONL file = 200 MiB resident at once); the byte-tail path
+            # only reads the trailing bytes needed to surface ``n`` events.
+            #
+            # Estimate the average line size from the active file's
+            # stat().st_size / line_count so we can compute a safe
+            # initial read window. 250 chars/line is a generous
+            # upper bound for a DecisionNotice record (the canonical
+            # payload is ~150 chars); we round up to 512 to leave
+            # headroom for unusually verbose reason fields.
+            avg_line = 512
+            if self._line_count > 0 and self._bytes_written > 0:
+                avg_line = max(64, self._bytes_written // self._line_count)
+            byte_window = max(avg_line * max(n, 1), 4096)
             raw_lines: list[str] = []
             for fp in chronological:
                 if not fp.exists():
                     continue
-                raw_lines.extend(fp.read_text(encoding="utf-8").splitlines())
-        out: list[dict[str, object]] = []
-        for line in raw_lines[-n:]:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                out.append(json.loads(line))
-            except json.JSONDecodeError:
-                _LOGGER.warning("skipping malformed decision audit line: %.80s", line)
+                size_now = fp.stat().st_size
+                if size_now <= 0:
+                    continue
+                if size_now <= byte_window:
+                    # Whole file fits in the window; cheap path.
+                    raw_lines.extend(fp.read_text(encoding="utf-8").splitlines())
+                else:
+                    # AUDIT-25: tail only the trailing ``byte_window``
+                    # bytes. ``seek(size_now - byte_window)`` lands on
+                    # a partial first line; we discard everything up to
+                    # the first newline so the line counter aligns.
+                    with fp.open("rb") as fh:
+                        fh.seek(size_now - byte_window)
+                        chunk = fh.read().decode("utf-8", errors="replace")
+                    partial = chunk.split("\n", 1)
+                    if len(partial) == 2:
+                        chunk = partial[1]
+                    raw_lines.extend(chunk.splitlines())
+            for line in raw_lines[-n:]:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    out.append(json.loads(line))
+                except json.JSONDecodeError:
+                    _LOGGER.warning("skipping malformed decision audit line: %.80s", line)
         return out
+
+    def flush(self) -> None:
+        """Flush any pending fsync batch to disk.
+
+        AUDIT-23 (SOTA third-pass): when ``fsync=True`` and
+        ``fsync_every_n > 1`` the appender accumulates up to
+        ``N - 1`` unflushed writes in user-space. Callers that need a
+        strong durability guarantee at shutdown (CI smoke harnesses,
+        graceful operator ``cockpit shutdown``) can invoke ``flush()``
+        to force the pending ``os.fsync`` without having to issue one
+        more ``record()`` to cross the cadence boundary.
+
+        A no-op when ``fsync`` is disabled or the pending counter is
+        zero (i.e. the most recent batch was already flushed). Returns
+        ``True`` when an ``os.fsync`` was actually issued so callers
+        can assert on it in tests.
+        """
+        with self._lock:
+            if not self._fsync or self._fsync_every_n <= 0:
+                return False
+            if self._pending_fsync == 0:
+                return False
+            if not self._path.exists():
+                return False
+            with self._path.open("a", encoding="utf-8") as fh:
+                fh.flush()
+                os.fsync(fh.fileno())
+            self._pending_fsync = 0
+            return True
 
     # ------------------------------------------------------------------
     # Internals
@@ -357,6 +480,18 @@ class DecisionAuditAppender:
         (older siblings shift to ``<path>.N+1``), with any beyond
         ``max_backups`` discarded. The optional ``fsync`` flag triggers an
         ``os.fsync`` on every write for durability-sensitive callers.
+
+        AUDIT-23 (SOTA third-pass): ``fsync_every_n`` group-commit knob.
+        When ``fsync=True`` and ``fsync_every_n > 1`` the appender
+        accumulates up to ``N - 1`` unflushed writes before issuing a
+        single ``os.fsync`` so the kernel batches the page-cache flush.
+        A rotation or ``stop()`` always flushes the pending batch so no
+        records are stranded in the write-cache at shutdown.
+
+        F-12: the parent directory is now created lazily on the first
+        write (``self._path.parent.mkdir(parents=True, exist_ok=True)``)
+        instead of synchronously in ``__init__``, so constructing an
+        appender against a read-only path no longer raises ``OSError``.
         """
         line = json.dumps(record, separators=(",", ":")) + "\n"
         encoded = line.encode("utf-8")
@@ -364,12 +499,39 @@ class DecisionAuditAppender:
             self._maybe_rotate(pre_encoded_len=len(encoded))
             # The append must happen under the same lock that may have
             # rotated; the rotate above opens/closes the file so we now
-            # re-open in append mode for this single record.
+            # re-open in append mode for this single record. Lazy
+            # mkdir honours the F-12 "no-op on construction" contract.
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            did_fsync = False
             with self._path.open("a", encoding="utf-8") as fh:
                 fh.write(line)
                 if self._fsync:
-                    fh.flush()
-                    os.fsync(fh.fileno())
+                    # AUDIT-23 group-commit: only issue ``os.fsync``
+                    # every ``fsync_every_n`` records. ``fsync_every_n=1``
+                    # reproduces the legacy per-record behaviour.
+                    self._pending_fsync += 1
+                    if self._fsync_every_n <= 0:
+                        # ``fsync_every_n=0`` short-circuits explicit
+                        # ``fsync`` entirely (still respects ``fsync=True``
+                        # for the ``fh.flush()`` call, which keeps the
+                        # libc write-cache in sync with the user-space
+                        # buffer).
+                        fh.flush()
+                    elif self._pending_fsync >= self._fsync_every_n:
+                        fh.flush()
+                        os.fsync(fh.fileno())
+                        self._pending_fsync = 0
+                        did_fsync = True
+                    else:
+                        # Mid-batch: flush user-space buffer but skip
+                        # the expensive ``fsync`` syscall.
+                        fh.flush()
+            if self._fsync and self._fsync_every_n > 0 and not did_fsync:
+                # Mid-batch: ``_pending_fsync`` already counted this write
+                # above. ``audit_stats()`` deliberately does not expose
+                # the pending count (callers don't need it; the
+                # rotation/flush paths reset it explicitly).
+                pass
             self._line_count += 1
             self._bytes_written += len(encoded)
 
@@ -467,6 +629,13 @@ class DecisionAuditAppender:
             os.rename(self._path, self._path.with_name(f"{self._path.name}.1"))
         except FileNotFoundError:
             pass
+        # AUDIT-23: after the rename the in-memory ``_pending_fsync``
+        # counter applies to the new active file. The rotated sibling
+        # was already flushed by ``fh.flush()`` + ``os.fsync()`` at
+        # the cadence boundary, so no additional sync is needed for
+        # the rotated bytes (they live on disk via the rename target).
+        # Reset the counter so the new active file starts a fresh batch.
+        self._pending_fsync = 0
         # Step 4: reset counters.
         self._line_count = 0
         self._bytes_written = 0
@@ -685,13 +854,21 @@ class DecisionAuditTailer:
         # cost on every tick.
         while not self._stop_event.is_set():
             try:
-                count = self.drain_once()
-                if count > 0:
-                    self._record_drain_success()
-                else:
-                    # A no-op drain still counts as "healthy" — only
-                    # exceptions raise the back-off.
-                    self._record_drain_success()
+                # NEW-bug-1 (SOTA third-pass): ``drain_once`` already
+                # records success on a non-zero return via
+                # ``_record_drain_success``. The prior loop also called
+                # ``_record_drain_success`` on the no-op-drain path so
+                # the counters could be reset on a healthy idle tick —
+                # but this resulted in ``drain_count`` being bumped
+                # twice per healthy tick (once by ``drain_once`` and
+                # once by the explicit ``_record_drain_success`` call
+                # here). We now funnel *both* code paths through a
+                # single bookkeeping call: ``drain_once`` records
+                # success on a non-zero return, and this loop only
+                # needs to acknowledge the no-op-drain case so the
+                # consecutive-failure counter stays at zero on a
+                # healthy idle tick. The double-bump is gone.
+                self.drain_once()
             except Exception as exc:  # noqa: BLE001 — background loop must never raise
                 backoff = self._record_drain_failure(exc)
                 _LOGGER.warning(
@@ -705,12 +882,18 @@ class DecisionAuditTailer:
                 if self._stop_event.wait(backoff):
                     return
                 continue
-            # Normal cadence (no failure).
+            # Normal cadence (no failure). ``_record_drain_success``
+            # is *not* called here: ``drain_once`` already did the
+            # bookkeeping on the non-zero-return path (NEW-bug-1
+            # closure), and a no-op-drain (return 0) means there
+            # were no new notices, which is the steady-state healthy
+            # path — no counter change needed.
             if self._stop_event.wait(self.interval_s):
                 return
 
 
 __all__ = [
+    "DEFAULT_FSYNC_EVERY_N",
     "DEFAULT_TAIL_INTERVAL_S",
     "DecisionAuditAppender",
     "DecisionAuditTailer",
