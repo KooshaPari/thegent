@@ -196,22 +196,21 @@ err_console = Console(stderr=True)
 # signature to ``object`` collapses the two helpers into one and
 # aligns with how the cli_sota module already calls the helper for
 # non-exception values (``_exc_text(snapshot_format)!r``, etc.).
-from rich.markup import escape as _rich_escape  # noqa: E402
+#
+# GOV-1 (Phase 3/4 sixteenth+1 lane): ``_exc_text`` is now a thin
+# re-export of :func:`thegent.ux.cli_errors.exc_text` so any CLI
+# sub-app outside the cockpit (e.g. ``thegent.cli.apps.govern``)
+# can import the same helper without dragging the full cockpit
+# dependency surface into the root ``thegent`` import graph.
+# The leading underscore on ``_exc_text`` is preserved here for
+# backward compatibility with every existing call site in this
+# module + the cli_sota companion module; the public alias
+# ``exc_text`` lives in ``thegent.ux.cli_errors``.
+from thegent.ux.cli_errors import exc_text as _exc_text  # noqa: E402, F401
+from thegent.ux.cli_errors import exc_text as _rich_escape  # noqa: E402, F401
 
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _exc_text(value: object) -> str:
-    """Render ``value`` with Rich markup escaped.
-
-    AUDIT-9 contract: every CLI error / warning string that
-    interpolates user-influenced data MUST route through this
-    helper so an attacker cannot inject Rich markup (e.g.
-    ``[red] injected[/red]``) into stderr. The widening from
-    ``BaseException`` to ``object`` is F-15.
-    """
-    return _rich_escape(str(value))
 
 
 # F-15 (SOTA fifth-pass): ``name="cockpit"`` so ``Usage: cockpit`` renders

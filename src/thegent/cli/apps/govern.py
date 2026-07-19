@@ -7,9 +7,52 @@ import json
 import typer
 from rich.console import Console
 
+from thegent.ux.cli_errors import exc_text, print_exc
+
 console = Console()
 
-app = typer.Typer(help="Governance controls: approvals, rejections, and escalation operations.")
+# GOV-1 (Phase 3/4 sixteenth+1 lane): error envelope parity across
+# every ``thegent govern <sub>`` Typer sub-command. The four sites
+# that previously interpolated ``{exc}`` directly into a Rich-markup
+# f-string (AUDIT-9 contract violation) now route through
+# :func:`thegent.ux.cli_errors.exc_text` so a malicious or buggy
+# exception payload containing ``[red]...[/red]`` cannot inject
+# Rich markup into an operator terminal.
+# Envelope prefix convention: ``[red]govern <sub> failed:[/red]``
+# so every ``govern <sub>`` failure renders the same shape as the
+# cockpit + sota envelopes (F-15 UX-1 convention).
+err_console = Console(stderr=True)
+
+# F-15-D (Phase 3/4 fifth-pass): ``name="govern"`` so the parent
+# ``app.add_typer(...)`` registration in ``thegent.cli.apps.main``
+# renders ``Usage: govern ...`` rather than Typer's default
+# ``Usage: root ...`` fallback when invoked through ``python -m
+# thegent.cli.apps.main govern --help`` (the parent CLI also has
+# a ``--govern`` flat-command alias for backward compatibility).
+#
+# F-15-F (Phase 3/4 fifth-pass): the ``@app.callback(help=...)``
+# decorator surfaces the root description alongside the sub-command
+# list in ``thegent govern --help``. Without the callback, Typer's
+# ``add_completion=False`` default path drops the ``help=`` text
+# from the root ``typer.Typer()`` and only the sub-commands are
+# rendered.
+app = typer.Typer(
+    name="govern",
+    help="Governance controls: approvals, rejections, and escalation operations.",
+    add_completion=False,
+)
+
+
+@app.callback()
+def govern_root(
+    _ctx: typer.Context,
+) -> None:
+    """Root callback for the ``thegent govern`` sub-app.
+
+    The callback exists solely so the root ``help=`` text on
+    ``app`` is rendered when ``thegent govern --help`` is invoked
+    directly (F-15-F); the body is a no-op.
+    """
 
 
 @app.command("approve", help="Approve a paused/escalated run for continuation.")
@@ -36,7 +79,7 @@ def govern_approve(
         result = govern_approve_impl(run_id=run_id, reason=reason)
         console.print(f"[green]Approved:[/green] {result['run_id']}")
     except Exception as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+        print_exc(err_console, "govern approve failed:", exc)
         raise typer.Exit(1) from exc
 
 
@@ -51,7 +94,7 @@ def govern_reject(
         result = govern_reject_impl(run_id=run_id, reason=reason)
         console.print(f"[yellow]Rejected:[/yellow] {result['run_id']}")
     except Exception as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+        print_exc(err_console, "govern reject failed:", exc)
         raise typer.Exit(1) from exc
 
 
@@ -93,7 +136,7 @@ def govern_vet(
         if result.get("verdict") == "rejected":
             raise typer.Exit(1)
     except Exception as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+        print_exc(err_console, "govern vet failed:", exc)
         raise typer.Exit(1) from exc
 
 
@@ -115,7 +158,7 @@ def govern_register_host(
     if result.get("success"):
         console.print(f"[green]Registered:[/green] {host_id} ({harness})")
     else:
-        console.print(f"[red]Error:[/red] {result.get('error', 'Unknown error')}")
+        print_exc(err_console, "govern register-host failed:", result.get("error", "Unknown error"))
 
 
 @app.command("resolve-config", help="Resolve configuration overrides for a tenant or session.")
