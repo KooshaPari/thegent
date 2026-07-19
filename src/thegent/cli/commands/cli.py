@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING, Any
 
 import typer
 
+from thegent.ux.cli_errors import safe_echo
+
 if TYPE_CHECKING:
     from rich.console import Console
 
@@ -329,7 +331,7 @@ def logs_cmd(
         except OSError:
             pass
         if not log_file.exists():
-            typer.echo(f"Log file not found: {log_file}", err=True)
+            safe_echo("Log file not found:", log_file, err=True)
             return 1
 
     # Read and display logs
@@ -415,7 +417,7 @@ def stop_cmd(
         except OSError:
             pass
         if not meta_file.exists():
-            typer.echo(f"Session not found: {session_id}", err=True)
+            safe_echo("Session not found:", session_id, err=True)
             raise typer.Exit(1)
 
     import json

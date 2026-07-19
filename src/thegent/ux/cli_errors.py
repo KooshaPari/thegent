@@ -30,6 +30,12 @@ History:
   string and then routing it through ``Console.print(markup=True)``
   would otherwise let Rich re-interpret the escape sequence and
   re-apply the malicious markup.
+* AUDIT-N+3 (Phase 3/4 sweep lane): :func:`safe_echo` is added as
+  the typer-echo counterpart to :func:`print_exc`. The helper
+  combines ``typer.echo``'s stderr-routing with
+  :func:`rich.markup.escape` applied to every interpolated value,
+  closing the unsafe ``typer.echo(f"… {untrusted_var}")`` pattern
+  in the ``cli/commands/`` + ``cli/apps/run_app.py`` surface.
 """
 
 from __future__ import annotations
@@ -132,4 +138,45 @@ def print_exc(
     console.print(line)
 
 
-__all__ = ["exc_text", "print_exc"]
+def safe_echo(*values: object, err: bool = False, **kwargs: object) -> None:
+    """AUDIT-N+3 — echo through typer/click with Rich-markup-safe coercion.
+
+    Combines ``typer.echo``'s ``err=True`` (stderr) routing with
+    :func:`rich.markup.escape` applied to every interpolated value so a
+    malicious or buggy payload containing Rich markup (``[red]…[/red]``,
+    ``[bold]…[/bold]``, etc.) cannot inject colour tags into the
+    operator's terminal.
+
+    Parameters
+    ----------
+    *values:
+        Positional values to render. Each value is coerced to ``str``
+        and Rich-markup-escaped via :func:`exc_text`. No legitimate
+        Rich markup passes through — this helper is for error/warning
+        envelopes, not styled success output.
+    err:
+        When ``True``, route through ``typer.echo(..., err=True)`` so
+        the envelope appears on stderr (the conventional destination
+        for CLI error/warning surfaces).
+    **kwargs:
+        Forwarded to ``typer.echo``. The ``color`` kwarg is pinned
+        to ``False`` so the rendered output is plain text.
+
+    Notes
+    -----
+    Why pin ``color=False``? ``typer.echo`` uses click's styler
+    which can re-introduce ANSI sequences on operator terminals
+    that enable colour. By pinning ``color=False`` we force the
+    literal-escaped string to reach the terminal unchanged — the
+    same end-to-end render-safety contract :func:`print_exc`
+    provides through :class:`rich.text.Text` assembly.
+    """
+    import typer
+
+    kwargs.setdefault("color", False)
+    kwargs["err"] = err
+    rendered = " ".join(exc_text(v) for v in values)
+    typer.echo(rendered, **kwargs)
+
+
+__all__ = ["exc_text", "print_exc", "safe_echo"]

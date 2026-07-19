@@ -48,7 +48,7 @@ from typing import List, Optional
 import typer
 from rich.console import Console
 
-from thegent.ux.cli_errors import print_exc
+from thegent.ux.cli_errors import exc_text, print_exc
 
 # AUDIT-N+1 (Phase 3/4 sweep lane): every CLI error envelope in
 # ``src/thegent/cli/apps/`` must route through ``print_exc`` (or the
@@ -78,6 +78,27 @@ run_app = typer.Typer(
 # once the @run_app.command(...) decorators run).  Used by the callback
 # to decide whether to forward to a subcommand or run model-first.
 _SUBCOMMANDS: set[str] = {"agent", "stop", "ps", "logs"}
+
+
+def _safe_model_unavailable_line(model: object, provider: object, suffix: str) -> str:
+    """Build the AUDIT-N+3-safe ``Model '…' not available via provider '…' …`` line.
+
+    The user-controlled ``model`` and ``provider`` segments are
+    routed through :func:`thegent.ux.cli_errors.exc_text` so a
+    malicious or buggy value containing Rich markup
+    (``[red]…[/red]``) cannot inject colour tags into the
+    operator's terminal. The literal ``'…'`` quoting around each
+    value is preserved (those characters are part of the trusted
+    envelope literal, not user data).
+
+    ``suffix`` is the pre-computed ``" Available: …. "`` line —
+    the comma-joined ``provider`` list comes from the in-process
+    model catalog (typed ``str``) but ``suffix`` still routes
+    through :func:`exc_text` so a future refactor that injects
+    additional operator-controlled data into the suffix stays
+    safe-by-construction.
+    """
+    return "Model '" + exc_text(model) + "' not available via provider '" + exc_text(provider) + "'." + exc_text(suffix)
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +176,13 @@ def _run_callback(
                 routes = ModelCatalog.routes_for(model_id)
                 available = ", ".join(sorted({r.provider for r in routes})) if routes else "none"
                 suffix = f" Available: {available}." if available != "none" else ""
-                typer.echo(f"Model '{model}' not available via provider '{provider}'.{suffix}")
+                # AUDIT-N+3 — route the operator-controlled ``model``
+                # and ``provider`` segments through ``exc_text`` so a
+                # malicious value containing Rich markup cannot
+                # inject colour into the operator's terminal. The
+                # literal ``'…'`` quoting around each value is
+                # preserved by the helper above.
+                typer.echo(_safe_model_unavailable_line(model, provider, suffix))
                 raise typer.Exit(1)
         except typer.Exit:
             raise

@@ -10,6 +10,8 @@ from typing import Any
 
 import typer
 
+from thegent.ux.cli_errors import safe_echo
+
 
 def dag_validate_cmd(*args: Any, **kwargs: Any) -> int:
     """Validate a DAG. Stub returning 0."""
@@ -294,7 +296,7 @@ def plan_verify_workstream_cmd(cd: Path | None = None, **_kwargs: Any) -> None:
     errors = _verify_work_stream(cd)
     if errors:
         for err in errors:
-            typer.echo(f"verify-workstream: {err}", err=True)
+            safe_echo("verify-workstream:", err, err=True)
         raise typer.Exit(1) from None
     typer.echo("verify-workstream: OK")
 
@@ -303,15 +305,15 @@ def plan_lint_workstream_cmd(cd: Path | None = None, **_kwargs: Any) -> None:
     """WL-224: lint WORK_STREAM.md schema (errors exit 1, warnings report)."""
     path = _resolve_work_stream_path(cd)
     if not path.exists():
-        typer.echo(f"lint-workstream: file not found: {path}", err=True)
+        safe_echo("lint-workstream: file not found:", path, err=True)
         raise typer.Exit(1) from None
     text = path.read_text(encoding="utf-8")
     errors, warnings = _lint_work_stream_text(text)
     for warn in warnings:
-        typer.echo(f"lint-workstream: warning: {warn}")
+        safe_echo("lint-workstream: warning:", warn)
     if errors:
         for err in errors:
-            typer.echo(f"lint-workstream: error: {err}", err=True)
+            safe_echo("lint-workstream: error:", err, err=True)
         raise typer.Exit(1) from None
     typer.echo("lint-workstream: OK")
 
@@ -320,14 +322,14 @@ def plan_normalize_workstream_cmd(cd: Path | None = None, **_kwargs: Any) -> Non
     """WL-225: normalize WORK_STREAM.md (idempotent; reports changes)."""
     path = _resolve_work_stream_path(cd)
     if not path.exists():
-        typer.echo(f"normalize-workstream: file not found: {path}", err=True)
+        safe_echo("normalize-workstream: file not found:", path, err=True)
         raise typer.Exit(1) from None
     text = path.read_text(encoding="utf-8")
     new_text, changes = _normalize_work_stream_text(text)
     if changes:
         path.write_text(new_text, encoding="utf-8")
     for change in changes:
-        typer.echo(f"normalize-workstream: {change}")
+        safe_echo("normalize-workstream:", change)
     typer.echo("normalize-workstream: done")
 
 
