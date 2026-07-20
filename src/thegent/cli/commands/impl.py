@@ -167,31 +167,18 @@ class DagPrioritizer:
 def run_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
     """Run the implementation.
 
-    Thin delegate to :func:`thegent.cli.services.run_execution_core_helpers.run_impl_core`.
-    The full execution pipeline (Pareto routing, policy, escalation, MAIF,
-    observability) lives in the extracted core; this wrapper exists to keep the
-    public CLI surface stable and to allow tests to stub the core via
-    ``monkeypatch.setattr`` on the helper module.
-
-    Args:
-        prompt: The prompt to execute.
-        **kwargs: Forwarded to ``run_impl_core``. See that function's signature
-            for accepted parameters.
-
-    Returns:
-        Result dictionary from ``run_impl_core``.
+    Thin delegate to
+    :func:`thegent.cli.commands.run.impl_core_runners.run_impl_core`,
+    which is the AUDIT-N+16 canonical home for the dispatch shim (it
+    threads ``impl_ns`` and forwards every caller kwarg verbatim to
+    :func:`thegent.cli.services.run_execution_core_helpers.run_impl_core`).
+    The full execution pipeline (Pareto routing, policy, escalation,
+    MAIF, observability) lives in the extracted core; this wrapper
+    exists to keep the public CLI surface stable.
     """
-    # Lazy import — keep impl.py import-order safe (run_execution_core_helpers
-    # imports back from impl at module top via _LazyImpl).
-    import sys as _sys
-    from thegent.cli.services import run_execution_core_helpers
+    from thegent.cli.commands.run.impl_core_runners import run_impl_core
 
-    impl_ns = _sys.modules.get("thegent.cli.commands.impl")
-    if impl_ns is None:
-        import importlib
-
-        impl_ns = importlib.import_module("thegent.cli.commands.impl")
-    return run_execution_core_helpers.run_impl_core(prompt=prompt, impl_ns=impl_ns, **kwargs)
+    return run_impl_core(prompt=prompt, **kwargs)
 
 
 def list_models_impl(**kwargs: Any) -> dict[str, Any]:
@@ -240,27 +227,16 @@ def session_list_impl(session_ids: list[str] | None = None, **kwargs: Any) -> di
 def bg_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
     """Background-run implementation.
 
-    Thin delegate to :func:`thegent.cli.services.run_execution_core_helpers.bg_impl_core`.
-    Mirrors :func:`run_impl`'s delegation contract so operators and tests can stub
-    the core helper via ``monkeypatch.setattr`` on the helper module.
-
-    Args:
-        prompt: The prompt to execute in the background.
-        **kwargs: Forwarded to ``bg_impl_core``. See that function's signature
-            for accepted parameters.
-
-    Returns:
-        Result dictionary from ``bg_impl_core``.
+    Thin delegate to
+    :func:`thegent.cli.commands.run.impl_core_runners.bg_impl_core`,
+    mirroring :func:`run_impl`'s delegation contract. The canonical home
+    for the dispatch shim threads ``impl_ns`` and forwards every caller
+    kwarg verbatim to
+    :func:`thegent.cli.services.run_execution_core_helpers.bg_impl_core`.
     """
-    import sys as _sys
-    from thegent.cli.services import run_execution_core_helpers
+    from thegent.cli.commands.run.impl_core_runners import bg_impl_core
 
-    impl_ns = _sys.modules.get("thegent.cli.commands.impl")
-    if impl_ns is None:
-        import importlib
-
-        impl_ns = importlib.import_module("thegent.cli.commands.impl")
-    return run_execution_core_helpers.bg_impl_core(prompt=prompt, impl_ns=impl_ns, **kwargs)
+    return bg_impl_core(prompt=prompt, **kwargs)
 
 
 # ---------------------------------------------------------------------------
