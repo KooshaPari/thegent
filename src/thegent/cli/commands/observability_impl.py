@@ -181,13 +181,92 @@ _DEFAULT_APPEND_OBSERVE_SUMMARY_SNAPSHOT = __import__(
 ).append_observe_summary_snapshot
 
 
-def _validate_image_capability(image_path: str) -> bool:
-    """Validate that image capability is available."""
+def _validate_image_capability(image_path: str, model: str | None = None) -> bool | None:
+    """Validate image capability.
+
+    AUDIT-N+16 (WL-125 closure): dual-mode bridge.
+
+    * AUDIT-N+9 legacy form ``_validate_image_capability(image_path)``
+      returns ``Path(image_path).exists()`` for the 1-arg call shape
+      pinned by ``tests/test_unit_audit_n9_observability_impl_extraction_parity.py``.
+    * WL-125 form ``_validate_image_capability(agent, model)`` delegates
+      to :func:`thegent.cli.services.run_input_helpers.validate_image_capability`
+      so the monkeypatch site
+      ``monkeypatch.setattr("thegent.cli.commands.impl.run_input_helpers.validate_image_capability", ...)``
+      in ``tests/test_wl125_run_input_helpers_parity.py`` is observed.
+
+    Args:
+        image_path: Either an image path (AUDIT-N+9 form, ``model`` is None)
+            or an agent name (WL-125 form, ``model`` is not None).
+        model: Model identifier (WL-125 form only).
+
+    Returns:
+        ``True``/``False`` for AUDIT-N+9 (file existence) or ``None`` for
+        WL-125 (raises on failure; returns ``None`` on success).
+    """
+    if model is not None:
+        from thegent.cli.services import run_input_helpers as _rih
+
+        return _rih.validate_image_capability(
+            agent=image_path,
+            model=model,
+            model_supports_vision_impl=_model_supports_vision_default,
+        )
     return Path(image_path).exists()
 
 
-def _resolve_audio_transcript_for_output(transcript: dict[str, Any]) -> dict[str, Any]:
-    """Resolve audio transcript for output."""
+def _model_supports_vision_default(model: str) -> bool:
+    """Default vision-capability stub for :func:`_validate_image_capability`.
+
+    Returns ``True`` unless overridden via monkeypatch. Mirrors the legacy
+    ``_model_supports_vision`` stub that AUDIT-N+11 introduced for the
+    ``run`` image flag.
+    """
+    return True
+
+
+def _resolve_audio_transcript_for_output(
+    transcript_or_injected: dict[str, Any] | None = None,
+    result_audio_transcript: dict[str, Any] | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Resolve audio transcript for output.
+
+    AUDIT-N+16 (WL-125 closure): dual-mode bridge.
+
+    * AUDIT-N+9 legacy form ``_resolve_audio_transcript_for_output(transcript)``
+      returns ``{"transcript": ..., "duration": ...}``.
+    * WL-125 form
+      ``_resolve_audio_transcript_for_output(injected_audio_transcript=..., result_audio_transcript=...)``
+      delegates to
+      :func:`thegent.cli.services.run_event_helpers.resolve_audio_transcript_for_output`
+      so the monkeypatch site
+      ``monkeypatch.setattr("thegent.cli.commands.impl.run_event_helpers.resolve_audio_transcript_for_output", ...)``
+      is observed.
+
+    Args:
+        transcript_or_injected: Legacy ``transcript`` dict or WL-125
+            ``injected_audio_transcript`` dict.
+        result_audio_transcript: WL-125 form only.
+        **kwargs: WL-125 form via ``injected_audio_transcript=`` /
+            ``result_audio_transcript=``.
+
+    Returns:
+        Resolved audio transcript dict.
+    """
+    from thegent.cli.services import run_event_helpers as _reh
+
+    # AUDIT-N+16 WL-125 dispatch — explicit kwargs → delegate via the
+    # canonical kwarg-only signature.
+    injected = kwargs.get("injected_audio_transcript", transcript_or_injected)
+    result = kwargs.get("result_audio_transcript", result_audio_transcript)
+    if injected is not None and result is not None:
+        return _reh.resolve_audio_transcript_for_output(
+            injected_audio_transcript=injected,
+            result_audio_transcript=result,
+        )
+    # AUDIT-N+9 legacy form: single dict positional arg.
+    transcript = injected or {}
     return {
         "transcript": transcript.get("text", ""),
         "duration": transcript.get("duration", 0.0),
@@ -265,8 +344,42 @@ def _inject_time_constraint(
     return prompt + constraint
 
 
-def _build_audio_summary_metadata(duration: float, format: str = "wav") -> dict[str, Any]:
-    """Build audio summary metadata."""
+def _build_audio_summary_metadata(
+    duration: float = 0.0,
+    format: str = "wav",  # noqa: A002 - AUDIT-N+9 pinned param name
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Build audio summary metadata.
+
+    AUDIT-N+16 (WL-125 closure): dual-mode bridge.
+
+    * AUDIT-N+9 legacy form ``_build_audio_summary_metadata(duration, format="wav")``
+      returns ``{"duration": ..., "format": ..., "sample_rate": ...}``.
+    * WL-125 form ``_build_audio_summary_metadata(audio_transcript=, audio_sources=)``
+      (via kwargs) delegates to
+      :func:`thegent.cli.services.run_audio_helpers.build_audio_summary_metadata`
+      so the monkeypatch site
+      ``monkeypatch.setattr("thegent.cli.commands.impl.run_audio_helpers.build_audio_summary_metadata", ...)``
+      in ``tests/test_wl125_run_audio_helpers_parity.py`` is observed.
+
+    Args:
+        duration: AUDIT-N+9 ``duration`` float.
+        format: AUDIT-N+9 ``format`` string.
+        **kwargs: WL-125 kwargs (``audio_transcript``, ``audio_sources``).
+
+    Returns:
+        Audio summary metadata dict.
+    """
+    from thegent.cli.services import run_audio_helpers as _rah
+
+    # AUDIT-N+16 WL-125 dispatch — explicit kwargs → delegate via the
+    # canonical kwarg-only signature.
+    if "audio_transcript" in kwargs or "audio_sources" in kwargs:
+        return _rah.build_audio_summary_metadata(
+            audio_transcript=kwargs.get("audio_transcript"),
+            audio_sources=kwargs.get("audio_sources", []),
+        )
+    # AUDIT-N+9 legacy form.
     return {
         "duration": duration,
         "format": format,
@@ -274,17 +387,112 @@ def _build_audio_summary_metadata(duration: float, format: str = "wav") -> dict[
     }
 
 
-def _build_run_event_details(event: dict[str, Any]) -> dict[str, Any]:
-    """Build run event details."""
+def _build_run_event_details(
+    event_or_grounding_sources: dict[str, Any] | list | None = None,
+    audio_transcript: dict[str, Any] | None = None,
+    audio_sources: list | None = None,
+    context_usage_ratio: float | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Build run event details.
+
+    AUDIT-N+16 (WL-125 closure): dual-mode bridge.
+
+    * AUDIT-N+9 legacy form ``_build_run_event_details(event)`` returns
+      ``{"event": ..., "timestamp": ...}``.
+    * WL-125 form
+      ``_build_run_event_details(grounding_sources=..., audio_transcript=..., audio_sources=..., context_usage_ratio=...)``
+      delegates to
+      :func:`thegent.cli.services.run_event_helpers.build_run_event_details`
+      so the monkeypatch site
+      ``monkeypatch.setattr("thegent.cli.commands.impl.run_event_helpers.build_run_event_details", ...)``
+      in ``tests/test_wl125_run_event_helpers_parity.py`` is observed.
+
+    Args:
+        event_or_grounding_sources: AUDIT-N+9 ``event`` dict or WL-125
+            ``grounding_sources`` list.
+        audio_transcript: WL-125 form only.
+        audio_sources: WL-125 form only.
+        context_usage_ratio: WL-125 form only.
+        **kwargs: WL-125 form via explicit kwargs.
+
+    Returns:
+        Run event details dict.
+    """
+    from thegent.cli.services import run_event_helpers as _reh
+
+    # AUDIT-N+16 WL-125 dispatch — explicit kwargs → delegate via the
+    # canonical kwarg-only signature.
+    grounding = kwargs.get("grounding_sources", event_or_grounding_sources)
+    if isinstance(grounding, list):
+        return _reh.build_run_event_details(
+            grounding_sources=grounding,
+            audio_transcript=audio_transcript,
+            audio_sources=audio_sources,
+            context_usage_ratio=context_usage_ratio,
+        )
+    # AUDIT-N+9 legacy form: single event dict.
+    event = grounding if isinstance(grounding, dict) else {}
     return {
         "event": event,
         "timestamp": time.time(),
     }
 
 
-def _append_health_snapshot(snapshots: list, snapshot: dict[str, Any]) -> None:
-    """Append health snapshot to list."""
-    snapshots.append(snapshot)
+def _append_health_snapshot(
+    snapshots_or_payload: list | dict[str, Any],
+    snapshot_or_scope_key: dict[str, Any],
+) -> None:
+    """Append health snapshot.
+
+    AUDIT-N+16 (WL-125 closure): dual-mode bridge.
+
+    * AUDIT-N+9 legacy form ``_append_health_snapshot(snapshots, snapshot)``
+      appends ``snapshot`` to ``snapshots``.
+    * WL-125 form ``_append_health_snapshot(payload, scope_key)`` delegates to
+      :func:`thegent.cli.services.run_health_helpers.append_health_snapshot`
+      so the monkeypatch site
+      ``monkeypatch.setattr("thegent.cli.commands.impl.run_health_helpers.append_health_snapshot", ...)``
+      in ``tests/test_wl125_run_health_helpers_parity.py`` is observed.
+
+    Args:
+        snapshots_or_payload: AUDIT-N+9 ``snapshots`` list or WL-125 ``payload`` dict.
+        snapshot_or_scope_key: AUDIT-N+9 ``snapshot`` dict or WL-125 ``scope_key`` dict.
+    """
+    from thegent.cli.services import run_health_helpers as _rhh
+
+    # AUDIT-N+16 WL-125 dispatch — first arg is dict → delegate.
+    if isinstance(snapshots_or_payload, dict):
+        return _rhh.append_health_snapshot(
+            snapshots_or_payload,
+            snapshot_or_scope_key,
+            log_path_resolver=_health_snapshot_log_path_resolver,
+            compact_log_fn=_compact_health_snapshot_log_stub,
+            coerce_issue_types_fn=_coerce_issue_types_default,
+        )
+    # AUDIT-N+9 legacy form: list.append(snapshot).
+    snapshots_or_payload.append(snapshot_or_scope_key)
+
+
+def _health_snapshot_log_path_resolver() -> Path:
+    """AUDIT-N+16 default log-path resolver for ``_append_health_snapshot``."""
+    from thegent.cli.services import run_health_helpers as _rhh
+
+    return _rhh.health_snapshot_log_path()
+
+
+def _compact_health_snapshot_log_stub() -> int:
+    """AUDIT-N+16 default compact-log callback for ``_append_health_snapshot``."""
+    from thegent.cli.services import run_health_helpers as _rhh
+
+    return _rhh.compact_health_snapshot_log()
+
+
+def _coerce_issue_types_default(value: Any) -> list[str]:
+    """AUDIT-N+16 default coerce-issue-types callback for ``_append_health_snapshot``."""
+    from thegent.cli.services import run_health_helpers as _rhh
+
+    return _rhh.coerce_issue_types(value)
 
 
 def _compute_observe_status(
