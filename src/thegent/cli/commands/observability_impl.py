@@ -116,18 +116,47 @@ def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str,
     return [{"source": s.get("source", ""), "content": s.get("content", "")[:100]} for s in sources]
 
 
-def _inject_time_constraint(prompt: str, timeout: int) -> str:
+def _inject_time_constraint(
+    prompt: str,
+    timeout: int,
+    *,
+    summary_mode: bool = False,
+    seconds_per_tool_call: float = 2.3,
+) -> str:
     """Inject time constraint into prompt.
+
+    AUDIT-N+11: signature restored to the WL-125 contract that the live
+    :func:`thegent.cli.services.run_execution_core_helpers._inject_time_constraint_local`
+    call-site (``prompt, timeout, summary_mode=not full``) expects. The
+    function preserves the original AUDIT-N+9 budget line and additionally
+    appends the worker-status-report footer when ``summary_mode=True`` so
+    operators using ``thegent run`` get the structured output block.
 
     Args:
         prompt: The prompt to inject constraint into.
         timeout: Timeout in seconds.
+        summary_mode: When True, append the ``OUTPUT FORMAT`` worker
+            status report block (mirrors the WL-125 prompt helper).
+        seconds_per_tool_call: Approximate seconds per tool call (used
+            to compute the budget). Defaults to 2.3 (legacy AUDIT-N+9
+            value).
 
     Returns:
         Prompt with time constraint injected.
     """
-    tool_calls = max(1, round(timeout / 2.3))
-    constraint = f"\n\nTIME CONSTRAINT: Complete in {timeout}s (~{tool_calls} tool calls).\n"
+    tool_calls = max(1, int(timeout / seconds_per_tool_call))
+    constraint = (
+        f"\n\n[TIME CONSTRAINT: You have approximately {tool_calls} tool "
+        f"calls (~{timeout}s). When done or when approaching this limit, "
+        "wrap up and report. Do not start new multi-step work.]\n"
+    )
+    if summary_mode:
+        constraint += (
+            "\n\n[OUTPUT FORMAT: End your response with a brief worker "
+            "status report: **Summary** (1–2 sentences), **Items Done** "
+            "(bullet list), **Issues** (if any), **Next Steps** (bullet "
+            "list). Use markdown. This is the primary output shown.]\n"
+        )
     return prompt + constraint
 
 
@@ -542,6 +571,34 @@ def _run_background_session_observer(session_id: str, **kwargs: Any) -> None:
     # Stub: observer runs in background
 
 
+def _build_observe_summary_trend_scope(
+    trend_samples: int | None = None,
+    limit: int = 500,
+) -> dict[str, Any]:
+    """Build observe summary trend scope parameters.
+
+    AUDIT-N+11: moved out of ``thegent.cli.commands.impl`` to
+    canonicalise the observability surface. This is the 2-arg form
+    that the impl-side test surface
+    (``tests/test_unit_cli_impl_gaps.py``) expects; the kw-only
+    6-arg ``build_observe_summary_trend_scope`` in
+    :mod:`thegent.cli.services.run_observe_helpers` remains the
+    WL-120 trend history builder.
+
+    Args:
+        trend_samples: Number of trend samples.
+        limit: Maximum events to analyze.
+
+    Returns:
+        Trend scope dictionary.
+    """
+    return {
+        "trend_samples": trend_samples,
+        "limit": limit,
+        "enabled": trend_samples is not None,
+    }
+
+
 __all__ = [
     "err_console",
     "print_exc",
@@ -555,6 +612,7 @@ __all__ = [
     "_build_audio_summary_metadata",
     "_build_run_event_details",
     "_append_health_snapshot",
+    "_build_observe_summary_trend_scope",
     "_compact_health_snapshot_log",
     "_classify_observe_summary_trend_health",
     "_hash_health_payload",

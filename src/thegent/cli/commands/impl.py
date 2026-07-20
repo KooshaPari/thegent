@@ -387,7 +387,6 @@ __all__ = [
     "session_list_impl",
     "bg_impl",
     "_build_continuation_prompt",
-    "_build_observe_summary_trend_scope",
     "dag_list_impl",
     "_append_context_usage",
     "_check_dag_cycles",
@@ -407,6 +406,7 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
     _inject_time_constraint,
     _append_observe_summary_snapshot,
     _append_health_snapshot,
+    _build_observe_summary_trend_scope,
     _classify_observe_summary_trend_health,
     _compact_health_snapshot_log,
     _hash_health_payload,
@@ -503,26 +503,6 @@ def _build_continuation_prompt(context: dict[str, Any]) -> str:
         Continuation prompt string.
     """
     return "Continue from where you left off."
-
-
-def _build_observe_summary_trend_scope(
-    trend_samples: int | None = None,
-    limit: int = 500,
-) -> dict[str, Any]:
-    """Build observe summary trend scope parameters.
-
-    Args:
-        trend_samples: Number of trend samples.
-        limit: Maximum events to analyze.
-
-    Returns:
-        Trend scope dictionary.
-    """
-    return {
-        "trend_samples": trend_samples,
-        "limit": limit,
-        "enabled": trend_samples is not None,
-    }
 
 
 def dag_list_impl(**kwargs: Any) -> dict[str, Any]:
