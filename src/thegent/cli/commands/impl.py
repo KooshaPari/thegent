@@ -354,29 +354,43 @@ def bg_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
 
 
 __all__ = [
+    # AUDIT-N+9: observability surface (canonical home: observability_impl)
     "_inject_time_constraint",
-    "_resolve_cwd",
-    "_resolve_droids_dir",
-    "_compose_owner_tag",
-    "_default_owner_tag",
-    "_EAGAIN_ERRNOS",
-    "_backoff_delay",
-    "_retry_if_eagain",
-    "_atomic_write",
-    "_spawn_with_eagain_retry",
     "_append_observe_summary_snapshot",
     "_validate_image_capability",
     "_resolve_audio_transcript_for_output",
     "_resolve_grounding_sources_for_output",
-    "HEALTH_PAYLOAD_SCHEMA_VERSION",
-    "_write_session_state",
-    "_normalize_image_paths",
-    "_build_audio_summary_metadata",
-    "_build_run_event_details",
     "_append_health_snapshot",
     "observe_summary_impl",
-    "DagDocument",
-    "DagPrioritizer",
+    # AUDIT-N+12: session lifecycle surface (canonical home: session_impl)
+    "_is_pid_running",
+    "_scope_key",
+    "_session_paths",
+    "_new_session_id",
+    "_save_session_meta",
+    "_read_session_meta",
+    "_find_session_meta",
+    "_resolve_session_status",
+    "_resolve_agent_model",
+    "_load_prior_session_output",
+    "_CONTINUATION_TAIL_CHARS",
+    "_CWD_CACHE",
+    "_session_dir",
+    "_session_scope_dirs",
+    "_build_continuation_prompt",
+    # AUDIT-N+12: I/O helpers (canonical home: impl.py)
+    "_resolve_cwd",
+    "_resolve_droids_dir",
+    "_compose_owner_tag",
+    "_default_owner_tag",
+    "_backoff_delay",
+    "_retry_if_eagain",
+    "_atomic_write",
+    "_spawn_with_eagain_retry",
+    "_EAGAIN_ERRNOS",
+    "_write_session_state",
+    "_normalize_image_paths",
+    # Public entry points (canonical home: impl.py)
     "run_impl",
     "logs_impl",
     "ps_impl",
@@ -386,16 +400,9 @@ __all__ = [
     "list_impl",
     "session_list_impl",
     "bg_impl",
-    "_build_continuation_prompt",
-    "dag_list_impl",
-    "_append_context_usage",
-    "_check_dag_cycles",
-    "dag_raw_impl",
-    "_coerce_issue_types",
-    "_classify_observe_summary_trend_health",
-    "list_agents_impl",
-    "_compact_health_snapshot_log",
-    "_session_state_path",
+    # DAG model classes (canonical home: impl.py)
+    "DagDocument",
+    "DagPrioritizer",
 ]
 
 
@@ -427,6 +434,47 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
     _build_run_event_details,
     _health_scope_key,
 )
+
+
+# AUDIT-N+12: re-export the session-lifecycle surface from
+# :mod:`thegent.cli.commands.session_impl`. These helpers previously
+# lived inline in ``impl.py`` but were never reachable because the
+# surface was incomplete (missing ``_CONTINUATION_TAIL_CHARS``,
+# ``_CWD_CACHE``, ``_load_prior_session_output``,
+# ``_resolve_agent_model`` 4-arg form, etc.). Extracting them into a
+# canonical module preserves the ``impl.<x>`` import path for legacy
+# callers and ``tests/test_unit_cli_impl_session.py`` patch sites.
+from thegent.cli.commands.session_impl import (  # noqa: F401
+    _CONTINUATION_TAIL_CHARS,
+    _CWD_CACHE,
+    _is_pid_running,
+    _scope_key,
+    _session_paths,
+    _new_session_id,
+    _save_session_meta,
+    _read_session_meta,
+    _find_session_meta,
+    _resolve_session_status,
+    _resolve_agent_model,
+    _load_prior_session_output,
+    _build_continuation_prompt,
+    _session_dir,
+    _session_scope_dirs,
+)
+
+
+# AUDIT-N+12: surface ``thegent.cli.services.run_observe_helpers`` as a
+# module attribute on ``impl`` so legacy ``monkeypatch.setattr`` sites
+# like ``monkeypatch.setattr("thegent.cli.commands.impl.run_observe_helpers.<x>", ...)``
+# (in ``tests/test_wl125_run_observe_helpers_parity.py``) resolve.
+from thegent.cli.services import run_observe_helpers  # noqa: F401
+
+
+# AUDIT-N+12: surface ``thegent.cli.services.observability`` as a module
+# attribute on ``impl`` so the WL-120 reconciliation tests can monkeypatch
+# the dormant trend/escalation builders via
+# ``monkeypatch.setattr("thegent.cli.commands.impl.services_observability.<x>", ...)``.
+from thegent.cli.services import observability as services_observability  # noqa: F401
 
 
 # AUDIT-N+10: re-export governance / escalation / HITL / data-protection
@@ -769,20 +817,12 @@ def _validate_task_id(task_id: str) -> bool:
     return bool(re.match(r"^[a-zA-Z0-9_-]+$", task_id))
 
 
-def _resolve_agent_model(model: str | None = None) -> str:
-    """Resolve agent model from configuration or default.
-
-    Args:
-        model: Explicitly specified model or None.
-
-    Returns:
-        Resolved model name.
-    """
-    import os
-
-    if model:
-        return model
-    return os.environ.get("THGENT_DEFAULT_MODEL", "claude-sonnet-4-5")
+# AUDIT-N+12: ``_resolve_agent_model`` (canonical 4-arg form), and
+# all other session-lifecycle helpers (see :mod:`session_impl`) are
+# re-exported via the AUDIT-N+12 re-export block below. The legacy
+# 1-arg inline stub has been removed; legacy callers must update
+# to the canonical 4-arg signature or use the module-level helper
+# directly.
 
 
 def _resolve_prompt(prompt: str | None = None, prompt_file: str | None = None) -> str:

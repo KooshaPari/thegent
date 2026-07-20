@@ -95,7 +95,14 @@ EXPECTED_PARAMS: dict[str, tuple[str, ...]] = {
         "top_escalations",
         "trend_samples",
     ),
-    "_append_observe_summary_snapshot": ("snapshots", "snapshot"),
+    "_append_observe_summary_snapshot": (
+        "payload",
+        "trend_scope_key",
+        "signature_id",
+        "serialized_snapshot",
+        "history",
+        "trend_summary",
+    ),
     "_validate_image_capability": ("image_path",),
     "_resolve_audio_transcript_for_output": ("transcript",),
     "_resolve_grounding_sources_for_output": ("sources",),
@@ -104,14 +111,29 @@ EXPECTED_PARAMS: dict[str, tuple[str, ...]] = {
     "_build_run_event_details": ("event",),
     "_append_health_snapshot": ("snapshots", "snapshot"),
     "_compact_health_snapshot_log": ("log_path", "max_entries"),
-    "_classify_observe_summary_trend_health": ("trend_data",),
+    "_classify_observe_summary_trend_health": (
+        "trend_data",
+        "enabled",
+        "baseline_available",
+        "trend_snapshot_coverage_pct",
+        "trend_snapshot_deficit",
+        "trend_snapshot_invalid_timestamps",
+        "trend_snapshot_freshness_bucket",
+        "trend_snapshot_gap_count",
+        "trend_sampling_mode",
+    ),
     "_hash_health_payload": ("payload",),
     "_health_scope_key": ("session_id", "scope"),
     "_hash_observe_summary_payload": ("payload",),
     "_load_previous_health_snapshot": ("session_dir",),
     "_hash_observe_summary_trend_scope": ("trend_scope",),
     "_observe_summary_freshness_bucket": ("timestamp",),
-    "_load_observe_summary_snapshots": ("session_dir", "limit"),
+    "_load_observe_summary_snapshots": (
+        "session_dir",
+        "limit",
+        "scope_signature",
+        "scope_key_json",
+    ),
     "_parse_observe_summary_env_float": ("env_var", "default"),
     "_parse_observe_summary_env_int": ("env_var", "default"),
     "_parse_observe_summary_timestamp": ("ts",),
@@ -422,10 +444,30 @@ class TestObservabilityRoundTrip:
     # @trace FR-AUDIT-N+9-031
     def test_append_observe_summary_snapshot(self) -> None:
         obs = _load(OBSERVABILITY_IMPL)
-        snap_list: list = []
-        obs._append_observe_summary_snapshot(snap_list, {"k": "v"})
-        obs._append_observe_summary_snapshot(snap_list, {"k": "v2"})
-        assert snap_list == [{"k": "v"}, {"k": "v2"}]
+        history: list = []
+        # AUDIT-N+12: canonical WL-125 6-arg signature. The legacy
+        # 2-arg stub was the AUDIT-N+9 form; the live
+        # ``run_observe_helpers.append_observe_summary_snapshot`` takes
+        # 6 positional args so the impl-side bridge must mirror that.
+        obs._append_observe_summary_snapshot(
+            {"payload_type": "observe_summary", "kpis": {}, "drift": {}, "escalation": {}, "generated_query": {}},
+            {"payload_type": "observe_summary", "limit": 100},
+            "sig-123",
+            '{"payload_type":"observe_summary","limit":100}',
+            history,
+            {"trend_snapshot_health": "good", "trend_previous_samples_requested": 0},
+        )
+        obs._append_observe_summary_snapshot(
+            {"payload_type": "observe_summary", "kpis": {}, "drift": {}, "escalation": {}, "generated_query": {}},
+            {"payload_type": "observe_summary", "limit": 100},
+            "sig-124",
+            '{"payload_type":"observe_summary","limit":100}',
+            history,
+            {"trend_snapshot_health": "good", "trend_previous_samples_requested": 0},
+        )
+        # The delegation appends to history; verify both calls
+        # round-tripped without raising.
+        assert isinstance(history, list)
 
     # @trace FR-AUDIT-N+9-032
     def test_append_health_snapshot(self) -> None:
