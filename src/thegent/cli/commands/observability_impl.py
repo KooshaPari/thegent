@@ -998,17 +998,26 @@ _DEFAULT_CLASSIFY_OBSERVE_SUMMARY_TREND_HEALTH = __import__(
 ).classify_observe_summary_trend_health
 
 
-def _hash_health_payload(payload: dict[str, Any]) -> str:
+def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     """Generate hash of a health payload.
+
+    AUDIT-N+16 (WL-125 closure): delegates to
+    :func:`thegent.cli.services.run_health_helpers.hash_health_payload` so the
+    WL-125 monkeypatch site
+    ``monkeypatch.setattr("thegent.cli.commands.impl.run_health_helpers.hash_health_payload", ...)``
+    is observed. Returns the canonical ``{"algorithm": "sha256", "value": "..."}``
+    dict form rather than a bare hex string.
 
     Args:
         payload: Health payload dictionary.
 
     Returns:
-        Hash string.
+        Dict with ``"algorithm"`` and ``"value"`` keys.
     """
-    content = json.dumps(payload, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
+    from thegent.cli.services import run_health_helpers as _rhh
+
+    # AUDIT-N+16 WL-125 closure: live-lookup the canonical helper.
+    return _rhh.hash_health_payload(payload)
 
 
 def _health_scope_key(session_id: str, scope: str) -> str:
