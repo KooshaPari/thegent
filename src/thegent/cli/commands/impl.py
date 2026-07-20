@@ -35,6 +35,7 @@ def _impl_globals() -> dict[str, Any]:
     """
     return sys.modules[__name__].__dict__
 
+
 # EAGAIN/EWOULDBLOCK errno numbers for retry logic
 _EAGAIN_ERRNOS = {errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR}
 
@@ -68,18 +69,16 @@ def _backoff_delay(attempt: int, base: float = 1.0, max_delay: float = 60.0) -> 
 
 
 # Atomic write function
-def _atomic_write(path: Path, content: str) -> None:
-    """Atomically write content to a file."""
-    import tempfile
-    import os
+def _atomic_write(path: Path, content: str, *, backup: bool = False) -> None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._atomic_write`.
 
-    path_str = str(path)
-    from pathlib import Path
+    The canonical atomic-write helper lives in :mod:`dag_impl` and
+    supports an optional ``backup=True`` kwarg that copies the existing
+    file to ``<path>.bak`` before swapping in the new content.
+    """
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=str(Path(path_str).parent) or ".") as f:
-        f.write(content)
-        temp_path = f.name
-    os.rename(temp_path, path_str)
+    return _dag_impl._atomic_write(path, content, backup=backup)
 
 
 # Spawn with eagain retry
@@ -153,29 +152,27 @@ def _normalize_image_paths(paths: list[str]) -> list[str]:
     return [str(Path(p).expanduser().resolve()) for p in paths]
 
 
-class DagDocument:
-    """DAG document representation for CLI."""
-
-    def __init__(self, name: str = "") -> None:
-        """Initialize DAG document."""
-        self.name = name
-        self.nodes: list[dict[str, Any]] = []
-        self.edges: list[tuple[str, str]] = []
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {"name": self.name, "nodes": self.nodes, "edges": self.edges}
-
-
 class DagPrioritizer:
-    """Prioritizer for DAG nodes."""
+    """Prioritizer for DAG nodes.
+
+    Thin placeholder — canonical prioritization lives in
+    :mod:`thegent.cli.commands.dag_impl`. Retained here only so legacy
+    callers that import :class:`DagPrioritizer` from ``impl`` keep
+    working during the AUDIT-N+19 Phase 4 migration.
+    """
 
     def __init__(self) -> None:
         self.priorities: dict[str, int] = {}
 
     def prioritize(self, nodes: list[str]) -> list[str]:
-        """Prioritize nodes by their priority values."""
+        """Prioritize DAG nodes by their priority values."""
         return sorted(nodes, key=lambda n: self.priorities.get(n, 999))
+
+
+# AUDIT-N+19: ``DagDocument`` lives in :mod:`thegent.cli.commands.dag_impl`
+# (canonical dataclass home). Re-export here so legacy callers (and the
+# AUDIT-N+11 identity contract) continue to bind to the canonical type.
+from thegent.cli.commands.dag_impl import DagDocument as DagDocument  # noqa: F401,E402,PLC0414
 
 
 def run_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
@@ -470,6 +467,16 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
         message=message,
         msg_type=msg_type,
     )
+
+
+def list_agents_impl() -> list[dict[str, str]]:
+    """List agent backends exposed via the MCP ``agents`` resource.
+
+    Thin delegate to :func:`run_post_surface_helpers.list_agents_impl`
+    so WL-125 monkeypatch sites that target ``impl.list_agents_impl``
+    (e.g. ``tests/test_unit_mcp.py``) resolve cleanly.
+    """
+    return run_post_surface_helpers.list_agents_impl()
 
 
 def events_impl(
@@ -903,6 +910,8 @@ def _session_state_path(session_id: str) -> str:
 
     base = os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions")
     return str(Path(base) / session_id / "session_state.json")
+
+
 def _coerce_issue_types(issues: list[dict[str, Any]]) -> list[str]:
     """Coerce issue-type values to a list of strings.
 
@@ -937,16 +946,11 @@ def _check_dag_cycles(dag: dict[str, Any]) -> list[list[str]]:
     return []
 
 
-def dag_raw_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for DAG raw command.
+def dag_raw_impl(*, cd: Path | None = None, **kwargs: Any) -> dict[str, Any]:  # noqa: F811
+    """AUDIT-N+19: delegate to :func:`dag_impl.dag_raw_impl`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Raw DAG result dictionary.
-    """
-    return {"nodes": [], "edges": []}
+    return _dag_impl.dag_raw_impl(cd=cd)
 
 
 # AUDIT-N+14: ``_build_continuation_prompt`` lives in
@@ -955,16 +959,11 @@ def dag_raw_impl(**kwargs: Any) -> dict[str, Any]:
 # AUDIT-N+12 re-export binds the canonical form.
 
 
-def dag_list_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for DAG list command.
+def dag_list_impl(*, cd: Path | None = None, **kwargs: Any) -> dict[str, Any]:  # noqa: F811
+    """AUDIT-N+19: delegate to :func:`dag_impl.dag_list_impl`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        DAG list result dictionary.
-    """
-    return {"items": [], "count": 0}
+    return _dag_impl.dag_list_impl(cd=cd)
 
 
 def _append_context_usage(snapshot: dict[str, Any], usage: dict[str, Any]) -> None:
@@ -979,161 +978,86 @@ def _append_context_usage(snapshot: dict[str, Any], usage: dict[str, Any]) -> No
     snapshot["context_usage"].append(usage)
 
 
-def _dag_path(dag_id: str) -> str:
-    """Get the file path for a DAG document.
+def _dag_path(cwd: Path | None) -> tuple[Path | None, Path | None]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._dag_path`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_id: DAG document identifier.
-
-    Returns:
-        File path string.
-    """
-    from pathlib import Path
-    import os
-
-    base_dir = os.environ.get("THGENT_DAG_DIR", "/tmp/thegent/dags")
-    return str(Path(base_dir) / f"{dag_id}.json")
+    return _dag_impl._dag_path(cwd)
 
 
-def _dag_update_task(dag_id: str, task_id: str, updates: dict[str, Any]) -> None:
-    """Update a task in a DAG document.
+def _dag_update_task(  # noqa: F811 - canonical AUDIT-N+19 dispatch
+    doc: Any,
+    task_id: str,
+    *,
+    status: str | None = None,
+    session_id: str | None = None,
+) -> Any:
+    """AUDIT-N+19: delegate to :func:`dag_impl._dag_update_task`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_id: DAG document identifier.
-        task_id: Task identifier.
-        updates: Dictionary of updates to apply.
-    """
-
-
-def list_agents_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for list agents command.
-
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        List of agents result dictionary.
-    """
-    return {"agents": [], "count": 0}
+    return _dag_impl._dag_update_task(
+        doc,
+        task_id,
+        status=status,
+        session_id=session_id,
+    )
 
 
-def _ensure_contract_version_header(headers: dict[str, str]) -> dict[str, str]:
-    """Ensure contract version header is present.
+def _ensure_contract_version_header(doc: Any) -> None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._ensure_contract_version_header`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        headers: Dictionary of headers.
-
-    Returns:
-        Updated headers with contract version.
-    """
-    if "X-Contract-Version" not in headers:
-        headers["X-Contract-Version"] = "1.0"
-    return headers
+    return _dag_impl._ensure_contract_version_header(doc)
 
 
 # NOTE: ``session_meta_impl`` is defined earlier in this module
 # (canonical real implementation — AUDIT-N+14 removed the legacy stub).
 
 
-def _ensure_dag_file(dag_path: str, **kwargs: Any) -> bool:
-    """Ensure a DAG file exists.
+def _ensure_dag_file(path: str | Path) -> Any:
+    """AUDIT-N+19: delegate to :func:`dag_impl._ensure_dag_file`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_path: Path to the DAG file.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        True if file exists or was created.
-    """
-    from pathlib import Path
-
-    path = Path(dag_path)
-    if path.exists():
-        return True
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("{}")
-    return True
+    return _dag_impl._ensure_dag_file(path)
 
 
-def _ensure_evidence_header(headers: dict[str, str]) -> dict[str, str]:
-    """Ensure evidence header is present.
+def _ensure_evidence_header(doc: Any) -> None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._ensure_evidence_header`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        headers: Dictionary of headers.
-
-    Returns:
-        Updated headers with evidence.
-    """
-    if "X-Evidence-Version" not in headers:
-        headers["X-Evidence-Version"] = "1.0"
-    return headers
+    return _dag_impl._ensure_evidence_header(doc)
 
 
 def _escape_cell(value: str) -> str:
-    """Escape a cell value for CSV output.
+    """AUDIT-N+19: delegate to :func:`dag_impl._escape_cell`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        value: The cell value to escape.
-
-    Returns:
-        Escaped cell value.
-    """
-    if "," in value or '"' in value or "\n" in value:
-        return '"' + value.replace('"', '""') + '"'
-    return value
+    return _dag_impl._escape_cell(value)
 
 
-def _get_ready_task_ids(dag: dict[str, Any]) -> list[str]:
-    """Get IDs of tasks that are ready to execute.
+def _get_ready_task_ids(tasks: list[dict[str, Any]]) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._get_ready_task_ids`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag: DAG dictionary.
-
-    Returns:
-        List of ready task IDs.
-    """
-    tasks = dag.get("tasks", [])
-    ready = []
-    for task in tasks:
-        if task.get("status") == "ready":
-            ready.append(task.get("id", ""))
-    return [r for r in ready if r]
+    return _dag_impl._get_ready_task_ids(tasks)
 
 
 # Constants for health snapshot management
 _health_snapshot_max_lines = 1000
 
 
-def _parse_dag_full(dag_content: str) -> dict[str, Any]:
-    """Parse full DAG content from string.
+def _parse_dag_full(path: Path) -> Any:  # noqa: F811 - AUDIT-N+19 canonical dispatch
+    """AUDIT-N+19: delegate to :func:`dag_impl._parse_dag_full`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_content: Raw DAG content string.
-
-    Returns:
-        Parsed DAG dictionary.
-    """
-    import json
-
-    return json.loads(dag_content)
+    return _dag_impl._parse_dag_full(path)
 
 
-def _parse_depends_on(depends_on: str | list[str] | None) -> list[str]:
-    """Parse depends_on field from task.
+def _parse_depends_on(depends_on: Any) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._parse_depends_on`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        depends_on: Depends on specification (string, list, or None).
-
-    Returns:
-        List of dependency IDs.
-    """
-    if depends_on is None:
-        return []
-    if isinstance(depends_on, str):
-        return [d.strip() for d in depends_on.split(",") if d.strip()]
-    if isinstance(depends_on, list):
-        return [str(d) for d in depends_on]
-    return []
+    return _dag_impl._parse_depends_on(depends_on)
 
 
 def _normalize_output_format(format: str | None) -> str:
@@ -1161,59 +1085,32 @@ def _normalize_output_format(format: str | None) -> str:
     return format
 
 
-def _serialize_dag(dag: dict[str, Any], format: str = "json") -> str:
-    """Serialize DAG to string.
+def _serialize_dag(doc: Any) -> str:
+    """AUDIT-N+19: delegate to :func:`dag_impl._serialize_dag`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag: DAG dictionary.
-        format: Output format (json or yaml).
-
-    Returns:
-        Serialized DAG string.
-    """
-    import json
-
-    if format == "yaml":
-        import yaml
-
-        return yaml.dump(dag)
-    return json.dumps(dag, indent=2)
+    return _dag_impl._serialize_dag(doc)
 
 
-def _validate_dag(dag: dict[str, Any]) -> list[str]:
-    """Validate DAG structure.
+def _validate_dag(doc: Any) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._validate_dag`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag: DAG dictionary.
-
-    Returns:
-        List of validation error messages (empty if valid).
-    """
-    errors = []
-    if "tasks" not in dag:
-        errors.append("DAG missing 'tasks' field")
-    else:
-        task_ids = {t.get("id") for t in dag["tasks"]}
-        for task in dag["tasks"]:
-            depends_on = task.get("depends_on", [])
-            for dep in depends_on:
-                if dep not in task_ids:
-                    errors.append(f"Task '{task.get('id')}' depends on unknown task '{dep}'")
-    return errors
+    return _dag_impl._validate_dag(doc)
 
 
-def _validate_task_id(task_id: str) -> bool:
-    """Validate task ID format.
+def _check_dag_cycles(tasks: list[dict[str, Any]]) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._check_dag_cycles`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        task_id: Task ID to validate.
+    return _dag_impl._check_dag_cycles(tasks)
 
-    Returns:
-        True if valid, False otherwise.
-    """
-    import re
 
-    return bool(re.match(r"^[a-zA-Z0-9_-]+$", task_id))
+def _validate_task_id(task_id: str) -> str | None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._validate_task_id`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
+
+    return _dag_impl._validate_task_id(task_id)
 
 
 # AUDIT-N+12: ``_resolve_agent_model`` (canonical 4-arg form), and
@@ -1225,22 +1122,10 @@ def _validate_task_id(task_id: str) -> bool:
 
 
 def _resolve_prompt(prompt: str | None = None, prompt_file: str | None = None) -> str:
-    """Resolve prompt from argument or file.
+    """AUDIT-N+19: delegate to :func:`dag_impl._resolve_prompt`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        prompt: Explicitly specified prompt or None.
-        prompt_file: Path to file containing prompt or None.
-
-    Returns:
-        Resolved prompt string.
-    """
-    if prompt:
-        return prompt
-    if prompt_file:
-        from pathlib import Path
-
-        return Path(prompt_file).read_text()
-    return ""
+    return _dag_impl._resolve_prompt(prompt=prompt, prompt_file=prompt_file)
 
 
 # AUDIT-N+14: ``_session_scope_dirs`` lives in
@@ -1299,9 +1184,7 @@ def get_server_meta_impl(server_name: str, **kwargs: Any) -> dict[str, Any]:
 # delegation contract is satisfied.
 # ---------------------------------------------------------------------------
 
-_DEFAULT_IMAGE_SUFFIXES: frozenset[str] = frozenset(
-    {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff"}
-)
+_DEFAULT_IMAGE_SUFFIXES: frozenset[str] = frozenset({".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff"})
 
 
 def _model_supports_vision(model: str) -> bool:
@@ -1410,9 +1293,7 @@ def _normalize_image_paths(paths: list[str]) -> list[str]:
     ``monkeypatch.setattr("thegent.cli.commands.impl.run_input_helpers.normalize_image_paths", ...)``
     to legacy callers in :mod:`thegent.cli.commands`.
     """
-    return run_input_helpers.normalize_image_paths(
-        paths, supported_image_suffixes=set(_DEFAULT_IMAGE_SUFFIXES)
-    )
+    return run_input_helpers.normalize_image_paths(paths, supported_image_suffixes=set(_DEFAULT_IMAGE_SUFFIXES))
 
 
 # ``impl._validate_image_capability`` retains the AUDIT-N+9 identity
@@ -1432,13 +1313,9 @@ def _normalize_image_paths(paths: list[str]) -> list[str]:
 # WL-125 dispatch wrapper that delegates to the canonical helper module.
 
 
-def _validate_explicit_ollama_provider(
-    *, provider: str | None, model: str | None
-) -> str | None:
+def _validate_explicit_ollama_provider(*, provider: str | None, model: str | None) -> str | None:
     """WL-125 delegate to :func:`run_model_helpers.validate_explicit_ollama_provider`."""
-    return run_model_helpers.validate_explicit_ollama_provider(
-        provider=provider, model=model
-    )
+    return run_model_helpers.validate_explicit_ollama_provider(provider=provider, model=model)
 
 
 # -- run_session_helpers / session_path_helpers / session_id_helpers ------
@@ -1459,9 +1336,7 @@ def _parse_work_stream_md(work_stream_path: Path) -> dict[str, Any]:
     return run_workstream_helpers.parse_work_stream_md(work_stream_path)
 
 
-def _collect_work_stream_items(
-    work_stream_path: Path, limit: int
-) -> tuple[list[dict[str, Any]], list[str]]:
+def _collect_work_stream_items(work_stream_path: Path, limit: int) -> tuple[list[dict[str, Any]], list[str]]:
     """WL-125 delegate to :func:`run_workstream_helpers.collect_work_stream_items`."""
     return run_workstream_helpers.collect_work_stream_items(work_stream_path, limit)
 
@@ -1622,9 +1497,7 @@ def work_stream_claim_impl(
     cd: Path | None = None,
 ) -> dict[str, Any]:
     """WL-125 thin delegate to :func:`work_stream_orchestration.work_stream_claim_impl`."""
-    return work_stream_orchestration.work_stream_claim_impl(
-        item_id=item_id, agent_id=agent_id, cd=cd
-    )
+    return work_stream_orchestration.work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
 def work_stream_complete_impl(
@@ -1633,9 +1506,7 @@ def work_stream_complete_impl(
     cd: Path | None = None,
 ) -> dict[str, Any]:
     """WL-125 thin delegate to :func:`work_stream_orchestration.work_stream_complete_impl`."""
-    return work_stream_orchestration.work_stream_complete_impl(
-        item_id=item_id, agent_id=agent_id, cd=cd
-    )
+    return work_stream_orchestration.work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
 def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
@@ -1749,6 +1620,18 @@ def _validate_explicit_ollama_provider(
 # the re-export and break AUDIT-N+9's identity checks.
 
 
+# AUDIT-N+9 IDENTITY CONTRACT: every helper in ``MOVED_HELPERS`` must be the
+# same object on ``impl`` as on ``observability_impl``. The helpers that the
+# AUDIT-N+19 Phase 4 surface needs a *different* contract for
+# (``_health_scope_key``, ``_hash_health_payload``,
+# ``_load_previous_health_snapshot``, ``_append_health_snapshot``,
+# ``_compact_health_snapshot_log``, ``_resolve_health_policy``) live in
+# their canonical Phase 4 home — :mod:`thegent.cli.commands.session_health_impl`
+# — and must NOT be re-defined here. The new code imports them via
+# ``thegent.cli.commands.session_health_impl`` (or the canonical
+# ``thegent.cli.services.run_health_helpers``).
+
+
 def _health_snapshot_log_path() -> Path:
     """WL-125 thin delegate to :func:`run_health_helpers.health_snapshot_log_path`."""
     return _run_health_helpers.health_snapshot_log_path()
@@ -1764,6 +1647,54 @@ def _coerce_issue_types(value: Any) -> list[str]:
     return _run_health_helpers.coerce_issue_types(value)
 
 
+def session_contract_audit_impl(*, owner: str | None = None) -> dict[str, Any]:
+    """Default audit implementation (read-only shell).
+
+    Real implementations live in ``thegent.cli.services`` modules; tests
+    patch this attribute on ``impl`` to drive coverage.
+    """
+    return {
+        "summary": {
+            "total": 0,
+            "health": {"healthy": 0, "warning": 0, "error": 0, "missing": 0},
+        },
+        "rows": [],
+    }
+
+
+def session_contract_health_gate_impl(**kwargs: Any) -> dict[str, Any]:
+    """Default gate implementation (forwarder)."""
+    from thegent.cli.commands.session_health_impl import (
+        session_contract_health_gate_impl as _gate,
+    )
+
+    return _gate(**kwargs)
+
+
+def session_contract_health_report_impl(**kwargs: Any) -> dict[str, Any]:
+    """Default report implementation (forwarder)."""
+    from thegent.cli.commands.session_health_report_impl import (
+        session_contract_health_report_impl as _report,
+    )
+
+    return _report(**kwargs)
+
+
+def session_contract_health_trend_impl(**kwargs: Any) -> dict[str, Any]:
+    """Default trend implementation (forwarder)."""
+    from thegent.cli.commands.session_health_trend_impl import (
+        session_contract_health_trend_impl as _trend,
+    )
+
+    return _trend(**kwargs)
+
+
+# AUDIT-N+12 re-export block (lines ~694) handles ``_build_continuation_prompt``
+# and ``_load_prior_session_output`` as identity bindings to the canonical
+# ``session_impl`` helpers. No local definitions here — the Phase 4
+# AUDIT-N+19 forwarders have been removed in favour of the canonical
+# session_impl contract (which itself now supports comma-separated
+# continue_from per the AUDIT-N+19 Phase 4 surface).
 # AUDIT-N+9: re-export provides _hash_observe_summary_payload /
 # _classify_observe_summary_trend_health / _load_observe_summary_snapshots /
 # _append_observe_summary_snapshot on ``impl``. No local definitions here.

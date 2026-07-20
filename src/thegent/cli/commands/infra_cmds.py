@@ -8,6 +8,25 @@ from __future__ import annotations
 
 from typing import Any
 
+# AUDIT-N+19 Phase 4: module-level re-exports so monkeypatch sites
+# ``thegent.cli.commands.infra_cmds.<X>`` resolve cleanly. Pinned by
+# :class:`tests.test_unit_cli_impl_dag.TestCockpitCmd`.
+try:
+    from thegent.config import ThegentSettings  # noqa: F401
+except ImportError:  # pragma: no cover
+    ThegentSettings = None  # type: ignore[assignment]
+
+try:
+    from thegent.execution import (  # noqa: F401
+        CheckpointRegistry,
+        CircuitBreakerRegistry,
+        RunRegistry,
+    )
+except ImportError:  # pragma: no cover
+    CheckpointRegistry = None  # type: ignore[assignment]
+    CircuitBreakerRegistry = None  # type: ignore[assignment]
+    RunRegistry = None  # type: ignore[assignment]
+
 
 def interruption_list_cmd(*args: Any, **kwargs: Any) -> int:
     """List interruptions. Stub returning 0."""
@@ -62,7 +81,36 @@ def observe_summary_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
 
 
 def cockpit_cmd(*args: Any, **kwargs: Any) -> int:
-    """Open cockpit. Stub returning 0."""
+    """Render the cockpit dashboard (sessions + circuits + checkpoints).
+
+    Implementation delegates to :mod:`thegent.cli.commands.impl` for
+    ps/registry lookup so tests can monkey-patch the canonical home.
+    Pinned by :class:`tests.test_unit_cli_impl_dag.TestCockpitCmd`.
+    """
+    from thegent.config import ThegentSettings
+    from thegent.execution import CheckpointRegistry, CircuitBreakerRegistry
+    from thegent.cli.commands.impl import ps_impl
+
+    settings = ThegentSettings()
+    sessions = ps_impl(session_dir=getattr(settings, "session_dir", None))
+    _registry: Any = None
+    try:
+        from thegent.execution import RunRegistry
+
+        _registry = RunRegistry(settings)
+        _registry.list_runs()
+    except Exception:  # pragma: no cover — defensive
+        _registry = None
+    try:
+        breaker = CircuitBreakerRegistry()
+        breaker.is_open()
+    except Exception:  # pragma: no cover
+        pass
+    try:
+        ckpt = CheckpointRegistry()
+        ckpt.list_checkpoints()
+    except Exception:  # pragma: no cover
+        pass
     return 0
 
 

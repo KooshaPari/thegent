@@ -274,9 +274,7 @@ def _resolve_agent_model(
     """
     from thegent.cli.services import run_session_helpers as _rsh
 
-    return _rsh.resolve_agent_model(
-        agent=agent, model=model, mode=mode, settings=settings
-    )
+    return _rsh.resolve_agent_model(agent=agent, model=model, mode=mode, settings=settings)
 
 
 # ---------------------------------------------------------------------------
@@ -353,18 +351,31 @@ def _build_continuation_prompt(
 ) -> str:
     """Build a continuation prompt that includes prior-session output.
 
-    Pinned by ``tests/test_unit_cli_impl_session.py::TestBuildContinuationPrompt``.
+    Supports comma-separated ``continue_from`` session ids (Phase 4
+    AUDIT-N+19 contract). For each id the prior output is loaded via
+    :func:`_load_prior_session_output`; the assembled block is
+    prepended to ``prompt``. When ``continue_from`` is empty or no
+    prior outputs can be found, ``prompt`` is returned unchanged.
+
+    Pinned by ``tests/test_unit_cli_impl_session.py::TestBuildContinuationPrompt``
+    and ``tests/test_unit_cli_impl_dag.py::TestBuildContinuationPrompt``.
     """
     if not continue_from:
         return prompt
-    prior_output = _load_prior_session_output(settings, continue_from, include_stderr=include_stderr)
-    if not prior_output:
+    session_ids = [sid.strip() for sid in continue_from.split(",") if sid.strip()]
+    if not session_ids:
         return prompt
-    return (
-        f"Continuing from prior session {continue_from}.\n\n"
-        f"--- previous output ---\n{prior_output}\n--- end previous output ---\n\n"
-        f"{prompt}"
-    )
+    blocks: list[str] = []
+    for sid in session_ids:
+        output = _load_prior_session_output(settings, sid, include_stderr=include_stderr)
+        if output:
+            blocks.append(
+                f"Continuing from prior session {sid}.\n\n"
+                f"--- previous output ---\n{output}\n--- end previous output ---"
+            )
+    if not blocks:
+        return prompt
+    return "\n\n".join(blocks) + f"\n\n{prompt}"
 
 
 # ---------------------------------------------------------------------------

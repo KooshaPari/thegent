@@ -814,15 +814,17 @@ def _count_pending_with_cap(
     escalation_queue: Any,
     top_escalations: int,
 ) -> tuple[list[Any], list[Any]]:
-    """Return ``(pending, past_sla)`` using a generous count-only cap.
+    """Return ``(pending, past_sla)`` for the escalation queue.
 
-    ``top_escalations`` is a *display* cap, not a *count* limit — using
-    it for ``list_pending(limit=...)`` would silently undercount
-    backlog size when ``top_escalations < actual backlog``.
+    ``top_escalations`` is a *display* cap applied later when we slice
+    ``past_sla`` for the user-facing top-N block. ``EscalationQueue``
+    does not expose a ``limit`` kwarg, so we cannot pre-cap the read —
+    we always pull the full pending backlog and slice in
+    :func:`_build_escalation_block`.
     """
-    count_cap = max(top_escalations, 100)
-    pending = escalation_queue.list_pending(limit=count_cap)
-    past_sla = escalation_queue.list_pending(past_sla_only=True, limit=count_cap)
+    del top_escalations  # display-only cap, applied in _build_escalation_block
+    pending = escalation_queue.list_pending()
+    past_sla = escalation_queue.list_pending(past_sla_only=True)
     return pending, past_sla
 
 
@@ -1113,12 +1115,19 @@ def _hash_health_payload(payload: dict[str, Any]) -> Any:
 def _health_scope_key(session_id: str, scope: str) -> str:
     """Generate health scope key.
 
+    AUDIT-N+9 canonical contract — kept for backward compat with
+    ``tests/test_unit_audit_n9_observability_impl_extraction_parity.py``
+    and ``tests/test_wl125_run_health_helpers_parity.py``. The newer
+    payload-based scope-dict form is the AUDIT-N+19 Phase 4 surface
+    that lives in :mod:`thegent.cli.commands.session_health_impl`
+    (see :func:`thegent.cli.commands.session_health_impl._health_scope_key`).
+
     Args:
         session_id: The session ID.
         scope: The scope string.
 
     Returns:
-        Scoped key string.
+        Scoped key string ``"health:<session_id>:<scope>"``.
     """
     return f"health:{session_id}:{scope}"
 
@@ -1161,6 +1170,12 @@ _DEFAULT_HASH_OBSERVE_SUMMARY_PAYLOAD = __import__(
 def _load_previous_health_snapshot(session_dir: Path) -> dict[str, Any] | None:
     """Load the previous health snapshot from session directory.
 
+    AUDIT-N+9 canonical contract — kept for backward compat with
+    ``tests/test_unit_audit_n9_observability_impl_extraction_parity.py``.
+    The newer scope-key-based loader is the AUDIT-N+19 Phase 4 surface
+    that lives in :mod:`thegent.cli.commands.session_health_impl`
+    (see :func:`thegent.cli.commands.session_health_impl._load_previous_health_snapshot`).
+
     Args:
         session_dir: The session directory path.
 
@@ -1188,6 +1203,11 @@ def _hash_observe_summary_trend_scope(trend_scope: dict[str, Any]) -> str:
 
 def _observe_summary_freshness_bucket(timestamp: float) -> str:
     """Determine freshness bucket for observe summary timestamp.
+
+    AUDIT-N+9 canonical contract — kept for backward compat with
+    ``tests/test_unit_audit_n9_observability_impl_extraction_parity.py``.
+    The newer ``age_seconds``-with-thresholds form is the canonical
+    home in :func:`thegent.cli.services.run_observe_helpers.observe_summary_freshness_bucket`.
 
     Args:
         timestamp: Unix timestamp.
@@ -1273,6 +1293,12 @@ _DEFAULT_LOAD_OBSERVE_SUMMARY_SNAPSHOTS = __import__(
 
 def _resolve_health_policy(policy_name: str | None = None) -> dict[str, Any]:
     """Resolve health policy by name.
+
+    AUDIT-N+9 canonical contract — kept for backward compat with
+    ``tests/test_unit_audit_n9_observability_impl_extraction_parity.py``.
+    The newer profile-based resolver is the AUDIT-N+19 Phase 4 surface
+    that lives in :mod:`thegent.cli.commands.session_health_impl`
+    (see :func:`thegent.cli.commands.session_health_impl._resolve_health_policy`).
 
     Args:
         policy_name: Name of the health policy (or None for default).

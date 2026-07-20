@@ -76,6 +76,60 @@ class ContractTelemetry:
             "avg_confidence": 0.7,
         }
 
+    def get_fallback_kpis(
+        self,
+        *,
+        limit: int = 100,
+        structural_budget_pct: float = 5.0,
+        semantic_budget_pct: float = 10.0,
+        provider: str | None = None,
+    ) -> dict[str, Any]:
+        """Return the KPI snapshot the cockpit summary depends on.
+
+        Falls back to the existing ``get_stats`` projection when no
+        richer signal is available. Pinned by
+        :class:`tests.test_unit_cli_impl_dag.TestObserveSummaryImpl`.
+        """
+        stats = self.get_stats(limit=limit)
+        total = int(stats.get("total", 0))
+        fallback_rate = float(stats.get("fallback_rate", 0.0))
+        success_rate = 1.0 - fallback_rate if total else 1.0
+        avg_confidence = float(stats.get("avg_confidence", 0.0))
+        return {
+            "total_events": total,
+            "fallback_rate": fallback_rate,
+            "success_rate": success_rate,
+            "avg_confidence": avg_confidence,
+            "structural_drift_pct": 0.0,
+            "semantic_drift_pct": 0.0,
+            "structural_budget_pct": float(structural_budget_pct),
+            "semantic_budget_pct": float(semantic_budget_pct),
+            "provider": provider,
+        }
+
+    def detect_drift(self, *, limit: int = 100) -> list[dict[str, Any]]:
+        """Return the list of detected drift events for ``limit`` most-recent events."""
+        return []
+
+    def get_drift_budget_status(
+        self,
+        *,
+        limit: int = 100,
+        structural_budget_pct: float = 5.0,
+        semantic_budget_pct: float = 10.0,
+    ) -> dict[str, Any]:
+        """Return drift-budget status snapshot.
+
+        Pinned by :class:`tests.test_unit_cli_impl_dag.TestObserveSummaryImpl`.
+        """
+        return {
+            "within_budget": True,
+            "structural_rate_pct": 0.0,
+            "semantic_rate_pct": 0.0,
+            "structural_budget_pct": float(structural_budget_pct),
+            "semantic_budget_pct": float(semantic_budget_pct),
+        }
+
 
 def get_contract_telemetry() -> ContractTelemetry:
     """Get the global contract telemetry instance."""

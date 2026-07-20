@@ -35,7 +35,39 @@ from thegent.ux.cli_errors import print_exc  # re-exported for AUDIT-N+2 contrac
 _log = structlog.get_logger(__name__)
 err_console = Console(stderr=True)
 
-__all__ = ["_build_continuation_prompt", "_save_session_meta", "err_console", "print_exc"]
+__all__ = [
+    "_build_continuation_prompt",
+    "_load_prior_session_output",
+    "_save_session_meta",
+    "err_console",
+    "print_exc",
+]
+
+
+def _load_prior_session_output(
+    settings: Any,
+    session_id: str,
+) -> str:
+    """Load the prior session's stdout (``stdout.log`` under ``session_id``).
+
+    Args:
+        settings: Settings object exposing ``session_dir``.
+        session_id: The session id whose output should be loaded.
+
+    Returns:
+        The last 4000 chars of the session's stdout, or ``""`` when the
+        session log cannot be located.
+
+    Pinned by :class:`tests.test_unit_cli_impl_dag.TestBuildContinuationPrompt`.
+    """
+    try:
+        session_dir = getattr(settings, "session_dir", None) or "."
+        candidate = Path(session_dir) / "sessions" / session_id / "stdout.log"
+        if candidate.exists() and candidate.is_file():
+            return candidate.read_text(encoding="utf-8", errors="replace")[-4000:]
+    except OSError as exc:
+        _log.debug("session_meta_impl: failed to read prior output: %s", exc)
+    return ""
 
 
 def _build_continuation_prompt(
@@ -47,27 +79,33 @@ def _build_continuation_prompt(
 ) -> str:
     """Build a continuation prompt that wraps the prior-session output.
 
-    Reads the prior session's stdout (and optionally stderr) and embeds
-    it before the new ``prompt`` so the new run sees the previous
-    result. The AUDIT-N+5 shim returns ``prompt`` unchanged when the
-    prior session cannot be located, preserving the safe-by-default
-    contract for the orchestrator.
+    Supports comma-separated ``continue_from`` session ids. For each
+    id the prior output is loaded (via
+    :func:`_load_prior_session_output`); the assembled block is
+    prepended to ``prompt``. When ``continue_from`` is empty or no
+    prior outputs can be found, ``prompt`` is returned unchanged.
+
+    Pinned by :class:`tests.test_unit_cli_impl_dag.TestBuildContinuationPrompt`.
     """
-    prior_output = ""
-    try:
-        session_dir = getattr(settings, "session_dir", None) or "."
-        candidate = Path(session_dir) / "sessions" / continue_from / "stdout.log"
-        if candidate.exists() and candidate.is_file():
-            prior_output = candidate.read_text(encoding="utf-8", errors="replace")[-4000:]
-        if include_stderr:
-            err_candidate = Path(session_dir) / "sessions" / continue_from / "stderr.log"
-            if err_candidate.exists() and err_candidate.is_file():
-                prior_output += "\n[stderr]\n" + err_candidate.read_text(encoding="utf-8", errors="replace")[-2000:]
-    except OSError as exc:
-        _log.debug("session_meta_impl: failed to read prior session output: %s", exc)
-    if prior_output:
-        return f"[Prior session {continue_from}]\n{prior_output}\n\n[New task]\n{prompt}"
-    return prompt
+    if not continue_from:
+        return prompt
+
+    session_ids = [sid.strip() for sid in continue_from.split(",") if sid.strip()]
+    if not session_ids:
+        return prompt
+
+    blocks: list[str] = []
+    for sid in session_ids:
+        output = _load_prior_session_output(settings, sid)
+        if output:
+            blocks.append(f"[Prior session {sid}]\n{output}")
+
+    if not blocks:
+        return prompt
+
+    header = "Continuing from prior session"
+    body = "\n\n".join(blocks)
+    return f"{header}\n\n{body}\n\n---\n\n{prompt}"
 
 
 def _save_session_meta(meta_path: Path | str, meta: dict[str, Any]) -> None:

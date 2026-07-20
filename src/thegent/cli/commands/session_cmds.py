@@ -10,6 +10,19 @@ from __future__ import annotations
 
 from typing import Any
 
+# AUDIT-N+19 Phase 4: module-level re-exports so monkeypatch sites
+# ``thegent.cli.commands.session_cmds.<X>`` resolve cleanly. Pinned by
+# :class:`tests.test_unit_cli_impl_dag.TestFeedbackCmd`.
+try:
+    from thegent.config import ThegentSettings  # noqa: F401
+except ImportError:  # pragma: no cover
+    ThegentSettings = None  # type: ignore[assignment]
+
+try:
+    from thegent.execution import RunRegistry  # noqa: F401
+except ImportError:  # pragma: no cover
+    RunRegistry = None  # type: ignore[assignment]
+
 
 def history_cmd(*args: Any, **kwargs: Any) -> int:
     """Show session history. Stub returning 0."""
@@ -32,7 +45,26 @@ def inbox_wait_cmd(*args: Any, **kwargs: Any) -> int:
 
 
 def feedback_cmd(*args: Any, **kwargs: Any) -> int:
-    """Submit feedback. Stub returning 0."""
+    """Submit feedback for a run.
+
+    Looks up the ``RunRegistry`` via the canonical home so tests can
+    monkey-patch ``thegent.cli.commands.session_cmds.RunRegistry`` and
+    ``thegent.cli.commands.session_cmds.ThegentSettings`` to drive coverage.
+    Pinned by :class:`tests.test_unit_cli_impl_dag.TestFeedbackCmd`.
+    """
+    import sys as _sys
+
+    mod = _sys.modules[__name__]
+    ThegentSettings = mod.ThegentSettings
+    RunRegistry = mod.RunRegistry
+
+    settings = ThegentSettings()
+    session_dir = getattr(settings, "session_dir", None)
+    registry = RunRegistry(session_dir=session_dir)
+    run_id = kwargs.get("run_id") or (args[0] if args else None)
+    score = kwargs.get("score")
+    note = kwargs.get("note")
+    registry.register_feedback(run_id, score, note)
     return 0
 
 
