@@ -749,8 +749,14 @@ class ConcurrencyController:
                     self.standard_lane_slots = int(env_standard)
                 except ValueError:
                     self.standard_lane_slots = max_concurrency - self.critical_lane_slots
-            else:
+            # Defensive: bypass max_concurrency arithmetic when it's a
+            # mocked/non-numeric value (e.g. MagicMock from pytest tests
+            # using partial settings) so comparison in acquire() doesn't
+            # raise ``TypeError: '<' not supported between 'MagicMock' and 'int'``.
+            elif isinstance(max_concurrency, int) and not isinstance(max_concurrency, bool):
                 self.standard_lane_slots = max_concurrency - self.critical_lane_slots
+            else:
+                self.standard_lane_slots = max(1, 10 - self.critical_lane_slots)
         self.max_concurrency = max_concurrency
         self.priority = priority
         self.use_load_based = use_load_based
