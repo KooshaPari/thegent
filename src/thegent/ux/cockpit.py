@@ -94,6 +94,13 @@ class CockpitPane(StrEnum):
     AUDIT-N+15 added the ``TRAFFIC`` pane so operators see live
     ``TrafficDashboard`` metrics (count, rps, error_rate, p50/p95)
     inline rather than only through the progress bar.
+
+    AUDIT-N+18 added the ``DORMANT_CORE`` pane so the cockpit
+    surfaces the AUDIT-N+13 dormant-core trend envelope (escalation
+    count, past-SLA count, freshness bucket) alongside the live
+    traffic metrics so operators see one unified snapshot of the
+    dormant-core reconciliation rather than only through
+    ``observe summary``.
     """
 
     RUNS = "runs"
@@ -101,6 +108,7 @@ class CockpitPane(StrEnum):
     CONFIDENCE = "confidence"
     OVERRIDES = "overrides"
     TRAFFIC = "traffic"
+    DORMANT_CORE = "dormant_core"
 
 
 class RunState(StrEnum):
@@ -135,6 +143,7 @@ class CockpitConfig:
             CockpitPane.CONFIDENCE: "Confidence (P50/P95)",
             CockpitPane.OVERRIDES: "Active Overrides",
             CockpitPane.TRAFFIC: "Traffic",
+            CockpitPane.DORMANT_CORE: "Dormant Core",
         }
     )
 
@@ -255,6 +264,13 @@ class _CockpitState:
     )
     last_progress: tuple[int, int] = (0, 0)  # (done, total)
     traffic_dashboard: Any = None  # TrafficDashboard | None — imported lazily to avoid cycle
+    # AUDIT-N+18: dormant-core envelope source. Accepts any callable
+    # returning a dict (the AUDIT-N+13 ``_build_observe_trend_payload``
+    # output shape) or any object exposing ``.summary()`` like
+    # ``TrafficDashboard``. Stored as ``Any`` so the cockpit does not
+    # force an import of the dormant-core service module at cockpit
+    # import time.
+    dormant_source: Any = None
 
 
 # ---------------------------------------------------------------------------
@@ -311,6 +327,28 @@ def _truncate(text: str, limit: int) -> str:
     if limit == 1:
         return text[:1]
     return text[: limit - 1] + "…"
+
+
+def _pad_box_row(row: str, interior: int) -> str:
+    """Pad / truncate a box row so the interior width matches ``interior``.
+
+    AUDIT-N+18: the DORMANT_CORE pane renders inside a fixed-width box
+    (``box_width`` chars). The body rows must always have exactly
+    ``interior = box_width - 2`` characters between the leading and
+    trailing ``│`` so the right border aligns. When a producer hands us
+    a longer-than-expected token (a runaway ``freshness_bucket``, a
+    long ``trend_scope_signature``) the row would otherwise push the
+    right border outwards. The renderer truncates the *content* to
+    fit, never expands the box — the box stays compact for the common
+    case and degrades gracefully under input pressure.
+    """
+    # Strip the borders if present so the math is straightforward.
+    body = row[1:-1] if len(row) >= 2 and row[0] == "│" and row[-1] == "│" else row
+    if len(body) > interior:
+        body = body[:interior]
+    elif len(body) < interior:
+        body = body + " " * (interior - len(body))
+    return f"│{body}│"
 
 
 # F-9 + NEW-5 (SOTA third-pass): strip ANSI / Rich control sequences from
@@ -622,6 +660,71 @@ class OperatorCockpit:
         with self._lock:
             return self._state.traffic_dashboard
 
+    # -------------------------------------------------------------- AUDIT-N+18 dormant-core pane
+
+    def attach_dormant_core(self, dormant_source: Any) -> "OperatorCockpit":
+        """Attach a dormant-core envelope source so the cockpit renders a DORMANT_CORE pane.
+
+        AUDIT-N+18: wire the AUDIT-N+13 dormant-core trend envelope
+        (``thegent.cli.commands.observability_impl._build_observe_trend_payload``
+        output shape) into the cockpit so operators see live escalation
+        count, past-SLA count, and freshness bucket inline alongside the
+        AUDIT-N+15 traffic pane in a single unified snapshot.
+
+        The source can be either:
+
+        * A zero-argument callable returning the dormant-core trend
+          dict (e.g. ``lambda: _build_observe_trend_payload(10)``).
+        * Any object exposing a no-arg ``summary()`` method that returns
+          a dict in the dormant-core envelope shape.
+
+        The source is borrowed by reference — callers retain ownership
+        and decide when the envelope is re-computed. Pass ``None`` to
+        detach and disable the pane.
+
+        Returns ``self`` for fluent chaining::
+
+            OperatorCockpit().attach_dormant_core(my_source).render()
+
+        The source reference is stored under the cockpit's lock so the
+        renderer can pick it up atomically. No validation is performed
+        on the source at attach time; the renderer defends against
+        bad / throwing sources by rendering a single neutral line
+        instead of crashing the cockpit.
+        """
+        with self._lock:
+            self._state.dormant_source = dormant_source
+        return self
+
+    def dormant_core_source(self) -> Any:
+        """Return the currently attached dormant-core source, or ``None``.
+
+        Read-only accessor used by ``snapshot()`` and tests.
+        """
+        with self._lock:
+            return self._state.dormant_source
+
+    def _invoke_dormant_core(self) -> dict[str, Any] | None:
+        """Resolve the attached dormant-core source to a dict (or ``None``).
+
+        Accepts either a zero-argument callable or any object with a
+        ``summary()`` method. Returns ``None`` when the source is
+        unattached, raises, or returns a non-dict. The renderer uses
+        this so a buggy dormant-core producer cannot crash the cockpit.
+        """
+        with self._lock:
+            source = self._state.dormant_source
+        if source is None:
+            return None
+        try:
+            if callable(source):
+                payload = source()
+            else:
+                payload = source.summary()
+        except Exception:  # noqa: BLE001 - never crash the cockpit.
+            return None
+        return payload if isinstance(payload, dict) else None
+
     # -------------------------------------------------------------- snapshots
 
     def snapshot(self) -> dict[str, Any]:
@@ -692,6 +795,13 @@ class OperatorCockpit:
                 "traffic": (
                     dict(self._state.traffic_dashboard.summary()) if self._state.traffic_dashboard is not None else None
                 ),
+                # AUDIT-N+18: dormant-core envelope (dict shape from
+                # ``thegent.cli.commands.observability_impl._build_observe_trend_payload``)
+                # surfaced alongside the live traffic snapshot so
+                # downstream consumers (CI hooks, log shippers) see one
+                # unified payload. ``None`` when no source is attached
+                # so consumers can short-circuit cleanly.
+                "dormant_core": self._invoke_dormant_core(),
             }
 
     def progress_bar(self) -> str:
@@ -793,11 +903,20 @@ class OperatorCockpit:
         #    dashboard attached the pane is omitted entirely so the
         #    layout reflects only attached subsystems.
         traffic_lines = self._render_traffic_pane_lines()
+        # 7. AUDIT-N+18: fifth row — dormant-core pane (full-width). When a
+        #    dormant-core source is attached via ``attach_dormant_core``,
+        #    this surfaces live escalation count, past-SLA count,
+        #    freshness bucket, and the AUDIT-N+13 ``wl120_dormant_round_trip``
+        #    side-channel flag so operators see the dormant-core
+        #    reconciliation inline alongside the traffic pane. Without
+        #    a source attached the pane is omitted entirely.
+        dormant_lines = self._render_dormant_core_pane_lines()
         body = (
             "\n".join(body_lines)
             + "\n"
             + "\n".join(decisions_lines)
             + ("\n" + "\n".join(traffic_lines) if traffic_lines else "")
+            + ("\n" + "\n".join(dormant_lines) if dormant_lines else "")
         )
 
         if banner:
@@ -986,6 +1105,107 @@ class OperatorCockpit:
                 lines.append(f"│  … {total_ovrs - MAX_OVERRIDE_PANE_ROWS} more            │")
         lines.append("└──────────────────────────────────────┘")
         return lines
+
+    def _render_dormant_core_pane(self) -> str:
+        """Render the AUDIT-N+18 DORMANT_CORE pane rows as a single string.
+
+        Reads the optionally-attached dormant-core source (via
+        :meth:`attach_dormant_core`) and renders a compact 4-line summary::
+
+            ┌─ Dormant Core ───────────────┐
+            │ esc=3  past_sla=1  fresh      │
+            │ health=good  sig=abc123      │
+            │ round_trip=True              │
+            └──────────────────────────────┘
+
+        When no source is attached, returns an empty string so callers
+        can treat the result as a no-op (the renderer omits the pane
+        entirely). When the source is attached but raises or returns
+        a non-dict, the pane renders a single neutral line so the
+        cockpit still produces usable output.
+
+        The renderer pulls fields by name from the AUDIT-N+13 envelope
+        shape (``trend_summary``, ``escalation_breakdown``,
+        ``wl120_dormant_round_trip``, ``trend_scope_signature``) so
+        the pane stays decoupled from the dormant-core service module
+        itself. Missing keys render as ``-`` rather than crashing so
+        the pane is tolerant of partial envelopes (the dormant core
+        is allowed to return incomplete data when its dependencies
+        are degraded).
+        """
+        lines = self._render_dormant_core_pane_lines()
+        return "\n".join(lines)
+
+    def _render_dormant_core_pane_lines(self) -> list[str]:
+        """Render the AUDIT-N+18 DORMANT_CORE pane rows as a list of strings.
+
+        Internal helper used by :meth:`_render_grid_locked` to splice
+        the dormant-core pane into the grid layout. Returns ``[]``
+        when no source is attached.
+        """
+        cfg = self.config
+        with self._lock:
+            source = self._state.dormant_source
+        if source is None:
+            return []
+        # Resolve the pane label defensively — older configs that pre-date
+        # AUDIT-N+18 won't have a DORMANT_CORE entry and we don't want a
+        # KeyError to crash the render.
+        pane_label = cfg.pane_labels.get(CockpitPane.DORMANT_CORE, "Dormant Core")
+        # Box layout (matches the AUDIT-N+15 TRAFFIC pane width):
+        #   total width = 35 chars (including corners)
+        #   interior   = 33 chars between the two ``│`` borders
+        box_width = 35
+        interior = box_width - 2
+        label = _truncate(str(pane_label), 16)
+        # Header: ``┌─ <label> ─...─┐`` with trailing dashes so total == box_width.
+        header_prefix = f"┌─ {label} "
+        header_dashes = "─" * max(1, box_width - len(header_prefix) - 1)
+        header_line = f"{header_prefix}{header_dashes}┐"
+        footer_line = "└" + "─" * interior + "┘"
+        empty_line = f"│{'':<{interior}}│"
+        payload = self._invoke_dormant_core()
+        if payload is None:
+            err_marker = "  (dormant-core source errored)  "
+            pad = max(0, interior - len(err_marker))
+            return [
+                header_line,
+                f"│{err_marker}{'':<{pad}}│",
+                empty_line,
+                empty_line,
+                footer_line,
+            ]
+        # AUDIT-N+13 envelope keys (defensive lookup — see the docstring
+        # for the canonical names). Nested ``trend_summary`` /
+        # ``escalation_breakdown`` dicts are flattened one level deep
+        # so a single-line summary is readable on an 80-col console.
+        trend_summary = payload.get("trend_summary") if isinstance(payload.get("trend_summary"), dict) else {}
+        escalation_breakdown = (
+            payload.get("escalation_breakdown") if isinstance(payload.get("escalation_breakdown"), dict) else {}
+        )
+        backlog = escalation_breakdown.get("backlog_count", escalation_breakdown.get("rows_count", "-"))
+        past_sla = escalation_breakdown.get("past_sla_count", "-")
+        freshness = trend_summary.get("freshness_bucket", trend_summary.get("trend_snapshot_health", "-"))
+        health = trend_summary.get("trend_snapshot_health", "-")
+        # Side-channel flag from AUDIT-N+12/13: True iff the dormant-core
+        # round-trip produced dict-shaped output for both halves.
+        round_trip = payload.get("wl120_dormant_round_trip")
+        scope_sig = payload.get("trend_scope_signature", "")
+        sig_short = (scope_sig[:8] + "…") if scope_sig and len(scope_sig) > 8 else (scope_sig or "-")
+        fresh_txt = _sanitize_console_text(str(freshness), max_len=6)
+        health_txt = _sanitize_console_text(str(health), max_len=6)
+        sig_txt = _sanitize_console_text(sig_short, max_len=12)
+        rt_txt = "True" if round_trip else "False"
+        # Body rows (each exactly ``interior`` chars between the borders).
+        body_lines = [
+            f"│ esc={backlog:<3} sla={past_sla:<3} f={fresh_txt:<6}{'':<14}│",
+            f"│ health={health_txt:<6} sig={sig_txt:<12}{'':<7}│",
+            f"│ round_trip={rt_txt:<22}{'':<1}│",
+        ]
+        # Hard-enforce width so the border lines stay aligned even when
+        # the source envelope contains unexpectedly long tokens.
+        body_lines = [_pad_box_row(row, interior) for row in body_lines]
+        return [header_line, *body_lines, footer_line]
 
     def _render_traffic_pane(self) -> str:
         """Render the AUDIT-N+15 TRAFFIC pane rows as a single string.
