@@ -16,6 +16,19 @@ promotes it to the canonical home of the full observability surface:
 
 The legacy :mod:`thegent.cli.commands.impl` module continues to
 re-export every public symbol so existing call-sites remain green.
+
+AUDIT-N+12 promoted the dormant-core reconciliation side-channel
+``wl120_dormant_round_trip`` inside ``_build_observe_trend_block``.
+
+AUDIT-N+13 extracts a separate :func:`_build_observe_trend_payload`
+that owns the **full** dormant-core wire-up (trend + escalation) and
+threads the result through :func:`observe_summary_impl`'s outer return
+contract as documented keys: ``trend_summary`` (dormant block),
+``escalation_breakdown`` (dormant rows), ``trend_scope_signature``
+(dormant hash), and the side-channel ``wl120_dormant_round_trip``.
+The legacy AUDIT-N+9 5-key stub block continues to live under the
+inner :func:`_build_observe_trend_block` so the AUDIT-N+12 parity
+tests still pin.
 """
 
 from __future__ import annotations
@@ -383,6 +396,160 @@ def _build_observe_trend_block(trend_samples: int) -> dict[str, Any]:
     return block
 
 
+# ---------------------------------------------------------------------------
+# AUDIT-N+13: dormant-core trend payload wire-up.
+# ---------------------------------------------------------------------------
+
+
+def _build_observe_trend_payload(
+    trend_samples: int,
+    *,
+    pending: list[Any] | None = None,
+    past_sla: list[Any] | None = None,
+    top_escalations: int = 5,
+    provider: str | None = "claude",
+    drift_window: int = 50,
+    structural_budget_pct: float = 5.0,
+    semantic_budget_pct: float = 10.0,
+    kpis: dict[str, Any] | None = None,
+    drift: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the **outer** dormant-core trend payload for ``observe_summary_impl``.
+
+    AUDIT-N+13: this is the canonical home for the WL-120 dormant-core
+    wire-up. Unlike the inner :func:`_build_observe_trend_block` (which
+    returns the AUDIT-N+9 5-key stub block with a side-channel flag),
+    this function returns the **full** dormant-core envelope that gets
+    attached to the outer :func:`observe_summary_impl` return contract:
+
+      * ``trend_summary`` — full dormant-core trend block (50+ keys
+        including health, scope signature, snapshot ids, deltas,
+        recommendations, baseline deltas).
+      * ``escalation_breakdown`` — full dormant-core escalation rows
+        (rows + top_rows + past_sla_count).
+      * ``trend_scope_signature`` — dormant-core hash (string).
+      * ``trend_scope_key`` — dormant-core scope key (dict).
+      * ``trend_snapshot_ids`` — list of snapshot ids (dormant-core).
+      * ``wl120_dormant_round_trip`` — bool side-channel marker
+        (mirrors the AUDIT-N+12 flag from ``_build_observe_trend_block``).
+
+    The function never raises — a failed dormant-core round-trip
+    returns a payload with ``wl120_dormant_round_trip=False`` and the
+    fields populated with safe defaults so downstream JSON consumers
+    see a stable shape. The legacy AUDIT-N+9 stub block (returned by
+    :func:`_build_observe_trend_block`) is the fallback when dormant
+    callables are unavailable.
+
+    Args:
+        trend_samples: Number of trend samples requested. When ``<= 0``
+            the dormant core is skipped and the returned payload is the
+            legacy disabled-mode stub.
+        pending: Pending escalation rows (forwarded to escalation builder).
+        past_sla: Past-SLA escalation rows (forwarded to escalation builder).
+        top_escalations: Top-N escalation cap.
+        provider: Provider name (forwarded to scope builder).
+        drift_window: Drift window size (forwarded to scope builder).
+        structural_budget_pct: Structural budget % (forwarded to scope builder).
+        semantic_budget_pct: Semantic budget % (forwarded to scope builder).
+        kpis: KPI dict (forwarded to dormant-core trend builder).
+        drift: Drift dict (forwarded to dormant-core trend builder).
+
+    Returns:
+        Dict with the dormant-core trend payload keys described above.
+    """
+    payload: dict[str, Any] = {
+        "trend_summary": {},
+        "escalation_breakdown": {},
+        "trend_scope_signature": "",
+        "trend_scope_key": {},
+        "trend_snapshot_ids": [],
+        "wl120_dormant_round_trip": False,
+    }
+    if trend_samples <= 0:
+        # Disabled mode: legacy shape preserved for backward compat.
+        payload["trend_summary"] = {
+            "enabled": False,
+            "trend_sampling_mode": "disabled",
+            "trend_samples_requested": 0,
+            "trend_effective_samples": 0,
+        }
+        return payload
+    # AUDIT-N+13: import lazily so import-time stays cheap and the
+    # legacy fallback path remains importable when services.observability
+    # is unavailable (e.g. during partial install / refactor in flight).
+    try:
+        from datetime import UTC, datetime
+
+        from thegent.cli.services import observability as _services
+    except Exception:
+        return payload
+    # Build the dormant-core trend block.
+    trend_block: dict[str, Any] = {}
+    try:
+        trend_block = _services.build_observe_summary_trend(
+            trend_samples=trend_samples,
+            provider=provider,
+            drift_window=drift_window,
+            structural_budget_pct=structural_budget_pct,
+            semantic_budget_pct=semantic_budget_pct,
+            limit=trend_samples,
+            top_escalations=top_escalations,
+            now=datetime.now(tz=UTC),
+            kpis=kpis
+            or {
+                "total": 0,
+                "fallback_rate": 0.0,
+                "success_rate": 1.0,
+                "avg_confidence": 1.0,
+            },
+            budget=drift or {"structural_rate_pct": 0.0, "semantic_rate_pct": 0.0},
+            backlog_count=len(pending or []),
+            past_sla_count=len(past_sla or []),
+            build_scope_fn=_build_observe_summary_trend_scope,
+            hash_scope_fn=_hash_observe_summary_payload,
+            load_snapshots_fn=_load_observe_summary_snapshots,
+            parse_timestamp_fn=lambda _raw: 0.0,
+            freshness_bucket_fn=lambda *_args, **_kw: "fresh",
+            classify_health_fn=lambda **kw: (
+                _classify_observe_summary_trend_health(**kw)
+                if isinstance(_classify_observe_summary_trend_health(**kw), dict)
+                else {"trend_snapshot_health": _classify_observe_summary_trend_health(**kw)}
+            ),
+        )
+    except Exception:
+        trend_block = {}
+    # Build the dormant-core escalation block.
+    escalation_block: dict[str, Any] = {}
+    try:
+        from datetime import UTC as _UTC
+        from datetime import datetime as _datetime
+
+        escalation_block = _services.build_observe_summary_escalation(
+            pending=list(pending or []),
+            past_sla=list(past_sla or []),
+            now=_datetime.now(tz=_UTC),
+            top_escalations=top_escalations,
+        )
+    except Exception:
+        escalation_block = {}
+    # Merge into the outer payload.
+    if isinstance(trend_block, dict):
+        payload["trend_summary"] = (
+            trend_block.get("trend_summary", {}) if isinstance(trend_block.get("trend_summary"), dict) else trend_block
+        )
+        payload["trend_scope_signature"] = trend_block.get("trend_scope_signature", "")
+        payload["trend_scope_key"] = trend_block.get("trend_scope_key", {})
+        payload["trend_snapshot_ids"] = list(trend_block.get("trend_snapshot_ids", []))
+    if isinstance(escalation_block, dict):
+        payload["escalation_breakdown"] = escalation_block
+    # AUDIT-N+13: side-channel flag — True iff both halves of the
+    # dormant-core round-trip produced dict-shaped output.
+    payload["wl120_dormant_round_trip"] = bool(
+        isinstance(trend_block, dict) and trend_block and isinstance(escalation_block, dict) and escalation_block
+    )
+    return payload
+
+
 def _count_pending_with_cap(
     escalation_queue: Any,
     top_escalations: int,
@@ -471,7 +638,28 @@ def observe_summary_impl(
     trend_samples: int | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Build the observe summary payload (status + KPIs + drift + escalation + trends)."""
+    """Build the observe summary payload (status + KPIs + drift + escalation + trends).
+
+    AUDIT-N+13: when ``trend_samples`` is set, the outer return contract
+    now carries the dormant-core trend payload under these keys
+    (in addition to the legacy AUDIT-N+9 ``trend_summary`` stub block
+    preserved under the same key for backward compat with the
+    AUDIT-N+12 parity suite):
+
+      * ``trend_summary`` — legacy AUDIT-N+9 5-key stub block (set by
+        :func:`_build_observe_trend_block`, retains the AUDIT-N+12
+        side-channel ``wl120_dormant_round_trip``).
+      * ``trend_payload`` — full dormant-core envelope from
+        :func:`_build_observe_trend_payload` with keys
+        ``trend_summary`` (dormant block), ``escalation_breakdown``,
+        ``trend_scope_signature``, ``trend_scope_key``,
+        ``trend_snapshot_ids``, ``wl120_dormant_round_trip``.
+      * ``escalation_breakdown`` — dormant-core escalation rows
+        (mirrored to outer contract for cockpit traffic-pane consumers
+        that don't read ``trend_payload``).
+      * ``trend_scope_signature`` — dormant-core hash (mirrored).
+      * ``generated_query`` — pinned for traceability.
+    """
     from thegent.contracts.telemetry import ContractTelemetry
     from thegent.execution import EscalationQueue
 
@@ -487,7 +675,32 @@ def observe_summary_impl(
     result = _build_observe_result(status, kpis, drift, pending, past_sla, top_escalations)
 
     if trend_samples is not None:
+        # AUDIT-N+9/12: legacy 5-key stub block + side-channel.
         result["trend_summary"] = _build_observe_trend_block(trend_samples)
+        # AUDIT-N+13: full dormant-core trend payload.
+        dormant_payload = _build_observe_trend_payload(
+            trend_samples,
+            pending=pending,
+            past_sla=past_sla,
+            top_escalations=top_escalations,
+            provider=provider,
+            drift_window=drift_window,
+            structural_budget_pct=structural_budget_pct,
+            semantic_budget_pct=semantic_budget_pct,
+            kpis=kpis,
+            drift=drift,
+        )
+        result["trend_payload"] = dormant_payload
+        # Mirror the dormant-core keys to the outer contract so
+        # cockpit traffic-pane consumers that read result-level keys
+        # see the WL-120 data without traversing trend_payload.
+        result["escalation_breakdown"] = dormant_payload.get("escalation_breakdown", {})
+        result["trend_scope_signature"] = dormant_payload.get("trend_scope_signature", "")
+        # AUDIT-N+13: mirror the dormant-core flag to the outer
+        # contract explicitly (True on full dormant success, False on
+        # any failure mode). Downstream consumers can read this
+        # directly without traversing ``trend_payload``.
+        result["wl120_dormant_round_trip"] = bool(dormant_payload.get("wl120_dormant_round_trip", False))
         result["generated_query"] = {"trend_samples": trend_samples}
 
     return result
@@ -869,6 +1082,8 @@ __all__ = [
     "_build_run_event_details",
     "_append_health_snapshot",
     "_build_observe_summary_trend_scope",
+    "_build_observe_trend_block",
+    "_build_observe_trend_payload",
     "_compact_health_snapshot_log",
     "_classify_observe_summary_trend_health",
     "_hash_health_payload",

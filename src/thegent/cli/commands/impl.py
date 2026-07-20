@@ -362,6 +362,9 @@ __all__ = [
     "_resolve_grounding_sources_for_output",
     "_append_health_snapshot",
     "observe_summary_impl",
+    # AUDIT-N+13: dormant-core trend payload wire-up.
+    "_build_observe_trend_block",
+    "_build_observe_trend_payload",
     # AUDIT-N+12: session lifecycle surface (canonical home: session_impl)
     "_is_pid_running",
     "_scope_key",
@@ -414,6 +417,8 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
     _append_observe_summary_snapshot,
     _append_health_snapshot,
     _build_observe_summary_trend_scope,
+    _build_observe_trend_block,
+    _build_observe_trend_payload,
     _classify_observe_summary_trend_health,
     _compact_health_snapshot_log,
     _hash_health_payload,
