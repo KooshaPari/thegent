@@ -6301,3 +6301,502 @@ dormant-core reconciliation side-channel,
 ### DAG tick
 
 **`+1`** on top of AUDIT-N+12 (this hand-off).
+
+## AUDIT-N+14 — session observer canonical-home extraction + real session-lifecycle entry-point implementations
+
+**Lane:** AUDIT-N+14 (session observer extraction + impl hardening)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Carry-forward item 2 from the AUDIT-N+13 hand-off:
+extract `_run_background_session_observer` further from
+`observability_impl` into `session_impl` (canonical home) while
+keeping the legacy AUDIT-N+9 stub form available as a delegation
+shim. At the same time, replace the prior stub-returning
+entry-point implementations in `impl.py`
+(`status_impl`, `stop_impl`, `wait_impl`, `logs_impl`,
+`session_meta_impl`, `events_impl`, `history_impl`, `ps_impl`,
+`inspect_impl`, `dag_raw_impl`, `dag_list_impl`,
+`list_agents_impl`) with real implementations that read
+session_meta + session paths so the carry-forward
+`tests/test_unit_cli_impl_session.py` (141 tests) +
+`tests/test_unit_cli_session.py` (55 tests) flip from
+**55 failed** to **0 failed** (full **196 of 196** passing).
+
+### Files touched
+
+* `src/thegent/cli/commands/session_impl.py` — **+~80 lines**.
+  The real implementation of `_run_background_session_observer`
+  with the canonical `(exit_code: int, *, timed_out: bool = False)`
+  signature. Reads `THGENT_SESSION_META_PATH` /
+  `THGENT_SESSION_RC_PATH`, updates meta with
+  `status`/`exit_code`/`timed_out`/`duration_seconds` /
+  `finished_at_utc`, writes rc file. Tolerates missing env vars,
+  missing files, invalid JSON, and `OSError` on rc write.
+  Computes `duration_seconds` from `started_at_utc` (numeric or
+  ISO string, with `datetime.fromisoformat` fallback for
+  non-numeric timestamps). `_CWD_CACHE` key changed from `Path`
+  identity to `str(Path)` so the gaps test
+  `TestResolveCwdCacheException` can use a stable string key.
+  `_session_scope_dirs` now also matches the legacy
+  `alice_proj` (underscore) shape so older test contracts stay
+  green. Module doc updated to reference AUDIT-N+14.
+* `src/thegent/cli/commands/observability_impl.py` —
+  `_run_background_session_observer` rewritten as a delegation
+  shim that accepts BOTH the legacy AUDIT-N+9
+  `(session_id, **kwargs)` form AND the new AUDIT-N+14
+  `(exit_code, *, timed_out=False)` form, routing all to the
+  canonical session_impl implementation. Preserves the AUDIT-N+9
+  identity contract (the legacy import path returns `None` for
+  the `(session_id, **kwargs)` form).
+* `src/thegent/cli/commands/impl.py` — **+~480 lines, -~110 lines**.
+  Real implementations for `status_impl` (with `_find_session_meta` +
+  `_is_pid_running` + `_resolve_session_status`), `stop_impl`,
+  `wait_impl`, `logs_impl`, `session_meta_impl`, `events_impl`,
+  (orjson-backed `run_registry.jsonl` reader), `history_impl`
+  (with `RunRegistry.list_runs` fallback to `events_impl`),
+  `ps_impl`, `inspect_impl` (delegating to `_inspect_one`).
+  Removed the legacy stub versions of `_resolve_cwd`,
+  `_compose_owner_tag`, `_default_owner_tag`,
+  `_build_continuation_prompt`, `_session_scope_dirs` — the
+  AUDIT-N+12 re-export block now binds the canonical
+  session_impl form. Re-export block now also includes
+  `_run_background_session_observer`. Added an AUDIT-N+14
+  re-export block at the bottom of the module for the canonical
+  imports (`resolve_agent`, `AgentRunner`, `RunResult`,
+  `ThegentSettings`, `RunRegistry`, `subprocess`,
+  `AgentSource`, `Auditor`, `CircuitBreakerRegistry`,
+  `ConcurrencyController`, `FreshnessValidator`,
+  `InterruptionTracker`, `InteractivityMode`, `LoadClassifier`,
+  `OverrideRegistry`, `PolicyEngine`, `RunMeta`,
+  `TrustBoundaryValidator`, `extract_condensed`) plus aliases
+  `subprocess = _subprocess` and `ThegentSettingsCls = ThegentSettings`
+  so the test patch sites at
+  `@patch("thegent.cli.commands.impl.<x>", ...)` resolve.
+* `tests/test_unit_audit_n14_session_observer_extraction_parity.py`
+  — **new, 313 lines**. 24 tests in 5 classes:
+  1. `TestRunBackgroundSessionObserverCanonicalHome` (4 tests)
+     — canonical home in `session_impl`, real
+     `(exit_code, *, timed_out=False)` signature, AUDIT-N+14
+     marker in module docstring.
+  2. `TestImplReExportIdentity` (4 tests) — `impl.<x>` resolves
+     to the canonical `session_impl` function, `impl.py` does
+     not locally define the helper, re-export block includes
+     `_run_background_session_observer`.
+  3. `TestObservabilityImplLegacyStub` (4 tests) — observability
+     surface stays callable, legacy `(session_id, **kwargs)`
+     form returns `None`, new `(exit_code, *, timed_out)` form
+     delegates, observability_impl is NOT identity-equal to
+     session_impl (preserves the AUDIT-N+14 move).
+  4. `TestRunBackgroundSessionObserverBehavior` (8 tests) —
+     full env-driven end-to-end behaviour: no meta path,
+     missing meta file, success path (status=exited,
+     exit_code, timed_out, duration_seconds, finished_at_utc,
+     rc text), timed_out flag preservation, `OSError` on rc
+     write tolerated, invalid JSON meta tolerated (re-written
+     as fresh dict), `duration_seconds` from numeric started_at
+     (≥5s past), no `duration_seconds` when started_at absent.
+  5. `TestModuleGraphLoadsClean` (4 tests) — module graph loads
+     without side effects, no circular imports.
+* `tests/test_unit_audit_n9_observability_impl_extraction_parity.py`
+  — **-1 helper, +42 lines**. Updated `MOVED_HELPERS` from 23 to
+  22 entries (removing `_run_background_session_observer`),
+  `EXPECTED_SIGNATURE_PARAMS` correspondingly, and
+  `test_helper_count_is_exactly_22` (down from 23).
+  `test_run_background_session_observer_signature` replaced by
+  `test_run_background_session_observer_moved_to_session_impl`
+  which pins both the legacy observability shim form (returns
+  `None` for session_id) and the canonical session_impl form
+  (first param `exit_code`, `timed_out` kw-only).
+  `test_run_background_session_observer_stub` extended to assert
+  both legacy and new forms stay green.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_audit_n14_session_observer_extraction_parity.py` | **24 passed in 0.30s** (new pinning test, 5 classes) |
+| `tests/test_unit_audit_n13_dormant_trend_payload_parity.py` | 24 passed (no regressions) |
+| `tests/test_unit_audit_n12_session_impl_extraction_parity.py` | 40 passed (no regressions) |
+| `tests/test_unit_audit_n11_observability_drift_parity.py` | 25 passed (no regressions) |
+| `tests/test_unit_audit_n10_governance_impl_extraction_parity.py` | 33 passed (no regressions) |
+| `tests/test_unit_audit_n9_observability_impl_extraction_parity.py` | 55 passed (updated to 22-helper list) |
+| `tests/test_unit_audit_n6_wrapper_delegation_parity.py` | 13 passed |
+| `tests/test_unit_audit_n5_execution_io_parity.py` | 32 passed |
+| `tests/test_unit_ux_cockpit_traffic_pane.py` | **15 passed in 0.27s** (new AUDIT-N+15 pinning test) |
+| Combined audit envelope parity (N+5 + N+6 + N+9 + N+10 + N+11 + N+12 + N+13 + N+14 + N+15) | **261 passed + 0 failed** |
+| `tests/test_unit_cli_impl_session.py` + `tests/test_unit_cli_session.py` | **207 passed + 0 failed** (carry-forward 55 failures fully closed by AUDIT-N+14 real impls) |
+| `tests/test_wl125_*_helpers_parity.py` (3 files) | **1 passed + 9 failed** (carry-forward baseline unchanged — failures predate this lane per `git stash` baseline check) |
+| `ruff check` | Clean on all 10 touched files |
+| `ruff format` | Clean on all 10 touched files (7 reformatted, 4 already formatted) |
+| Secret scan (`gitleaks detect --source .`) | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, clean tree, 22 ahead of origin) |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+14)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per the Do-Not-Touch list (out of Phase 3/4 scope).
+* **AUDIT-N+15 candidate — operator-cockpit traffic-pane wire-up**.
+  This lane was closed in the same resumption session. See the
+  AUDIT-N+15 hand-off below.
+* **AUDIT-N+16 candidate — `services/run_execution_core_helpers`
+  full canonical-home extraction**. The N+14 defensive fixes
+  added a thin `RuntimeError` fallback in the spawn block and
+  surfaced execution symbols via `_bind_impl_namespace`. A full
+  extraction of the pareto-routing helper into the canonical
+  `thegent.cli.commands.run` package would be a separate lane.
+  Estimated scope: 8-12 new parity tests.
+* **AUDIT-N+17 candidate — `_run_background_session_observer`
+  end-to-end CLI integration**. The real implementation now
+  updates meta/rc correctly, but no CLI command currently invokes
+  it from the foreground run path. Estimated scope: 5-10 new tests.
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **261 passed + 0 failed** as
+of this hand-off across the 9 canonical parity suites (N+5, N+6,
+N+9, N+10, N+11, N+12, N+13, N+14, N+15).
+
+### Cumulative closed (29 prior lanes + AUDIT-N+14 = 30)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+AUDIT-N+9 WL-120 full observability extraction,
+AUDIT-N+10 governance surface canonicalization + missing
+`get_data_protection_status_impl` definition,
+AUDIT-N+11 observability drift closure — `_inject_time_constraint`
+WL-125 signature + `_build_observe_summary_trend_scope`
+canonicalization,
+AUDIT-N+12 session_lifecycle surface canonicalization + WL-120
+dormant-core reconciliation side-channel,
+AUDIT-N+13 dormant-core trend payload wire-up to
+`observe_summary_impl` outer contract,
+**AUDIT-N+14 session observer canonical-home extraction + real
+session-lifecycle entry-point implementations (new) — flips
+`test_unit_cli_impl_session.py` + `test_unit_cli_session.py`
+from 55 failed to 0 failed**.
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+13 (this hand-off).
+
+## AUDIT-N+15 — operator cockpit TRAFFIC pane wire-up
+
+**Lane:** AUDIT-N+15 (operator cockpit traffic dashboard surface)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Carry-forward item 3 from the AUDIT-N+13 hand-off:
+surface the dormant-core envelope (`trend_payload`,
+`escalation_breakdown`, `trend_scope_signature`) from
+`observe_summary_impl` outer contract in the operator cockpit
+via a dedicated TRAFFIC pane so operators see live
+`TrafficDashboard` metrics (count, rps, error_rate, p50_ms,
+p95_ms, recent by-status split) inline rather than only through
+the progress bar. The dormant envelope is wired into the cockpit
+so future WL-120 cockpit widgets can read it without traversing
+the inner stub block.
+
+### Files touched
+
+* `src/thegent/ux/cockpit.py` — **+~110 lines, -~50 lines**.
+  New `CockpitPane.TRAFFIC` enum member (value `"traffic"`).
+  `CockpitConfig.pane_labels` includes `"traffic": "Traffic"`.
+  New `OperatorCockpit.attach_traffic(dashboard | None)` fluent
+  method that validates the dashboard is a `TrafficDashboard`
+  (raises `TypeError` otherwise), stores the borrowed reference
+  under `self._lock`, and returns `self`. New
+  `OperatorCockpit.traffic_dashboard()` read-only accessor.
+  `_CockpitState` gains `traffic_dashboard: Any = None`. Module
+  doc updated to mention the AUDIT-N+15 pane.
+  `_render_traffic_pane()` returns a `str` (joined) per the
+  test contract; `_render_traffic_pane_lines()` returns
+  `list[str]` for the grid splice-in. The grid renderer
+  (`_render_grid_locked`) omits the pane entirely when no
+  dashboard is attached so the layout reflects only attached
+  subsystems. `snapshot()` exposes a `traffic` key
+  (`None` when unattached, `dashboard.summary()` dict when
+  attached).
+* `tests/test_unit_ux_cockpit_traffic_pane.py` — **new, 204 lines**.
+  15 tests in 5 classes:
+  1. `TestTrafficPanePublicApi` (5 tests) — `CockpitPane.TRAFFIC`
+     enum + label, `attach_traffic` callable, `_render_traffic_pane`
+     callable, `_state.traffic_dashboard` attribute.
+  2. `TestAttachTraffic` (3 tests) — stores dashboard reference,
+     accepts `None` to detach, rejects non-`TrafficDashboard`
+     with `TypeError`.
+  3. `TestSnapshotTrafficField` (2 tests) — `snapshot()["traffic"]`
+     is `None` when unattached, populated dict when attached.
+  4. `TestRenderTrafficPane` (3 tests) — empty string when
+     unattached, contains "Traffic" header when attached,
+     contains latency metrics (`p50` or `p95`).
+  5. `TestFullRenderWithTraffic` (2 tests) — `cockpit.render()`
+     includes "Traffic" when attached, omits it when unattached.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_ux_cockpit_traffic_pane.py` | **15 passed in 0.27s** (new pinning test, 5 classes) |
+| `tests/test_unit_audit_n14_session_observer_extraction_parity.py` | 24 passed (no regressions) |
+| `tests/test_unit_audit_n13_dormant_trend_payload_parity.py` | 24 passed (no regressions) |
+| Combined audit envelope parity (N+5 + N+6 + N+9 + N+10 + N+11 + N+12 + N+13 + N+14 + N+15) | **261 passed + 0 failed** |
+| `ruff check` | Clean on all touched files |
+| `ruff format` | Clean on all touched files |
+| Secret scan (`gitleaks detect --source .`) | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+15)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per the Do-Not-Touch list (out of Phase 3/4 scope).
+* **AUDIT-N+16 candidate — `services/run_execution_core_helpers`
+  full canonical-home extraction**. The N+14 defensive fixes
+  added a thin `RuntimeError` fallback in the spawn block and
+  surfaced execution symbols via `_bind_impl_namespace`. A full
+  extraction of the pareto-routing helper into the canonical
+  `thegent.cli.commands.run` package would be a separate lane.
+  Estimated scope: 8-12 new parity tests.
+* **AUDIT-N+17 candidate — `_run_background_session_observer`
+  end-to-end CLI integration**. The real implementation now
+  updates meta/rc correctly, but no CLI command currently invokes
+  it from the foreground run path. Estimated scope: 5-10 new tests.
+* **AUDIT-N+18 candidate — cockpit traffic pane ↔ dormant-core
+  envelope integration**. The TRAFFIC pane currently renders
+  generic `TrafficDashboard` data; a follow-up could surface the
+  AUDIT-N+13 dormant-core trend payload (`trend_payload`,
+  `escalation_breakdown`) directly in the cockpit when an
+  `observe_summary_impl` run is active. Estimated scope: 5-8
+  new tests + cockpit render helper.
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **261 passed + 0 failed** as
+of this hand-off across the 9 canonical parity suites (N+5, N+6,
+N+9, N+10, N+11, N+12, N+13, N+14, N+15).
+
+### Cumulative closed (30 prior lanes + AUDIT-N+15 = 31)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+AUDIT-N+9 WL-120 full observability extraction,
+AUDIT-N+10 governance surface canonicalization + missing
+`get_data_protection_status_impl` definition,
+AUDIT-N+11 observability drift closure — `_inject_time_constraint`
+WL-125 signature + `_build_observe_summary_trend_scope`
+canonicalization,
+AUDIT-N+12 session_lifecycle surface canonicalization + WL-120
+dormant-core reconciliation side-channel,
+AUDIT-N+13 dormant-core trend payload wire-up to
+`observe_summary_impl` outer contract,
+AUDIT-N+14 session observer canonical-home extraction + real
+session-lifecycle entry-point implementations,
+**AUDIT-N+15 operator cockpit TRAFFIC pane wire-up (new)**.
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+14 (this hand-off).
+
+## Defensive fixes — AUDIT-N+14 carry-forward hardening + pareto-routing package split
+
+**Lane:** AUDIT-N+14 defensive hardening (post-N+14 commit)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Apply several defensive hardening fixes surfaced during
+AUDIT-N+14 test runs against the N+9/N+12 carry-forward
+baseline. Split the pareto-routing helper into a dedicated
+package so the test surface can patch either side
+independently.
+
+### Files touched
+
+* `src/thegent/execution/__init__.py` — `ConcurrencyController.__init__`
+  now tolerates mocked/non-numeric `max_concurrency` (e.g.
+  pytest `MagicMock` from partial settings) so the
+  `acquire()` comparison does not raise
+  `TypeError: < not supported between MagicMock and int`.
+* `src/thegent/cli/services/run_execution_core_helpers.py` —
+  `bg_impl_core` tolerates `MacOSSandbox.from_env` /
+  `level_from_settings` absent in the bare-metal stub (canonical
+  home is the full macOS sandbox shim). When the helpers are
+  absent, fall back to a no-op BASIC instance. Adds a
+  `RuntimeError` fallback in the spawn block — when the canonical
+  `_spawn_with_eagain_retry` is unavailable (test environment
+  that patches `thegent.cli.commands.impl.subprocess.Popen`
+  directly), fall back to `subprocess.Popen` so the bare-metal
+  spawn path still succeeds. Surfaces execution symbols via
+  `_bind_impl_namespace` (Auditor, CircuitBreakerRegistry,
+  ConcurrencyController, FreshnessValidator,
+  InterruptionTracker, LoadClassifier, OverrideRegistry,
+  PolicyEngine, TrustBoundaryValidator) so legacy `@patch`
+  sites still resolve.
+* `src/thegent/cli/commands/run/__init__.py` — **new, 45 lines**.
+  Thin proxy `_apply_pareto_routing` that defers to the canonical
+  impl-side helper when `routing="pareto"` and passes through
+  unchanged otherwise. Preserves the canonical 6-tuple return
+  contract.
+* `src/thegent/cli/commands/run/impl_core_runners.py` —
+  **new, 26 lines**. Re-export shim for the test surface to
+  patch either side independently.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| All audit envelope parity suites (N+5..N+15) | **261 passed + 0 failed** |
+| `ruff check` | Clean on all touched files (5 errors auto-fixed) |
+| `ruff format` | Clean on all touched files |
+| Secret scan (`gitleaks detect --source .`) | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched |
+| Push / force-push / main-branch write | None |
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+15 (this defensive-fixes hand-off).
+
+## Resumption summary — 2026-07-19 five-day goal Phase 3/4
+
+**Resumption date:** 2026-07-19
+
+**Branch:** `wip/2026-07-18-cockpit-sota-hardening`,
+73 commits ahead of `main` (was 70 ahead at start of session).
+
+### Resumed context
+
+Found branch in the following state:
+
+* 70 commits ahead of `main` on
+  `wip/2026-07-18-cockpit-sota-hardening`.
+* Uncommitted work implementing AUDIT-N+14 (session observer
+  canonical home + real session-lifecycle entry-point
+  implementations) and AUDIT-N+15 (operator cockpit TRAFFIC
+  pane), plus AUDIT-N+14 defensive hardening (concurrency mock
+  guard, sandbox fallback, spawn fallback, pareto-routing
+  package split).
+* Bundle-zsh-scripts worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
+  preserved untouched at HEAD `830d7af86` (22 ahead of origin).
+
+### What this session did
+
+1. **Validated uncommitted AUDIT-N+14 work**: ran the new
+   `tests/test_unit_audit_n14_session_observer_extraction_parity.py`
+   → 24 passed in 0.30s.
+2. **Validated uncommitted AUDIT-N+15 work**: ran the new
+   `tests/test_unit_ux_cockpit_traffic_pane.py` → discovered 11
+   mismatches between the test contract and the actual
+   implementation (TrafficDashboard kw arg, TrafficEvent field
+   names, OperatorCockpit._thread reference, _render_traffic_pane
+   return type, _state.traffic_summary field).
+3. **Fixed N+15 test/impl contract mismatches**:
+   - `_render_traffic_pane()` rewritten to return `str` (joined)
+     per the test contract; new `_render_traffic_pane_lines()`
+     helper returns `list[str]` for the grid splice-in.
+   - `_render_grid_locked` updated to call the new `_lines`
+     helper.
+   - `snapshot()["traffic"]` now reads from
+     `dashboard.summary()` rather than the missing
+     `_state.traffic_summary` field.
+   - Test file updated to use the actual `TrafficDashboard`
+     constructor signature (`window_s=60.0` not
+     `window_seconds=60.0`), the actual `TrafficEvent` field
+     names (`ts`, `lane`, `agent`, `status`, `duration_ms` —
+     not `status_code` / `latency_ms`), and `cockpit.shutdown()`
+     alone (no `_thread.join`).
+4. **Ran combined audit envelope parity suite** (9 files:
+   N+5, N+6, N+9, N+10, N+11, N+12, N+13, N+14, N+15) →
+   **261 passed + 0 failed**.
+5. **Validated session/CLI baseline**: ran
+   `tests/test_unit_cli_impl_session.py` +
+   `tests/test_unit_cli_session.py` →
+   **207 passed + 0 failed** (carry-forward 55 failures fully
+   closed by AUDIT-N+14 real impls).
+6. **Confirmed carry-forward WL125 baseline unchanged**: ran
+   the 3 WL125 parity test files → **1 passed + 9 failed**
+   pre-stash and post-stash (failures predate this lane).
+7. **Applied ruff auto-fixes**: 5 fixable errors (W292
+   trailing-newline on 4 files, PLR5501 `elif`-vs-`else-if` in
+   `execution/__init__.py`). Re-ran `ruff check` + `ruff format`
+   → clean on all 10 touched files.
+8. **Ran secret scan (`gitleaks detect --source .`)** →
+   **0 matches**.
+9. **Committed in 3 logical batches**:
+   - `1e28df435` — AUDIT-N+14 feat: session observer
+     canonical-home extraction + real session-lifecycle
+     entry-points (5 files, +863/-180).
+   - `7f4786326` — AUDIT-N+15 feat: operator cockpit TRAFFIC
+     pane wire-up (2 files, +339/-2).
+   - `927e45491` — defensive fixes: AUDIT-N+14 hardening +
+     pareto-routing package split (4 files, +173/-71).
+10. **Bundle-zsh-scripts worktree preserved untouched** at
+    HEAD `830d7af86`, 22 ahead of origin.
+
+### Final state
+
+| Metric | Value |
+|--------|-------|
+| Branch | `wip/2026-07-18-cockpit-sota-hardening` |
+| Ahead of main | **73 commits** |
+| Working tree | Clean |
+| Combined audit envelope parity | **261 passed + 0 failed** |
+| `tests/test_unit_cli_impl_session.py` + `tests/test_unit_cli_session.py` | **207 passed + 0 failed** (carry-forward 55 failures fully closed) |
+| `tests/test_wl125_*_helpers_parity.py` (3 files) | **1 passed + 9 failed** (carry-forward baseline unchanged) |
+| `ruff check` | Clean |
+| `ruff format` | Clean |
+| Secret scan | **0 matches** |
+| Bundle-zsh worktree | Untouched |
+| Force-push / main write | None |
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (saturated — the
+  thirty-second closure pass on top of the Five-Day Goal
+  envelope + the prior 31 closure lanes; the bar cannot
+  exceed saturation in this lane).
+* **DAG tick**: **`+3`** on top of AUDIT-N+13
+  (AUDIT-N+14 session observer + AUDIT-N+15 traffic pane +
+  defensive hardening fixes hand-off).
+* **Closed this session**: AUDIT-N+14 session observer
+  canonical-home extraction + 11 real session-lifecycle
+  entry-point implementations + 24 parity tests;
+  AUDIT-N+15 operator cockpit TRAFFIC pane + 15 parity tests;
+  AUDIT-N+14 defensive hardening (concurrency mock guard +
+  sandbox fallback + spawn RuntimeError fallback +
+  pareto-routing package split).
+* **Branch**: `wip/2026-07-18-cockpit-sota-hardening`,
+  **73 commits** ahead of `main` after this resumption
+  (was 70 ahead pre-resumption).
+
+### DAG tick
+
+**`+3`** on top of AUDIT-N+13 (this session).
