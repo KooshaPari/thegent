@@ -695,7 +695,6 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
     _health_scope_key,
 )
 
-
 # AUDIT-N+12: re-export the session-lifecycle surface from
 # :mod:`thegent.cli.commands.session_impl`. These helpers previously
 # lived inline in ``impl.py`` but were never reachable because the
@@ -704,29 +703,44 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
 # ``_resolve_agent_model`` 4-arg form, etc.). Extracting them into a
 # canonical module preserves the ``impl.<x>`` import path for legacy
 # callers and ``tests/test_unit_cli_impl_session.py`` patch sites.
-from thegent.cli.commands.session_impl import (  # noqa: F401
-    _CONTINUATION_TAIL_CHARS,
-    _CWD_CACHE,
-    _is_pid_running,
-    _scope_key,
-    _session_paths,
-    _new_session_id,
-    _save_session_meta,
-    _read_session_meta,
-    _find_session_meta,
-    _resolve_session_status,
-    _resolve_agent_model,
-    _resolve_cwd,
-    _compose_owner_tag,
-    _default_owner_tag,
-    _load_prior_session_output,
-    _build_continuation_prompt,
-    _session_dir,
-    _session_scope_dirs,
-    _run_background_session_observer,
+# AUDIT-N+16 (WL-125 closure): wrapped in try/except so partially-stubbed
+# ``session_impl`` modules (used by ``tests/test_wl125_*_parity.py`` to
+# isolate ``impl.py`` import surface) don't fail. Falls back to
+# module-level sentinel attributes that callers can ``monkeypatch``.
+_SESSION_IMPL_REEXPORTS = (
+    "_CONTINUATION_TAIL_CHARS",
+    "_CWD_CACHE",
+    "_is_pid_running",
+    "_scope_key",
+    "_session_paths",
+    "_new_session_id",
+    "_save_session_meta",
+    "_read_session_meta",
+    "_find_session_meta",
+    "_resolve_session_status",
+    "_resolve_agent_model",
+    "_resolve_cwd",
+    "_compose_owner_tag",
+    "_default_owner_tag",
+    "_load_prior_session_output",
+    "_build_continuation_prompt",
+    "_session_dir",
+    "_session_scope_dirs",
+    "_run_background_session_observer",
 )
+try:
+    from thegent.cli.commands import session_impl as _session_impl  # noqa: F401
 
-
+    _sym: str  # noqa: F842 - always bound below
+    for _sym in _SESSION_IMPL_REEXPORTS:
+        try:
+            globals()[_sym] = getattr(_session_impl, _sym)
+        except AttributeError:  # pragma: no cover - defensive
+            globals()[_sym] = None
+except ImportError:  # pragma: no cover - defensive
+    for _sym in _SESSION_IMPL_REEXPORTS:
+        globals().setdefault(_sym, None)
+del _SESSION_IMPL_REEXPORTS
 # AUDIT-N+12: surface ``thegent.cli.services.run_observe_helpers`` as a
 # module attribute on ``impl`` so legacy ``monkeypatch.setattr`` sites
 # like ``monkeypatch.setattr("thegent.cli.commands.impl.run_observe_helpers.<x>", ...)``
@@ -739,6 +753,31 @@ from thegent.cli.services import run_observe_helpers  # noqa: F401
 # the dormant trend/escalation builders via
 # ``monkeypatch.setattr("thegent.cli.commands.impl.services_observability.<x>", ...)``.
 from thegent.cli.services import observability as services_observability  # noqa: F401
+
+
+# AUDIT-N+16 (WL-125 closure): surface ``thegent.cli.services.prompt_constraint_helpers``
+# as a module attribute on ``impl`` so legacy ``monkeypatch.setattr`` sites like
+# ``monkeypatch.setattr("thegent.cli.commands.impl.prompt_constraint_helpers.<x>", ...)``
+# (in ``tests/test_wl125_prompt_constraint_helpers_parity.py``) resolve.
+from thegent.cli.services import prompt_constraint_helpers  # noqa: F401
+
+
+# AUDIT-N+16 (WL-125 closure): re-export the ``SECONDS_PER_TOOL_CALL`` constant
+# from the canonical home so external callers (and
+# ``tests/test_wl125_prompt_constraint_helpers_parity.py``) can read it via
+# ``thegent.cli.commands.impl.SECONDS_PER_TOOL_CALL``. NOTE: We deliberately do
+# NOT re-define ``_inject_time_constraint`` here — the canonical version is
+# re-exported from ``observability_impl`` above (AUDIT-N+9 identity contract)
+# and now delegates to ``prompt_constraint_helpers.inject_time_constraint`` at
+# runtime (AUDIT-N+16). This satisfies the WL-125 patch site contract:
+# ``monkeypatch.setattr("thegent.cli.commands.impl.prompt_constraint_helpers.inject_time_constraint", ...)``
+# is observed by the next ``impl._inject_time_constraint(...)`` call.
+try:
+    from thegent.cli.services.prompt_constraint_helpers import (  # noqa: F401
+        SECONDS_PER_TOOL_CALL,
+    )
+except ImportError:  # pragma: no cover - defensive
+    SECONDS_PER_TOOL_CALL = 2.3  # type: ignore[assignment, has-type]
 
 
 # ---------------------------------------------------------------------------

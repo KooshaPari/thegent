@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+# AUDIT-N+16 (WL-125 closure): default seconds-per-tool-call budget used by
+# :func:`inject_time_constraint` when callers don't override it. Exposed at
+# module scope so ``thegent.cli.commands.impl._inject_time_constraint`` can
+# forward the constant value verbatim (and tests can monkeypatch it).
+# NOTE: defaults to 2.3 to match the AUDIT-N+9/N+11 observability contract;
+# callers that need the larger 30s budget should pass the value explicitly.
+SECONDS_PER_TOOL_CALL: float = 2.3
+
 
 def inject_time_constraint(
     *,
@@ -26,4 +34,4 @@ def inject_time_constraint(
     return prompt + suffix
 
 
-__all__ = ["inject_time_constraint"]
+__all__ = ["inject_time_constraint", "SECONDS_PER_TOOL_CALL"]

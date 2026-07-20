@@ -215,6 +215,13 @@ def _inject_time_constraint(
     appends the worker-status-report footer when ``summary_mode=True`` so
     operators using ``thegent run`` get the structured output block.
 
+    AUDIT-N+16 (WL-125 closure): delegates to the canonical
+    :func:`thegent.cli.services.prompt_constraint_helpers.inject_time_constraint`
+    when available so all callers (observability, run helpers, WL-125
+    parity tests) get a single implementation. Falls back to the inline
+    implementation if the prompt-constraint module is unavailable (e.g.,
+    during partial module-stub scenarios used by parity tests).
+
     Args:
         prompt: The prompt to inject constraint into.
         timeout: Timeout in seconds.
@@ -227,6 +234,21 @@ def _inject_time_constraint(
     Returns:
         Prompt with time constraint injected.
     """
+    try:
+        from thegent.cli.services import prompt_constraint_helpers as _pch
+
+        # Look up the function on the live module each call so tests that
+        # ``monkeypatch.setattr("thegent.cli.commands.impl.prompt_constraint_helpers.inject_time_constraint", ...)``
+        # observe the patched behaviour.
+        return _pch.inject_time_constraint(
+            prompt=prompt,
+            timeout=timeout,
+            seconds_per_tool_call=seconds_per_tool_call,
+            summary_mode=summary_mode,
+        )
+    except ImportError:  # pragma: no cover - defensive
+        pass
+
     tool_calls = max(1, int(timeout / seconds_per_tool_call))
     constraint = (
         f"\n\n[TIME CONSTRAINT: You have approximately {tool_calls} tool "
