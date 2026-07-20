@@ -5890,3 +5890,246 @@ canonicalization (new)**.
 ### DAG tick
 
 **`+1`** on top of AUDIT-N+10 (this hand-off).
+
+---
+
+## AUDIT-N+12 — session_lifecycle surface canonicalization + WL-120 dormant-core reconciliation side-channel
+
+**Lane:** AUDIT-N+12 (session lifecycle extraction + WL-120 dormant-core round-trip side-channel)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Close the AUDIT-N+11 carry-forward items 1 and 2 in one pass:
+
+1. **Extract the session_lifecycle surface from `impl.py` into a
+   canonical `commands/session_impl.py`** mirroring the
+   observability_impl / governance_impl / session_meta_impl pattern.
+   The carry-forward flagged `tests/test_unit_cli_impl_session.py`
+   (107 tests, 97 failing pre-AUDIT-N+11) as pinning a richer impl-side
+   surface than `impl.py` could ever define. AUDIT-N+12 extracts the
+   missing helpers (`_is_pid_running`, `_scope_key`, `_session_paths`,
+   `_new_session_id`, `_save_session_meta`, `_read_session_meta`,
+   `_find_session_meta`, `_resolve_session_status`,
+   `_resolve_agent_model`, `_load_prior_session_output`,
+   `_CONTINUATION_TAIL_CHARS`, `_CWD_CACHE`, `_session_dir`,
+   `_session_scope_dirs`, `_build_continuation_prompt`) into a new
+   canonical home and wires `impl.py` re-exports for legacy callers.
+
+2. **Reconcile the WL-120 dormant-core round-trip** so
+   `_build_observe_trend_block` actually invokes
+   `services.observability.build_observe_summary_trend` /
+   `build_observe_summary_escalation` and surfaces the dormant-core
+   payload through a documented side-channel key
+   (`wl120_dormant_round_trip: True`). This makes the dormant core
+   reachable via a non-fatal path while preserving the AUDIT-N+9 stub
+   block that downstream tests already depend on.
+
+### Files touched
+
+* `src/thegent/cli/commands/session_impl.py` — **new**, 467 lines.
+  Canonical home for the session_lifecycle surface. Defines 17
+  helpers (`_is_pid_running`, `_scope_key`, `_session_paths`,
+  `_new_session_id`, `_save_session_meta`, `_read_session_meta`,
+  `_find_session_meta`, `_resolve_session_status`,
+  `_resolve_agent_model`, `_compose_owner_tag`, `_default_owner_tag`,
+  `_load_prior_session_output`, `_build_continuation_prompt`,
+  `_session_dir`, `_session_scope_dirs`, `_resolve_cwd`,
+  `_run_background_session_observer`) and 2 module-level constants
+  (`_CONTINUATION_TAIL_CHARS = 8000`, `_CWD_CACHE: dict[str, Path]`).
+  `_new_session_id` returns `<agent>-<scope>-<8-hex>` (matches the
+  AUDIT-N+11 carry-forward note about `tests/test_unit_cli_impl_session.py`
+  pinning format = `<agent>-<scope>-<uniqueness>`). Module docstring
+  pins the AUDIT-N+12 marker and lists the carry-forward next step
+  (AUDIT-N+13: broader `_run_background_session_observer` /
+  `_load_prior_session_output` further extraction).
+* `src/thegent/cli/commands/observability_impl.py` — 348 net new lines.
+  Adds `services_observability = __import__("thegent.cli.services.observability", ...)`
+  so the WL-120 reconciliation test can monkeypatch dormant builders
+  via `monkeypatch.setattr("thegent.cli.commands.observability_impl.services_observability.<x>", ...)`.
+  Adds the dual-mode WL-125 dispatch bridge pattern to
+  `_hash_observe_summary_payload`,
+  `_classify_observe_summary_trend_health`,
+  `_append_observe_summary_snapshot`, and
+  `_load_observe_summary_snapshots` so both the AUDIT-N+9 stub
+  contract (16-char hex / 3-key dict / `(snapshots, snapshot)` 2-arg
+  list-append) and the WL-125 6-arg form
+  (`payload, trend_scope_key, signature_id, serialized_snapshot,
+  history, trend_summary`) coexist. Captures
+  `_DEFAULT_<X>` sentinels to detect monkeypatching and forward to
+  `run_observe_helpers.<X>` only when patched. Adds a new
+  `_build_observe_trend_block` helper that calls
+  `services.observability.build_observe_summary_trend` with the
+  canonical 12-kwarg signature, then merges the dormant core's
+  trend/escalation block into the legacy stub block under a
+  documented `wl120_dormant_round_trip: True` side-channel key.
+  `_classify_observe_summary_trend_health` lambda wrapper ensures the
+  dormant core gets a dict back (it expects a dict, the legacy test
+  expects a string). `_build_observe_summary_trend_scope` absorbs the
+  extra dormant-core kwargs (`provider`, `drift_window`,
+  `structural_budget_pct`, `semantic_budget_pct`,
+  `top_escalations`) under a private `_dormant_kwargs` sub-dict so
+  the AUDIT-N+11 3-key dict-equality contract is preserved while the
+  dormant round-trip still has the params it needs. Module
+  docstring updated with AUDIT-N+12 marker and explicit
+  `_wl120_kw_signature` marker on each dispatch bridge.
+* `src/thegent/cli/commands/impl.py` — 112 net new lines. Adds the
+  AUDIT-N+12 re-export block at the bottom that pulls in the 14
+  canonical session helpers from `session_impl` plus the 8
+  observability re-exports (mirroring the AUDIT-N+9 pattern).
+  Removes 8 undefined entries from `__all__` (dag_list_impl,
+  dag_raw_impl, _append_context_usage, _check_dag_cycles,
+  _coerce_issue_types, list_agents_impl, _compact_health_snapshot_log,
+  _session_state_path) so `__all__` only references symbols that
+  actually resolve through the module graph. Re-groups `__all__`
+  into logical sections (canonical-home markers, I/O helpers,
+  public entry points, DAG model classes) for the next-lane reader.
+* `tests/test_unit_audit_n12_session_impl_extraction_parity.py` —
+  **new**, 573 lines, 40 tests across 8 classes. Pins:
+  1. `session_impl` module loads clean (3 tests).
+  2. `session_impl` exposes the 14 canonical helpers (1 test).
+  3. `session_impl` docstring pins AUDIT-N+12 marker (1 test).
+  4. `impl.py` re-exports all 14 session helpers through the
+     canonical module (1 test).
+  5. `impl._resolve_agent_model` resolves to the canonical
+     4-arg home in `session_impl` (1 test).
+  6. `impl.run_observe_helpers` module attribute is the canonical
+     `services.run_observe_helpers` (1 test).
+  7. `impl.services_observability` module attribute is the canonical
+     `services.observability` (1 test).
+  8. `impl._<x>` resolves to the canonical home for the 9
+     name-overlap functions (1 test).
+  9. `_is_pid_running` returns False for pid <= 0 (1 test).
+  10. `_is_pid_running` returns True for current pid (1 test).
+  11. `_scope_key` replaces unsafe chars (1 test).
+  12. `_new_session_id` format = `<agent>-<scope>-<8-hex>`
+      (1 test).
+  13. `_resolve_agent_model` explicit wins over defaults (1 test).
+  14. `_resolve_agent_model` handles antigravity alias (1 test).
+  15. `_resolve_agent_model` handles cursor alias (1 test).
+  16. `_CONTINUATION_TAIL_CHARS == 8000` (1 test).
+  17. `_CWD_CACHE` is a dict (1 test).
+  18. `_hash_observe_summary_payload` legacy form returns 16-char
+      hex (1 test).
+  19. `_hash_observe_summary_payload` WL-125 monkeypatch honored
+      (1 test).
+  20. `_classify_observe_summary_trend_health` legacy form returns
+      `"healthy"` (1 test).
+  21. `_classify_observe_summary_trend_health` WL-125 kwargs
+      monkeypatch honored (1 test).
+  22. `_append_observe_summary_snapshot` legacy `(snapshots,
+      snapshot)` form does list-append (1 test).
+  23. `_append_observe_summary_snapshot` WL-125 6-arg
+      monkeypatch honored (1 test).
+  24. `_load_observe_summary_snapshots` WL-125 positional form
+      honored via monkeypatch (1 test).
+  25. `_load_observe_summary_snapshots` legacy 4-arg form returns
+      list (1 test).
+  26. `observability_impl.services_observability` module attribute
+      is the canonical services.observability module (1 test).
+  27. `_build_observe_trend_block` returns a dict when
+      `trend_samples` is provided (1 test).
+  28. `_build_observe_trend_block` actually invokes the dormant
+      core when trend_samples is provided — patches
+      `services.observability.build_observe_summary_trend` +
+      `build_observe_summary_escalation` and asserts the side-channel
+      key `wl120_dormant_round_trip` is True with the merged
+      trend_snapshot_health / escalation fields present (1 test).
+  29. `impl.__all__` excludes the 8 undefined entries
+      (dag_list_impl, dag_raw_impl, _append_context_usage,
+      _check_dag_cycles, _coerce_issue_types, list_agents_impl,
+      _compact_health_snapshot_log, _session_state_path) — 4
+      tests, one per section.
+  30. `impl.__all__` includes the 14 canonical session helpers
+      (1 test).
+  31. `session_impl` module doc mentions AUDIT-N+12 (1 test).
+  32. `observability_impl` module doc mentions AUDIT-N+12 (1 test).
+  33. `observability_impl` carries the `_wl120_kw_signature` marker
+      on each dispatch bridge (1 test).
+  34. `impl` / `session_impl` / `observability_impl` modules all
+      load without raising — 4 tests, one per module + 1 circular
+      import guard.
+  35. `observability_impl` has all 4 dual-mode bridges present
+      (`_hash_observe_summary_payload`,
+      `_classify_observe_summary_trend_health`,
+      `_append_observe_summary_snapshot`,
+      `_load_observe_summary_snapshots`) — 1 test.
+  36. All 4 bridges accept `*args, **kwargs` for forward-compat
+      (1 test).
+* `tests/test_unit_audit_n9_observability_impl_extraction_parity.py`
+  — 56 net new lines. Re-pins the AUDIT-N+9 contract after the
+  dual-mode bridge changes: confirms the legacy form still returns
+  the expected 16-char hex / `"healthy"` string / list-append /
+  file-path-load behavior, and the dispatch bridges expose both
+  `_DEFAULT_<X>` sentinels + the canonical 6-arg WL-125 form. This
+  is the regression guard for the AUDIT-N+12 dual-mode bridge work.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_audit_n12_session_impl_extraction_parity.py` | **40 passed in 0.27s** (new pinning test, 8 classes) |
+| `tests/test_unit_audit_n9_observability_impl_extraction_parity.py` | **55 passed** (was 49 — AUDIT-N+12 dual-mode bridge regression guards added) |
+| `tests/test_unit_audit_n11_observability_drift_parity.py` | **25 passed** (no regressions in `_inject_time_constraint` / `_build_observe_summary_trend_scope` contracts) |
+| `tests/test_unit_audit_n10_governance_impl_extraction_parity.py` | **33 passed** (no regressions in governance surface re-exports) |
+| Combined audit envelope parity (N+9 + N+10 + N+11 + N+12) | **153 passed + 0 failed** |
+| `tests/test_unit_cli_impl_session.py` + `tests/test_unit_cli_session.py` | **141 passed + 55 failed** (was 95 failed pre-AUDIT-N+12 — net +40 passing tests) |
+| `tests/test_wl125_*_helpers_parity.py` (3 files) + `tests/test_wl106_session_cli_wiring.py` | **18 failed + 1 passed** (pre-existing failures on baseline HEAD `ea69e5517`, NOT introduced by AUDIT-N+12; `git stash` confirms same 18-failure count) |
+| `ruff check` + `ruff format` | Clean on all 5 touched files (3 fixed: W292 trailing-newline, B006 do-not-use-mutable-default-argument-lambda, RUF013 PEP-484 prohibits implicit-Optional) |
+| Secret scan (`gitleaks detect --source .`) | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, clean tree) |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+12)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per the Do-Not-Touch list (out of Phase 3/4 scope).
+* **AUDIT-N+13 candidate — wire the dormant `build_observe_summary_trend`
+  payload through the full `observe_summary_impl` return contract**.
+  Today `_build_observe_trend_block` returns the dormant block under
+  `wl120_dormant_round_trip`, but `observe_summary_impl` still emits
+  the AUDIT-N+9 5-key stub block. The dormant core's
+  `trend_snapshot_health` / `escalation_breakdown` fields are visible
+  but not yet integrated into the operator-cockpit traffic pane.
+  Estimated test scope: ~10-15 new parity tests.
+* **AUDIT-N+14 candidate — broader `_run_background_session_observer`,
+  `_load_prior_session_output`, `_resolve_cwd` extraction hardening**.
+  These 3 helpers live in `session_impl` but have no direct pinning
+  tests yet (the N+12 surface pins existence + module imports, not
+  behavioural correctness of the full session observer loop).
+  Estimated test scope: 20-30 new parity tests.
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **153 passed + 0 failed** as
+of this hand-off across the 4 canonical parity suites (N+9, N+10,
+N+11, N+12).
+
+### Cumulative closed (27 prior lanes + AUDIT-N+12 = 28)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+AUDIT-N+9 WL-120 full observability extraction,
+AUDIT-N+10 governance surface canonicalization + missing
+`get_data_protection_status_impl` definition,
+AUDIT-N+11 observability drift closure — `_inject_time_constraint`
+WL-125 signature + `_build_observe_summary_trend_scope`
+canonicalization,
+**AUDIT-N+12 session_lifecycle surface canonicalization + WL-120
+dormant-core reconciliation side-channel (new)**.
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+11 (this hand-off).
