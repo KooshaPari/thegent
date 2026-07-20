@@ -31,6 +31,25 @@ from thegent.cli.commands.impl import session_contract_health_report_impl  # noq
 from thegent.cli.commands.impl import session_contract_health_trend_impl  # noqa: E402, F401
 from thegent.mcp.server.tools_skills import _ToolResult  # noqa: E402, F401
 
+# AUDIT-N+15: MCP server gate deltas — re-export the ``*_impl`` symbols
+# that ``tests/test_unit_mcp_tools.py`` and ``tests/test_unit_mcp_pre_work_gate.py``
+# patch via ``@patch("thegent.mcp.server.<name>")``.  Without these
+# module-level bindings, ``patch()`` raises ``AttributeError`` because
+# ``unittest.mock.patch`` refuses to create new attributes on the target
+# module unless ``create=True`` is passed.
+from thegent.cli.commands.impl import run_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import bg_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import status_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import stop_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import ps_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import inspect_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import logs_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import wait_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import dag_list_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import list_models_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import list_agents_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import do_next_impl  # noqa: E402, F401
+
 
 def _summary_meta(payload: dict[str, Any]) -> dict[str, Any]:
     """Build the canonical ``meta`` block for an observe/contract-health payload."""

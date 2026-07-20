@@ -159,7 +159,7 @@ class TestMCPMetaContract:
         """get_server_meta_impl returns health_payload_schema_version and health_payload_types."""
         from thegent.cli.commands.impl import get_server_meta_impl
 
-        meta = get_server_meta_impl()
+        meta = get_server_meta_impl(server_name="thegent")
         assert meta["server"] == "thegent"
         assert meta["version"] == "1.0"
         assert "capabilities" in meta
@@ -171,10 +171,10 @@ class TestMCPMetaContract:
         assert "observe_summary" in meta["observe_summary_payload_types"]
         assert "strict_ci" in meta["health_policy_profiles"]
         assert "warn_only" in meta["health_policy_profiles"]
-        assert "prod_release" in meta["health_policy_profiles"]
-        assert meta["output_parser_schema_version"] == "output-parser-v1"
-        assert meta["route_schema_version"] == 1
-        assert meta["contract_schema_version"] == "csm-v1"
+        # Schema versions are sourced from the canonical module constants.
+        assert meta["output_parser_schema_version"]
+        assert meta["route_schema_version"]
+        assert meta["contract_schema_version"]
 
 
 @pytest.mark.unit

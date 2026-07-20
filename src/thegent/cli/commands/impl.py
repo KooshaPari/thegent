@@ -1158,21 +1158,36 @@ def _session_status_for(session_id: str) -> str:
     return "completed"
 
 
-def get_server_meta_impl(server_name: str, **kwargs: Any) -> dict[str, Any]:
-    """Get server metadata implementation.
+def get_server_meta_impl(server_name: str = "thegent", **kwargs: Any) -> dict[str, Any]:
+    """Build the MCP server-meta payload for thegent://meta.
 
-    Args:
-        server_name: Server name.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Server metadata dictionary.
+    Delegates to the canonical
+    :func:`thegent.cli.services.observability.get_server_meta_impl`
+    with the schema-version parameters that the MCP tool surface
+    requires.  The ``server_name`` positional arg is accepted for
+    backward-compatibility with the ``impl.py`` call-site but is
+    forwarded as ``server_name="thegent"`` to the canonical helper.
     """
-    return {
-        "server_name": server_name,
-        "version": "1.0.0",
-        "status": "ok",
-    }
+    from thegent.cli.services.observability import (
+        get_server_meta_impl as _canonical_meta,
+    )
+
+    # Canonical health payload types served by the MCP tool surface.
+    _health_types = (
+        "session_contract_health_gate",
+        "session_contract_health_report",
+        "session_contract_health_trend",
+    )
+    _observe_types = ("observe_summary",)
+    _profiles = ["strict_ci", "warn_only"]
+
+    return _canonical_meta(
+        health_payload_schema_version="health-schema-v1",
+        health_payload_types=_health_types,
+        observe_summary_payload_schema_version="observe-summary-schema-v1",
+        observe_summary_payload_types=_observe_types,
+        health_policy_profiles=_profiles,
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ header insertion, agent-aware validation, ``_dag_path`` resolution,
 ``dag_list_impl`` / ``dag_raw_impl``, ``_resolve_prompt``). The legacy
 stubs in :mod:`thegent.cli.commands.impl` delegate here.
 """
+
 from __future__ import annotations
 
 import os
@@ -76,7 +77,7 @@ def _parse_frontmatter(raw: str) -> tuple[dict[str, Any], str]:
             continue
         key, _, value = line.partition(":")
         frontmatter[key.strip()] = value.strip()
-    return frontmatter, raw[match.end():]
+    return frontmatter, raw[match.end() :]
 
 
 def _parse_dag_full(path: Path) -> DagDocument:
@@ -101,7 +102,7 @@ def _parse_dag_full(path: Path) -> DagDocument:
 
     if "|" in body:
         before_table = body[: body.find("|")]
-        table_block = body[body.find("|"):]
+        table_block = body[body.find("|") :]
     else:
         before_table = body
         table_block = ""
@@ -223,12 +224,7 @@ def _parse_depends_on(depends_on: Any) -> list[str]:
     if isinstance(depends_on, str):
         # Strip em/en-dashes and "-" sentinel so legacy "-", "—", "—"
         # all normalize to an empty list.
-        cleaned = (
-            depends_on.replace("\u2014", "")
-            .replace("\u2013", "")
-            .replace("—", "")
-            .replace("-", "")
-        )
+        cleaned = depends_on.replace("\u2014", "").replace("\u2013", "").replace("—", "").replace("-", "")
         return [d.strip() for d in cleaned.split(",") if d.strip()]
     if isinstance(depends_on, list):
         return [str(d) for d in depends_on if d]
@@ -278,19 +274,14 @@ def _validate_dag(doc: DagDocument) -> list[str]:
         deps = _parse_depends_on(task.get("depends_on"))
         for dep in deps:
             if dep not in task_ids:
-                errors.append(
-                    f"Task {task.get('id')!r} depends on unknown task {dep!r}"
-                )
+                errors.append(f"Task {task.get('id')!r} depends on unknown task {dep!r}")
         agent = task.get("agent", "")
         agent_err = _validate_agent(agent) if agent else None
         if agent_err:
             errors.append(agent_err)
         status = task.get("status", "")
         if status == "done" and not (task.get("evidence") or task.get("session_id")):
-            errors.append(
-                f"Task {task.get('id')!r} has status 'done' but is missing "
-                f"evidence / session_id"
-            )
+            errors.append(f"Task {task.get('id')!r} has status 'done' but is missing evidence / session_id")
     return errors
 
 
@@ -310,9 +301,7 @@ def _check_dag_cycles(tasks: list[dict[str, Any]]) -> list[str]:
         deps = _parse_depends_on(task.get("depends_on"))
         for dep in deps:
             if dep not in task_ids:
-                errors.append(
-                    f"unknown task {task.get('id')!r} depends on {dep!r}"
-                )
+                errors.append(f"unknown task {task.get('id')!r} depends on {dep!r}")
 
     adj: dict[str, list[str]] = {}
     for task in tasks:
@@ -322,7 +311,7 @@ def _check_dag_cycles(tasks: list[dict[str, Any]]) -> list[str]:
         adj[tid] = _parse_depends_on(task.get("depends_on"))
 
     WHITE, GRAY, BLACK = 0, 1, 2
-    color: dict[str, int] = {tid: WHITE for tid in adj}
+    color: dict[str, int] = dict.fromkeys(adj, WHITE)
     stack: list[str] = []
     seen_cycles: set[str] = set()
 
@@ -442,9 +431,7 @@ def _atomic_write(path: Path, content: str, *, backup: bool = False) -> None:
         backup_path = target.with_suffix(target.suffix + ".bak")
         backup_path.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
     target.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(
-        prefix=target.name + ".", dir=str(target.parent or ".")
-    )
+    fd, tmp_name = tempfile.mkstemp(prefix=target.name + ".", dir=str(target.parent or "."))
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(content)
@@ -502,7 +489,7 @@ def dag_list_impl(*, cd: Path | None = None) -> dict[str, Any]:
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}"}
     doc = _parse_dag_full(dag_path)
-    return {"tasks": doc.tasks, "path": str(dag_path)}
+    return {"frontmatter": doc.frontmatter, "tasks": doc.tasks, "path": str(dag_path)}
 
 
 def dag_raw_impl(*, cd: Path | None = None) -> str:
