@@ -738,6 +738,27 @@ from thegent.cli.services import observability as services_observability  # noqa
 from thegent.cli.services import prompt_constraint_helpers  # noqa: F401
 
 
+# AUDIT-N+16 (WL-125 closure): surface canonical ``thegent.cli.services`` helper
+# modules as attributes on ``impl`` so legacy ``monkeypatch.setattr`` sites
+# like ``monkeypatch.setattr("thegent.cli.commands.impl.<svc_module>.<x>", ...)``
+# (in ``tests/test_wl125_*_parity.py``) resolve. These are thin re-exports:
+# canonical implementations live in the respective ``services`` submodules.
+from thegent.cli.services import pre_work_gate_helpers  # noqa: F401
+from thegent.cli.services import process_helpers  # noqa: F401
+from thegent.cli.services import retry_helpers  # noqa: F401
+from thegent.cli.services import run_audio_helpers  # noqa: F401
+from thegent.cli.services import run_event_helpers  # noqa: F401
+from thegent.cli.services import run_health_helpers  # noqa: F401
+from thegent.cli.services import run_input_helpers  # noqa: F401
+from thegent.cli.services import run_model_helpers  # noqa: F401
+from thegent.cli.services import run_post_surface_helpers  # noqa: F401
+from thegent.cli.services import run_session_helpers  # noqa: F401
+from thegent.cli.services import run_workstream_helpers  # noqa: F401
+from thegent.cli.services import session_id_helpers  # noqa: F401
+from thegent.cli.services import session_path_helpers  # noqa: F401
+from thegent.cli.services import spawn_retry_helpers  # noqa: F401
+
+
 # AUDIT-N+16 (WL-125 closure): re-export the ``SECONDS_PER_TOOL_CALL`` constant
 # from the canonical home so external callers (and
 # ``tests/test_wl125_prompt_constraint_helpers_parity.py``) can read it via
