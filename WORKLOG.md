@@ -6133,3 +6133,171 @@ dormant-core reconciliation side-channel (new)**.
 ### DAG tick
 
 **`+1`** on top of AUDIT-N+11 (this hand-off).
+
+## AUDIT-N+13 — dormant-core trend payload wire-up to observe_summary_impl outer contract
+
+**Lane:** AUDIT-N+13 (WL-120 dormant-core outer-contract integration)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Close the AUDIT-N+12 carry-forward item 1: wire the dormant
+`build_observe_summary_trend` / `build_observe_summary_escalation`
+payload through the full `observe_summary_impl` outer return contract
+instead of stopping at the inner `_build_observe_trend_block`
+side-channel flag.
+
+Today the dormant core is reachable only as the
+`wl120_dormant_round_trip: True` side-channel key inside
+`result["trend_summary"]["wl120_dormant_round_trip"]`. AUDIT-N+13
+extracts the wire-up into a new canonical helper
+`_build_observe_trend_payload` and threads the dormant envelope
+through the **outer** `observe_summary_impl` return contract under
+documented keys that the operator-cockpit traffic pane can read
+without traversing the inner stub block.
+
+### Files touched
+
+* `src/thegent/cli/commands/observability_impl.py` — **+217 lines**.
+  New canonical helper `_build_observe_trend_payload` (157 lines,
+  immediately after `_build_observe_trend_block`) that owns the full
+  dormant-core wire-up: lazy import of `services.observability`,
+  invocation of `build_observe_summary_trend` with the canonical 13
+  kwargs, invocation of `build_observe_summary_escalation`, and
+  safe-default fallback when the dormant core raises. Also updated
+  `observe_summary_impl` to call the new helper when
+  `trend_samples` is set, attaching the dormant envelope under the
+  outer keys `trend_payload`, `escalation_breakdown`,
+  `trend_scope_signature`, and `wl120_dormant_round_trip` (the
+  latter now mirrored explicitly to `True`/`False` rather than only
+  on success). Module doc updated to reference AUDIT-N+13 +
+  `_build_observe_trend_payload` + the outer envelope keys. Both
+  `_build_observe_trend_block` (AUDIT-N+12) and
+  `_build_observe_trend_payload` (new) added to `__all__`.
+* `src/thegent/cli/commands/impl.py` — **+5 lines**. Re-export
+  `_build_observe_trend_block` + `_build_observe_trend_payload` in
+  `__all__` and the `from thegent.cli.commands.observability_impl
+  import (...)` block so legacy `impl.<x>` import sites keep working.
+* `tests/test_unit_audit_n13_dormant_trend_payload_parity.py` —
+  **new, 585 lines**. 24 tests in 7 classes:
+  1. `TestBuildObserveTrendPayloadExists` (5 tests) — canonical
+     home, `__all__` membership, re-export identity with
+     `impl._build_observe_trend_payload`.
+  2. `TestBuildObserveTrendPayloadShape` (4 tests) — outer envelope
+     keys present for both disabled and enabled modes, snapshot-ids
+     always a list.
+  3. `TestBuildObserveTrendPayloadDormantWire` (3 tests) —
+     `build_observe_summary_trend` invoked with all 13 canonical
+     kwargs, `build_observe_summary_escalation` invoked with
+     pending/past_sla/top_escalations forwarded.
+  4. `TestBuildObserveTrendPayloadResilience` (2 tests) — failed
+     dormant-core callables return safe defaults and never propagate.
+  5. `TestObserveSummaryImplWL120DormantWire` (5 tests) — full
+     `observe_summary_impl` run with `_collect_observe_kpis` /
+     `_collect_observe_drift` / `_count_pending_with_cap` monkeypatched
+     so the function runs end-to-end without a populated telemetry
+     layer; pins the outer contract (`trend_payload`,
+     `escalation_breakdown`, `trend_scope_signature`,
+     `wl120_dormant_round_trip`, legacy `trend_summary` stub block
+     preservation, `generated_query` pinned, dormant-failure safe
+     defaults).
+  6. `TestObservabilityImplDocstringAuditN13` (2 tests) — module
+     doc enumerates the AUDIT-N+13 marker + outer envelope keys.
+  7. `TestAuditN13ModuleGraphLoadsClean` (3 tests) — module graph
+     loads clean, `_build_observe_trend_payload` defined in canonical
+     home.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_audit_n13_dormant_trend_payload_parity.py` | **24 passed in 0.21s** (new pinning test, 7 classes) |
+| `tests/test_unit_audit_n12_session_impl_extraction_parity.py` | **40 passed** (no regressions in AUDIT-N+12 session-lifecycle surface) |
+| `tests/test_unit_audit_n11_observability_drift_parity.py` | **25 passed** (no regressions in `_inject_time_constraint` / `_build_observe_summary_trend_scope` contracts) |
+| `tests/test_unit_audit_n10_governance_impl_extraction_parity.py` | **33 passed** (no regressions in governance surface re-exports) |
+| `tests/test_unit_audit_n9_observability_impl_extraction_parity.py` | **55 passed** (no regressions in dual-mode bridge contracts) |
+| `tests/test_unit_audit_n6_wrapper_delegation_parity.py` | 13 passed |
+| `tests/test_unit_audit_n5_execution_io_parity.py` | 32 passed |
+| Combined audit envelope parity (N+5 + N+6 + N+9 + N+10 + N+11 + N+12 + N+13) | **222 passed + 0 failed** |
+| `tests/test_unit_cli_impl_session.py` + `tests/test_unit_cli_session.py` | **141 passed + 55 failed** (carry-forward baseline unchanged from AUDIT-N+12) |
+| `tests/test_wl125_*_helpers_parity.py` (3 files) + `tests/test_wl106_session_cli_wiring.py` | **4 passed + 20 failed** (pre-existing carry-forward baseline unchanged from AUDIT-N+12) |
+| `ruff check` | Clean on all 3 touched files |
+| `ruff format` | Clean on all 3 touched files (1 fix applied: W292 trailing-newline) |
+| Secret scan (`gitleaks detect --source .`) | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, clean tree) |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+13)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per the Do-Not-Touch list (out of Phase 3/4 scope).
+* **AUDIT-N+14 candidate — broader `_run_background_session_observer`,
+  `_load_prior_session_output`, `_resolve_cwd` extraction hardening**.
+  These 3 helpers live in `session_impl` but have no direct pinning
+  tests yet (the N+12 surface pins existence + module imports, not
+  behavioural correctness of the full session observer loop).
+  Estimated test scope: 20-30 new parity tests.
+* **AUDIT-N+15 candidate — operator-cockpit traffic-pane wire-up**.
+  The dormant-core envelope (`trend_payload`,
+  `escalation_breakdown`, `trend_scope_signature`) now reaches the
+  outer `observe_summary_impl` return contract but no UI / CLI pane
+  reads it yet. The next lane should surface the dormant payload in
+  the cockpit traffic pane (`thegent cockpit --observe-summary`)
+  with a `wl120_dormant_round_trip` chip and an escalation-breakdown
+  table. Estimated scope: 5-10 new tests + cockpit pane render
+  helper.
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **222 passed + 0 failed** as
+of this hand-off across the 7 canonical parity suites (N+5, N+6,
+N+9, N+10, N+11, N+12, N+13).
+
+### Cumulative closed (28 prior lanes + AUDIT-N+13 = 29)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+AUDIT-N+9 WL-120 full observability extraction,
+AUDIT-N+10 governance surface canonicalization + missing
+`get_data_protection_status_impl` definition,
+AUDIT-N+11 observability drift closure — `_inject_time_constraint`
+WL-125 signature + `_build_observe_summary_trend_scope`
+canonicalization,
+AUDIT-N+12 session_lifecycle surface canonicalization + WL-120
+dormant-core reconciliation side-channel,
+**AUDIT-N+13 dormant-core trend payload wire-up to
+`observe_summary_impl` outer contract (new)**.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (saturated — the
+  twenty-ninth closure pass on top of the Five-Day Goal
+  envelope + the prior 28 closure lanes; the bar cannot
+  exceed saturation in this lane).
+* **DAG tick**: **`+1`** (this AUDIT-N+13 hand-off on top
+  of AUDIT-N+12 dormant-core reconciliation side-channel).
+* **Closed this lane**: AUDIT-N+13 dormant-core trend payload
+  wire-up to `observe_summary_impl` outer contract +
+  `_build_observe_trend_payload` canonical helper + 24 parity
+  tests pinning the dormant envelope, the outer-contract mirror
+  keys, the safe-default resilience path, and the legacy stub
+  block backward compat.
+* **Branch**: `wip/2026-07-18-cockpit-sota-hardening`,
+  **69 commits** ahead of `main` after this hand-off
+  (was 68 ahead pre-AUDIT-N+13).
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+12 (this hand-off).
