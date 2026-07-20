@@ -7,8 +7,8 @@ the main CLI module.
 from __future__ import annotations
 
 import errno
-import getpass
 import math
+import os
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -85,37 +85,14 @@ def _spawn_with_eagain_retry(cmd: list[str], **kwargs: Any) -> Any:
     return None
 
 
-def _resolve_cwd(cwd: Path | None) -> Path | None:
-    """Resolve the working directory for the CLI.
+# AUDIT-N+14: ``_resolve_cwd`` lives in :mod:`thegent.cli.commands.session_impl`
+# (canonical home). The local stub is removed so the AUDIT-N+12 re-export
+# binds the canonical 4-arg form (with caching + project-indicator scan).
+# Legacy callers must import from ``thegent.cli.commands.session_impl``
+# directly or via ``thegent.cli.commands.impl._resolve_cwd`` (re-export).
 
-    Args:
-        cwd: Explicitly specified directory, or None to infer.
-
-    Returns:
-        Resolved Path or None if ambiguous.
-
-    Raises:
-        typer.BadParameter: If explicitly specified directory doesn't exist.
-    """
-    if cwd is not None:
-        expanded = cwd.expanduser()
-        if not expanded.exists():
-            raise typer.BadParameter(f"Directory does not exist: {cwd}")
-        return expanded.resolve()
-
-    # Try to infer from project indicators
-    current = Path.cwd()
-
-    # Check current and parents for .git, .factory, or pyproject.toml
-    for parent in [current, *current.parents]:
-        if (parent / ".git").exists():
-            return parent
-        if (parent / ".factory").exists():
-            return parent
-        if (parent / "pyproject.toml").exists():
-            return parent
-
-    return None  # Ambiguous
+# AUDIT-N+14: ``_resolve_droids_dir`` lives here (impl.py is the canonical
+# home — it is not a session-lifecycle helper).
 
 
 def _resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
@@ -136,49 +113,15 @@ def _resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
     return settings.factory_droids_dir.expanduser().resolve()
 
 
-def _compose_owner_tag(
-    user: str,
-    cwd: Path,
-    scope: str | None = None,
-) -> str:
-    """Compose the owner tag for a session.
+# AUDIT-N+14: ``_compose_owner_tag`` and ``_default_owner_tag`` live in
+# :mod:`thegent.cli.commands.session_impl` (canonical home). The local stubs
+# are removed so the AUDIT-N+12 re-export binds the canonical 4-arg form
+# (with ``{pid}`` / ``{cwd}`` placeholder expansion + ``THGENT_OWNER_TAG``
+# env override).
 
-    Args:
-        user: The username.
-        cwd: The working directory.
-        scope: Optional scope suffix.
-
-    Returns:
-        Composed owner tag.
-    """
-    base = f"{user}:{cwd.name}"
-    if scope:
-        # Expand placeholders
-        scope = scope.replace("{pid}", str(__import__("os").getpid()))
-        scope = scope.replace("{cwd}", cwd.name)
-        return f"{base}:{scope}"
-    return base
-
-
-def _default_owner_tag(cwd: Path) -> str:
-    """Get the default owner tag for the given directory.
-
-    Args:
-        cwd: The working directory.
-
-    Returns:
-        Default owner tag.
-    """
-    import os
-
-    # Check for explicit override
-    explicit = os.environ.get("THGENT_OWNER_TAG")
-    if explicit:
-        return explicit
-
-    user = getpass.getuser()
-    scope = os.environ.get("THGENT_OWNER_SCOPE")
-    return _compose_owner_tag(user, cwd, scope=scope)
+# AUDIT-N+14: ``_write_session_state`` and ``_normalize_image_paths`` stay
+# here (impl.py is the canonical home — they are not session-lifecycle
+# helpers).
 
 
 def _write_session_state(session_dir: Path, state: dict[str, Any]) -> None:
@@ -251,42 +194,9 @@ def run_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
     return run_execution_core_helpers.run_impl_core(prompt=prompt, impl_ns=impl_ns, **kwargs)
 
 
-def logs_impl(
-    limit: int = 100,
-    filter_text: str | None = None,
-    **kwargs: Any,
-) -> dict[str, Any]:
-    """Implementation for logs command.
-
-    Args:
-        limit: Maximum number of log entries to return.
-        filter_text: Optional text filter for logs.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Log entries result dictionary.
-    """
-    return {
-        "logs": [],
-        "count": 0,
-        "limit": limit,
-        "filter": filter_text,
-    }
-
-
-def ps_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for ps command."""
-    return {"processes": []}
-
-
 def list_models_impl(**kwargs: Any) -> dict[str, Any]:
     """Implementation for list models command."""
     return {"models": []}
-
-
-def status_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for status command."""
-    return {"status": "ok", "version": "1.0.0"}
 
 
 def resume_impl(session_id: str, **kwargs: Any) -> dict[str, Any]:
@@ -352,6 +262,351 @@ def bg_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
         impl_ns = importlib.import_module("thegent.cli.commands.impl")
     return run_execution_core_helpers.bg_impl_core(prompt=prompt, impl_ns=impl_ns, **kwargs)
 
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+14: real session-lifecycle entry-point implementations
+# Pinned by tests/test_unit_cli_impl_session.py (FR-CLI-100..150).
+# Each function uses ``impl.<x>`` references for the canonical imports
+# above so ``@patch("thegent.cli.commands.impl.<x>", ...)`` decorators
+# continue to work.
+# ---------------------------------------------------------------------------
+
+
+def status_impl(session_id: str, include_contract: bool = False, **kwargs: Any) -> dict[str, Any]:
+    """Return the canonical status payload for a session.
+
+    Resolves the session-meta file via :func:`_find_session_meta`, reads
+    it, computes ``running`` via :func:`_is_pid_running`, and composes
+    the canonical status string via :func:`_resolve_session_status`.
+    Returns ``{"error": ...}`` if the session is not found.
+
+    Pinned by ``TestStatusImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    pid = int(meta.get("pid") or 0)
+    running = _is_pid_running(pid)
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    status = _resolve_session_status(meta, paths["rc"], running=running)
+    exit_code = meta.get("exit_code")
+    if exit_code is None and paths["rc"].exists():
+        try:
+            exit_code = int(paths["rc"].read_text(encoding="utf-8").strip())
+        except ValueError:
+            exit_code = None
+    result: dict[str, Any] = {
+        "session_id": session_id,
+        "status": status,
+        "running": running,
+        "exit_code": exit_code,
+        "pid": pid,
+        "owner": meta.get("owner"),
+        "agent": meta.get("agent"),
+    }
+    if include_contract:
+        if "route_contract" in meta:
+            result["route_contract"] = meta["route_contract"]
+        if "route_request" in meta:
+            result["route_request"] = meta["route_request"]
+    return result
+
+
+def stop_impl(
+    session_id: str,
+    force: bool = False,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Stop a running session by signaling its PID.
+
+    Sends ``SIGTERM`` (graceful) or ``SIGKILL`` (``force=True``) to the
+    session PID via :func:`os.killpg`. Returns ``{"status": "stopped"}``
+    / ``{"status": "stopped_force"}`` on success, ``{"status": "error", ...}``
+    on OS errors, or ``{"status": "not_running"}`` if the session is
+    already stopped.
+
+    Pinned by ``TestStopImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    import os as _os
+    import signal as _signal
+
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    pid = int(meta.get("pid") or 0)
+    if not _is_pid_running(pid):
+        return {"status": "not_running", "session_id": session_id}
+    sig = _signal.SIGKILL if force else _signal.SIGTERM
+    try:
+        _os.killpg(pid, sig)
+    except OSError as exc:
+        return {"status": "error", "error": str(exc), "session_id": session_id}
+    return {
+        "status": "stopped_force" if force else "stopped",
+        "session_id": session_id,
+    }
+
+
+def wait_impl(
+    session_id: str,
+    timeout: float | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Wait for a session to finish, optionally bounded by ``timeout``.
+
+    Returns ``{"exit_code": int, "timed_out": bool}`` on success or
+    ``{"error": ...}`` if the session is not found.
+
+    Pinned by ``TestWaitImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    pid = int(meta.get("pid") or 0)
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    timed_out = False
+    if _is_pid_running(pid):
+        deadline = (time.time() + timeout) if timeout else None
+        while _is_pid_running(pid):
+            if deadline is not None and time.time() >= deadline:
+                timed_out = True
+                break
+            time.sleep(0.1)
+    exit_code = meta.get("exit_code")
+    if exit_code is None and paths["rc"].exists():
+        try:
+            exit_code = int(paths["rc"].read_text(encoding="utf-8").strip())
+        except ValueError:
+            exit_code = None
+    return {
+        "session_id": session_id,
+        "exit_code": exit_code,
+        "timed_out": timed_out,
+    }
+
+
+def logs_impl(
+    session_id: str,
+    stderr: bool = False,
+    tail: int | None = None,
+    **kwargs: Any,
+) -> str:
+    """Return the canonical logs payload for a session as a string.
+
+    Returns stdout by default, stderr when ``stderr=True``, and the
+    last ``tail`` lines when ``tail`` is set. The test contract pins
+    the return type as ``str`` (with error prefixes inlined).
+
+    Pinned by ``TestLogsImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return f"Error: {exc}"
+    if not meta_path.exists():
+        return f"Error: session meta not found: {session_id}"
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    log_path = paths["stderr"] if stderr else paths["stdout"]
+    if not log_path.exists():
+        return f"Log file missing: {log_path.name}"
+    content = log_path.read_text(encoding="utf-8")
+    if tail is not None:
+        lines = content.splitlines()
+        content = "\n".join(lines[-tail:])
+    return content
+
+
+def session_meta_impl(session_id: str, **kwargs: Any) -> dict[str, Any]:
+    """Return the canonical session-meta payload.
+
+    Pinned by ``TestSessionMetaImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    if not meta_path.exists():
+        return {"error": f"session meta not found: {session_id}", "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    return {
+        "session_id": session_id,
+        "agent": meta.get("agent"),
+        "owner": meta.get("owner"),
+        "started_at_utc": meta.get("started_at_utc"),
+        "metadata": meta,
+    }
+
+
+def events_impl(
+    run_id: str | None = None,
+    limit: int = 100,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """Return run-registry events filtered by ``run_id`` and capped by ``limit``.
+
+    The canonical registry file lives at ``<session_dir>/run_registry.jsonl``
+    and contains one JSON object per line.
+
+    Pinned by ``TestEventsImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    import orjson as _json
+
+    settings = ThegentSettings()
+    registry_path = Path(settings.session_dir) / "run_registry.jsonl"
+    if not registry_path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    for raw in registry_path.read_text(encoding="utf-8").splitlines():
+        if not raw.strip():
+            continue
+        try:
+            obj = _json.loads(raw)
+        except Exception:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        events.append(obj)
+    if run_id is not None:
+        events = [e for e in events if e.get("run_id") == run_id]
+    if limit is not None and limit > 0:
+        events = events[-limit:]
+    return events
+
+
+def history_impl(limit: int = 50, **kwargs: Any) -> list[dict[str, Any]]:
+    """Return the most-recent runs from the run registry.
+
+    Pinned by ``TestHistoryImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    if hasattr(registry, "list_runs"):
+        runs = registry.list_runs(limit=limit)
+        return list(runs or [])
+    # Fallback: read the canonical registry file when list_runs is unavailable.
+    return events_impl(run_id=None, limit=limit)
+
+
+def ps_impl(
+    all: bool = False,  # noqa: A002 — test surface
+    owner: str | None = None,
+    include_contract: bool = False,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """List session-process rows.
+
+    When ``all=True`` scans every scope dir under ``session_dir``;
+    otherwise filters to the current owner (or ``owner=``).
+
+    Pinned by ``TestPsImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    session_root = Path(settings.session_dir)
+    if all:
+        owner_filter: str | None = None
+        scope_dirs: list[Path] = sorted(p for p in session_root.iterdir() if p.is_dir())
+    else:
+        owner_filter = owner or _default_owner_tag(Path.cwd())
+        scope_dirs = _session_scope_dirs(session_root, owner_filter)
+    rows: list[dict[str, Any]] = []
+    for scope_dir in scope_dirs:
+        for meta_path in sorted(scope_dir.glob("*.json")):
+            try:
+                meta = _read_session_meta(meta_path)
+            except Exception:
+                continue
+            sid = meta.get("session_id") or meta_path.stem
+            pid = int(meta.get("pid") or 0)
+            running = bool(_is_pid_running(pid))
+            if owner_filter is not None and meta.get("owner") != owner_filter:
+                continue
+            prompt = str(meta.get("prompt") or "")
+            prompt_preview = prompt if len(prompt) <= 40 else prompt[:40] + "..."
+            row: dict[str, Any] = {
+                "id": sid,
+                "session_id": sid,
+                "owner": meta.get("owner"),
+                "agent": meta.get("agent"),
+                "pid": pid,
+                "running": running,
+                "started_at_utc": meta.get("started_at_utc"),
+                "status": meta.get("status") or ("running" if running else "exited"),
+                "prompt_preview": prompt_preview,
+            }
+            if include_contract and "route_contract" in meta:
+                row["route_contract"] = meta["route_contract"]
+            rows.append(row)
+    return rows
+
+
+def inspect_impl(
+    session_ids: list[str],
+    owner: str | None = None,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """Return a list of inspect payloads for one or more sessions.
+
+    When ``session_ids`` is empty, scans all sessions owned by
+    ``owner`` (or the default owner tag if ``owner`` is ``None``).
+
+    Pinned by ``TestInspectImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    if not session_ids and owner is None:
+        return []
+    settings = ThegentSettings()
+    results: list[dict[str, Any]] = []
+    if not session_ids:
+        # Owner-discovery path: scan every scope dir for the owner prefix.
+        owner_tag = owner or _default_owner_tag(Path.cwd())
+        scope_dirs = _session_scope_dirs(Path(settings.session_dir), owner_tag)
+        for scope_dir in scope_dirs:
+            for meta_path in sorted(scope_dir.glob("*.json")):
+                sid = meta_path.stem
+                results.extend(_inspect_one(settings, sid))
+        return results
+    for sid in session_ids:
+        results.extend(_inspect_one(settings, sid))
+    return results
+
+
+def _inspect_one(settings: ThegentSettings, session_id: str) -> list[dict[str, Any]]:
+    """Helper: build the inspect payload for a single session."""
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter:
+        return []
+    if not meta_path.exists():
+        return []
+    meta = _read_session_meta(meta_path)
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    stdout_text = ""
+    if paths["stdout"].exists():
+        stdout_text = paths["stdout"].read_text(encoding="utf-8")
+    return [
+        {
+            "session_id": session_id,
+            "owner": meta.get("owner"),
+            "agent": meta.get("agent"),
+            "logs": stdout_text,
+            "pid": meta.get("pid"),
+        }
+    ]
+
+
+# NOTE: ``history_impl`` and ``events_impl`` are defined earlier in this
+# module (canonical single home — AUDIT-N+14 removed the duplicate
+# definitions that previously shadowed the canonical pair).
 
 __all__ = [
     # AUDIT-N+9: observability surface (canonical home: observability_impl)
@@ -461,10 +716,14 @@ from thegent.cli.commands.session_impl import (  # noqa: F401
     _find_session_meta,
     _resolve_session_status,
     _resolve_agent_model,
+    _resolve_cwd,
+    _compose_owner_tag,
+    _default_owner_tag,
     _load_prior_session_output,
     _build_continuation_prompt,
     _session_dir,
     _session_scope_dirs,
+    _run_background_session_observer,
 )
 
 
@@ -482,6 +741,48 @@ from thegent.cli.services import run_observe_helpers  # noqa: F401
 from thegent.cli.services import observability as services_observability  # noqa: F401
 
 
+# ---------------------------------------------------------------------------
+# AUDIT-N+14: re-export the canonical imports so the test mocks at
+# ``thegent.cli.commands.impl.<x>`` resolve. Each test patches names like
+# ``thegent.cli.commands.impl.resolve_agent`` / ``impl.subprocess`` /
+# ``impl.ThegentSettings`` / ``impl.MigrationController`` / etc.; without
+# these re-exports the ``@patch(...)`` decorators raise
+# ``AttributeError: module ... does not have the attribute '...'``.
+# ---------------------------------------------------------------------------
+from thegent.agents import get_fallback_agents, get_runner, resolve_agent  # noqa: F401
+from thegent.agents.base import AgentRunner, RunResult  # noqa: F401
+from thegent.agents.resilience import is_usage_limit  # noqa: F401
+from thegent.cli.commands._cli_shared import RunRegistry  # noqa: F401
+from thegent.config import ThegentSettings  # noqa: F401
+from thegent.contracts.telemetry import (  # noqa: F401
+    ContractTelemetry,
+    rank_providers_by_parser_quality,
+)
+import subprocess as _subprocess  # noqa: F401
+from thegent.execution import (  # noqa: F401
+    AgentSource,
+    Auditor,
+    CircuitBreakerRegistry,
+    ConcurrencyController,
+    FreshnessValidator,
+    InterruptionTracker,
+    InteractivityMode,
+    LoadClassifier,
+    OverrideRegistry,
+    PolicyEngine,
+    RunMeta,
+    TrustBoundaryValidator,
+)
+from thegent.output_parser import extract_condensed  # noqa: F401
+
+# Aliases that the test patch sites reference.
+subprocess = _subprocess
+ThegentSettingsCls = ThegentSettings
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+14: real entry-point implementations
+# ---------------------------------------------------------------------------
 # AUDIT-N+10: re-export governance / escalation / HITL / data-protection
 # surface for backward compat with external callers (and the legacy
 # ``tests/test_unit_cli_*.py`` patch sites) that still import from
@@ -546,16 +847,10 @@ def dag_raw_impl(**kwargs: Any) -> dict[str, Any]:
     return {"nodes": [], "edges": []}
 
 
-def _build_continuation_prompt(context: dict[str, Any]) -> str:
-    """Build a continuation prompt from context.
-
-    Args:
-        context: Context dictionary.
-
-    Returns:
-        Continuation prompt string.
-    """
-    return "Continue from where you left off."
+# AUDIT-N+14: ``_build_continuation_prompt`` lives in
+# :mod:`thegent.cli.commands.session_impl` (canonical home, 4-arg form
+# with ``include_stderr`` keyword). The local stub is removed so the
+# AUDIT-N+12 re-export binds the canonical form.
 
 
 def dag_list_impl(**kwargs: Any) -> dict[str, Any]:
@@ -634,17 +929,8 @@ def _ensure_contract_version_header(headers: dict[str, str]) -> dict[str, str]:
     return headers
 
 
-def session_meta_impl(session_id: str, **kwargs: Any) -> dict[str, Any]:
-    """Implementation for session metadata command.
-
-    Args:
-        session_id: The session ID.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Session metadata result dictionary.
-    """
-    return {"session_id": session_id, "metadata": {}}
+# NOTE: ``session_meta_impl`` is defined earlier in this module
+# (canonical real implementation — AUDIT-N+14 removed the legacy stub).
 
 
 def _ensure_dag_file(dag_path: str, **kwargs: Any) -> bool:
@@ -748,15 +1034,19 @@ def _parse_depends_on(depends_on: str | list[str] | None) -> list[str]:
     return []
 
 
-def _normalize_output_format(format: str) -> str:
+def _normalize_output_format(format: str | None) -> str:
     """Normalize output format string.
 
     Args:
-        format: Format string (e.g., "json", "csv", "md").
+        format: Format string (e.g., "json", "csv", "md"). May be ``None``
+            or empty; defaults to ``"rich"`` from the
+            ``THGENT_OUTPUT_FORMAT`` env var when unset.
 
     Returns:
         Normalized format string.
     """
+    if not format:
+        format = os.environ.get("THGENT_OUTPUT_FORMAT", "rich")
     format = format.lower().strip()
     if format in ("json", "jsonl"):
         return "json"
@@ -764,6 +1054,8 @@ def _normalize_output_format(format: str) -> str:
         return "csv"
     if format in ("md", "markdown"):
         return "md"
+    if format in ("rich", "table", "human", ""):
+        return "rich"
     return format
 
 
@@ -849,25 +1141,10 @@ def _resolve_prompt(prompt: str | None = None, prompt_file: str | None = None) -
     return ""
 
 
-def _session_scope_dirs(session_id: str) -> dict[str, Path]:
-    """Get session scope directories.
-
-    Args:
-        session_id: Session ID.
-
-    Returns:
-        Dictionary of scope name to directory path.
-    """
-    import os
-
-    base = Path(os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
-    session_dir = base / session_id
-    return {
-        "base": session_dir,
-        "logs": session_dir / "logs",
-        "artifacts": session_dir / "artifacts",
-        "state": session_dir / "state",
-    }
+# AUDIT-N+14: ``_session_scope_dirs`` lives in
+# :mod:`thegent.cli.commands.session_impl` (canonical home, 2-arg form
+# ``(session_dir, owner)`` returning ``list[Path]``). The local stub is
+# removed so the AUDIT-N+12 re-export binds the canonical form.
 
 
 def _session_status_for(session_id: str) -> str:

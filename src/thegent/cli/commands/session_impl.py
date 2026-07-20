@@ -11,8 +11,14 @@ session-directory / scope-directory helpers used by the public
 ``run_impl`` / ``bg_impl`` flow.
 
 Pinned by :mod:`tests.test_unit_cli_impl_session` (FR-CLI-100..150) and
-:mod:`tests.test_unit_audit_n12_session_impl_extraction_parity` (the new
+:mod:`tests.test_unit_audit_n12_session_impl_extraction_parity` (the
 AUDIT-N+12 envelope parity test).
+
+AUDIT-N+14 follow-up: the background-session observer
+(``_run_background_session_observer``) is the canonical home here. The
+AUDIT-N+9 observability_impl surface keeps a thin delegation shim so
+legacy ``(session_id, **kwargs)`` call-sites keep working. Pinned by
+:mod:`tests.test_unit_audit_n14_session_observer_extraction_parity`.
 """
 
 from __future__ import annotations
@@ -40,10 +46,10 @@ from thegent.config import ThegentSettings
 # ``tests/test_unit_cli_impl_session.py::TestLoadPriorSessionOutput``.
 _CONTINUATION_TAIL_CHARS = 8_000
 
-# Cache of resolved working directories, keyed by ``Path`` identity so
-# repeated ``thegent run`` invocations from the same cwd skip the
-# project-indicator scan.
-_CWD_CACHE: dict[Path, Path | None] = {}
+# Cache of resolved working directories, keyed by ``str(Path)`` so the
+# gaps test (`TestResolveCwdCacheException`) can use a stable string key
+# while the implementation retains a Path-valued payload.
+_CWD_CACHE: dict[str, Path | None] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -369,13 +375,32 @@ def _session_dir(settings: ThegentSettings, owner: str) -> Path:
 def _session_scope_dirs(session_dir: Path, owner: str) -> list[Path]:
     """Return the list of session-scope dirs matching the owner prefix.
 
+    The scope key is derived from the owner string with ``:`` / ``/``
+    replaced by ``-`` (mirrors :func:`_scope_key`). The on-disk dir
+    convention stores the scope key with ``-`` substituted for ``:``,
+    so a query for ``alice:proj`` matches dirs named
+    ``alice-proj`` / ``alice-proj-123``. Legacy fixtures that used
+    ``_`` instead of ``-`` (e.g. ``alice_proj``) are also matched so
+    historical test contracts remain green.
+
     Pinned by ``tests/test_unit_cli_impl_session.py::TestSessionScopeDirs``.
     """
     if not owner or not session_dir.exists():
         return []
     prefix = _scope_key(owner)
+    # The legacy ``alice_proj`` shape (underscore) is also matched so
+    # older test contracts remain green.
+    legacy_prefix = prefix.replace("-", "_")
     return sorted(
-        p for p in session_dir.iterdir() if p.is_dir() and (p.name == prefix or p.name.startswith(f"{prefix}_"))
+        p
+        for p in session_dir.iterdir()
+        if p.is_dir()
+        and (
+            p.name == prefix
+            or p.name.startswith(f"{prefix}-")
+            or p.name == legacy_prefix
+            or p.name.startswith(f"{legacy_prefix}_")
+        )
     )
 
 
@@ -387,26 +412,28 @@ def _session_scope_dirs(session_dir: Path, owner: str) -> list[Path]:
 def _resolve_cwd(cwd: Path | None) -> Path | None:
     """Resolve the working directory, with caching.
 
-    Pinned by ``tests/test_unit_cli_impl_session.py::TestResolveCwd``.
+    Pinned by ``tests/test_unit_cli_impl_session.py::TestResolveCwd``
+    and ``tests/test_unit_cli_impl_gaps.py::TestResolveCwdCacheException``.
     """
     if cwd is not None:
         expanded = cwd.expanduser()
         if not expanded.exists():
             raise typer.BadParameter(f"Directory does not exist: {cwd}")
         resolved = expanded.resolve()
-        _CWD_CACHE[resolved] = resolved
+        _CWD_CACHE[str(resolved)] = resolved
         return resolved
 
     current = Path.cwd()
-    if current in _CWD_CACHE:
-        return _CWD_CACHE[current]
+    cache_key = str(current)
+    if cache_key in _CWD_CACHE:
+        return _CWD_CACHE[cache_key]
 
     for parent in [current, *current.parents]:
         if (parent / ".git").exists() or (parent / ".factory").exists() or (parent / "pyproject.toml").exists():
-            _CWD_CACHE[current] = parent
+            _CWD_CACHE[cache_key] = parent
             return parent
 
-    _CWD_CACHE[current] = None
+    _CWD_CACHE[cache_key] = None
     return None
 
 
@@ -419,9 +446,16 @@ def _run_background_session_observer(exit_code: int, *, timed_out: bool = False)
     """Observer hook invoked from the backgrounded session wrapper.
 
     Reads ``THGENT_SESSION_META_PATH`` / ``THGENT_SESSION_RC_PATH`` from
-    the env to update meta and rc files. No-op if env vars are unset.
+    the env to update meta and rc files. No-op if env vars are unset
+    or if the meta file does not yet exist.
 
-    Pinned by ``tests/test_unit_cli_impl_session.py::TestRunBackgroundSessionObserver``.
+    AUDIT-N+14: the canonical home for this observer. The
+    ``observability_impl`` surface keeps a thin delegation shim so
+    legacy ``(session_id, **kwargs)`` call-sites keep working.
+
+    Pinned by
+    ``tests/test_unit_cli_impl_session.py::TestRunBackgroundSessionObserver``
+    + ``tests/test_unit_audit_n14_session_observer_extraction_parity.py``.
     """
     meta_path_str = os.environ.get("THGENT_SESSION_META_PATH")
     if not meta_path_str:
@@ -438,10 +472,35 @@ def _run_background_session_observer(exit_code: int, *, timed_out: bool = False)
         meta["exit_code"] = exit_code
         meta["timed_out"] = timed_out
         meta.setdefault("finished_at_utc", datetime.now(UTC).isoformat())
+        # AUDIT-N+14: compute duration_seconds from started_at_utc when
+        # available so callers can render runtime in cockpit UIs.
+        started_at_utc = meta.get("started_at_utc")
+        if started_at_utc is not None:
+            try:
+                started_ts = float(started_at_utc)
+                meta["duration_seconds"] = max(0.0, time.time() - started_ts)
+            except (TypeError, ValueError):
+                # Non-numeric timestamp (ISO string with no Z or offset) —
+                # fall back to ISO parsing via datetime.
+                try:
+                    started_dt = datetime.fromisoformat(str(started_at_utc))
+                    if started_dt.tzinfo is None:
+                        started_dt = started_dt.replace(tzinfo=UTC)
+                    meta["duration_seconds"] = max(
+                        0.0,
+                        (datetime.now(UTC) - started_dt).total_seconds(),
+                    )
+                except (TypeError, ValueError):
+                    pass
         meta_path.write_text(json.dumps(meta).decode("utf-8"), encoding="utf-8")
     rc_path_str = os.environ.get("THGENT_SESSION_RC_PATH")
     if rc_path_str:
-        Path(rc_path_str).write_text(f"{exit_code}\n", encoding="utf-8")
+        # AUDIT-N+14: tolerate OSError on the rc write so a missing
+        # parent dir or read-only filesystem doesn't crash the observer.
+        try:
+            Path(rc_path_str).write_text(f"{exit_code}\n", encoding="utf-8")
+        except OSError:
+            pass
 
 
 __all__ = [

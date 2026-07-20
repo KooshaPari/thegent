@@ -9,7 +9,9 @@ in ``impl.py`` keeps every legacy call-site working.
 Specifically this test pins:
 
   1. ``observability_impl.observe_summary_impl`` is importable + callable.
-  2. All 23 moved helpers exist as ``observability_impl.X`` attributes.
+  2. All 22 moved helpers exist as ``observability_impl.X`` attributes.
+     (AUDIT-N+14 further moved ``_run_background_session_observer`` to
+     ``session_impl``; it is pinned separately in the N+14 parity test.)
   3. ``impl.observe_summary_impl`` re-export equals the canonical symbol
      (identity) — the legacy import path remains green.
   4. ``infra_cmds.observe_summary_cmd`` delegates to
@@ -52,7 +54,9 @@ def _load(module_path: str):  # type: ignore[no-untyped-def]
 
 
 # ---------------------------------------------------------------------------
-# The exact 23 functions AUDIT-N+9 moved. Pinned in spec order.
+# The exact 22 functions AUDIT-N+9 moved. Pinned in spec order.
+# (AUDIT-N+14 further moved `_run_background_session_observer` to
+# `session_impl`; it is no longer part of this list.)
 # ---------------------------------------------------------------------------
 
 MOVED_HELPERS: tuple[str, ...] = (
@@ -78,7 +82,6 @@ MOVED_HELPERS: tuple[str, ...] = (
     "_parse_observe_summary_env_int",
     "_parse_observe_summary_timestamp",
     "_resolve_health_policy",
-    "_run_background_session_observer",
 )
 
 
@@ -138,7 +141,6 @@ EXPECTED_PARAMS: dict[str, tuple[str, ...]] = {
     "_parse_observe_summary_env_int": ("env_var", "default"),
     "_parse_observe_summary_timestamp": ("ts",),
     "_resolve_health_policy": ("policy_name",),
-    "_run_background_session_observer": ("session_id",),
 }
 
 
@@ -179,10 +181,10 @@ class TestObservabilityImplModuleLoads:
 @pytest.mark.unit
 class TestAllMovedHelpersPresent:
     # @trace FR-AUDIT-N+9-004
-    def test_helper_count_is_exactly_23(self) -> None:
+    def test_helper_count_is_exactly_22(self) -> None:
         mod = _load(OBSERVABILITY_IMPL)
         present = [n for n in MOVED_HELPERS if hasattr(mod, n)]
-        assert len(present) == 23, f"expected 23 helpers, found {len(present)}"
+        assert len(present) == 22, f"expected 22 helpers, found {len(present)}"
         assert sorted(present) == sorted(MOVED_HELPERS)
 
     # @trace FR-AUDIT-N+9-005
@@ -313,10 +315,26 @@ class TestMovedHelperSignaturesPreserved:
         assert "timeout" in sig.parameters
 
     # @trace FR-AUDIT-N+9-018
-    def test_run_background_session_observer_signature(self) -> None:
+    def test_run_background_session_observer_moved_to_session_impl(self) -> None:
+        """AUDIT-N+14 moved ``_run_background_session_observer`` further
+        to ``session_impl``. ``observability_impl`` keeps a thin
+        delegation shim that returns ``None`` for backward compat (the
+        legacy AUDIT-N+9 contract) but the canonical home is now
+        ``session_impl``. Pinned by this test."""
         obs = _load(OBSERVABILITY_IMPL)
-        sig = inspect.signature(obs._run_background_session_observer)
-        assert "session_id" in sig.parameters
+        session_impl = _load("thegent.cli.commands.session_impl")
+        # The observability_impl shim is the legacy AUDIT-N+9 form:
+        assert callable(obs._run_background_session_observer)
+        assert obs._run_background_session_observer("sess-x") is None
+        # The canonical real implementation now lives in session_impl:
+        assert callable(session_impl._run_background_session_observer)
+        sig = inspect.signature(session_impl._run_background_session_observer)
+        params = list(sig.parameters.keys())
+        # AUDIT-N+14 real form: (exit_code, *, timed_out=False)
+        assert params[0] == "exit_code", (
+            f"session_impl._run_background_session_observer first param should be 'exit_code', got {params[0]!r}"
+        )
+        assert "timed_out" in sig.parameters
 
 
 # ---------------------------------------------------------------------------
@@ -438,8 +456,13 @@ class TestObservabilityRoundTrip:
 
     # @trace FR-AUDIT-N+9-030
     def test_run_background_session_observer_stub(self) -> None:
+        """Backward compat shim — the legacy AUDIT-N+9 stub form returns
+        ``None`` for any ``session_id``. AUDIT-N+14 added a real
+        implementation in ``session_impl``; the canonical behavior is
+        pinned separately in the N+14 parity test."""
         obs = _load(OBSERVABILITY_IMPL)
         assert obs._run_background_session_observer("sess-1") is None
+        assert obs._run_background_session_observer("sess-2", debug=True) is None
 
     # @trace FR-AUDIT-N+9-031
     def test_append_observe_summary_snapshot(self) -> None:

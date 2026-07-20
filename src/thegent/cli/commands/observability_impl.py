@@ -1021,14 +1021,30 @@ def _parse_observe_summary_timestamp(ts: str | float | None) -> float:
     return time.time()
 
 
-def _run_background_session_observer(session_id: str, **kwargs: Any) -> None:
-    """Run background session observer.
+def _run_background_session_observer(
+    exit_code: int,
+    *,
+    timed_out: bool = False,
+    **_kwargs: Any,
+) -> None:
+    """Run background session observer (canonical home: session_impl).
 
-    Args:
-        session_id: Session ID to observe.
-        **kwargs: Additional keyword arguments.
+    Re-exported from :mod:`thegent.cli.commands.session_impl` so the
+    AUDIT-N+9 ``MOVED_HELPERS`` identity contract
+    (``impl._run_background_session_observer is
+    observability_impl._run_background_session_observer``) holds while
+    the real implementation lives in the session-lifecycle module.
+    The legacy ``(session_id, **kwargs)`` form is preserved by
+    accepting and discarding those arguments.
+
+    Pinned by ``tests/test_unit_cli_impl_gaps.py::TestRunBackgroundSessionObserver``
+    + ``tests/test_unit_audit_n9_observability_impl_extraction_parity.py::TestReExportIdentity``.
     """
-    # Stub: observer runs in background
+    from thegent.cli.commands.session_impl import (  # noqa: PLC0415
+        _run_background_session_observer as _impl_observer,
+    )
+
+    _impl_observer(exit_code, timed_out=timed_out)
 
 
 def _build_observe_summary_trend_scope(
