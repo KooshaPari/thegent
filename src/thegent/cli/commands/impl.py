@@ -429,6 +429,25 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
 )
 
 
+# AUDIT-N+10: re-export governance / escalation / HITL / data-protection
+# surface for backward compat with external callers (and the legacy
+# ``tests/test_unit_cli_*.py`` patch sites) that still import from
+# ``thegent.cli.commands.impl``. The canonical home for these 9 symbols
+# is :mod:`thegent.cli.governance.governance_impl`.
+from thegent.cli.governance.governance_impl import (  # noqa: F401
+    escalate_add_impl,
+    escalate_approve_impl,
+    escalate_list_impl,
+    escalate_resolve_impl,
+    govern_approve_impl,
+    govern_reject_impl,
+    govern_list_pending_impl,
+    harness_register_host_impl,
+    get_data_protection_status_impl,
+    sweep_impl,
+)
+
+
 # Session state path helper
 def _session_state_path(session_id: str) -> str:
     """Get session state path for session."""

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 def data_protection_cmd(format: str | None = None) -> None:
     """Show data protection status."""
-    from thegent.cli.commands.impl import get_data_protection_status_impl
+    from thegent.cli.governance.governance_impl import get_data_protection_status_impl
 
     status = get_data_protection_status_impl()
 

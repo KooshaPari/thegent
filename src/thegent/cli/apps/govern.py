@@ -60,7 +60,7 @@ def govern_approve(
     run_id: str = typer.Argument(..., help="Run ID to approve"),
     reason: str | None = typer.Option(None, "--reason", "-r", help="Approval reason"),
 ) -> None:
-    from thegent.cli.commands.impl import govern_approve_impl
+    from thegent.cli.governance.governance_impl import govern_approve_impl
     from thegent.cli.governance.governance import govern_get_pending_approval_impl
     from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
 
@@ -88,7 +88,7 @@ def govern_reject(
     run_id: str = typer.Argument(..., help="Run ID to reject"),
     reason: str = typer.Option("rejected", "--reason", "-r", help="Rejection reason"),
 ) -> None:
-    from thegent.cli.commands.impl import govern_reject_impl
+    from thegent.cli.governance.governance_impl import govern_reject_impl
 
     try:
         result = govern_reject_impl(run_id=run_id, reason=reason)
@@ -147,7 +147,7 @@ def govern_register_host(
     prefix: str = typer.Option("", "--prefix", "-p", help="Command prefix (e.g., 'ssh user@host')"),
 ) -> None:
     """Register a new host device for remote harness execution."""
-    from thegent.cli.commands.impl import harness_register_host_impl
+    from thegent.cli.governance.governance_impl import harness_register_host_impl
 
     result = harness_register_host_impl(
         host_id=host_id,
