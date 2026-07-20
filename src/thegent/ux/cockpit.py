@@ -89,12 +89,18 @@ _DEFAULT_CLOCK: Callable[[], float] = time.time
 
 
 class CockpitPane(StrEnum):
-    """The four panes of the operator cockpit."""
+    """The panes of the operator cockpit.
+
+    AUDIT-N+15 added the ``TRAFFIC`` pane so operators see live
+    ``TrafficDashboard`` metrics (count, rps, error_rate, p50/p95)
+    inline rather than only through the progress bar.
+    """
 
     RUNS = "runs"
     LANES = "lanes"
     CONFIDENCE = "confidence"
     OVERRIDES = "overrides"
+    TRAFFIC = "traffic"
 
 
 class RunState(StrEnum):
@@ -128,6 +134,7 @@ class CockpitConfig:
             CockpitPane.LANES: "Lane Distribution",
             CockpitPane.CONFIDENCE: "Confidence (P50/P95)",
             CockpitPane.OVERRIDES: "Active Overrides",
+            CockpitPane.TRAFFIC: "Traffic",
         }
     )
 
@@ -231,6 +238,11 @@ class _CockpitState:
     ``confidence_history`` and ``override_notices`` are bounded ``deque``
     collections to prevent unbounded memory growth across a long-running
     operator session.
+
+    AUDIT-N+15: ``traffic_dashboard`` is the optional :class:`TrafficDashboard`
+    attached via :meth:`OperatorCockpit.attach_traffic`. When set, the
+    cockpit renders a dedicated traffic pane (count, rps, error_rate,
+    p50/p95, recent by-status split).
     """
 
     last_tick_at: float = 0.0
@@ -242,6 +254,7 @@ class _CockpitState:
         default_factory=lambda: deque(maxlen=MAX_DECISION_NOTICES),
     )
     last_progress: tuple[int, int] = (0, 0)  # (done, total)
+    traffic_dashboard: Any = None  # TrafficDashboard | None — imported lazily to avoid cycle
 
 
 # ---------------------------------------------------------------------------
@@ -572,6 +585,43 @@ class OperatorCockpit:
                 )
             self._state.decision_notices.append(payload)
 
+    # -------------------------------------------------------------- AUDIT-N+15 traffic pane
+
+    def attach_traffic(self, dashboard: Any) -> "OperatorCockpit":
+        """Attach a :class:`TrafficDashboard` so the cockpit renders a TRAFFIC pane.
+
+        AUDIT-N+15: the operator cockpit gains a dedicated TRAFFIC pane
+        (count, rps, error_rate, p50_ms, p95_ms, recent by-status split)
+        so operators see live traffic metrics inline rather than only
+        through the progress bar. The dashboard is a borrowed reference;
+        callers retain ownership and decide when to record events.
+
+        The dashboard reference is stored under the cockpit's lock so
+        the renderer can pick it up atomically. Pass ``None`` to detach.
+
+        Returns ``self`` for fluent chaining::
+
+            OperatorCockpit().attach_traffic(my_dashboard).render()
+        """
+        if dashboard is not None:
+            # Local import keeps the cockpit module cycle-free; the
+            # kpis.traffic module imports from cockpit if needed.
+            from .kpis.traffic import TrafficDashboard
+
+            if not isinstance(dashboard, TrafficDashboard):
+                raise TypeError(f"attach_traffic expects TrafficDashboard, got {type(dashboard).__name__}")
+        with self._lock:
+            self._state.traffic_dashboard = dashboard
+        return self
+
+    def traffic_dashboard(self) -> Any:
+        """Return the currently attached :class:`TrafficDashboard`, or ``None``.
+
+        Read-only accessor used by ``snapshot()`` and tests.
+        """
+        with self._lock:
+            return self._state.traffic_dashboard
+
     # -------------------------------------------------------------- snapshots
 
     def snapshot(self) -> dict[str, Any]:
@@ -639,6 +689,9 @@ class OperatorCockpit:
                     for d in self._state.decision_notices
                 ],
                 "last_render_ms": self._last_render_ms,
+                "traffic": (
+                    dict(self._state.traffic_dashboard.summary()) if self._state.traffic_dashboard is not None else None
+                ),
             }
 
     def progress_bar(self) -> str:
@@ -733,7 +786,19 @@ class OperatorCockpit:
         #    age so operators can trace governance denies without
         #    tailing the JSONL.
         decisions_lines = self._render_decisions_pane()
-        body = "\n".join(body_lines) + "\n" + "\n".join(decisions_lines)
+        # 6. AUDIT-N+15: fourth row — traffic pane (full-width). When a
+        #    ``TrafficDashboard`` is attached via ``attach_traffic``, this
+        #    surfaces live count/rps/error_rate/p50/p95 so operators see
+        #    traffic without tailing a separate dashboard. Without a
+        #    dashboard attached the pane is omitted entirely so the
+        #    layout reflects only attached subsystems.
+        traffic_lines = self._render_traffic_pane_lines()
+        body = (
+            "\n".join(body_lines)
+            + "\n"
+            + "\n".join(decisions_lines)
+            + ("\n" + "\n".join(traffic_lines) if traffic_lines else "")
+        )
 
         if banner:
             return f"{header}\n{banner}\n{body}"
@@ -920,6 +985,74 @@ class OperatorCockpit:
             if total_ovrs > MAX_OVERRIDE_PANE_ROWS:
                 lines.append(f"│  … {total_ovrs - MAX_OVERRIDE_PANE_ROWS} more            │")
         lines.append("└──────────────────────────────────────┘")
+        return lines
+
+    def _render_traffic_pane(self) -> str:
+        """Render the AUDIT-N+15 TRAFFIC pane rows as a single string.
+
+        Reads the optionally-attached :class:`TrafficDashboard` (via
+        :meth:`attach_traffic`) and renders a compact 4-line summary::
+
+            ┌─ TRAFFIC ────────────────┐
+            │ count=240 rps=4.0 err=2.5%│
+            │ p50=120ms  p95=410ms      │
+            │ ok=232 err=6 warn=2       │
+            └───────────────────────────┘
+
+        When no dashboard is attached, returns an empty string so callers
+        can treat the result as a no-op (the renderer omits the pane
+        entirely). When the dashboard is attached but has no events yet,
+        the pane renders a single neutral line so operators can tell the
+        audit pipeline is idle at a glance.
+
+        NEW-22 (SOTA fourth-pass, AUDIT-N+15): copies the dashboard
+        reference under ``self._lock`` so a concurrent ``attach_traffic``
+        / ``tick`` cannot tear the bound identity. The pane joins all
+        rows into a single string for caller convenience; the grid
+        renderer uses :meth:`_render_traffic_pane_lines` to consume
+        the raw list form.
+        """
+        lines = self._render_traffic_pane_lines()
+        return "\n".join(lines)
+
+    def _render_traffic_pane_lines(self) -> list[str]:
+        """Render the AUDIT-N+15 TRAFFIC pane rows as a list of strings.
+
+        Internal helper used by :meth:`_render_grid_locked` to splice
+        the traffic pane into the grid layout. Returns ``[]`` when no
+        dashboard is attached.
+        """
+        cfg = self.config
+        with self._lock:
+            dashboard = self._state.traffic_dashboard
+        if dashboard is None:
+            return []
+        # Resolve the pane label defensively — older configs that pre-date
+        # AUDIT-N+15 won't have a TRAFFIC entry and we don't want a
+        # KeyError to crash the render.
+        pane_label = cfg.pane_labels.get(CockpitPane.TRAFFIC, "Traffic")
+        lines = [f"┌─ {pane_label} ────────────────┐"]
+        try:
+            snap = dashboard.summary()
+        except Exception:  # noqa: BLE001 - never crash the cockpit.
+            lines.append("│  (traffic dashboard error)       │")
+            lines.append("│                                 │")
+            lines.append("│                                 │")
+            lines.append("└─────────────────────────────────┘")
+            return lines
+        count = int(snap.get("count", 0))
+        rps = float(snap.get("rps", 0.0))
+        err = float(snap.get("error_rate", 0.0)) * 100.0
+        p50 = float(snap.get("p50_ms", 0.0))
+        p95 = float(snap.get("p95_ms", 0.0))
+        by_status = ", ".join(f"{k}={int(v)}" for k, v in sorted(snap.get("by_status", {}).items()))
+        lines.append(f"│ count={count:<5d} rps={rps:<4.2f} err={err:>5.2f}% │")
+        lines.append(f"│ p50={p50:<6.0f}ms p95={p95:<6.0f}ms        │")
+        if by_status:
+            lines.append(f"│ {by_status:<33} │")
+        else:
+            lines.append("│ (no events yet)                  │")
+        lines.append("└─────────────────────────────────┘")
         return lines
 
     def _render_decisions_pane(self) -> list[str]:
