@@ -5581,3 +5581,143 @@ AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
 ### DAG tick
 
 **`+1`** on top of AUDIT-N+8 (this hand-off).
+
+---
+
+## AUDIT-N+10 — governance surface canonicalization + missing `get_data_protection_status_impl` definition
+
+**Lane:** AUDIT-N+10 (governance / escalation / HITL / data-protection surface extraction)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Close the governance surface drift discovered in the AUDIT-N+9 hand-off
+pre-flight scan: three governance callsites were importing symbols
+that lived in `thegent.cli.commands.impl` but were *not actually
+defined there* (or lived as stale duplicates in `governance.py`).
+The latent ImportError was masked because the test surface in
+AUDIT-N+5/9 mocked the symbols at impl without ever importing them.
+
+Specifically:
+  * `escalate_resolve_impl` — duplicate def in `governance.py`,
+    used by `governance_escalation_hitl_cmds.py` via a
+    `_cli_shared.escalate_resolve_impl` re-export.
+  * `govern_approve_impl` / `govern_reject_impl` /
+    `govern_list_pending_impl` — duplicate defs in `governance.py`,
+    used by `apps/govern.py` and (transitively) other callers.
+  * `sweep_impl` — *signature-mismatched* (positional vs 5-kwarg)
+    across call-site and canonical home (`services/observability.py`).
+  * `harness_register_host_impl` — home was
+    `services/run_post_surface_helpers.py`, not in impl.
+  * `get_data_protection_status_impl` — **never defined anywhere**;
+    test files patched it but no implementation existed.
+
+### Files touched
+
+* `src/thegent/cli/governance/governance_impl.py` — **new** canonical
+  governance module, 333 lines, 10 functions defined with full
+  docstrings. Mirrors the `observability_impl` shape established by
+  AUDIT-N+9.
+* `src/thegent/cli/governance/governance.py` — 3 stale duplicate
+  `escalate_*` / `govern_*` defs replaced with re-export imports
+  from `governance_impl`. No behavior change at `governance.py`
+  import surface.
+* `src/thegent/cli/governance/governance_escalation_hitl_cmds.py`
+  — full rewrite of imports to canonical `governance_impl`; dead
+  `from thegent.cli.commands import _cli_shared` removed.
+* `src/thegent/cli/governance/governance_data_protection_cmds.py`
+  — 3 imports updated to canonical `governance_impl`.
+* `src/thegent/cli/apps/govern.py` — 3 imports updated to canonical
+  `governance_impl`.
+* `src/thegent/cli/services/observability.py` — `sweep_impl` home
+  vacated; the canonical def now lives in `governance_impl.py`
+  (the 5-kwarg signature is the test contract).
+* `src/thegent/cli/commands/impl.py` — new AUDIT-N+10 re-export
+  block (alongside the AUDIT-N+9 observability surface), adds
+  the 10 governance symbols to the legacy
+  `from thegent.cli.commands.impl import <governance_symbol>`
+  path without redefining them.
+* `tests/test_unit_audit_n10_governance_impl_extraction_parity.py`
+  — **new**, 661 lines, 37 tests across 8 classes. Pins:
+  1. `governance_impl` module loads clean + has the AUDIT-N+10
+     module docstring marker + all 10 canonical exports + the
+     AUDIT-N+5/9 escalation contract from `observability_impl`.
+  2. Exactly 10 canonical symbols exist + each is callable.
+  3. Each symbol resolves to `governance_impl` (via `__module__`
+     inspection) and is identical (`is`) across `impl` /
+     `governance_impl` (re-export is a real alias).
+  4. `impl.escalate_add_impl` is still `observability_impl.escalate_add_impl`
+     (preserves AUDIT-N+5/9 contract through the AUDIT-N+10
+     re-export block).
+  5. `impl.get_data_protection_status_impl` is defined and importable.
+  6. Each call-site file imports from `governance_impl` (not from
+     `impl`); `escalation_hitl_cmds.py` does NOT import `_cli_shared`.
+  7. Each canonical signature preserved (param names + kwarg-only
+     contract for `escalate_add_impl` / `sweep_impl`); harness
+     `_register_host_impl` parametrized correctly.
+  8. Round-trip: `escalate_list_impl` returns list,
+     `escalate_approve_impl` / `escalate_resolve_impl` return bool,
+     `govern_approve_impl` / `govern_reject_impl` return dict with
+     `run_id` + `approved` / `rejected` keys, `govern_list_pending_impl`
+     returns list, `harness_register_host_impl` returns `success=True`
+     for known + `success=False` for unknown harness types,
+     `get_data_protection_status_impl` returns dict with 7 expected
+     keys (incl. `policy_root`, `audit_count`), takes no args,
+     handles non-existent dir gracefully, and `sweep_impl` returns
+     dict with `pass` key.
+  9. Re-export structure: `impl.py` contains the `AUDIT-N+10` comment
+     marker, lists all 10 symbols, and has no inline `def` for any
+     canonical symbol.
+  10. Sweep call-site uses the canonical signature (5-kwargs).
+  11. `_cli_shared` no longer imported in `escalation_hitl_cmds.py`.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_audit_n10_governance_impl_extraction_parity.py` | **37 passed in 0.40s** (new pinning test, 8 classes) |
+| Combined audit envelope parity (10 files) | **274 passed + 4 skipped + 0 failed** |
+| Phase 3/4 hardening regression (8 files) | **234 passed + 0 failed** |
+| Combined single run (19 files) | **508 passed + 4 skipped + 0 failed in 6.18s** |
+| `ruff check` + `ruff format` | Clean on all 8 touched files |
+| Secret scan | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, clean tree) |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+10)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per the Do-Not-Touch list (out of Phase 3/4 scope).
+* **AUDIT-N+11+ candidates** — natural next-up lanes (none
+  pre-defined; will scope at next session based on resumption
+  invariant satisfaction + newly-discovered drift).
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **274 passed + 4 skipped + 0 failed** as
+of this hand-off. There are no remaining pre-existing baseline
+failures.
+
+### Cumulative closed (25 prior lanes + AUDIT-N+10 = 26)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+AUDIT-N+9 WL-120 full observability extraction (new),
+**AUDIT-N+10 governance surface canonicalization + missing
+`get_data_protection_status_impl` definition (new)**.
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+9 (this hand-off).
