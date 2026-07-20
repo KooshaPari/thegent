@@ -961,23 +961,23 @@ def _classify_observe_summary_trend_health(
     trend_snapshot_gap_count: int = 0,
     trend_sampling_mode: str = "disabled",
     **kwargs: Any,
-) -> str | dict[str, Any]:
+) -> dict[str, Any]:
     """Classify the health of observe summary trend data.
 
-    AUDIT-N+12: dual-mode bridge. By default returns the AUDIT-N+9
-    ``"healthy"`` string. When
-    ``run_observe_helpers.classify_observe_summary_trend_health``
-    is monkeypatched (the WL-125 patch site pattern), the dispatch
-    honors whatever the patched callable returns.
+    AUDIT-N+16 (WL-125 closure): always dispatches to the canonical
+    :func:`thegent.cli.services.run_observe_helpers.classify_observe_summary_trend_health`
+    via live module attribute lookup so the WL-125 monkeypatch site
+    ``monkeypatch.setattr("thegent.cli.commands.impl.run_observe_helpers.classify_observe_summary_trend_health", ...)``
+    is observed, AND so the AUDIT-N+13 functional good-case
+    (``tests/test_wl125_run_observe_helpers_parity.py::test_wl125_classify_observe_summary_trend_health_functional_good_case``)
+    sees the canonical dict-shaped classification result.
     """
     from thegent.cli.services import run_observe_helpers as _roh
 
-    roh_fn = _roh.classify_observe_summary_trend_health
-    if roh_fn is _DEFAULT_CLASSIFY_OBSERVE_SUMMARY_TREND_HEALTH:
-        # AUDIT-N+9 legacy stub form.
-        return "healthy"
-    # AUDIT-N+12: WL-125 patch site — honor the patched callable.
-    return roh_fn(
+    # AUDIT-N+16: always dispatch via live-lookup. The previous AUDIT-N+12
+    # sentinel short-circuit returned the AUDIT-N+9 legacy "healthy" string
+    # which broke the WL-125 functional good-case.
+    return _roh.classify_observe_summary_trend_health(
         enabled=enabled,
         baseline_available=baseline_available,
         trend_snapshot_coverage_pct=trend_snapshot_coverage_pct,
