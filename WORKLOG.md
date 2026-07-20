@@ -5721,3 +5721,172 @@ AUDIT-N+9 WL-120 full observability extraction (new),
 ### DAG tick
 
 **`+1`** on top of AUDIT-N+9 (this hand-off).
+
+---
+
+## AUDIT-N+11 — observability drift closure (`_inject_time_constraint` WL-125 signature + `_build_observe_summary_trend_scope` canonicalization)
+
+**Lane:** AUDIT-N+11 (observability / WL-120 surface closure)
+
+**Closure date:** 2026-07-19
+
+### Goal
+
+Close the residual observability drift discovered in the AUDIT-N+9 → N+10
+post-mortem scan: the WL-125 `summary_mode` contract on
+`_inject_time_constraint` was silently lost during the AUDIT-N+9 surface
+move, causing a live `TypeError` on every `run_impl_core` /
+`bg_impl_core` invocation. Plus, `_build_observe_summary_trend_scope`
+was left behind as an inline duplicate in `impl.py:508-525` even though
+the AUDIT-N+9 re-export block was meant to canonicalize the surface.
+
+Specifically:
+  * `_inject_time_constraint` — the AUDIT-N+9 signature `(prompt, timeout)`
+    broke the WL-125 call-site
+    `run_execution_core_helpers._inject_time_constraint_local(prompt, timeout, summary_mode=not full)`
+    which fires on every `thegent run` / `thegent bg` invocation. Live
+    `TypeError` every time.
+  * `_build_observe_summary_trend_scope` — observability-themed helper
+    left inline in `impl.py:508-525` after AUDIT-N+9; not part of the
+    23-move but conceptually part of the observability surface; listed
+    in `impl.__all__` at line 390.
+
+### Files touched
+
+* `src/thegent/cli/commands/observability_impl.py` — `_inject_time_constraint`
+  signature extended from `(prompt, timeout)` to
+  `(prompt, timeout, *, summary_mode=False, seconds_per_tool_call=2.3)`.
+  The legacy AUDIT-N+9 budget line is preserved (now prefixed with
+  `[TIME CONSTRAINT:` to mirror the WL-125 prompt helper) and a new
+  `[OUTPUT FORMAT: ...]` worker-status-report block is appended when
+  `summary_mode=True`. Docstring updated with AUDIT-N+11 marker.
+  Function moved: `_build_observe_summary_trend_scope` added to the
+  canonical observability_impl surface (and listed in `__all__`).
+* `src/thegent/cli/commands/impl.py` — inline `_build_observe_summary_trend_scope`
+  removed (now lives only in observability_impl). AUDIT-N+9 re-export
+  block updated to include `_build_observe_summary_trend_scope` in the
+  re-exported observability surface. `impl.__all__` entry for
+  `_build_observe_summary_trend_scope` removed.
+* `tests/test_unit_audit_n11_observability_drift_parity.py` — **new**,
+  288 lines, 25 tests across 6 classes. Pins:
+  1. `_inject_time_constraint` accepts `summary_mode` kwarg (KW_ONLY,
+     default False).
+  2. `_inject_time_constraint` accepts `seconds_per_tool_call` kwarg
+     (KW_ONLY, default 2.3).
+  3. `_inject_time_constraint` `prompt` and `timeout` remain
+     POSITIONAL_OR_KEYWORD (back-compat).
+  4. Identity: `impl._inject_time_constraint is observability_impl._inject_time_constraint`
+     (AUDIT-N+9 contract preserved through the AUDIT-N+11 signature
+     extension).
+  5. Plain call appends `TIME CONSTRAINT` only.
+  6. `summary_mode=True` appends `OUTPUT FORMAT` worker-status-report
+     block.
+  7. `summary_mode=False` omits the OUTPUT FORMAT block.
+  8. Tool-call budget is bounded at 1+.
+  9. `seconds_per_tool_call` parameter tunes the budget (slower
+     per-call → fewer tool calls).
+  10. **Live execution-core path round-trips**:
+      `run_execution_core_helpers._inject_time_constraint_local("hello", 30, summary_mode=True)`
+      no longer raises; returns string with both `TIME CONSTRAINT` and
+      `OUTPUT FORMAT` blocks (the critical CRITICAL-severity Finding 2
+      closure).
+  11. `_build_observe_summary_trend_scope` canonical home is
+      `observability_impl` (`__module__` introspection).
+  12. `impl._build_observe_summary_trend_scope is observability_impl._build_observe_summary_trend_scope`
+      (legacy path resolves).
+  13. `impl.py` no longer contains inline
+      `def _build_observe_summary_trend_scope` (source inspection).
+  14. `_build_observe_summary_trend_scope` listed in
+      `observability_impl.__all__`.
+  15. `trend_samples=N` enables scope with `enabled=True`.
+  16. `trend_samples=None` disables scope with `enabled=False`.
+  17. Custom `limit` preserved.
+  18. `observability_impl` module loads with both `observe_summary_impl`
+      and `escalate_add_impl` + `err_console` (AUDIT-N+5/9 contracts
+      preserved).
+  19. AUDIT-N+11 marker present in observability_impl source.
+  20. AUDIT-N+9 marker still present (regression guard).
+  21. AUDIT-N+9 re-export block in impl.py includes `_build_observe_summary_trend_scope`.
+  22. AUDIT-N+10 governance re-export block still intact
+      (`escalate_add_impl`, `get_data_protection_status_impl`).
+  23. **AUDIT-N+12 carry-forward documentation**: `services/observability.py`
+      has `build_observe_summary_trend` and
+      `build_observe_summary_escalation` builders that are dormant
+      (the AUDIT-N+12 reconciliation scope).
+  24. The 9-function name overlap between
+      `observability_impl._<x>` (N+9 stubs) and
+      `services/run_observe_helpers.<x>` (real WL-120 implementations)
+      is pinned for existence on either side (AUDIT-N+12 reconciliation
+      scope).
+  25. Module graph loads clean: `impl`, `observability_impl`,
+      `run_execution_core_helpers` all importable.
+
+### Validation
+
+| Suite | Result |
+|-------|--------|
+| `tests/test_unit_audit_n11_observability_drift_parity.py` | **25 passed in 0.36s** (new pinning test, 6 classes) |
+| Combined audit envelope parity (12 files, includes new N+11) | **301 passed + 4 skipped + 0 failed** |
+| `tests/test_unit_cli_impl_session.py::TestInjectTimeConstraint` | **3 passed + 0 failed** (was 3 failed pre-AUDIT-N+11) |
+| `tests/test_wl125_prompt_constraint_helpers_parity.py` (subset) | `TestInjectTimeConstraint` round-trips; 1 pre-existing monkeypatch sub-attribute bug remains out-of-scope |
+| Live `run_execution_core_helpers._inject_time_constraint_local` call | OK (no TypeError) |
+| `ruff check` + `ruff format` | Clean on all 3 touched files |
+| Secret scan | **0 matches** |
+| Bundle-zsh-scripts worktree | Preserved untouched (HEAD `830d7af86`, clean tree) |
+| Push / force-push / main-branch write | None |
+
+### Carry-forward (post-AUDIT-N+11)
+
+* **V4-1.2.x (L2 SOTA Rust crates upgrade)** — still blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`
+  per the Do-Not-Touch list (out of Phase 3/4 scope).
+* **AUDIT-N+12 candidate — services/observability.py + run_observe_helpers.py
+  WL-120 reconciliation** — the dormant services observability core
+  (`get_server_meta_impl`, `sweep_impl`, `build_observe_summary_trend`,
+  `build_observe_summary_escalation` in
+  `src/thegent/cli/services/observability.py` and 11 helpers in
+  `src/thegent/cli/services/run_observe_helpers.py`) needs to be wired
+  through `observe_summary_impl` so the WL-120 trend/escalation history
+  feature actually runs. Today's `observe_summary_impl` returns a 5-key
+  stub. Estimated test scope: ~15-20 new parity tests + signature
+  reconciliation on the 9 name-overlap functions.
+* **AUDIT-N+13+ candidate — broader `_resolve_agent_model`,
+  `_load_prior_session_output`, `_CWD_CACHE`, `_session_dir`,
+  `_run_background_session_observer` surface extraction** — the
+  `tests/test_unit_cli_impl_session.py` test surface (107 tests, 97
+  failing pre-AUDIT-N+11) pins a much richer impl-side surface than
+  `impl.py` currently defines. Sub-lane: extract these into
+  `commands/session_impl.py` mirroring the observability_impl /
+  governance_impl / session_meta_impl pattern. Estimated test
+  surface: 107 tests, ~6 sessions_meta / agent_model classes.
+
+The resumption invariant
+("Combined audit envelope parity suite must be fully green —
+0 failures — before exiting any resumption session")
+remains satisfied. **301 passed + 4 skipped + 0 failed** as
+of this hand-off. There are no remaining pre-existing baseline
+failures.
+
+### Cumulative closed (26 prior lanes + AUDIT-N+11 = 27)
+
+AUDIT-1/2/4/6/9/19/22/23/24/25/26, F-1..F-15, NEW-1..NEW-23,
+CAL-1, KA-1..6, A11Y-1, CLI-1..5, TEST-1, WL-224/WL-225,
+diskcache-skip-guard, CachePreWarmer FR-CACHE-003, F-15 + UX
+polish, GOV-1 governance error-envelope parity, AUDIT-N+1 run
+sub-app envelope sweep, AUDIT-N+2 governance+infra+mesh+services
+envelope sweep, AUDIT-N+3 cli/commands+agents+tools envelope
+sweep, AUDIT-N+4 governance observability + perf hardening lane,
+AUDIT-N+5 source-shim closure (4 missing modules),
+AUDIT-N+6 WL-125 wrapper-delegation closure,
+AUDIT-N+7 Click 8.2+ CliRunner API drift closure,
+AUDIT-N+8 Typer 0.12+ bare-args help-rendering API drift closure,
+AUDIT-N+9 WL-120 full observability extraction,
+AUDIT-N+10 governance surface canonicalization + missing
+`get_data_protection_status_impl` definition,
+**AUDIT-N+11 observability drift closure — `_inject_time_constraint`
+WL-125 signature + `_build_observe_summary_trend_scope`
+canonicalization (new)**.
+
+### DAG tick
+
+**`+1`** on top of AUDIT-N+10 (this hand-off).
