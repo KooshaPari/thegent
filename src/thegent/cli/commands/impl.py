@@ -9,6 +9,7 @@ from __future__ import annotations
 import errno
 import math
 import os
+import sys
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -20,6 +21,19 @@ from thegent.config import ThegentSettings
 if TYPE_CHECKING:
     from thegent.contracts.telemetry import ContractTelemetry
     from thegent.execution import EscalationQueue
+
+
+def _impl_globals() -> dict[str, Any]:
+    """Return the live ``impl`` module's ``__dict__``.
+
+    AUDIT-N+16 (WL-125 closure): wrapper functions that forward resolver
+    callbacks (e.g. ``log_path_resolver=impl._health_snapshot_log_path``)
+    must look the callback up on the **current** module globals each call,
+    not on the closure cell created at definition time. Otherwise
+    ``monkeypatch.setattr("thegent.cli.commands.impl.<callback>", ...)``
+    patches in ``tests/test_wl125_*_parity.py`` would not be observed.
+    """
+    return sys.modules[__name__].__dict__
 
 # EAGAIN/EWOULDBLOCK errno numbers for retry logic
 _EAGAIN_ERRNOS = {errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR}
@@ -911,38 +925,6 @@ def _health_snapshot_max_lines() -> int:
     return run_health_helpers.health_snapshot_max_lines()
 
 
-def _append_health_snapshot(
-    payload: dict[str, Any],
-    scope_key: dict[str, Any],
-) -> None:
-    """WL-125 delegate to :func:`run_health_helpers.append_health_snapshot`.
-
-    Threads the impl-side resolvers (``_health_snapshot_log_path``,
-    ``_compact_health_snapshot_log``, ``_coerce_issue_types``) so legacy
-    test patch sites that ``monkeypatch.setattr`` those impl module
-    attributes are observed by the canonical append pipeline.
-    """
-    run_health_helpers.append_health_snapshot(
-        payload,
-        scope_key,
-        log_path_resolver=_health_snapshot_log_path,
-        compact_log_fn=_compact_health_snapshot_log,
-        coerce_issue_types_fn=_coerce_issue_types,
-    )
-
-
-def _compact_health_snapshot_log() -> int:
-    """WL-125 delegate to :func:`run_health_helpers.compact_health_snapshot_log`.
-
-    Threads the impl-side resolvers (``_health_snapshot_log_path``,
-    ``_health_snapshot_max_lines``) so legacy test patch sites that
-    ``monkeypatch.setattr`` those impl module attributes are observed by
-    the canonical compact pipeline.
-    """
-    return run_health_helpers.compact_health_snapshot_log(
-        log_path_resolver=_health_snapshot_log_path,
-        max_lines_resolver=_health_snapshot_max_lines,
-    )
 def _check_dag_cycles(dag: dict[str, Any]) -> list[list[str]]:
     """Check for cycles in a DAG.
 
@@ -1505,31 +1487,40 @@ def resume_impl(  # noqa: F811 - shadow the AUDIT-N+14 stub at :167
     ``_resolve_latest_session_id``, ``_session_state_path``,
     ``_normalize_contract_string``) so legacy test patch sites that
     ``monkeypatch.setattr`` those impl module attributes are observed by
-    the canonical resume pipeline. AUDIT-N+14 signature kept for the
-    positional ``(session_id, **kwargs)`` caller form.
+    the canonical resume pipeline. The WL-125 dispatch is honored whenever
+    a caller supplies a ``session_id`` kwarg (the canonical contract); the
+    AUDIT-N+14 ``resume_impl()`` empty-call path is preserved by passing
+    ``session_id=None`` straight through.
     """
-    from thegent.cli.commands import session_impl as _session_impl
+    # WL-125: ``test_wl125_run_execution_core_helpers_parity`` reimports
+    # this module (``sys.modules.pop`` + ``importlib.import_module``),
+    # creating a fresh instance in ``sys.modules[__name__]`` while the
+    # caller's ``impl`` variable still references the prior instance.
+    # To make the WL-125 dispatch observable in both:
+    #
+    #   * the identity assertions against ``impl._resolve_latest_session_id``
+    #     (``post_surface`` test) — which need this function's defining
+    #     module's globals (OLD)
+    #   * the ``monkeypatch.setattr("thegent.cli.commands.impl.session_send_impl", ...)``
+    #     patch site (which monkeypatch resolves via ``sys.modules`` and
+    #     therefore applies to the NEW instance)
+    #
+    # we resolve ``_resolve_latest_session_id`` / ``_session_state_path`` /
+    # ``_normalize_contract_string`` from ``__globals__`` (the defining
+    # module) and ``session_send_impl`` from ``sys.modules[__name__]``
+    # (the live module observed by monkeypatch).
+    import sys as _sys
 
-    if "session_id" not in kwargs and isinstance(session_id, str):
-        # Positional / single-arg call form (AUDIT-N+14): ``resume_impl("sid")``
-        kwargs["session_id"] = session_id
-        if prompt is not None:
-            kwargs.setdefault("prompt", prompt)
-        if skills is not None:
-            kwargs.setdefault("skills", skills)
-        # AUDIT-N+14 stub-only path: just return a minimal dict so existing
-        # callers that pass session_id as the first positional arg continue
-        # to work. The canonical WL-125 delegate is below.
-        return {"session_id": session_id, "status": "resumed"}
-
+    _old_globals = resume_impl.__globals__
+    _new_mod = _sys.modules[__name__]
     return run_post_surface_helpers.resume_impl(
         session_id=session_id,
         prompt=prompt,
         skills=skills,
-        resolve_latest_session_id=_resolve_latest_session_id,
-        session_state_path=_session_state_path,
-        normalize_contract_string=_normalize_contract_string,
-        session_send_impl=session_send_impl,
+        resolve_latest_session_id=_old_globals["_resolve_latest_session_id"],
+        session_state_path=_old_globals["_session_state_path"],
+        normalize_contract_string=_old_globals["_normalize_contract_string"],
+        session_send_impl=_new_mod.session_send_impl,
     )
 
 
@@ -1676,3 +1667,139 @@ def continuity_snapshot_impl(
         state_summary=state_summary,
         next_steps=next_steps,
     )
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+16 (WL-125 closure): real delegation wrappers for service helpers.
+# Each wrapper looks up the canonical implementation on the live module each
+# call so ``monkeypatch.setattr`` patches in
+# ``tests/test_wl125_*_parity.py`` are observed by the next call.
+# ---------------------------------------------------------------------------
+
+from thegent.cli.services import (  # noqa: F401
+    pre_work_gate_helpers as _pre_work_gate_helpers,
+    process_helpers as _process_helpers,
+    run_audio_helpers as _run_audio_helpers,
+    run_event_helpers as _run_event_helpers,
+    run_health_helpers as _run_health_helpers,
+    run_model_helpers as _run_model_helpers,
+    run_observe_helpers as _run_observe_helpers,
+    run_post_surface_helpers as _run_post_surface_helpers,
+    run_session_helpers as _run_session_helpers,
+    session_id_helpers as _session_id_helpers,
+    session_path_helpers as _session_path_helpers,
+    spawn_retry_helpers as _spawn_retry_helpers,
+)
+
+
+# AUDIT-N+12 (WL-125 closure): the canonical re-export of ``_is_pid_running``
+# lives in ``session_impl`` and is assigned via the ``_SESSION_IMPL_REEXPORTS``
+# loop above (line ~768). Do NOT add a local ``def _is_pid_running`` here —
+# doing so would shadow the re-export and break AUDIT-N+12's
+# ``impl._is_pid_running is session_impl._is_pid_running`` identity contract.
+# WL-125 monkeypatch sites patch ``process_helpers.is_pid_running`` directly,
+# not ``impl._is_pid_running``.
+
+
+def _retry_if_eagain(exc: BaseException) -> bool:
+    """WL-125 thin delegate to :func:`spawn_retry_helpers.retry_if_eagain`."""
+    return _spawn_retry_helpers.retry_if_eagain(exc)
+
+
+def _new_session_id(agent: str | None, owner: str) -> str:
+    """WL-125 thin delegate to :func:`session_id_helpers.new_session_id`."""
+    return _session_id_helpers.new_session_id(agent=agent, owner=owner)
+
+
+# AUDIT-N+12 (WL-125 closure): the canonical re-export of ``_session_paths``
+# lives in ``session_impl`` and is assigned via the ``_SESSION_IMPL_REEXPORTS``
+# loop above (line ~768). Do NOT add a local ``def _session_paths`` here —
+# doing so would shadow the re-export and break AUDIT-N+12's identity contract
+# for the session-lifecycle surface. WL-125 monkeypatch sites patch
+# ``run_session_helpers.session_paths`` directly (or
+# ``session_path_helpers.session_paths``), not ``impl._session_paths``.
+
+
+# AUDIT-N+12 (WL-125 closure): the canonical re-export of ``_resolve_agent_model``
+# lives in ``session_impl`` and is assigned via the ``_SESSION_IMPL_REEXPORTS``
+# loop above (line ~768). Do NOT add a local ``def _resolve_agent_model`` here —
+# doing so would shadow the re-export and break AUDIT-N+12's identity contract
+# for the session-lifecycle surface. WL-125 monkeypatch sites patch
+# ``run_session_helpers.resolve_agent_model`` directly, not
+# ``impl._resolve_agent_model``.
+
+
+def _validate_explicit_ollama_provider(
+    *,
+    provider: str | None,
+    model: str | None,
+) -> str | None:
+    """WL-125 thin delegate to :func:`run_model_helpers.validate_explicit_ollama_provider`."""
+    return _run_model_helpers.validate_explicit_ollama_provider(
+        provider=provider,
+        model=model,
+    )
+
+
+# AUDIT-N+9: re-export provides _build_audio_summary_metadata /
+# _resolve_audio_transcript_for_output / _build_run_event_details on ``impl``
+# so legacy callers (and ``tests/test_wl125_*_parity.py``
+# ``monkeypatch.setattr`` sites) resolve them via the canonical
+# observability_impl module. No local definitions here — that would shadow
+# the re-export and break AUDIT-N+9's identity checks.
+
+
+def _health_snapshot_log_path() -> Path:
+    """WL-125 thin delegate to :func:`run_health_helpers.health_snapshot_log_path`."""
+    return _run_health_helpers.health_snapshot_log_path()
+
+
+def _health_snapshot_max_lines() -> int:
+    """WL-125 thin delegate to :func:`run_health_helpers.health_snapshot_max_lines`."""
+    return _run_health_helpers.health_snapshot_max_lines()
+
+
+def _coerce_issue_types(value: Any) -> list[str]:
+    """WL-125 thin delegate to :func:`run_health_helpers.coerce_issue_types`."""
+    return _run_health_helpers.coerce_issue_types(value)
+
+
+# AUDIT-N+9: re-export provides _hash_observe_summary_payload /
+# _classify_observe_summary_trend_health / _load_observe_summary_snapshots /
+# _append_observe_summary_snapshot on ``impl``. No local definitions here.
+
+
+def _pre_work_gate_defaults() -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.pre_work_gate_defaults`."""
+    return _pre_work_gate_helpers.pre_work_gate_defaults()
+
+
+def _pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.pre_work_gate_thresholds`."""
+    return _pre_work_gate_helpers.pre_work_gate_thresholds(project_dir)
+
+
+def _evidence_age_minutes(path: Path) -> int:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.evidence_age_minutes`."""
+    return _pre_work_gate_helpers.evidence_age_minutes(path)
+
+
+def _pre_work_governance_block_payload(
+    *,
+    project_dir: Path,
+    thresholds: dict[str, Any],
+    violations: list[dict[str, Any]],
+    config_source: str,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.pre_work_governance_block_payload`."""
+    return _pre_work_gate_helpers.pre_work_governance_block_payload(
+        project_dir=project_dir,
+        thresholds=thresholds,
+        violations=violations,
+        config_source=config_source,
+    )
+
+
+def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.enforce_pre_work_hard_gate`."""
+    return _pre_work_gate_helpers.enforce_pre_work_hard_gate(project_dir)

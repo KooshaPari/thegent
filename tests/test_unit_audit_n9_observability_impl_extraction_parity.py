@@ -386,7 +386,14 @@ class TestObservabilityRoundTrip:
         h1 = obs._hash_health_payload(payload)
         h2 = obs._hash_health_payload(payload)
         assert h1 == h2
-        assert len(h1) == 16
+        # AUDIT-N+16 (WL-125 closure): canonical contract is now the
+        # ``{"algorithm": "sha256", "value": <hex>}`` dict (verbatim from
+        # ``run_health_helpers.hash_health_payload``). Pin the dict shape
+        # and the hex-digest length (sha256 → 64 hex chars).
+        assert isinstance(h1, dict)
+        assert h1["algorithm"] == "sha256"
+        assert isinstance(h1["value"], str)
+        assert len(h1["value"]) == 64
         assert obs._hash_health_payload({"a": 2}) != h1
 
     # @trace FR-AUDIT-N+9-022
@@ -552,8 +559,13 @@ class TestBackwardCompatImports:
     def test_impl_hash_health_payload_importable_and_callable(self) -> None:
         impl = _load(IMPL)
         h = impl._hash_health_payload({"x": 1})
-        assert isinstance(h, str)
-        assert len(h) == 16
+        # AUDIT-N+16 (WL-125 closure): canonical contract is now the
+        # ``{"algorithm": "sha256", "value": <hex>}`` dict (verbatim
+        # from ``run_health_helpers.hash_health_payload``).
+        assert isinstance(h, dict)
+        assert h["algorithm"] == "sha256"
+        assert isinstance(h["value"], str)
+        assert len(h["value"]) == 64
 
     # @trace FR-AUDIT-N+9-042
     def test_impl_inject_time_constraint_importable_and_callable(self) -> None:
