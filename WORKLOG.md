@@ -6887,3 +6887,116 @@ Found branch in the following state:
 ### DAG tick
 
 **`+4`** on top of AUDIT-N+15 (this session).
+
+## Resumption — 2026-07-19 five-day goal Phase 3/4 (continued)
+
+### Actions Taken
+
+This resumption closes the two remaining blockers in the
+AUDIT-N+16 (WL-125 closure) carry-forward lane. Both are surgical
+fixes inside the uncommitted diff that was on disk at the start of
+the session; the diff was inspected, the remaining wrapper-
+doesn't-delegate failures were root-caused, and the regression in
+the AUDIT-N+12 identity contract was caught and fixed before commit.
+
+* **WL-125 trio closure (commit `7b980cfee`)** — closed the last 3
+  failures in `tests/test_wl125_run_health_helpers_parity.py`:
+  - `src/thegent/cli/commands/observability_impl.py`
+    - `_hash_health_payload`: returns the canonical
+      `run_health_helpers.hash_health_payload` result verbatim (the
+      canonical contract is a `{"algorithm": "sha256", "value": <hex>}`
+      dict, not a 16-char hex string). The previous implementation
+      coerced the dict to a 16-char string, which broke the WL-125
+      monkeypatch contract for `test_hash_helpers_are_deterministic`
+      in `test_unit_audit_n9_observability_impl_extraction_parity.py`.
+    - `_append_health_snapshot`: live-lookup impl-side resolvers
+      (`_health_snapshot_log_path`, `_compact_health_snapshot_log`,
+      `_coerce_issue_types`) on `sys.modules['thegent.cli.commands.impl']`
+      each call. The previous closure-captured resolvers shadowed
+      monkeypatched attributes. AUDIT-N+9 legacy `list.append(snapshot)`
+      form preserved (added explicit `return None` to satisfy ruff).
+    - `_compact_health_snapshot_log`: signature changed to no-arg,
+      dispatching to `run_health_helpers.compact_health_snapshot_log`
+      via the canonical kwarg-only contract with live-lookup impl-side
+      resolvers.
+  - `tests/test_unit_audit_n9_observability_impl_extraction_parity.py`
+    - `test_hash_helpers_are_deterministic`: assert the dict contract
+      (`algorithm == "sha256"`, `len(value) == 64`).
+    - `test_legacy_still_returns_a_string`: confirm the canonical
+      `value` is a 64-char sha256 hex string (full digest, not truncated).
+
+* **AUDIT-N+12 identity contract restoration (commit `7b980cfee`)** —
+  three local thin-wrapper defs in `src/thegent/cli/commands/impl.py`
+  (`_is_pid_running`, `_session_paths`, `_resolve_agent_model`) were
+  shadowing the canonical re-export from `session_impl` (assigned via
+  the `_SESSION_IMPL_REEXPORTS` loop at line ~768). The shadow broke
+  the AUDIT-N+12 identity contract:
+  ```
+  impl._is_pid_running is session_impl._is_pid_running
+  impl._session_paths is session_impl._session_paths
+  impl._resolve_agent_model is session_impl._resolve_agent_model
+  ```
+  WL-125 monkeypatch sites patch the helpers module directly
+  (`process_helpers.is_pid_running`, `run_session_helpers.session_paths`,
+  `run_session_helpers.resolve_agent_model`), not `impl.<x>`, so the
+  thin-wrapper defs were redundant AND harmful. Removed; re-exports
+  now hold.
+
+* **`dag_impl/__init__.py` validated** — the uncommitted
+  `DagDocument` + `dag_ready_impl` surface imports cleanly via
+  `from thegent.cli.commands.dag_impl import dag_ready_impl, DagDocument`
+  and exposes `dag_ready_impl` + `DagDocument` on the public API.
+  Validation deferred to the next phase lane (Phase 4 wiring).
+
+### Validation Results
+
+| Suite | Before this resumption | After this resumption |
+|-------|------------------------|-----------------------|
+| `tests/test_wl125_*_parity.py` | 17 failed | **91 passed** |
+| `tests/test_unit_audit_n12_session_impl_extraction_parity.py` | 2 failed | **40 passed** |
+| `tests/test_unit_audit_n9_observability_impl_extraction_parity.py` | 1 failed | **50 passed** |
+| Full focused regression sweep (WL-125 + AUDIT-N+5..N+14 + cockpit) | 328 passed + 2 failed | **330 passed** |
+| `ruff check` | 1 error (implicit None return) | **Clean** |
+| `ruff format` | Clean | Clean |
+| Secret scan | 0 matches | **0 matches** |
+
+### Status
+
+| Item | Status |
+|------|--------|
+| `tests/test_wl125_*_parity.py` | **All green (91/91)** |
+| `tests/test_unit_audit_n5..n14_*_parity.py` | **All green (330/330)** |
+| `tests/test_unit_ux_cockpit_traffic_pane.py` | **All green** |
+| `tests/test_unit_ux_cockpit_dormant_core_pane.py` | **All green** |
+| `tests/test_unit_cockpit_sota_json_parity.py` | **All green** |
+| `ruff check` | **Clean** |
+| Secret scan | **0 matches** |
+| Force-push / main write | None |
+| Bundle-zsh worktree | Untouched (`830d7af86`) |
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **`[##############--------]  55%`** —
+  Phase 3/4 hardening lane at ~55% saturation (was 100% last session
+  per the prior hand-off; the bar dropped because new lanes entered:
+  (a) WL-125 trio closure (carry-forward), (b) AUDIT-N+12 identity
+  restoration (carry-forward), (c) Phase 4 `dag_impl` wiring (new).
+  55% = WL-125 trio closed + AUDIT-N+12 identity restored, with
+  `dag_impl` Phase 4 wiring still pending).
+* **DAG tick**: **`+2`** on top of the prior session's `+4`
+  (this resumption closed the WL-125 trio and the AUDIT-N+12
+  identity contract carry-forward, two effective lane increments
+  inside the AUDIT-N+16 wrapper-doesn't-delegate envelope).
+* **Closed this session**: WL-125 trio (commit `7b980cfee`):
+  - `_hash_health_payload` dict contract + live-lookup resolver
+  - `_append_health_snapshot` live-lookup impl-side resolvers
+  - `_compact_health_snapshot_log` no-arg canonical dispatch
+  - AUDIT-N+12 identity restoration for `_is_pid_running`,
+    `_session_paths`, `_resolve_agent_model`
+* **Branch**: `wip/2026-07-18-cockpit-sota-hardening`,
+  **77 commits** ahead of `main` after this resumption
+  (was 76 ahead pre-resumption).
+
+### DAG tick
+
+**`+2`** on top of the prior session's `+4` (this resumption).
