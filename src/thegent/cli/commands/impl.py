@@ -737,7 +737,6 @@ _SESSION_IMPL_REEXPORTS = (
     "_read_session_meta",
     "_find_session_meta",
     "_resolve_session_status",
-    "_resolve_agent_model",
     "_resolve_cwd",
     "_compose_owner_tag",
     "_default_owner_tag",
@@ -746,6 +745,7 @@ _SESSION_IMPL_REEXPORTS = (
     "_session_dir",
     "_session_scope_dirs",
     "_run_background_session_observer",
+    "_resolve_agent_model",
 )
 try:
     from thegent.cli.commands import session_impl as _session_impl  # noqa: F401
@@ -1334,12 +1334,11 @@ def _model_supports_vision(model: str) -> bool:
 
 
 # -- process / retry / spawn_retry -----------------------------------------
-# AUDIT-N+12: ``_is_pid_running`` lives in
-# :mod:`thegent.cli.commands.session_impl` (canonical home); re-exported
-# via the session_impl import block. The WL-125 patch site
+# WL-125 closure: ``_is_pid_running`` is re-exported from
+# ``session_impl`` (canonical home) as a thin live-lookup delegate
+# to ``process_helpers.is_pid_running``. The monkeypatch site
 # ``monkeypatch.setattr("thegent.cli.commands.impl.process_helpers.is_pid_running", ...)``
-# is observed because ``process_helpers`` is imported as a module
-# attribute below.
+# is observed. Canonical home is :mod:`thegent.cli.commands.session_impl`.
 
 
 def _backoff_delay(attempt: int, *, max_delay: float = 60.0) -> float:
@@ -1441,12 +1440,13 @@ def _normalize_image_paths(paths: list[str]) -> list[str]:
 
 
 # -- run_model_helpers ----------------------------------------------------
-# AUDIT-N+12: ``_resolve_agent_model`` lives in
-# :mod:`thegent.cli.commands.session_impl` (canonical 4-arg form);
-# re-exported via the session_impl import block. The WL-125 patch site
+# WL-125 closure: ``_resolve_agent_model`` is re-exported from
+# ``session_impl`` (canonical home) as a thin live-lookup delegate so the
+# monkeypatch sites
 # ``monkeypatch.setattr("thegent.cli.commands.impl.run_model_helpers.resolve_agent_model", ...)``
-# is observed because ``run_model_helpers`` is imported as a module
-# attribute below. ``_validate_explicit_ollama_provider`` is a new
+# and
+# ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.resolve_agent_model", ...)``
+# are observed. ``_validate_explicit_ollama_provider`` is a new
 # WL-125 dispatch wrapper that delegates to the canonical helper module.
 
 
@@ -1460,13 +1460,13 @@ def _validate_explicit_ollama_provider(
 
 
 # -- run_session_helpers / session_path_helpers / session_id_helpers ------
-# AUDIT-N+12: ``_session_paths`` and ``_new_session_id`` live in
-# :mod:`thegent.cli.commands.session_impl` (canonical home); re-exported
-# via the session_impl import block. The WL-125 patch sites
-# (``impl.session_path_helpers.session_paths``,
-# ``impl.run_session_helpers.session_paths``, and
-# ``impl.session_id_helpers.new_session_id``) are observed because each
-# helper module is imported as a module attribute below.
+# WL-125 closure: ``_session_paths`` and ``_new_session_id`` are
+# re-exported from ``session_impl`` (canonical home) as thin live-lookup
+# delegates so the monkeypatch sites
+# ``monkeypatch.setattr("thegent.cli.commands.impl.session_path_helpers.session_paths", ...)``
+# and ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.session_paths", ...)``
+# (plus ``session_id_helpers.new_session_id``) are observed. Canonical homes
+# are the respective ``thegent.cli.services.*_helpers`` modules.
 
 
 # -- run_workstream_helpers ----------------------------------------------

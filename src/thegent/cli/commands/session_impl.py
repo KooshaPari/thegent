@@ -60,20 +60,21 @@ _CWD_CACHE: dict[str, Path | None] = {}
 def _is_pid_running(pid: int) -> bool:
     """Return True iff the given OS PID is alive and visible to us.
 
-    Pinned by ``tests/test_unit_cli_impl_session.py::TestIsPidRunning``.
+    WL-125: live-lookup delegate to ``thegent.cli.services.process_helpers.is_pid_running``
+    so monkeypatch sites like
+    ``monkeypatch.setattr("thegent.cli.commands.impl.process_helpers.is_pid_running", ...)``
+    are observed.
+
+    Pinned by ``tests/test_unit_cli_impl_session.py::TestIsPidRunning`` and
+    ``tests/test_wl125_process_helpers_parity.py``.
     """
-    if pid <= 0:
-        return False
-    try:
-        os.kill(pid, 0)
-    except OSError as exc:  # noqa: PERF203 - explicit errno check
-        if exc.errno == errno.ESRCH:
-            return False
-        if exc.errno == errno.EPERM:
-            # Process exists but we lack permission to signal it.
-            return True
-        return False
-    return True
+    # Lazy import ensures each call reads the live module attribute, so
+    # patches like ``impl.process_helpers.is_pid_running = fake`` are
+    # observed without requiring module-level import. ``errno`` handling
+    # lives in the canonical helper (process_helpers.is_pid_running).
+    from thegent.cli.services import process_helpers as _proc_helpers
+
+    return _proc_helpers.is_pid_running(pid)
 
 
 # ---------------------------------------------------------------------------
@@ -103,28 +104,44 @@ def _scope_key(value: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _session_paths(session_dir: Path, session_id: str) -> dict[str, Path]:
+def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
     """Return the canonical on-disk paths for a session.
 
-    Pinned by ``tests/test_unit_cli_impl_session.py::TestSessionPaths``.
+    WL-125: live-lookup delegate to
+    ``thegent.cli.services.run_session_helpers.session_paths`` (kwarg form)
+    so monkeypatch sites like
+    ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.session_paths", ...)``
+    are observed directly, and patches against
+    ``session_path_helpers.session_paths`` are observed transitively via the
+    ``run_session_helpers`` chain.
+
+    Pinned by ``tests/test_unit_cli_impl_session.py::TestSessionPaths``,
+    ``tests/test_wl125_session_path_helpers_parity.py``, and
+    ``tests/test_wl125_run_session_helpers_parity.py``.
     """
-    return {
-        "meta": session_dir / f"{session_id}.json",
-        "stdout": session_dir / f"{session_id}.stdout.log",
-        "stderr": session_dir / f"{session_id}.stderr.log",
-        "rc": session_dir / f"{session_id}.rc",
-        "in": session_dir / f"{session_id}.in",
-    }
+    from thegent.cli.services import run_session_helpers as _rsh
+
+    return _rsh.session_paths(base=base, session_id=session_id)
 
 
 def _new_session_id(agent: str, owner: str) -> str:
     """Compose a new, unique session id of the form ``<agent>-<scope>-<uuid>``.
 
-    Pinned by ``tests/test_unit_cli_impl_session.py::TestNewSessionId``.
+    WL-125: live-lookup delegate to
+    ``thegent.cli.services.session_id_helpers.new_session_id`` so
+    monkeypatch sites like
+    ``monkeypatch.setattr("thegent.cli.commands.impl.session_id_helpers.new_session_id", ...)``
+    are observed directly, and patches against
+    ``run_session_helpers.new_session_id`` (the timestamp facade) are
+    observed transitively via :func:`run_session_helpers.session_id`.
+
+    Pinned by ``tests/test_unit_cli_impl_session.py::TestNewSessionId``,
+    ``tests/test_unit_audit_n12_session_impl_extraction_parity.py::TestNewSessionIdFormat``,
+    and ``tests/test_wl125_session_id_helpers_parity.py``.
     """
-    scope = _scope_key(owner) if owner else "anon"
-    short = uuid.uuid4().hex[:8]
-    return f"{agent}-{scope}-{short}"
+    from thegent.cli.services import session_id_helpers as _sid_helpers
+
+    return _sid_helpers.new_session_id(agent=agent, owner=owner)
 
 
 # ---------------------------------------------------------------------------
@@ -241,31 +258,25 @@ def _resolve_agent_model(
       3. Hard-coded fallback in :data:`_HARDCODED_AGENT_MODELS`.
       4. ``None`` for unknown agents.
 
+    WL-125: live-lookup delegate to
+    ``thegent.cli.services.run_session_helpers.resolve_agent_model`` so
+    monkeypatch sites like
+    ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.resolve_agent_model", ...)``
+    are observed directly, and patches against
+    ``run_model_helpers.resolve_agent_model`` are observed transitively via
+    the ``run_session_helpers`` chain.
+
     Pinned by
     ``tests/test_unit_cli_impl_session.py::TestResolveAgentModel`` (lines
-    213-256) and ``::TestResolveAgentModelExtended`` (lines 1691-1739).
+    213-256) and ``::TestResolveAgentModelExtended`` (lines 1691-1739),
+    plus ``tests/test_wl125_run_model_helpers_parity.py`` and
+    ``tests/test_wl125_run_session_helpers_parity.py``.
     """
-    if model:
-        return model
-    canonical = _AGENT_ALIASES.get(agent, agent)
+    from thegent.cli.services import run_session_helpers as _rsh
 
-    if canonical == "codex":
-        if mode == "full":
-            high = getattr(settings, "default_codex_model_high", None)
-            if high:
-                return high
-        return getattr(settings, "default_codex_model", None)
-    if canonical == "claude":
-        return getattr(settings, "default_claude_model", None)
-    if canonical == "gemini":
-        return getattr(settings, "default_gemini_model", None)
-    if canonical == "copilot":
-        return getattr(settings, "default_copilot_model", None)
-    if canonical in ("cursor", "antigravity"):
-        # Per-agent resolution: antigravity has its own default.
-        attr = "default_cursor_model" if canonical == "cursor" else "default_antigravity_model"
-        return getattr(settings, attr, None)
-    return _HARDCODED_AGENT_MODELS.get(agent)
+    return _rsh.resolve_agent_model(
+        agent=agent, model=model, mode=mode, settings=settings
+    )
 
 
 # ---------------------------------------------------------------------------
