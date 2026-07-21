@@ -993,6 +993,70 @@ class TestThegentSessionContractHealthTrendTool:
         assert call_kwargs["all"] is True
         assert call_kwargs["limit"] == 5
 
+    # @trace FR-MCP-073
+    @patch("thegent.mcp.server.session_contract_health_trend_impl")
+    def test_trend_tool_meta_envelope(self, mock_impl: MagicMock) -> None:
+        """Meta block contains all _health_trend_meta fields."""
+        mock_impl.return_value = {
+            "payload_type": "session_contract_health_trend",
+            "schema_version": "v1",
+            "status": "healthy",
+            "trend_payload_type": "session_contract_health_gate",
+            "snapshots": [{"id": "s1"}, {"id": "s2"}],
+            "delta_summary": {"blocked_ratio_delta": 0.1},
+            "scope_key": {"owner": "team-a"},
+            "latest": {
+                "status": "pass",
+                "pass": True,
+                "blocked_ratio": 0.05,
+                "blocked_count": 1,
+                "issue_types": ["type_a", "type_b"],
+            },
+            "compat": {"mode": "v1", "aliases": {"old": "new"}},
+        }
+        result = _mcp_mod.thegent_session_contract_health_trend()
+        meta = result.meta
+        assert meta["status"] == "healthy"
+        assert meta["trend_payload_type"] == "session_contract_health_gate"
+        assert meta["latest_status"] == "pass"
+        assert meta["latest_pass"] is True
+        assert meta["latest_blocked_ratio"] == 0.05
+        assert meta["latest_blocked_count"] == 1
+        assert meta["latest_issue_types_count"] == 2
+        assert "type_a" in meta["latest_issue_types_csv"]
+        assert meta["compat_mode"] == "v1"
+        assert meta["compat_aliases"] == {"old": "new"}
+        assert meta["compat_aliases_count"] == 1
+
+    # @trace FR-MCP-074
+    @patch("thegent.mcp.server.session_contract_health_trend_impl")
+    def test_trend_tool_error_envelope(self, mock_impl: MagicMock) -> None:
+        """MCPBudgetExceeded returns error _ToolResult."""
+        from thegent.mcp.server.mcp_perf_gates import MCPBudgetExceeded
+
+        mock_impl.side_effect = MCPBudgetExceeded("health_trend_ms", 80.0, 50.0)
+        result = _mcp_mod.thegent_session_contract_health_trend()
+        assert "MCP budget exceeded" in result.content
+        assert result.structured_content == {}
+        assert result.meta == {}
+
+    # @trace FR-MCP-075
+    @patch("thegent.mcp.server.session_contract_health_trend_impl")
+    def test_trend_tool_structured_content(self, mock_impl: MagicMock) -> None:
+        """structured_content matches the raw impl payload."""
+        raw_payload = {
+            "payload_type": "session_contract_health_trend",
+            "schema_version": "v1",
+            "snapshots": [{"id": "s1"}],
+            "delta_summary": {"blocked_ratio_delta": 0.1},
+            "scope_key": {"owner": "team-a"},
+            "latest": {"status": "pass", "pass": True},
+            "compat": None,
+        }
+        mock_impl.return_value = raw_payload
+        result = _mcp_mod.thegent_session_contract_health_trend()
+        assert result.structured_content == raw_payload
+
 
 # ===================================================================
 # Tool: thegent_observe_summary (deep meta verification)

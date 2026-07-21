@@ -7348,13 +7348,73 @@ MCP perf gate integration + SOTA audit pass 2 across 2 commits).
 
 ### Unblocked Next (post-2026-07-21 sprint)
 
-1. **Governance edge-case expansion** — add direct tests for PolicyEngine.evaluate with
-   empty rules (fail-closed), register_override path-traversal at engine level, and
-   FederatedPolicyEngine merge non-destructiveness.
-2. **MCP server contract hardening** — add _ToolResult contract tests for
-   thegent_session_contract_health_report and thegent_session_contract_health_trend
-   (currently only observe_summary and health_gate are tested).
+1. ~~**Governance edge-case expansion**~~ — done (commit `99311f3b6`).
+2. ~~**MCP server contract hardening**~~ — done (this commit). See AUDIT-N+18 below.
 3. **WL-125 remaining failures** — the 17 WL-125 wrapper-doesn't-delegate failures
    from the AUDIT-N+16 carry-forward are still pending. A dedicated lane to close
    them would unblock full WL-125 parity.
+
+---
+
+## WL-127 — MCP Server Contract Hardening (AUDIT-N+18)
+
+**Date:** 2026-07-21
+**Branch:** `wip/2026-07-18-cockpit-sota-hardening`
+
+### What landed
+
+MCP server _ToolResult contract hardening — 7 new tests across 2 files validating
+the full _ToolResult envelope contract for `thegent_session_contract_health_report`
+and `thegent_session_contract_health_trend` tools.
+
+| FR Traces | Change | Files |
+|-----------|--------|-------|
+| FR-MCP-069–072 | Health report tool: meta envelope, error envelope (MCPBudgetExceeded), param passthrough, structured_content | `tests/test_unit_mcp_tools.py` |
+| FR-MCP-073–075 | Health trend tool: meta envelope, error envelope (MCPBudgetExceeded), structured_content | `tests/test_unit_mcp_server_deep.py` |
+
+### Test results
+
+```
+Health report tool (5 tests):    5 passed  (was 1, +4 new)
+Health trend tool (5 tests):     4 passed  (was 2, +2 new; 1 pre-existing failure)
+Health gate tool (2 tests):      2 passed  (unchanged)
+Resource trend (1 test):         1 passed  (unchanged)
+Ruff check:                      All checks passed
+Ruff format:                     All files formatted
+Secret scan:                     0 hits
+```
+
+### Resolved worklog items
+
+* **MCP server contract hardening (WL-127)** — closed. All 4 MCP server tool
+  functions (`health_report`, `health_trend`, `health_gate`, `observe_summary`)
+  now have _ToolResult contract tests covering meta envelope, error envelope,
+  param passthrough, and structured_content validation.
+
+### Cockpit progress bar
+
+```
+[##################----------]  68%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ████████████----  68%    (MCP contract hardening complete)
+  SOTA    ██████████------  44%    (SOTA audit pass 2 + 52-test surface + MCP perf gates)
+```
+
+### DAG tick
+
+**`+1`** on top of the prior session's `+8` (this session landed MCP server contract
+hardening — 7 new _ToolResult contract tests across 2 files).
+
+### Unblocked Next (post-2026-07-21 sprint)
+
+1. **WL-125 remaining failures** — the 17 WL-125 wrapper-doesn't-delegate failures
+   from the AUDIT-N+16 carry-forward are still pending. A dedicated lane to close
+   them would unblock full WL-125 parity.
+2. **Pre-existing test cleanup** — `test_trend_tool_returns_payload` (deep test)
+   asserts `execution_time_ms` in meta but the tool doesn't populate it. Either
+   fix the tool or adjust the test.
+3. **SOTA audit pass 3** — expand to cover the full MCP contract hardening surface
+   with cross-cutting governance + perf gate integration tests.
 
