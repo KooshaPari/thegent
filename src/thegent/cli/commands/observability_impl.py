@@ -963,7 +963,7 @@ def observe_summary_impl(
         # any failure mode). Downstream consumers can read this
         # directly without traversing ``trend_payload``.
         result["wl120_dormant_round_trip"] = bool(dormant_payload.get("wl120_dormant_round_trip", False))
-        result["generated_query"] = {"trend_samples": trend_samples}
+        result["generated_query"] = {"trend_samples": trend_samples, "top_escalations": top_escalations}
 
     return result
 
