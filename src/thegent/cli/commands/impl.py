@@ -572,7 +572,7 @@ def ps_impl(
                 "pid": pid,
                 "running": running,
                 "started_at_utc": meta.get("started_at_utc"),
-                "status": meta.get("status") or ("running" if running else "exited"),
+                "status": _resolve_session_status(meta, scope_dir / f"{sid}.rc", running=running),
                 "prompt_preview": prompt_preview,
             }
             if include_contract and "route_contract" in meta:

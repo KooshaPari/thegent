@@ -5,6 +5,7 @@ This module provides the MCP (Model Context Protocol) server implementation.
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
 
@@ -71,6 +72,99 @@ def _summary_meta(payload: dict[str, Any]) -> dict[str, Any]:
         "provider": escalation.get("provider"),
         "trend_enabled": trend_summary.get("enabled"),
         "trend_samples_requested": generated_query.get("trend_samples"),
+    }
+
+
+def _health_trend_meta(payload: dict[str, Any]) -> dict[str, Any]:
+    """Build the canonical ``meta`` block for a health-trend payload.
+
+    The health-trend envelope carries a different key-set than the
+    observe-summary envelope (``trend_payload_type``,
+    ``snapshot_health_volatility``, ``latest_issue_types_count``,
+    etc.), so a dedicated meta builder is needed.
+
+    Normalizes ``latest.issue_types`` (may be a string, list, or missing)
+    into ``latest_issue_types_count``, ``_csv``, ``_json``, ``_hash``.
+    Computes ``snapshot_health_volatility_hash`` when not provided.
+    """
+    latest = payload.get("latest") or {}
+    latest_raw = latest.get("issue_types")
+    if isinstance(latest_raw, str):
+        latest_types_list = [latest_raw]
+    elif isinstance(latest_raw, list):
+        latest_types_list = latest_raw
+    else:
+        latest_types_list = []
+    # Prefer top-level keys when present; fall back to normalizing latest.issue_types
+    latest_count = payload.get("latest_issue_types_count")
+    if latest_count is None and latest_types_list:
+        latest_count = len(latest_types_list)
+    latest_csv = payload.get("latest_issue_types_csv")
+    if latest_csv is None and latest_types_list:
+        latest_csv = ", ".join(str(i) for i in latest_types_list)
+    latest_json_str = payload.get("latest_issue_types_json")
+    if latest_json_str is None and latest_types_list:
+        latest_json_str = _json.dumps(latest_types_list)
+    latest_hash = payload.get("latest_issue_types_hash")
+    if latest_hash is None and latest_json_str:
+        latest_hash = hashlib.sha256(latest_json_str.encode("utf-8")).hexdigest()
+
+    volatility = payload.get("snapshot_health_volatility")
+    volatility_hash = payload.get("snapshot_health_volatility_hash")
+    if volatility_hash is None and volatility is not None:
+        volatility_hash = hashlib.sha256(str(volatility).encode("utf-8")).hexdigest()
+    elif volatility_hash is None and volatility is None:
+        volatility_hash = hashlib.sha256(str(None).encode("utf-8")).hexdigest()
+
+    compat = payload.get("compat") or {}
+    compat_aliases = compat.get("aliases") or {}
+
+    return {
+        "status": payload.get("status"),
+        "payload_type": payload.get("payload_type"),
+        "schema_version": payload.get("schema_version"),
+        "trend_payload_type": payload.get("trend_payload_type"),
+        "generated_at_utc": payload.get("generated_at_utc"),
+        "scope_key": payload.get("scope_key"),
+        "scope_key_json": payload.get("scope_key_json"),
+        "scope_payload_type": payload.get("scope_payload_type"),
+        "scope_owner": payload.get("scope_owner"),
+        "scope_all": payload.get("scope_all"),
+        "scope_strict": payload.get("scope_strict"),
+        "scope_policy_profile": payload.get("scope_policy_profile"),
+        "scope_top_blocked": payload.get("scope_top_blocked"),
+        "scope_min_healthy_ratio": payload.get("scope_min_healthy_ratio"),
+        "snapshot_count": payload.get("snapshot_count"),
+        "snapshot_ids_csv": payload.get("snapshot_ids_csv"),
+        "snapshot_ids_hash": payload.get("snapshot_ids_hash"),
+        "snapshot_window_seconds": payload.get("snapshot_window_seconds"),
+        "snapshot_window_hash": payload.get("snapshot_window_hash"),
+        "snapshot_interval_seconds_avg": payload.get("snapshot_interval_seconds_avg"),
+        "snapshot_interval_hash": payload.get("snapshot_interval_hash"),
+        "snapshot_density_per_hour": payload.get("snapshot_density_per_hour"),
+        "snapshot_density_hash": payload.get("snapshot_density_hash"),
+        "snapshot_issue_churn_count": payload.get("snapshot_issue_churn_count"),
+        "snapshot_issue_churn_hash": payload.get("snapshot_issue_churn_hash"),
+        "snapshot_health_volatility": volatility,
+        "snapshot_health_volatility_hash": volatility_hash,
+        "snapshot_freshness_seconds": payload.get("snapshot_freshness_seconds"),
+        "snapshot_freshness_hash": payload.get("snapshot_freshness_hash"),
+        "snapshot_retention_max_lines": payload.get("snapshot_retention_max_lines"),
+        "delta_summary_json": payload.get("delta_summary_json"),
+        "blocked_ratio_delta": payload.get("blocked_ratio_delta"),
+        "blocked_count_delta": payload.get("blocked_count_delta"),
+        "latest_status": payload.get("latest_status") or latest.get("status"),
+        "latest_pass": payload.get("latest_pass") if "latest_pass" in payload else latest.get("pass"),
+        "latest_captured_at_utc": payload.get("latest_captured_at_utc") or latest.get("captured_at_utc"),
+        "latest_blocked_ratio": payload.get("latest_blocked_ratio") or latest.get("blocked_ratio"),
+        "latest_blocked_count": payload.get("latest_blocked_count") or latest.get("blocked_count"),
+        "latest_issue_types_csv": latest_csv,
+        "latest_issue_types_json": latest_json_str,
+        "latest_issue_types_hash": latest_hash,
+        "latest_issue_types_count": latest_count,
+        "compat_mode": payload.get("schema_compat_mode") or compat.get("mode"),
+        "compat_aliases": compat_aliases,
+        "compat_aliases_count": payload.get("compat_aliases_count") or len(compat_aliases),
     }
 
 
@@ -298,7 +392,7 @@ def thegent_session_contract_health_trend(
     return _ToolResult(
         content=_json.dumps(payload),
         structured_content=payload,
-        meta=_summary_meta(payload),
+        meta=_health_trend_meta(payload),
     )
 
 

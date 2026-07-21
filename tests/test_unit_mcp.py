@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from thegent.cli.commands.cli import _scope_key
+from thegent.cli.commands._cli_shared import resolve_owner_dir
 from thegent.cli.commands.impl import (
     bg_impl,
     dag_list_impl,
@@ -216,8 +216,9 @@ class TestObserveSummaryMCPContracts:
             captured.update(kwargs)
             return payload
 
-        with patch("thegent.cli.commands.observability_impl.observe_summary_impl", side_effect=_fake_impl):
+        with patch("thegent.mcp.server.observe_summary_impl", side_effect=_fake_impl):
             raw = resource_observe_summary(
+                "test-resource://observe",
                 limit=25,
                 drift_window=9,
                 structural_budget_pct=5.0,
@@ -237,7 +238,7 @@ class TestObserveSummaryMCPContracts:
         payload = {
             "payload_type": "observe_summary",
             "payload_schema_version": "observe-summary-schema-v1",
-            "generated_query": {"trend_samples": 2},
+            "generated_query": {"trend_samples": 2, "top_escalations": 3},
             "trend_summary": {"enabled": True},
             "kpis": {
                 "total_events": 1,
@@ -307,7 +308,7 @@ class TestCLIImplBackground:
 
         assert "session_id" in result
         assert "owner" in result
-        scoped = session_dir / _scope_key(result["owner"])
+        scoped = resolve_owner_dir(result["owner"], session_dir)
         meta_path = scoped / f"{result['session_id']}.json"
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         assert meta["agent"] == "cursor-agent"
@@ -332,8 +333,8 @@ class TestCLIImplBackground:
         """ps_impl resolves completion status from rc file and metadata."""
         owner = f"{getpass.getuser()}:{tmp_path.name}:manual"
         session_dir = tmp_path / "sessions"
-        scoped = session_dir / _scope_key(owner)
-        scoped.mkdir(parents=True)
+        scoped = resolve_owner_dir(owner, session_dir)
+        scoped.mkdir(parents=True, exist_ok=True)
         sid = "sid-ps"
         meta = {
             "session_id": sid,
@@ -357,8 +358,8 @@ class TestCLIImplBackground:
         """status_impl includes host/mode/path/timeout metadata."""
         owner = f"{getpass.getuser()}:{tmp_path.name}:manual"
         session_dir = tmp_path / "sessions"
-        scoped = session_dir / _scope_key(owner)
-        scoped.mkdir(parents=True)
+        scoped = resolve_owner_dir(owner, session_dir)
+        scoped.mkdir(parents=True, exist_ok=True)
         sid = "sid-status"
         paths = {
             "meta": str(scoped / f"{sid}.json"),
@@ -736,7 +737,7 @@ class TestMCPObserveSummaryContract:
                 "top_escalations_count": 2,
             },
             "trend_summary": {"enabled": False},
-            "generated_query": {"trend_samples": 0},
+            "generated_query": {"trend_samples": 0, "top_escalations": 2},
             "payload_type": "observe_summary",
             "payload_schema_version": "observe-summary-schema-v1",
         }
@@ -785,7 +786,9 @@ class TestMCPObserveSummaryContract:
             "payload_schema_version": "observe-summary-schema-v1",
         }
         with patch("thegent.mcp.server.observe_summary_impl", return_value=payload):
-            raw = resource_observe_summary(limit=100, drift_window=30, provider="cursor", trend_samples=3)
+            raw = resource_observe_summary(
+                "test-resource://observe", limit=100, drift_window=30, provider="cursor", trend_samples=3
+            )
         data = json.loads(raw)
         assert data["status"] == "healthy"
         assert data["drift"]["within_budget"] is True
