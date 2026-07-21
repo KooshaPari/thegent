@@ -30,6 +30,7 @@ from thegent.cli.commands.observability_impl import observe_summary_impl  # noqa
 from thegent.cli.commands.impl import session_contract_health_gate_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import session_contract_health_report_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import session_contract_health_trend_impl  # noqa: E402, F401
+from thegent.mcp.server.mcp_perf_gates import MCPBudgetExceeded, mcp_budget_context  # noqa: E402, F401
 from thegent.mcp.server.tools_skills import _ToolResult  # noqa: E402, F401
 
 # AUDIT-N+15: MCP server gate deltas — re-export the ``*_impl`` symbols
@@ -242,16 +243,17 @@ def resource_observe_summary(
     ``str`` (json-encoded body), whereas the tool variant returns a
     ``_ToolResult`` envelope.
     """
-    payload = observe_summary_impl(
-        limit=limit,
-        drift_window=drift_window,
-        structural_budget_pct=structural_budget_pct,
-        semantic_budget_pct=semantic_budget_pct,
-        provider=provider,
-        top_escalations=top_escalations,
-        trend_samples=trend_samples,
-        **kwargs,
-    )
+    with mcp_budget_context("observe_summary_ms"):
+        payload = observe_summary_impl(
+            limit=limit,
+            drift_window=drift_window,
+            structural_budget_pct=structural_budget_pct,
+            semantic_budget_pct=semantic_budget_pct,
+            provider=provider,
+            top_escalations=top_escalations,
+            trend_samples=trend_samples,
+            **kwargs,
+        )
     return _json.dumps(payload)
 
 
@@ -292,21 +294,25 @@ def thegent_observe_summary(
     ``structured_content`` (the raw payload) and ``meta`` (the
     canonical summary meta block).
     """
-    payload = observe_summary_impl(
-        limit=limit,
-        drift_window=drift_window,
-        structural_budget_pct=structural_budget_pct,
-        semantic_budget_pct=semantic_budget_pct,
-        provider=provider,
-        top_escalations=top_escalations,
-        trend_samples=trend_samples,
-        **kwargs,
-    )
-    return _ToolResult(
-        content=_json.dumps(payload),
-        structured_content=payload,
-        meta=_summary_meta(payload),
-    )
+    try:
+        with mcp_budget_context("observe_summary_ms"):
+            payload = observe_summary_impl(
+                limit=limit,
+                drift_window=drift_window,
+                structural_budget_pct=structural_budget_pct,
+                semantic_budget_pct=semantic_budget_pct,
+                provider=provider,
+                top_escalations=top_escalations,
+                trend_samples=trend_samples,
+                **kwargs,
+            )
+        return _ToolResult(
+            content=_json.dumps(payload),
+            structured_content=payload,
+            meta=_summary_meta(payload),
+        )
+    except MCPBudgetExceeded as exc:
+        return _ToolResult(content=str(exc), structured_content={}, meta={})
 
 
 def thegent_session_contract_health_gate(
@@ -326,20 +332,24 @@ def thegent_session_contract_health_gate(
     ``structured_content`` (the raw payload) and ``meta`` (the
     canonical contract-health meta block).
     """
-    payload = session_contract_health_gate_impl(
-        policy_profile=policy_profile,
-        strict=strict,
-        min_healthy_ratio=min_healthy_ratio,
-        owner=owner,
-        all=all,
-        top_blocked=top_blocked,
-        **kwargs,
-    )
-    return _ToolResult(
-        content=_json.dumps(payload),
-        structured_content=payload,
-        meta=_contract_health_meta(payload),
-    )
+    try:
+        with mcp_budget_context("tool_invoke_ms"):
+            payload = session_contract_health_gate_impl(
+                policy_profile=policy_profile,
+                strict=strict,
+                min_healthy_ratio=min_healthy_ratio,
+                owner=owner,
+                all=all,
+                top_blocked=top_blocked,
+                **kwargs,
+            )
+        return _ToolResult(
+            content=_json.dumps(payload),
+            structured_content=payload,
+            meta=_contract_health_meta(payload),
+        )
+    except MCPBudgetExceeded as exc:
+        return _ToolResult(content=str(exc), structured_content={}, meta={})
 
 
 def thegent_session_contract_health_report(
@@ -357,20 +367,24 @@ def thegent_session_contract_health_report(
 
     Returns a ``_ToolResult`` envelope.
     """
-    payload = session_contract_health_report_impl(
-        policy_profile=policy_profile,
-        strict=strict,
-        min_healthy_ratio=min_healthy_ratio,
-        owner=owner,
-        all=all,
-        top_blocked=top_blocked,
-        **kwargs,
-    )
-    return _ToolResult(
-        content=_json.dumps(payload),
-        structured_content=payload,
-        meta=_contract_health_meta(payload),
-    )
+    try:
+        with mcp_budget_context("tool_invoke_ms"):
+            payload = session_contract_health_report_impl(
+                policy_profile=policy_profile,
+                strict=strict,
+                min_healthy_ratio=min_healthy_ratio,
+                owner=owner,
+                all=all,
+                top_blocked=top_blocked,
+                **kwargs,
+            )
+        return _ToolResult(
+            content=_json.dumps(payload),
+            structured_content=payload,
+            meta=_contract_health_meta(payload),
+        )
+    except MCPBudgetExceeded as exc:
+        return _ToolResult(content=str(exc), structured_content={}, meta={})
 
 
 def thegent_session_contract_health_trend(
@@ -384,16 +398,20 @@ def thegent_session_contract_health_trend(
 
     Returns a ``_ToolResult`` envelope.
     """
-    payload = session_contract_health_trend_impl(
-        payload_type=payload_type,
-        trend_samples=trend_samples,
-        **kwargs,
-    )
-    return _ToolResult(
-        content=_json.dumps(payload),
-        structured_content=payload,
-        meta=_health_trend_meta(payload),
-    )
+    try:
+        with mcp_budget_context("health_trend_ms"):
+            payload = session_contract_health_trend_impl(
+                payload_type=payload_type,
+                trend_samples=trend_samples,
+                **kwargs,
+            )
+        return _ToolResult(
+            content=_json.dumps(payload),
+            structured_content=payload,
+            meta=_health_trend_meta(payload),
+        )
+    except MCPBudgetExceeded as exc:
+        return _ToolResult(content=str(exc), structured_content={}, meta={})
 
 
 def _cache_elicitation_key(elicitation_id: str) -> str:
