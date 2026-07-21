@@ -7284,3 +7284,77 @@ Secret scan:                0 hits (grep on api_key|secret|token|password|bearer
 **`+6`** on top of the prior session's `+5` (this session landed AUDIT-N+17:
 perf budgets + UX polish + MCP perf gates + 63 new tests in a single commit).
 
+---
+
+## 2026-07-21: Phase 3/4 Continuation — WL-124/126 hardening + MCP perf gate integration + SOTA audit pass 2
+
+**Commits:** `e424f45ba`, `85b121e5b`
+**Branch:** `wip/2026-07-18-cockpit-sota-hardening`
+
+### Context
+
+Resumed the active Five-Day Goal on 2026-07-21. Working tree had uncommitted
+WL-124/126 hardening work (10 modified files + 2 untracked test files).
+Baseline 551 tests passing from AUDIT-N+17.
+
+### What landed
+
+Two focused commits in the same session:
+
+| Commit | Lane | Change | Files |
+|--------|------|--------|-------|
+| `e424f45ba` | WL-124/126 hardening | CLI command stubs hardened (governance_cmds, operations_commands, project_commands, queue_commands, recovery_commands) with __all__ exports + docstrings + backward-compat aliases. MCP re-export surface hardened (mcp/__init__, server_catalog_tools) with register_catalog_tool, invoke_catalog_tool. UX polish: dead branch removal in explanations.py, elapsed_s<=0 guard in progress_bar_with_eta. | 12 files, +441/-27 |
+| `85b121e5b` | MCP perf gate integration + SOTA audit pass 2 | MCP server tool dispatch wrapped with mcp_budget_context (5 functions). Budget-exceeding calls return _ToolResult error envelope. SOTA audit pass 2 test suite (52 tests) validates full Phase 3/4 hardening surface. | 2 files, +478/-63 |
+
+### Test results
+
+```
+WL-124 hardening:              17 passed
+WL-126 hardening:              27 passed
+SOTA audit pass 2:             52 passed
+MCP perf gates:                17 passed
+Full regression (23 files):    594 passed in 8.17s (was 551 baseline, +43 net, 0 regressions)
+Ruff check:                    All checks passed
+Ruff format:                   All files formatted
+Secret scan:                   0 hits
+```
+
+### Resolved worklog items
+
+* **WL-124 / WL-125 / WL-126 implementation-grade hardening** — closed. All 5 CLI command
+  modules and 2 MCP re-export modules now have proper __all__ exports, docstrings, and
+  backward-compatible aliases.
+* **SOTA audit pass 2** — closed. 52-test suite validates the full Phase 3/4 hardening
+  surface including MCP perf gates, perf budgets, governance thread-safety, cockpit clock
+  injection, decision audit trail, UX explanations, and MCP server contract functions.
+* **MCP perf gate integration** — closed. All 5 key MCP server tool dispatch functions
+  now wrapped with mcp_budget_context for runtime budget enforcement.
+
+### Cockpit progress bar
+
+```
+[##################----------]  68%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ████████████----  67%    (MCP perf gate integration complete, SOTA pass 2 done)
+  SOTA    ██████████------  44%    (SOTA audit pass 2 + 52-test surface + MCP perf gates)
+```
+
+### DAG tick
+
+**`+2`** on top of the prior session's `+6` (this session landed WL-124/126 hardening +
+MCP perf gate integration + SOTA audit pass 2 across 2 commits).
+
+### Unblocked Next (post-2026-07-21 sprint)
+
+1. **Governance edge-case expansion** — add direct tests for PolicyEngine.evaluate with
+   empty rules (fail-closed), register_override path-traversal at engine level, and
+   FederatedPolicyEngine merge non-destructiveness.
+2. **MCP server contract hardening** — add _ToolResult contract tests for
+   thegent_session_contract_health_report and thegent_session_contract_health_trend
+   (currently only observe_summary and health_gate are tested).
+3. **WL-125 remaining failures** — the 17 WL-125 wrapper-doesn't-delegate failures
+   from the AUDIT-N+16 carry-forward are still pending. A dedicated lane to close
+   them would unblock full WL-125 parity.
+
