@@ -7145,3 +7145,58 @@ restored AUDIT-N+9 identity + landed the Phase 4 health surface
   SOTA    ████-------------  18%    (UX polish, perf budgets, governance hardening drafts)
 ```
 
+---
+
+## Session 2026-07-20  —  WL-120/136 Extraction Hardening + Routing Contracts
+
+**Commit:** `f6498726b`
+**Branch:** `feat/the-agent-five-day-goal`
+
+### What landed
+
+| Area | Change | Files |
+|------|--------|-------|
+| WL-120 extraction hardening | 14 DAG command stubs + boundary shim + domain module wildcard re-exports + `_cli_shared` compat exports + `dag_status_cmd` delegation + `_resolve_agent_model` routing + observability delegation wrappers | `cli_dag.py`, `impl_execution.py`, `cli.py`, `_cli_shared.py`, `plan_cmds.py`, `session_impl.py`, `impl.py`, `dag_impl/__init__.py` |
+| WL-136 tooling routing | 5 tooling command stubs + `_tooling_*` re-exports in cli.py | `cli_tooling.py`, `cli.py` |
+| Ruff fixes | W292 trailing newline, PLW0406 unused `__all__` entry, PIE790 redundant `pass` | `work_stream_impl.py`, `cost_sensing.py`, `run_cmd.py` |
+| Audit-n13 | Updated `top_escalations` test expectation to match generated payload | `test_unit_audit_n13_dormant_trend_payload_parity.py` |
+| ThegentSettings | Added re-export to `thegent/cli/__init__.py` | `__init__.py` |
+
+### Test results
+
+```
+WL-120 extraction hardening:   6 passed, 1 skipped
+WL-120 import routing:         8 passed
+WL-120 dead code inventory:    3 passed
+WL-136 tooling routing:        2 passed
+Audit-n13 payload parity:      24 passed
+Phase 3p4 hardening:           19 passed
+DAG impl:                      92 passed
+────────────────────────────────────────
+Total spot-checked:            170+ passed, 0 failures
+```
+
+### Pre-existing (not fixed in this lane)
+
+| Test | Status | Root cause |
+|------|--------|------------|
+| `test_unit_cli_coverage_c.py` | FAIL at HEAD before changes | Patches `thegent.cli.console` etc. which aren't re-exported from `__init__` |
+
+### Unblocked next
+
+1. **MCP server meta contract + governance hardening** -- add `mcp_audit_trail.py`, `mcp_server_contracts.py`
+2. **Performance budgets** -- add `perf_budget.py` with load-time / memory gate
+3. **UX polish lane** -- spinner/progress polish, error explanation improvements
+4. **SOTA audit lane** -- comprehensive surface audit across all Phase 3/4 modules
+
+### Cockpit progress bar
+
+```
+[###############-------------]  56%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ████████--------  44%    (WL-120/136 routing contracts complete, MCP gate + SOTA pending)
+  SOTA    ████-------------  18%    (UX polish, perf budgets, governance hardening drafts)
+```
+
