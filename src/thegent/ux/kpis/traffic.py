@@ -83,6 +83,8 @@ def progress_bar_with_eta(done: int, total: int, elapsed_s: float, *, width: int
         return f"{bar} ETA -"
     if done >= total:
         return f"{bar} ETA 0s"
+    if elapsed_s <= 0:
+        return f"{bar} ETA -"
     remaining = (elapsed_s / done) * (total - done)
     if remaining >= 60:
         minutes = int(remaining) // 60

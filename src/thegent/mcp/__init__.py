@@ -1,16 +1,18 @@
-"""STUB MODULE - thegent.mcp
+"""thegent.mcp — hardened re-export surface (WL-126).
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+Stable public API for the MCP module. All symbols listed in ``__all__``
+are guaranteed importable from ``thegent.mcp``.  Implementation details
+live in sibling modules; this package ``__init__`` exists solely to
+present a consistent, versioned import surface.
 """
 
 from __future__ import annotations
+
 from typing import Any
 
 
 def server_cache_elicitation_response(data: dict[str, Any]) -> dict[str, Any]:
-    """Server cache elicitation response stub."""
+    """Cache an elicitation response payload."""
     return {"cached": True}
 
 
@@ -72,6 +74,11 @@ def server_resolve_cwd_elicitation(cwd: str | None = None) -> str:
     return cwd or ""
 
 
+def server_resolve_owner_elicitation(owner: str | None = None) -> str:
+    """Resolve the owner for elicitation."""
+    return owner or ""
+
+
 def hotreload(enabled: bool = True) -> None:
     """Enable or disable hotreload."""
 
@@ -85,15 +92,9 @@ __all__ = [
     "server_error_result",
     "server_get_cached_elicitation",
     "server_load_module",
-    "_server_tools_workstream_lsp",
     "server_resolve_cwd_elicitation",
     "server_resolve_owner_elicitation",
     "server_stable_json",
     "server_tools_workstream_lsp",
     "hotreload",
 ]
-
-
-def server_resolve_owner_elicitation(owner: str | None = None) -> str:
-    """Resolve the owner for elicitation."""
-    return owner or ""

@@ -185,6 +185,21 @@ def discovery_scan_cmd(*args: Any, **kwargs: Any) -> int:
     return 0
 
 
+def gov_policy_lint_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Lint governance policies for violations. Stub returning empty dict."""
+    return {}
+
+
+def gov_policy_apply_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Apply governance policy changes. Stub returning empty dict."""
+    return {}
+
+
+def gov_policy_diff_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Diff governance policies before applying. Stub returning empty dict."""
+    return {}
+
+
 __all__ = [
     "data_protection_cmd",
     "compliance_report_cmd",
@@ -221,4 +236,7 @@ __all__ = [
     "discovery_register_cmd",
     "discovery_parse_cmd",
     "discovery_scan_cmd",
+    "gov_policy_lint_cmd",
+    "gov_policy_apply_cmd",
+    "gov_policy_diff_cmd",
 ]

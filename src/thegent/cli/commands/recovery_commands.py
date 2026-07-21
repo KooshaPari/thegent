@@ -16,4 +16,19 @@ def forensics_snapshot_cmd(*args: Any, **kwargs: Any) -> int:
     return 0
 
 
-__all__ = ["recover_status_cmd", "forensics_snapshot_cmd"]
+def recover_run_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Run a recovery procedure. Stub returning empty dict."""
+    return {}
+
+
+def recover_drill_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Run a recovery drill. Stub returning empty dict."""
+    return {}
+
+
+__all__ = [
+    "recover_status_cmd",
+    "forensics_snapshot_cmd",
+    "recover_run_cmd",
+    "recover_drill_cmd",
+]

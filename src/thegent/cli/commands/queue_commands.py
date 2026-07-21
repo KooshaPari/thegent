@@ -11,4 +11,14 @@ def queue_list_cmd(*args: Any, **kwargs: Any) -> int:
     return 0
 
 
-__all__ = ["queue_list_cmd"]
+def queue_status_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Show queue status summary. Stub returning empty dict."""
+    return {}
+
+
+def queue_drain_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Drain the queue, returning items processed. Stub returning empty dict."""
+    return {}
+
+
+__all__ = ["queue_list_cmd", "queue_status_cmd", "queue_drain_cmd"]

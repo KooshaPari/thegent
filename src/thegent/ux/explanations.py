@@ -473,8 +473,6 @@ def explain_exit_code(code: int) -> str:
     """
     if code in EXPLANATION_MAP:
         return EXPLANATION_MAP[code]
-    if 1 <= code <= 2:
-        return f"error code {code} — see docs for exit-code semantics"
     return f"exit code {code} — consult the process documentation"
 
 

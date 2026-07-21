@@ -16,4 +16,9 @@ def project_list_cmd(*args: Any, **kwargs: Any) -> int:
     return 0
 
 
-__all__ = ["project_register_cmd", "project_list_cmd"]
+def project_get_cmd(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Get a project by name or ID. Stub returning empty dict."""
+    return {}
+
+
+__all__ = ["project_register_cmd", "project_list_cmd", "project_get_cmd"]
