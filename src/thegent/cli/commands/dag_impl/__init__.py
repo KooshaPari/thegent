@@ -518,6 +518,28 @@ def dag_ready_impl(cd: Path | None = None) -> dict[str, Any]:
     }
 
 
+def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
+    """Return the status summary for the DAG under ``cd``.
+
+    Returns ``{"tasks": [...], "summary": {...}, "path": "..."}``.
+    """
+    cwd, dag_path = _dag_path(cd)
+    if cwd is None or dag_path is None:
+        return {"error": "Could not resolve cwd for DAG status"}
+    if not dag_path.exists():
+        return {"error": f"DAG not found: {dag_path}"}
+    doc = _parse_dag_full(dag_path)
+    status_counts: dict[str, int] = {}
+    for task in doc.tasks:
+        s = task.get("status", "unknown")
+        status_counts[s] = status_counts.get(s, 0) + 1
+    return {
+        "tasks": doc.tasks,
+        "summary": status_counts,
+        "path": str(dag_path),
+    }
+
+
 __all__ = [
     "DagDocument",
     "_parse_dag_full",
@@ -540,4 +562,5 @@ __all__ = [
     "dag_list_impl",
     "dag_raw_impl",
     "dag_ready_impl",
+    "dag_status_impl",
 ]

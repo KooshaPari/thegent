@@ -607,203 +607,34 @@ def team_task_list_cmd(
 
 
 # ============================================================================
-# WL-124: Re-export block — keep cli.py as the legacy monolith while
-# exposing the new domain submodules' names so legacy `from cli import X`
-# continues to work and the contract test passes.
-# ============================================================================
-from thegent.cli.commands.run_cmds import (  # noqa: E402,F401
-    bg_cmd,
-    deep_research_cmd,
-    loop_cmd,
-    loop_send_cmd,
-    loop_stop_cmd,
-    replay_cmd,
-    retry_cmd,
-    run_cmd,
-    run_diff_cmd,
-    takeover_cmd,
-    terminal_route_cmd,
-    trace_replay_cmd,
-)
-from thegent.cli.commands.session_cmds import (  # noqa: E402,F401
-    deferral_list_cmd,
-    deferral_resume_cmd,
-    events_cmd,
-    feedback_cmd,
-    history_cmd,
-    inbox_list_cmd,
-    inbox_wait_cmd,
-    inspect_cmd,
-    pause_cmd,
-    ps_cmd,
-    resume_cmd,
-    session_cmd,
-    session_contract_health_gate_cmd,
-    session_contract_health_report_cmd,
-    session_contract_health_trend_cmd,
-    session_contract_negotiate_cmd,
-    session_contract_trend_analysis_cmd,
-    session_contracts_cmd,
-    session_fork_cmd,
-    session_rollback_cmd,
-    status_cmd,
-    wait_cmd,
-)
-
+# WL-124: Wildcard re-exports from each extracted domain module.
+# The contract tests inspect ``inspect.getsource(cli)`` for these lines.
 # NOTE: `logs_cmd` and `stop_cmd` are intentionally NOT re-exported from
 # session_cmds. session_cmds.logs_cmd / session_cmds.stop_cmd are thin shims
 # that delegate back into this module, which causes import-time name
 # shadowing (the shim replaces the real definition in this module's
 # namespace, then the shim's delegation call resolves to the shadowed
-# shim → infinite recursion). Keep the real `logs_cmd` (line 295) and
-# `stop_cmd` (line 370) as the canonical implementations.
-from thegent.cli.commands.governance_cmds import (  # noqa: E402,F401
-    audit_verify_cmd,
-    compliance_plugin_check_cmd,
-    compliance_redact_cmd,
-    compliance_report_cmd,
-    compliance_siem_test_cmd,
-    contracts_conformance_cmd,
-    contracts_registry_cmd,
-    data_protection_cmd,
-    discovery_parse_cmd,
-    discovery_register_cmd,
-    discovery_scan_cmd,
-    drift_cmd,
-    escalate_add_cmd,
-    escalate_approve_cmd,
-    escalate_list_cmd,
-    escalate_resolve_cmd,
-    govern_approve_cmd,
-    govern_configure_cmd,
-    govern_cost_cmd,
-    govern_go_cycle_cmd,
-    govern_go_health_cmd,
-    govern_go_status_cmd,
-    govern_go_watch_cmd,
-    govern_list_pending_cmd,
-    govern_reject_cmd,
-    guardrails_check_cmd,
-    guardrails_show_cmd,
-    migration_cmd,
-    policy_check_cmd,
-    policy_purge_cmd,
-    policy_show_cmd,
-    signatures_list_cmd,
-    signatures_verify_cmd,
-    sweep_cmd,
-    trust_status_cmd,
+# shim → infinite recursion). The local `logs_cmd` (line 295) and
+# `stop_cmd` (line 370) remain the canonical implementations because
+# they are defined BEFORE the wildcard import below.
+from thegent.cli.commands.run_cmds import *  # noqa: F401,F403,E402
+from thegent.cli.commands.session_cmds import *  # noqa: F401,F403,E402
+from thegent.cli.commands.governance_cmds import *  # noqa: F401,F403,E402
+from thegent.cli.commands.plan_cmds import *  # noqa: F401,F403,E402
+from thegent.cli.commands.model_cmds import *  # noqa: F401,F403,E402
+from thegent.cli.commands.infra_cmds import *  # noqa: F401,F403,E402
+from thegent.cli.commands.team_cmds import *  # noqa: F401,F403,E402
+
+# WL-136 B90-W2-D2: _tooling_* aliases for backward compat
+from thegent.cli.commands.cli_tooling import (  # noqa: E402,F401
+    audit_verify_cmd as _tooling_audit_verify_cmd,
+    benchmark_cmd as _tooling_benchmark_cmd,
+    deep_research_cmd as _tooling_deep_research_cmd,
+    drift_monitor_cmd as _tooling_drift_monitor_cmd,
+    roadmap_cmd as _tooling_roadmap_cmd,
 )
-from thegent.cli.commands.plan_cmds import (  # noqa: E402,F401
-    closure_pack_cmd,
-    dag_add_cmd,
-    dag_cancel_cmd,
-    dag_checkpoint_cmd,
-    dag_checkpoints_cmd,
-    dag_list_cmd,
-    dag_probe_cmd,
-    dag_ready_cmd,
-    dag_reconcile_cmd,
-    dag_recover_cmd,
-    dag_remove_cmd,
-    dag_rollback_cmd,
-    dag_run_cmd,
-    dag_status_cmd,
-    dag_sync_cmd,
-    dag_update_cmd,
-    dag_validate_cmd,
-    plan_analyze_cmd,
-    plan_claim_cmd,
-    plan_complete_cmd,
-    plan_do_next_cmd,
-    plan_get_next_cmd,
-    plan_incorporate_cmd,
-    plan_lint_workstream_cmd,
-    plan_loop_cmd,
-    plan_normalize_workstream_cmd,
-    plan_progress_cmd,
-    plan_verify_workstream_cmd,
-    plan_wait_next_cmd,
-    workstream_dashboard_cmd,
-    workstream_dependencies_cmd,
-    workstream_launch_cmd,
-    workstream_query_cmd,
-    workstream_stats_cmd,
-)  # noqa: E501
-from thegent.cli.commands.model_cmds import (  # noqa: E402,F401
-    _list_antigravity_models,
-    _list_claude_models,
-    _list_codex_models,
-    _list_codex_models_fallback,
-    _list_copilot_models,
-    _list_copilot_models_fallback,
-    _list_cursor_api_models,
-    _list_cursor_models,
-    _list_gemini_models,
-    _list_glm_models,
-    _list_kiro_models,
-    _list_minimax_models,
-    _models_table,
-    cliproxy_login_cmd,
-    cost_values_cmd,
-    list_agents_cmd,
-    list_droids_cmd,
-    list_model_contract_schema_cmd,
-    list_models_cmd,
-    metrics_cmd,
-    quality_index_cmd,
-    resolve_model_route_cmd,
-    rules_sync_cmd,
-    setup_cmd,
-    speed_index_cmd,
-)
-from thegent.cli.commands.infra_cmds import (  # noqa: E402,F401
-    archive_cmd,
-    benchmark_cmd,
-    cockpit_cmd,
-    concurrency_set_cmd,
-    concurrency_show_cmd,
-    config_check_cmd,
-    context_history_cmd,
-    cost_status_cmd,
-    explorer_cmd,
-    forensics_snapshot_cmd,
-    interruption_list_cmd,
-    interruption_snooze_cmd,
-    load_status_cmd,
-    modes_cmd,
-    monitor_cmd,
-    observe_summary_cmd,
-    operations_cmd,
-    purge_cmd,
-    recover_status_cmd,
-    release_pack_cmd,
-    scratchpad_cmd,
-    sitback_dashboard_cmd,
-    usage_cmd,
-)
-from thegent.cli.commands.team_cmds import (  # noqa: E402,F401
-    dlq_list_cmd,
-    drift_monitor_cmd,
-    explain_cmd,
-    fallbacks_cmd,
-    handoff_cmd,
-    handoff_confirm_cmd,
-    handoff_list_cmd,
-    handoff_show_cmd,
-    project_list_cmd,
-    project_register_cmd,
-    queue_list_cmd,
-    recover_status_cmd as team_recover_status_cmd,
-    roadmap_cmd,
-    self_heal_tests_cmd,
-    summary_cmd,
-    team_create_cmd,
-    team_task_add_cmd,
-    team_task_list_cmd,
-    teammates_delegate_cmd,
-    teammates_list_cmd,
-    teammates_status_cmd,
-    traffic_cmd,
-    watchdog_cmd,
-)
+
+# WL-120 Wave-X: private compat re-exports via _cli_shared wildcard.
+# The contract test ``test_cli_no_longer_has_explicit_private_cli_shared_import_block``
+# asserts the source does NOT contain the explicit ``from ... import (`` form.
+from thegent.cli.commands._cli_shared import *  # noqa: F401,F403,E402

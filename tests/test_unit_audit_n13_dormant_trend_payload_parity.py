@@ -450,7 +450,10 @@ class TestObserveSummaryImplWL120DormantWire:
         from thegent.cli.commands.observability_impl import observe_summary_impl
 
         result = observe_summary_impl(trend_samples=7)
-        assert result["generated_query"] == {"trend_samples": 7}
+        # AUDIT-N+16 added top_escalations to the generated_query
+        # contract alongside trend_samples.
+        assert result["generated_query"]["trend_samples"] == 7
+        assert "top_escalations" in result["generated_query"]
 
     # @trace FR-AUDIT-N+13-024
     def test_dormant_failure_keeps_legacy_stub(self, monkeypatch: pytest.MonkeyPatch) -> None:

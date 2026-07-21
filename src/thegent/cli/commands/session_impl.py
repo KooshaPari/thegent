@@ -272,9 +272,9 @@ def _resolve_agent_model(
     plus ``tests/test_wl125_run_model_helpers_parity.py`` and
     ``tests/test_wl125_run_session_helpers_parity.py``.
     """
-    from thegent.cli.services import run_session_helpers as _rsh
+    from thegent.cli.services import run_model_helpers
 
-    return _rsh.resolve_agent_model(agent=agent, model=model, mode=mode, settings=settings)
+    return run_model_helpers.resolve_agent_model(agent=agent, model=model, mode=mode, settings=settings)
 
 
 # ---------------------------------------------------------------------------

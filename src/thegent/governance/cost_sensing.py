@@ -108,4 +108,3 @@ class CostPredictor:
 
     def __init__(self) -> None:
         """Initialize CostPredictor."""
-        pass

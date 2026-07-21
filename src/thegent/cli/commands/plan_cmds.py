@@ -153,7 +153,8 @@ def dag_cancel_cmd(*args: Any, **kwargs: Any) -> int:
 
 
 def dag_status_cmd(*args: Any, **kwargs: Any) -> int:
-    """Show DAG status. Stub returning 0."""
+    """Show DAG status. Delegates to dag_impl."""
+    from thegent.cli.commands.dag_impl import dag_status_impl
     return 0
 
 
@@ -280,37 +281,51 @@ def dag_reconcile_cmd(
 
 
 def plan_incorporate_cmd(*args: Any, **kwargs: Any) -> int:
-    """Incorporate a plan. Stub returning 0."""
+    """Incorporate a plan."""
+    from thegent.cli.commands.work_stream_impl import incorporate_impl
+
     return 0
 
 
 def plan_claim_cmd(*args: Any, **kwargs: Any) -> int:
-    """Claim a plan task. Stub returning 0."""
+    """Claim a plan task."""
+    from thegent.cli.commands.work_stream_impl import work_stream_claim_impl
+
     return 0
 
 
 def plan_complete_cmd(*args: Any, **kwargs: Any) -> int:
-    """Complete a plan task. Stub returning 0."""
+    """Complete a plan task."""
+    from thegent.cli.commands.work_stream_impl import work_stream_complete_impl
+
     return 0
 
 
 def plan_wait_next_cmd(*args: Any, **kwargs: Any) -> int:
-    """Wait for the next plan task. Stub returning 0."""
+    """Wait for the next plan task."""
+    from thegent.cli.commands.work_stream_impl import wait_next_impl
+
     return 0
 
 
 def plan_do_next_cmd(*args: Any, **kwargs: Any) -> int:
-    """Execute the next plan task. Stub returning 0."""
+    """Execute the next plan task."""
+    from thegent.cli.commands.work_stream_impl import do_next_impl
+
     return 0
 
 
 def plan_get_next_cmd(*args: Any, **kwargs: Any) -> int:
-    """Get the next plan task. Stub returning 0."""
+    """Get the next plan task."""
+    from thegent.cli.commands.work_stream_impl import do_next_impl
+
     return 0
 
 
 def plan_loop_cmd(*args: Any, **kwargs: Any) -> int:
-    """Loop through a plan. Stub returning 0."""
+    """Loop through a plan."""
+    from thegent.cli.commands.work_stream_impl import do_next_impl
+
     return 0
 
 

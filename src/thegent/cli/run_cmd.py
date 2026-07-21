@@ -77,7 +77,7 @@ def run_cmd(model: str | None = None, prompt: str | None = None, cwd: str | None
 def _run_model_cmd(model: str, prompt: str, cwd: str | None = None, remote: str | None = None, **kwargs: Any) -> int:
     """Execute a model command."""
     # Call through module namespace so patching works
-    import thegent.cli.run_cmd as _m
+    import thegent.cli.run_cmd as _m  # noqa: PLW0406
     # Normalize through module namespace
     model = _m._normalize_model_alias(model) if model else model
     # Call through module namespace

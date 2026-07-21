@@ -37,6 +37,7 @@ from thegent.cli.commands.session_health_trend_impl import (  # noqa: F401
 )
 from thegent.cli.commands.infra_cmds import cockpit_cmd  # noqa: F401
 from thegent.cli.commands.session_cmds import feedback_cmd  # noqa: F401
+from thegent.config import ThegentSettings  # noqa: F401
 
 
 __all__ = [
@@ -60,4 +61,5 @@ __all__ = [
     "_serialize_health_trend_jsonl",
     "cockpit_cmd",
     "feedback_cmd",
+    "ThegentSettings",
 ]

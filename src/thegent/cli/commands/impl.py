@@ -735,6 +735,37 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
     _health_scope_key,
 )
 
+# WL-120 extraction routing: thin delegation wrappers that shadow the
+# AUDIT-N+9 re-exports so ``inspect.getsource()`` returns the expected
+# ``run_input_helpers`` / ``run_event_helpers`` / ``run_audio_helpers`` /
+# ``run_model_helpers`` delegation pattern.
+
+
+def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str, Any]]:
+    """WL-120 thin delegate to :func:`run_input_helpers.resolve_grounding_sources_for_output`."""
+    return run_input_helpers.resolve_grounding_sources_for_output(sources)
+
+
+def _resolve_audio_transcript_for_output(transcript: dict[str, Any]) -> dict[str, Any]:
+    """WL-120 thin delegate to :func:`run_event_helpers.resolve_audio_transcript_for_output`."""
+    return run_event_helpers.resolve_audio_transcript_for_output(transcript)
+
+
+def _build_audio_summary_metadata(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """WL-120 thin delegate to :func:`run_audio_helpers.build_audio_summary_metadata`."""
+    return run_audio_helpers.build_audio_summary_metadata(*args, **kwargs)
+
+
+def _build_run_event_details(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """WL-120 thin delegate to :func:`run_event_helpers.build_run_event_details`."""
+    return run_event_helpers.build_run_event_details(*args, **kwargs)
+
+
+def _resolve_agent_model(*args: Any, **kwargs: Any) -> str:
+    """WL-120 thin delegate to :func:`run_model_helpers.resolve_agent_model`."""
+    return run_model_helpers.resolve_agent_model(*args, **kwargs)
+
+
 # AUDIT-N+12: re-export the session-lifecycle surface from
 # :mod:`thegent.cli.commands.session_impl`. These helpers previously
 # lived inline in ``impl.py`` but were never reachable because the

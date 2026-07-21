@@ -263,6 +263,63 @@ contracts: []
 """
 
 
+def _atomic_write(path: Path, content: str, **kw: Any) -> None:
+    """Atomic write helper (WL-124 stable import surface)."""
+    from thegent.cli.commands.dag_impl import _atomic_write as _impl
+
+    _impl(path, content, **kw)
+
+
+def _serialize_health_report_md(results: list[dict]) -> str:
+    """Serialize health report results to Markdown format."""
+    from thegent.cli.commands.session_health_report_impl import (
+        _serialize_health_report_md as _impl,
+    )
+    return _impl(results)
+
+
+def _write_health_trend_export(
+    path: Path,
+    result: dict[str, Any],
+    fmt: str,
+    *,
+    overwrite: bool = False,
+) -> str:
+    """Write health trend export to *path* in the given *fmt*.
+
+    Returns the format string on success. Raises ``typer.BadParameter``
+    for invalid paths or missing overwrite.
+    """
+    import typer as _typer
+
+    p = Path(path)
+    if p.is_dir():
+        raise _typer.BadParameter(f"{p} is a directory")
+    if p.exists() and not overwrite:
+        raise _typer.BadParameter(f"{p} already exists")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if fmt == "md":
+        lines = ["# Health Trend\n"]
+        for k, v in result.items():
+            lines.append(f"**{k}**: {v}")
+        p.write_text("\n".join(lines), encoding="utf-8")
+    elif fmt == "csv":
+        import csv as _csv
+        with p.open("w", newline="", encoding="utf-8") as fh:
+            writer = _csv.writer(fh)
+            writer.writerow(["key", "value"])
+            for k, v in result.items():
+                writer.writerow([k, v])
+    else:  # json / jsonl
+        import orjson as _orjson
+        p.write_text(
+            _orjson.dumps(result, option=_orjson.OPT_INDENT_2).decode(),
+            encoding="utf-8",
+        )
+        fmt = "json"
+    return fmt
+
+
 __all__ = [
     "console",
     "ThegentSettings",
@@ -289,4 +346,7 @@ __all__ = [
     "_METRIC_CONTRACTS_TEMPLATE",
     "get_session_dir",
     "resolve_owner_dir",
+    "_atomic_write",
+    "_serialize_health_report_md",
+    "_write_health_trend_export",
 ]
