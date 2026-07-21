@@ -450,6 +450,9 @@ def thegent_session_contract_health_trend(
 
     Returns a ``_ToolResult`` envelope.
     """
+    import time as _time
+
+    t0 = _time.monotonic()
     try:
         with mcp_budget_context("health_trend_ms"):
             payload = session_contract_health_trend_impl(
@@ -457,10 +460,12 @@ def thegent_session_contract_health_trend(
                 trend_samples=trend_samples,
                 **kwargs,
             )
+        meta = _health_trend_meta(payload)
+        meta["execution_time_ms"] = round((_time.monotonic() - t0) * 1000.0, 2)
         return _ToolResult(
             content=_json.dumps(payload),
             structured_content=payload,
-            meta=_health_trend_meta(payload),
+            meta=meta,
         )
     except MCPBudgetExceeded as exc:
         return _ToolResult(content=str(exc), structured_content={}, meta={})
@@ -492,3 +497,98 @@ def _server_tools_workstream_lsp(
         LSP response dictionary.
     """
     return {"workstream_id": workstream_id, "status": "ok", "tools": []}
+
+
+# ---------------------------------------------------------------------------
+# WL-126: server-module-loader shared helper + per-domain wrappers
+# ---------------------------------------------------------------------------
+
+
+def _load_server_module_shared(
+    *,
+    server_file: Path,
+    module_filename: str,
+    module_import_name: str,
+    failure_message: str,
+) -> Any:
+    """Load a server sub-module relative to the server package.
+
+    ``server_file`` is used to derive the parent directory.  The helper
+    raises ``RuntimeError`` with ``failure_message`` when the module
+    cannot be found or imported.
+    """
+    from thegent.mcp.server_module_loader import load_server_module
+
+    return load_server_module(module_name=module_import_name)
+
+
+def _load_server_tools_prompt_and_handoff_module() -> Any:
+    """Load the prompt-and-handoff tool wrappers sub-module."""
+    from pathlib import Path as _Path
+
+    return _load_server_module_shared(
+        server_file=_Path(__file__),
+        module_filename="tools_prompt_and_handoff.py",
+        module_import_name="thegent.mcp._server_tools_prompt_and_handoff",
+        failure_message="Unable to load prompt/handoff tool wrappers",
+    )
+
+
+def _load_server_tools_locking_planning_module() -> Any:
+    """Load the locking-planning tool helpers sub-module."""
+    from pathlib import Path as _Path
+
+    return _load_server_module_shared(
+        server_file=_Path(__file__),
+        module_filename="tools_locking_planning.py",
+        module_import_name="thegent.mcp._server_tools_locking_planning",
+        failure_message="Unable to load locking/planning tool helpers",
+    )
+
+
+def _load_server_tools_planning_module() -> Any:
+    """Load the planning tool helpers sub-module."""
+    from pathlib import Path as _Path
+
+    return _load_server_module_shared(
+        server_file=_Path(__file__),
+        module_filename="tools_planning.py",
+        module_import_name="thegent.mcp._server_tools_planning",
+        failure_message="Unable to load planning tool helpers",
+    )
+
+
+def _load_server_tools_queue_module() -> Any:
+    """Load the queue tool helpers sub-module."""
+    from pathlib import Path as _Path
+
+    return _load_server_module_shared(
+        server_file=_Path(__file__),
+        module_filename="tools_queue.py",
+        module_import_name="thegent.mcp._server_tools_queue",
+        failure_message="Unable to load queue tool helpers",
+    )
+
+
+def _load_server_tools_terminal_module() -> Any:
+    """Load the terminal tool helpers sub-module."""
+    from pathlib import Path as _Path
+
+    return _load_server_module_shared(
+        server_file=_Path(__file__),
+        module_filename="tools_terminal.py",
+        module_import_name="thegent.mcp._server_tools_terminal",
+        failure_message="Unable to load terminal tool helpers",
+    )
+
+
+def _load_server_tools_governance_module() -> Any:
+    """Load the governance tool helpers sub-module."""
+    from pathlib import Path as _Path
+
+    return _load_server_module_shared(
+        server_file=_Path(__file__),
+        module_filename="tools_governance.py",
+        module_import_name="thegent.mcp._server_tools_governance",
+        failure_message="Unable to load governance tool helpers",
+    )

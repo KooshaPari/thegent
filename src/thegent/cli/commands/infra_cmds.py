@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from typing import Any
 
+# WL-125: module-level console so delegating wrappers can forward it.
+console: Any = None
+
 # AUDIT-N+19 Phase 4: module-level re-exports so monkeypatch sites
 # ``thegent.cli.commands.infra_cmds.<X>`` resolve cleanly. Pinned by
 # :class:`tests.test_unit_cli_impl_dag.TestCockpitCmd`.
@@ -125,7 +128,12 @@ def archive_cmd(*args: Any, **kwargs: Any) -> int:
 
 
 def operations_cmd(*args: Any, **kwargs: Any) -> int:
-    """Run operations. Stub returning 0."""
+    """Delegate to the extracted operations_commands module."""
+    from thegent.cli.commands.operations_commands import (
+        operations_cmd as _actual,
+    )
+
+    _actual(*args, **kwargs, console=console)
     return 0
 
 
@@ -145,12 +153,22 @@ def release_pack_cmd(*args: Any, **kwargs: Any) -> int:
 
 
 def forensics_snapshot_cmd(*args: Any, **kwargs: Any) -> int:
-    """Take a forensics snapshot. Stub returning 0."""
+    """Delegate to the extracted recovery_commands module."""
+    from thegent.cli.commands.recovery_commands import (
+        forensics_snapshot_cmd as _actual,
+    )
+
+    _actual(*args, **kwargs, console=console)
     return 0
 
 
 def recover_status_cmd(*args: Any, **kwargs: Any) -> int:
-    """Show recovery status. Stub returning 0."""
+    """Delegate to the extracted recovery_commands module."""
+    from thegent.cli.commands.recovery_commands import (
+        recover_status_cmd as _actual,
+    )
+
+    _actual(*args, **kwargs, console=console)
     return 0
 
 

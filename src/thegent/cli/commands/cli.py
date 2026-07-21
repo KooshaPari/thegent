@@ -638,3 +638,121 @@ from thegent.cli.commands.cli_tooling import (  # noqa: E402,F401
 # The contract test ``test_cli_no_longer_has_explicit_private_cli_shared_import_block``
 # asserts the source does NOT contain the explicit ``from ... import (`` form.
 from thegent.cli.commands._cli_shared import *  # noqa: F401,F403,E402
+
+# ---------------------------------------------------------------------------
+# WL-124/WL-125: Explicit delegating wrappers placed AFTER wildcard imports
+# so they are not shadowed by the wildcard-imported names from
+# team_cmds, infra_cmds, plan_cmds, etc.
+# ---------------------------------------------------------------------------
+
+
+def team_create_cmd(
+    *,
+    name: str,
+    leader: str | None = None,
+    teammates: str | None = None,
+    console: "Console" | None = None,
+) -> None:
+    """Create a new team (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.team_commands import team_create_cmd as _actual
+
+    if console is None:
+        console = globals().get("console")
+
+    _actual(name=name, leader=leader, teammates=teammates, console=console)
+
+
+def team_task_add_cmd(
+    *,
+    team_id: str,
+    title: str,
+    description: str,
+    console: "Console" | None = None,
+) -> None:
+    """Add a task to a team (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.team_commands import team_task_add_cmd as _actual
+
+    if console is None:
+        console = globals().get("console")
+
+    _actual(team_id=team_id, title=title, description=description, console=console)
+
+
+def team_task_list_cmd(
+    *,
+    team_id: str,
+    console: "Console" | None = None,
+) -> None:
+    """List tasks for a team (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.team_commands import team_task_list_cmd as _actual
+
+    if console is None:
+        console = globals().get("console")
+
+    _actual(team_id=team_id, console=console)
+
+
+def recover_status_cmd() -> None:
+    """Show recovery status (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.recovery_commands import (
+        recover_status_cmd as _actual,
+    )
+
+    _actual(console=console)
+
+
+def forensics_snapshot_cmd(
+    *,
+    run_id: str,
+    phase: str,
+    console: "Console" | None = None,
+) -> None:
+    """Take a forensics snapshot (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.recovery_commands import (
+        forensics_snapshot_cmd as _actual,
+    )
+
+    if console is None:
+        console = globals().get("console")
+
+    _actual(run_id=run_id, phase=phase, console=console)
+
+
+def queue_list_cmd(*, watch: bool = False) -> None:
+    """List queued items (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.queue_commands import queue_list_cmd as _actual
+
+    _actual(watch=watch)
+
+
+def project_register_cmd(
+    *,
+    path: "Path",
+    name: str,
+    console: "Console" | None = None,
+) -> None:
+    """Register a project (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.project_commands import (
+        project_register_cmd as _actual,
+    )
+
+    if console is None:
+        console = globals().get("console")
+
+    _actual(path=path, name=name, console=console)
+
+
+def project_list_cmd(
+    *,
+    format: str = "json",  # noqa: A002
+    console: "Console" | None = None,
+) -> None:
+    """List registered projects (WL-124 delegating wrapper)."""
+    from thegent.cli.commands.project_commands import (
+        project_list_cmd as _actual,
+    )
+
+    if console is None:
+        console = globals().get("console")
+
+    _actual(format=format, console=console)

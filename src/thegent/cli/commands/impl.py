@@ -746,9 +746,28 @@ def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str,
     return run_input_helpers.resolve_grounding_sources_for_output(sources)
 
 
-def _resolve_audio_transcript_for_output(transcript: dict[str, Any]) -> dict[str, Any]:
-    """WL-120 thin delegate to :func:`run_event_helpers.resolve_audio_transcript_for_output`."""
-    return run_event_helpers.resolve_audio_transcript_for_output(transcript)
+def _resolve_audio_transcript_for_output(
+    transcript: dict[str, Any] | None = None,
+    injected_audio_transcript: str | None = None,
+    result_audio_transcript: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`run_event_helpers.resolve_audio_transcript_for_output`.
+
+    Supports both the legacy positional form and the WL-125 kwarg form
+    so that monkeypatch sites like
+    ``monkeypatch.setattr(..., run_event_helpers.resolve_audio_transcript_for_output, ...)``
+    are observed.
+    """
+    if injected_audio_transcript is not None or result_audio_transcript is not None:
+        return run_event_helpers.resolve_audio_transcript_for_output(
+            injected_audio_transcript=injected_audio_transcript,
+            result_audio_transcript=result_audio_transcript,
+        )
+    return run_event_helpers.resolve_audio_transcript_for_output(
+        injected_audio_transcript=transcript,
+        result_audio_transcript=kwargs.get("result_audio_transcript"),
+    )
 
 
 def _build_audio_summary_metadata(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -761,9 +780,26 @@ def _build_run_event_details(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return run_event_helpers.build_run_event_details(*args, **kwargs)
 
 
-def _resolve_agent_model(*args: Any, **kwargs: Any) -> str:
-    """WL-120 thin delegate to :func:`run_model_helpers.resolve_agent_model`."""
-    return run_model_helpers.resolve_agent_model(*args, **kwargs)
+def _resolve_agent_model(
+    agent: str,
+    model: str | None = None,
+    mode: str = "full",
+    settings: Any = None,
+) -> str:
+    """WL-125 thin delegate to :func:`run_session_helpers.resolve_agent_model`.
+
+    Routes through ``run_session_helpers`` (not ``run_model_helpers``)
+    so that monkeypatch sites targeting
+    ``impl.run_session_helpers.resolve_agent_model`` are observed.
+    """
+    from thegent.cli.services import run_session_helpers as _rsh
+
+    return _rsh.resolve_agent_model(
+        agent=agent,
+        model=model,
+        mode=mode,
+        settings=settings,
+    )
 
 
 # AUDIT-N+12: re-export the session-lifecycle surface from
@@ -797,7 +833,10 @@ _SESSION_IMPL_REEXPORTS = (
     "_session_dir",
     "_session_scope_dirs",
     "_run_background_session_observer",
-    "_resolve_agent_model",
+    # WL-125: _resolve_agent_model intentionally excluded — the
+    # canonical definition at line ~783 delegates through
+    # run_session_helpers so monkeypatch sites targeting
+    # impl.run_session_helpers.resolve_agent_model are observed.
 )
 try:
     from thegent.cli.commands import session_impl as _session_impl  # noqa: F401
