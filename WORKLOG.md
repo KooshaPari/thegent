@@ -7200,3 +7200,87 @@ Total spot-checked:            170+ passed, 0 failures
   SOTA    ████-------------  18%    (UX polish, perf budgets, governance hardening drafts)
 ```
 
+---
+
+## 2026-07-21: Phase 3/4 Continuation — AUDIT-N+17 perf budgets + UX polish + MCP perf gates
+
+**Commit:** `300adc086`
+**Branch:** `wip/2026-07-18-cockpit-sota-hardening`
+
+### Context
+
+Resumed the active Five-Day Goal on 2026-07-21 (Day 6+ / post-goal continuation).
+Working tree was clean; 96 commits ahead of `main`; baseline 488 tests passing.
+
+### What landed
+
+Three parallel lanes dispatched and merged in a single commit:
+
+| Lane | Area | Change | Files |
+|------|------|--------|-------|
+| **Lane 1** | Performance budgets (P-090) | `perf_budget.py` — thread-safe load-time gate, memory gate (Linux KB / macOS byte handling), `budget_context` CM, `get_perf_summary`, `PerformanceBudgetError` exception | `src/thegent/infra/perf_budget.py` (264 lines), `tests/test_unit_infra_perf_budget.py` (21 tests) |
+| **Lane 2** | UX polish | `throttled_spinner` CM with `SpinnerThrottle` rate-limiter; `explain_exit_code` + `explain_exception` + `EXPLANATION_MAP`; `progress_bar_with_eta` with ETA estimate | `src/thegent/infra/progress.py`, `src/thegent/ux/explanations.py`, `src/thegent/ux/kpis/traffic.py`, `tests/test_unit_ux_polish.py` (25 tests) |
+| **Lane 3** | SOTA audit + MCP perf gates | `mcp_perf_gates.py` — `MCP_PERF_BUDGETS`, `check_mcp_budget`, `MCPBudgetExceeded`, `mcp_budget_context` CM; `decision_audit.py` flush() return type fix (`None` -> `bool`) | `src/thegent/mcp/server/mcp_perf_gates.py` (108 lines), `tests/test_unit_sota_audit_mcp_perf_gates.py` (17 tests) |
+
+### Test results
+
+```
+New tests (3 lanes):         63 passed in 3.69s
+Full regression (24 files): 551 passed in 18.94s (488 baseline + 63 new, 0 regressions)
+Ruff check:                 All checks passed (9 files)
+Ruff format:                9 files already formatted
+Secret scan:                0 hits (grep on api_key|secret|token|password|bearer|aws_access)
+```
+
+### SOTA audit findings (Lane 3)
+
+| Module | Finding | Severity | Action |
+|--------|---------|----------|--------|
+| `decision_audit.py` | `flush()` return type annotation says `None` but function returns `bool` | P1 | Fixed: `-> None` -> `-> bool` |
+| `mcp_audit_trail.py` | Thread-safe, bounded, append-only. No issues found. | -- | Clean |
+| `mcp_server_contracts.py` | Schema version pinning + registry. No issues found. | -- | Clean |
+| `cockpit.py` | Clock injection + decision notices. No issues found. | -- | Clean |
+| `policy_engine.py` | Engine-level guard + federation. No issues found. | -- | Clean |
+| `federated_policy.py` | RLock + path-traversal guard. No issues found. | -- | Clean |
+
+### Files touched (9)
+
+- `src/thegent/infra/perf_budget.py` — **new** (264 lines)
+- `src/thegent/infra/progress.py` — modified (+44 lines: `SpinnerThrottle`, `throttled_spinner`)
+- `src/thegent/ux/explanations.py` — modified (+64 lines: exit code map, exception classifier)
+- `src/thegent/ux/kpis/traffic.py` — modified (+30 lines: `progress_bar_with_eta`)
+- `src/thegent/mcp/server/mcp_perf_gates.py` — **new** (108 lines)
+- `src/thegent/ux/decision_audit.py` — modified (1 line: return type fix)
+- `tests/test_unit_infra_perf_budget.py` — **new** (291 lines, 21 tests)
+- `tests/test_unit_ux_polish.py` — **new** (137 lines, 25 tests)
+- `tests/test_unit_sota_audit_mcp_perf_gates.py` — **new** (193 lines, 17 tests)
+
+### Resolved worklog items
+
+* **Performance budgets (P-090)** — closed. `perf_budget.py` provides load-time and memory gates with thread-safe caching.
+* **UX polish lane** — closed. Spinner throttle, exit code explanations, and ETA-enhanced progress bar all landed.
+* **SOTA audit lane** — first pass closed. 6 modules audited; 1 P1 finding fixed; MCP perf gates module added.
+
+### Unblocked Next (post-AUDIT-N+17)
+
+1. **Wider Phase 3/4 cockpit polish** — the `cockpit replay` / `sota replay` JSON envelope surface has no operator-facing docs beyond the inline docstring. A short `docs/ux/cockpit-sota.md` companion would close the docs gap.
+2. **`cockpit replay --snapshot-flip <field>` granular per-field flip** — the current flag flips the first recognised field; a future lane could add `--snapshot-flip-field <field>` for explicit field selection.
+3. **Federated-policy concurrency integration test** — the `FederatedPolicyEngine._lock` covers `register`/`merge`/`evaluate`/`expose_to`/`load_from_file`, but a true end-to-end test through `PolicyEngine.evaluate` under the federation flag is still deferred.
+4. **WL-124 / WL-125 / WL-126 implementation-grade hardening** — the WL-124 split stubs and WL-126 re-export stubs still delegate to the legacy `impl` module; a follow-up could move implementation bodies into the split modules.
+
+### Cockpit progress bar
+
+```
+[################------------]  62%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ██████████------  56%    (perf budgets + MCP perf gates wired, SOTA audit pass 1 complete)
+  SOTA    ████████--------  37%    (UX polish + perf budgets + MCP perf gates + 6-module audit)
+```
+
+### DAG tick
+
+**`+6`** on top of the prior session's `+5` (this session landed AUDIT-N+17:
+perf budgets + UX polish + MCP perf gates + 63 new tests in a single commit).
+
