@@ -62,6 +62,35 @@ def progress_bar(done: int, total: int, *, width: int = 24) -> str:
     return f"[{'#' * filled}{'-' * (width - filled)}] {pct:3d}%"
 
 
+def progress_bar_with_eta(done: int, total: int, elapsed_s: float, *, width: int = 24) -> str:
+    """Progress bar with an ETA estimate appended.
+
+    Appends `` ETA 12s`` (or `` ETA 0:02`` for >= 60 s) to the standard
+    bar.  Returns a bare bar when ``done == 0`` (ETA unknown) or
+    ``done == total`` (``ETA 0s``).
+
+    Args:
+        done: Items processed so far.
+        total: Total items expected.
+        elapsed_s: Wall-clock seconds elapsed since start.
+        width: Character width of the filled bar section.
+
+    Returns:
+        A single-line string like ``[##########--------]  50% ETA 12s``.
+    """
+    bar = progress_bar(done, total, width=width)
+    if done == 0:
+        return f"{bar} ETA -"
+    if done >= total:
+        return f"{bar} ETA 0s"
+    remaining = (elapsed_s / done) * (total - done)
+    if remaining >= 60:
+        minutes = int(remaining) // 60
+        seconds = int(remaining) % 60
+        return f"{bar} ETA {minutes}:{seconds:02d}"
+    return f"{bar} ETA {int(remaining)}s"
+
+
 # ---------------------------------------------------------------------------
 # TrafficWindow
 # ---------------------------------------------------------------------------
@@ -520,6 +549,7 @@ __all__ = [
     "TrafficEvent",
     "TrafficWindow",
     "progress_bar",
+    "progress_bar_with_eta",
     "render_traffic",
     "render_trend",
 ]

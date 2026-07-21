@@ -4,8 +4,11 @@ This module provides utilities for displaying progress bars, spinners, and
 status updates in a consistent, beautiful way.
 """
 
+from __future__ import annotations
+
 import time
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 
 from rich.console import Console
 from rich.progress import (
@@ -73,6 +76,47 @@ def spinner_context(message: str):
     """
     with console.status(f"[bold cyan]{message}[/bold cyan]", spinner="dots"):
         yield
+
+
+@dataclass
+class SpinnerThrottle:
+    """Tracks the last Rich status update time to prevent visual flicker."""
+
+    _last_update: float = 0.0
+    _interval: float = 0.1
+
+    def should_update(self) -> bool:
+        """Return True if enough time has elapsed since the last update."""
+        now = time.monotonic()
+        if now - self._last_update >= self._interval:
+            self._last_update = now
+            return True
+        return False
+
+
+@contextmanager
+def throttled_spinner(message: str, min_interval: float = 0.1):
+    """Context manager that wraps spinner_context with rate-limiting.
+
+    Only updates the Rich status display every ``min_interval`` seconds
+    to prevent visual flicker on fast operations.  Yields a
+    :class:`SpinnerThrottle` whose ``should_update()`` method gates
+    re-rendering.
+
+    Args:
+        message: Message to display while spinning
+        min_interval: Minimum seconds between display updates
+
+    Example:
+        >>> with throttled_spinner("Processing...", min_interval=0.2) as spin:
+        ...     for item in fast_items():
+        ...         if spin.should_update():
+        ...             pass  # status auto-throttled
+        ...         process(item)
+    """
+    throttle = SpinnerThrottle(_interval=min_interval)
+    with console.status(f"[bold cyan]{message}[/bold cyan]", spinner="dots"):
+        yield throttle
 
 
 def print_status(message: str, status: str = "info") -> None:

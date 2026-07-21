@@ -478,7 +478,7 @@ class DecisionAuditAppender:
                     _LOGGER.warning("skipping malformed decision audit line: %.80s", line)
         return out
 
-    def flush(self) -> None:
+    def flush(self) -> bool:
         """Flush any pending fsync batch to disk.
 
         AUDIT-23 (SOTA third-pass): when ``fsync=True`` and

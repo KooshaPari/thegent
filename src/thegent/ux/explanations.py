@@ -448,6 +448,67 @@ def _render_deepdive(exp: DecisionExplanation, *, width: int) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Exit-code and exception explanations (Lane 2 UX polish)
+# ---------------------------------------------------------------------------
+
+EXPLANATION_MAP: dict[int, str] = {
+    0: "success — operation completed without errors",
+    1: "general error — check logs for details",
+    2: "misuse — incorrect command-line usage or bad arguments",
+    3: "policy deny — check governance rules",
+    4: "replay mismatch — snapshot fields differ",
+    127: "command not found — verify PATH or install the dependency",
+    130: "interrupted — process was killed by SIGINT (Ctrl-C)",
+}
+
+
+def explain_exit_code(code: int) -> str:
+    """Map a process exit code to a human-readable, actionable explanation.
+
+    Args:
+        code: The integer exit code from a subprocess.
+
+    Returns:
+        A one-line explanation the operator can act on.
+    """
+    if code in EXPLANATION_MAP:
+        return EXPLANATION_MAP[code]
+    if 1 <= code <= 2:
+        return f"error code {code} — see docs for exit-code semantics"
+    return f"exit code {code} — consult the process documentation"
+
+
+# Exception-type to hint mapping (checked in order)
+_EXCEPTION_HINTS: list[tuple[type[Exception], str]] = [
+    (TimeoutError, "timeout — increase the timeout or check network latency"),
+    (PermissionError, "permission denied — check file/process permissions"),
+    (ConnectionError, "connection failed — verify endpoint availability"),
+    (ConnectionRefusedError, "connection refused — ensure the target service is running"),
+    (FileNotFoundError, "file not found — verify the path exists"),
+    (ValueError, "validation error — check input format and constraints"),
+    (KeyError, "missing key — verify the expected data structure"),
+]
+
+
+def explain_exception(exc: Exception) -> str:
+    """Classify an exception into a category with an actionable one-line hint.
+
+    Args:
+        exc: The caught exception.
+
+    Returns:
+        A one-line string describing the category and what to try.
+    """
+    for exc_type, hint in _EXCEPTION_HINTS:
+        if isinstance(exc, exc_type):
+            return hint
+    name = type(exc).__name__
+    msg = str(exc).strip()
+    summary = msg[:60] + "…" if len(msg) > 60 else msg
+    return f"unexpected {name} — {summary}" if summary else f"unexpected {name}"
+
+
+# ---------------------------------------------------------------------------
 # Compose helper
 # ---------------------------------------------------------------------------
 
@@ -474,9 +535,12 @@ def render_decision_chain(
 
 
 __all__ = [
+    "EXPLANATION_MAP",
     "DecisionExplanation",
     "DisclosureLevel",
     "ExplanationBuilder",
+    "explain_exception",
+    "explain_exit_code",
     "render_decision_chain",
     "render_explanation",
 ]
