@@ -277,6 +277,58 @@ def resource_session_contract_health_trend(
     return _json.dumps(payload)
 
 
+def resource_session_contract_health_report(
+    session_id: str | None = None,
+    *,
+    policy_profile: str | None = None,
+    strict: bool = False,
+    owner: str | None = None,
+    all: bool = False,  # noqa: A002
+    top_blocked: int = 25,
+    no_worse_than_baseline: bool = False,
+    regression_tolerance: float = 0.0,
+    **kwargs: Any,
+) -> str:
+    """MCP resource: session contract health report."""
+    payload = session_contract_health_report_impl(
+        policy_profile=policy_profile,
+        strict=strict,
+        owner=owner,
+        all=all,
+        top_blocked=top_blocked,
+        no_worse_than_baseline=no_worse_than_baseline,
+        regression_tolerance=regression_tolerance,
+        **kwargs,
+    )
+    return _json.dumps(payload)
+
+
+def resource_session_contract_health_gate(
+    session_id: str | None = None,
+    *,
+    policy_profile: str | None = None,
+    strict: bool = False,
+    min_healthy_ratio: float = 1.0,
+    owner: str | None = None,
+    all: bool = False,  # noqa: A002
+    no_worse_than_baseline: bool = False,
+    regression_tolerance: float = 0.0,
+    **kwargs: Any,
+) -> str:
+    """MCP resource: session contract health gate."""
+    payload = session_contract_health_gate_impl(
+        policy_profile=policy_profile,
+        strict=strict,
+        min_healthy_ratio=min_healthy_ratio,
+        owner=owner,
+        all=all,
+        no_worse_than_baseline=no_worse_than_baseline,
+        regression_tolerance=regression_tolerance,
+        **kwargs,
+    )
+    return _json.dumps(payload)
+
+
 def thegent_observe_summary(
     *,
     limit: int = 100,

@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from thegent.config.settings import ThegentSettings
+from thegent.governance.federated_policy import FederatedPolicyEngine
 from thegent.governance.policy_engine import (
     PolicyContext,
     PolicyDecision,
@@ -601,3 +602,92 @@ class TestRegisterOverridePathTraversalGuard:
                 duration_minutes=1,
             )
         assert calls == [], f"manager.apply_override was invoked for an empty rule_id: {calls}"
+
+
+# ---------------------------------------------------------------------------
+# Governance edge-case expansion (SOTA audit closure)
+# ---------------------------------------------------------------------------
+
+
+class TestGovernanceEdgeCases:
+    """Pin governance edge-case paths identified in the SOTA audit."""
+
+    def test_evaluate_federated_zero_rules_allows(self, settings: ThegentSettings) -> None:
+        """Empty federated registry falls through to local default ALLOW."""
+        eng = PolicyEngine(settings=settings, use_federation=True)
+        result = eng.evaluate(PolicyContext(agent="cursor", environment="development", confidence=0.95))
+        assert result.verdict.value == "allow"
+        assert result.rule_id == "local.default.allow"
+
+    def test_evaluate_bare_context_allows(self, engine: PolicyEngine) -> None:
+        """Fully-default PolicyContext hits trust skip then local ALLOW."""
+        result = engine.evaluate(PolicyContext())
+        assert result.verdict.value == "allow"
+
+    def test_evaluate_federated_exception_yields_deny(
+        self,
+        federated_engine: PolicyEngine,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Registry failure triggers fail-closed DENY."""
+        federated_engine.register_rule(
+            rule_id="dummy",
+            when={"agent": "cursor"},
+            verdict="allow",
+            reason="activate federation",
+        )
+        monkeypatch.setattr(
+            federated_engine.federated,
+            "resolve_policies",
+            lambda _ns: (_ for _ in ()).throw(RuntimeError("simulated failure")),
+        )
+        result = federated_engine.evaluate(PolicyContext(agent="cursor"))
+        assert result.verdict.value == "deny"
+
+    def test_evaluate_federated_empty_registry_unknown_agent_production(self, settings: ThegentSettings) -> None:
+        """Empty registry + unknown agent in production → local deny rule fires."""
+        eng = PolicyEngine(settings=settings, use_federation=True)
+        result = eng.evaluate(PolicyContext(agent="unknown", environment="production", confidence=0.95))
+        assert result.verdict.value == "deny"
+
+    def test_evaluate_federated_rule_match_overrides_local_allow(self, settings: ThegentSettings) -> None:
+        """Federated DENY rule takes precedence over local default ALLOW."""
+        eng = PolicyEngine(settings=settings, use_federation=True)
+        eng.register_rule(
+            rule_id="block-dev",
+            when={"environment": "development"},
+            verdict="deny",
+            reason="block dev env",
+            priority=1,
+        )
+        result = eng.evaluate(PolicyContext(agent="cursor", environment="development", confidence=0.95))
+        assert result.verdict.value == "deny"
+        assert result.rule_id != "local.default.allow"
+
+    def test_merge_both_empty_returns_empty_engine(self) -> None:
+        """Merging two empty engines yields an empty engine with shared namespace."""
+        e1 = FederatedPolicyEngine()
+        e2 = FederatedPolicyEngine()
+        merged = e1.merge(e2)
+        assert merged.resolve_policies("global") == []
+        assert merged.default_namespace == e1.default_namespace
+
+    def test_evaluate_override_flips_federated_deny_to_allow(self, settings: ThegentSettings) -> None:
+        """Override reverses a federated DENY back to ALLOW."""
+        eng = PolicyEngine(settings=settings, use_federation=True)
+        eng.register_rule(
+            rule_id="block-prod",
+            when={"environment": "production"},
+            verdict="deny",
+            reason="block prod",
+            priority=1,
+        )
+        eng.register_override(
+            "block-prod",
+            reason="approved by SRE",
+            by="admin",
+            duration_minutes=5,
+        )
+        result = eng.evaluate(PolicyContext(agent="cursor", environment="production", confidence=0.95))
+        assert result.verdict.value == "allow"
+        assert result.override_applied is True
