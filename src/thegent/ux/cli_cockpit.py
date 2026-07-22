@@ -284,6 +284,48 @@ def _attach_mcp_audit_stats(cockpit: "OperatorCockpit") -> Optional[str]:
     return None
 
 
+# AUDIT-N+26 (SOTA audit pass 12): ``_fetch_pre_check_mcp_stats`` is the
+# single source of truth for fetching the live MCP audit-trail
+# singleton stats that ``cockpit pre-check --include-mcp-audit``
+# surfaces in its JSON envelope. Mirrors the lazy-import /
+# defensive-try shape of ``_attach_mcp_audit_stats`` (Pass 11) and
+# ``_fetch_mcp_audit_entries`` (Pass 9) so the cockpit renderer
+# never crashes on a missing MCP module.
+#
+# Why this lives here (not in ``cockpit.py``): the cockpit module owns
+# the runtime engine, but the CLI surface owns the user-facing
+# *opt-in* contract. A dedicated helper keeps the single-context and
+# batch ``--json`` paths in lockstep on the envelope shape — both
+# call this and write the result under the ``mcp_audit_stats`` key.
+def _fetch_pre_check_mcp_stats() -> tuple[Optional[dict[str, Any]], Optional[str]]:
+    """Return ``(stats, error)`` for the ``pre-check --include-mcp-audit`` block.
+
+    ``stats`` is the live MCP audit-trail singleton dict (or ``None``
+    on import failure / fetch failure); ``error`` is a human-readable
+    diagnostic string (or ``None`` on success). The CLI uses both to
+    populate the JSON envelope so operators see a structured
+    diagnosis instead of a silent ``null``.
+    """
+    try:
+        from ..mcp.server import mcp_audit_stats
+    except Exception as exc:  # pragma: no cover - import guard
+        return None, f"import:{type(exc).__name__}:{exc}"
+    try:
+        stats_obj = mcp_audit_stats()
+    except Exception as exc:  # noqa: BLE001 - never crash the renderer.
+        return None, f"fetch:{type(exc).__name__}:{exc}"
+    # ``mcp_audit_stats`` returns a dict; tolerate any object exposing
+    # ``to_dict()`` so future schema migrations stay defensive.
+    if hasattr(stats_obj, "to_dict"):
+        try:
+            stats_obj = stats_obj.to_dict()
+        except Exception as exc:  # noqa: BLE001
+            return None, f"to_dict:{type(exc).__name__}:{exc}"
+    if not isinstance(stats_obj, dict):
+        return None, f"unexpected:{type(stats_obj).__name__}"
+    return stats_obj, None
+
+
 @app.command("render", help="Render the 4-pane operator cockpit to stdout.")
 def cockpit_render(
     runs_json: Optional[Path] = typer.Option(
@@ -710,6 +752,29 @@ def cockpit_pre_check(
         "--audit-append/--audit-overwrite",
         help="Append to the audit file (default: overwrite; useful for replay runs).",
     ),
+    # AUDIT-N+26 (SOTA audit pass 12): ``--include-mcp-audit`` mirrors the
+    # ``cockpit render --include-mcp-audit`` and ``cockpit traffic
+    # --include-mcp-audit`` toggle so the canonical operator UX surfaces
+    # agree on vocabulary. Default off so the single-context JSON
+    # envelope (a bare ``PolicyDecision.to_dict()``) and the batch JSON
+    # stream (one decision per line) stay byte-identical for the existing
+    # harvesters (``test_unit_cockpit_sota_json_parity.py`` /
+    # ``test_unit_ux_cli_cockpit.py::_harvest_decisions``) — opt in to
+    # attach the live MCP audit-trail singleton stats and surface them in
+    # the envelope. ``--no-mcp-audit`` is the documented way to drop the
+    # MCP import on synthetic / replay paths.
+    include_mcp_audit: bool = typer.Option(
+        False,
+        "--include-mcp-audit/--no-mcp-audit",
+        help=(
+            "Attach the live MCP audit-trail singleton stats "
+            "(mcp_audit_stats) so the JSON envelope surfaces a populated "
+            "``mcp_audit_stats`` key. Default off so existing JSON "
+            "harvesters stay byte-identical; pass --include-mcp-audit "
+            "to opt in (mirrors ``cockpit render --include-mcp-audit`` "
+            "and ``cockpit traffic --include-mcp-audit``)."
+        ),
+    ),
 ) -> None:
     """Evaluate a :class:`PolicyContext` and emit the resulting decision.
 
@@ -723,6 +788,16 @@ def cockpit_pre_check(
     Lane 2 federation-namespace pin: they let SOTA replay tooling
     force every corpus entry to live in (and the engine to default to)
     a single namespace without rewriting every JSON entry.
+
+    With ``--include-mcp-audit`` (AUDIT-N+26, SOTA audit pass 12) the
+    JSON envelope surfaces the live MCP audit-trail singleton stats so
+    operators can correlate a deny / allow verdict with the upstream
+    MCP tool / resource / gate dispatches that triggered it. The
+    single-context path augments the ``PolicyDecision.to_dict()``
+    envelope in place (existing top-level keys preserved); the batch
+    path emits an additional trailing ``_pre_check_envelope_v1`` line
+    that the canonical ``cockpit replay`` harvesters ignore (they
+    filter on ``verdict`` / ``reason_code`` membership).
     """
     try:
         # Import lazily so the CLI does not pull the full governance
@@ -761,6 +836,13 @@ def cockpit_pre_check(
                 append_audit=audit_append,
                 json_output=json_output,
                 namespace_override=namespace,
+                # AUDIT-N+26 (SOTA audit pass 12): forward the
+                # ``--include-mcp-audit`` opt-in to the batch runner so the
+                # trailing envelope line is emitted when the operator wants
+                # the MCP audit-trail singleton correlated with the
+                # batch decisions. Default off keeps the existing
+                # line-delimited JSON stream byte-identical.
+                include_mcp_audit=include_mcp_audit,
             )
             raise typer.Exit(exit_code)
 
@@ -788,7 +870,26 @@ def cockpit_pre_check(
             )
             decision = engine.evaluate(ctx)
         if json_output:
-            typer.echo(json.dumps(decision.to_dict(), indent=2, sort_keys=True))
+            # AUDIT-N+26 (SOTA audit pass 12): when ``--include-mcp-audit``
+            # is set, augment the decision envelope in place with the
+            # live MCP audit-trail singleton stats. Existing top-level
+            # keys (``verdict`` / ``reason`` / ``reason_code`` /
+            # ``rule_id`` / ``override_applied`` / ``cached`` /
+            # ``evaluated_at``) are preserved so the
+            # ``test_unit_ux_cli_cockpit.py::test_pre_check_json``
+            # assertion ``"verdict" in payload`` keeps passing.
+            payload = decision.to_dict()
+            if include_mcp_audit:
+                stats, error = _fetch_pre_check_mcp_stats()
+                payload["mcp_audit_stats"] = stats
+                if error is not None:
+                    # Surface the fetch / import error in the envelope
+                    # so the operator gets a structured diagnosis
+                    # instead of a silent empty block — mirrors the
+                    # ``cockpit traffic --include-mcp-audit`` envelope
+                    # error-key contract.
+                    payload["mcp_audit_error"] = error
+            typer.echo(json.dumps(payload, indent=2, sort_keys=True, default=str))
             return
         typer.echo(
             f"verdict={decision.verdict.value} reason_code={decision.reason_code.value} "
@@ -814,6 +915,15 @@ def _run_pre_check_batch(
     append_audit: bool,
     json_output: bool,
     namespace_override: Optional[str] = None,
+    # AUDIT-N+26 (SOTA audit pass 12): when set, emit a trailing
+    # ``_pre_check_envelope_v1`` line containing the MCP audit-trail
+    # singleton stats after the line-delimited decisions so the
+    # operator can correlate the verdict stream with the upstream
+    # MCP dispatches. Default ``False`` so existing harvesters
+    # (``test_unit_cockpit_sota_json_parity._harvest_decisions`` and
+    # ``test_unit_ux_cli_cockpit._harvest_decisions``) stay
+    # byte-identical.
+    include_mcp_audit: bool = False,
 ) -> int:
     """Replay a corpus of :class:`PolicyContext` JSONs through pre-check.
 
@@ -832,6 +942,15 @@ def _run_pre_check_batch(
     Lane 2 federation contract). Both ``pre-check`` and ``replay`` route
     through this argument so they cannot drift apart on namespace
     semantics.
+
+    ``include_mcp_audit`` (AUDIT-N+26, SOTA audit pass 12) opts in to
+    emit a trailing envelope line after the decision stream. The
+    envelope carries ``mcp_audit_stats`` (live singleton) and an
+    optional ``mcp_audit_error`` for fetch / import failures. The
+    envelope is tagged with the ``_pre_check_envelope_v1`` discriminator
+    so the canonical ``cockpit replay`` harvesters can filter it out
+    (they collect only objects that look like
+    :class:`PolicyDecision` ``to_dict()`` output).
     """
     contexts, decisions, notices = _build_batch_decision_log(
         batch=batch,
@@ -854,7 +973,22 @@ def _run_pre_check_batch(
     any_deny = any(d.verdict.value == "deny" for d in decisions)
     if json_output:
         for d in decisions:
-            typer.echo(json.dumps(d.to_dict(), indent=2, sort_keys=True))
+            typer.echo(json.dumps(d.to_dict(), indent=2, sort_keys=True, default=str))
+        # AUDIT-N+26 (SOTA audit pass 12): opt-in trailing envelope.
+        # The discriminator key (``_pre_check_envelope_v1``) lets
+        # harvesters skip the envelope without affecting the
+        # decision stream semantics; it carries the same MCP
+        # audit-trail singleton stats the
+        # ``cockpit traffic --include-mcp-audit`` lane surfaces.
+        if include_mcp_audit:
+            stats, error = _fetch_pre_check_mcp_stats()
+            envelope: dict[str, Any] = {
+                "_pre_check_envelope_v1": True,
+                "mcp_audit_stats": stats,
+            }
+            if error is not None:
+                envelope["mcp_audit_error"] = error
+            typer.echo(json.dumps(envelope, indent=2, sort_keys=True, default=str))
 
     if appender is not None and notices:
         appender.record_many(notices)
