@@ -8476,6 +8476,97 @@ observability_impl.py dormant-core lanes), or (b) the
 V4-1.2.x L2 Rust crates upgrade once the Do-Not-Touch
 archive block clears.
 
+## 2026-07-22: SOTA Audit Pass 12 — cockpit pre-check `--include-mcp-audit` wiring (AUDIT-N+26)
+
+Resumes the carry-forward option (a) above. Closes the
+single genuinely-unblocked cockpit lane the Pass 11 sweep
+explicitly named: `cockpit pre-check` (single-context
+`--json` + batch `--batch --json`) never attached the live
+MCP audit-trail singleton, so operators correlating a deny
+/ allow verdict with the upstream MCP tool / resource /
+gate dispatches had to issue two separate CLI invocations
+(`cockpit pre-check --json` + `cockpit audit mcp-tail --stats`).
+Pass 12 mirrors the `cockpit render --include-mcp-audit`
+(Pass 11) and `cockpit traffic --include-mcp-audit` (Pass 9)
+toggles on `pre-check` so the canonical operator UX surfaces
+agree on vocabulary.
+
+**Default off** on `pre-check` (chose the `cockpit traffic`
+default, NOT the `cockpit render` default) so existing JSON
+harvesters
+(`test_unit_cockpit_sota_json_parity._harvest_decisions`
+and `test_unit_ux_cli_cockpit._harvest_decisions`) stay
+byte-identical. Pass 12 only changes the envelope when
+`--include-mcp-audit` is explicitly supplied:
+
+* **Single-context `--json`**: augments the bare
+  `PolicyDecision.to_dict()` envelope in place with a
+  sibling `mcp_audit_stats` key (existing top-level keys
+  preserved so `'verdict' in payload` keeps passing).
+* **Batch `--batch --json`**: appends a trailing
+  `_pre_check_envelope_v1` line after the line-delimited
+  decisions, with `mcp_audit_stats` and optional
+  `mcp_audit_error`. The discriminator key lets the
+  canonical `cockpit replay` harvesters (which filter on
+  `'verdict'` membership) skip the envelope without
+  affecting decision stream semantics.
+* **Text mode**: unchanged (no envelope pollution).
+* **Missing MCP subsystem**: `mcp_audit_error` surfaces the
+  failure string so operators get a structured diagnosis
+  instead of a silent `null` — mirrors the `cockpit
+  traffic` envelope error-key contract.
+
+New helper `_fetch_pre_check_mcp_stats()` lives next to
+`_attach_mcp_audit_stats()` (Pass 11) and uses the same
+lazy-import / defensive-try shape so the cockpit renderer
+never crashes on a missing MCP module.
+
+### Files changed
+* `src/thegent/ux/cli_cockpit.py:267-326` — new
+  `_fetch_pre_check_mcp_stats` helper, `--include-mcp-audit`
+  typer.Option on `cockpit_pre_check`, single-context `--json`
+  envelope augmentation, batch `--json` trailing envelope,
+  `_run_pre_check_batch` kwargs extension.
+* `tests/test_unit_cockpit_pass12_pre_check_mcp_audit.py` —
+  new 9-test suite pinning the AUDIT-N+26 contract.
+
+### Verification
+* `ruff check` + `ruff format --check`: clean.
+* `tests/test_unit_cockpit_pass12_pre_check_mcp_audit.py`:
+  9 / 9 pass.
+* `tests/test_unit_cockpit_pass11_audit_envelope.py` +
+  `test_unit_cockpit_sota_json_parity.py` +
+  `test_unit_cockpit_snapshot_flip.py` +
+  `test_unit_cockpit_snapshot_flip_envelope.py`: 64 / 64
+  pass (no Pass 11 / SOTA parity regression).
+* `tests/test_unit_ux_cli_cockpit.py`: 26 / 26 pass
+  (existing `test_pre_check_json` `verdict in payload`
+  assertion preserved).
+* Broader 227-test UX suite (cockpit / traffic / audit /
+  sota parity / snapshot flip / mcp-tail / keepalive):
+  all green.
+
+### DAG tick tally
+* **+1 cockpit-observability tick** (`AUDIT-N+26`):
+  `cockpit pre-check --include-mcp-audit` envelope.
+
+### Carry-forward (post-SOTA pass 12)
+
+The saturated lanes (CLI-1..5, AUDIT-1/2/3/4/6/9,
+AUDIT-N+22/24/25/26, F-1..F-15, NEW-1..23, KA-1..6,
+A11Y-1, TEST-1, WL-224/225, diskcache, CachePreWarmer)
+remain closed. The next genuinely-unblocked
+cockpit/SOTA observation lane will require either (a) a
+fresh SOTA pass over the `observability_impl.py`
+dormant-core lanes, or (b) the V4-1.2.x L2 Rust crates
+upgrade once the Do-Not-Touch archive block clears.
+
+### Commit
+* `be9844397` — AUDIT-N+26: wire --include-mcp-audit into
+  cockpit pre-check (SOTA audit pass 12). Local commit on
+  `wip/2026-07-22-thegent-local-preservation` only; no
+  upstream push (preserves the archived upstream contract).
+
 ## 2026-07-22: SOTA Audit Pass 11 — cockpit render mcp_audit_stats wiring + mcp-tail --json-envelope echo (AUDIT-N+25)
 
 ### Goal
@@ -8667,4 +8758,95 @@ pre-check` envelope for `--include-mcp-audit`, or the
 observability_impl.py dormant-core lanes), or (b) the
 V4-1.2.x L2 Rust crates upgrade once the Do-Not-Touch
 archive block clears.
+
+## 2026-07-22: SOTA Audit Pass 12 — cockpit pre-check `--include-mcp-audit` wiring (AUDIT-N+26)
+
+Resumes the carry-forward option (a) above. Closes the
+single genuinely-unblocked cockpit lane the Pass 11 sweep
+explicitly named: `cockpit pre-check` (single-context
+`--json` + batch `--batch --json`) never attached the live
+MCP audit-trail singleton, so operators correlating a deny
+/ allow verdict with the upstream MCP tool / resource /
+gate dispatches had to issue two separate CLI invocations
+(`cockpit pre-check --json` + `cockpit audit mcp-tail --stats`).
+Pass 12 mirrors the `cockpit render --include-mcp-audit`
+(Pass 11) and `cockpit traffic --include-mcp-audit` (Pass 9)
+toggles on `pre-check` so the canonical operator UX surfaces
+agree on vocabulary.
+
+**Default off** on `pre-check` (chose the `cockpit traffic`
+default, NOT the `cockpit render` default) so existing JSON
+harvesters
+(`test_unit_cockpit_sota_json_parity._harvest_decisions`
+and `test_unit_ux_cli_cockpit._harvest_decisions`) stay
+byte-identical. Pass 12 only changes the envelope when
+`--include-mcp-audit` is explicitly supplied:
+
+* **Single-context `--json`**: augments the bare
+  `PolicyDecision.to_dict()` envelope in place with a
+  sibling `mcp_audit_stats` key (existing top-level keys
+  preserved so `'verdict' in payload` keeps passing).
+* **Batch `--batch --json`**: appends a trailing
+  `_pre_check_envelope_v1` line after the line-delimited
+  decisions, with `mcp_audit_stats` and optional
+  `mcp_audit_error`. The discriminator key lets the
+  canonical `cockpit replay` harvesters (which filter on
+  `'verdict'` membership) skip the envelope without
+  affecting decision stream semantics.
+* **Text mode**: unchanged (no envelope pollution).
+* **Missing MCP subsystem**: `mcp_audit_error` surfaces the
+  failure string so operators get a structured diagnosis
+  instead of a silent `null` — mirrors the `cockpit
+  traffic` envelope error-key contract.
+
+New helper `_fetch_pre_check_mcp_stats()` lives next to
+`_attach_mcp_audit_stats()` (Pass 11) and uses the same
+lazy-import / defensive-try shape so the cockpit renderer
+never crashes on a missing MCP module.
+
+### Files changed
+* `src/thegent/ux/cli_cockpit.py:267-326` — new
+  `_fetch_pre_check_mcp_stats` helper, `--include-mcp-audit`
+  typer.Option on `cockpit_pre_check`, single-context `--json`
+  envelope augmentation, batch `--json` trailing envelope,
+  `_run_pre_check_batch` kwargs extension.
+* `tests/test_unit_cockpit_pass12_pre_check_mcp_audit.py` —
+  new 9-test suite pinning the AUDIT-N+26 contract.
+
+### Verification
+* `ruff check` + `ruff format --check`: clean.
+* `tests/test_unit_cockpit_pass12_pre_check_mcp_audit.py`:
+  9 / 9 pass.
+* `tests/test_unit_cockpit_pass11_audit_envelope.py` +
+  `test_unit_cockpit_sota_json_parity.py` +
+  `test_unit_cockpit_snapshot_flip.py` +
+  `test_unit_cockpit_snapshot_flip_envelope.py`: 64 / 64
+  pass (no Pass 11 / SOTA parity regression).
+* `tests/test_unit_ux_cli_cockpit.py`: 26 / 26 pass
+  (existing `test_pre_check_json` `verdict in payload`
+  assertion preserved).
+* Broader 227-test UX suite (cockpit / traffic / audit /
+  sota parity / snapshot flip / mcp-tail / keepalive):
+  all green.
+
+### DAG tick tally
+* **+1 cockpit-observability tick** (`AUDIT-N+26`):
+  `cockpit pre-check --include-mcp-audit` envelope.
+
+### Carry-forward (post-SOTA pass 12)
+
+The saturated lanes (CLI-1..5, AUDIT-1/2/3/4/6/9,
+AUDIT-N+22/24/25/26, F-1..F-15, NEW-1..23, KA-1..6,
+A11Y-1, TEST-1, WL-224/225, diskcache, CachePreWarmer)
+remain closed. The next genuinely-unblocked
+cockpit/SOTA observation lane will require either (a) a
+fresh SOTA pass over the `observability_impl.py`
+dormant-core lanes, or (b) the V4-1.2.x L2 Rust crates
+upgrade once the Do-Not-Touch archive block clears.
+
+### Commit
+* `be9844397` — AUDIT-N+26: wire --include-mcp-audit into
+  cockpit pre-check (SOTA audit pass 12). Local commit on
+  `wip/2026-07-22-thegent-local-preservation` only; no
+  upstream push (preserves the archived upstream contract).
 
