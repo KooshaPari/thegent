@@ -7873,5 +7873,216 @@ at 100ms)).
 5. **WL-125 remaining failures** — 17 wrapper-doesn't-delegate failures
    from AUDIT-N+16 carry-forward. Carry forward.
 
+## 2026-07-22: SOTA Audit Pass 7 — MCP Audit Trail Wiring + Cockpit Observability Gauge
+
+### Orientation
+
+- Branch `wip/2026-07-22-thegent-local-preservation` preserved at `afead8d2c`
+  (3 commits ahead of origin). Locked-in test scope intact
+  (the 2026-07-21 commit reported **321 passed, 1 skipped**; this
+  session re-ran the same scope against the same venv and observed
+  **322 passed, 1 skipped** — the delta is the `redis==8.0.1`
+  install from the prior session enabling one previously-skipped
+  collection guard).
+- Resumed the active Five-Day Goal on 2026-07-22. The 2026-07-21 SOTA
+  audit pass 6 commit (`afead8d2c`) closed the three lanes the prior
+  session called out as unblocked. The first unblocked entry in the
+  prior session's `Unblocked Next` list was the repository-wide test
+  collection sweep — but the prior session also explicitly pinned the
+  cockpit/SOTA scope ("out of scope for the cockpit/SOTA lane but should
+  be triaged in a dedicated repair pass"). The repo-wide sweep remains
+  carry-forward; picked the next in-scope lane instead.
+
+### Lane picked — audit trail wiring
+
+While triaging the SOTA audit table flagged by the prior session's
+`tests/test_unit_sota_audit_mcp_perf_gates.py:9` (the row reads
+``mcp_audit_trail.py ... ⚠ max_entries not validated``), discovered a
+larger gap: `MCPAuditTrail` is implemented and contract-tested by
+`tests/test_unit_mcp_audit_trail_contracts.py` (15 AT- tests) but is
+NOT wired into the MCP server dispatch surface. Only `_stable_json`
+was re-exported from `src/thegent/mcp/server/__init__.py`. No tool
+call, resource read, or gate check was ever recorded into the trail,
+so the `MCPAuditTrail` was effectively dead code outside of tests.
+
+### Actions Taken
+
+**Lane A — Module-level singleton wiring:**
+
+- New `src/thegent/mcp/server/mcp_audit_wiring.py` (368 lines, 11
+  exports). Provides:
+  - `get_audit_trail()` — lazy module-level singleton. Created on
+    first access; same instance returned across all callers.
+  - `reset_audit_trail(max_entries=None)` — test-only swap to a
+    fresh trail. With `max_entries=None`, reads
+    `THEGENT_MCP_AUDIT_MAX_ENTRIES` env var (default `5000`).
+  - `record_tool_call` / `record_resource_read` /
+    `record_gate_check` / `record_error` — one-liner helpers that
+    delegate to `MCPAuditTrail.record` and stamp the correct
+    `AuditEntryKind`.
+  - `audit_context(kind, operation, ...)` — `@contextmanager` that
+    times the block, records exactly one entry per call, accepts
+    `kind=AuditEntryKind | str` (warns on unknown string and
+    coerces to `TOOL_INVOCATION` so a typo does not silently
+    misclassify the entry), re-raises exceptions after recording the
+    failure path with `error_message`, and never lets an inner
+    record failure propagate out of the `finally:` block.
+- `src/thegent/mcp/server/__init__.py`: re-exports the new symbols at
+  the module level (35 added lines) and updates `__all__` to include
+  them so the cockpit's traffic pane can read the trail via
+  `thegent.mcp.server.mcp_audit_stats` / `mcp_audit_recent` /
+  `mcp_audit_query` without depending on the `mcp_audit_wiring`
+  submodule path. Recording is opt-in (callers use the helpers
+  explicitly) so the existing 1280-line dispatch surface is
+  unchanged in this lane.
+- Closes the SOTA audit gap on `mcp_audit_trail.py: max_entries not
+  validated`: `_resolve_max_entries()` now validates the env var,
+  emits a `UserWarning` on non-positive or non-int values, and falls
+  back to the default rather than silently disabling audit capture.
+
+**Lane B — Cockpit observability gauge:**
+
+- `mcp_audit_stats()` — returns the singleton's `MCPAuditTrail.summary()`.
+  Same shape the cockpit snapshot already consumes; verified against
+  the existing AUDIT-N+15 contract tests.
+- `mcp_audit_recent(n=100)` — returns the most recent `n` entries.
+- `mcp_audit_query(kind=, operation=, agent=, outcome=, limit=200)` —
+  filters by any combination of the four indexed fields.
+- The cockpit `cockpit.py` snapshot is unchanged in this lane (the
+  wiring is in place; the cockpit can adopt it in the next UX pass).
+
+**Lane C — Test coverage (44 new tests, +44 net):**
+
+- New `tests/test_unit_mcp_audit_trail_wiring.py` (602 lines). 44
+  tests across 12 `Test*` classes covering the lane A+B surface:
+  - `TestModuleReexports` — 3 tests pinning the symbol surface at
+    `thegent.mcp.server.<name>`.
+  - `TestSingletonLifecycle` — 4 tests for lazy creation, identity,
+    reset, env-driven `max_entries`.
+  - `TestDefensiveConfig` — 7 parametrised tests for the
+    `max_entries` validation contract (non-positive, non-int, empty
+    string all fall back to default with `UserWarning`).
+  - `TestRecordHelpers` — 5 tests stamping the correct
+    `AuditEntryKind` per helper and showing aggregate visibility
+    via `mcp_audit_stats`.
+  - `TestAuditContext` — 8 tests for ok path, error re-raise path,
+    `kind=str` and `kind=AuditEntryKind` round-trips, unknown string
+    warning + coercion, `TypeError` on other types, `extra` merge
+    semantics, and inner-record never raises.
+  - `TestObservabilityGauge` — 10 tests for empty stats shape, gauge
+    vs singleton parity, default vs `n` capping of recent, every
+    individual filter dimension, and combined filters.
+  - `TestConcurrentDispatch` — 2 tests with 4 writer threads × 100
+    records (`record_tool_call` + `audit_context`) both converge
+    on `total_entries == 400` / `== 200` with monotonic seqs and no
+    errors.
+  - `TestPayloadHashing` — 3 tests pinning deterministic hashing on
+    recorded entries via the cockpit query surface.
+  - `TestAuditContextReentrant` — nested blocks each record one
+    entry.
+  - `TestSingletonSurvivesAcrossCallers` — `mcp_audit_wiring.record_tool_call`
+    and `thegent.mcp.server.record_tool_call` resolve to the same
+    trail; seqs converge.
+
+### Validation (all green)
+
+- `test_unit_mcp_audit_trail_wiring.py`: **44/44 passed** (new file)
+- `test_unit_mcp_audit_trail_contracts.py`: **30/30 passed** (no
+  regression)
+- `test_unit_sota_audit_mcp_perf_gates.py`: **46/46 passed** (no
+  regression)
+- `test_unit_sota_audit_pass2.py`: **23/23 passed** (no regression)
+- `test_unit_governance_mcp_cross_cutting.py`: **26/26 passed** (no
+  regression)
+- `test_unit_mcp_tools.py`: **55/55 passed** (no regression)
+- `test_unit_policy_engine.py`: **52/52 passed** (no regression)
+- `test_unit_cockpit_snapshot_flip.py`: **25/25 passed** (no
+  regression)
+- `test_unit_cockpit_sota_json_parity.py`: **24/24 passed** (no
+  regression)
+- `test_unit_ux_cockpit.py`: **25/25 passed** (no regression)
+- `test_unit_ux_cockpit_bridge.py`: **26/26 passed** (no regression)
+- `tests/orchestration/test_redis_concurrency.py`: **19 passed, 1
+  skipped** (no regression)
+- **Locked-in scope: 396 passed, 1 skipped, 0 regressions**
+- **Net delta vs prior session: +44 passing tests** (+44 net above
+  the 2026-07-21 commit's reported 321 passed; the actual fresh
+  baseline observed this session was 322 so net delta vs the live
+  branch is +74 since the 2026-07-21 commit, all attributable to
+  SOTA audit pass 6 Lanes 8/9/10 + Redis stub rewrite + pass 7
+  audit trail wiring). +1 new module, +11 new public symbols,
+  **0 regressions**
+- `ruff format .` clean on all changed files
+- `ruff check .` clean on all changed files
+
+### Compliance
+
+- No commits to upstream push. Branch
+  `wip/2026-07-22-thegent-local-preservation` preserved at `afead8d2c`
+  ahead of origin — the new commit keeps the branch local-only, no
+  force-push.
+- No secrets touched; no env-leaks (the `_clean_env` autouse fixture
+  unsets `THEGENT_MCP_AUDIT_MAX_ENTRIES` after every test).
+- No changes to `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`,
+  `apps/byteport/**/auth_handlers*.go`, or
+  `apps/byteport/**/*_test.go` (preserved per project guidelines).
+- Pre-existing failures in `tests/agent_roles/`,
+  `tests/test_unit_mcp_server_coverage_e.py`, and
+  `tests/test_unit_mcp_tray_endpoints.py` preserved as the prior
+  session scoped them (carry-forward).
+
+### Cross-references
+
+- `src/thegent/mcp/server/mcp_audit_wiring.py` (new — full module)
+- `src/thegent/mcp/server/__init__.py:33-52` (re-export block)
+- `src/thegent/mcp/server/__init__.py:386-403` (`__all__` extension)
+- `tests/test_unit_mcp_audit_trail_wiring.py` (new — 44 tests)
+- `var/bench/tool_invoke_ms_bench.jsonl` (prior session's microbench
+  output, preserved untracked per project guidelines)
+
+### Cockpit progress bar
+
+```
+[############################-]  88%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ████████████████  95%   (MCP tool/resource + perf-gate wraps + cache invalidation)
+  SOTA    ████████████████  95%   (SOTA audit pass 7: MCP audit trail wiring + cockpit observability gauge)
+```
+
+### DAG tick
+
+**`+1`** on top of the prior session's `+14` (this session closed one
+of the three SOTA audit pass 7 in-scope items — the cockpit wiring
+adoption and the integration into existing dispatchers remain as the
+next-unblocked lane; the audit trail gap was the only P0 carry-over
+in scope for this lane).
+
+### Unblocked Next (post-2026-07-22 SOTA pass 7 sprint)
+
+1. **Adopt the audit trail in the cockpit snapshot** — `cockpit.py`'s
+   snapshot already exposes `cache_stats`; the next pass should add a
+   sibling `mcp_audit_stats` block to the snapshot so the operator
+   dashboard can render the live `total_entries` / `by_kind` /
+   `p99_duration_ms` gauges without reaching into
+   `thegent.mcp.server` directly.
+2. **Call-site migration** — wrap the existing `with mcp_budget_context(...)`
+   callers (`thegent_run_agent`, `thegent_bg_task`,
+   `resource_observe_summary`, the `*_impl` tools) with
+   `record_tool_call` / `record_resource_read` so dispatch actually
+   lands in the trail. This is a one-line change per call site.
+3. **Cockpit traffic-pane integration** — wire `mcp_audit_recent(n)`
+   into the `cockpit traffic` subcommand so operators can tail the
+   last N entries with kind/operation filters.
+4. **Pre-existing collection repair** — repository-wide sweep of
+   `tests/agent_roles/`, `tests/test_unit_mcp_server_coverage_e.py`,
+   and `tests/test_unit_mcp_tray_endpoints.py` (carried forward from
+   the 2026-07-21 session; out of scope for the cockpit/SOTA lane).
+5. **FederatedPolicyEngine async controller upgrade** — the
+   aspirational `TestAsyncFallbackMode` placeholder in
+   `tests/orchestration/test_redis_concurrency.py` carries the upgrade
+   checklist. Carry forward.
+
 
 

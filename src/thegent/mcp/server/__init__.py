@@ -30,6 +30,27 @@ _server_tools_sessions = _tools_sessions
 import json as _json  # noqa: E402
 from thegent.mcp.server.mcp_audit_trail import _stable_json  # noqa: E402
 
+# SOTA audit pass 7 — module-level audit trail wiring. Re-export the
+# observability gauge so the cockpit's traffic pane can read the
+# singleton trail via ``thegent.mcp.server.mcp_audit_stats`` /
+# ``mcp_audit_recent`` / ``mcp_audit_query`` without depending on the
+# ``mcp_audit_wiring`` module path. Recording is opt-in (callers use
+# ``record_tool_call`` / ``record_resource_read`` etc. explicitly) so
+# the existing 1280-line dispatch surface is unchanged.
+from thegent.mcp.server.mcp_audit_wiring import (  # noqa: E402, F401
+    MCP_AUDIT_DEFAULT_MAX_ENTRIES,
+    audit_context,
+    get_audit_trail,
+    mcp_audit_query,
+    mcp_audit_recent,
+    mcp_audit_stats,
+    record_error,
+    record_gate_check,
+    record_resource_read,
+    record_tool_call,
+    reset_audit_trail,
+)
+
 from thegent.cli.commands.observability_impl import observe_summary_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import session_contract_health_gate_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import session_contract_health_report_impl  # noqa: E402, F401
@@ -367,7 +388,20 @@ __all__ = [
     "_server_tools_workstream_lsp",
     "resource_observe_summary",
     "mcp",
-]
+    # SOTA audit pass 7 — audit trail wiring (re-exports from
+    # ``mcp_audit_wiring``).
+    "MCP_AUDIT_DEFAULT_MAX_ENTRIES",
+    "get_audit_trail",
+    "reset_audit_trail",
+    "record_tool_call",
+    "record_resource_read",
+    "record_gate_check",
+    "record_error",
+    "audit_context",
+    "mcp_audit_stats",
+    "mcp_audit_recent",
+    "mcp_audit_query",
+]  # noqa: E501
 
 
 def resource_observe_summary(
