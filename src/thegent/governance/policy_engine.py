@@ -231,6 +231,13 @@ class PolicyEngine:
         Empty or missing ``when`` is rejected with ``PolicyEngineConfigError``
         — an empty condition would otherwise match every context (silent
         catch-all), which is unsafe for policy authoring.
+
+        AUDIT-N+20 (SOTA audit pass 6): every successful registration
+        invalidates the OPT-008 decision cache so the next ``evaluate``
+        call re-runs the federated pass and observes the new rule. Without
+        this, a freshly-registered federated deny rule would be silently
+        shadowed by a stale cached allow decision for the same context
+        (a P0 audit gap surfaced by the SOTA pass 6 cross-cutting lane).
         """
         if self.federated is None:
             _log.debug("register_rule ignored: federation disabled")
@@ -238,6 +245,7 @@ class PolicyEngine:
         if rule is not None:
             with self._lock:
                 self.federated.register(rule)
+                self._cache.clear()
             return
         if rule_id is None:
             raise PolicyEngineConfigError("register_rule requires rule_id when no PolicyRule is passed")
@@ -264,6 +272,11 @@ class PolicyEngine:
                     namespace=namespace,
                 )
             )
+            # Invalidate the OPT-008 cache: a newly-registered federated
+            # rule must take effect on the next ``evaluate`` call. The
+            # hit/miss counters are preserved (a future audit-window
+            # analysis should still see pre-existing observations).
+            self._cache.clear()
 
     def load_rules_from_file(self, path: str | Path, namespace: str = "global") -> int:
         """Load federated rules from a JSON file. Returns count loaded.
@@ -272,6 +285,10 @@ class PolicyEngine:
         exist. Authored rule bodies are operator-managed; the file body must
         be valid JSON of the schema documented in
         ``src/thegent/governance/federated_policy.py``.
+
+        AUDIT-N+20 (SOTA audit pass 6): a successful load invalidates the
+        OPT-008 decision cache so freshly-loaded rules are visible on the
+        next ``evaluate`` call.
         """
         if self.federated is None:
             return 0
@@ -281,6 +298,11 @@ class PolicyEngine:
         before = sum(len(ns) for ns in self.federated._namespaces.values())
         with self._lock:
             self.federated.load_from_file(resolved, namespace=namespace)
+            # Drop the OPT-008 cache so the next ``evaluate`` call sees
+            # the freshly-loaded rules. Counters are preserved so a
+            # SOTA audit window that started before the load still
+            # reflects the pre-load observations.
+            self._cache.clear()
         after = sum(len(ns) for ns in self.federated._namespaces.values())
         return after - before
 
@@ -307,6 +329,13 @@ class PolicyEngine:
         empty strings, ``/``, ``\\``, ``..`` substrings, and NUL bytes are
         all rejected with :class:`PolicyEngineConfigError` before any state
         is mutated.
+
+        AUDIT-N+20 (SOTA audit pass 6): every successful override
+        invalidates the OPT-008 decision cache so the next ``evaluate``
+        call re-runs the override path. Without this, a freshly-registered
+        override would be silently shadowed by a stale cached deny
+        decision for the same context (a P0 audit gap surfaced by the
+        SOTA pass 6 cross-cutting lane).
         """
         if not isinstance(rule_id, str):
             # Defensive: surface config drift as PolicyEngineConfigError so
@@ -328,6 +357,11 @@ class PolicyEngine:
                 duration_minutes=duration_minutes,
                 metadata=metadata,
             )
+            # Drop the OPT-008 cache so the next ``evaluate`` call sees
+            # the freshly-registered override. Counters are preserved
+            # so a SOTA audit window that started before the override
+            # still reflects the pre-override observations.
+            self._cache.clear()
 
     # ------------------------------------------------------------------ evaluate
 

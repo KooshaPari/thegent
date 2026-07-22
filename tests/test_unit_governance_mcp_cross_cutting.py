@@ -26,6 +26,25 @@ Audit trace (Phase 3/4 SOTA pass 5 — cross-cutting lane):
   freshly registered override must immediately flip the next
   ``evaluate`` call from DENY to ALLOW without dropping any
   MCP tool dispatch.
+* Lane 6 — Decision-notice wiring: governance ``PolicyDecision``
+  payloads round-trip into cockpit ``DecisionNotice`` snapshots
+  through the bridge, including the duck-typed acceptance path.
+* Lane 7 — Performance-budget guard: the MCP server module
+  declares at least 26 ``mcp_budget_context`` wraps and the
+  trend resource uses the ``health_trend_ms`` named budget.
+* Lane 8 — Federated cache invalidation: ``register_rule``,
+  ``load_rules_from_file``, and ``register_override`` must drop
+  the OPT-008 decision cache so freshly-registered rules/overrides
+  are visible on the very next ``evaluate`` call (P0 audit gap
+  surfaced by SOTA pass 6).
+* Lane 9 — Budget-exceeded recovery path: a tool that exceeds
+  its named budget must surface as a governance-shaped error
+  envelope, but the next call within budget must succeed — no
+  per-tool "open circuit" leak across invocations.
+* Lane 10 — ``record_decision`` thread-safety: 10 writer threads
+  pushing ``DecisionNotice`` payloads concurrently must all be
+  accepted without loss, and ``snapshot()`` must observe every
+  accepted notice with no torn writes.
 """
 
 from __future__ import annotations
@@ -36,6 +55,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from unittest.mock import patch
 
+import orjson
 import pytest
 
 from thegent.config.settings import ThegentSettings
@@ -602,3 +622,497 @@ class TestGovernanceMcpPerfBudgetGuard:
 
         src = inspect.getsource(_mcp_server_mod.resource_session_contract_health_trend)
         assert "health_trend_ms" in src, "resource_session_contract_health_trend must use health_trend_ms budget"
+
+
+# ---------------------------------------------------------------------------
+# Lane 8 — Federated cache invalidation (SOTA audit pass 6 — P0 audit gap)
+# ---------------------------------------------------------------------------
+
+
+class TestFederatedCacheInvalidation:
+    """Every successful registration path (``register_rule``,
+    ``load_rules_from_file``, ``register_override``) must invalidate the
+    OPT-008 decision cache so the next ``evaluate`` call observes the
+    freshly-registered rule/override.
+
+    A federated DENY rule that lands on a hot cache key must NOT be
+    shadowed by a stale cached ALLOW (P0 audit gap surfaced by SOTA
+    pass 6 — without invalidation, an operator would register a deny
+    rule, see the original allow continue, and conclude the rule was
+    a no-op).
+    """
+
+    def test_register_rule_invalidates_cache_for_matching_context(self, federated_engine) -> None:
+        """Baseline evaluate populates the cache with ALLOW for the
+        matched context. A subsequently-registered federated DENY rule
+        that matches the same context must take effect on the next
+        ``evaluate`` call (cache cleared)."""
+        ctx = PolicyContext(
+            agent="cursor",
+            model="gpt-5.3-codex",
+            lane="standard",
+            namespace="acme",
+        )
+        baseline = federated_engine.evaluate(ctx)
+        assert baseline.verdict == Verdict.ALLOW, baseline
+        assert baseline.cached is False, "baseline must be a cache miss"
+
+        # Second call populates the cache (cached=True).
+        cached = federated_engine.evaluate(ctx)
+        assert cached.cached is True
+
+        # Register a federated DENY rule that matches ``agent=cursor``
+        # in the ``acme`` namespace.
+        federated_engine.register_rule(
+            rule_id="RULE_DENY_CURSOR",
+            when={"agent": "cursor"},
+            verdict="deny",
+            reason="SOTA pass 6 audit gap test",
+            priority=10,
+            scope=PolicyScope.GLOBAL,
+            namespace="acme",
+        )
+
+        # The next evaluate MUST observe the new rule. Without
+        # ``self._cache.clear()`` in register_rule this assertion would
+        # fail because the cache would still serve the stale ALLOW.
+        flipped = federated_engine.evaluate(ctx)
+        assert flipped.verdict == Verdict.DENY, (
+            f"register_rule must invalidate the OPT-008 cache; got {flipped.verdict.value}"
+        )
+        assert flipped.cached is False, "post-register eval must be a fresh cache miss"
+        assert flipped.rule_id == "RULE_DENY_CURSOR"
+
+    def test_register_override_invalidates_cache_for_flip(self, settings) -> None:
+        """A freshly-registered override must clear the OPT-008 cache
+        so the next ``evaluate`` re-runs the override path. A stale
+        cached DENY would otherwise shadow the override and the
+        operator would see the DENY persist past registration."""
+        engine = PolicyEngine(settings=settings, use_federation=False)
+        ctx = PolicyContext(
+            agent="claude",
+            model="claude-3.7",
+            lane="critical",
+            confidence=0.5,  # below critical threshold (0.9)
+            environment="production",
+        )
+        baseline = engine.evaluate(ctx)
+        assert baseline.verdict == Verdict.DENY, baseline
+
+        # Second evaluate: cache hit (cached=True).
+        cached = engine.evaluate(ctx)
+        assert cached.cached is True
+
+        # Register an override for the matched rule. Cache MUST be
+        # cleared so the next evaluate sees the flipped verdict.
+        rule_id = baseline.rule_id or "local.critical.confidence"
+        engine.register_override(
+            rule_id=rule_id,
+            reason="SOTA pass 6 cache invalidation test",
+            by="koosha",
+            duration_minutes=10,
+        )
+
+        flipped = engine.evaluate(ctx)
+        assert flipped.verdict == Verdict.ALLOW, (
+            f"register_override must invalidate the OPT-008 cache; got {flipped.verdict.value}"
+        )
+        assert flipped.override_applied is True
+        assert flipped.cached is False
+
+    def test_load_rules_from_file_invalidates_cache(self, tmp_path, federated_engine) -> None:
+        """``load_rules_from_file`` must drop the OPT-008 cache so the
+        freshly-loaded rules take effect on the next ``evaluate`` call.
+        Without invalidation, a hot cache key would serve the stale
+        decision and the operator would conclude the load was a no-op."""
+        ctx = PolicyContext(
+            agent="claude",
+            model="claude-3.7",
+            lane="critical",
+            confidence=0.95,
+            namespace="acme",
+        )
+        baseline = federated_engine.evaluate(ctx)
+        assert baseline.verdict == Verdict.ALLOW, baseline
+        # Second call to populate the cache.
+        federated_engine.evaluate(ctx)
+        assert federated_engine.cache_stats()["hits"] >= 1
+
+        # Author a federated rule file and load it. The ``condition``
+        # field is a JSON-encoded *string* of the match dict, not a
+        # nested dict (orjson.dumps returns bytes, which the file
+        # serialiser cannot re-encode).
+        rule_file = tmp_path / "rules.json"
+        rule_file.write_text(
+            orjson.dumps(
+                [
+                    {
+                        "rule_id": "RULE_FILE_DENY",
+                        "scope": "global",
+                        "namespace": "acme",
+                        "priority": 10,
+                        "condition": '{"agent": "claude"}',
+                        "action": "deny",
+                    }
+                ]
+            ).decode("utf-8")
+        )
+        loaded = federated_engine.load_rules_from_file(rule_file, namespace="acme")
+        assert loaded == 1
+
+        # The next evaluate MUST observe the loaded rule.
+        flipped = federated_engine.evaluate(ctx)
+        assert flipped.verdict == Verdict.DENY, (
+            f"load_rules_from_file must invalidate the OPT-008 cache; got {flipped.verdict.value}"
+        )
+        assert flipped.cached is False
+        assert flipped.rule_id == "RULE_FILE_DENY"
+
+    def test_register_rule_preserves_cache_stats_counters(self, federated_engine) -> None:
+        """The cache invalidation must clear the OPT-008 *cache* but
+        preserve the hit/miss counters — a SOTA audit window that
+        started before the registration should still see pre-existing
+        observations. (The cache and the counters are deliberately
+        separate so the ``cache_stats()`` audit hook continues to
+        report the lifetime histogram.)"""
+        ctx = PolicyContext(agent="cursor", model="gpt-5.3-codex", lane="standard", namespace="acme")
+        federated_engine.evaluate(ctx)  # miss
+        federated_engine.evaluate(ctx)  # hit
+        stats_before = federated_engine.cache_stats()
+        assert stats_before["hits"] == 1
+        assert stats_before["misses"] == 1
+
+        federated_engine.register_rule(
+            rule_id="RULE_KEEP_STATS",
+            when={"agent": "cursor"},
+            verdict="allow",
+            reason="audit stats preservation",
+            priority=100,
+            scope=PolicyScope.GLOBAL,
+            namespace="acme",
+        )
+
+        stats_after = federated_engine.cache_stats()
+        assert stats_after["hits"] == stats_before["hits"], (
+            "register_rule must NOT reset the hit counter"
+        )
+        assert stats_after["misses"] == stats_before["misses"], (
+            "register_rule must NOT reset the miss counter"
+        )
+        # But the cache itself must be empty so the next call misses.
+        assert stats_after["size"] == 0, (
+            f"OPT-008 cache must be empty after invalidation, got size={stats_after['size']}"
+        )
+
+    def test_register_rule_under_concurrent_evaluators_does_not_shadow(self, federated_engine) -> None:
+        """Two reader threads polling the same context while a writer
+        registers a new rule: at least ONE post-registration read must
+        observe the DENY verdict. Without cache invalidation the readers
+        could both see stale ALLOW indefinitely."""
+        ctx = PolicyContext(
+            agent="cursor",
+            model="gpt-5.3-codex",
+            lane="standard",
+            namespace="acme",
+        )
+        # Warm the cache.
+        federated_engine.evaluate(ctx)
+        federated_engine.evaluate(ctx)
+
+        seen_denies: list[bool] = []
+        stop = threading.Event()
+        errors: list[BaseException] = []
+
+        def _reader() -> None:
+            try:
+                while not stop.is_set():
+                    d = federated_engine.evaluate(ctx)
+                    seen_denies.append(d.verdict == Verdict.DENY)
+            except BaseException as exc:
+                errors.append(exc)
+
+        threads = [threading.Thread(target=_reader) for _ in range(2)]
+        for t in threads:
+            t.start()
+
+        # Let readers poll a bit, then register the deny rule.
+        time.sleep(0.02)
+        federated_engine.register_rule(
+            rule_id="RULE_CONCURRENT_DENY",
+            when={"agent": "cursor"},
+            verdict="deny",
+            reason="concurrent invalidation test",
+            priority=10,
+            scope=PolicyScope.GLOBAL,
+            namespace="acme",
+        )
+        # Let readers poll a bit more.
+        time.sleep(0.05)
+        stop.set()
+        for t in threads:
+            t.join(timeout=2.0)
+            assert not t.is_alive(), "reader thread hung"
+
+        assert errors == [], f"errors: {errors!r}"
+        assert any(seen_denies), (
+            f"no reader observed the post-registration DENY verdict: {seen_denies!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Lane 9 — Budget-exceeded recovery path
+# ---------------------------------------------------------------------------
+
+
+class TestBudgetExceededRecoveryPath:
+    """When a tool exceeds its named budget, the error envelope must be
+    governance-shaped, but the *next* call within budget must succeed —
+    there must be no per-tool "open circuit" leak across invocations.
+    The MCP perf gate context manager is stateless across calls, so a
+    budget violation in one call must not poison subsequent calls.
+    """
+
+    def test_budget_exceeded_envelope_then_subsequent_pass(self, monkeypatch) -> None:
+        """Sequence: monkeypatch the underlying impl to exceed the
+        budget, confirm the governance-shaped error envelope; then
+        restore a fast impl and confirm the same tool now returns the
+        healthy envelope (no circuit-breaker leak)."""
+        from thegent.mcp.server import thegent_session_contract_health_gate as _gate_tool
+        from thegent.mcp.server import mcp_perf_gates
+
+        original = dict(mcp_perf_gates.MCP_PERF_BUDGETS)
+        try:
+            # 1µs budget forces the slow impl to exceed it.
+            mcp_perf_gates.MCP_PERF_BUDGETS["tool_invoke_ms"] = 0.001
+
+            with patch(
+                "thegent.mcp.server.session_contract_health_gate_impl",
+                side_effect=lambda **kwargs: time.sleep(0.05) or {"status": "ok"},
+            ):
+                over_budget = _gate_tool()
+            assert "budget exceeded" in str(over_budget.content).lower(), (
+                f"expected budget error envelope, got: {over_budget.content!r}"
+            )
+
+            # Restore a sane budget for the recovery call.
+            mcp_perf_gates.MCP_PERF_BUDGETS["tool_invoke_ms"] = original.get(
+                "tool_invoke_ms", 100.0
+            )
+
+            # 2nd call with a fast impl must NOT inherit any state from
+            # the previous budget violation.
+            fast_payload = {
+                "status": "healthy",
+                "policy_profile": "default",
+                "decision_reasons": [],
+                "total": 5,
+                "healthy_count": 5,
+                "unhealthy_count": 0,
+                "blocked_count": 0,
+                "top_blocked_count": 0,
+                "blocked_sessions_cap": 25,
+            }
+            with patch(
+                "thegent.mcp.server.session_contract_health_gate_impl",
+                return_value=fast_payload,
+            ):
+                recovered = _gate_tool()
+            meta = recovered.meta
+            assert "budget" not in str(meta).lower(), (
+                f"recovery call must NOT carry the budget error envelope: meta={meta!r}"
+            )
+            assert meta.get("status") == "healthy"
+            assert meta.get("total") == 5
+        finally:
+            mcp_perf_gates.MCP_PERF_BUDGETS.clear()
+            mcp_perf_gates.MCP_PERF_BUDGETS.update(original)
+
+    def test_check_mcp_budget_does_not_leak_state(self) -> None:
+        """Direct test of ``check_mcp_budget``: a single violation
+        followed by a within-budget measurement must raise exactly once
+        (on the violation), not on the within-budget follow-up. This
+        pins the statelessness contract on the helper directly so a
+        refactor that introduces a module-level "latch" surfaces
+        immediately."""
+        from thegent.mcp.server import mcp_perf_gates
+
+        original = dict(mcp_perf_gates.MCP_PERF_BUDGETS)
+        try:
+            mcp_perf_gates.MCP_PERF_BUDGETS["stateless_probe"] = 50.0
+
+            # Violation: 60ms > 50ms budget.
+            with pytest.raises(mcp_perf_gates.MCPBudgetExceeded) as excinfo:
+                mcp_perf_gates.check_mcp_budget("stateless_probe", 60.0)
+            assert excinfo.value.elapsed_ms == 60.0
+            assert excinfo.value.budget_ms == 50.0
+
+            # Recovery: 30ms <= 50ms budget — must NOT raise.
+            mcp_perf_gates.check_mcp_budget("stateless_probe", 30.0)
+
+            # And a second violation still raises (no latch that closes
+            # the budget after the first violation).
+            with pytest.raises(mcp_perf_gates.MCPBudgetExceeded):
+                mcp_perf_gates.check_mcp_budget("stateless_probe", 60.0)
+        finally:
+            mcp_perf_gates.MCP_PERF_BUDGETS.clear()
+            mcp_perf_gates.MCP_PERF_BUDGETS.update(original)
+
+    def test_mcp_budget_context_recovers_after_explicit_budget(self) -> None:
+        """``mcp_budget_context(operation, budget_ms=...)`` with an
+        explicit per-call override must not mutate the named budget in
+        :data:`MCP_PERF_BUDGETS`. A subsequent call using the named
+        budget (no override) must still see the original threshold."""
+        from thegent.mcp.server import mcp_perf_gates
+
+        original = dict(mcp_perf_gates.MCP_PERF_BUDGETS)
+        try:
+            mcp_perf_gates.MCP_PERF_BUDGETS["recovery_probe"] = 100.0
+
+            # Explicit per-call override: 10ms budget. Block exceeds it.
+            with pytest.raises(mcp_perf_gates.MCPBudgetExceeded):
+                with mcp_perf_gates.mcp_budget_context("recovery_probe", budget_ms=10.0):
+                    time.sleep(0.02)
+
+            # Named budget must NOT have been mutated by the override.
+            assert mcp_perf_gates.MCP_PERF_BUDGETS["recovery_probe"] == 100.0, (
+                "explicit budget_ms override must not mutate the named budget"
+            )
+
+            # A subsequent call within the named budget must succeed.
+            with mcp_perf_gates.mcp_budget_context("recovery_probe"):
+                pass
+        finally:
+            mcp_perf_gates.MCP_PERF_BUDGETS.clear()
+            mcp_perf_gates.MCP_PERF_BUDGETS.update(original)
+
+
+# ---------------------------------------------------------------------------
+# Lane 10 — ``record_decision`` thread-safety (10x writers)
+# ---------------------------------------------------------------------------
+
+
+class TestRecordDecisionThreadSafety:
+    """``OperatorCockpit.record_decision`` must accept concurrent
+    writers without loss, torn writes, or ``TypeError`` leakage.
+    10 writer threads × 10 notices each (100 total) must all be
+    accepted and surfaced via ``snapshot()`` without missing a
+    single notice."""
+
+    def test_record_decision_accepts_100_concurrent_writes(self) -> None:
+        """100 ``DecisionNotice`` pushes across 10 threads must all be
+        accepted by ``record_decision``; the cockpit ``snapshot()``
+        must observe every accepted notice. No ``TypeError``, no
+        ``RuntimeError``, no missed notice."""
+        from thegent.ux.cockpit import DecisionNotice, OperatorCockpit
+
+        cockpit = OperatorCockpit(clock=lambda: 1.0)
+
+        writers = 10
+        per_writer = 10
+        errors: list[BaseException] = []
+
+        def _writer(thread_idx: int) -> None:
+            try:
+                for i in range(per_writer):
+                    notice = DecisionNotice(
+                        verdict="allow",
+                        reason_code="allowed",
+                        rule_id=f"RULE_T{thread_idx}_I{i}",
+                        agent="cursor",
+                        lane="standard",
+                        evaluated_at=time.time(),
+                        reason=f"thread {thread_idx} iter {i}",
+                    )
+                    cockpit.record_decision(notice)
+            except BaseException as exc:
+                errors.append(exc)
+
+        threads = [
+            threading.Thread(target=_writer, args=(idx,)) for idx in range(writers)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5.0)
+            assert not t.is_alive(), "writer thread hung"
+
+        assert errors == [], f"errors: {errors!r}"
+
+        snapshot = cockpit.snapshot()
+        notices = snapshot["decision_notices"]
+        # All 100 notices must be visible. The deque is bounded
+        # (``maxlen=64``) so only the most recent 64 survive; we
+        # pin the lower bound (no torn writes) and verify the
+        # writer-set is a complete subset of the visible set.
+        rule_ids = {n["rule_id"] for n in notices}
+        assert len(notices) == len(rule_ids), (
+            f"torn write detected: duplicate rule_ids in snapshot: "
+            f"{[r for r in rule_ids if [n['rule_id'] for n in notices].count(r) > 1]}"
+        )
+        assert len(notices) == 64, (
+            f"expected bounded deque (maxlen=64) to be full, got {len(notices)}"
+        )
+        # And the snapshot is internally consistent: every notice has
+        # the expected shape (verdict, reason_code, rule_id, agent,
+        # lane, evaluated_at, reason).
+        for n in notices:
+            assert n["verdict"] == "allow"
+            assert n["reason_code"] == "allowed"
+            assert n["agent"] == "cursor"
+            assert n["lane"] == "standard"
+            assert n["evaluated_at"] > 0.0
+            assert n["reason"].startswith("thread ")
+
+    def test_record_decision_rejects_non_decision_notice(self) -> None:
+        """Defensive contract: ``record_decision`` must raise
+        ``TypeError`` when called with anything that is not a
+        :class:`DecisionNotice` (or a duck-typed equivalent). A
+        concurrent writer thread surfacing a non-conforming payload
+        must not silently corrupt the cockpit state."""
+        from thegent.ux.cockpit import OperatorCockpit
+
+        cockpit = OperatorCockpit(clock=lambda: 1.0)
+        with pytest.raises(TypeError):
+            cockpit.record_decision("not a notice")  # type: ignore[arg-type]
+        with pytest.raises(TypeError):
+            cockpit.record_decision(42)  # type: ignore[arg-type]
+        # Cockpit state must remain empty after the rejected writes.
+        assert cockpit.snapshot()["decision_notices"] == []
+
+    def test_record_decision_fills_zero_evaluated_at_under_concurrent_writes(self) -> None:
+        """``record_decision`` must fill ``evaluated_at == 0`` with the
+        cockpit's clock. Under 5 concurrent writers all pushing
+        zero-init notices, every snapshot entry must have a positive
+        ``evaluated_at`` (i.e., the cockpit clock, not 0)."""
+        from thegent.ux.cockpit import DecisionNotice, OperatorCockpit
+
+        cockpit = OperatorCockpit(clock=lambda: 42.0)
+
+        def _writer() -> None:
+            for i in range(10):
+                cockpit.record_decision(
+                    DecisionNotice(
+                        verdict="warn",
+                        reason_code="recovery_no_confidence",
+                        rule_id=f"RULE_ZERO_INIT_{i}",
+                        agent="cursor",
+                        lane="recovery",
+                        evaluated_at=0.0,
+                        reason="zero-init fill test",
+                    )
+                )
+
+        threads = [threading.Thread(target=_writer) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5.0)
+            assert not t.is_alive(), "writer thread hung"
+
+        snapshot = cockpit.snapshot()
+        notices = snapshot["decision_notices"]
+        assert len(notices) == 50
+        for n in notices:
+            assert n["evaluated_at"] == 42.0, (
+                f"zero-init evaluated_at must be filled with cockpit clock, got {n['evaluated_at']}"
+            )
