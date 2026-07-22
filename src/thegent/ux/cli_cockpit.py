@@ -249,6 +249,41 @@ def _resolve_clock(epoch: Optional[float]) -> Callable[[], float]:
 # ---------------------------------------------------------------------------
 
 
+# AUDIT-N+25 (SOTA audit pass 11): ``_attach_mcp_audit_stats`` is the
+# single source of truth for attaching the live MCP audit-trail
+# singleton stats to the live :class:`OperatorCockpit` so the snapshot
+# envelope (already shipped in Pass 8) emits a populated
+# ``mcp_audit_stats`` key. Mirrors the lazy-import / defensive-try
+# shape of ``_fetch_mcp_audit_entries`` (Pass 9) so the cockpit
+# renderer never crashes on a missing MCP module.
+#
+# Why this lives here (not in ``cockpit.py``): the cockpit module owns
+# the runtime engine, but the CLI surface owns the user-facing
+# *opt-in* contract. Attaching the singleton unconditionally from
+# ``cockpit.py`` would force every cockpit consumer to import the MCP
+# subsystem; the CLI helper gates the attach behind a lazy import so
+# ``cockpit render`` still works against synthetic snapshots that
+# never touch the MCP audit trail.
+def _attach_mcp_audit_stats(cockpit: "OperatorCockpit") -> Optional[str]:
+    """Attach ``mcp_audit_stats`` to ``cockpit``; return ``None`` on success.
+
+    Returns a human-readable error string when the import fails so the
+    call site can decide whether to surface it in the JSON envelope or
+    silently drop it (the latter is the right choice for
+    ``cockpit render --json`` so the historical contract — every key
+    present, ``mcp_audit_stats`` may be ``null`` — is preserved).
+    """
+    try:
+        from ..mcp.server import mcp_audit_stats
+    except Exception as exc:  # pragma: no cover - import guard
+        return f"import:{type(exc).__name__}:{exc}"
+    try:
+        cockpit.attach_audit_trail(mcp_audit_stats)
+    except Exception as exc:  # noqa: BLE001 - never crash the renderer.
+        return f"attach:{type(exc).__name__}:{exc}"
+    return None
+
+
 @app.command("render", help="Render the 4-pane operator cockpit to stdout.")
 def cockpit_render(
     runs_json: Optional[Path] = typer.Option(
@@ -269,8 +304,39 @@ def cockpit_render(
         help="Pin wall clock (epoch seconds) for deterministic replay",
     ),
     json_output: bool = typer.Option(False, "--json", help="Emit snapshot JSON instead of text"),
+    # AUDIT-N+25 (SOTA audit pass 11): the audit-trail toggle. Default
+    # on so the AUDIT-N+22 contract (Pass 8) is honoured by the render
+    # envelope — without an explicit attach, ``mcp_audit_stats`` is
+    # always ``null``. Operators on synthetic snapshots (no MCP
+    # subsystem loaded) can opt out with ``--no-mcp-audit`` to drop the
+    # MCP import attempt entirely.
+    include_mcp_audit: bool = typer.Option(
+        True,
+        "--include-mcp-audit/--no-mcp-audit",
+        help=(
+            "Attach the live MCP audit-trail singleton stats "
+            "(mcp_audit_stats) so the JSON envelope's ``mcp_audit_stats`` "
+            "key is populated. Default on; pass --no-mcp-audit to skip "
+            "the MCP import and keep the envelope's ``mcp_audit_stats`` "
+            "key set to ``null`` (useful for synthetic / test snapshots)."
+        ),
+    ),
 ) -> None:
-    """Render the 4-pane operator cockpit (WP-4001, FR-UX-007, P-081)."""
+    """Render the 4-pane operator cockpit (WP-4001, FR-UX-007, P-081).
+
+    With ``--include-mcp-audit`` (AUDIT-N+25, SOTA audit pass 11) the
+    JSON envelope's ``mcp_audit_stats`` key is populated with the live
+    MCP audit-trail singleton — the same gauge the ``cockpit traffic
+    --include-mcp-audit`` lane and ``cockpit audit mcp-tail --stats``
+    subcommand surface. The render envelope contract introduced in
+    Pass 8 already emitted the key; Pass 11 closes the AUDIT-N+22
+    regression by attaching the source so the key is no longer
+    perpetually ``null``.
+
+    The text mode is unchanged because the cockpit renderer already
+    surfaces the gauges via the ``attach_*`` machinery — Pass 11 only
+    wires the JSON envelope path through the same source.
+    """
     try:
         runs = _load_runs(runs_json)
         overrides = _load_overrides(overrides_json)
@@ -279,6 +345,13 @@ def cockpit_render(
             # JSON mode needs the live cockpit object (not the one-shot
             # helper) so snapshot() picks up the injected clock.
             live = OperatorCockpit(clock=clock_fn)
+            # AUDIT-N+25 (SOTA audit pass 11): attach the MCP audit
+            # singleton stats so the snapshot's ``mcp_audit_stats``
+            # key is populated. The helper swallows import / attach
+            # errors so a missing MCP subsystem leaves the envelope
+            # shape intact (the key stays ``null`` instead of crashing).
+            if include_mcp_audit:
+                _attach_mcp_audit_stats(live)
             live.tick(runs=runs, overrides=overrides, progress=(progress_done, progress_total))
             typer.echo(json.dumps(live.snapshot(), indent=2, sort_keys=True))
             return
@@ -1860,6 +1933,24 @@ def cockpit_audit_mcp_tail(
         "--stats",
         help="Print only the audit-trail statistics block (skips entry listing).",
     ),
+    # AUDIT-N+25 (SOTA audit pass 11): when set, the ``--json`` path
+    # emits a single JSON envelope with ``filters`` / ``entries`` /
+    # ``count`` keys instead of the historical line-delimited shape.
+    # This mirrors the ``cockpit traffic --include-mcp-audit``
+    # envelope contract and lets CI consumers introspect the
+    # resolved filter set without re-parsing argv. Default off so the
+    # AUDIT-N+15 line-delimited contract is preserved for
+    # grep-style pipelines (``head -n 1 | jq``).
+    json_envelope: bool = typer.Option(
+        False,
+        "--json-envelope",
+        help=(
+            "Emit a single JSON envelope (filters + entries + count) "
+            "instead of the line-delimited shape. Mirrors the "
+            "``cockpit traffic --include-mcp-audit`` envelope so "
+            "CI consumers can introspect the filter set in one round-trip."
+        ),
+    ),
 ) -> None:
     """Tail the MCP audit trail singleton (``thegent.mcp.server.mcp_audit_*``).
 
@@ -1890,6 +1981,24 @@ def cockpit_audit_mcp_tail(
         raise typer.Exit(1) from exc
 
     try:
+        # AUDIT-N+25 (SOTA audit pass 11): when ``--json-envelope`` is
+        # set together with ``--stats``, route the stats through the
+        # envelope so the ``filters`` key is always emitted. The
+        # historical ``--json --stats`` short-circuit returns the bare
+        # stats dict and is preserved when ``--json-envelope`` is off.
+        if stats_only and json_output and json_envelope:
+            envelope_dict: dict[str, Any] = {
+                "filters": {
+                    "kind": kind,
+                    "agent": agent,
+                    "outcome": outcome,
+                    "lines": n,
+                },
+                "stats": mcp_audit_stats(),
+            }
+            typer.echo(json.dumps(envelope_dict, indent=2, sort_keys=True, default=str))
+            return
+
         if stats_only:
             typer.echo(json.dumps(mcp_audit_stats(), indent=2, sort_keys=True))
             return
@@ -1915,11 +2024,40 @@ def cockpit_audit_mcp_tail(
             entries = mcp_audit_recent(n=max(int(n), 1))
 
         if json_output:
+            # AUDIT-N+25 (SOTA audit pass 11): when ``--json-envelope``
+            # is set, emit a single JSON object that echoes the
+            # resolved filter set (``filters`` key) alongside the
+            # entries list and a ``count`` summary. Mirrors the
+            # ``cockpit traffic --include-mcp-audit`` envelope so
+            # CI consumers can introspect the filter set in one
+            # round-trip. The default (``--json`` only) keeps the
+            # historical line-delimited shape so existing
+            # ``head -n 1 | jq`` pipelines keep working unchanged.
+            if json_envelope:
+                envelope_dict = {
+                    "filters": {
+                        "kind": kind,
+                        "agent": agent,
+                        "outcome": outcome,
+                        "lines": n,
+                    },
+                }
+                if stats_only:
+                    envelope_dict["stats"] = mcp_audit_stats()
+                else:
+                    envelope_dict["entries"] = [
+                        entry.to_dict() if hasattr(entry, "to_dict") else entry for entry in entries
+                    ]
+                    envelope_dict["count"] = len(envelope_dict["entries"])
+                typer.echo(json.dumps(envelope_dict, indent=2, sort_keys=True, default=str))
+                return
+            # Default ``--json`` path: line-delimited entries (one
+            # ``AuditEntry.to_dict()`` per line) so jq-style pipelines
+            # stay terse. ``mcp_audit_recent`` / ``mcp_audit_query``
+            # return ``AuditEntry`` dataclasses (or dicts when callers
+            # wrap with ``to_dict()``); normalise so JSON mode never
+            # crashes on enum types in ``kind``.
             for entry in entries:
-                # ``mcp_audit_recent`` / ``mcp_audit_query`` return
-                # ``AuditEntry`` dataclasses (or dicts when callers
-                # wrap with ``to_dict()``); normalise so JSON mode
-                # never crashes on enum types in ``kind``.
                 if hasattr(entry, "to_dict"):
                     payload = entry.to_dict()
                 else:

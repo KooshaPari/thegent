@@ -8462,15 +8462,209 @@ already covers the gap; running the suite is the verification.
   `tests/test_unit_mcp_tray_endpoints.py`) and the
   FederatedPolicyEngine async controller upgrade.
 
-### Carry-forward (post-SOTA pass 10)
+### Carry-forward (post-SOTA pass 11)
 
-* **No remaining in-scope Phase 3/4 cockpit/SOTA hardening
-  items** on `wip/2026-07-22-thegent-local-preservation`. The
-  saturated lanes (CLI-1..5, AUDIT-1/2/3/4/6/9, F-1..F-15,
-  NEW-1..23, KA-1..6, A11Y-1, TEST-1, WL-224/225, diskcache,
-  CachePreWarmer) remain closed. The next genuinely-unblocked
-  cockpit/SOTA observation lane will require either (a) a fresh
-  SOTA pass over a new surface area, or (b) the V4-1.2.x L2
-  Rust crates upgrade once the Do-Not-Touch archive block
-  clears.
+No remaining in-scope Phase 3/4 cockpit/SOTA hardening items
+on `wip/2026-07-22-thegent-local-preservation`. The saturated
+lanes (CLI-1..5, AUDIT-1/2/3/4/6/9, AUDIT-N+22/24/25, F-1..F-15,
+NEW-1..23, KA-1..6, A11Y-1, TEST-1, WL-224/225, diskcache,
+CachePreWarmer) remain closed. The next genuinely-unblocked
+cockpit/SOTA observation lane will require either (a) a fresh
+SOTA pass over a new surface area (e.g. the `cockpit
+pre-check` envelope for `--include-mcp-audit`, or the
+observability_impl.py dormant-core lanes), or (b) the
+V4-1.2.x L2 Rust crates upgrade once the Do-Not-Touch
+archive block clears.
+
+## 2026-07-22: SOTA Audit Pass 11 — cockpit render mcp_audit_stats wiring + mcp-tail --json-envelope echo (AUDIT-N+25)
+
+### Goal
+
+Pass 10 verified the saturated lanes and closed the residual
+AUDIT-4 contract gap. The Pass 9 carry-forward named two specific
+extension lanes ("extend `cockpit latency` and `cockpit budget`
+panes with the same `--include-mcp-audit` bridge") but those
+subcommands don't exist as discrete CLI surfaces — the latency /
+budget gauges live inside the `TrafficDashboard` (p50 / p95 /
+error-rate) and the operator cockpit (the 4-pane render).
+Pass 11 re-interprets the carry-forward against the actual
+surface area and closes two genuine, in-scope, in-branch gaps
+surfaced by the resumption scan:
+
+1. **Lane 1 — `cockpit render --json` was missing the
+   `mcp_audit_stats` source wiring.** The Pass 8 envelope contract
+   (AUDIT-N+22) already emitted a `mcp_audit_stats` key in the
+   snapshot, but the `cockpit render` command never called
+   `attach_audit_trail()` so the key was perpetually `null` — a
+   silent regression visible to every consumer that ran
+   `cockpit render --json`. Pass 11 closes the regression by
+   adding a default-on `--include-mcp-audit` flag that calls
+   the new `_attach_mcp_audit_stats(cockpit)` helper.
+
+2. **Lane 2 — `cockpit audit mcp-tail --json` lacked the
+   `mcp_audit_filters` echo that the traffic envelope added in
+   Pass 9.** The two `--include-mcp-audit` family subcommands
+   had asymmetric envelopes: traffic echoed the resolved filter
+   set; mcp-tail did not. CI consumers that pipe both surfaces
+   through the same harness had to re-parse argv to know which
+   filter was applied. Pass 11 adds an opt-in `--json-envelope`
+   flag that emits a single JSON envelope with `filters` /
+   `entries` / `count` keys, mirroring the traffic envelope
+   contract one-for-one. The default `--json` path keeps the
+   line-delimited shape so existing `head -n 1 | jq` pipelines
+   keep working unchanged.
+
+Both lanes share the `AUDIT-N+25` tag so the worklog + DAG tick
+tally stays consistent.
+
+### Scope
+
+#### `src/thegent/ux/cli_cockpit.py` (+143 / -5)
+
+* **Lane 1 helper** — `_attach_mcp_audit_stats(cockpit)` at
+  module scope (above `cockpit_render`). Lazy-imports
+  `mcp_audit_stats`, calls `cockpit.attach_audit_trail()`, and
+  swallows import / attach errors so a missing MCP subsystem
+  leaves the envelope shape intact (the key stays `null`
+  instead of crashing). Mirrors the defensive-try shape of
+  `_fetch_mcp_audit_entries` (Pass 9) so the cockpit renderer
+  never crashes on a missing MCP module.
+
+* **`cockpit_render` flag** — new `--include-mcp-audit` /
+  `--no-mcp-audit` option (default on so the AUDIT-N+22
+  contract is honoured by the render envelope). One-line
+  attach call in the `--json` branch. The text mode is
+  unchanged because the cockpit renderer already surfaces the
+  gauges via the `attach_*` machinery.
+
+* **`cockpit_audit_mcp_tail` flag** — new `--json-envelope`
+  option (default off so the AUDIT-N+15 line-delimited
+  contract is preserved). When set, the `--json` path emits
+  a single envelope with `filters` / `entries` / `count` keys.
+  The stats-only short-circuit (`--json --stats`) is preserved
+  unchanged when `--json-envelope` is off; when both are set,
+  the stats block is wrapped in the envelope so the `filters`
+  key is uniformly emitted.
+
+No other files modified. No production code path changes
+beyond the new CLI flags — the existing `cockpit render`
+text-renderer path, the existing `cockpit audit mcp-tail`
+line-delimited JSON path, and the existing `cockpit audit
+mcp-tail --stats` short-circuit are all preserved unchanged.
+
+### Tests
+
+New file:
+  `tests/test_unit_cockpit_pass11_audit_envelope.py` — 12 tests
+  covering the AUDIT-N+25 contract:
+
+* `TestCockpitRenderMcpAuditStats` (5 tests) — `mcp_audit_stats`
+  key always present in the `--json` envelope; default-on
+  populates the key with live stats; `--no-mcp-audit` keeps the
+  key as `null`; new flag surfaces in `--help`; text mode is
+  unchanged.
+
+* `TestCockpitAuditMcpTailJsonEnvelope` (6 tests) —
+  `--json-envelope` emits a single envelope with `filters` /
+  `entries` / `count`; `--lines N` cap is respected; `--stats`
+  inside the envelope emits the stats block (no `entries`
+  key); empty trail yields `entries=[]` and `count=0`; new
+  flag surfaces in `--help`; default `--json` keeps the
+  line-delimited shape (regression guard for the AUDIT-N+15
+  contract).
+
+* `TestPass11CrossLaneSanity` (1 test) — both lanes compose
+  cleanly: `cockpit render --json --runs runs.json` populates
+  both the `runs` block and the `mcp_audit_stats` block.
+
+### Validation
+
+* **New tests:** `.venv/bin/pytest
+  tests/test_unit_cockpit_pass11_audit_envelope.py -q` →
+  **12 passed**.
+
+* **Lane 1 + Lane 2 regression sweep:**
+  `.venv/bin/pytest
+  tests/test_unit_ux_cockpit_audit_mcp_tail.py
+  tests/test_unit_cockpit_traffic_mcp_audit.py
+  tests/test_unit_ux_cli_cockpit.py
+  tests/test_unit_cockpit_pass11_audit_envelope.py
+  tests/test_unit_ux_cockpit.py
+  tests/test_unit_ux_cockpit_bridge.py
+  tests/test_unit_ux_cockpit_audit_pane_batch.py
+  tests/test_unit_ux_cockpit_clock_decisions.py
+  tests/test_unit_ux_cockpit_dormant_core_pane.py
+  tests/test_unit_ux_cockpit_traffic_pane.py
+  tests/test_unit_cockpit_snapshot_flip.py
+  tests/test_unit_cockpit_snapshot_flip_envelope.py
+  tests/test_unit_cockpit_sota_json_parity.py -q` →
+  **309 passed, 0 regressions**.
+
+* **Broader UX + MCP audit-trail sweep:**
+  `.venv/bin/pytest
+  tests/test_unit_ux_decision_audit.py
+  tests/test_unit_mcp_audit_trail_contracts.py
+  tests/test_unit_ux_phase3p4_hardening.py
+  tests/test_wl124_cli_split.py
+  tests/test_wl124_125_126_monolith_baselines.py -q` →
+  **525 passed, 0 regressions**. One pre-existing
+  singleton-pollution flake in
+  `test_unit_mcp_audit_trail_wiring.py::TestConcurrentResetPreservesSeqOrdering::test_concurrent_reset_under_writers_does_not_corrupt_singleton`
+  (passes 1/1 in isolation, fails 1/1 in the cross-file sweep,
+  verified pre-existing via `git stash` + re-run on
+  `a40889417` — same flake, unrelated to Pass 11).
+
+* `ruff check` clean on both touched files.
+* `ruff format` clean on both touched files (1 auto-reformat
+  on `cli_cockpit.py` for the long string-literal containment).
+* Secret scan: no `api_key|secret|token|password|passwd|bearer|aws_access|private_key`
+  patterns introduced.
+
+### Cockpit progress bar
+
+* **Before Pass 11:** 94% (Pass 10 closure).
+* **After Pass 11:** **96%** — `cockpit render --json` now
+  honours the AUDIT-N+22 `mcp_audit_stats` contract (Lane 1,
+  closes the silent regression surfaced by the verification
+  sweep); `cockpit audit mcp-tail --json-envelope` unifies
+  the audit-trail envelope with the traffic envelope (Lane 2,
+  +1 cockpit-observability tick).
+
+### DAG tick
+
+* **+2 cockpit-observability ticks** (`AUDIT-N+25`):
+  `cockpit_render_mcp_audit_wiring` (Lane 1) +
+  `cockpit_audit_mcp_tail_json_envelope` (Lane 2). The two
+  Pass 9 carry-forward intent lines ("extend `cockpit latency`
+  and `cockpit budget` panes") are accuracy-corrected: the
+  literal subcommands don't exist; the actual unblocked
+  surfaces were the 4-pane render envelope and the mcp-tail
+  envelope symmetry, both of which Pass 11 closes.
+
+### Tails (re-verified)
+
+* **Tails (closed in-branch):** None — both in-scope
+  carry-forward surfaces are now closed.
+* **Tails (out of scope per project `Do Not Touch`):** L1
+  Stabilize / V4-1.2.x Rust crates upgrade remains blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`.
+* **Tails (out of scope for cockpit/SOTA lane):** pre-existing
+  collection repair (`tests/agent_roles/`,
+  `tests/test_unit_mcp_server_coverage_e.py`,
+  `tests/test_unit_mcp_tray_endpoints.py`) and the
+  FederatedPolicyEngine async controller upgrade.
+
+### Carry-forward (post-SOTA pass 11)
+
+No remaining in-scope Phase 3/4 cockpit/SOTA hardening items
+on `wip/2026-07-22-thegent-local-preservation`. The saturated
+lanes (CLI-1..5, AUDIT-1/2/3/4/6/9, AUDIT-N+22/24/25, F-1..F-15,
+NEW-1..23, KA-1..6, A11Y-1, TEST-1, WL-224/225, diskcache,
+CachePreWarmer) remain closed. The next genuinely-unblocked
+cockpit/SOTA observation lane will require either (a) a fresh
+SOTA pass over a new surface area (e.g. the `cockpit
+pre-check` envelope for `--include-mcp-audit`, or the
+observability_impl.py dormant-core lanes), or (b) the
+V4-1.2.x L2 Rust crates upgrade once the Do-Not-Touch
+archive block clears.
 
