@@ -312,9 +312,7 @@ class TestConcurrentMcpDispatchFederatedWriters:
     """Concurrent MCP tool dispatch + concurrent federated writers must
     not produce torn envelopes or lost rules."""
 
-    def test_concurrent_observe_summary_dispatches_under_writer_pressure(
-        self, federated_engine
-    ) -> None:
+    def test_concurrent_observe_summary_dispatches_under_writer_pressure(self, federated_engine) -> None:
         """4 reader threads × 25 dispatches while 2 writer threads each
         register 30 federated rules. Every dispatch returns a non-empty
         JSON string (no torn payload) and the rule count converges to
@@ -533,8 +531,7 @@ class TestDecisionNoticeCockpitWiring:
         assert "deny" in verdicts
         # ``is_deny()`` on DecisionNotice still matches the banner set.
         assert "warn" not in verdicts, (
-            "warn was deliberately moved out of the banner set; surface "
-            "it via DecisionNotice.is_warn() instead."
+            "warn was deliberately moved out of the banner set; surface it via DecisionNotice.is_warn() instead."
         )
 
     def test_decision_notice_bridge_maps_object_via_duck_typing(self) -> None:
