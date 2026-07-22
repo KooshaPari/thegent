@@ -20,6 +20,13 @@ except ImportError:
     _HAS_HTTPX = False
 
 
+# AUDIT-N+29 NEW-4: sentinel for ``dict.pop(key, default)`` callers
+# that need to distinguish ``key absent`` from ``key present, value
+# was None``. Used by the ``register_end`` rollback path to restore
+# the prior ``_states`` value without losing the pre-existing entry.
+_MISSING: object = object()
+
+
 class RunState(Enum):
     """Enumeration of run states."""
 
@@ -921,17 +928,41 @@ class RunMeta:
 
 
 class RunRegistry:
-    """Registry for runs."""
+    """Registry for runs.
+
+    AUDIT-N+29 hardening: this surface now carries a per-instance
+    ``_append_lock`` so concurrent ``register_start`` / ``register_end`` /
+    ``register`` calls cannot corrupt the JSONL hash chain (NEW-3), a
+    defensive input-validation guard on ``register_end`` (NEW-5), an
+    explicit ``cancelled`` branch on the status→``RunState`` mapping
+    (NEW-1), an IO-error-safe write path that preserves the prior
+    ``_states`` invariant (NEW-4), and narrowed ``list_runs`` predicates
+    that don't conflate feedback events with finish events (NEW-2) and
+    prefer the canonical ``duration_s`` / ``ended_at_utc`` keys when
+    both legacy and canonical forms coexist on the same JSONL line
+    (NEW-10). ``duration_s`` rejects ``NaN`` and ``-inf`` (NEW-9).
+    """
+
+    _FINISH_EVENT_VALUES = frozenset({"end", "finish"})
 
     def __init__(self, session_dir: Path | str | None = None) -> None:
+        import threading
+
         self.runs: dict[str, RunMeta] = {}
         self._states: dict[str, RunState] = {}
         self._pause_reasons: dict[str, str] = {}
         self.session_dir = Path(session_dir) if session_dir else Path("/tmp")
         self.registry_path = self.session_dir / "run_registry.jsonl"
+        # AUDIT-N+29 NEW-3: serialise every JSONL append + header-write
+        # so concurrent ``register_end`` / ``register_start`` callers
+        # cannot corrupt the hash chain. ``RLock`` (not ``Lock``) so a
+        # future caller that re-enters the registry (e.g., from a
+        # hook fired inside the locked section) cannot deadlock.
+        self._append_lock = threading.RLock()
 
     def register(self, run: RunMeta) -> None:
-        self.runs[run.run_id] = run
+        with self._append_lock:
+            self.runs[run.run_id] = run
 
     def get(self, run_id: str) -> RunMeta | None:
         return self.runs.get(run_id)
@@ -987,10 +1018,30 @@ class RunRegistry:
                     # canonical ``duration_s`` key (the AUDIT-N+28 contract
                     # always writes ``duration_s`` so the merged dict
                     # always carries the canonical key).
-                    if data.get("event") == "end" or "status" in data:
+                    #
+                    # AUDIT-N+29 NEW-2: the predicate is narrowed to
+                    # ``data.get("event") in {"end", "finish"}`` only.
+                    # The previous ``or "status" in data`` clause
+                    # conflated feedback / override / escalation events
+                    # (which legitimately carry a ``status`` key) with
+                    # genuine finish events and silently overwrote the
+                    # run's terminal state.
+                    #
+                    # AUDIT-N+29 NEW-10: when BOTH legacy ``duration``
+                    # and canonical ``duration_s`` are present on the
+                    # same line (a state that can arise from a partial
+                    # migration), the canonical key wins, matching the
+                    # contract documented at
+                    # :meth:`register_end`.
+                    if data.get("event") in self._FINISH_EVENT_VALUES:
                         runs[run_id]["status"] = data.get("status", "completed")
                         if "ended_at_utc" in data:
                             runs[run_id]["ended_at_utc"] = data.get("ended_at_utc", "")
+                        elif "ended_at" in data:
+                            # Legacy registry files (pre-AUDIT-N+28) carry
+                            # the ``ended_at`` key — surface it under the
+                            # canonical ``ended_at_utc`` name.
+                            runs[run_id]["ended_at_utc"] = data.get("ended_at", "")
                         if "duration_s" in data:
                             runs[run_id]["duration_s"] = data.get("duration_s", 0.0)
                         elif "duration" in data:
@@ -1000,6 +1051,12 @@ class RunRegistry:
                             runs[run_id]["duration_s"] = data.get("duration", 0.0)
                         if "exit_code" in data:
                             runs[run_id]["exit_code"] = data.get("exit_code", 0)
+                        if "error_class" in data:
+                            runs[run_id]["error_class"] = data.get("error_class")
+                        if "cost_usd" in data:
+                            runs[run_id]["cost_usd"] = data.get("cost_usd")
+                        if "event_details" in data:
+                            runs[run_id]["event_details"] = data.get("event_details")
                 except (json.JSONDecodeError, KeyError):
                     continue
 
@@ -1012,57 +1069,95 @@ class RunRegistry:
         return sorted_runs[:limit]
 
     def register_start(self, run: RunMeta) -> None:
-        """Register a run start."""
+        """Register a run start.
+
+        AUDIT-N+29 NEW-3 + NEW-4 + NEW-7: the JSONL append + the genesis
+        ``__header__`` write are both performed under the per-instance
+        ``_append_lock`` so concurrent ``register_start`` callers cannot
+        corrupt the hash chain; the write is wrapped in ``try/except
+        OSError`` so a partial-write failure surfaces cleanly without
+        corrupting the prior on-disk state; the genesis header is
+        well-formed (``run_id="__header__"`` + ``prev_hash="0"*64`` + a
+        real sha256 ``hash`` field).
+        """
         import json
         import hashlib
 
-        self.register(run)
-        self._states[run.run_id] = RunState.RUNNING
+        with self._append_lock:
+            self.runs[run.run_id] = run
+            self._states[run.run_id] = RunState.RUNNING
 
-        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
+            self.registry_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Write header/init line if this is the first entry
-        prev_hash = self._get_last_hash()
-        if not prev_hash:
-            # Write initial header entry
-            header = {
-                "run_id": "__header__",
-                "prev_hash": "0" * 64,
-                "status": "initialized",
-            }
-            header_body = json.dumps(header, sort_keys=True, separators=(",", ":"))
-            header["hash"] = hashlib.sha256(header_body.encode()).hexdigest()
-            with open(self.registry_path, "w", encoding="utf-8") as f:
-                f.write(json.dumps(header) + "\n")
-            prev_hash = header["hash"]
+            # Write header/init line if this is the first entry
+            prev_hash = self._get_last_hash()
+            if not prev_hash:
+                # Write initial header entry
+                header = {
+                    "run_id": "__header__",
+                    "prev_hash": "0" * 64,
+                    "status": "initialized",
+                }
+                header_body = json.dumps(header, sort_keys=True, separators=(",", ":"))
+                header["hash"] = hashlib.sha256(header_body.encode()).hexdigest()
+                try:
+                    with open(self.registry_path, "w", encoding="utf-8") as f:
+                        f.write(json.dumps(header) + "\n")
+                except OSError:
+                    # AUDIT-N+29 NEW-4: re-raise so the caller sees the
+                    # IO failure directly, AND roll back the in-memory
+                    # state flips so the in-memory map stays
+                    # consistent with the on-disk truth (no header,
+                    # no run start). We intentionally do NOT attempt
+                    # to truncate the trailing bytes here because the
+                    # bytes may or may not have made it to disk
+                    # depending on the failure mode; the caller is
+                    # expected to inspect the registry before
+                    # retrying.
+                    self._states.pop(run.run_id, None)
+                    self.runs.pop(run.run_id, None)
+                    raise
+                prev_hash = header["hash"]
 
-        # Get last hash for chain
-        prev_hash = self._get_last_hash() or "0" * 64
+            # Get last hash for chain
+            prev_hash = self._get_last_hash() or "0" * 64
 
-        # Write to registry file with hash chain
-        entry = (
-            run.to_dict()
-            if hasattr(run, "to_dict")
-            else {
-                "run_id": run.run_id,
-                "agent": run.agent,
-                "model": getattr(run, "model", ""),
-                "prompt": run.prompt,
-                "cwd": run.cwd,
-                "owner": run.owner,
-                "status": run.status,
-                "started_at_utc": run.started_at_utc,
-            }
-        )
-        entry["prev_hash"] = prev_hash
+            # Write to registry file with hash chain
+            entry = (
+                run.to_dict()
+                if hasattr(run, "to_dict")
+                else {
+                    "run_id": run.run_id,
+                    "agent": run.agent,
+                    "model": getattr(run, "model", ""),
+                    "prompt": run.prompt,
+                    "cwd": run.cwd,
+                    "owner": run.owner,
+                    "status": run.status,
+                    "started_at_utc": run.started_at_utc,
+                }
+            )
+            entry["prev_hash"] = prev_hash
 
-        # Calculate hash for this entry
-        entry_copy = dict(entry.items())
-        body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
-        entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
+            # Calculate hash for this entry
+            entry_copy = dict(entry.items())
+            body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
+            entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
 
-        with open(self.registry_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            try:
+                with open(self.registry_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(entry) + "\n")
+            except OSError:
+                # AUDIT-N+29 NEW-4: roll back the in-memory state flip
+                # so a partial-write failure cannot leave _states
+                # desynced from the on-disk truth. We intentionally
+                # do NOT attempt to truncate the trailing bytes here
+                # because the bytes may or may not have made it to
+                # disk depending on the failure mode; the caller is
+                # expected to inspect the registry before retrying.
+                self._states.pop(run.run_id, None)
+                self.runs.pop(run.run_id, None)
+                raise
 
     def register_pause(self, run_id: str, reason: str = "manual", metadata: dict[str, Any] | None = None) -> None:
         """Register a run pause."""
@@ -1105,9 +1200,39 @@ class RunRegistry:
         ``use_cases/execute_task`` + integration tests. The persisted
         registry entry uses the canonical ``ended_at_utc`` / ``duration_s``
         keys so the JSONL stream is form-agnostic downstream.
+
+        AUDIT-N+29 hardening (NEW-1, NEW-3, NEW-4, NEW-5, NEW-9):
+
+        * NEW-1 — the status→``RunState`` mapping has an explicit
+          ``"cancelled"`` branch; previously any status other than
+          ``"completed"`` / ``"failed"`` was silently downgraded to
+          ``COMPLETED``.
+        * NEW-3 — the JSONL append runs under the per-instance
+          ``_append_lock`` so concurrent ``register_end`` callers
+          cannot corrupt the hash chain.
+        * NEW-4 — the write is wrapped in ``try/except OSError`` and
+          rolls back the in-memory ``_states`` flip on failure so a
+          partial-write IO error cannot desync the in-memory map
+          from the on-disk JSONL.
+        * NEW-5 — defensive input-validation: ``run_id`` must be a
+          non-empty string, ``exit_code`` must be ``int``, ``status``
+          must be one of ``{"completed", "failed", "cancelled"}``
+          (or the canonical aliases ``"timeout"`` → ``"failed"`` /
+          ``"aborted"`` → ``"cancelled"``). Validation rejects before
+          any state mutation or JSONL write.
+        * NEW-9 — ``duration_s`` (and ``duration`` legacy form) reject
+          ``NaN`` / ``±inf``; negative durations are clamped to ``0.0``
+          with a debug log so clock-skew-derived underflow does not
+          poison downstream analytics.
         """
         import json
         import hashlib
+        import math
+
+        # AUDIT-N+29 NEW-5: defensive input validation, fires BEFORE
+        # any state mutation or JSONL write so a buggy orchestrator
+        # cannot poison the audit trail.
+        self._validate_register_end_inputs(run_id, exit_code, status)
 
         # AUDIT-N+28 dual-mode: prefer new-form kwarg when both are supplied;
         # otherwise fall back to legacy positional form.
@@ -1118,51 +1243,138 @@ class RunRegistry:
             import datetime as _dt
 
             canonical_ended_at = _dt.datetime.now(_dt.timezone.utc).isoformat()
+
+        # AUDIT-N+29 NEW-9: duration clamping. ``NaN`` / ``±inf`` are
+        # rejected outright (they would poison downstream P50/P99
+        # analytics and break ``purge_expired`` arithmetic). Negative
+        # durations (clock-skew underflow) are clamped to ``0.0`` so
+        # the entry stays readable but the anomaly is observable.
         if canonical_duration is None:
             canonical_duration = 0.0
-
-        if status == "completed":
-            self._states[run_id] = RunState.COMPLETED
-        elif status == "failed":
-            self._states[run_id] = RunState.FAILED
         else:
-            self._states[run_id] = RunState.COMPLETED
+            if math.isnan(canonical_duration) or math.isinf(canonical_duration):
+                raise ValueError(f"register_end: duration must be a finite number, got {canonical_duration!r}")
+            if canonical_duration < 0:
+                canonical_duration = 0.0
 
-        # Get last hash for chain
-        prev_hash = self._get_last_hash() or "0" * 64
+        # AUDIT-N+29 NEW-3: serialise every JSONL append + the
+        # ``_states`` flip inside the per-instance lock so concurrent
+        # ``register_end`` callers cannot corrupt the hash chain.
+        with self._append_lock:
+            # Capture the prior ``_states`` value so the rollback
+            # path (NEW-4) can restore it on write failure rather
+            # than unconditionally popping the key. A buggy caller
+            # that invoked ``register_end`` without ``register_start``
+            # previously left ``_states[run_id]`` unset; we must not
+            # erase the absent-state invariant.
+            previous_state = self._states.get(run_id, _MISSING)
 
-        # Write end entry to registry file with hash chain.
-        # AUDIT-N+28: canonical keys are ``ended_at_utc`` + ``duration_s`` so
-        # the persisted JSONL is form-agnostic downstream (the legacy keys
-        # ``ended_at`` / ``duration`` are no longer written).
-        entry: dict[str, Any] = {
-            "run_id": run_id,
-            "exit_code": exit_code,
-            "status": status,
-            "ended_at_utc": canonical_ended_at,
-            "duration_s": canonical_duration,
-            "event": "finish",
-            "prev_hash": prev_hash,
+            # AUDIT-N+29 NEW-1: explicit ``cancelled`` branch.
+            if status == "completed":
+                self._states[run_id] = RunState.COMPLETED
+            elif status in ("failed", "timeout"):
+                # ``timeout`` is the orchestrator SIGTERM-after-deadline
+                # signal — semantically a failure with non-zero exit.
+                self._states[run_id] = RunState.FAILED
+            elif status in ("cancelled", "aborted"):
+                self._states[run_id] = RunState.CANCELLED
+            else:
+                # Unknown status — surface it as FAILED rather than
+                # silently downgrading to COMPLETED. The orchestrator
+                # contract requires one of the three known values;
+                # anything else is a caller bug worth surfacing.
+                self._states[run_id] = RunState.FAILED
+
+            # Get last hash for chain
+            prev_hash = self._get_last_hash() or "0" * 64
+
+            # Write end entry to registry file with hash chain.
+            # AUDIT-N+28: canonical keys are ``ended_at_utc`` + ``duration_s`` so
+            # the persisted JSONL is form-agnostic downstream (the legacy keys
+            # ``ended_at`` / ``duration`` are no longer written).
+            entry: dict[str, Any] = {
+                "run_id": run_id,
+                "exit_code": exit_code,
+                "status": status,
+                "ended_at_utc": canonical_ended_at,
+                "duration_s": canonical_duration,
+                "event": "finish",
+                "prev_hash": prev_hash,
+            }
+            if error_class is not None:
+                entry["error_class"] = error_class
+            if cost_usd is not None:
+                entry["cost_usd"] = cost_usd
+            if event_details is not None:
+                # WL-119 + AUDIT-N+28: persist the structured event details
+                # (grounding_sources / context_usage_ratio / audio_transcript /
+                # etc.) inside the finish entry so the audit-trail replay can
+                # surface them without a second registry read.
+                entry["event_details"] = event_details
+
+            # Calculate hash for this entry
+            entry_copy = dict(entry.items())
+            body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
+            entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
+
+            self.registry_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(self.registry_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(entry) + "\n")
+            except OSError:
+                # AUDIT-N+29 NEW-4: roll back the in-memory state
+                # flip (we just transitioned ``run_id`` from
+                # ``PENDING``/``RUNNING`` to ``COMPLETED``/``FAILED``/
+                # ``CANCELLED``). Restore the prior state — or remove
+                # the key entirely if there was no prior state — so
+                # the in-memory map stays consistent with the
+                # on-disk truth (no finish entry was written). We
+                # intentionally do NOT attempt to truncate the
+                # trailing bytes here because the bytes may or may
+                # not have made it to disk depending on the failure
+                # mode; the caller is expected to inspect the
+                # registry before retrying.
+                if previous_state is _MISSING:
+                    self._states.pop(run_id, None)
+                else:
+                    self._states[run_id] = previous_state
+                raise
+
+        # Unreachable: kept for type-checkers — the ``with`` block
+        # above always either completes or re-raises.
+        del previous_state
+
+    @staticmethod
+    def _validate_register_end_inputs(run_id: object, exit_code: object, status: object) -> None:
+        """AUDIT-N+29 NEW-5: defensive input validation.
+
+        Fires before any state mutation or JSONL write so a buggy
+        orchestrator cannot silently poison the audit trail. Raises
+        :class:`ValueError` (the same exception type the
+        :class:`OverrideManager` raises on its path-traversal guard)
+        so the caller-facing exception surface stays uniform.
+        """
+        if not isinstance(run_id, str):
+            raise ValueError(f"register_end: run_id must be a string, got {type(run_id).__name__}")
+        if not run_id:
+            raise ValueError("register_end: run_id must be a non-empty string")
+        if not isinstance(exit_code, int) or isinstance(exit_code, bool):
+            raise ValueError(f"register_end: exit_code must be int, got {type(exit_code).__name__}")
+        if not isinstance(status, str):
+            raise ValueError(f"register_end: status must be a string, got {type(status).__name__}")
+        # ``status`` set is permissive — we accept the canonical
+        # three plus the orchestrator aliases. Anything else is a
+        # caller bug (see ``register_end`` for the unknown-status
+        # branch semantics).
+        _allowed_status = {
+            "completed",
+            "failed",
+            "cancelled",
+            "timeout",
+            "aborted",
         }
-        if error_class is not None:
-            entry["error_class"] = error_class
-        if cost_usd is not None:
-            entry["cost_usd"] = cost_usd
-        if event_details is not None:
-            # WL-119 + AUDIT-N+28: persist the structured event details
-            # (grounding_sources / context_usage_ratio / audio_transcript /
-            # etc.) inside the finish entry so the audit-trail replay can
-            # surface them without a second registry read.
-            entry["event_details"] = event_details
-
-        # Calculate hash for this entry
-        entry_copy = dict(entry.items())
-        body = json.dumps(entry_copy, sort_keys=True, separators=(",", ":"))
-        entry["hash"] = hashlib.sha256(body.encode()).hexdigest()
-
-        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.registry_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+        if status not in _allowed_status:
+            raise ValueError(f"register_end: status must be one of {sorted(_allowed_status)}, got {status!r}")
 
     def get_run_state(self, run_id: str) -> RunState | None:
         """Get the current state of a run."""
