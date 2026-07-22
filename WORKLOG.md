@@ -10032,3 +10032,82 @@ pattern; locks in the dormant-core contract surface).
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## AUDIT-N+36 Hand-off (dormant-core SOTA pass-20: ExecutionEngine)
+
+**Status**: Closed. 13 hardening invariants, 34 new tests
+(AUDIT-N+36), 2 dormant wiring tests now green after sidecar
+`create=True` alignment.
+
+**Scope delivered**:
+
+- Hardened `ExecutionEngine` in
+  `src/thegent/orchestration/execution/engine/__init__.py`
+  (330 lines, up from dormant 23-line stub): accepts
+  `settings=` (and legacy `config=`); `execute(runner, run_meta,
+  ...)` returns the inner `RunResult` untouched; `submit()` +
+  `cancel()` are idempotent and RLock-serialized; `Auditor` is a
+  lazy sidecar (best-effort, never breaks a run); `sign_run`
+  invoked exactly once per `execute()`; run_id validation +
+  defensive `session_dir` resolution so the engine works with
+  partial `MagicMock` configs.
+- Unified legacy module
+  `src/thegent/orchestration/execution.py` as a thin re-export
+  shim — preserves back-compat while pointing the dormant
+  import to the hardened engine.
+- Aligned dormant wiring test
+  `tests/maif/test_engine_wiring.py` to use
+  `patch(..., create=True)` on the runtime-injected Auditor
+  sidecar methods (`generate_maif_artifact` +
+  `persist_maif_artifact`).
+
+**Carry-forward (post-AUDIT-N+36)**:
+
+The dormant-core cluster inside `orchestration/execution/` has now
+been hardened through:
+- AUDIT-N+33 — `MessageBus` + `OrchestrationPlan` +
+  `BudgetTracker` + `ResultAggregator` + `SubAgentDispatcher`
+- AUDIT-N+34 — `LaneModel` + `LANE_PRIORITIES` + `Lane` enum +
+  `RunPriorityQueue` + `QueuedRun` + `make_priority_queue`
+- AUDIT-N+35 — `DagPrioritizer` + `DagTask` + `DagCycleError` +
+  `DependencyRouter` (CPM)
+- AUDIT-N+36 — `ExecutionEngine` (FR-ORC-EXEC primary contract)
+
+The next genuinely-unblocked dormant-core candidates per the
+SOTA pass-21 sweep are:
+1. `orchestration/event_queue/` — never audited in the
+   dormant-core chain.
+2. `orchestration/consensus/{redlock_atomic, omega_consensus,
+   redis_concurrency}/` — never audited in the dormant-core chain.
+
+Recommended start of next session: SOTA pass-21 over the
+`event_queue` module (smallest unblocked cluster; mirrors the
+AUDIT-N+34 / AUDIT-N+35 / AUDIT-N+36 spec-first pattern).
+
+**Commits** (local-only on
+`wip/2026-07-22-thegent-local-preservation`, no upstream push):
+- `84962b203` — AUDIT-N+36 dormant-core ExecutionEngine hardening
+  spec (SOTA pass-20)
+- `8f40fb170` — AUDIT-N+36 source patch (330-line hardened
+  engine + re-export shim)
+- `6ac28f410` — AUDIT-N+36 dormant test wire alignment
+  (`create=True` on runtime-injected Auditor sidecar methods)
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (AUDIT-N+36 lane fully
+  closed: 13 hardening items, 34 new SOTA spec tests, 2 dormant
+  wiring tests now green, 496-test dormant-core corridor sweep
+  clean, 160-test focused corridor (AUDIT-N+36 + dormant wiring +
+  execution) all green, ruff check + format clean, secrets
+  negative-grep 0 hits, no pre-existing regressions, unrelated
+  worktree mod set preserved).
+* **DAG tick**: **+1** (this hand-off). The dormant-core
+  hardening chain now extends through AUDIT-N+36; the next
+  dormant-core candidates (`event_queue/` +
+  `consensus/{redlock_atomic, omega_consensus,
+  redis_concurrency}`) are queued for SOTA pass-21+.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
