@@ -9865,3 +9865,170 @@ contract).
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## 2026-07-22 — AUDIT-N+35 hand-off (dormant-core: DagPrioritizer CPM hardening, SOTA pass 19)
+
+Closes the carry-forward chain from AUDIT-N+34: SOTA pass-19 over
+`orchestration/execution/dag_prioritization/__init__.py`. The dormant
+stub at this location only exposed a `prioritize(nodes)` method, but
+the dormant test suite at `tests/orchestration/test_dag_prioritization.py`
+(49 tests covering FR-ORC-020..030) exercised the full CPM (Critical
+Path Method) contract — `add_task`, `topological_sort`,
+`compute_critical_path`, `get_priority_score`, `ready_tasks`,
+`DagCycleError` cycle detection, and unknown-dependency `ValueError`.
+The dormant tests' baseline was **24 failed, 1 passed, 24 errors**.
+
+**Lane picked**: spec-first pattern (mirrors AUDIT-N+34). The 586-line
+AUDIT-N+35 hardening spec
+(`tests/test_unit_audit_n35_dag_prioritizer_hardening.py`) was
+committed first, capturing the failure signature (58 failed, 7
+passed, 48 errors across the spec + dormant test file). The source
+patch landed next to make every assertion pass.
+
+**Contracts closed (14 NEW items across 1 module)**:
+
+`src/thegent/orchestration/execution/dag_prioritization/__init__.py`
+(14 items):
+- NEW-1 — `DagTask(task_id, estimated_duration_s=1.0, dependencies=None, priority=0)`
+  accepts both legacy positional / kwarg forms; per-instance list
+  default via `__init__` so two tasks never share state (no shared
+  mutable default bug).
+- NEW-2 — `DagTask` accepts legacy kwargs `id=` / `duration=` so
+  out-of-tree callers using the pre-AUDIT-N+35 stub form keep
+  working without breakage.
+- NEW-3 — `DagTask.__repr__` for introspection parity with the
+  AUDIT-N+29 dataclass siblings.
+- NEW-4 — `DagPrioritizer._tasks: dict[str, DagTask]` internal
+  storage (dormant-core invariant pinned by
+  `TestEmptyDagContract::test_tasks_dict_empty`).
+- NEW-5 — `add_task(task)` overwrite-by-task_id semantics + defensive
+  copy of `task.dependencies` so external mutation of the caller's
+  list cannot corrupt internal state. Returns `None` (in-place
+  mutation contract).
+- NEW-6 — `_validate_dependencies()` raises `ValueError("unknown task
+  'X'")` on unknown dependency; raises `DagCycleError` on cycle
+  (FR-ORC-029).
+- NEW-7 — `_check_acyclic()` 3-color DFS with explicit
+  WHITE/GRAY/BLACK states; raises `DagCycleError` with
+  cycle-at-node diagnostic.
+- NEW-8 — `_topological_order()` Kahn's algorithm with deterministic
+  ready-set (sorted); raises `DagCycleError` when Kahn's process
+  fails to consume every node.
+- NEW-9 — `topological_sort()` public surface; empty DAG → `[]`.
+- NEW-10 — `compute_critical_path()` forward DP + predecessor-pointer
+  walk-back; returns longest-duration path; ties broken by
+  lexicographic path order; empty DAG → `[]`.
+- NEW-11 — `get_priority_score(task_id)` returns `project_makespan -
+  total_float`; raises `KeyError` on unknown task, `DagCycleError`
+  on cycle, `ValueError` on unknown dependency.
+- NEW-12 — `ready_tasks(completed)` filtered by completed-set +
+  satisfied-deps, sorted by priority score desc with task_id asc
+  tiebreak; empty DAG → `[]`.
+- NEW-13 — `prioritize(nodes)` legacy stub preserved (sorted by
+  `self.priorities` asc, default 999 for unknown nodes).
+- NEW-14 — `DependencyRouter` legacy stub preserved (public `routes`
+  dict + `route(node_id)` returns registered deps or `[]`).
+
+**Files touched**:
+
+| File | LOC | What |
+|---|---|---|
+| `src/thegent/orchestration/execution/dag_prioritization/__init__.py` | +307 / -13 | 14 dormant-core hardening items |
+| `tests/test_unit_audit_n35_dag_prioritizer_hardening.py` | +586 (new) | 65 tests pinning the AUDIT-N+35 contract |
+
+**Validation**:
+- **726 / 726** dormant-core + execution + observability tests pass
+  in the AUDIT-N+27 → AUDIT-N+35 corridor (up from 509 at AUDIT-N+34):
+  - `tests/test_unit_audit_n35_dag_prioritizer_hardening.py` (NEW, 65 tests)
+  - `tests/orchestration/test_dag_prioritization.py` (49 dormant contracts — all green)
+  - `tests/test_unit_audit_n34_lanes_priority_queue_hardening.py`
+  - `tests/test_unit_orchestration_lanes.py`
+  - `tests/orchestration/test_priority_queue.py`
+  - `tests/test_unit_audit_n33_orchestration_hardening.py`
+  - `tests/test_unit_audit_n32_escalation_message_hardening.py`
+  - `tests/test_unit_audit_n31_checkpoint_registry_hardening.py`
+  - `tests/test_unit_audit_n30_override_registry_hardening.py`
+  - `tests/test_unit_audit_n29_dormant_core_hardening.py`
+  - `tests/test_unit_audit_n28_signature_gap_closure.py`
+  - `tests/test_unit_audit_n27_shim_purity_hardening.py`
+  - `tests/test_unit_execution.py`
+  - `tests/test_unit_escalation.py`
+  - `tests/test_wl125_run_dag_helpers_parity.py`
+- AUDIT-N+35 spec + dormant dag test surface: **113 / 113 passed**
+  (65 new spec tests + 49 dormant tests, 0 regressions).
+- `ruff check` clean on both touched files (C420 unnecessary
+  dict-comprehension auto-fixed to `dict.fromkeys`).
+- `ruff format` clean on both touched files.
+- Secrets negative-grep on the diff: **0 hits** (no `api_key|secret|
+  token|password|passwd|bearer|aws_access|private_key` patterns,
+  no `sk-…`/`ghp_…`/`xox…`/`AKIA…` literals).
+- Baseline failure signature (24 failed, 1 passed, 24 errors) **fully
+  resolved**: every dormant contract now passes; no pre-existing
+  tests broken; no latent-bug tests required updating.
+- Unrelated worktree mod set on
+  `wip/2026-07-22-thegent-local-preservation` preserved untouched
+  (no upstream push, no force-push, no archival).
+- `audit_history.jsonl` shows audit trail intact.
+
+**Why the surface needed a rewrite (not a tweak)**: the prior stub
+exposed only `prioritize(nodes)` and a `priorities` dict; the dormant
++ AUDIT-N+35 spec surface requires the full CPM contract
+(`add_task` / `topological_sort` / `compute_critical_path` /
+`get_priority_score` / `ready_tasks` / `DagCycleError` cycle
+detection / `ValueError` unknown-dependency detection). A targeted
+tweak was not possible; the rewrite preserves the legacy
+`DependencyRouter` + `prioritize(nodes)` + `self.priorities`
+field shape that the `impl.py:155-169` shim relies on, while
+unlocking the full CPM surface that the dormant test suite
+already exercises.
+
+**Carry-forward closed**: AUDIT-N+34's "next unblocked lane" was
+`DagPrioritizer` (SOTA pass-19). That lane is now fully closed.
+
+**Carry-forward (post-AUDIT-N+35)**:
+
+The dormant-core cluster inside `orchestration/execution/` has now
+been hardened through:
+- AUDIT-N+33 — `MessageBus` + `OrchestrationPlan` +
+  `BudgetTracker` + `ResultAggregator` + `SubAgentDispatcher`
+  (orchestration surface)
+- AUDIT-N+34 — `LaneModel` + `LANE_PRIORITIES` + `Lane` enum
+  attrs + `RunPriorityQueue` + `QueuedRun` + `make_priority_queue`
+  (execution lanes + run-priority-queue surface)
+- AUDIT-N+35 — `DagPrioritizer` + `DagTask` + `DagCycleError`
+  + `DependencyRouter` (CPM-based DAG scheduling surface)
+
+The next genuinely-unblocked dormant-core candidates per the
+SOTA pass-20 sweep are:
+1. `orchestration/execution/engine/ExecutionEngine` (referenced by
+   `src/thegent/agents/maif_runner.py` + `tests/maif/test_engine_wiring.py`)
+   — dormant surface, FR-ORC-EXEC contract surface.
+2. `orchestration/event_queue/` — never audited in the dormant-core
+   chain.
+3. `orchestration/consensus/{redlock_atomic, omega_consensus,
+   redis_concurrency}/` — never audited in the dormant-core chain.
+
+Recommended start of next session: SOTA pass-20 over
+`ExecutionEngine` (mirrors the AUDIT-N+34 / AUDIT-N+35 spec-first
+pattern; locks in the dormant-core contract surface).
+
+**Commit**:
+- AUDIT-N+35 local commit on
+  `wip/2026-07-22-thegent-local-preservation` only; no upstream
+  push, no force-push (preserves the archived upstream contract).
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (AUDIT-N+35 lane fully closed:
+  14 hardening items across the dormant-core DAG prioritization
+  surface, 65 new tests + 49 dormant tests all green, 726-test
+  broader corridor sweep clean, ruff check + format clean, secrets
+  negative-grep 0 hits, no pre-existing regressions, unrelated
+  worktree mod set preserved).
+* **DAG tick**: **+1** (this hand-off). The dormant-core hardening
+  chain now extends through AUDIT-N+35; the next dormant-core
+  candidate (`ExecutionEngine`) is queued for SOTA pass-20.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
