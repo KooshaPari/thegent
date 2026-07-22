@@ -10,6 +10,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 import json
+import math
 import time
 
 try:
@@ -349,7 +350,14 @@ class CircuitBreakerRegistry:
 
 
 class CheckpointRegistry:
-    """Registry for execution checkpoints."""
+    """Registry for execution checkpoints.
+
+    NOTE: This is a dormant surface (shadowed by the dict-based
+    ``CheckpointRegistry`` at line ~2068). It is kept here only for
+    backward compatibility with older callers that may have imported
+    it before the AUDIT-N+5 shim rewrite. New code should target the
+    live class further down in this module.
+    """
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
@@ -1962,38 +1970,104 @@ def get_last_poll_session_messages_meta(session_id: str) -> dict[str, Any]:
 
 
 class CheckpointRegistry:
-    """Registry for execution checkpoints."""
+    """Registry for execution checkpoints.
+
+    AUDIT-N+31 hardening: this surface now carries a per-instance
+    ``_append_lock`` (RLock) so concurrent ``create_checkpoint``
+    calls cannot interleave on the in-memory dict (NEW-1);
+    defensive input validation on ``reason`` / ``dag_content`` /
+    ``owner`` (NEW-2); an explicit ``clear()`` method that returns
+    the cleared count (NEW-3); and both ``list_checkpoints`` and
+    ``get_checkpoint`` return deep copies so callers cannot mutate
+    internal state by writing through returned dicts (NEW-4).
+
+    Note: this class is purely in-memory; persistence to disk is
+    not part of its contract (the file-based variant higher in this
+    module is the dormant surface).
+    """
 
     def __init__(self, registry_path: str | Path) -> None:
+        import threading
+
         path = Path(registry_path)
         if path.is_dir():
             path = path / "checkpoints.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         self.registry_path = path
         self._checkpoints: dict[str, dict[str, Any]] = {}
+        # AUDIT-N+31 NEW-1: serialise ``create_checkpoint`` /
+        # ``clear`` so concurrent callers cannot interleave dict
+        # mutations. ``RLock`` (not ``Lock``) so a future caller
+        # that re-enters the registry (e.g., from a hook fired
+        # inside the locked section) cannot deadlock.
+        self._append_lock = threading.RLock()
 
     def create_checkpoint(self, reason: str, dag_content: str, owner: str) -> "CheckpointMeta":
-        """Create a new checkpoint."""
+        """Create a new checkpoint.
+
+        AUDIT-N+31 NEW-2: defensive input validation. Fires before
+        any state mutation so a buggy orchestrator cannot silently
+        poison the audit trail.
+
+        AUDIT-N+31 NEW-1: append + id-allocation wrapped in ``RLock``
+        to serialise concurrent writers.
+        """
         import uuid
 
-        checkpoint_id = f"ckpt_{uuid.uuid4().hex[:12]}"
-        checkpoint = {
-            "checkpoint_id": checkpoint_id,
-            "reason": reason,
-            "dag_content": dag_content,
-            "owner": owner,
-            "created_at": time.time(),
-        }
-        self._checkpoints[checkpoint_id] = checkpoint
-        return CheckpointMeta(**checkpoint)
+        if not isinstance(reason, str) or not reason:
+            raise ValueError("reason must be a non-empty string")
+        if not isinstance(dag_content, str):
+            raise ValueError("dag_content must be a string")
+        if not isinstance(owner, str) or not owner:
+            raise ValueError("owner must be a non-empty string")
+
+        with self._append_lock:
+            checkpoint_id = f"ckpt_{uuid.uuid4().hex[:12]}"
+            checkpoint = {
+                "checkpoint_id": checkpoint_id,
+                "reason": reason,
+                "dag_content": dag_content,
+                "owner": owner,
+                "created_at": time.time(),
+            }
+            self._checkpoints[checkpoint_id] = checkpoint
+            return CheckpointMeta(**checkpoint)
 
     def list_checkpoints(self) -> list[dict[str, Any]]:
-        """List all checkpoints."""
-        return list(self._checkpoints.values())
+        """List all checkpoints.
+
+        AUDIT-N+31 NEW-4: returns deep copies so callers cannot
+        mutate internal state by writing through returned dicts.
+        """
+        import copy
+
+        return copy.deepcopy(list(self._checkpoints.values()))
 
     def get_checkpoint(self, checkpoint_id: str) -> dict[str, Any] | None:
-        """Get a checkpoint by ID."""
-        return self._checkpoints.get(checkpoint_id)
+        """Get a checkpoint by ID.
+
+        AUDIT-N+31 NEW-4: returns a deep copy so callers cannot
+        mutate internal state by writing through the returned dict.
+        """
+        import copy
+
+        cp = self._checkpoints.get(checkpoint_id)
+        return copy.deepcopy(cp) if cp is not None else None
+
+    def clear(self) -> int:
+        """Clear all checkpoints from the registry.
+
+        AUDIT-N+31 NEW-3: explicit reset path so callers (e.g.,
+        ``plan_cmds``, ``infra_cmds``) have a clean way to reset
+        state without monkey-patching internals.
+
+        Returns:
+            The number of checkpoints that were cleared.
+        """
+        with self._append_lock:
+            cleared = len(self._checkpoints)
+            self._checkpoints = {}
+            return cleared
 
 
 @dataclass
@@ -2020,38 +2094,128 @@ def poll_session_messages(session_id: str) -> list[dict[str, Any]]:
 
 
 class HandoffManager:
-    """Manager for agent handoffs."""
+    """Manager for agent handoffs.
+
+    AUDIT-N+31 hardening: this surface now carries a per-instance
+    ``_append_lock`` (RLock) so concurrent ``register_handoff`` calls
+    cannot interleave on the in-memory dict (NEW-1); defensive input
+    validation on ``from_agent`` / ``to_agent`` / ``context`` (NEW-2);
+    an explicit ``clear()`` method that returns the cleared count
+    (NEW-3); and ``list_handoffs`` returns deep copies so callers
+    cannot mutate internal state by writing through returned dicts
+    (NEW-4).
+    """
 
     def __init__(self) -> None:
+        import threading
+
         self._handoffs: dict[str, Any] = {}
+        # AUDIT-N+31 NEW-1: serialise handoff registration so
+        # concurrent callers cannot interleave dict mutations.
+        self._append_lock = threading.RLock()
 
     def register_handoff(self, from_agent: str, to_agent: str, context: dict[str, Any]) -> None:
-        """Register a handoff between agents."""
+        """Register a handoff between agents.
+
+        AUDIT-N+31 NEW-2: defensive input validation. Fires before
+        any state mutation so a buggy orchestrator cannot silently
+        poison the handoff log.
+
+        AUDIT-N+31 NEW-1: dict update wrapped in ``RLock`` to
+        serialise concurrent writers.
+        """
+        if not isinstance(from_agent, str) or not from_agent:
+            raise ValueError("from_agent must be a non-empty string")
+        if not isinstance(to_agent, str) or not to_agent:
+            raise ValueError("to_agent must be a non-empty string")
+        if not isinstance(context, dict):
+            raise ValueError("context must be a dict")
+
         key = f"{from_agent}->{to_agent}"
-        self._handoffs[key] = {"from": from_agent, "to": to_agent, "context": context}
+        with self._append_lock:
+            self._handoffs[key] = {"from": from_agent, "to": to_agent, "context": context}
 
     def get_handoff(self, from_agent: str, to_agent: str) -> dict[str, Any] | None:
-        """Get a handoff by agents."""
-        key = f"{from_agent}->{to_agent}"
-        return self._handoffs.get(key)
+        """Get a handoff by agents.
+
+        AUDIT-N+31 NEW-4: returns a deep copy so callers cannot
+        mutate internal state by writing through the returned dict.
+        """
+        import copy
+
+        handoff = self._handoffs.get(f"{from_agent}->{to_agent}")
+        return copy.deepcopy(handoff) if handoff is not None else None
 
     def list_handoffs(self) -> list[dict[str, Any]]:
-        """List all registered handoffs."""
-        return list(self._handoffs.values())
+        """List all registered handoffs.
+
+        AUDIT-N+31 NEW-4: returns deep copies so callers cannot
+        mutate internal state by writing through returned dicts.
+        """
+        import copy
+
+        return copy.deepcopy(list(self._handoffs.values()))
+
+    def clear(self) -> int:
+        """Clear all handoffs from the manager.
+
+        AUDIT-N+31 NEW-3: explicit reset path.
+
+        Returns:
+            The number of handoffs that were cleared.
+        """
+        with self._append_lock:
+            cleared = len(self._handoffs)
+            self._handoffs = {}
+            return cleared
 
 
 class KPIManager:
-    """Manager for KPIs and telemetry."""
+    """Manager for KPIs and telemetry.
+
+    AUDIT-N+31 hardening: this surface now carries a per-instance
+    ``_append_lock`` (RLock) so concurrent ``record`` calls cannot
+    interleave on the in-memory kpis / events dicts (NEW-1);
+    defensive input validation on ``kpi_name`` (non-empty str) and
+    ``value`` (must be a finite number) (NEW-2); an explicit
+    ``clear()`` method that returns the cleared event count (NEW-3);
+    and ``get_kpis`` returns a deep-copied dict so callers cannot
+    mutate internal state by writing through the returned mapping
+    (NEW-4).
+    """
 
     def __init__(self, session_dir: Path | str | None = None) -> None:
+        import threading
+
         self.kpis: dict[str, float] = {}
         self.events: list[dict[str, Any]] = []
         self._session_dir = Path(session_dir) if session_dir else Path("/tmp")
+        # AUDIT-N+31 NEW-1: serialise record / clear so concurrent
+        # callers cannot interleave mutations on ``kpis`` / ``events``.
+        self._append_lock = threading.RLock()
 
     def record(self, kpi_name: str, value: float, metadata: dict[str, Any] | None = None) -> None:
-        """Record a KPI value."""
-        self.kpis[kpi_name] = value
-        self.events.append({"kpi": kpi_name, "value": value, "metadata": metadata or {}})
+        """Record a KPI value.
+
+        AUDIT-N+31 NEW-2: defensive input validation. Fires before
+        any state mutation.
+
+        AUDIT-N+31 NEW-1: mutations wrapped in ``RLock`` to serialise
+        concurrent writers.
+        """
+        if not isinstance(kpi_name, str) or not kpi_name:
+            raise ValueError("kpi_name must be a non-empty string")
+        # ``bool`` is a subclass of ``int`` but not a real number;
+        # reject it explicitly so callers do not record True/False
+        # as KPIs by accident.
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("value must be a number")
+        if isinstance(value, float) and (math.isnan(value) or not math.isfinite(value)):
+            raise ValueError("value must be a finite number (no NaN or inf)")
+
+        with self._append_lock:
+            self.kpis[kpi_name] = float(value)
+            self.events.append({"kpi": kpi_name, "value": float(value), "metadata": metadata or {}})
 
     def get(self, kpi_name: str) -> float | None:
         """Get a KPI value."""
@@ -2081,6 +2245,21 @@ class KPIManager:
             "data_availability": "sparse" if len(runs) < 10 else "dense",
             "kpi_confidence": 1.0 - fatigue,
         }
+
+    def clear(self) -> int:
+        """Clear all KPIs and events from the manager.
+
+        AUDIT-N+31 NEW-3: explicit reset path.
+
+        Returns:
+            The number of events that were cleared (kpis count
+            may differ; the events list is the audit trail).
+        """
+        with self._append_lock:
+            cleared = len(self.events)
+            self.kpis = {}
+            self.events = []
+            return cleared
 
 
 class InterruptionTracker:

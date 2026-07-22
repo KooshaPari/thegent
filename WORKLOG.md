@@ -9331,3 +9331,73 @@ the AUDIT-N+30 hardened `OverrideRegistry`
   continues with three adjacent dormant-core candidates
   (`CheckpointRegistry`, `EscalationQueue`, `MessageEntry`)
   queued for the next SOTA pass.
+
+---
+
+## 2026-07-22 — Hand-off: AUDIT-N+31 (dormant-core: CheckpointRegistry + HandoffManager + KPIManager hardening)
+
+**Lane picked**: SOTA pass-15 audit over the live dormant-core
+surfaces immediately following the AUDIT-N+30 hardened
+`OverrideRegistry`: `CheckpointRegistry` (dict-based, line ~2068),
+`HandoffManager` (line ~2126), and `KPIManager` (line ~2147) — all
+in `src/thegent/execution/__init__.py`.
+
+**Note**: A file-based `CheckpointRegistry` exists earlier in the
+module (line ~351) but is shadowed by the dict-based redefinition
+that the AUDIT-N+5 shim rewrite brought forward; Python keeps the
+last definition. AUDIT-N+31 targets the live class.
+
+**Hardening items closed (8 total across 3 classes)**:
+
+`CheckpointRegistry`:
+- NEW-1 — `RLock` on `create_checkpoint` (re-entrant safe)
+- NEW-2 — Defensive validation on `reason` (non-empty str),
+          `dag_content` (str), `owner` (non-empty str)
+- NEW-3 — `get_checkpoint` / `list_checkpoints` return defensive
+          copies (`copy.deepcopy`) so callers cannot mutate
+          internal state
+- NEW-4 — Explicit `clear()` method returning cleared count
+
+`HandoffManager`:
+- NEW-5 — Defensive validation on `register_handoff(agent,
+          context, status)` — agent non-empty str, context str,
+          status in known set
+
+`KPIManager`:
+- NEW-6 — Defensive validation on `record(metric_name, value,
+          tags)` — non-empty metric_name, finite non-negative
+          numeric value (`math.isnan` / `math.isfinite`), Mapping
+          or None tags; duplicate names append `_2`, `_3`, ... to
+          preserve all data points
+- NEW-7 — `summary()` returns defensive copies + sorted-by-name
+          list of metric entries for deterministic consumption
+- NEW-8 — `clear()` method resets all three dicts and returns
+          total cleared count
+
+**Changes**:
+| File | LOC | What |
+|---|---|---|
+| `src/thegent/execution/__init__.py` | +150 / -10 | 3 dormant-core classes hardened |
+| `tests/test_unit_audit_n31_checkpoint_registry_hardening.py` | +535 (new) | 76 tests |
+
+**Validation**:
+- 437 / 437 dormant-core + execution tests pass (up from 361 at
+  AUDIT-N+30)
+- 76 / 76 new AUDIT-N+31 tests pass
+- `ruff check` + `ruff format --check` clean on both touched files
+- No secrets in diff (`idempotency_token` excluded explicitly)
+
+**Cockpit progress bar**: 100% (AUDIT-N+31 lane fully closed: 8
+hardening items across 3 adjacent dormant-core classes, 76 new
+tests, 437-test broader sweep clean, ruff clean, no secrets).
+
+**DAG tick**: `+1` (this hand-off). The dormant-core hardening
+chain now extends through AUDIT-N+31. Two adjacent surfaces
+remain in the dormant-core cluster before reaching the
+run-event / run-audio payload lanes (`EscalationQueue` is in the
+same module; `MessageEntry` is in the messaging surface).
+Recommended start of next session: SOTA pass-16 audit over
+`EscalationQueue` + `MessageEntry` (likely AUDIT-N+32 + AUDIT-N+33
+combined into one focused commit), then either branch into
+AUDIT-23/25/F-7..F-15 follow-ups or WL-124 stub closure once
+audio-lane signal stabilizes.
