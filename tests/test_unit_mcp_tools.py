@@ -204,8 +204,8 @@ class TestThegentRun:
         data = _json_content(result)
         assert data["exit_code"] == 0
         call_args = mock_run_impl.call_args
-        assert call_args[0][3] == "full"  # mode arg
-        assert call_args[0][4] == 300  # timeout arg
+        assert call_args.kwargs.get("mode") == "full"  # mode kwarg
+        assert call_args.kwargs.get("timeout") == 300  # timeout kwarg
 
 
 @pytest.mark.unit
@@ -766,7 +766,7 @@ class TestResourceSessionContractHealthGate:
 class TestResourceObserveSummary:
     """Tests for the resource_observe_summary MCP resource."""
 
-    @patch("thegent.cli.commands.observability_impl.observe_summary_impl")
+    @patch("thegent.mcp.server.observe_summary_impl")
     def test_observe_summary_resource(self, mock_impl: MagicMock) -> None:
         # @trace FR-MCP-041
         mock_impl.return_value = {
@@ -784,7 +784,7 @@ class TestResourceObserveSummary:
         assert data["kpis"]["total_events"] == 100
         mock_impl.assert_called_once()
 
-    @patch("thegent.cli.commands.observability_impl.observe_summary_impl")
+    @patch("thegent.mcp.server.observe_summary_impl")
     def test_observe_summary_resource_custom_params(self, mock_impl: MagicMock) -> None:
         # @trace FR-MCP-042
         mock_impl.return_value = {"status": "degraded", "kpis": {}, "drift": {}, "escalation": {}}
@@ -980,7 +980,7 @@ class TestThegentSessionContractHealthReportTool:
 class TestThegentObserveSummaryTool:
     """Tests for the thegent_observe_summary MCP tool."""
 
-    @patch("thegent.cli.commands.observability_impl.observe_summary_impl")
+    @patch("thegent.mcp.server.observe_summary_impl")
     def test_observe_summary_tool(self, mock_impl: MagicMock) -> None:
         # @trace FR-MCP-046
         mock_impl.return_value = {

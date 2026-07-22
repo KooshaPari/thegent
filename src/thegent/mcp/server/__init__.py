@@ -67,6 +67,7 @@ def _summary_meta(payload: dict[str, Any]) -> dict[str, Any]:
         "payload_schema_version": payload.get("payload_schema_version") or payload.get("schema_version"),
         "alerts_count": len(alerts) if isinstance(alerts, list) else 0,
         "drift_within_budget": drift.get("within_budget"),
+        "backlog_count": escalation.get("backlog_count"),
         "backlog_past_sla_count": escalation.get("past_sla_count"),
         "top_escalations_requested": generated_query.get("top_escalations"),
         "drift_structural_budget_pct": drift.get("structural_budget_pct"),
@@ -74,6 +75,8 @@ def _summary_meta(payload: dict[str, Any]) -> dict[str, Any]:
         "provider": escalation.get("provider"),
         "trend_enabled": trend_summary.get("enabled"),
         "trend_samples_requested": generated_query.get("trend_samples"),
+        "kpi_total_events": payload.get("kpis", {}).get("total_events"),
+        "fallback_rate": payload.get("kpis", {}).get("fallback_rate"),
     }
 
 
@@ -206,6 +209,19 @@ class _MCPStub:
 mcp = _MCPStub()
 
 
+# ---------------------------------------------------------------------------
+# TOOL_ICONS – emoji/icon mapping for core MCP tools
+# ---------------------------------------------------------------------------
+
+TOOL_ICONS: dict[str, str] = {
+    "thegent_run": "🚀",
+    "thegent_bg": "⚙️",
+    "thegent_stop": "🛑",
+    "thegent_ps": "📊",
+    "thegent_dag_list": "📋",
+}
+
+
 def create_server(**kwargs: Any) -> Any:
     """Create an MCP server.
 
@@ -227,7 +243,7 @@ __all__ = [
 
 
 def resource_observe_summary(
-    resource_path: str,
+    resource_path: str | None = None,
     *,
     limit: int = 100,
     drift_window: int = 30,
@@ -389,6 +405,255 @@ def thegent_observe_summary(
         )
     except MCPBudgetExceeded as exc:
         return _ToolResult(content=str(exc), structured_content={}, meta={})
+
+
+# ---------------------------------------------------------------------------
+# MCP tool/resource function re-exports (WL-125/126 contract surface)
+# ---------------------------------------------------------------------------
+
+from thegent.cli.commands.impl import _resolve_cwd as _resolve_cwd  # noqa: E402, F811
+from thegent.cli.commands.impl import _default_owner_tag as _default_owner_tag  # noqa: E402, F811
+from thegent.cli.commands.impl import run_impl as run_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import bg_impl as bg_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import status_impl as status_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import stop_impl as stop_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import ps_impl as ps_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import inspect_impl as inspect_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import logs_impl as logs_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import wait_impl as wait_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import dag_list_impl as dag_list_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import list_models_impl as list_models_impl  # noqa: E402, F811
+from thegent.cli.commands.impl import list_agents_impl as list_agents_impl  # noqa: E402, F811
+
+
+# --- Tool functions (MCP @mcp.tool() wrappers) ---
+
+
+async def thegent_run(
+    prompt: str,
+    agent: str | None = None,
+    model: str | None = None,
+    cd: str | Path | None = None,
+    ctx: Any = None,
+    default_cwd: Path | None = None,
+    mode: str | None = None,
+    timeout: int | None = None,
+    **kwargs: Any,
+) -> Any:
+    """Run a foreground agent task."""
+    resolved = _resolve_cwd(cd) if cd else default_cwd
+    if agent is None and model is None:
+        return _ToolResult(
+            content=_json.dumps({"exit_code": 1, "error": "no agent or model specified"}),
+            structured_content={"exit_code": 1, "error": "no agent or model specified"},
+            meta={},
+        )
+    with mcp_budget_context("tool_invoke_ms"):
+        result = run_impl(prompt=prompt, agent=agent, model=model, cwd=resolved, mode=mode, timeout=timeout, **kwargs)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+async def thegent_bg(
+    prompt: str,
+    agent: str | None = None,
+    model: str | None = None,
+    cd: str | Path | None = None,
+    ctx: Any = None,
+    default_cwd: Path | None = None,
+    default_owner: str | None = None,
+    owner: str | None = None,
+    include_contract: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """Start a background agent task."""
+    resolved = _resolve_cwd(cd) if cd else default_cwd
+    effective_owner = owner or (_default_owner_tag(resolved) if resolved else None)
+    with mcp_budget_context("tool_invoke_ms"):
+        result = bg_impl(
+            prompt=prompt,
+            agent=agent,
+            model=model,
+            cwd=resolved,
+            owner=effective_owner,
+            include_contract=include_contract,
+            **kwargs,
+        )
+    if include_contract and agent:
+        from thegent.models import resolve_route_contract, route_contract
+
+        resolved_contract = resolve_route_contract(agent)
+        result["routing"] = {
+            "agent": agent,
+            "model": model,
+            "contract": resolved_contract,
+            "route": route_contract(agent) if agent else {},
+        }
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+def thegent_status(session_id: str, include_contract: bool = False, **kwargs: Any) -> Any:
+    """Get session status."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = status_impl(session_id=session_id, include_contract=include_contract)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+def thegent_stop(session_id: str, force: bool = False, **kwargs: Any) -> Any:
+    """Stop a running session."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = stop_impl(session_id=session_id, force=force)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+def thegent_ps(
+    owner: str | None = None,
+    all: bool = False,  # noqa: A002
+    include_contract: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """List running sessions."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = ps_impl(owner=owner, all=all, include_contract=include_contract)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+def thegent_inspect(
+    session_ids: list[str] | None = None,
+    owner: str | None = None,
+    tail: int = 50,
+    stderr: bool = False,
+    include_contract: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """Inspect session details."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = inspect_impl(
+            session_ids=session_ids or [],
+            owner=owner,
+            tail=tail,
+            stderr=stderr,
+            include_contract=include_contract,
+        )
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+def thegent_logs(
+    session_id: str,
+    tail: int | None = None,
+    stderr: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """Get session logs."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = logs_impl(session_id=session_id, tail=tail, stderr=stderr)
+    return _ToolResult(
+        content=str(result) if isinstance(result, str) else _json.dumps(result), structured_content={}, meta={}
+    )
+
+
+def thegent_wait(session_id: str, timeout: int | None = None, **kwargs: Any) -> Any:
+    """Wait for a session to complete."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = wait_impl(session_id=session_id, timeout=timeout)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+async def thegent_dag_list(
+    cd: str | Path | None = None,
+    ctx: Any = None,
+    default_cwd: Path | None = None,
+    **kwargs: Any,
+) -> Any:
+    """List DAG tasks."""
+    resolved = _resolve_cwd(cd) if cd else default_cwd
+    with mcp_budget_context("tool_invoke_ms"):
+        result = dag_list_impl(cd=resolved)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+async def thegent_suggest_prompt(raw_prompt: str, ctx: Any = None, **kwargs: Any) -> Any:
+    """Suggest a refined prompt using sampling."""
+    sampling_used = False
+    suggested = raw_prompt
+    if ctx is not None:
+        try:
+            sample_result = await ctx.sample(f"Refine this prompt for clarity and completeness: {raw_prompt}")
+            suggested = sample_result.text
+            sampling_used = True
+        except Exception:  # noqa: BLE001
+            suggested = raw_prompt
+    data = {"suggested_prompt": suggested, "sampling_used": sampling_used}
+    return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
+
+
+def thegent_create_wbs(feature: str, scope: str | None = None, **kwargs: Any) -> str:
+    """Create a work breakdown structure for a feature."""
+    lines = [f"WBS for: {feature}"]
+    if scope:
+        lines.append(f"Scope: {scope}")
+    lines.append("- Phase 1: Design")
+    lines.append("- Phase 2: Implementation")
+    lines.append("- Phase 3: Testing")
+    lines.append("- Phase 4: Deployment")
+    return "\n".join(lines)
+
+
+def thegent_list_agents(**kwargs: Any) -> Any:
+    """List available agents."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = list_agents_impl()
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+def thegent_list_models(
+    provider: str | None = None,
+    include_contract: bool = False,
+    by_model: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """List available models."""
+    with mcp_budget_context("tool_invoke_ms"):
+        result = list_models_impl(provider=provider, include_contract=include_contract, by_model=by_model)
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+
+
+# --- Resource functions (MCP @mcp.resource() wrappers) ---
+
+
+def resource_sessions(include_contract: bool = False, **kwargs: Any) -> str:
+    """MCP resource: list all sessions."""
+    payload = ps_impl(owner=None, all=True, include_contract=include_contract)
+    return _stable_json(payload)
+
+
+def resource_dag(cd: str | Path | None = None, **kwargs: Any) -> str:
+    """MCP resource: get DAG state."""
+    payload = dag_list_impl(cd=cd)
+    return _stable_json(payload)
+
+
+def resource_models(provider: str | None = None, include_contract: bool = False, **kwargs: Any) -> str:
+    """MCP resource: list models."""
+    payload = list_models_impl(provider=provider, include_contract=include_contract)
+    return _stable_json(payload)
+
+
+# --- TOOL_ICONS ---
+
+TOOL_ICONS: dict[str, str] = {
+    "thegent_run": "play",
+    "thegent_bg": "background",
+    "thegent_status": "info",
+    "thegent_stop": "stop",
+    "thegent_ps": "list",
+    "thegent_inspect": "search",
+    "thegent_logs": "scroll",
+    "thegent_wait": "clock",
+    "thegent_dag_list": "workflow",
+    "thegent_observe_summary": "chart",
+    "thegent_list_agents": "robot",
+    "thegent_list_models": "brain",
+}
 
 
 def thegent_session_contract_health_gate(
