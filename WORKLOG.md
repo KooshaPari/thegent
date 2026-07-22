@@ -8362,3 +8362,115 @@ implements that bridge end-to-end.
   F-1..F-15, NEW-1..23, KA-1..6, A11Y-1, TEST-1, WL-224/225,
   diskcache, CachePreWarmer) remain closed.
 
+## 2026-07-22: SOTA Audit Pass 10 — AUDIT-4 carry-forward corrective (1-line `__all__` fix)
+
+### Goal
+
+Reconcile the stale "AUDIT-3 / AUDIT-4 remain tracked" wording in
+Pass 9's carry-forward with the on-disk reality, then close the
+single remaining AUDIT-4 contract gap surfaced by the verification
+sweep.
+
+### Stale-carry-forward audit
+
+Direct verification (reading cited code, not inferring) shows the
+two tails Pass 9 listed are **already closed**:
+
+* **AUDIT-3 (DecisionAuditAppender rotation)** — closed by the
+  2026-07-19 third-pass hardening commit
+  (`src/thegent/ux/decision_audit.py:129-411`) with 8 tests in
+  `tests/test_unit_ux_phase3p4_hardening.py::TestDecisionAuditRotation`
+  (no-rotation-under-threshold, line-bound, byte-bound, monotonic
+  counter, `max_lines=0` unbounded, `record_many` bound
+  enforcement, concurrent 4-thread × 50-event integrity, and
+  `audit_stats()` snapshot contract). All 8 pass.
+* **AUDIT-4 (WL-124 CLI command-module contract closure)** —
+  closed by the 2026-07-19 dedicated AUDIT-4 hand-off. The 7
+  domain submodules (`run_cmds`, `session_cmds`, `governance_cmds`,
+  `plan_cmds`, `model_cmds`, `infra_cmds`, `team_cmds`) all exist
+  and `tests/test_wl124_cli_split.py` reports 382/383 passing —
+  one failure, the AUDIT-4 contract is 99.7% closed, not 100%.
+
+The verification gap is **one missing `__all__` export** in
+`src/thegent/cli/commands/plan_cmds.py`: the stub `plan_analyze_cmd`
+is defined at line 337 but omitted from `__all__` at line 666, so
+the wildcard re-export in `cli.py:623` cannot pick it up and
+`thegent.cli.commands.cli.plan_analyze_cmd` raises `AttributeError`.
+This is the **only** real, in-scope, residual gap left from the
+AUDIT-4 hand-off — a genuine audit-corrective one-line fix.
+
+### Scope
+
+* **`src/thegent/cli/commands/plan_cmds.py:698`** — add
+  `"plan_analyze_cmd",` to `__all__` between `"plan_wait_next_cmd",`
+  and `"closure_pack_cmd",` (alphabetical-within-namespace order
+  preserved; no other names touched). The stub's
+  `(*args, **kwargs) -> int` body is unchanged.
+
+No other files modified. No production code path changes — the
+fix is a 1-line `__all__` extension that lets the existing
+wildcard-import re-export surface the already-defined stub.
+
+### Tests
+
+No new tests — the existing parametrized
+`tests/test_wl124_cli_split.py::test_backward_compat_via_cli_module`
+already covers the gap; running the suite is the verification.
+
+### Validation
+
+* **Direct fix verification:**
+  `.venv/bin/pytest tests/test_wl124_cli_split.py
+  tests/test_wl124_125_126_monolith_baselines.py -q` →
+  **405 passed** (was 405 passed with 1 failure before; now 405
+  passed, 0 failures).
+* **Pass 9 regression sweep:**
+  `.venv/bin/pytest tests/test_unit_ux_decision_audit.py
+  tests/test_unit_cockpit_traffic_mcp_audit.py
+  tests/test_unit_ux_phase3p4_hardening.py
+  tests/test_unit_ux_cockpit_audit_mcp_tail.py -q` →
+  **71 passed** (0 regressions).
+* `ruff check` clean on the touched file.
+* `ruff format --check` reports 1 pre-existing drift unrelated to
+  this lane (blank-line additions in unrelated regions); left
+  untouched to keep the diff minimal-scope.
+* Secret scan: no `api_key|secret|token|password|passwd|bearer|aws_access|private_key`
+  patterns introduced.
+
+### Cockpit progress bar
+
+* **Before Pass 10:** 94% (Pass 9 closure).
+* **After Pass 10:** **94%** — cockpit bar saturated; the AUDIT-4
+  contract closure is a worklog-tally correction, not a
+  progression tick.
+
+### DAG tick
+
+* **+1 audit-corrective tick** (`plan_analyze_cmd __all__`):
+  AUDIT-4 contract now 100% green (382/383 → 383/383). The
+  Pass 9 carry-forward wording "AUDIT-3 / AUDIT-4 remain
+  tracked" is corrected; the only remaining in-scope, in-branch
+  Phase 3/4 hardening residue is **0 items**.
+* **Tails (verified closed):** AUDIT-3 rotation (closed in
+  `phase3p4_hardening`), AUDIT-4 WL-124 (closed in this lane).
+* **Tails (out of scope per project `Do Not Touch`):** L1
+  Stabilize / V4-1.2.x (Rust crates upgrade) remains blocked by
+  `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`.
+* **Tails (out of scope for cockpit/SOTA lane):** pre-existing
+  collection repair (`tests/agent_roles/`,
+  `tests/test_unit_mcp_server_coverage_e.py`,
+  `tests/test_unit_mcp_tray_endpoints.py`) and the
+  FederatedPolicyEngine async controller upgrade.
+
+### Carry-forward (post-SOTA pass 10)
+
+* **No remaining in-scope Phase 3/4 cockpit/SOTA hardening
+  items** on `wip/2026-07-22-thegent-local-preservation`. The
+  saturated lanes (CLI-1..5, AUDIT-1/2/3/4/6/9, F-1..F-15,
+  NEW-1..23, KA-1..6, A11Y-1, TEST-1, WL-224/225, diskcache,
+  CachePreWarmer) remain closed. The next genuinely-unblocked
+  cockpit/SOTA observation lane will require either (a) a fresh
+  SOTA pass over a new surface area, or (b) the V4-1.2.x L2
+  Rust crates upgrade once the Do-Not-Touch archive block
+  clears.
+

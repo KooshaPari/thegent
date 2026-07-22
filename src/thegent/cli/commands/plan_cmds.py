@@ -695,6 +695,7 @@ __all__ = [
     "plan_progress_cmd",
     "plan_verify_workstream_cmd",
     "plan_wait_next_cmd",
+    "plan_analyze_cmd",
     "closure_pack_cmd",
     "dag_run_cmd",
     "dag_sync_cmd",
