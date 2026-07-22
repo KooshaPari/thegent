@@ -9401,3 +9401,116 @@ Recommended start of next session: SOTA pass-16 audit over
 combined into one focused commit), then either branch into
 AUDIT-23/25/F-7..F-15 follow-ups or WL-124 stub closure once
 audio-lane signal stabilizes.
+---
+
+## 2026-07-22 — AUDIT-N+32 hand-off: EscalationQueue + MessageEntry hardening (SOTA pass 16)
+
+**Lane picked**: SOTA pass-16 audit over the dormant-core surfaces
+adjacent to the AUDIT-N+31 hardened `CheckpointRegistry` +
+`HandoffManager` + `KPIManager` block — the file-based
+`EscalationQueue` (line ~414) and the simple `MessageEntry`
+value-object (line ~606) in `src/thegent/execution/__init__.py`.
+
+The governance-side `thegent.governance.escalation.EscalationQueue`
+was intentionally **NOT** targeted (it is already structured with
+`@dataclass` + `StrEnum` + `SerializableMixin` and has its own
+`tests/test_unit_escalation.py` coverage; not dormant-core).
+
+**Hardening items closed (10 total across 2 classes)**:
+
+`EscalationQueue` (7 items):
+- NEW-1 — per-instance `_append_lock` (`RLock`) serialises
+  `add` / `enqueue` / `dequeue` / `resolve` / `_save` / `_load` /
+  `list_pending` against concurrent callers (50-thread stress
+  test confirmed; zero corruption, zero double-append)
+- NEW-2 — defensive validation on `add(run_id, reason, priority,
+  sla_minutes, blocked_at_utc, owner)` — `run_id` non-empty str,
+  `reason` non-empty str, `priority` in {1..5}, `sla_minutes`
+  non-negative int, `blocked_at_utc` / `owner` str-or-None
+- NEW-3 — `enqueue(item)` now requires `dict` with non-empty
+  `run_id` key (was previously `Any`)
+- NEW-4 — `_save` wraps the JSONL write in `try/except OSError`
+  and `add` rolls back the in-memory append on append-IO failure
+  (parity with AUDIT-N+30 OverrideRegistry NEW-2)
+- NEW-5 — `_corrupt_lines` now exposed as read-only
+  `corrupt_lines` property returning an immutable `tuple`;
+  `list_pending` no longer mutates internal state
+- NEW-6 — explicit `clear()` method returning cleared count
+  (queue items + corrupt lines) + truncating on-disk JSONL
+- NEW-7 — `list_pending` returns defensive deep copies of pending
+  records (parity with AUDIT-N+31 NEW-4 / NEW-7)
+
+`MessageEntry` (3 items):
+- NEW-8 — defensive validation in `__init__` — `role` in known
+  set, `content` str, `timestamp` str; `__slots__` prevents
+  arbitrary attribute injection
+- NEW-9 — explicit `__eq__` / `__hash__` / `__repr__` for
+  deterministic comparison, set-hashability, and introspection
+  (parity with AUDIT-N+29 dataclass siblings)
+- NEW-10 — `from_dict` classmethod accepts dict-shaped input
+  with missing fields and validates the result
+
+**Files touched**:
+
+| File | LOC | What |
+|---|---|---|
+| `src/thegent/execution/__init__.py` | +272 / -71 | 2 dormant-core classes hardened |
+| `tests/test_unit_audit_n32_escalation_message_hardening.py` | +608 (new) | 61 tests |
+| `tests/test_unit_execution.py` | +22 / -13 | 2 latent-bug tests updated for hardened contract |
+
+**Latent-bug signal**:
+- `tests/test_unit_execution.py::TestEscalationQueueSLAExpiry::test_add_with_priority_sorting`
+  was passing `priority=10` (out-of-range) and silently accepting
+  it. The hardened `add()` now correctly rejects it; the test
+  was updated to use `priority=5` (still sorting-test-eligible).
+- `tests/test_unit_execution.py::TestEscalationQueueExceptionPaths::test_resolve_keeps_corrupt_lines`
+  was relying on the previous buggy `_save()` round-tripping
+  corrupt lines through disk. The hardened `_save()` writes a
+  clean snapshot (`self.queue + self.corrupt_lines`) — the
+  invariant the test cared about (no extra line breaks /
+  garbage added by `resolve()`) is preserved; only the
+  over-coupled disk-round-trip assertion was relaxed.
+
+**Validation**:
+- 61 / 61 new AUDIT-N+32 tests pass
+- 479 / 479 dormant-core + execution + observability
+  regression sweep passes (cleaned from 437 at AUDIT-N+31
+  baseline — 42 net new tests covered by AUDIT-N+32)
+- 124 / 124 `test_unit_execution.py` tests pass (2 latent-bug
+  tests updated to assert hardened contract — see above)
+- `ruff check` + `ruff format --check` clean on all 3 touched
+  files
+- No secrets in diff (`idempotency_token`, `register_end`,
+  `escalate_by_utc`, `tokens_in/out` are field/method names,
+  not credentials — explicit negative-grep run)
+
+**Carry-forward closed**:
+- None new; the AUDIT-N+31 hand-off noted `EscalationQueue` +
+  `MessageEntry` as the next dormant-core pair, and this lane
+  fully closes them.
+
+**Carry-forward (post-AUDIT-N+32)**:
+The dormant-core cluster inside `execution/__init__.py` has now
+been hardened through:
+- AUDIT-N+29 — `RunRegistry` + 5 sibling dataclasses
+- AUDIT-N+30 — `OverrideRegistry` + `_governance_policy`
+- AUDIT-N+31 — `CheckpointRegistry` + `HandoffManager` +
+  `KPIManager`
+- AUDIT-N+32 — `EscalationQueue` + `MessageEntry`
+
+The next dormant-core candidate outside this file is the
+messaging surface (`MessageBus` in
+`orchestration/inter_agent_protocol.py`). Recommended start of
+next session: SOTA pass-17 audit over `MessageBus` + adjacent
+governance-shim dataclasses (likely AUDIT-N+33), then either
+branch into AUDIT-23/25/F-7..F-15 follow-ups or WL-124 stub
+closure once audio-lane signal stabilizes.
+
+**Cockpit progress bar**: 100% (AUDIT-N+32 lane fully closed:
+10 hardening items across 2 adjacent dormant-core classes,
+61 new tests, 479-test broader sweep clean, ruff clean, no
+secrets, no pre-existing regressions introduced, 2 latent-bug
+tests updated to match hardened contract).
+
+**DAG tick**: `+1` (this hand-off). Commit `46533f6d6` on
+`wip/2026-07-22-thegent-local-preservation` (no upstream push).
