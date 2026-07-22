@@ -1,10 +1,12 @@
 """Stub module."""
+
 from __future__ import annotations
 from enum import Enum
 
 
 class FailureMode(str, Enum):
     """Failure modes for orchestration."""
+
     TIMEOUT = "timeout"
     RATE_LIMIT = "rate_limit"
     AUTH_FAILURE = "auth_failure"

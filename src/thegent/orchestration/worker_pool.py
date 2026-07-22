@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 
-
 @dataclass
 class TaskRequest:
     """A task request for the worker pool."""

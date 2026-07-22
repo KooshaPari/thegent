@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class OwnerStats:
     """Statistics for an owner."""
+
     owner: str
     session_count: int = 0
     resource_usage: float = 0.0
@@ -49,10 +51,19 @@ class DeadlineMonitor:
     def is_expired(self, task_id: str) -> bool:
         """Check if task deadline is expired."""
         import time
+
         return task_id in self._deadlines and self._deadlines[task_id] < time.time()
 
 
-__all__ = ["OwnerStats", "LoadBasedLimits", "UsageTracker", "DeadlineMonitor", "SoftDeadline", "get_usage_tracker", "get_deadline_monitor"]
+__all__ = [
+    "OwnerStats",
+    "LoadBasedLimits",
+    "UsageTracker",
+    "DeadlineMonitor",
+    "SoftDeadline",
+    "get_usage_tracker",
+    "get_deadline_monitor",
+]
 
 
 _deadline_monitor_instance: DeadlineMonitor | None = None

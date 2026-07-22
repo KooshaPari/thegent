@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 import heapq
 
@@ -26,6 +27,7 @@ from typing import Any
 @dataclass
 class QueuedRun:
     """A queued execution run."""
+
     run_id: str
     priority: int = 0
     status: str = "queued"
@@ -50,12 +52,14 @@ class RunPriorityQueue:
     def enqueue(self, run: QueuedRun) -> None:
         """Add a run to the queue."""
         import heapq
+
         heapq.heappush(self._heap, (run.priority, run.run_id))
         self._items[run.run_id] = run
 
     def dequeue(self) -> QueuedRun | None:
         """Remove and return the highest priority run."""
         import heapq
+
         if self._heap:
             _, run_id = heapq.heappop(self._heap)
             return self._items.pop(run_id, None)

@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class PromotionGate:
     """Gate for evidence-based promotion decisions."""
+
     threshold: float = 0.8
     min_evidence: int = 3
 

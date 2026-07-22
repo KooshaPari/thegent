@@ -11,14 +11,14 @@ from typing import Any
 
 class SHMSystem:
     """Shared memory system for orchestration.
-    
+
     This class manages shared memory regions for fast
     inter-process communication.
     """
 
     def __init__(self, size: int = 1024 * 1024) -> None:
         """Initialize the SHM system.
-        
+
         Args:
             size: Size of the shared memory region in bytes.
         """
@@ -27,7 +27,7 @@ class SHMSystem:
 
     def write(self, key: str, value: Any) -> None:
         """Write a value to shared memory.
-        
+
         Args:
             key: The key to write.
             value: The value to store.
@@ -36,10 +36,10 @@ class SHMSystem:
 
     def read(self, key: str) -> Any | None:
         """Read a value from shared memory.
-        
+
         Args:
             key: The key to read.
-            
+
         Returns:
             The stored value or None if not found.
         """
@@ -47,7 +47,7 @@ class SHMSystem:
 
     def delete(self, key: str) -> None:
         """Delete a value from shared memory.
-        
+
         Args:
             key: The key to delete.
         """
@@ -59,7 +59,7 @@ class SHMSystem:
 
     def keys(self) -> list[str]:
         """Get all keys in shared memory.
-        
+
         Returns:
             List of keys.
         """
@@ -72,7 +72,7 @@ _shm_system: SHMSystem | None = None
 
 def get_shm_system() -> SHMSystem:
     """Get the global SHM system instance.
-    
+
     Returns:
         The global SHMSystem instance.
     """

@@ -12,14 +12,14 @@ from typing import Any
 
 class SessionScraper:
     """Session scraper for orchestration state.
-    
+
     This class provides methods for extracting and scraping
     session data from the orchestration system.
     """
 
     def __init__(self, session_dir: Path | str | None = None) -> None:
         """Initialize the session scraper.
-        
+
         Args:
             session_dir: Optional path to the session directory.
         """
@@ -27,10 +27,10 @@ class SessionScraper:
 
     def scrape_session(self, session_id: str) -> dict[str, Any]:
         """Scrape a session by ID.
-        
+
         Args:
             session_id: The session ID to scrape.
-            
+
         Returns:
             Session data dictionary.
         """
@@ -42,7 +42,7 @@ class SessionScraper:
 
     def scrape_all_sessions(self) -> list[dict[str, Any]]:
         """Scrape all sessions.
-        
+
         Returns:
             List of session data dictionaries.
         """
@@ -50,10 +50,10 @@ class SessionScraper:
 
     def get_session_summary(self, session_id: str) -> dict[str, Any]:
         """Get a summary of a session.
-        
+
         Args:
             session_id: The session ID.
-            
+
         Returns:
             Session summary dictionary.
         """
@@ -65,10 +65,10 @@ class SessionScraper:
 
     def scrape_turns(self, session_id: str) -> list[dict[str, Any]]:
         """Scrape all turns for a session.
-        
+
         Args:
             session_id: The session ID.
-            
+
         Returns:
             List of turn data dictionaries.
         """

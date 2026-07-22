@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class RedisConfig:
     """Redis configuration for concurrency control."""
+
     host: str = "localhost"
     port: int = 6379
     db: int = 0
