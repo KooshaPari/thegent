@@ -25,6 +25,7 @@ _server_tools_sessions = _tools_sessions
 # ``resource_observe_summary`` / ``thegent_observe_summary`` /
 # ``thegent_session_contract_health_*``.
 import json as _json  # noqa: E402
+from thegent.mcp.server.mcp_audit_trail import _stable_json  # noqa: E402
 
 from thegent.cli.commands.observability_impl import observe_summary_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import session_contract_health_gate_impl  # noqa: E402, F401
@@ -254,7 +255,7 @@ def resource_observe_summary(
             trend_samples=trend_samples,
             **kwargs,
         )
-    return _json.dumps(payload)
+    return _stable_json(payload)
 
 
 def resource_session_contract_health_trend(
@@ -274,7 +275,7 @@ def resource_session_contract_health_trend(
         trend_samples=trend_samples,
         **kwargs,
     )
-    return _json.dumps(payload)
+    return _stable_json(payload)
 
 
 def resource_session_contract_health_report(
@@ -300,7 +301,7 @@ def resource_session_contract_health_report(
         regression_tolerance=regression_tolerance,
         **kwargs,
     )
-    return _json.dumps(payload)
+    return _stable_json(payload)
 
 
 def resource_session_contract_health_gate(
@@ -326,7 +327,30 @@ def resource_session_contract_health_gate(
         regression_tolerance=regression_tolerance,
         **kwargs,
     )
-    return _json.dumps(payload)
+    return _stable_json(payload)
+
+
+class HealthResponse:
+    """Simple response object for the health endpoint."""
+
+    def __init__(self, status_code: int, body: bytes) -> None:
+        self.status_code = status_code
+        self.body = body
+
+
+async def health(request: Any) -> HealthResponse:
+    """Health check endpoint.
+
+    Args:
+        request: The incoming request object.
+
+    Returns:
+        A response object with status_code and body.
+    """
+    return HealthResponse(
+        status_code=200,
+        body=_json.dumps({"status": "ok", "server": "thegent"}).encode("utf-8"),
+    )
 
 
 def thegent_observe_summary(
