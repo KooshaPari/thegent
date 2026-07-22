@@ -6,6 +6,9 @@ This module provides the MCP (Model Context Protocol) server implementation.
 from __future__ import annotations
 
 import hashlib
+import os
+import time as _time
+from pathlib import Path
 from typing import Any
 
 
@@ -52,6 +55,120 @@ from thegent.cli.commands.impl import dag_list_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import list_models_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import list_agents_impl  # noqa: E402, F401
 from thegent.cli.commands.impl import do_next_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import session_contract_audit_impl  # noqa: E402, F401
+from thegent.cli.commands.impl import get_server_meta_impl  # noqa: E402, F401
+
+
+def get_default_cwd(ctx: Any) -> Path | None:
+    """Extract the default CWD from an MCP request context.
+
+    Returns ``None`` when the context has no request context, no meta,
+    or when ``meta.cwd`` is not set / falsy.
+    """
+    if ctx is None or getattr(ctx, "request_context", None) is None:
+        return None
+    meta = getattr(ctx.request_context, "meta", None)
+    if meta is None:
+        return None
+    cwd = getattr(meta, "cwd", None)
+    if not cwd:
+        return None
+    return Path(cwd).expanduser().resolve()
+
+
+def get_default_owner(ctx: Any) -> str | None:
+    """Extract the default owner tag from an MCP request context.
+
+    Returns ``None`` when the context has no request context, no meta,
+    or when ``meta.owner`` is not set.
+    """
+    if ctx is None or getattr(ctx, "request_context", None) is None:
+        return None
+    meta = getattr(ctx.request_context, "meta", None)
+    if meta is None:
+        return None
+    return getattr(meta, "owner", None)
+
+
+def _get_event_store() -> Any:
+    """Return an EventStore instance.
+
+    Uses Redis when ``FASTMCP_EVENT_STORE_URL`` is set, otherwise
+    falls back to in-memory storage.
+    """
+    from fastmcp.server.event_store import EventStore
+
+    redis_url = os.environ.get("FASTMCP_EVENT_STORE_URL")
+    if redis_url:
+        try:
+            from key_value.aio.stores.redis import RedisStore
+
+            return RedisStore(url=redis_url)
+        except (ImportError, ModuleNotFoundError):
+            pass
+    return EventStore()
+
+
+def http_app(stateless_http: bool = True) -> Any:
+    """Create an HTTP ASGI application from the MCP server.
+
+    Args:
+        stateless_http: Whether to use stateless HTTP mode.
+    """
+    return mcp.http_app(stateless_http=stateless_http, transport="http")
+
+
+# Lifespan object (stub for testing)
+class _LifespanStub:
+    """Minimal lifespan stub for MCP server testing."""
+
+
+thegent_lifespan: Any = _LifespanStub()
+
+
+def run(
+    host: str | None = None,
+    port: int | None = None,
+) -> None:
+    """Run the MCP server with uvicorn.
+
+    Uses settings defaults when host/port are not specified.
+    """
+    import uvicorn
+
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    effective_host = host if host is not None else getattr(settings, "mcp_host", "0.0.0.0")  # noqa: S104
+    effective_port = port if port is not None else getattr(settings, "mcp_port", 3847)
+    app = mcp.http_app()
+    uvicorn.run(app, host=effective_host, port=effective_port, lifespan="on")
+
+
+def thegent_run_agent(
+    agent: str,
+    prompt: str,
+    cd: str | None = None,
+    **kwargs: Any,
+) -> str:
+    """MCP prompt: generate a run-agent instruction."""
+    lines = [f"Run agent '{agent}' with prompt: {prompt}"]
+    if cd:
+        lines.append(f"Working directory: {cd}")
+    return "\n".join(lines)
+
+
+def thegent_bg_task(
+    agent: str,
+    prompt: str,
+    owner: str | None = None,
+    **kwargs: Any,
+) -> str:
+    """MCP prompt: generate a background task instruction."""
+    lines = [f"Start background task with agent '{agent}': {prompt}"]
+    if owner:
+        lines.append(f"Owner: {owner}")
+    return "\n".join(lines)
 
 
 def _summary_meta(payload: dict[str, Any]) -> dict[str, Any]:
@@ -198,11 +315,20 @@ class _MCPStub:
 
     def __init__(self) -> None:
         self._lifespan: Any = None
+        self._http_app_value: Any = None
 
     @property
     def http_app(self) -> Any:
         """Return the HTTP ASGI application."""
-        return None
+        return self._http_app_value
+
+    @http_app.setter
+    def http_app(self, value: Any) -> None:
+        self._http_app_value = value
+
+    @http_app.deleter
+    def http_app(self) -> None:
+        self._http_app_value = None
 
 
 # Global MCP server instance (lazy-loaded in production)
@@ -566,9 +692,44 @@ async def thegent_dag_list(
 ) -> Any:
     """List DAG tasks."""
     resolved = _resolve_cwd(cd) if cd else default_cwd
+    if resolved is None and ctx is not None and hasattr(ctx, "elicit"):
+        elicitation_result = await ctx.elicit(
+            message="No working directory specified. Please provide a project path.",
+            schema={"type": "object", "properties": {"cwd": {"type": "string"}}},
+        )
+        from fastmcp.server.context import (
+            AcceptedElicitation,
+            CancelledElicitation,
+            DeclinedElicitation,
+        )
+
+        if isinstance(elicitation_result, DeclinedElicitation):
+            return _ToolResult(
+                content=_json.dumps({"error": "CWD elicitation declined", "tasks": []}),
+                structured_content={"error": "CWD elicitation declined", "tasks": []},
+                meta={},
+            )
+        if isinstance(elicitation_result, CancelledElicitation):
+            return _ToolResult(
+                content=_json.dumps({"error": "CWD elicitation cancelled", "tasks": []}),
+                structured_content={"error": "CWD elicitation cancelled", "tasks": []},
+                meta={},
+            )
+        if isinstance(elicitation_result, AcceptedElicitation):
+            cwd_value = (elicitation_result.content or {}).get("cwd")
+            if cwd_value:
+                resolved = Path(cwd_value)
+        else:
+            return _ToolResult(
+                content=_json.dumps({"error": "Ambiguous CWD elicitation response", "tasks": []}),
+                structured_content={"error": "Ambiguous CWD elicitation response", "tasks": []},
+                meta={},
+            )
+    t0 = _time.monotonic()
     with mcp_budget_context("tool_invoke_ms"):
         result = dag_list_impl(cd=resolved)
-    return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
+    meta = {"execution_time_ms": round((_time.monotonic() - t0) * 1000.0, 2)}
+    return _ToolResult(content=_json.dumps(result), structured_content=result, meta=meta)
 
 
 async def thegent_suggest_prompt(raw_prompt: str, ctx: Any = None, **kwargs: Any) -> Any:
@@ -578,7 +739,7 @@ async def thegent_suggest_prompt(raw_prompt: str, ctx: Any = None, **kwargs: Any
     if ctx is not None:
         try:
             sample_result = await ctx.sample(f"Refine this prompt for clarity and completeness: {raw_prompt}")
-            suggested = sample_result.text
+            suggested = sample_result.text.strip()
             sampling_used = True
         except Exception:  # noqa: BLE001
             suggested = raw_prompt
@@ -617,6 +778,131 @@ def thegent_list_models(
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
 
+def thegent_list_operations(
+    operation: str | None = None,
+    **kwargs: Any,
+) -> Any:
+    """List available operations."""
+    from thegent.operations import Operation, get_operations_by_type, list_operations as _list_ops
+
+    try:
+        if operation:
+            try:
+                op = Operation(operation)
+            except (ValueError, KeyError):
+                return _ToolResult(
+                    content=_json.dumps({"error": f"Unknown operation type: {operation}"}),
+                    structured_content={"error": f"Unknown operation type: {operation}"},
+                    meta={},
+                )
+            entries = get_operations_by_type(op)
+            if not entries:
+                return _ToolResult(
+                    content=_json.dumps({"error": f"No operations found for type: {operation}"}),
+                    structured_content={"error": f"No operations found for type: {operation}"},
+                    meta={},
+                )
+            data = {
+                operation: [
+                    {"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries
+                ]
+            }
+        else:
+            data = _list_ops()
+    except (ValueError, KeyError, Exception) as exc:  # noqa: BLE001
+        data = {"error": str(exc)}
+    return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
+    return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
+
+
+def thegent_list_modes(
+    mode: str | None = None,
+    **kwargs: Any,
+) -> Any:
+    """List available orchestration modes."""
+    from thegent.orchestration_modes import get_mode, list_modes as _list_modes
+
+    if mode:
+        entry = get_mode(mode)
+        if entry is None:
+            data = {"error": f"Unknown mode: {mode}"}
+        else:
+            data = [
+                {
+                    "mode": entry.mode.value,
+                    "description": entry.description,
+                    "phases": entry.phases,
+                    "use_case": entry.use_case,
+                    "risk_profile": entry.risk_profile,
+                    "selection_hint": entry.selection_hint,
+                }
+            ]
+    else:
+        data = _list_modes()
+    return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
+
+
+def thegent_session_contracts(
+    owner: str | None = None,
+    all: bool = False,  # noqa: A002
+    missing_only: bool = False,
+    summary_only: bool = False,
+    strict: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """Audit session contracts."""
+    import time as _ct
+
+    t0 = _ct.monotonic()
+    with mcp_budget_context("tool_invoke_ms"):
+        payload = session_contract_audit_impl(
+            owner=owner,
+            all=all,
+            missing_only=missing_only,
+            summary_only=summary_only,
+            strict=strict,
+        )
+    meta = {"execution_time_ms": round((_ct.monotonic() - t0) * 1000.0, 2)}
+    return _ToolResult(content=_json.dumps(payload), structured_content=payload, meta=meta)
+
+
+def _list_droid_names(cwd: Path | None) -> list[str]:
+    """Resolve droid names from the filesystem."""
+    from thegent.cli.commands.impl import _resolve_droids_dir
+    from thegent.config import ThegentSettings
+
+    settings = ThegentSettings()
+    effective_cwd = cwd or Path.cwd()
+    droids_dir = _resolve_droids_dir(effective_cwd, settings)
+    if not droids_dir.exists():
+        return []
+    return sorted(p.name for p in droids_dir.iterdir() if p.is_dir() and not p.name.startswith("."))
+
+
+def list_droids_impl(cd: Any = None) -> list[str]:
+    """Simple wrapper around droid listing for MCP tool use.
+
+    This module-level function can be patched by tests.
+    """
+    resolved = Path(cd) if cd else Path.cwd()
+    return _list_droid_names(resolved)
+
+
+def thegent_list_droids(
+    cd: str | Path | None = None,
+    default_cwd: Path | None = None,
+    **kwargs: Any,
+) -> Any:
+    """List available droids."""
+    resolved = Path(cd) if cd else default_cwd
+    droid_names = list_droids_impl(cd=resolved)
+    return _ToolResult(
+        content=_json.dumps(droid_names),
+        structured_content={"droids": droid_names},
+        meta={},
+    )
+
+
 # --- Resource functions (MCP @mcp.resource() wrappers) ---
 
 
@@ -638,6 +924,99 @@ def resource_models(provider: str | None = None, include_contract: bool = False,
     return _stable_json(payload)
 
 
+def resource_meta(**kwargs: Any) -> str:
+    """MCP resource: server metadata."""
+    payload = get_server_meta_impl()
+    return _stable_json(payload)
+
+
+def resource_agents(**kwargs: Any) -> str:
+    """MCP resource: list agents."""
+    payload = list_agents_impl()
+    return _stable_json(payload)
+
+
+def resource_models_contract(**kwargs: Any) -> str:
+    """MCP resource: models route contract."""
+    from thegent.models import route_contract
+
+    payload = route_contract()
+    return _stable_json(payload)
+
+
+def resource_session_meta(id: str, include_contract: bool = False, **kwargs: Any) -> str:
+    """MCP resource: session metadata."""
+    payload = status_impl(session_id=id, include_contract=include_contract)
+    return _stable_json(payload)
+
+
+def resource_session_logs(id: str, tail: int | None = None, stderr: bool = False, **kwargs: Any) -> str:
+    """MCP resource: session logs."""
+    return logs_impl(session_id=id, tail=tail, stderr=stderr)
+
+
+def resource_session_contracts(
+    owner: str | None = None,
+    all: bool = False,  # noqa: A002
+    missing_only: bool = False,
+    summary_only: bool = False,
+    strict: bool = False,
+    **kwargs: Any,
+) -> str:
+    """MCP resource: session contract audit."""
+    payload = session_contract_audit_impl(
+        owner=owner,
+        all=all,
+        missing_only=missing_only,
+        summary_only=summary_only,
+        strict=strict,
+    )
+    return _stable_json(payload)
+
+
+def resource_operations(operation: str | None = None, **kwargs: Any) -> str:
+    """MCP resource: list operations."""
+    from thegent.operations import Operation, get_operations_by_type, list_operations as _list_ops
+
+    try:
+        if operation:
+            entries = get_operations_by_type(Operation(operation))
+            data = {
+                operation: [
+                    {"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries
+                ]
+            }
+        else:
+            data = _list_ops()
+    except (ValueError, KeyError, Exception) as exc:  # noqa: BLE001
+        data = {"error": str(exc)}
+    return _stable_json(data)
+
+
+def resource_modes(mode: str | None = None, **kwargs: Any) -> str:
+    """MCP resource: list orchestration modes."""
+    from thegent.orchestration_modes import get_mode, list_modes as _list_modes
+
+    if mode:
+        entry = get_mode(mode)
+        if entry is None:
+            data = {"error": f"Unknown mode: {mode}"}
+        else:
+            data = [
+                {
+                    "mode": entry.mode.value,
+                    "description": entry.description,
+                    "phases": entry.phases,
+                    "use_case": entry.use_case,
+                    "risk_profile": entry.risk_profile,
+                    "selection_hint": entry.selection_hint,
+                }
+            ]
+    else:
+        data = _list_modes()
+    return _stable_json(data)
+
+
 # --- TOOL_ICONS ---
 
 TOOL_ICONS: dict[str, str] = {
@@ -653,6 +1032,13 @@ TOOL_ICONS: dict[str, str] = {
     "thegent_observe_summary": "chart",
     "thegent_list_agents": "robot",
     "thegent_list_models": "brain",
+    "thegent_list_droids": "droid",
+    "thegent_list_operations": "operations",
+    "thegent_list_modes": "modes",
+    "thegent_session_contracts": "contracts",
+    "thegent_suggest_prompt": "magic",
+    "thegent_run_agent": "rocket",
+    "thegent_bg_task": "background",
 }
 
 
