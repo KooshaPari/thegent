@@ -7482,3 +7482,77 @@ and expanded _summary_meta envelope).
 3. **Performance budget** — MCP perf gate integration tests for the new tool
    functions (currently only observe_summary has budget context).
 
+## 2026-07-21: SOTA Audit Pass 4 — MCP Server Deep Test Surface (49 → 1 failures)
+
+### Actions Taken
+
+**Implemented 20+ missing functions in `src/thegent/mcp/server/__init__.py`:**
+
+**Context dependency functions:**
+- `get_default_cwd(ctx)` — extracts CWD from MCP request context meta
+- `get_default_owner(ctx)` — extracts owner tag from MCP request context meta
+
+**Infrastructure:**
+- `_get_event_store()` — EventStore factory (in-memory default, Redis when URL set)
+- `http_app(stateless_http=True)` — ASGI app factory
+- `run(host, port)` — uvicorn entry point with settings defaults
+- `thegent_lifespan` — Lifespan stub object for testing
+- `_MCPStub.http_app` — added setter + deleter for `@patch.object` compatibility
+
+**Resource functions (8 new):**
+- `resource_meta()` — server metadata
+- `resource_agents()` — agent list
+- `resource_models_contract()` — route contract schema
+- `resource_session_meta(id, include_contract)` — session metadata
+- `resource_session_logs(id, tail, stderr)` — session logs
+- `resource_session_contracts(owner, all, missing_only, summary_only, strict)` — contract audit
+- `resource_operations(operation)` — operations listing
+- `resource_modes(mode)` — orchestration modes listing
+
+**Tool functions (6 new):**
+- `thegent_list_operations(operation)` — operations tool with unknown-type error handling
+- `thegent_list_modes(mode)` — modes tool with unknown-mode error handling
+- `thegent_session_contracts(owner, all, missing_only, summary_only, strict)` — contract audit tool with execution_time_ms meta
+- `thegent_list_droids(cd, default_cwd)` — droid listing with filesystem resolution
+- `list_droids_impl(cd)` — module-level wrapper for test patching
+- `thegent_run_agent(agent, prompt, cd)` — MCP prompt function
+- `thegent_bg_task(agent, prompt, owner)` — MCP prompt function
+
+**Fixes:**
+- `thegent_dag_list` — added elicitation handling (DeclinedElicitation, CancelledElicitation, ambiguous)
+- `thegent_dag_list` — added `execution_time_ms` meta with timing
+- `thegent_suggest_prompt` — added `.strip()` to sampled text
+- TOOL_ICONS — expanded with 7 new tool icon entries
+
+**Validation:**
+- MCP server deep: **73/74 passed** (was 25/74; fixed 48 tests)
+- MCP tools: **55/55 passed** (no regressions)
+- WL-124 hardening: **22/22 passed** (no regressions)
+- WL-126 hardening: **22/22 passed** (no regressions)
+- WL-125 wrapper delegation: **57/57 passed** (no regressions)
+- ruff check clean, ruff format clean
+- 1 remaining failure: `test_redis_store_when_url_set` (pre-existing: `py-key-value-aio[redis]` not installed)
+
+### Cockpit progress bar
+
+```
+[########################------]  78%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ████████████████  85%   (MCP tool/resource functions + contract hardening)
+  SOTA    ████████████████  80%   (SOTA audit pass 4 + 73-test MCP deep surface)
+```
+
+### DAG tick
+
+**`+2`** on top of the prior session's `+11` (this session implemented 20+ missing
+MCP server functions, fixed 48 pre-existing test failures, added elicitation handling,
+expanded resource/tool surface to full coverage).
+
+### Unblocked Next
+
+1. **Performance budget expansion** — extend `mcp_budget_context` to all new tool functions
+2. **Cross-cutting governance tests** — integration tests for policy engine + MCP tool dispatch
+3. **Redis test infra** — install `py-key-value-aio[redis]` for full event store coverage
+
