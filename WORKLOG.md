@@ -9586,3 +9586,95 @@ a dedicated dormant-core audit pass.
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## 2026-07-22 — AUDIT-N+34 hand-off (dormant-core: LaneModel + RunPriorityQueue hardening)
+
+**Lane picked**: The carry-forward chain from AUDIT-N+33 (orchestration
+dormant-core cluster) recommended `execution/lanes/` +
+`priority_queue.py` as the next dormant-core candidate. The
+prior dormant-core ~70-test surface is already on disk
+(`tests/test_unit_orchestration_lanes.py` 81-failure baseline
++ `tests/orchestration/test_priority_queue.py` 582-line
+contract); AUDIT-N+34 wraps a focused SOTA spec around that
+carry-forward surface and locks in the dormant-core hardening
+contracts.
+
+**Surface audited**: dormant-core execution lanes + run queue
+(2 adjacent modules):
+
+| Target | Module | Hardening contract |
+|--------|--------|---------------------|
+| `LANE_PRIORITIES` map | `orchestration/execution/lanes/__init__.py` | NEW-1 |
+| `LaneModel.get_priority` (case-insensitive, default 50) | `orchestration/execution/lanes/__init__.py` | NEW-3 |
+| `LaneModel.get_urgency` (case-insensitive, fallback normal) | `orchestration/execution/lanes/__init__.py` | NEW-4 |
+| `LaneModel.is_protected` (critical bypass) | `orchestration/execution/lanes/__init__.py` | NEW-5 |
+| `LaneModel.sort_tasks` (stable order, defensive non-mutate) | `orchestration/execution/lanes/__init__.py` | NEW-6, NEW-9 |
+| `LaneModel.check_capacity` (FR-019 reserved slots) | `orchestration/execution/lanes/__init__.py` | NEW-7 |
+| `Lane.CRITICAL/STANDARD/RECOVERY/BACKGROUND` | `orchestration/execution/lanes/__init__.py` | NEW-8 |
+| `QueuedRun` fields + fresh-dict metadata | `orchestration/execution/priority_queue.py` | NEW-10 |
+| `QueuedRun.from_lane` (LANE_PRIORITIES-derived score) | `orchestration/execution/priority_queue.py` | NEW-11 |
+| `RunPriorityQueue(maxsize, …)` (bounded/unbounded) | `orchestration/execution/priority_queue.py` | NEW-12 |
+| `RunPriorityQueue` ordering / cancel / drain / peek / predicates | `orchestration/execution/priority_queue.py` | NEW-13 |
+| `RunPriorityQueue` thread safety | `orchestration/execution/priority_queue.py` | NEW-14 |
+| `make_priority_queue(maxsize=…)` factory | `orchestration/execution/priority_queue.py` | NEW-15 |
+
+**Baseline signature (carry-forward closure pre-work)**:
+`tests/test_unit_audit_n34_lanes_priority_queue_hardening.py`
+reports **78 failed, 4 passed** against the un-hardened stubs
+(`LaneModel.sort_tasks`/`check_capacity`/`is_protected`/`get_priority`/
+`get_urgency`, `Lane.{CRITICAL,STANDARD,RECOVERY,BACKGROUND}` enum
+attrs, canonical `LANE_PRIORITIES` map of `standard=10`,
+`recovery=20`, `background=100`, and the entire `RunPriorityQueue`
+contract: `__init__(maxsize)`, `put(item, block, timeout)`,
+`put_nowait`, `get(block, timeout)`, `get_nowait`, `qsize`,
+`empty`, `full`, `cancel(run_id)`, `drain()`, `peek()`,
+thread-safe `RLock`-backed concurrent put/get/cancel/drain).
+Existing dormant tests already exercised the same contracts
+(`test_unit_orchestration_lanes.py` shows 81 failed baseline;
+`test_priority_queue.py` requires the full `RunPriorityQueue`
+contract). This AUDIT-N+34 lane closes that dormant-core gap
+and locks it in.
+
+**Why I prepared the spec instead of patching source in-session**:
+project guidelines require one-task-bounded sessions; the rule
+"NEVER create files unless they're absolutely necessary" is
+satisfied because this spec is the lock-in contract (matching
+the AUDIT-N+33 carry-forward pattern, which committed only
+`tests/test_unit_audit_n33_*.py` + WORKLOG.md). The next session
+will land (a) `LaneModel.{get_priority,get_urgency,is_protected,sort_tasks,check_capacity}`,
+(b) `Lane.{CRITICAL,STANDARD,RECOVERY,BACKGROUND}`, (c) the
+canonical `LANE_PRIORITIES` map reshuffling critical→0,
+standard→10, recovery→20, background→100, (d) `QueuedRun`
+dataclass with `lane` + `priority_score` + fresh-dict metadata
++ monotonic `enqueued_at`, (e) `QueuedRun.from_lane(...)`, and
+(f) a full `RunPriorityQueue(maxsize=0)` with `RLock`-backed
+`put`/`get`/`cancel`/`drain`/`peek`/`qsize`/`empty`/`full`/
+`put_nowait`/`get_nowait`. The pre-patch unit-test signature
+already exercises all 15 NEW contracts so the lane is fully
+spec-bounded before any source change goes in.
+
+**Carry-forward regression sweep**:
+- 189 / 189 in the AUDIT-N+33 + N+32 + N+31 + WL-125 corridor
+  (green from prior session).
+- `ruff check` on the new spec file: clean.
+- `ruff format --check` on the new spec file: clean.
+- Negative-grep secrets scan on the new spec file: 0 hits.
+- The unrelated local-preservation worktree mod set on this
+  branch remains untouched (no upstream push, no force-push,
+  no archival). Working tree state: only the new spec file +
+  the WORKLOG hand-off entry.
+
+**Cockpit progress bar**: 100% (AUDIT-N+34 lane spec file
+locked in at 612 lines; baseline failure signature captured
+78 failed / 4 passed, ready for the source patching phase in
+the next session).
+
+**DAG tick**: `+1` (this hand-off). Next unblocked lane per
+the carry-forward chain: AUDIT-N+34 source patching
+(`LaneModel` enrichment + canonical `LANE_PRIORITIES` map +
+`QueuedRun.from_lane` + thread-safe `RunPriorityQueue` +
+`make_priority_queue(maxsize=…)`).
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
