@@ -152,9 +152,10 @@ def thegent_run_agent(
     **kwargs: Any,
 ) -> str:
     """MCP prompt: generate a run-agent instruction."""
-    lines = [f"Run agent '{agent}' with prompt: {prompt}"]
-    if cd:
-        lines.append(f"Working directory: {cd}")
+    with mcp_budget_context("tool_invoke_ms"):
+        lines = [f"Run agent '{agent}' with prompt: {prompt}"]
+        if cd:
+            lines.append(f"Working directory: {cd}")
     return "\n".join(lines)
 
 
@@ -165,9 +166,10 @@ def thegent_bg_task(
     **kwargs: Any,
 ) -> str:
     """MCP prompt: generate a background task instruction."""
-    lines = [f"Start background task with agent '{agent}': {prompt}"]
-    if owner:
-        lines.append(f"Owner: {owner}")
+    with mcp_budget_context("tool_invoke_ms"):
+        lines = [f"Start background task with agent '{agent}': {prompt}"]
+        if owner:
+            lines.append(f"Owner: {owner}")
     return "\n".join(lines)
 
 
@@ -412,11 +414,12 @@ def resource_session_contract_health_trend(
     Returns a JSON string payload — the MCP resource contract is
     ``str`` (json-encoded body).
     """
-    payload = session_contract_health_trend_impl(
-        payload_type=payload_type,
-        trend_samples=trend_samples,
-        **kwargs,
-    )
+    with mcp_budget_context("health_trend_ms"):
+        payload = session_contract_health_trend_impl(
+            payload_type=payload_type,
+            trend_samples=trend_samples,
+            **kwargs,
+        )
     return _stable_json(payload)
 
 
@@ -433,16 +436,17 @@ def resource_session_contract_health_report(
     **kwargs: Any,
 ) -> str:
     """MCP resource: session contract health report."""
-    payload = session_contract_health_report_impl(
-        policy_profile=policy_profile,
-        strict=strict,
-        owner=owner,
-        all=all,
-        top_blocked=top_blocked,
-        no_worse_than_baseline=no_worse_than_baseline,
-        regression_tolerance=regression_tolerance,
-        **kwargs,
-    )
+    with mcp_budget_context("tool_invoke_ms"):
+        payload = session_contract_health_report_impl(
+            policy_profile=policy_profile,
+            strict=strict,
+            owner=owner,
+            all=all,
+            top_blocked=top_blocked,
+            no_worse_than_baseline=no_worse_than_baseline,
+            regression_tolerance=regression_tolerance,
+            **kwargs,
+        )
     return _stable_json(payload)
 
 
@@ -459,16 +463,17 @@ def resource_session_contract_health_gate(
     **kwargs: Any,
 ) -> str:
     """MCP resource: session contract health gate."""
-    payload = session_contract_health_gate_impl(
-        policy_profile=policy_profile,
-        strict=strict,
-        min_healthy_ratio=min_healthy_ratio,
-        owner=owner,
-        all=all,
-        no_worse_than_baseline=no_worse_than_baseline,
-        regression_tolerance=regression_tolerance,
-        **kwargs,
-    )
+    with mcp_budget_context("gate_check_ms"):
+        payload = session_contract_health_gate_impl(
+            policy_profile=policy_profile,
+            strict=strict,
+            min_healthy_ratio=min_healthy_ratio,
+            owner=owner,
+            all=all,
+            no_worse_than_baseline=no_worse_than_baseline,
+            regression_tolerance=regression_tolerance,
+            **kwargs,
+        )
     return _stable_json(payload)
 
 
@@ -738,9 +743,10 @@ async def thegent_suggest_prompt(raw_prompt: str, ctx: Any = None, **kwargs: Any
     suggested = raw_prompt
     if ctx is not None:
         try:
-            sample_result = await ctx.sample(f"Refine this prompt for clarity and completeness: {raw_prompt}")
-            suggested = sample_result.text.strip()
-            sampling_used = True
+            with mcp_budget_context("tool_invoke_ms"):
+                sample_result = await ctx.sample(f"Refine this prompt for clarity and completeness: {raw_prompt}")
+                suggested = sample_result.text.strip()
+                sampling_used = True
         except Exception:  # noqa: BLE001
             suggested = raw_prompt
     data = {"suggested_prompt": suggested, "sampling_used": sampling_used}
@@ -786,32 +792,32 @@ def thegent_list_operations(
     from thegent.operations import Operation, get_operations_by_type, list_operations as _list_ops
 
     try:
-        if operation:
-            try:
-                op = Operation(operation)
-            except (ValueError, KeyError):
-                return _ToolResult(
-                    content=_json.dumps({"error": f"Unknown operation type: {operation}"}),
-                    structured_content={"error": f"Unknown operation type: {operation}"},
-                    meta={},
-                )
-            entries = get_operations_by_type(op)
-            if not entries:
-                return _ToolResult(
-                    content=_json.dumps({"error": f"No operations found for type: {operation}"}),
-                    structured_content={"error": f"No operations found for type: {operation}"},
-                    meta={},
-                )
-            data = {
-                operation: [
-                    {"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries
-                ]
-            }
-        else:
-            data = _list_ops()
+        with mcp_budget_context("tool_invoke_ms"):
+            if operation:
+                try:
+                    op = Operation(operation)
+                except (ValueError, KeyError):
+                    return _ToolResult(
+                        content=_json.dumps({"error": f"Unknown operation type: {operation}"}),
+                        structured_content={"error": f"Unknown operation type: {operation}"},
+                        meta={},
+                    )
+                entries = get_operations_by_type(op)
+                if not entries:
+                    return _ToolResult(
+                        content=_json.dumps({"error": f"No operations found for type: {operation}"}),
+                        structured_content={"error": f"No operations found for type: {operation}"},
+                        meta={},
+                    )
+                data = {
+                    operation: [
+                        {"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries
+                    ]
+                }
+            else:
+                data = _list_ops()
     except (ValueError, KeyError, Exception) as exc:  # noqa: BLE001
         data = {"error": str(exc)}
-    return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
     return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
 
 
@@ -822,23 +828,27 @@ def thegent_list_modes(
     """List available orchestration modes."""
     from thegent.orchestration_modes import get_mode, list_modes as _list_modes
 
-    if mode:
-        entry = get_mode(mode)
-        if entry is None:
-            data = {"error": f"Unknown mode: {mode}"}
-        else:
-            data = [
-                {
-                    "mode": entry.mode.value,
-                    "description": entry.description,
-                    "phases": entry.phases,
-                    "use_case": entry.use_case,
-                    "risk_profile": entry.risk_profile,
-                    "selection_hint": entry.selection_hint,
-                }
-            ]
-    else:
-        data = _list_modes()
+    try:
+        with mcp_budget_context("tool_invoke_ms"):
+            if mode:
+                entry = get_mode(mode)
+                if entry is None:
+                    data = {"error": f"Unknown mode: {mode}"}
+                else:
+                    data = [
+                        {
+                            "mode": entry.mode.value,
+                            "description": entry.description,
+                            "phases": entry.phases,
+                            "use_case": entry.use_case,
+                            "risk_profile": entry.risk_profile,
+                            "selection_hint": entry.selection_hint,
+                        }
+                    ]
+            else:
+                data = _list_modes()
+    except (ValueError, KeyError, Exception) as exc:  # noqa: BLE001
+        data = {"error": str(exc)}
     return _ToolResult(content=_json.dumps(data), structured_content=data, meta={})
 
 
@@ -895,7 +905,8 @@ def thegent_list_droids(
 ) -> Any:
     """List available droids."""
     resolved = Path(cd) if cd else default_cwd
-    droid_names = list_droids_impl(cd=resolved)
+    with mcp_budget_context("tool_invoke_ms"):
+        droid_names = list_droids_impl(cd=resolved)
     return _ToolResult(
         content=_json.dumps(droid_names),
         structured_content={"droids": droid_names},
