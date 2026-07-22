@@ -982,13 +982,22 @@ class RunRegistry:
                     if "feedback_score" in data:
                         runs[run_id]["feedback_score"] = data.get("feedback_score")
 
-                    # Merge end event data
+                    # Merge end event data — AUDIT-N+28 dual-mode: read
+                    # both the legacy ``duration`` key (if any) and the
+                    # canonical ``duration_s`` key (the AUDIT-N+28 contract
+                    # always writes ``duration_s`` so the merged dict
+                    # always carries the canonical key).
                     if data.get("event") == "end" or "status" in data:
                         runs[run_id]["status"] = data.get("status", "completed")
                         if "ended_at_utc" in data:
                             runs[run_id]["ended_at_utc"] = data.get("ended_at_utc", "")
-                        if "duration" in data:
-                            runs[run_id]["duration"] = data.get("duration", 0.0)
+                        if "duration_s" in data:
+                            runs[run_id]["duration_s"] = data.get("duration_s", 0.0)
+                        elif "duration" in data:
+                            # Legacy registry files (pre-AUDIT-N+28) carry
+                            # the ``duration`` key — surface it under the
+                            # canonical ``duration_s`` name.
+                            runs[run_id]["duration_s"] = data.get("duration", 0.0)
                         if "exit_code" in data:
                             runs[run_id]["exit_code"] = data.get("exit_code", 0)
                 except (json.JSONDecodeError, KeyError):
@@ -1064,18 +1073,53 @@ class RunRegistry:
         """Register a run resume."""
         self._states[run_id] = RunState.RUNNING
 
-    def register_end(
+    def register_end(  # noqa: PLR0913 - AUDIT-N+28 dual-mode bridge (legacy 5-arg + new kwarg forms)
         self,
         run_id: str,
         exit_code: int,
         status: str,
-        ended_at: str,
-        duration: float,
+        # AUDIT-N+28 dual-mode bridge — legacy callers pass ``ended_at`` /
+        # ``duration`` (5-positional-arg form, used by test_unit_execution.py
+        # and the prior canonical contract); new callers (run_execution_core_helpers,
+        # use_cases/execute_task, integration tests) pass ``ended_at_utc`` /
+        # ``duration_s`` / ``event_details`` / ``error_class``. The bridge
+        # honours whichever form is supplied and persists the canonical
+        # ``ended_at_utc`` / ``duration_s`` keys for the hash-chained finish
+        # entry so the persisted JSONL is form-agnostic downstream.
+        ended_at: str | None = None,
+        duration: float | None = None,
+        ended_at_utc: str | None = None,
+        duration_s: float | None = None,
+        error_class: str | None = None,
         cost_usd: float | None = None,
+        event_details: dict[str, Any] | None = None,
     ) -> None:
-        """Register a run end."""
+        """Register a run end.
+
+        AUDIT-N+28 dual-mode bridge: accepts both the legacy 5-arg positional
+        form (``run_id``, ``exit_code``, ``status``, ``ended_at``,
+        ``duration``) pinned by ``tests/test_unit_execution.py`` and the new
+        kwarg form (``run_id``, ``exit_code``, ``status``, ``ended_at_utc``,
+        ``duration_s``, ``error_class``, ``cost_usd``, ``event_details``)
+        pinned by the ``run_execution_core_helpers`` orchestrator +
+        ``use_cases/execute_task`` + integration tests. The persisted
+        registry entry uses the canonical ``ended_at_utc`` / ``duration_s``
+        keys so the JSONL stream is form-agnostic downstream.
+        """
         import json
         import hashlib
+
+        # AUDIT-N+28 dual-mode: prefer new-form kwarg when both are supplied;
+        # otherwise fall back to legacy positional form.
+        canonical_ended_at = ended_at_utc if ended_at_utc is not None else ended_at
+        canonical_duration = duration_s if duration_s is not None else duration
+        if canonical_ended_at is None:
+            # Defensive default — callers must supply at least one timestamp.
+            import datetime as _dt
+
+            canonical_ended_at = _dt.datetime.now(_dt.timezone.utc).isoformat()
+        if canonical_duration is None:
+            canonical_duration = 0.0
 
         if status == "completed":
             self._states[run_id] = RunState.COMPLETED
@@ -1087,18 +1131,29 @@ class RunRegistry:
         # Get last hash for chain
         prev_hash = self._get_last_hash() or "0" * 64
 
-        # Write end entry to registry file with hash chain
-        entry = {
+        # Write end entry to registry file with hash chain.
+        # AUDIT-N+28: canonical keys are ``ended_at_utc`` + ``duration_s`` so
+        # the persisted JSONL is form-agnostic downstream (the legacy keys
+        # ``ended_at`` / ``duration`` are no longer written).
+        entry: dict[str, Any] = {
             "run_id": run_id,
             "exit_code": exit_code,
             "status": status,
-            "ended_at": ended_at,
-            "duration": duration,
+            "ended_at_utc": canonical_ended_at,
+            "duration_s": canonical_duration,
             "event": "finish",
             "prev_hash": prev_hash,
         }
+        if error_class is not None:
+            entry["error_class"] = error_class
         if cost_usd is not None:
             entry["cost_usd"] = cost_usd
+        if event_details is not None:
+            # WL-119 + AUDIT-N+28: persist the structured event details
+            # (grounding_sources / context_usage_ratio / audio_transcript /
+            # etc.) inside the finish entry so the audit-trail replay can
+            # surface them without a second registry read.
+            entry["event_details"] = event_details
 
         # Calculate hash for this entry
         entry_copy = dict(entry.items())

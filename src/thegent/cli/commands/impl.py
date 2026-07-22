@@ -175,7 +175,12 @@ class DagPrioritizer:
 from thegent.cli.commands.dag_impl import DagDocument as DagDocument  # noqa: F401,E402,PLC0414
 
 
-def run_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
+def run_impl(
+    prompt: str,
+    audio_files: list[str] | None = None,
+    google_grounding: bool = False,
+    **kwargs: Any,
+) -> dict[str, Any]:
     """Run the implementation.
 
     Thin delegate to
@@ -186,10 +191,16 @@ def run_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
     The full execution pipeline (Pareto routing, policy, escalation,
     MAIF, observability) lives in the extracted core; this wrapper
     exists to keep the public CLI surface stable.
+
+    AUDIT-N+28: ``audio_files`` + ``google_grounding`` are explicit kwargs
+    (pinned by ``tests/test_wl116_audio_inputs.py::test_run_impl_accepts_audio_files_and_google_grounding``)
+    so callers see them in ``inspect.signature(run_impl)`` without having
+    to grep through ``**kwargs``. Both are forwarded to the canonical
+    helper verbatim alongside every other caller kwarg.
     """
     from thegent.cli.commands.run.impl_core_runners import run_impl_core
 
-    return run_impl_core(prompt=prompt, **kwargs)
+    return run_impl_core(prompt=prompt, audio_files=audio_files, google_grounding=google_grounding, **kwargs)
 
 
 def list_models_impl(**kwargs: Any) -> dict[str, Any]:
