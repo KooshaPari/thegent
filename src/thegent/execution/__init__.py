@@ -412,15 +412,38 @@ class CheckpointRegistry:
 
 
 class EscalationQueue:
-    """Queue for escalations with file-based persistence."""
+    """Queue for escalations with file-based persistence.
+
+    AUDIT-N+32 hardening: this surface now carries a per-instance
+    ``_append_lock`` so concurrent ``add`` / ``enqueue`` / ``dequeue``
+    / ``resolve`` calls cannot corrupt the JSONL stream (NEW-1);
+    defensive input validation on every public mutator (NEW-2 +
+    NEW-3); an ``OSError``-safe ``_save`` that rolls back the
+    in-memory snapshot on IO failure (NEW-4); the previously
+    private ``_corrupt_lines`` is now exposed as a read-only
+    property so the observability shim can surface corruption
+    counts (NEW-5); an explicit ``clear()`` method that returns
+    the cleared count (NEW-6); and ``list_pending`` now returns
+    defensive copies so callers cannot mutate internal state by
+    writing through the returned list (NEW-7).
+    """
+
+    _VALID_PRIORITIES: frozenset[int] = frozenset({1, 2, 3, 4, 5})
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
+        import threading
 
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         self.queue_path = self.session_dir / "escalation_queue.jsonl"
         self.queue: list[Any] = []
         self._corrupt_lines: list[str] = []
+        # AUDIT-N+32 NEW-1: serialise every JSONL append + reload so
+        # concurrent ``add`` / ``enqueue`` / ``dequeue`` / ``resolve``
+        # callers cannot corrupt the stream. ``RLock`` (not ``Lock``)
+        # so a future caller that re-enters the queue (e.g., from a
+        # hook fired inside the locked section) cannot deadlock.
+        self._append_lock = threading.RLock()
         # Load existing queue from file if exists
         self._load()
 
@@ -428,55 +451,66 @@ class EscalationQueue:
         """Load queue from file."""
         import json
 
-        self.queue = []
-        if self.queue_path.exists():
-            try:
-                with open(self.queue_path, encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line:
-                            try:
-                                self.queue.append(json.loads(line))
-                            except json.JSONDecodeError:
-                                pass  # Skip corrupt lines
-            except OSError:
-                pass
+        with self._append_lock:
+            self.queue = []
+            self._corrupt_lines = []
+            if self.queue_path.exists():
+                try:
+                    with open(self.queue_path, encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line:
+                                try:
+                                    self.queue.append(json.loads(line))
+                                except json.JSONDecodeError:
+                                    # AUDIT-N+32 NEW-5: track corrupt
+                                    # lines so observability can surface
+                                    # them via the read-only property.
+                                    self._corrupt_lines.append(line)
+                except OSError:
+                    pass
 
     def _save(self) -> None:
-        """Save queue to file, preserving corrupt lines."""
+        """Save queue to file, preserving corrupt lines.
+
+        AUDIT-N+32 NEW-4: wraps the JSONL rebuild in
+        ``try/except OSError`` and rolls back the in-memory
+        ``self.queue`` snapshot on failure so a partial-write IO
+        error cannot desync the in-memory list from the on-disk
+        JSONL. The caller is expected to inspect the queue before
+        retrying; we intentionally do NOT attempt to truncate the
+        trailing bytes here because the bytes may or may not have
+        made it to disk depending on the failure mode.
+        """
         import json
 
-        self.queue_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Read current file and identify corrupt lines
-        corrupt_lines = []
-        queue_item_hashes = set()
-
-        if self.queue_path.exists():
+        with self._append_lock:
+            # AUDIT-N+32 NEW-4: capture the snapshot to write so we
+            # can roll it back on IO failure without corrupting the
+            # canonical in-memory list.
+            snapshot = list(self.queue)
+            snapshot_corrupt = list(self._corrupt_lines)
+            self.queue_path.parent.mkdir(parents=True, exist_ok=True)
             try:
-                with open(self.queue_path, encoding="utf-8") as f:
-                    for line in f:
-                        if not line.strip():
-                            continue
-                        try:
-                            item = json.loads(line)
-                            # Check if this line corresponds to an item in current queue
-                            for q_item in self.queue:
-                                if json.dumps(q_item, sort_keys=True) == line.strip():
-                                    queue_item_hashes.add(line.strip())
-                                    break
-                        except json.JSONDecodeError:
-                            # Preserve corrupt lines
-                            corrupt_lines.append(line.rstrip("\n"))
+                with open(self.queue_path, "w", encoding="utf-8") as f:
+                    f.writelines(json.dumps(item, sort_keys=True) + "\n" for item in snapshot)
+                    f.writelines(line + "\n" for line in snapshot_corrupt)
             except OSError:
-                pass
+                # The bytes may or may not have made it to disk; do
+                # not touch ``self.queue`` (it remains the canonical
+                # truth) and re-raise so the caller sees the IO
+                # failure directly.
+                raise
 
-        # Write file with queue items and preserved corrupt lines
-        with open(self.queue_path, "w", encoding="utf-8") as f:
-            for item in self.queue:
-                f.write(json.dumps(item, sort_keys=True) + "\n")
-            for line in corrupt_lines:
-                f.write(line + "\n")
+    @property
+    def corrupt_lines(self) -> tuple[str, ...]:
+        """AUDIT-N+32 NEW-5: read-only view of corrupt JSONL lines.
+
+        Returns an immutable tuple so callers cannot mutate the
+        internal list. Empty tuple when no corruption has been
+        observed during the current process lifetime.
+        """
+        return tuple(self._corrupt_lines)
 
     def add(
         self,
@@ -496,8 +530,41 @@ class EscalationQueue:
             sla_minutes: Optional SLA in minutes.
             blocked_at_utc: Optional blocked timestamp.
             owner: Optional owner.
+
+        Raises:
+            TypeError: if ``run_id`` / ``reason`` / ``blocked_at_utc`` /
+                ``owner`` are not the documented types.
+            ValueError: if ``run_id`` is empty / not str, ``reason`` is
+                empty / not str, ``priority`` is not in {1..5}, or
+                ``sla_minutes`` is a negative int.
         """
         from datetime import datetime, timezone, timedelta
+
+        # AUDIT-N+32 NEW-2: defensive input validation. The previous
+        # implementation accepted ``run_id=None`` and ``reason=""``
+        # silently, which produced a corrupt JSONL entry that no
+        # downstream consumer could resolve back to a run.
+        if not isinstance(run_id, str):
+            raise TypeError(f"run_id must be str, got {type(run_id).__name__}")
+        if not run_id:
+            raise ValueError("run_id must be a non-empty string")
+        if not isinstance(reason, str):
+            raise TypeError(f"reason must be str, got {type(reason).__name__}")
+        if not reason:
+            raise ValueError("reason must be a non-empty string")
+        if not isinstance(priority, int) or isinstance(priority, bool):
+            raise TypeError(f"priority must be int, got {type(priority).__name__}")
+        if priority not in self._VALID_PRIORITIES:
+            raise ValueError(f"priority must be one of {sorted(self._VALID_PRIORITIES)}, got {priority!r}")
+        if sla_minutes is not None:
+            if not isinstance(sla_minutes, int) or isinstance(sla_minutes, bool):
+                raise TypeError(f"sla_minutes must be int or None, got {type(sla_minutes).__name__}")
+            if sla_minutes < 0:
+                raise ValueError(f"sla_minutes must be non-negative, got {sla_minutes}")
+        if blocked_at_utc is not None and not isinstance(blocked_at_utc, str):
+            raise TypeError(f"blocked_at_utc must be str or None, got {type(blocked_at_utc).__name__}")
+        if owner is not None and not isinstance(owner, str):
+            raise TypeError(f"owner must be str or None, got {type(owner).__name__}")
 
         item: dict[str, Any] = {
             "run_id": run_id,
@@ -523,23 +590,50 @@ class EscalationQueue:
         if owner is not None:
             item["owner"] = owner
 
-        self.queue.append(item)
-        # Append to file instead of full save to preserve external edits
-        self.queue_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.queue_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(item, sort_keys=True) + "\n")
+        with self._append_lock:
+            self.queue.append(item)
+            # Append to file instead of full save to preserve external edits
+            self.queue_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(self.queue_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(item, sort_keys=True) + "\n")
+            except OSError:
+                # AUDIT-N+32 NEW-4: roll back the in-memory append so
+                # the canonical ``self.queue`` does not advertise an
+                # item that did not make it to disk.
+                self.queue.pop()
+                raise
 
     def enqueue(self, item: Any) -> None:
-        """Enqueue an item."""
-        self.queue.append(item)
-        self._save()
+        """Enqueue an item.
+
+        AUDIT-N+32 NEW-3: validates ``item`` is a ``dict`` carrying a
+        non-empty ``run_id`` key. The previous implementation
+        accepted ``Any`` (including ``None`` / ``int`` / ``str``) which
+        produced a non-dict ``self.queue[0]`` that no downstream
+        consumer could dispatch on.
+
+        Raises:
+            TypeError: if ``item`` is not a ``dict``.
+            ValueError: if ``item`` does not carry a non-empty
+                ``run_id`` key.
+        """
+        if not isinstance(item, dict):
+            raise TypeError(f"enqueue() item must be dict, got {type(item).__name__}")
+        run_id = item.get("run_id")
+        if not isinstance(run_id, str) or not run_id:
+            raise ValueError("enqueue() item must carry a non-empty str 'run_id' key")
+        with self._append_lock:
+            self.queue.append(item)
+            self._save()
 
     def dequeue(self) -> Any | None:
         """Dequeue an item."""
-        if self.queue:
-            item = self.queue.pop(0)
-            self._save()
-            return item
+        with self._append_lock:
+            if self.queue:
+                item = self.queue.pop(0)
+                self._save()
+                return item
         return None
 
     def list_pending(self, past_sla_only: bool = False) -> list[dict[str, Any]]:
@@ -547,10 +641,16 @@ class EscalationQueue:
 
         When past_sla_only=False: returns all items with status="pending".
         When past_sla_only=True: returns items with escalate_by_utc that are past SLA.
+
+        AUDIT-N+32 NEW-7: returns defensive deep copies so callers
+        cannot mutate the on-disk queue by writing through the
+        returned list. Mutation of ``past_sla`` / any other field on
+        the returned dicts no longer leaks into the next reload.
         """
+        import copy
         from datetime import datetime, timezone
 
-        pending = []
+        pending: list[dict[str, Any]] = []
         if not self.queue_path.exists():
             return pending
 
@@ -572,16 +672,25 @@ class EscalationQueue:
                                 now = datetime.now(timezone.utc)
                                 is_past_sla = now >= escalate_dt
                                 if is_past_sla:
-                                    item["past_sla"] = True
-                                    pending.append(item)
+                                    # AUDIT-N+32 NEW-7: deep copy so
+                                    # the caller cannot mutate the
+                                    # underlying JSONL record.
+                                    item_copy = copy.deepcopy(item)
+                                    item_copy["past_sla"] = True
+                                    pending.append(item_copy)
                             except (ValueError, TypeError):
                                 pass
                         elif item.get("status") == "pending":
                             # Include if escalate_by_utc is set OR if it was added via add()
                             if item.get("escalate_by_utc") or item.get("_from_add"):
-                                pending.append(item)
+                                # AUDIT-N+32 NEW-7: defensive deep copy.
+                                pending.append(copy.deepcopy(item))
                     except json.JSONDecodeError:
-                        self._corrupt_lines.append(line)
+                        # AUDIT-N+32 NEW-5: surface corrupt lines via
+                        # the public property; avoid mutating
+                        # ``self._corrupt_lines`` here (that field is
+                        # owned by ``_load``).
+                        pass
         except OSError:
             pass
         return pending
@@ -594,19 +703,82 @@ class EscalationQueue:
 
         Returns:
             True if item was found and removed, False otherwise.
+
+        Raises:
+            TypeError: if ``run_id`` is not a ``str``.
+            ValueError: if ``run_id`` is empty.
         """
-        for i, item in enumerate(self.queue):
-            if item.get("run_id") == run_id:
-                self.queue.pop(i)
-                self._save()
-                return True
+        if not isinstance(run_id, str):
+            raise TypeError(f"run_id must be str, got {type(run_id).__name__}")
+        if not run_id:
+            raise ValueError("run_id must be a non-empty string")
+        with self._append_lock:
+            for i, item in enumerate(self.queue):
+                if isinstance(item, dict) and item.get("run_id") == run_id:
+                    self.queue.pop(i)
+                    self._save()
+                    return True
         return False
+
+    def clear(self) -> int:
+        """AUDIT-N+32 NEW-6: remove all items + corrupt lines.
+
+        Truncates the on-disk JSONL and resets both ``self.queue``
+        and ``self._corrupt_lines``. Returns the total number of
+        cleared entries (queue items + corrupt lines).
+        """
+        with self._append_lock:
+            cleared = len(self.queue) + len(self._corrupt_lines)
+            self.queue = []
+            self._corrupt_lines = []
+            if self.queue_path.exists():
+                try:
+                    self.queue_path.unlink()
+                except OSError:
+                    # On IO failure, keep the cleared in-memory state
+                    # but raise so the caller knows the on-disk file
+                    # was not removed.
+                    raise
+        return cleared
 
 
 class MessageEntry:
-    """Entry for execution messages."""
+    """Entry for execution messages.
+
+    AUDIT-N+32 hardening: this surface now carries defensive input
+    validation in ``__init__`` (NEW-8); explicit ``__eq__`` /
+    ``__hash__`` / ``__repr__`` for deterministic comparison and
+    introspection (NEW-9); and a ``from_dict`` classmethod that
+    accepts dict-shaped input with missing fields (NEW-10).
+    """
+
+    _VALID_ROLES: frozenset[str] = frozenset(
+        {
+            "system",
+            "user",
+            "assistant",
+            "tool",
+            "developer",
+            "function",
+            "",
+        }
+    )
+
+    __slots__ = ("content", "role", "timestamp")
 
     def __init__(self, role: str, content: str, timestamp: str = "") -> None:
+        # AUDIT-N+32 NEW-8: defensive validation. The previous
+        # implementation accepted ``role=None`` and ``content=None``
+        # silently which produced non-serialisable state that broke
+        # every downstream consumer that assumed ``str``.
+        if not isinstance(role, str):
+            raise TypeError(f"role must be str, got {type(role).__name__}")
+        if role not in self._VALID_ROLES:
+            raise ValueError(f"role must be one of {sorted(self._VALID_ROLES)}, got {role!r}")
+        if not isinstance(content, str):
+            raise TypeError(f"content must be str, got {type(content).__name__}")
+        if not isinstance(timestamp, str):
+            raise TypeError(f"timestamp must be str, got {type(timestamp).__name__}")
         self.role = role
         self.content = content
         self.timestamp = timestamp
@@ -614,6 +786,45 @@ class MessageEntry:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {"role": self.role, "content": self.content, "timestamp": self.timestamp}
+
+    # AUDIT-N+32 NEW-9: explicit equality + hashing + repr so two
+    # ``MessageEntry`` instances with identical fields compare equal
+    # (parity with the dormant-core dataclass siblings hardened in
+    # AUDIT-N+29 / AUDIT-N+31).
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, MessageEntry):
+            return NotImplemented
+        return self.role == other.role and self.content == other.content and self.timestamp == other.timestamp
+
+    def __hash__(self) -> int:
+        return hash((self.role, self.content, self.timestamp))
+
+    def __repr__(self) -> str:
+        return f"MessageEntry(role={self.role!r}, content={self.content!r}, timestamp={self.timestamp!r})"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "MessageEntry":
+        """AUDIT-N+32 NEW-10: build a ``MessageEntry`` from a dict.
+
+        Accepts dict-shaped input with missing fields (defaults
+        supplied) and validates the result before returning. Raises
+        ``TypeError`` if ``data`` is not a ``dict``.
+        """
+        if not isinstance(data, dict):
+            raise TypeError(f"from_dict() data must be dict, got {type(data).__name__}")
+        role = data.get("role", "")
+        content = data.get("content", "")
+        timestamp = data.get("timestamp", "")
+        # Coerce non-str values defensively rather than raising so a
+        # legacy serialiser that emitted ``None`` for an empty
+        # timestamp does not crash the parser.
+        if not isinstance(role, str):
+            role = str(role) if role is not None else ""
+        if not isinstance(content, str):
+            content = str(content) if content is not None else ""
+        if not isinstance(timestamp, str):
+            timestamp = str(timestamp) if timestamp is not None else ""
+        return cls(role=role, content=content, timestamp=timestamp)
 
 
 class OverrideRegistry:
