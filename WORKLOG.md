@@ -8303,3 +8303,62 @@ audit pass 8 findings (B1 race, B3 reconciliation) also closed.
    rotation) and AUDIT-4 (WL-124 stub renaming) remain tracked
    for the next sprint.
 
+## 2026-07-22: SOTA Audit Pass 9 — cockpit traffic → mcp_audit_recent(n) bridge
+
+### Goal
+Pass 8 left an explicit unblocked item: pipe the `cockpit traffic`
+subcommand through `mcp_audit_recent(n)` so operators can read the
+MCP audit trail directly from the traffic-pane dashboard. Pass 9
+implements that bridge end-to-end.
+
+### Scope
+- **`src/thegent/ux/cli_cockpit.py`** — extended
+  `cockpit_traffic_summary` with three new opt-in flags:
+  - `--include-mcp-audit / --no-mcp-audit` (default off)
+  - `--mcp-audit-lines N` (default 10, clamped to ≥1)
+  - `--mcp-kind / --mcp-agent / --mcp-outcome` filter forwarding
+- Added `_fetch_mcp_audit_stats`, `_fetch_mcp_audit_entries`,
+  `_render_audit_rows` helpers — pure data + presentation, no I/O
+  side effects.
+- The `--json` envelope gains three stable keys:
+  `mcp_audit_stats`, `mcp_audit_recent`, `mcp_audit_filters`,
+  plus an optional `mcp_audit_error` if the helpers raise.
+- The text-mode dashboard gains an `MCP audit trail:` block: stats
+  line, optional breadcrumb, then aligned `  [mcp-audit] seq=N ...`
+  rows, with a `(no MCP audit entries match the current filter)`
+  neutral line when the filter excludes everything.
+
+### Validation
+- 17 new tests in
+  `tests/test_unit_cockpit_traffic_mcp_audit.py` covering:
+  flag composition, JSON envelope stability, filter forwarding,
+  recent cap, neutral-line rendering, programmatic-API parity
+  (`mcp_audit_recent` mirrors the envelope), invalid-arg
+  rejection, and error containment. **All 17 pass.**
+- Regression: 98/98 tests in adjacent lanes
+  (`test_unit_ux_cockpit_audit_mcp_tail.py`,
+  `test_unit_ux_cockpit.py`, `test_unit_ux_cockpit_bridge.py`).
+- `ruff check` + `ruff format` clean on both files.
+
+### Cockpit progress bar
+- **Before Pass 9:** 92% (Pass 8 closure)
+- **After Pass 9:** **94%** — `cockpit traffic --include-mcp-audit`
+  lane closed end-to-end (3 cockpit observability gauges now
+  surface the audit trail; new programmatic-API parity contract
+  pinned by the test suite).
+
+### DAG tick
+- Pass 8 → Pass 9: +1 cockpit-observability tick
+  (`cockpit_traffic_audit_bridge`). Tails remain:
+  Pre-existing collection repair, FederatedPolicyEngine async
+  upgrade, AUDIT-3 (DecisionAuditAppender rotation),
+  AUDIT-4 (WL-124 stub renaming).
+
+### Carry-forward
+- Pass 10 candidate: extend `cockpit latency` and
+  `cockpit budget` panes with the same `--include-mcp-audit`
+  bridge so all three traffic-related cockpit views share one
+  audit trail surface. Saturated lanes (CLI-1..5, AUDIT-1/2/6/9,
+  F-1..F-15, NEW-1..23, KA-1..6, A11Y-1, TEST-1, WL-224/225,
+  diskcache, CachePreWarmer) remain closed.
+

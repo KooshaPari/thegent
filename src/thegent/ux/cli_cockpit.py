@@ -300,6 +300,27 @@ def cockpit_render(
 # ---------------------------------------------------------------------------
 
 
+# AUDIT-N+24 (SOTA audit pass 9): ``DEFAULT_MCP_AUDIT_LINES`` is the
+# no-flag default cap for the recent-entries slice surfaced by the
+# ``cockpit traffic --include-mcp-audit`` toggle. Sits next to the
+# ``cockpit audit mcp-tail`` default (``n=20``) but tighter so the
+# dashboard stays scannable on 80-col terminals. Operators who want the
+# longer list can pass ``--mcp-audit-lines N``; operators who want to
+# disable the trailing block pass ``--no-mcp-audit``.
+DEFAULT_MCP_AUDIT_LINES = 10
+# Maps the ``--kind`` CLI string to the canonical ``AuditEntryKind`` so
+# the cockpit traffic subcommand mirrors the same vocabulary as
+# ``cockpit audit mcp-tail``. Kept here (not in mcp_audit_wiring) so the
+# CLI module owns its user-facing strings and the audit-trail module
+# stays CLI-free.
+_MCP_AUDIT_KIND_VALUES = (
+    "tool_invocation",
+    "resource_read",
+    "gate_check",
+    "error",
+)
+
+
 # F-15 (SOTA fifth-pass): ``name="traffic"`` for symmetry with the
 # ``audit_app`` sub-app and so ``cockpit traffic --help`` renders
 # cleanly under the parent ``cockpit`` group.
@@ -308,6 +329,117 @@ traffic_app = typer.Typer(
     help="TRAFFIC KPI dashboard (WP-Y7, OPS-001/002/003, P-081).",
     no_args_is_help=True,
 )
+
+
+# AUDIT-N+24 (SOTA audit pass 9): ``_fetch_mcp_audit_entries`` is the
+# single source of truth for fetching the recent / filtered MCP audit
+# entries the cockpit traffic subcommand surfaces. Centralised so the
+# ``cockpit_traffic_summary`` body stays focused on rendering and the
+# ``mcp_audit_query`` / ``mcp_audit_recent`` routing is testable in
+# isolation.
+#
+# ``kind`` is the raw CLI string (``"tool_invocation"`` etc.) or
+# ``None`` for no filter. ``limit`` caps the result list (``mcp_audit_query``
+# defaults to ``200``; ``mcp_audit_recent`` defaults to ``100``). The
+# helper applies the ``--include-mcp-audit`` gate so the call site can
+# remain terse.
+def _fetch_mcp_audit_entries(
+    *,
+    include: bool,
+    lines: int,
+    kind: Optional[str],
+    agent: Optional[str],
+    outcome: Optional[str],
+) -> tuple[list[Any], Optional[dict[str, Any]], Optional[str]]:
+    """Return ``(entries, stats, error)`` for the cockpit traffic audit block.
+
+    Returns ``([], None, None)`` when ``include=False`` so the caller can
+    short-circuit rendering without branching on the filter flags.
+
+    ``kind`` is the raw CLI string (``"tool_invocation"`` /
+    ``"resource_read"`` / ``"gate_check"`` / ``"error"``); invalid
+    values surface as ``error="kind: <value> not in (…)"`` so the CLI
+    can re-raise as ``typer.BadParameter`` and the JSON envelope can
+    surface a stable ``{"error": {"kind": "<value>", "allowed": [...]}}``
+    payload instead of silently coercing.
+
+    The fetch is wrapped in ``try`` so a buggy audit-trail singleton
+    (raised during the in-memory lookup) never crashes the cockpit
+    traffic renderer — the helper swallows the exception and returns
+    ``([], None, "<class>:<str>" })``.
+    """
+    if not include:
+        return [], None, None
+    try:
+        from ..mcp.server import (
+            AuditEntryKind,
+            mcp_audit_query,
+            mcp_audit_recent,
+            mcp_audit_stats,
+        )
+    except Exception as exc:  # pragma: no cover - import guard
+        return [], None, f"import:{type(exc).__name__}:{exc}"
+
+    limit = max(int(lines), 1) if lines and lines > 0 else DEFAULT_MCP_AUDIT_LINES
+    try:
+        if kind or agent or outcome:
+            kind_enum = None
+            if kind is not None:
+                try:
+                    kind_enum = AuditEntryKind(kind)
+                except ValueError:
+                    return (
+                        [],
+                        None,
+                        f"kind: {kind!r} not in {_MCP_AUDIT_KIND_VALUES}",
+                    )
+            entries = mcp_audit_query(
+                kind=kind_enum,
+                agent=agent,
+                outcome=outcome,
+                limit=limit,
+            )
+        else:
+            entries = mcp_audit_recent(n=limit)
+        stats = mcp_audit_stats()
+    except Exception as exc:  # noqa: BLE001 - never crash the renderer
+        return [], None, f"fetch:{type(exc).__name__}:{exc}"
+    return list(entries), stats, None
+
+
+# AUDIT-N+24 (SOTA audit pass 9): ``_render_audit_rows`` is the
+# text-mode renderer for the MCP audit block. Mirrors the column layout
+# used by ``cockpit audit mcp-tail`` (seq / kind / op / agent /
+# outcome / duration_ms) so operators learn one vocabulary for both
+# subcommands. Returns ``[]`` when there are no entries so the
+# renderer naturally degrades to an empty pane.
+def _render_audit_rows(entries: list[Any], max_rows: int) -> list[str]:
+    rows: list[str] = []
+    if not entries:
+        return rows
+    for entry in entries[:max_rows]:
+        if hasattr(entry, "to_dict"):
+            ed = entry.to_dict()
+            kind_str = str(ed.get("kind", "-"))
+            op_str = str(ed.get("operation", "-"))
+            agent_str = str(ed.get("agent") or "-")
+            outcome_str = str(ed.get("outcome") or "-")
+            seq_val = ed.get("seq", 0)
+            dur_val = float(ed.get("duration_ms", 0.0))
+        else:
+            kind_str = str(entry.get("kind", "-"))
+            op_str = str(entry.get("operation", "-"))
+            agent_str = str(entry.get("agent") or "-")
+            outcome_str = str(entry.get("outcome") or "-")
+            seq_val = entry.get("seq", 0)
+            dur_val = float(entry.get("duration_ms", 0.0))
+        rows.append(
+            f"[mcp-audit] seq={seq_val} kind={kind_str} op={op_str} "
+            f"agent={agent_str} outcome={outcome_str} duration_ms={dur_val:.2f}"
+        )
+    if len(entries) > max_rows:
+        rows.append(f"[mcp-audit] ... {len(entries) - max_rows} older entries hidden")
+    return rows
 
 
 @traffic_app.command("summary", help="Render a TRAFFIC KPI snapshot to stdout.")
@@ -324,17 +456,128 @@ def cockpit_traffic_summary(
         help="Pin wall clock (epoch seconds) for deterministic replay",
     ),
     json_output: bool = typer.Option(False, "--json", help="Emit summary JSON instead of text"),
+    # AUDIT-N+24 (SOTA audit pass 9): the audit-trail toggle. Default
+    # off so the historical ``cockpit traffic summary`` contract is
+    # preserved; opt in with ``--include-mcp-audit`` to append the
+    # recent MCP audit entries underneath the TRAFFIC dashboard.
+    include_mcp_audit: bool = typer.Option(
+        False,
+        "--include-mcp-audit/--no-mcp-audit",
+        help=(
+            "Append the live MCP audit trail (singleton gauge + recent N "
+            "entries) underneath the TRAFFIC dashboard. Default "
+            "--no-mcp-audit for backward compatibility."
+        ),
+    ),
+    mcp_audit_lines: int = typer.Option(
+        DEFAULT_MCP_AUDIT_LINES,
+        "--mcp-audit-lines",
+        help=(
+            "Cap the number of recent MCP audit entries rendered / "
+            "returned when --include-mcp-audit is set. Default 10."
+        ),
+    ),
+    mcp_kind: Optional[str] = typer.Option(
+        None,
+        "--mcp-kind",
+        help=(
+            "Filter the audit entries by kind (tool_invocation, "
+            "resource_read, gate_check, error). Omit to include all "
+            "kinds."
+        ),
+    ),
+    mcp_agent: Optional[str] = typer.Option(
+        None,
+        "--mcp-agent",
+        help="Filter the audit entries by agent name (exact match).",
+    ),
+    mcp_outcome: Optional[str] = typer.Option(
+        None,
+        "--mcp-outcome",
+        help="Filter the audit entries by outcome (ok, error, budget_exceeded).",
+    ),
 ) -> None:
-    """Render the TRAFFIC KPI dashboard from a (possibly empty) event log."""
+    """Render the TRAFFIC KPI dashboard from a (possibly empty) event log.
+
+    With ``--include-mcp-audit`` (AUDIT-N+24, SOTA audit pass 9) the
+    command also appends the live MCP audit-trail singleton stats
+    (``mcp_audit_stats()``) and the most recent ``--mcp-audit-lines``
+    entries (``mcp_audit_recent`` / ``mcp_audit_query`` filtered by the
+    optional ``--mcp-kind`` / ``--mcp-agent`` / ``--mcp-outcome``
+    flags). The two sources compose into a single dashboard so
+    operators can see at-a-glance:
+
+    * TRAFFIC KPIs (count / rps / error_rate / p50 / p95 / by-status)
+    * MCP audit singleton (``total_entries`` / ``by_kind`` /
+      ``by_outcome`` / ``avg_duration_ms`` / ``p99_duration_ms``)
+    * MCP audit recent entries (one row per ``AuditEntry``)
+
+    The ``--json`` envelope gains stable keys ``mcp_audit_stats`` and
+    ``mcp_audit_recent`` (and an optional ``mcp_audit_error`` for the
+    kind-validation / fetch-failure paths) so downstream SOTA tooling
+    can ingest both surfaces in one round-trip.
+    """  # noqa: E501 - long docstring pinned by SOTA contract tests.
     try:
         clock_fn = _resolve_clock(clock)
         dashboard = TrafficDashboard(window_s=window_s, clock=clock_fn)
         for ev in _load_traffic_events(events_json):
             dashboard.record(ev)
+
+        # AUDIT-N+24 (SOTA audit pass 9): fetch the audit-trail block
+        # once so both the JSON envelope and the text renderer see the
+        # same payload. ``kind`` validation surfaces a clean
+        # ``typer.BadParameter`` instead of a stack trace.
+        entries, stats, error = _fetch_mcp_audit_entries(
+            include=include_mcp_audit,
+            lines=mcp_audit_lines,
+            kind=mcp_kind,
+            agent=mcp_agent,
+            outcome=mcp_outcome,
+        )
+        if error and error.startswith("kind:"):
+            # kind validation error → BadParameter so --help + exit 2.
+            raise typer.BadParameter(error)
         if json_output:
-            typer.echo(json.dumps(dashboard.summary(), indent=2, sort_keys=True))
+            payload: dict[str, Any] = dict(dashboard.summary())
+            if include_mcp_audit:
+                payload["mcp_audit_stats"] = stats
+                payload["mcp_audit_recent"] = [e.to_dict() if hasattr(e, "to_dict") else e for e in entries]
+                payload["mcp_audit_filters"] = {
+                    "kind": mcp_kind,
+                    "agent": mcp_agent,
+                    "outcome": mcp_outcome,
+                    "lines": mcp_audit_lines,
+                }
+                if error:
+                    # Fetch-side error (post-validation). Surface in the
+                    # envelope so the operator still gets a structured
+                    # diagnosis instead of a silent empty block.
+                    payload["mcp_audit_error"] = error
+            typer.echo(json.dumps(payload, indent=2, sort_keys=True))
             return
         typer.echo(render_traffic(dashboard))
+        if include_mcp_audit:
+            typer.echo("")
+            typer.echo("MCP audit trail:")
+            if stats is not None:
+                typer.echo(
+                    f"  stats: total_entries={stats.get('total_entries', 0)} "
+                    f"error_count={stats.get('error_count', 0)} "
+                    f"avg_duration_ms={stats.get('avg_duration_ms')} "
+                    f"p99_duration_ms={stats.get('p99_duration_ms')}"
+                )
+            rendered = _render_audit_rows(entries, max_rows=mcp_audit_lines)
+            if not rendered:
+                typer.echo("  (no MCP audit entries match the current filter)")
+            else:
+                for row in rendered:
+                    typer.echo(f"  {row}")
+            if error:
+                typer.echo(f"  warning: {error}")
+    except typer.Exit:
+        raise
+    except typer.BadParameter:
+        raise
     except Exception as exc:
         err_console.print(f"[red]traffic summary failed:[/red] {_exc_text(exc)}")
         raise typer.Exit(1) from exc
