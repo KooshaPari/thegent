@@ -735,49 +735,19 @@ from thegent.cli.commands.observability_impl import (  # noqa: F401
     _health_scope_key,
 )
 
-# WL-120 extraction routing: thin delegation wrappers that shadow the
-# AUDIT-N+9 re-exports so ``inspect.getsource()`` returns the expected
-# ``run_input_helpers`` / ``run_event_helpers`` / ``run_audio_helpers`` /
-# ``run_model_helpers`` delegation pattern.
-
-
-def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str, Any]]:
-    """WL-120 thin delegate to :func:`run_input_helpers.resolve_grounding_sources_for_output`."""
-    return run_input_helpers.resolve_grounding_sources_for_output(sources)
-
-
-def _resolve_audio_transcript_for_output(
-    transcript: dict[str, Any] | None = None,
-    injected_audio_transcript: str | None = None,
-    result_audio_transcript: str | None = None,
-    **kwargs: Any,
-) -> dict[str, Any]:
-    """WL-125 thin delegate to :func:`run_event_helpers.resolve_audio_transcript_for_output`.
-
-    Supports both the legacy positional form and the WL-125 kwarg form
-    so that monkeypatch sites like
-    ``monkeypatch.setattr(..., run_event_helpers.resolve_audio_transcript_for_output, ...)``
-    are observed.
-    """
-    if injected_audio_transcript is not None or result_audio_transcript is not None:
-        return run_event_helpers.resolve_audio_transcript_for_output(
-            injected_audio_transcript=injected_audio_transcript,
-            result_audio_transcript=result_audio_transcript,
-        )
-    return run_event_helpers.resolve_audio_transcript_for_output(
-        injected_audio_transcript=transcript,
-        result_audio_transcript=kwargs.get("result_audio_transcript"),
-    )
-
-
-def _build_audio_summary_metadata(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    """WL-120 thin delegate to :func:`run_audio_helpers.build_audio_summary_metadata`."""
-    return run_audio_helpers.build_audio_summary_metadata(*args, **kwargs)
-
-
-def _build_run_event_details(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    """WL-120 thin delegate to :func:`run_event_helpers.build_run_event_details`."""
-    return run_event_helpers.build_run_event_details(*args, **kwargs)
+# AUDIT-N+27: no WL-120 shadow wrappers for the AUDIT-N+9 moved helpers
+# (``_resolve_audio_transcript_for_output`` /
+# ``_resolve_grounding_sources_for_output`` /
+# ``_build_audio_summary_metadata`` / ``_build_run_event_details``).
+# Each is a single canonical implementation in
+# :mod:`thegent.cli.commands.observability_impl` (which dispatches to the
+# service modules) so the WL-125 monkeypatch sites
+# (``impl.run_event_helpers.<name>``, ``impl.run_audio_helpers.<name>``,
+# ``impl.run_input_helpers.<name>``) are observed via the shared module
+# identity between ``impl`` and ``observability_impl`` for the imported
+# service modules. The re-export block above is the AUDIT-N+9 identity
+# contract — ``impl.<name> is observability_impl.<name>`` for every
+# member of :data:`tests.test_unit_audit_n9_observability_impl_extraction_parity.MOVED_HELPERS`.
 
 
 def _resolve_agent_model(
@@ -1341,8 +1311,8 @@ def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
 
 
 # -- run_audio_helpers ----------------------------------------------------
-# No AUDIT-N+9 shadow wrapper for ``_build_audio_summary_metadata``: the
-# observability_impl re-export (``impl._build_audio_summary_metadata is
+# AUDIT-N+27: no AUDIT-N+9 shadow wrapper for ``_build_audio_summary_metadata``.
+# The observability_impl re-export (``impl._build_audio_summary_metadata is
 # obs._build_audio_summary_metadata``) is pinned by the AUDIT-N+9 identity
 # test in tests/test_unit_audit_n9_observability_impl_extraction_parity.py.
 # The WL-125 module-attribute re-export above is sufficient — legacy callers
@@ -1351,8 +1321,8 @@ def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
 
 
 # -- run_event_helpers ----------------------------------------------------
-# No AUDIT-N+9 shadow wrapper for ``_resolve_audio_transcript_for_output`` /
-# ``_build_run_event_details``: same AUDIT-N+9 identity contract applies
+# AUDIT-N+27: no AUDIT-N+9 shadow wrapper for ``_resolve_audio_transcript_for_output`` /
+# ``_build_run_event_details``: the same AUDIT-N+9 identity contract applies
 # (see observability_impl re-export block). WL-125 callers reach the
 # canonical implementation via ``impl.run_event_helpers.<x>``.
 
@@ -1697,12 +1667,17 @@ def _validate_explicit_ollama_provider(
     )
 
 
-# AUDIT-N+9: re-export provides _build_audio_summary_metadata /
-# _resolve_audio_transcript_for_output / _build_run_event_details on ``impl``
-# so legacy callers (and ``tests/test_wl125_*_parity.py``
-# ``monkeypatch.setattr`` sites) resolve them via the canonical
-# observability_impl module. No local definitions here — that would shadow
-# the re-export and break AUDIT-N+9's identity checks.
+# AUDIT-N+27: ``_build_audio_summary_metadata`` /
+# ``_resolve_audio_transcript_for_output`` / ``_resolve_grounding_sources_for_output` /
+# ``_build_run_event_details`` are re-exported from ``observability_impl`` via
+# the AUDIT-N+9 re-export block above so legacy callers (and the
+# ``tests/test_wl125_*_parity.py`` ``monkeypatch.setattr`` sites via the
+# shared module-attribute identity between ``impl.run_*_helpers`` and the
+# observability_impl-imported services) resolve them through the canonical
+# observability_impl module. AUDIT-N+27 removed the prior WL-120 shadow
+# wrappers so the AUDIT-N+9 shim-purity contract
+# (``impl.py must not locally define any ``MOVED_HELPERS`` entry``)
+# holds.
 
 
 # AUDIT-N+9 IDENTITY CONTRACT: every helper in ``MOVED_HELPERS`` must be the

@@ -226,10 +226,11 @@ def _model_supports_vision_default(model: str) -> bool:
 
 
 def _resolve_audio_transcript_for_output(
-    transcript: dict[str, Any] | None = None,
-    result_audio_transcript: dict[str, Any] | None = None,
+    transcript: dict[str, Any] | str | None = None,
+    injected_audio_transcript: str | None = None,
+    result_audio_transcript: str | None = None,
     **kwargs: Any,
-) -> dict[str, Any]:
+) -> dict[str, Any] | str | None:
     """Resolve audio transcript for output.
 
     AUDIT-N+16 (WL-125 closure): dual-mode bridge.
@@ -242,40 +243,88 @@ def _resolve_audio_transcript_for_output(
       :func:`thegent.cli.services.run_event_helpers.resolve_audio_transcript_for_output`
       so the monkeypatch site
       ``monkeypatch.setattr("thegent.cli.commands.impl.run_event_helpers.resolve_audio_transcript_for_output", ...)``
-      is observed.
+      in ``tests/test_wl125_run_event_helpers_parity.py`` is observed.
+    * AUDIT-N+27 (WL-116 low-risk slice): when ``injected_audio_transcript=``
+      and ``result_audio_transcript=`` are explicitly supplied (the WL-116
+      form observed by ``tests/test_wl116_audio_inputs.py``), the helper
+      returns the canonical ``str | None`` from the service module
+      (``result_audio_transcript`` wins per
+      :func:`run_event_helpers.resolve_audio_transcript_for_output`).
 
     Args:
-        transcript: Legacy ``transcript`` dict or WL-125
-            ``injected_audio_transcript`` dict.
-        result_audio_transcript: WL-125 form only.
+        transcript: Legacy ``transcript`` dict or positional string
+            (WL-116 form).
+        injected_audio_transcript: WL-125/WL-116 form.
+        result_audio_transcript: WL-125/WL-116 form.
         **kwargs: WL-125 form via ``injected_audio_transcript=`` /
             ``result_audio_transcript=``.
 
     Returns:
-        Resolved audio transcript dict.
+        Resolved audio transcript (dict for legacy, ``str | None`` for
+        WL-125/WL-116).
     """
     from thegent.cli.services import run_event_helpers as _reh
 
-    # AUDIT-N+16 WL-125 dispatch — explicit kwargs → delegate via the
-    # canonical kwarg-only signature.
-    injected = kwargs.get("injected_audio_transcript", transcript)
-    result = kwargs.get("result_audio_transcript", result_audio_transcript)
-    if injected is not None and result is not None:
+    # AUDIT-N+27: detect WL-125 / WL-116 explicit-kwarg form.
+    if (
+        "injected_audio_transcript" in kwargs
+        or "result_audio_transcript" in kwargs
+        or injected_audio_transcript is not None
+        or result_audio_transcript is not None
+    ):
+        injected = kwargs.get("injected_audio_transcript", injected_audio_transcript)
+        result = kwargs.get("result_audio_transcript", result_audio_transcript)
+        if injected is None and isinstance(transcript, str):
+            injected = transcript
         return _reh.resolve_audio_transcript_for_output(
             injected_audio_transcript=injected,
             result_audio_transcript=result,
         )
     # AUDIT-N+9 legacy form: single dict positional arg.
-    transcript = injected or {}
+    transcript_dict = transcript if isinstance(transcript, dict) else {}
     return {
-        "transcript": transcript.get("text", ""),
-        "duration": transcript.get("duration", 0.0),
+        "transcript": transcript_dict.get("text", ""),
+        "duration": transcript_dict.get("duration", 0.0),
     }
 
 
-def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str, Any]]:
-    """Resolve grounding sources for output."""
-    return [{"source": s.get("source", ""), "content": s.get("content", "")[:100]} for s in sources]
+def _resolve_grounding_sources_for_output(
+    sources: list[dict[str, Any]] | None = None,
+    *,
+    stdout: str | None = None,
+    result_grounding_sources: list[str] | None = None,
+    **kwargs: Any,
+) -> list[dict[str, Any]] | list[str]:
+    """Resolve grounding sources for output.
+
+    AUDIT-N+27: dual-mode bridge.
+
+    * AUDIT-N+9 legacy form ``_resolve_grounding_sources_for_output(sources)``
+      returns ``[{"source": ..., "content": ...[:100]}, ...]`` (legacy
+      100-char content slice).
+    * WL-119 form ``_resolve_grounding_sources_for_output(stdout=..., result_grounding_sources=...)``
+      delegates to
+      :func:`thegent.cli.services.run_input_helpers.resolve_grounding_sources_for_output`
+      so the monkeypatch site
+      ``monkeypatch.setattr("thegent.cli.commands.impl.run_input_helpers.resolve_grounding_sources_for_output", ...)``
+      is observed and the WL-119 dedup / structured-result contract
+      (``tests/test_wl119_grounding_sources.py::test_resolve_grounding_sources_prefers_structured_result_list``)
+      holds.
+    """
+    if (
+        "stdout" in kwargs
+        or "result_grounding_sources" in kwargs
+        or stdout is not None
+        or result_grounding_sources is not None
+    ):
+        from thegent.cli.services import run_input_helpers as _rih
+
+        return _rih.resolve_grounding_sources_for_output(
+            stdout=stdout if stdout is not None else "",
+            result_grounding_sources=result_grounding_sources,
+        )
+    legacy_sources = sources or []
+    return [{"source": s.get("source", ""), "content": s.get("content", "")[:100]} for s in legacy_sources]
 
 
 def _inject_time_constraint(
