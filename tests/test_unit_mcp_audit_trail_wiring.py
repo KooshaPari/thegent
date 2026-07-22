@@ -50,12 +50,14 @@ Test surface (cross-cutting):
 from __future__ import annotations
 
 import threading
+import time as _time
 import warnings
 
 import pytest
 
 from thegent.mcp.server import (
     MCP_AUDIT_DEFAULT_MAX_ENTRIES,
+    audited_budget,
     audit_context,
     get_audit_trail,
     mcp_audit_query,
@@ -598,3 +600,269 @@ class TestSingletonSurvivesAcrossCallers:
         # Seqs are 1, 2 in arrival order
         ops = [e.operation for e in mcp_audit_recent()]
         assert ops == ["caller_a", "caller_b"]
+
+
+# ------------------------------------------------------------------
+# AUDIT-N+22 — outcome reconciliation (SOTA audit pass 8 B3)
+# ------------------------------------------------------------------
+
+
+class TestAuditContextOutcomeReconciliation:
+    """AUDIT-N+22 B3: when ``kind=ERROR`` is passed explicitly, the
+    recorded ``outcome`` is ``"error"`` even if the block succeeded.
+
+    Previously a caller that did ``with audit_context(kind=ERROR, ...):``
+    on a happy path would land a record with ``kind=error, outcome=ok``
+    — semantically contradictory and likely to mask audit anomalies
+    downstream. The fix reconciles the outcome to ``error`` so the
+    JSONL audit log + the cockpit's ``by_outcome`` breakdown stay
+    self-consistent.
+    """
+
+    def test_kind_error_success_records_outcome_error(self) -> None:
+        with audit_context(kind=AuditEntryKind.ERROR, operation="e_path"):
+            pass  # block succeeds
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].kind == AuditEntryKind.ERROR
+        assert recent[0].outcome == "error"
+        assert recent[0].error_message is None  # no exception was raised
+
+    def test_kind_tool_invocation_success_records_outcome_ok(self) -> None:
+        with audit_context(kind=AuditEntryKind.TOOL_INVOCATION, operation="t_path"):
+            pass
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].outcome == "ok"
+
+    def test_kind_error_string_coerces_and_reconciles(self) -> None:
+        with audit_context(kind="error", operation="e_str"):
+            pass
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].kind == AuditEntryKind.ERROR
+        assert recent[0].outcome == "error"
+
+    def test_exception_in_block_drives_error_outcome(self) -> None:
+        with pytest.raises(RuntimeError):
+            with audit_context(kind=AuditEntryKind.TOOL_INVOCATION, operation="boom"):
+                raise RuntimeError("kaboom")
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].outcome == "error"
+        assert recent[0].error_message is not None
+        assert "kaboom" in recent[0].error_message
+
+
+# ------------------------------------------------------------------
+# AUDIT-N+22 — singleton swap safety (SOTA audit pass 8 B1)
+# ------------------------------------------------------------------
+
+
+class TestConcurrentResetPreservesSeqOrdering:
+    """AUDIT-N+22 B1: a reset mid-write must NOT corrupt seq ordering.
+
+    The wiring module swaps the singleton under ``_lock``. Concurrent
+    ``record()`` calls that captured the old trail reference continue
+    writing to the OLD trail (Python's GIL guarantees the method
+    dispatch is atomic). The new trail starts a fresh seq counter at
+    1. After the reset, the new trail must NOT inherit seqs from the
+    old one (which would create a phantom history).
+
+    This test pins the swap semantics so a future refactor (e.g.,
+    moving to an async trail or a shared ring buffer) cannot silently
+    break it.
+    """
+
+    def test_reset_mid_write_starts_fresh_seq_counter(self) -> None:
+        reset_audit_trail()
+        old_trail = get_audit_trail()
+        old_trail.record(
+            kind=AuditEntryKind.TOOL_INVOCATION,
+            operation="pre_reset",
+            agent="a",
+            outcome="ok",
+        )
+        # Capture the old seq counter
+        pre_reset_seqs = [e.seq for e in old_trail.recent(n=10)]
+        assert pre_reset_seqs == [1]
+
+        # Swap the singleton
+        reset_audit_trail(max_entries=50)
+        new_trail = get_audit_trail()
+        assert new_trail is not old_trail
+
+        # New trail's seq counter must start at 1
+        entry = new_trail.record(
+            kind=AuditEntryKind.TOOL_INVOCATION,
+            operation="post_reset",
+            agent="a",
+            outcome="ok",
+        )
+        assert entry.seq == 1
+
+        # Old trail is now orphaned (not the singleton) but still
+        # accepts writes — its seq counter has continued from 2.
+        # This is documented behaviour: callers who hold a direct
+        # reference to the old trail can still write to it.
+        old_entry = old_trail.record(
+            kind=AuditEntryKind.TOOL_INVOCATION,
+            operation="orphaned",
+            agent="a",
+            outcome="ok",
+        )
+        assert old_entry.seq == 2
+
+    def test_concurrent_reset_under_writers_does_not_corrupt_singleton(self) -> None:
+        """B1 stress test: writers and a resetter run concurrently.
+
+        After the resetters have completed, the singleton must be one
+        of the two trails produced by the resets (not some interleaved
+        phantom). Each writer's last ``record()`` call lands on
+        whichever trail was current at that moment.
+        """
+        import threading
+
+        reset_audit_trail(max_entries=200)
+        barrier = threading.Barrier(8)
+        errors: list[BaseException] = []
+
+        def writer(idx: int) -> None:
+            try:
+                barrier.wait(timeout=5.0)
+                for i in range(50):
+                    get_audit_trail().record(
+                        kind=AuditEntryKind.GATE_CHECK,
+                        operation=f"w{idx}_{i}",
+                        agent=f"w{idx}",
+                        outcome="ok",
+                    )
+            except BaseException as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        def resetter(idx: int) -> None:
+            try:
+                barrier.wait(timeout=5.0)
+                for i in range(5):
+                    reset_audit_trail(max_entries=200 + idx * 10 + i)
+            except BaseException as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        threads: list[threading.Thread] = []
+        for i in range(6):
+            threads.append(threading.Thread(target=writer, args=(i,)))
+        for i in range(2):
+            threads.append(threading.Thread(target=resetter, args=(i,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=10.0)
+
+        assert not errors, f"workers raised: {errors!r}"
+        # The final singleton must have a coherent seq counter: each
+        # entry's seq equals its 1-based position within the current
+        # trail (we cannot pin the exact N because resetters may have
+        # swapped mid-write, but within whatever trail is current the
+        # seqs must form a contiguous 1..N range).
+        current = get_audit_trail()
+        seqs = [e.seq for e in current.recent(n=200)]
+        assert seqs == sorted(seqs), "seqs must be monotonic"
+        if seqs:
+            assert seqs == list(range(1, len(seqs) + 1)), (
+                f"fresh trail seqs must be contiguous 1..N; got {seqs[:5]}...{seqs[-3:]}"
+            )
+
+
+# ------------------------------------------------------------------
+# AUDIT-N+22 — audited_budget composite (SOTA audit pass 8 A2 helper)
+# ------------------------------------------------------------------
+
+
+class TestAuditedBudgetHelper:
+    """AUDIT-N+22 A2 helper: ``audited_budget`` composes
+    ``audit_context`` and ``mcp_budget_context`` so each MCP tool /
+    resource dispatch records exactly one audit entry and applies
+    the named perf budget in lockstep.
+    """
+
+    def test_success_path_records_one_entry_and_no_budget_exceeded(self) -> None:
+        from thegent.mcp.server.mcp_perf_gates import MCP_PERF_BUDGETS
+
+        with audited_budget(
+            kind="tool_invocation",
+            operation="tool_invoke_ms",
+            budget_ms=10_000.0,  # generous so we don't trip the budget
+        ):
+            pass
+
+        recent = mcp_audit_recent(n=1)
+        assert len(recent) == 1
+        assert recent[0].operation == "tool_invoke_ms"
+        assert recent[0].outcome == "ok"
+        # The named budget exists in MCP_PERF_BUDGETS so we did not
+        # trip the "operation not in MCP_PERF_BUDGETS" KeyError branch.
+        assert "tool_invoke_ms" in MCP_PERF_BUDGETS
+
+    def test_exception_path_records_error_outcome_and_reraises(self) -> None:
+        with pytest.raises(ValueError):
+            with audited_budget(
+                kind="tool_invocation",
+                operation="tool_invoke_ms",
+                budget_ms=10_000.0,
+            ):
+                raise ValueError("simulated")
+
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].outcome == "error"
+        assert recent[0].error_message is not None
+        assert "simulated" in recent[0].error_message
+
+    def test_yield_state_allows_caller_annotations(self) -> None:
+        with audited_budget(
+            kind="tool_invocation",
+            operation="tool_invoke_ms",
+            budget_ms=10_000.0,
+        ) as state:
+            state["verdict"] = "allow"
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].extra.get("verdict") == "allow"
+
+    def test_budget_exceeded_path_raises_mcp_budget_error(self) -> None:
+        """When the named budget is exceeded, ``mcp_budget_context``
+        raises :class:`MCPBudgetExceeded`. The audit entry is still
+        recorded with the elapsed duration so the operator can
+        reconcile budget failures with audit timestamps.
+        """
+        from thegent.mcp.server.mcp_perf_gates import MCPBudgetExceeded
+
+        with pytest.raises(MCPBudgetExceeded):
+            with audited_budget(
+                kind="tool_invocation",
+                operation="tool_invoke_ms",
+                budget_ms=0.001,  # 1 microsecond — impossible to satisfy
+            ):
+                # Yield to the scheduler so the context sees at least
+                # a few microseconds of elapsed time.
+                _time.sleep(0.005)
+
+        recent = mcp_audit_recent(n=1)
+        # The audit entry was recorded even though the budget
+        # exceeded — useful for operators tracing a slow call.
+        assert recent[0].operation == "tool_invoke_ms"
+        assert recent[0].duration_ms is not None
+
+    def test_unknown_kind_string_coerces_to_tool_invocation(self) -> None:
+        """``audited_budget`` inherits the ``AuditEntryKind | str``
+        contract from ``audit_context``: unknown strings coerce to
+        ``TOOL_INVOCATION`` with a ``UserWarning``.
+        """
+        with pytest.warns(UserWarning, match="unknown kind"):
+            with audited_budget(
+                kind="totally_bogus_kind",
+                operation="tool_invoke_ms",
+                budget_ms=10_000.0,
+            ):
+                pass
+        recent = mcp_audit_recent(n=1)
+        assert recent[0].kind == AuditEntryKind.TOOL_INVOCATION
+
+    def test_audited_budget_module_reexport(self) -> None:
+        from thegent.mcp.server import audited_budget as exported  # noqa: F401
+
+        assert exported is audited_budget

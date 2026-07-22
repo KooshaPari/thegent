@@ -30,8 +30,10 @@ Audit trace (Phase 3/4 SOTA pass 5 — cross-cutting lane):
   payloads round-trip into cockpit ``DecisionNotice`` snapshots
   through the bridge, including the duck-typed acceptance path.
 * Lane 7 — Performance-budget guard: the MCP server module
-  declares at least 26 ``mcp_budget_context`` wraps and the
-  trend resource uses the ``health_trend_ms`` named budget.
+  declares at least 26 ``audited_budget`` wraps (audit pass 8 —
+  these compose ``mcp_budget_context`` + ``audit_context`` so
+  every tool dispatch is recorded in the MCP audit trail) and
+  the trend resource uses the ``health_trend_ms`` named budget.
 * Lane 8 — Federated cache invalidation: ``register_rule``,
   ``load_rules_from_file``, and ``register_override`` must drop
   the OPT-008 decision cache so freshly-registered rules/overrides
@@ -591,28 +593,67 @@ class TestGovernanceMcpPerfBudgetGuard:
     """The MCP perf-gate context manager must fire inside every
     ``thegent_*`` tool dispatch path. This is a smoke test that asserts
     the wrapper count grows monotonically (regression guard against a
-    refactor that drops a budget wrap from a tool function)."""
+    refactor that drops a budget wrap from a tool function).
+
+    SOTA audit pass 8: wraps are now ``audited_budget`` — they compose
+    ``mcp_budget_context`` (perf gate) + ``audit_context`` (audit trail
+    record) so every dispatch is both budgeted AND observed in one shot.
+    """
 
     def test_mcp_server_module_declares_at_least_26_budget_wraps(self) -> None:
-        """Sanity guard: the prior sessions landed at least 26
-        budget-context calls; a regression that drops a wrap below this
-        threshold must fail."""
+        """Sanity guard: audit pass 8 collapsed 26 ``mcp_budget_context``
+        call sites into 26 ``audited_budget`` wrappers (which compose
+        the budget context + audit context). A regression that drops
+        a wrap below this threshold must fail."""
         import inspect
         from thegent.mcp import server as _mcp_server_mod
 
         source = inspect.getsource(_mcp_server_mod)
         # The ``from ... import`` line at module top is counted by
         # ``str.count`` but it isn't a *wrap*, so we exclude any line
-        # that is itself an import statement.
+        # that is itself an import statement. We accept either the
+        # legacy ``mcp_budget_context(...)`` wrap or the new
+        # ``audited_budget(...)`` wrap — but no other context manager
+        # that looks like a budget guard.
         wrap_count = sum(
             1
             for line in source.splitlines()
-            if "mcp_budget_context(" in line and not line.lstrip().startswith(("from ", "import "))
+            if ("mcp_budget_context(" in line or "audited_budget(" in line)
+            and not line.lstrip().startswith(("from ", "import "))
         )
         assert wrap_count >= 26, (
-            f"expected >= 26 mcp_budget_context wraps, got {wrap_count}. "
-            "A recent refactor likely dropped a wrap; re-add it."
+            f"expected >= 26 budget wraps (mcp_budget_context or audited_budget), "
+            f"got {wrap_count}. A recent refactor likely dropped a wrap; re-add it."
         )
+
+    def test_mcp_server_module_audited_budget_composes_audit_trail(self) -> None:
+        """Audit pass 8 contract: every ``audited_budget`` wrap must
+        produce an entry in the singleton audit trail. This guarantees
+        the dispatch surface is end-to-end observable (not just budgeted)."""
+        from thegent.mcp.server import (
+            AuditEntryKind,
+            get_audit_trail,
+            mcp_audit_stats,
+            reset_audit_trail,
+        )
+
+        reset_audit_trail()
+        try:
+            # Drive a single audited_budget context to confirm wiring
+            from thegent.mcp.server.mcp_audit_wiring import audited_budget
+
+            with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms", agent="test"):
+                pass
+            stats = mcp_audit_stats()
+            assert stats["total_entries"] >= 1, (
+                f"audited_budget wrap did not record an entry to the audit trail; stats={stats}"
+            )
+            entries = get_audit_trail().recent(n=10)
+            assert any(e.kind == AuditEntryKind.TOOL_INVOCATION for e in entries), (
+                f"expected at least one TOOL_INVOCATION entry after audited_budget; kinds={[e.kind for e in entries]}"
+            )
+        finally:
+            reset_audit_trail()
 
     def test_health_trend_budget_uses_named_budget(self) -> None:
         """``health_trend_ms`` budget is reserved for trend ops; confirm
@@ -793,12 +834,8 @@ class TestFederatedCacheInvalidation:
         )
 
         stats_after = federated_engine.cache_stats()
-        assert stats_after["hits"] == stats_before["hits"], (
-            "register_rule must NOT reset the hit counter"
-        )
-        assert stats_after["misses"] == stats_before["misses"], (
-            "register_rule must NOT reset the miss counter"
-        )
+        assert stats_after["hits"] == stats_before["hits"], "register_rule must NOT reset the hit counter"
+        assert stats_after["misses"] == stats_before["misses"], "register_rule must NOT reset the miss counter"
         # But the cache itself must be empty so the next call misses.
         assert stats_after["size"] == 0, (
             f"OPT-008 cache must be empty after invalidation, got size={stats_after['size']}"
@@ -854,9 +891,7 @@ class TestFederatedCacheInvalidation:
             assert not t.is_alive(), "reader thread hung"
 
         assert errors == [], f"errors: {errors!r}"
-        assert any(seen_denies), (
-            f"no reader observed the post-registration DENY verdict: {seen_denies!r}"
-        )
+        assert any(seen_denies), f"no reader observed the post-registration DENY verdict: {seen_denies!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -895,9 +930,7 @@ class TestBudgetExceededRecoveryPath:
             )
 
             # Restore a sane budget for the recovery call.
-            mcp_perf_gates.MCP_PERF_BUDGETS["tool_invoke_ms"] = original.get(
-                "tool_invoke_ms", 100.0
-            )
+            mcp_perf_gates.MCP_PERF_BUDGETS["tool_invoke_ms"] = original.get("tool_invoke_ms", 100.0)
 
             # 2nd call with a fast impl must NOT inherit any state from
             # the previous budget violation.
@@ -1027,9 +1060,7 @@ class TestRecordDecisionThreadSafety:
             except BaseException as exc:
                 errors.append(exc)
 
-        threads = [
-            threading.Thread(target=_writer, args=(idx,)) for idx in range(writers)
-        ]
+        threads = [threading.Thread(target=_writer, args=(idx,)) for idx in range(writers)]
         for t in threads:
             t.start()
         for t in threads:
@@ -1049,9 +1080,7 @@ class TestRecordDecisionThreadSafety:
             f"torn write detected: duplicate rule_ids in snapshot: "
             f"{[r for r in rule_ids if [n['rule_id'] for n in notices].count(r) > 1]}"
         )
-        assert len(notices) == 64, (
-            f"expected bounded deque (maxlen=64) to be full, got {len(notices)}"
-        )
+        assert len(notices) == 64, f"expected bounded deque (maxlen=64) to be full, got {len(notices)}"
         # And the snapshot is internally consistent: every notice has
         # the expected shape (verdict, reason_code, rule_id, agent,
         # lane, evaluated_at, reason).

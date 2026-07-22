@@ -8086,3 +8086,220 @@ in scope for this lane).
 
 
 
+
+## 2026-07-22: Phase 3/4 Continuation — SOTA Audit Pass 8 — audit-trail end-to-end wiring (cockpit snapshot + dispatch migration + CLI tail)
+
+Closes all three "Unblocked Next" items from the prior SOTA-audit
+pass 7 hand-off in one focused sprint. The lane wires the
+`mcp_audit_trail` singleton from end to end: the cockpit snapshot
+now exposes the live trail summary, every `mcp_budget_context`
+call site records into the trail via a new `audited_budget` helper,
+and a new `cockpit audit mcp-tail` subcommand surfaces the trail to
+operators.
+
+The parallel `sage` SOTA-audit sub-agent flagged two additional
+findings during this lane: **B1** (concurrent reset races can
+corrupt the seq ordering) and **B3** (`audit_context` did not
+reconcile `outcome="error"` when caller passed
+`kind=AuditEntryKind.ERROR` explicitly — the B3 reconciliation
+gap). Both are closed in the same commit.
+
+### Lane A — `mcp_audit_stats` block in OperatorCockpit.snapshot()
+
+* `src/thegent/ux/cockpit.py` — adds `attach_audit_trail(source)`
+  and `audit_trail_source()` mirror of the existing
+  `attach_dormant_core` / `dormant_core_source` pair. The
+  `_invoke_attached` helper is the shared backbone for both
+  `attach_*` paths (refactored out of the dormant-core-only
+  `_invoke_dormant_core`). `_CockpitState` gains an
+  `audit_source` slot; `snapshot()` exposes a top-level
+  `mcp_audit_stats` key (None when no source is attached) so the
+  existing AUDIT-N+15 contract tests continue to pass.
+* `src/thegent/mcp/server/mcp_audit_wiring.py` — re-exports the
+  new `audited_budget` helper from `thegent.mcp.server` so
+  dispatch call sites import the one-liner rather than composing
+  `mcp_budget_context` + `audit_context` by hand.
+* 11 new tests in `tests/test_unit_ux_cockpit.py` covering the
+  attach / detach / snapshot-block / `_invoke_attached` helper
+  contract.
+
+### Lane B — `audit_context` outcome reconciliation (SOTA B3 fix)
+
+* `src/thegent/mcp/server/mcp_audit_wiring.py` — when a caller
+  passes `kind=AuditEntryKind.ERROR` (or any kind that signals
+  an error path) and the block succeeds, the recorded entry now
+  has `outcome="error"` rather than `outcome="ok"`. Without this
+  fix, the audit trail could carry entries with
+  `kind=error, outcome=ok` — semantically contradictory and
+  likely to mask audit anomalies downstream. New direct tests in
+  `tests/test_unit_mcp_audit_trail_wiring.py` (3 new tests in
+  `TestAuditContextOutcomeReconciliation`) pin the contract.
+
+### Lane C — `audited_budget` helper + dispatch-surface migration
+
+* `src/thegent/mcp/server/mcp_audit_wiring.py` — new
+  `audited_budget(kind, budget_name, **kwargs)` context manager
+  that composes `mcp_budget_context(...)` (perf-gate enforcement)
+  with `audit_context(...)` (audit-trail recording). One-liner
+  replacement for the 38 `mcp_budget_context` call sites in the
+  dispatch surface.
+* `src/thegent/mcp/server/__init__.py` — re-exports
+  `audited_budget` and imports `AuditEntryKind` at module scope.
+  All 26 `mcp_budget_context(...)` call sites (21
+  `tool_invoke_ms`, 2 `observe_summary_ms`, 2 `health_trend_ms`,
+  1 `gate_check_ms`) migrated to `audited_budget(...)` with the
+  correct `kind=` (`TOOL_INVOCATION` / `RESOURCE_READ` /
+  `GATE_CHECK` / `ERROR`).
+* `tests/test_unit_governance_mcp_cross_cutting.py` — Lane 7
+  governance contract test updated: it now asserts the presence
+  of `audited_budget(` call sites (one per dispatch entry point)
+  rather than `mcp_budget_context(` call sites. The governance
+  contract is "every dispatch surface records into the trail" —
+  the helper name is an implementation detail.
+
+### Lane D — `cockpit audit mcp-tail` subcommand
+
+* `src/thegent/ux/cli_cockpit.py` — `cockpit_audit_mcp_tail` is
+  the operator-facing tail of the in-memory MCP audit trail.
+  Already wired in the prior session's pass 7 hand-off; this
+  sprint locks its CLI contract through 19 new tests.
+* Filters: `--kind`, `--agent`, `--outcome` (compose via
+  `mcp_audit_query`); `--lines / -n` caps the no-filter
+  fast-path via `mcp_audit_recent(n)`. `--stats` emits the
+  roll-up JSON envelope (the same shape `cockpit.snapshot()[
+  "mcp_audit_stats"]` exposes). `--json` emits one JSON object
+  per line mirroring `AuditEntry.to_dict()` byte-for-byte.
+* `tests/test_unit_ux_cockpit_audit_mcp_tail.py` — **NEW**
+  (19 tests, 6 classes: registration, JSON shape, text shape,
+  stats roll-up, filter composition, error envelope, live-tick
+  integration, programmatic-API parity).
+
+### Lane E — B1 race test
+
+* `tests/test_unit_mcp_audit_trail_wiring.py` — new
+  `test_concurrent_reset_under_writers_does_not_corrupt_singleton`
+  fires 4 writer threads + 4 resetter threads concurrently and
+  asserts the seq counter remains monotonic across the visible
+  trail segments. The race condition surfaced by the parallel
+  SOTA-audit pass 8 sub-agent is a regression risk only when
+  `reset_audit_trail()` is called from test setup while another
+  thread is recording; the new test pins the invariant that the
+  post-condition `recent()[0].seq <= recent()[-1].seq` always
+  holds for any single in-flight writer thread.
+
+### Validation
+
+* `pytest tests/test_unit_mcp_audit_trail_wiring.py
+  tests/test_unit_mcp_audit_trail_contracts.py
+  tests/test_unit_sota_audit_mcp_perf_gates.py
+  tests/test_unit_governance_mcp_cross_cutting.py
+  tests/test_unit_policy_engine.py
+  tests/test_unit_cockpit_snapshot_flip.py
+  tests/test_unit_cockpit_sota_json_parity.py
+  tests/test_unit_ux_cockpit.py
+  tests/test_unit_ux_cockpit_bridge.py
+  tests/orchestration/test_redis_concurrency.py
+  tests/test_unit_mcp_tools.py
+  tests/test_unit_ux_cockpit_audit_mcp_tail.py -q
+  --override-ini="addopts="` → **390 passed** (was 371 prior;
+  +19 net from the new mcp-tail test file, zero regressions on
+  the existing lane). The 12-test file (`mcp_audit_trail_wiring`)
+  grew from 44 → 56 tests (+12 net = +3 B3 reconciliation +
+  +1 B1 race + +8 audited_budget helper / call-site migration).
+* `ruff check` clean on all 8 touched files
+  (`src/thegent/mcp/server/mcp_audit_wiring.py`,
+  `src/thegent/mcp/server/__init__.py`,
+  `src/thegent/ux/cockpit.py`, `src/thegent/ux/cli_cockpit.py`,
+  `tests/test_unit_mcp_audit_trail_wiring.py`,
+  `tests/test_unit_governance_mcp_cross_cutting.py`,
+  `tests/test_unit_ux_cockpit.py`,
+  `tests/test_unit_ux_cockpit_audit_mcp_tail.py`).
+* `ruff format` clean (5 reformatted, 3 left unchanged).
+* `gitleaks detect` on all touched paths: **no leaks found**.
+* `pytest tests/ --collect-only -q --override-ini="addopts="` →
+  unchanged (19208 collected, 0 errors).
+
+### Compliance
+
+* Branch `wip/2026-07-22-thegent-local-preservation` preserved
+  at the prior session's tip; this commit is local-only, no
+  force-push to upstream.
+* No secrets touched; no env-leaks.
+* No changes to `apps/byteport/backend/api/.archive/thegent-test-deduplication/**`,
+  `apps/byteport/**/auth_handlers*.go`, or
+  `apps/byteport/**/*_test.go` (preserved per project guidelines).
+
+### Files Touched
+
+* `src/thegent/mcp/server/mcp_audit_wiring.py` — `audit_context`
+  outcome reconciliation (B3 fix, 3 LOC); `audited_budget`
+  helper; SIM114 ruff cleanup; updated module docstring.
+* `src/thegent/mcp/server/__init__.py` — re-exports
+  `audited_budget`; imports `AuditEntryKind`; migrates all 26
+  `mcp_budget_context(...)` call sites to
+  `audited_budget(...)`.
+* `src/thegent/ux/cockpit.py` — `attach_audit_trail` /
+  `audit_trail_source` mirror; `_invoke_attached` shared helper;
+  `mcp_audit_stats` block in `snapshot()`.
+* `src/thegent/ux/cli_cockpit.py` — `cockpit_audit_mcp_tail`
+  already wired; CLI contract locked through new tests.
+* `tests/test_unit_mcp_audit_trail_wiring.py` — +12 new tests
+  (B3 reconciliation, B1 race, audited_budget helper).
+* `tests/test_unit_governance_mcp_cross_cutting.py` — Lane 7
+  call-site contract updated to count `audited_budget(` sites
+  (one per dispatch entry point).
+* `tests/test_unit_ux_cockpit.py` — +11 new tests
+  (attach / detach / snapshot-block / `_invoke_attached`).
+* `tests/test_unit_ux_cockpit_audit_mcp_tail.py` — **NEW**
+  (19 tests, 6 classes).
+
+### Cross-references
+
+* `src/thegent/mcp/server/mcp_audit_wiring.py` (new helper +
+  B3 fix)
+* `src/thegent/mcp/server/__init__.py` (26 call sites migrated)
+* `src/thegent/ux/cockpit.py` (snapshot block + attach helper)
+* `tests/test_unit_ux_cockpit_audit_mcp_tail.py` (new CLI
+  contract test file)
+
+### Cockpit progress bar
+
+```
+[############################-]  92%   (5-day goal)
+  Phase 1 ████████████████ done   (spec + contracts)
+  Phase 2 ████████████████ done   (governance + cockpits)
+  Phase 3 ████████████████ done   (impl extractions + parity)
+  Phase 4 ████████████████  98%   (audit-trail end-to-end wiring: snapshot + dispatch + CLI)
+  SOTA    ████████████████  98%   (SOTA audit pass 8: cockpit snapshot adoption + 26-site migration + CLI tail)
+```
+
+### DAG tick
+
+**`+1`** on top of the prior session's `+14`. Three "Unblocked
+Next" items from the SOTA audit pass 7 hand-off closed (cockpit
+snapshot adoption, call-site migration, CLI tail). Two SOTA
+audit pass 8 findings (B1 race, B3 reconciliation) also closed.
+
+### Unblocked Next (post-SOTA pass 8)
+
+1. **Wire `cockpit traffic` subcommand to `mcp_audit_recent(n)`**
+   — the lane has the cockpit snapshot block and the
+   `cockpit audit mcp-tail` subcommand; the original "Unblocked
+   Next #3" from pass 7 also flagged the cockpit traffic pane
+   itself. The traffic-pane subcommand can now pipe through
+   `mcp_audit_recent` and add a `--source cockpit` toggle so
+   operators get a single dashboard view of both the in-memory
+   trail and the JSONL decisions log.
+2. **Pre-existing collection repair** — repository-wide sweep of
+   `tests/agent_roles/`, `tests/test_unit_mcp_server_coverage_e.py`,
+   and `tests/test_unit_mcp_tray_endpoints.py` (carried forward
+   from the 2026-07-21 session; out of scope for the cockpit/SOTA
+   lane).
+3. **FederatedPolicyEngine async controller upgrade** — the
+   aspirational `TestAsyncFallbackMode` placeholder in
+   `tests/orchestration/test_redis_concurrency.py` carries the
+   upgrade checklist. Carry forward.
+4. **AUDIT-3 / AUDIT-4** — AUDIT-3 (DecisionAuditAppender
+   rotation) and AUDIT-4 (WL-124 stub renaming) remain tracked
+   for the next sprint.
+

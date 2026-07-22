@@ -37,8 +37,10 @@ from thegent.mcp.server.mcp_audit_trail import _stable_json  # noqa: E402
 # ``mcp_audit_wiring`` module path. Recording is opt-in (callers use
 # ``record_tool_call`` / ``record_resource_read`` etc. explicitly) so
 # the existing 1280-line dispatch surface is unchanged.
+from thegent.mcp.server.mcp_audit_trail import AuditEntryKind  # noqa: E402, F401
 from thegent.mcp.server.mcp_audit_wiring import (  # noqa: E402, F401
     MCP_AUDIT_DEFAULT_MAX_ENTRIES,
+    audited_budget,
     audit_context,
     get_audit_trail,
     mcp_audit_query,
@@ -173,7 +175,7 @@ def thegent_run_agent(
     **kwargs: Any,
 ) -> str:
     """MCP prompt: generate a run-agent instruction."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         lines = [f"Run agent '{agent}' with prompt: {prompt}"]
         if cd:
             lines.append(f"Working directory: {cd}")
@@ -187,7 +189,7 @@ def thegent_bg_task(
     **kwargs: Any,
 ) -> str:
     """MCP prompt: generate a background task instruction."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         lines = [f"Start background task with agent '{agent}': {prompt}"]
         if owner:
             lines.append(f"Owner: {owner}")
@@ -422,7 +424,7 @@ def resource_observe_summary(
     ``str`` (json-encoded body), whereas the tool variant returns a
     ``_ToolResult`` envelope.
     """
-    with mcp_budget_context("observe_summary_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "observe_summary_ms"):
         payload = observe_summary_impl(
             limit=limit,
             drift_window=drift_window,
@@ -448,7 +450,7 @@ def resource_session_contract_health_trend(
     Returns a JSON string payload — the MCP resource contract is
     ``str`` (json-encoded body).
     """
-    with mcp_budget_context("health_trend_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "health_trend_ms"):
         payload = session_contract_health_trend_impl(
             payload_type=payload_type,
             trend_samples=trend_samples,
@@ -470,7 +472,7 @@ def resource_session_contract_health_report(
     **kwargs: Any,
 ) -> str:
     """MCP resource: session contract health report."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         payload = session_contract_health_report_impl(
             policy_profile=policy_profile,
             strict=strict,
@@ -497,7 +499,7 @@ def resource_session_contract_health_gate(
     **kwargs: Any,
 ) -> str:
     """MCP resource: session contract health gate."""
-    with mcp_budget_context("gate_check_ms"):
+    with audited_budget(AuditEntryKind.GATE_CHECK, "gate_check_ms"):
         payload = session_contract_health_gate_impl(
             policy_profile=policy_profile,
             strict=strict,
@@ -552,7 +554,7 @@ def thegent_observe_summary(
     canonical summary meta block).
     """
     try:
-        with mcp_budget_context("observe_summary_ms"):
+        with audited_budget(AuditEntryKind.TOOL_INVOCATION, "observe_summary_ms"):
             payload = observe_summary_impl(
                 limit=limit,
                 drift_window=drift_window,
@@ -613,7 +615,7 @@ async def thegent_run(
             structured_content={"exit_code": 1, "error": "no agent or model specified"},
             meta={},
         )
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = run_impl(prompt=prompt, agent=agent, model=model, cwd=resolved, mode=mode, timeout=timeout, **kwargs)
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
@@ -633,7 +635,7 @@ async def thegent_bg(
     """Start a background agent task."""
     resolved = _resolve_cwd(cd) if cd else default_cwd
     effective_owner = owner or (_default_owner_tag(resolved) if resolved else None)
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = bg_impl(
             prompt=prompt,
             agent=agent,
@@ -658,14 +660,14 @@ async def thegent_bg(
 
 def thegent_status(session_id: str, include_contract: bool = False, **kwargs: Any) -> Any:
     """Get session status."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = status_impl(session_id=session_id, include_contract=include_contract)
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
 
 def thegent_stop(session_id: str, force: bool = False, **kwargs: Any) -> Any:
     """Stop a running session."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = stop_impl(session_id=session_id, force=force)
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
@@ -677,7 +679,7 @@ def thegent_ps(
     **kwargs: Any,
 ) -> Any:
     """List running sessions."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = ps_impl(owner=owner, all=all, include_contract=include_contract)
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
@@ -691,7 +693,7 @@ def thegent_inspect(
     **kwargs: Any,
 ) -> Any:
     """Inspect session details."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = inspect_impl(
             session_ids=session_ids or [],
             owner=owner,
@@ -709,7 +711,7 @@ def thegent_logs(
     **kwargs: Any,
 ) -> Any:
     """Get session logs."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = logs_impl(session_id=session_id, tail=tail, stderr=stderr)
     return _ToolResult(
         content=str(result) if isinstance(result, str) else _json.dumps(result), structured_content={}, meta={}
@@ -718,7 +720,7 @@ def thegent_logs(
 
 def thegent_wait(session_id: str, timeout: int | None = None, **kwargs: Any) -> Any:
     """Wait for a session to complete."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = wait_impl(session_id=session_id, timeout=timeout)
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
@@ -765,7 +767,7 @@ async def thegent_dag_list(
                 meta={},
             )
     t0 = _time.monotonic()
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = dag_list_impl(cd=resolved)
     meta = {"execution_time_ms": round((_time.monotonic() - t0) * 1000.0, 2)}
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta=meta)
@@ -777,7 +779,7 @@ async def thegent_suggest_prompt(raw_prompt: str, ctx: Any = None, **kwargs: Any
     suggested = raw_prompt
     if ctx is not None:
         try:
-            with mcp_budget_context("tool_invoke_ms"):
+            with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
                 sample_result = await ctx.sample(f"Refine this prompt for clarity and completeness: {raw_prompt}")
                 suggested = sample_result.text.strip()
                 sampling_used = True
@@ -801,7 +803,7 @@ def thegent_create_wbs(feature: str, scope: str | None = None, **kwargs: Any) ->
 
 def thegent_list_agents(**kwargs: Any) -> Any:
     """List available agents."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = list_agents_impl()
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
@@ -813,7 +815,7 @@ def thegent_list_models(
     **kwargs: Any,
 ) -> Any:
     """List available models."""
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         result = list_models_impl(provider=provider, include_contract=include_contract, by_model=by_model)
     return _ToolResult(content=_json.dumps(result), structured_content=result, meta={})
 
@@ -826,7 +828,7 @@ def thegent_list_operations(
     from thegent.operations import Operation, get_operations_by_type, list_operations as _list_ops
 
     try:
-        with mcp_budget_context("tool_invoke_ms"):
+        with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
             if operation:
                 try:
                     op = Operation(operation)
@@ -863,7 +865,7 @@ def thegent_list_modes(
     from thegent.orchestration_modes import get_mode, list_modes as _list_modes
 
     try:
-        with mcp_budget_context("tool_invoke_ms"):
+        with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
             if mode:
                 entry = get_mode(mode)
                 if entry is None:
@@ -898,7 +900,7 @@ def thegent_session_contracts(
     import time as _ct
 
     t0 = _ct.monotonic()
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         payload = session_contract_audit_impl(
             owner=owner,
             all=all,
@@ -939,7 +941,7 @@ def thegent_list_droids(
 ) -> Any:
     """List available droids."""
     resolved = Path(cd) if cd else default_cwd
-    with mcp_budget_context("tool_invoke_ms"):
+    with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
         droid_names = list_droids_impl(cd=resolved)
     return _ToolResult(
         content=_json.dumps(droid_names),
@@ -1105,7 +1107,7 @@ def thegent_session_contract_health_gate(
     canonical contract-health meta block).
     """
     try:
-        with mcp_budget_context("tool_invoke_ms"):
+        with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
             payload = session_contract_health_gate_impl(
                 policy_profile=policy_profile,
                 strict=strict,
@@ -1140,7 +1142,7 @@ def thegent_session_contract_health_report(
     Returns a ``_ToolResult`` envelope.
     """
     try:
-        with mcp_budget_context("tool_invoke_ms"):
+        with audited_budget(AuditEntryKind.TOOL_INVOCATION, "tool_invoke_ms"):
             payload = session_contract_health_report_impl(
                 policy_profile=policy_profile,
                 strict=strict,
@@ -1174,7 +1176,7 @@ def thegent_session_contract_health_trend(
 
     t0 = _time.monotonic()
     try:
-        with mcp_budget_context("health_trend_ms"):
+        with audited_budget(AuditEntryKind.TOOL_INVOCATION, "health_trend_ms"):
             payload = session_contract_health_trend_impl(
                 payload_type=payload_type,
                 trend_samples=trend_samples,

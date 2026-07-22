@@ -434,13 +434,17 @@ class TestOverrideExpiryBanner:
         c = OperatorCockpit()
         c.record_override_event(
             OverrideExpiryNotice(
-                rule_id="old-rule", owner="alice", reason="old",
+                rule_id="old-rule",
+                owner="alice",
+                reason="old",
                 expired_at=time.time() - 5.0,
             )
         )
         c.record_override_event(
             OverrideExpiryNotice(
-                rule_id="new-rule", owner="bob", reason="fresh",
+                rule_id="new-rule",
+                owner="bob",
+                reason="fresh",
                 expired_at=time.time(),
             )
         )
@@ -476,7 +480,9 @@ class TestOverrideExpiryBanner:
         c = OperatorCockpit()
         c.record_override_event(
             OverrideExpiryNotice(
-                rule_id="snap-rule", owner="ci", reason="r",
+                rule_id="snap-rule",
+                owner="ci",
+                reason="r",
                 expired_at=time.time(),
             )
         )
@@ -607,8 +613,7 @@ class TestRenderPerformance:
         cockpit.render()
         measured = cockpit.last_render_ms()
         assert measured < self._P90_SLO_MS, (
-            f"cockpit.last_render_ms reported {measured:.2f} ms, exceeds "
-            f"the {self._P90_SLO_MS} ms P-090 SLO."
+            f"cockpit.last_render_ms reported {measured:.2f} ms, exceeds the {self._P90_SLO_MS} ms P-090 SLO."
         )
 
     def test_worst_case_state_shape_is_documented(self) -> None:
@@ -648,3 +653,176 @@ class TestRenderPerformance:
             f"empty cockpit.render() averaged {elapsed_ms:.2f} ms "
             f"over 100 frames, exceeds the {self._P90_SLO_MS} ms SLO."
         )
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+22 (SOTA audit pass 8, Lane A) — MCP audit-trail pane
+# ---------------------------------------------------------------------------
+
+
+class TestAttachAuditTrail:
+    """AUDIT-N+22 Lane A: ``OperatorCockpit.attach_audit_trail`` exposes the
+    MCP audit-trail singleton inside the cockpit snapshot.
+
+    The wiring lives in :mod:`thegent.mcp.server.mcp_audit_wiring`;
+    these tests pin the cockpit-side contract: source is borrowed,
+    stored under the lock, surfaced in ``snapshot()`` as the
+    ``mcp_audit_stats`` block, and detached by passing ``None``.
+    """
+
+    def test_attach_returns_self_for_chaining(self) -> None:
+        c = OperatorCockpit()
+        result = c.attach_audit_trail(lambda: {"total_entries": 0})
+        assert result is c
+
+    def test_snapshot_includes_mcp_audit_stats_when_attached(self) -> None:
+        c = OperatorCockpit().attach_audit_trail(
+            lambda: {
+                "total_entries": 5,
+                "max_entries": 5000,
+                "by_kind": {"tool_invocation": 5},
+                "by_outcome": {"ok": 5},
+                "error_count": 0,
+                "avg_duration_ms": 1.2,
+                "p99_duration_ms": 3.4,
+                "oldest_seq": 1,
+                "newest_seq": 5,
+            }
+        )
+        snap = c.snapshot()
+        assert "mcp_audit_stats" in snap
+        assert snap["mcp_audit_stats"] == {
+            "total_entries": 5,
+            "max_entries": 5000,
+            "by_kind": {"tool_invocation": 5},
+            "by_outcome": {"ok": 5},
+            "error_count": 0,
+            "avg_duration_ms": 1.2,
+            "p99_duration_ms": 3.4,
+            "oldest_seq": 1,
+            "newest_seq": 5,
+        }
+
+    def test_snapshot_mcp_audit_stats_none_when_not_attached(self) -> None:
+        c = OperatorCockpit()
+        snap = c.snapshot()
+        assert snap["mcp_audit_stats"] is None
+
+    def test_audit_trail_source_accessor_round_trips(self) -> None:
+        def sentinel() -> dict[str, int]:
+            return {"total_entries": 1}
+
+        c = OperatorCockpit().attach_audit_trail(sentinel)
+        assert c.audit_trail_source() is sentinel
+
+    def test_detach_via_none(self) -> None:
+        def fake_source() -> dict[str, int]:
+            return {"total_entries": 1}
+
+        c = OperatorCockpit().attach_audit_trail(fake_source)
+        assert c.snapshot()["mcp_audit_stats"] is not None
+        c.attach_audit_trail(None)
+        assert c.snapshot()["mcp_audit_stats"] is None
+
+    def test_summary_method_object_supported(self) -> None:
+        """A source that exposes a no-arg ``summary()`` method is honoured
+        identically to a zero-arg callable — same contract as
+        ``attach_dormant_core``."""
+
+        class _StubDashboard:
+            def summary(self) -> dict[str, object]:
+                return {"total_entries": 7, "p99_duration_ms": 12.0}
+
+        c = OperatorCockpit().attach_audit_trail(_StubDashboard())
+        snap = c.snapshot()
+        assert snap["mcp_audit_stats"] == {"total_entries": 7, "p99_duration_ms": 12.0}
+
+    def test_raising_source_does_not_crash_snapshot(self) -> None:
+        """A buggy audit-trail implementation must not crash the cockpit.
+
+        Mirrors the AUDIT-N+18 ``_invoke_dormant_core`` contract.
+        """
+
+        def boom() -> dict[str, object]:
+            raise RuntimeError("audit trail unavailable")
+
+        c = OperatorCockpit().attach_audit_trail(boom)
+        snap = c.snapshot()
+        assert snap["mcp_audit_stats"] is None
+
+    def test_non_dict_return_does_not_crash_snapshot(self) -> None:
+        """A source that returns a non-dict (e.g. a list) is treated as
+        ``None`` so downstream consumers can short-circuit cleanly."""
+
+        def bad() -> list[int]:
+            return [1, 2, 3]
+
+        c = OperatorCockpit().attach_audit_trail(bad)
+        snap = c.snapshot()
+        assert snap["mcp_audit_stats"] is None
+
+    def test_real_mcp_audit_stats_function_round_trips(self) -> None:
+        """End-to-end: the wiring singleton function passes through the
+        cockpit snapshot unchanged. This is the canonical operator path."""
+        from thegent.mcp.server import mcp_audit_stats
+
+        c = OperatorCockpit().attach_audit_trail(mcp_audit_stats)
+        snap = c.snapshot()
+        stats = snap["mcp_audit_stats"]
+        assert isinstance(stats, dict)
+        # The MCPAuditTrail.summary() shape is pinned by the contract tests.
+        for key in (
+            "total_entries",
+            "max_entries",
+            "by_kind",
+            "by_outcome",
+            "error_count",
+            "avg_duration_ms",
+            "p99_duration_ms",
+            "oldest_seq",
+            "newest_seq",
+        ):
+            assert key in stats
+
+    def test_attach_does_not_block_other_panes(self) -> None:
+        """Attaching an audit-trail source does not break the existing
+        ``traffic`` / ``dormant_core`` snapshot blocks. Defends against
+        refactors that accidentally share a slot.
+        """
+        from thegent.ux.kpis.traffic import TrafficDashboard
+
+        c = (
+            OperatorCockpit()
+            .attach_traffic(TrafficDashboard())
+            .attach_dormant_core(lambda: {"alerts": 0})
+            .attach_audit_trail(lambda: {"total_entries": 0})
+        )
+        snap = c.snapshot()
+        assert snap["traffic"] is not None
+        assert snap["dormant_core"] == {"alerts": 0}
+        assert snap["mcp_audit_stats"] == {"total_entries": 0}
+
+
+class TestInvokeAttachedHelper:
+    """AUDIT-N+22 Lane A: the generic ``_invoke_attached`` helper that
+    both ``_invoke_dormant_core`` and ``_invoke_audit_stats`` delegate
+    to. Pinned so a future refactor (e.g. moving to an async source
+    resolver) cannot break both consumers at once.
+    """
+
+    def test_returns_none_when_attr_missing(self) -> None:
+        c = OperatorCockpit()
+        assert c._invoke_attached("nonexistent_attr_xyz") is None
+
+    def test_returns_none_when_source_is_none(self) -> None:
+        c = OperatorCockpit()
+        assert c._invoke_attached("dormant_source") is None
+        assert c._invoke_attached("audit_source") is None
+
+    def test_invoke_dormant_core_delegates_to_invoke_attached(self) -> None:
+        c = OperatorCockpit().attach_dormant_core(lambda: {"k": 1})
+        assert c._invoke_dormant_core() == {"k": 1}
+
+    def test_invoke_audit_stats_delegates_to_invoke_attached(self) -> None:
+        c = OperatorCockpit().attach_audit_trail(lambda: {"total_entries": 9})
+        assert c._invoke_audit_stats() == {"total_entries": 9}

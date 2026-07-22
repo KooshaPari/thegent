@@ -34,14 +34,14 @@ Public surface:
 * :func:`record_resource_read`
 * :func:`record_gate_check`
 * :func:`record_error`
+* :func:`audit_context`
+* :func:`audited_budget`
 * :func:`mcp_audit_stats`
 * :func:`mcp_audit_recent`
 * :func:`mcp_audit_query`
 
 Canonical home: ``thegent.mcp.server.mcp_audit_wiring``
 """
-
-from __future__ import annotations
 
 import logging
 import os
@@ -294,13 +294,26 @@ def audit_context(
         elapsed_ms = (time.monotonic() - t0) * 1000.0
         merged_extra: dict[str, Any] = dict(extra or {})
         merged_extra.update(state)
+        # AUDIT-N+22 (SOTA audit pass 8, B3 reconciliation): when a caller
+        # explicitly passes ``kind=AuditEntryKind.ERROR`` and the block
+        # succeeds, the entry would otherwise record ``kind=error,
+        # outcome=ok`` — semantically contradictory and likely to mask
+        # audit anomalies downstream. Coerce ``outcome`` to ``"error"``
+        # whenever the kind itself signals an error path so the JSONL
+        # audit log and the cockpit's ``by_outcome`` breakdown stay
+        # self-consistent. An exception inside the block still drives
+        # ``outcome="error"`` via the ``error_message`` branch below.
+        if error_message is not None or kind_enum == AuditEntryKind.ERROR:
+            outcome = "error"
+        else:
+            outcome = "ok"
         try:
             get_audit_trail().record(
                 kind=kind_enum,
                 operation=operation,
                 agent=agent,
                 session_id=session_id,
-                outcome="ok" if error_message is None else "error",
+                outcome=outcome,
                 duration_ms=elapsed_ms,
                 payload=payload,
                 error_message=error_message,
@@ -308,6 +321,65 @@ def audit_context(
             )
         except Exception as exc:  # never let the audit raise in finally
             _log.warning("audit_context.record failed: %s", exc)
+
+
+# ------------------------------------------------------------------
+# Composite: budget + audit
+# ------------------------------------------------------------------
+
+
+@contextmanager
+def audited_budget(
+    kind: AuditEntryKind | str,
+    operation: str,
+    *,
+    budget_ms: float | None = None,
+    agent: str = "unknown",
+    session_id: str | None = None,
+    payload: Any = None,
+    extra: dict[str, Any] | None = None,
+) -> Iterator[dict[str, Any]]:
+    """Compose :func:`mcp_budget_context` with :func:`audit_context`.
+
+    AUDIT-N+22 (SOTA audit pass 8, A2 helper): collapses the
+    ``with mcp_budget_context("..."):`` + ``with audit_context(...):``
+    nesting into a single ``with audited_budget(...):`` call so every
+    MCP tool/resource dispatch records exactly one audit entry and
+    checks the per-call perf budget in lockstep. ``operation`` is
+    used as both the perf-budget key and the audit ``operation``
+    field, so budget violations and audit timestamps line up.
+
+    ``kind`` follows the same ``AuditEntryKind | str`` contract as
+    :func:`audit_context` (unknown strings coerce to ``TOOL_INVOCATION``
+    with a ``UserWarning``). ``budget_ms`` overrides the named budget
+    for this single measurement (useful for per-call overrides in
+    tests); when ``None`` the named budget from ``MCP_PERF_BUDGETS`` is
+    applied — same fallback contract as
+    :func:`mcp_budget_context`.
+
+    Performance: this helper adds one extra ``time.monotonic()`` read
+    (the budget context already times its block) and one extra
+    dictionary allocation for the merged ``extra`` payload. Both are
+    in the low-microsecond range on dev hardware; the bench in
+    :mod:`scripts.bench_tool_invoke_ms_budget` keeps the
+    ``tool_invoke_ms`` budget pinned at 100ms so this helper has ~5
+    orders of magnitude of headroom.
+    """
+    # Local import keeps ``mcp_perf_gates`` decoupled from
+    # ``mcp_audit_wiring`` at module-load time (otherwise the two
+    # would form an import cycle through ``mcp_audit_trail``).
+    from thegent.mcp.server.mcp_perf_gates import mcp_budget_context
+
+    with audit_context(
+        kind=kind,
+        operation=operation,
+        agent=agent,
+        session_id=session_id,
+        payload=payload,
+        extra=extra,
+    ) as state:
+        with mcp_budget_context(operation, budget_ms=budget_ms):
+            yield state
 
 
 # ------------------------------------------------------------------
@@ -350,14 +422,15 @@ def mcp_audit_query(
 
 __all__ = [
     "MCP_AUDIT_DEFAULT_MAX_ENTRIES",
-    "get_audit_trail",
-    "reset_audit_trail",
-    "record_tool_call",
-    "record_resource_read",
-    "record_gate_check",
-    "record_error",
+    "audited_budget",
     "audit_context",
-    "mcp_audit_stats",
-    "mcp_audit_recent",
+    "get_audit_trail",
     "mcp_audit_query",
+    "mcp_audit_recent",
+    "mcp_audit_stats",
+    "record_error",
+    "record_gate_check",
+    "record_resource_read",
+    "record_tool_call",
+    "reset_audit_trail",
 ]

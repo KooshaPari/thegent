@@ -1576,11 +1576,147 @@ def _follow_audit_log(
                 if cap and emitted >= cap:
                     return emitted
 
-        if cap and emitted >= cap:
-            return emitted
         # ``sleep`` is interruptible so SIGINT bubbles up as
         # ``KeyboardInterrupt`` promptly.
         time.sleep(sleep_s)
+
+
+@audit_app.command(
+    "mcp-tail",
+    help=(
+        "Print the last N entries from the in-memory MCP audit trail "
+        "(SOTA audit pass 8; complements the decision JSONL audit)."
+    ),
+)
+def cockpit_audit_mcp_tail(
+    n: int = typer.Option(20, "--lines", "-n", help="Number of entries to print (most recent first)"),
+    kind: Optional[str] = typer.Option(
+        None,
+        "--kind",
+        help=(
+            "Filter by AuditEntryKind: tool_invocation, resource_read, gate_check, or error. Omit to print all kinds."
+        ),
+    ),
+    agent: Optional[str] = typer.Option(
+        None,
+        "--agent",
+        help="Filter by agent name (exact match).",
+    ),
+    outcome: Optional[str] = typer.Option(
+        None,
+        "--outcome",
+        help="Filter by outcome (ok, error, budget_exceeded).",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit one JSON object per line instead of formatted text.",
+    ),
+    stats_only: bool = typer.Option(
+        False,
+        "--stats",
+        help="Print only the audit-trail statistics block (skips entry listing).",
+    ),
+) -> None:
+    """Tail the MCP audit trail singleton (``thegent.mcp.server.mcp_audit_*``).
+
+    Unlike ``audit tail`` (which reads the JSONL decision log), this
+    subcommand reads the **in-memory** MCP audit trail that
+    ``audited_budget`` writes every time a tool/resource/gate
+    dispatch fires. The trail is **per-process** — operators wanting
+    cross-process history should add ``--audit-path`` to the replay
+    or pre-check subcommand and tail the resulting JSONL with
+    ``audit tail`` instead.
+
+    Filters compose: ``--kind tool_invocation --agent cursor`` returns
+    only TOOL_INVOCATION entries from agent ``cursor``. ``--json``
+    emits one entry per line (so callers can pipe through ``jq``)
+    and is the format CI smoke tests should prefer — it never
+    changes shape across versions, only the per-entry schema
+    evolves (see ``tests/test_unit_mcp_audit_trail_contracts.py``).
+    """
+    try:
+        from ..mcp.server import (
+            AuditEntryKind,
+            mcp_audit_query,
+            mcp_audit_recent,
+            mcp_audit_stats,
+        )
+    except Exception as exc:  # pragma: no cover - import guard
+        err_console.print(f"[red]MCP audit module unavailable:[/red] {_exc_text(exc)}")
+        raise typer.Exit(1) from exc
+
+    try:
+        if stats_only:
+            typer.echo(json.dumps(mcp_audit_stats(), indent=2, sort_keys=True))
+            return
+
+        # ``mcp_audit_query`` is the preferred path when any filter is
+        # supplied; ``mcp_audit_recent(n)`` is the no-filter fast path.
+        if kind or agent or outcome:
+            kind_enum: AuditEntryKind | None = None
+            if kind is not None:
+                try:
+                    kind_enum = AuditEntryKind(kind)
+                except ValueError as exc:
+                    raise typer.BadParameter(
+                        f"--kind must be one of {[k.value for k in AuditEntryKind]}, got {kind!r}"
+                    ) from exc
+            entries = mcp_audit_query(
+                kind=kind_enum,
+                agent=agent,
+                outcome=outcome,
+                limit=max(int(n), 1),
+            )
+        else:
+            entries = mcp_audit_recent(n=max(int(n), 1))
+
+        if json_output:
+            for entry in entries:
+                # ``mcp_audit_recent`` / ``mcp_audit_query`` return
+                # ``AuditEntry`` dataclasses (or dicts when callers
+                # wrap with ``to_dict()``); normalise so JSON mode
+                # never crashes on enum types in ``kind``.
+                if hasattr(entry, "to_dict"):
+                    payload = entry.to_dict()
+                else:
+                    payload = entry
+                typer.echo(json.dumps(payload, indent=None, sort_keys=True, default=str))
+            return
+
+        # Text mode: aligned columns so operators can ``less`` the output.
+        for entry in entries:
+            if hasattr(entry, "to_dict"):
+                ed = entry.to_dict()
+                kind_str = str(ed.get("kind", "-"))
+                op_str = str(ed.get("operation", "-"))
+                agent_str = str(ed.get("agent") or "-")
+                outcome_str = str(ed.get("outcome") or "-")
+                ts_val = float(ed.get("ts", 0.0))
+                seq_val = ed.get("seq", 0)
+                dur_val = float(ed.get("duration_ms", 0.0))
+            else:
+                kind_str = str(entry.get("kind", "-"))
+                op_str = str(entry.get("operation", "-"))
+                agent_str = str(entry.get("agent") or "-")
+                outcome_str = str(entry.get("outcome") or "-")
+                ts_val = float(entry.get("ts", 0.0))
+                seq_val = entry.get("seq", 0)
+                dur_val = float(entry.get("duration_ms", 0.0))
+            typer.echo(
+                f"[{ts_val:.3f}] seq={seq_val} "
+                f"kind={kind_str} op={op_str} "
+                f"agent={agent_str} "
+                f"outcome={outcome_str} "
+                f"duration_ms={dur_val:.2f}"
+            )
+    except typer.Exit:
+        raise
+    except typer.BadParameter:
+        raise
+    except Exception as exc:
+        err_console.print(f"[red]audit mcp-tail failed:[/red] {_exc_text(exc)}")
+        raise typer.Exit(1) from exc
 
 
 app.add_typer(audit_app, name="audit")

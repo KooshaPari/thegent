@@ -271,6 +271,13 @@ class _CockpitState:
     # force an import of the dormant-core service module at cockpit
     # import time.
     dormant_source: Any = None
+    # AUDIT-N+22 (SOTA audit pass 8, Lane A): MCP audit-trail source.
+    # Same shape as ``dormant_source`` — accepts any zero-arg callable
+    # returning the audit-stats dict (e.g.
+    # ``thegent.mcp.server.mcp_audit_stats``) or any object exposing a
+    # ``.summary()`` method. Stored as ``Any`` to keep the cockpit
+    # import graph cycle-free.
+    audit_source: Any = None
 
 
 # ---------------------------------------------------------------------------
@@ -704,16 +711,68 @@ class OperatorCockpit:
         with self._lock:
             return self._state.dormant_source
 
-    def _invoke_dormant_core(self) -> dict[str, Any] | None:
-        """Resolve the attached dormant-core source to a dict (or ``None``).
+    # -------------------------------------------------------------- AUDIT-N+22 MCP audit-trail pane
 
-        Accepts either a zero-argument callable or any object with a
-        ``summary()`` method. Returns ``None`` when the source is
-        unattached, raises, or returns a non-dict. The renderer uses
-        this so a buggy dormant-core producer cannot crash the cockpit.
+    def attach_audit_trail(self, audit_source: Any) -> "OperatorCockpit":
+        """Attach an MCP audit-trail source so the cockpit renders an MCP_AUDIT_STATS block.
+
+        AUDIT-N+22 (SOTA audit pass 8, Lane A): wire the
+        :data:`thegent.mcp.server.mcp_audit_wiring.mcp_audit_stats`
+        singleton into the cockpit snapshot so operators see the live
+        ``total_entries``, ``by_kind``, ``by_outcome``, ``error_count``,
+        and ``p99_duration_ms`` gauges inline alongside the existing
+        ``traffic`` and ``dormant_core`` blocks.
+
+        The source can be either:
+
+        * A zero-argument callable returning the audit-stats dict
+          (e.g. ``thegent.mcp.server.mcp_audit_stats`` — note it is a
+          function, not a method, so this works out of the box).
+        * Any object exposing a no-arg ``summary()`` method that
+          returns a dict in the audit-stats envelope shape
+          (``total_entries``, ``max_entries``, ``by_kind``,
+          ``by_outcome``, ``error_count``, ``avg_duration_ms``,
+          ``p99_duration_ms``, ``oldest_seq``, ``newest_seq``).
+
+        The source is borrowed by reference — callers retain
+        ownership. Pass ``None`` to detach and disable the block.
+
+        Returns ``self`` for fluent chaining::
+
+            from thegent.mcp.server import mcp_audit_stats
+            from thegent.ux.cockpit import OperatorCockpit
+
+            cockpit = OperatorCockpit().attach_audit_trail(mcp_audit_stats)
+            snapshot = cockpit.snapshot()
+            assert "mcp_audit_stats" in snapshot
         """
         with self._lock:
-            source = self._state.dormant_source
+            self._state.audit_source = audit_source
+        return self
+
+    def audit_trail_source(self) -> Any:
+        """Return the currently attached audit-trail source, or ``None``.
+
+        Read-only accessor used by :meth:`snapshot` and tests.
+        """
+        with self._lock:
+            return self._state.audit_source
+
+    def _invoke_attached(self, attr: str) -> dict[str, Any] | None:
+        """Resolve an attached source (callable or ``.summary()``) to a dict.
+
+        AUDIT-N+22 (SOTA audit pass 8, Lane A): generic helper that
+        both :meth:`_invoke_dormant_core` and :meth:`_invoke_audit_stats`
+        delegate to. Returns ``None`` when the source is unattached,
+        raises, or returns a non-dict. The renderer uses this so a
+        buggy producer (audit trail or dormant-core) cannot crash
+        the cockpit.
+
+        ``attr`` is the ``_CockpitState`` field name holding the
+        source (e.g. ``"dormant_source"``, ``"audit_source"``).
+        """
+        with self._lock:
+            source = getattr(self._state, attr, None)
         if source is None:
             return None
         try:
@@ -724,6 +783,26 @@ class OperatorCockpit:
         except Exception:  # noqa: BLE001 - never crash the cockpit.
             return None
         return payload if isinstance(payload, dict) else None
+
+    def _invoke_dormant_core(self) -> dict[str, Any] | None:
+        """Resolve the attached dormant-core source to a dict (or ``None``).
+
+        Thin wrapper over :meth:`_invoke_attached` for the dormant-core
+        slot. Kept for backwards compatibility with the AUDIT-N+18
+        callers (renderer, ``cockpit_bridge`` consumers) that already
+        use the named helper.
+        """
+        return self._invoke_attached("dormant_source")
+
+    def _invoke_audit_stats(self) -> dict[str, Any] | None:
+        """Resolve the attached MCP audit-trail source to a dict (or ``None``).
+
+        AUDIT-N+22 (SOTA audit pass 8, Lane A): the snapshot block
+        that surfaces the MCP audit trail alongside the live traffic
+        pane. Defensive against missing/raising sources so a buggy
+        audit-trail implementation cannot crash the operator cockpit.
+        """
+        return self._invoke_attached("audit_source")
 
     # -------------------------------------------------------------- snapshots
 
@@ -802,6 +881,17 @@ class OperatorCockpit:
                 # unified payload. ``None`` when no source is attached
                 # so consumers can short-circuit cleanly.
                 "dormant_core": self._invoke_dormant_core(),
+                # AUDIT-N+22 (SOTA audit pass 8, Lane A): MCP audit-trail
+                # singleton stats. Same shape as the live traffic
+                # snapshot (``total_entries`` / ``max_entries`` /
+                # ``by_kind`` / ``by_outcome`` / ``error_count`` /
+                # ``avg_duration_ms`` / ``p99_duration_ms`` /
+                # ``oldest_seq`` / ``newest_seq``) so downstream CI hooks
+                # and SOTA replay tooling can ingest it without bespoke
+                # parsing. ``None`` when no source is attached so the
+                # cockpit can run cleanly without the MCP subsystem
+                # (e.g. ``cockpit render`` against a synthetic snapshot).
+                "mcp_audit_stats": self._invoke_audit_stats(),
             }
 
     def progress_bar(self) -> str:
