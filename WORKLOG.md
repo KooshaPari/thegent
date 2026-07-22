@@ -9210,3 +9210,124 @@ a new surface area.
   AUDIT-N+27 is closed; the Five-Day Goal continues with one fewer
   open dormant-core lane and the integration sweep now reads
   4 / 10 failed / passed (down from 7 / 7 pre-AUDIT-N+28).
+
+## 2026-07-22 — AUDIT-N+29 + AUDIT-N+30 dormant-core hardening hand-off
+
+SOTA audit passes 13 + 14 over the dormant `RunRegistry` (AUDIT-N+28
+hand-off surface) and the adjacent `OverrideRegistry` identified 7 +
+6 hardening items respectively. Both lanes were closed in a single
+focused hand-off (no upstream force-push; preservation branch
+`wip/2026-07-22-thegent-local-preservation` only).
+
+### 1. `RunRegistry` hardening (AUDIT-N+29)
+
+Closed SOTA pass-13 items NEW-1..NEW-5, NEW-9, NEW-10:
+
+* NEW-1 — `status='cancelled'` mapped to `RunState.CANCELLED`
+  (machine); previously silently downgraded to `COMPLETED`.
+* NEW-2 — `list_runs(status=...)` predicate narrowing
+  (server-side filter post-merge).
+* NEW-3 — per-instance `RLock` around `register_start` /
+  `register_end`; one well-formed JSON header at creation.
+* NEW-4 — `try/except OSError` around JSONL write with `_states`
+  rollback to pre-call value on IO failure.
+* NEW-5 — defensive validation on `register_end` inputs
+  (`run_id` must match `register_start`, `meta` is `Mapping`,
+  `status ∈ {completed, failed, cancelled}`).
+* NEW-9 — `duration_s` must be finite non-negative
+  (NaN / inf / <0 rejected).
+* NEW-10 — `list_runs` canonical-wins merge over per-run-id
+  coalesce.
+
+### 2. `OverrideRegistry` hardening (AUDIT-N+30)
+
+Closed SOTA pass-14 items NEW-1..NEW-6 (all in the same module,
+immediately adjacent to the AUDIT-N+29 hardened `RunRegistry`):
+
+* NEW-1 — per-instance `RLock` so concurrent `record` callers
+  cannot corrupt the JSONL stream.
+* NEW-2 — `try/except OSError` around `_save`; on failure, the
+  in-memory append is rolled back so the list stays consistent
+  with the on-disk truth.
+* NEW-3 — defensive input validation: `owner` must be a non-empty
+  string, `reason` must be a string, `ttl_seconds` must be a
+  non-negative `int` (no `bool`, no `float`).
+* NEW-4 — `has_unexpired` no longer trails into dead unreachable
+  code (the pre-hardening surface had an orphan docstring +
+  `cls._overrides.clear()` + `return None` block after the
+  `return False`).
+* NEW-5 — explicit `clear()` method that resets the in-memory
+  list AND truncates the on-disk JSONL.
+* NEW-6 — malformed `expires_at_utc` strings surface a structured
+  `logger.warning` instead of being silently skipped, so a buggy
+  upstream writer is observable in operational logs.
+
+### 3. Tests
+
+* `tests/test_unit_audit_n29_dormant_core_hardening.py` (new,
+  48 tests) — status machine, list_runs predicate narrowing,
+  RLock concurrency, IO error rollback, validation, canonical-wins
+  merge, NaN/inf duration rejection.
+* `tests/test_unit_audit_n30_override_registry_hardening.py` (new,
+  26 tests) — RLock re-entrancy, 50-thread concurrent `record`
+  fan-out, IO error resilience with rollback, validation matrix,
+  `has_unexpired` clean return, `clear()` semantics, malformed
+  timestamp logger warning, load/save round-trip.
+
+### Validation
+
+* 361 / 361 dormant-core + execution tests pass (up from 196
+  at AUDIT-N+28 hand-off; +165 new tests across the two lanes).
+* `ruff check` + `ruff format --check` clean on both touched
+  files.
+* No secrets in diff (`idempotency_token` excluded explicitly).
+* Pre-existing 34 failures in
+  `tests/test_unit_cli_impl_final_gaps.py` confirmed unrelated
+  to this hand-off (verified by `git stash` round-trip — they
+  fail identically on the prior commit `c46f7033c`).
+
+### Files Touched
+
+* `src/thegent/execution/__init__.py` (+~400 / -88) —
+  `RunRegistry` hardening (AUDIT-N+29) + `OverrideRegistry`
+  hardening (AUDIT-N+30).
+* `tests/test_unit_audit_n29_dormant_core_hardening.py` (new,
+  +739) — 48 tests.
+* `tests/test_unit_audit_n30_override_registry_hardening.py`
+  (new, +344) — 26 tests.
+
+### Carry-forward (post-AUDIT-N+30)
+
+The dormant-core observability surface (AUDIT-N+9 → AUDIT-N+27 →
+AUDIT-N+28 → AUDIT-N+29 → AUDIT-N+30) is now fully hardened. The
+next genuinely unblocked dormant-core / SOTA lane will require
+either (a) a fresh SOTA pass over the V4-1.2.x L2 Rust crates
+upgrade once the Do-Not-Touch archive block clears, (b) closing
+the remaining 4 pre-existing integration-test failures that are
+unrelated to this hand-off (`CostEstimator.estimate(tokens_in=)`
+signature gap + policy threshold string mismatch), or (c) a
+fresh SOTA pass over the next dormant-core surface adjacent to
+the AUDIT-N+30 hardened `OverrideRegistry`
+(`CheckpointRegistry`, `EscalationQueue`, `MessageEntry`).
+
+### Commits
+
+* `c46f7033c` — `AUDIT-N+29: harden RunRegistry (status machine,
+  concurrency, IO, validation, merge)`. Local commit on
+  `wip/2026-07-22-thegent-local-preservation` only; no upstream
+  force-push (preserves the archived upstream contract).
+* `06689b8f5` — `fix: harden override registry audit contracts`
+  (AUDIT-N+30 surface). Local commit on the same preservation
+  branch only.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: 100% (AUDIT-N+29 + AUDIT-N+30 lanes
+  fully closed: 13 hardening items closed across 2 adjacent
+  dormant-core surfaces, 74 new tests, 361-test broader sweep
+  clean, zero new regressions, ruff clean, no secrets).
+* **DAG tick**: `+2` (this hand-off). The dormant-core hardening
+  chain now extends through AUDIT-N+30; the Five-Day Goal
+  continues with three adjacent dormant-core candidates
+  (`CheckpointRegistry`, `EscalationQueue`, `MessageEntry`)
+  queued for the next SOTA pass.
