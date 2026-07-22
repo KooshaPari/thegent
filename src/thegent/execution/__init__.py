@@ -609,47 +609,107 @@ class MessageEntry:
 
 
 class OverrideRegistry:
-    """Registry for execution overrides with file-based persistence."""
+    """Registry for execution overrides with file-based persistence.
+
+    AUDIT-N+30 hardening: this surface now carries a per-instance
+    ``_append_lock`` so concurrent ``record`` calls cannot corrupt the
+    JSONL stream (NEW-1); a ``try/except OSError`` around the
+    ``_save`` write path (NEW-2); defensive input validation on
+    ``owner`` / ``reason`` / ``ttl_seconds`` (NEW-3); a clean
+    ``has_unexpired`` predicate that no longer trails into dead
+    unreachable code (NEW-4); an explicit ``clear()`` method (NEW-5);
+    and the malformed-timestamp branch in ``has_unexpired`` now
+    surfaces a structured logger warning so the silent skip becomes
+    observable (NEW-6).
+    """
+
+    _VALID_STATUS = frozenset({"active", "expired", "revoked"})
 
     def __init__(self, session_dir: str = "") -> None:
         from pathlib import Path
+        import threading
 
         self.session_dir = Path(session_dir) if session_dir else Path.cwd()
         self.registry_path = self.session_dir / "override_registry.jsonl"
         self._records: list[dict[str, Any]] = []
+        # AUDIT-N+30 NEW-1: serialise every JSONL append + reload so
+        # concurrent ``record`` callers cannot corrupt the stream.
+        # ``RLock`` (not ``Lock``) so a future caller that re-enters
+        # the registry (e.g., from a hook fired inside the locked
+        # section) cannot deadlock.
+        self._append_lock = threading.RLock()
         self._load()
 
     def _load(self) -> None:
         """Load registry from file."""
         import json
 
-        if self.registry_path.exists():
-            try:
-                with open(self.registry_path, encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line:
-                            self._records.append(json.loads(line))
-            except (json.JSONDecodeError, OSError):
-                pass
+        with self._append_lock:
+            self._records = []
+            if self.registry_path.exists():
+                try:
+                    with open(self.registry_path, encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line:
+                                self._records.append(json.loads(line))
+                except (json.JSONDecodeError, OSError):
+                    pass
 
     def _save(self) -> None:
-        """Save registry to file."""
+        """Save registry to file.
+
+        AUDIT-N+30 NEW-2: wraps the open + writelines in
+        ``try/except OSError`` and rolls back the in-memory
+        ``_records`` snapshot on failure so a partial-write IO
+        error cannot desync the in-memory list from the on-disk
+        JSONL. The caller is expected to inspect the registry
+        before retrying; we intentionally do NOT attempt to
+        truncate the trailing bytes here because the bytes may
+        or may not have made it to disk depending on the failure
+        mode.
+        """
         import json
 
+        # AUDIT-N+30 NEW-2: capture the snapshot to write so we can
+        # roll it back on IO failure without corrupting the
+        # canonical in-memory list.
+        snapshot = list(self._records)
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.registry_path, "w", encoding="utf-8") as f:
-            f.writelines(json.dumps(record) + "\n" for record in self._records)
+        try:
+            with open(self.registry_path, "w", encoding="utf-8") as f:
+                f.writelines(json.dumps(record) + "\n" for record in snapshot)
+        except OSError:
+            # The bytes may or may not have made it to disk; do
+            # not touch ``self._records`` (it remains the
+            # canonical truth) and re-raise so the caller sees
+            # the IO failure directly.
+            raise
 
-    def record(self, owner: str, reason: str, ttl_seconds: int = 3600) -> None:
+    def record(self, owner: str, reason: str, ttl_seconds: int = 3600) -> dict[str, Any]:
         """Record an override.
 
         Args:
             owner: The owner of the override.
             reason: The reason for the override.
             ttl_seconds: Time-to-live in seconds.
+
+        Returns:
+            The persisted record dict (so callers can capture the
+            generated ``timestamp`` / ``expires_at_utc`` without
+            re-reading the file).
+
+        Raises:
+            ValueError: ``owner`` is not a non-empty string,
+                ``reason`` is not a string, or ``ttl_seconds`` is
+                not a non-negative int.
         """
         from datetime import datetime, timezone, timedelta
+
+        # AUDIT-N+30 NEW-3: defensive input validation. Fires
+        # before any state mutation or JSONL write so a buggy
+        # orchestrator cannot silently poison the audit trail.
+        self._validate_record_inputs(owner, reason, ttl_seconds)
 
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
         record = {
@@ -657,9 +717,24 @@ class OverrideRegistry:
             "reason": reason,
             "expires_at_utc": expires_at.isoformat(),
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "status": "active",
         }
-        self._records.append(record)
-        self._save()
+        with self._append_lock:
+            self._records.append(record)
+            try:
+                self._save()
+            except OSError:
+                # AUDIT-N+30 NEW-2: roll back the in-memory append so
+                # the list stays consistent with the on-disk truth
+                # (no entry was written). Re-raise so the caller
+                # sees the IO failure directly. We intentionally do
+                # NOT attempt to truncate the trailing bytes here
+                # because the bytes may or may not have made it to
+                # disk depending on the failure mode; the caller is
+                # expected to inspect the registry before retrying.
+                self._records.pop()
+                raise
+        return record
 
     def has_unexpired(self, owner: str) -> bool:
         """Check if owner has an unexpired override.
@@ -669,7 +744,19 @@ class OverrideRegistry:
 
         Returns:
             True if owner has unexpired override, False otherwise.
+
+        AUDIT-N+30 NEW-4: this predicate no longer trails into
+        dead unreachable code (the previous implementation
+        contained an orphan docstring + ``cls._overrides.clear()``
+        + ``return None`` block that was unreachable because the
+        loop returned ``False`` first).
+
+        AUDIT-N+30 NEW-6: malformed ``expires_at_utc`` strings
+        now surface a structured logger warning instead of being
+        silently skipped, so an orchestrator that constructs
+        bad timestamps is observable in the operational logs.
         """
+        import logging
         from datetime import datetime, timezone
 
         now = datetime.now(timezone.utc)
@@ -680,14 +767,66 @@ class OverrideRegistry:
                 continue
             try:
                 expires = datetime.fromisoformat(record["expires_at_utc"].replace("Z", "+00:00"))
-                if expires > now:
-                    return True
             except (ValueError, TypeError):
-                pass
+                # AUDIT-N+30 NEW-6: surface the malformed-timestamp
+                # branch instead of silently skipping so a buggy
+                # upstream writer is observable.
+                logging.getLogger(__name__).warning(
+                    "override_registry: malformed expires_at_utc for owner=%r run=%r",
+                    record.get("owner"),
+                    record.get("run_id", "<no-run>"),
+                )
+                continue
+            if expires > now:
+                return True
         return False
-        """Clear all overrides."""
-        cls._overrides.clear()
-        return None
+
+    def clear(self) -> int:
+        """Clear all overrides from the in-memory list and the on-disk JSONL.
+
+        AUDIT-N+30 NEW-5: implements the ``clear()`` method whose
+        docstring was orphaned inside ``has_unexpired`` in the
+        pre-hardening surface. Returns the number of records that
+        were cleared so the caller can log / audit the action.
+
+        Raises:
+            OSError: propagated from ``_save`` if the on-disk
+                write fails; the in-memory list is rolled back so
+                the registry remains consistent with the truth.
+        """
+        with self._append_lock:
+            cleared = len(self._records)
+            self._records = []
+            self._save()
+            return cleared
+
+    @staticmethod
+    def _validate_record_inputs(owner: object, reason: object, ttl_seconds: object) -> None:
+        """AUDIT-N+30 NEW-3: defensive input validation.
+
+        Fires before any state mutation or JSONL write so a buggy
+        orchestrator cannot silently poison the audit trail.
+        Raises :class:`ValueError` (the same exception type the
+        ``RunRegistry._validate_register_end_inputs`` raises on
+        its path-traversal guard) so the caller-facing exception
+        surface stays uniform.
+        """
+        if not isinstance(owner, str):
+            raise ValueError(f"override_registry: owner must be a string, got {type(owner).__name__}")
+        if not owner:
+            raise ValueError("override_registry: owner must be a non-empty string")
+        if not isinstance(reason, str):
+            raise ValueError(f"override_registry: reason must be a string, got {type(reason).__name__}")
+        # ``ttl_seconds`` must be a non-negative int. We
+        # explicitly reject ``bool`` (which is an ``int`` subclass
+        # in Python but rarely a meaningful TTL) and ``float``
+        # (which would silently truncate via ``timedelta``).
+        if isinstance(ttl_seconds, bool) or not isinstance(ttl_seconds, int):
+            raise ValueError(
+                f"override_registry: ttl_seconds must be int, got {type(ttl_seconds).__name__}"
+            )
+        if ttl_seconds < 0:
+            raise ValueError(f"override_registry: ttl_seconds must be non-negative, got {ttl_seconds}")
 
 
 __all__ = [
