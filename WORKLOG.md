@@ -9514,3 +9514,75 @@ tests updated to match hardened contract).
 
 **DAG tick**: `+1` (this hand-off). Commit `46533f6d6` on
 `wip/2026-07-22-thegent-local-preservation` (no upstream push).
+## 2026-07-22 — AUDIT-N+33 hand-off (dormant-core: MessageBus + OrchestrationPlan + BudgetTracker + ResultAggregator + SubAgentDispatcher hardening)
+
+**Lane picked**: The dormant-core carry-forward from AUDIT-N+32
+slated `MessageBus` +
+`orchestration/inter_agent_protocol.py` as the next candidate.
+On resume (2026-07-22, system_date), a previously-untracked
+49-test hardening spec already existed on disk at
+`tests/test_unit_audit_n33_orchestration_hardening.py` — so the
+AUDIT-N+33 lane reduced to (a) auditing the dormant-core
+orchestration surface against the spec and (b) commiting the
+test surface + this hand-off once it goes green.
+
+**Surface audited**: the live dormant-core orchestration
+cluster (5 adjacent classes, all in the orchestration layer
+that the executor / cockpit traffic pane consume).
+
+| Target class | Module | Hardening contract |
+|--------------|--------|---------------------|
+| `InterAgentMessage` | `orchestration/inter_agent_protocol.py` | NEW-1, NEW-2 |
+| `MessageBus` | `orchestration/inter_agent_protocol.py` | NEW-3, NEW-4 |
+| `OrchestrationPlan` | `orchestration/plan/__init__.py` | NEW-5, NEW-6, NEW-7 |
+| `BudgetTracker` (+ `BudgetExceededError`) | `orchestration/budget_tracker.py` | NEW-8, NEW-9, NEW-10 |
+| `ResultAggregator` | `orchestration/aggregator/__init__.py` | NEW-11, NEW-12 |
+| `DispatchResult` + `SubAgentDispatcher` | `orchestration/sub_agent_dispatcher/__init__.py` | NEW-13, NEW-14, NEW-15 |
+
+**Result**: `49 / 49` new tests pass on first run
+(`tests/test_unit_audit_n33_orchestration_hardening.py`).
+The dormant-core orchestration surface was already hardened
+across the prior 5 SOTA passes; this lane validates the
+contract and locks it in.
+
+**Carry-forward regression sweep**:
+- 294 / 294 dormant-core + execution + observability tests
+  pass across `test_unit_audit_n32_*`,
+  `test_unit_audit_n31_checkpoint_registry_hardening`,
+  `test_unit_audit_n30_override_registry_hardening`,
+  `test_wl125_run_dag_helpers_parity`, `test_unit_execution`,
+  `test_unit_escalation`.
+- `ruff check` + `ruff format --check` clean on the new test
+  file.
+- `git diff` negative-grep for `sk-…`, `ghp_…`, `xox…`, `AKIA…`,
+  bare `password = "…"` matches: **0 hits** (no-secrets
+  contract upheld).
+- The unrelated 47-file local-preservation worktree mod set
+  on `wip/2026-07-22-thegent-local-preservation` is preserved
+  untouched (no upstream push, no force-push, no archival).
+- `audit_history.jsonl` shows audit trail intact.
+
+**Why the surface was already green**: each class carries the
+`# @trace AUDIT-N+33` provenance comment, the constructor
+validation lines, the kwarg-only canonical factories, and the
+defensive-copy returns. The lane's value is the **lock-in
+test surface** (49 tests, including the 50-thread concurrent
+publish stress, the diamond-DAG topological order, the cyclic
+plan `ValueError`, the optimistic `__setattr__` for
+`is_expired`, and the FIFO drain contract).
+
+**Cockpit progress bar**: 100% (AUDIT-N+33 lane fully closed:
+15 hardening items across 5 adjacent dormant-core classes,
+49 new tests, 294-test broader sweep clean, ruff clean, no
+secrets, unrelated worktree mod set preserved).
+
+**DAG tick**: `+1` (this hand-off). Next unblocked lane per
+the carry-forward chain: a fresh SOTA pass over the next
+orchestration dormant-core surface — recommended candidates
+are the `consensus/`, `event_queue/`, and
+`execution/lanes/` packages, each of which has never received
+a dedicated dormant-core audit pass.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
