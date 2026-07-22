@@ -8850,3 +8850,178 @@ upgrade once the Do-Not-Touch archive block clears.
   `wip/2026-07-22-thegent-local-preservation` only; no
   upstream push (preserves the archived upstream contract).
 
+
+## 2026-07-22: AUDIT-N+27 — dormant-core observability shim-purity hardening (carry-forward from SOTA Audit Pass 12)
+
+Closes the (a) carry-forward from the AUDIT-N+26 SOTA Audit Pass 12
+hand-off: a fresh SOTA pass over the `observability_impl.py`
+dormant-core lanes. The lane is a low-risk, dual-mode bridge shape
+that hardens the AUDIT-N+9 shim-purity contract while preserving the
+WL-116 / WL-119 / WL-125 monkeypatch propagation through
+`thegent.cli.services.*` modules.
+
+Commit: `152dcfc02` — `AUDIT-N+27: dormant-core observability
+shim-purity hardening (impl.py removes 4 local delegates;
+observability_impl hosts the dual-mode bridge)`. Local commit on
+`wip/2026-07-22-thegent-local-preservation` only; no upstream push
+(preserves the archived upstream contract).
+
+### 1. Surface hardening — dual-mode bridge shape
+
+* `observability_impl._resolve_audio_transcript_for_output` (line 226)
+  now handles two call shapes:
+  - **AUDIT-N+9 legacy form**: `(transcript: dict)` →
+    `{"transcript": ..., "duration": ...}` (the 1-positional-arg
+    contract pinned by
+    `tests/test_unit_audit_n9_observability_impl_extraction_parity.py`).
+  - **WL-125 / WL-116 form**:
+    `(injected_audio_transcript=..., result_audio_transcript=...)`
+    → delegates to
+    `thegent.cli.services.run_event_helpers.resolve_audio_transcript_for_output`
+    so the monkeypatch site
+    `monkeypatch.setattr("thegent.cli.commands.impl.run_event_helpers.resolve_audio_transcript_for_output", ...)`
+    is observed. `result_audio_transcript` wins per the canonical
+    service contract.
+* `observability_impl._resolve_grounding_sources_for_output` (line 289)
+  now handles two call shapes:
+  - **AUDIT-N+9 legacy form**: `(sources: list[dict])` →
+    `[{"source": ..., "content": ...[:100]}, ...]` (the 100-char
+    content slice legacy contract).
+  - **WL-119 form**: `(stdout=..., result_grounding_sources=...)` →
+    delegates to
+    `thegent.cli.services.run_input_helpers.resolve_grounding_sources_for_output`
+    so the monkeypatch site
+    `monkeypatch.setattr("thegent.cli.commands.impl.run_input_helpers.resolve_grounding_sources_for_output", ...)`
+    is observed and the WL-119 dedup / structured-result contract
+    (`test_resolve_grounding_sources_prefers_structured_result_list`)
+    holds.
+* `observability_impl._build_audio_summary_metadata` (line 392) and
+  `observability_impl._build_run_event_details` (line 435) were
+  already correctly delegating via `run_audio_helpers` /
+  `run_event_helpers`; the AUDIT-N+9 round-trip form (legacy
+  positional args → 3-key stub / `{event, timestamp}`) is preserved
+  alongside the WL-125 kwarg form.
+
+### 2. `impl.py` shim purity
+
+* `impl.py` no longer defines the 4 dual-mode helpers locally
+  (the prior local delegates were at `impl.py:744-780`). They are
+  re-exports from `observability_impl` only.
+* `impl.py` continues to import `run_event_helpers` /
+  `run_audio_helpers` / `run_input_helpers` at module scope so the
+  WL-125 monkeypatch sites (`impl.run_event_helpers.<name>`, etc.)
+  continue to resolve to the canonical service module objects
+  (`impl.run_event_helpers is services.run_event_helpers`).
+* Comments at `impl.py:1313-1327` and `impl.py:1670-1687` updated
+  to reflect that the local delegates are no longer present (the
+  shim is now the single re-export contract).
+
+### 3. Tests (`tests/test_unit_audit_n27_shim_purity_hardening.py`, 32 tests)
+
+* `TestObservabilityImplIsCanonicalHome` (8 tests) — pins both the
+  AUDIT-N+9 legacy form and the WL-116 / WL-119 kwarg forms on
+  `observability_impl` directly.
+* `TestDualModeBridgeDetection` (5 tests) — pins positional-vs-kwarg
+  detection: no args → legacy shape, positional dict → legacy shape,
+  kwargs → service delegation shape.
+* `TestImplReExportIdentity` (5 tests) — pins
+  `impl.X is observability_impl.X` for the 4 dual-mode helpers
+  and `__module__ == observability_impl`.
+* `TestImplShimPurity` (3 tests) — pins `impl.py` does NOT define any
+  of the 4 helpers locally (re-export shim contract) and that the
+  AUDIT-N+9 re-export block is present.
+* `TestWL125MonkeypatchPropagation` (7 tests) — pins the 4 identity
+  checks (`impl.run_event_helpers is services.run_event_helpers`,
+  etc.) and `monkeypatch.setattr` propagation through all 4 service
+  helper modules.
+* `TestAuditN9ContractPreserved` (4 tests) — pins the AUDIT-N+9
+  round-trip form (legacy positional args → expected dict shape) is
+  preserved unchanged.
+
+### Validation
+
+* `pytest tests/test_unit_audit_n27_shim_purity_hardening.py` →
+  **32 / 32 passed** in 118.02s.
+* Full active lane (8 test files):
+  - `tests/test_unit_audit_n27_shim_purity_hardening.py` (NEW, 32 tests)
+  - `tests/test_unit_audit_n9_observability_impl_extraction_parity.py`
+  - `tests/test_unit_audit_n13_dormant_trend_payload_parity.py`
+  - `tests/test_unit_cockpit_pass12_pre_check_mcp_audit.py`
+  - `tests/test_wl116_audio_inputs.py`
+  - `tests/test_wl119_grounding_sources.py`
+  - `tests/test_wl125_run_audio_helpers_parity.py`
+  - `tests/test_wl125_run_event_helpers_parity.py`
+  → **137 passed, 2 failed** in 162.98s. The 2 failures are
+  pre-existing on `HEAD ca2c3a5c9` (unrelated to this lane):
+  - `test_wl116_audio_inputs.py::test_run_impl_accepts_audio_files_and_google_grounding`
+    — `run_impl(prompt, **kwargs)` signature does not declare
+    `audio_files` as an explicit kwarg (a signature gap on the
+    upstream run() entry-point, not on the helper bridges this lane
+    touched).
+  - `test_wl119_grounding_sources.py::test_run_registry_finish_event_can_persist_grounding_sources`
+    — `RunRegistry.register_end()` does not accept `ended_at_utc`
+    (an unrelated signature gap on the registry surface).
+  Both failures confirmed pre-existing via `git stash` + retest on
+  the unmodified `ca2c3a5c9` HEAD.
+* `ruff check` + `ruff format --check` clean on all 3 touched files
+  (`src/thegent/cli/commands/impl.py`,
+  `src/thegent/cli/commands/observability_impl.py`,
+  `tests/test_unit_audit_n27_shim_purity_hardening.py`).
+* No secrets in the diff (`api_key|secret|token|password|passwd|bearer|
+  aws_access|private_key` patterns absent from every touched file).
+
+### Files Touched
+
+* `src/thegent/cli/commands/observability_impl.py:226-325` —
+  `_resolve_audio_transcript_for_output` and
+  `_resolve_grounding_sources_for_output` extended to the
+  dual-mode bridge shape (AUDIT-N+9 legacy + WL-116 / WL-119 kwarg).
+* `src/thegent/cli/commands/impl.py:744-780` — removed 4 local
+  delegates (`_resolve_audio_transcript_for_output`,
+  `_resolve_grounding_sources_for_output`,
+  `_build_audio_summary_metadata`, `_build_run_event_details`).
+  The AUDIT-N+9 re-export block at `impl.py:709-736` is unchanged
+  and continues to expose all 22 moved helpers as identity-equal
+  re-exports from `observability_impl`.
+* `src/thegent/cli/commands/impl.py:1313-1327, 1670-1687` —
+  comments refreshed to reflect that the local delegates are gone.
+* `tests/test_unit_audit_n27_shim_purity_hardening.py` — **new**
+  (484 lines, 32 tests).
+
+### Resolved Worklog Items
+
+* **Carry-forward (a) from AUDIT-N+26 (SOTA Audit Pass 12)** —
+  closed. The fresh SOTA pass over the `observability_impl.py`
+  dormant-core lanes surfaced 4 dual-mode helpers that needed the
+  bridge shape hardening; all 4 are now hardened and pinned by the
+  32-test AUDIT-N+27 suite.
+
+### Carry-forward (post-AUDIT-N+27)
+
+The dormant-core observability surface is now fully hardened and
+the AUDIT-N+9 shim-purity contract is locked. The next genuinely
+unblocked dormant-core / SOTA lane will require either (a) a fresh
+SOTA pass over the V4-1.2.x L2 Rust crates upgrade once the
+Do-Not-Touch archive block clears, or (b) closing the pre-existing
+2 unrelated failures (`run()` `audio_files` signature gap,
+`RunRegistry.register_end(ended_at_utc=)` signature gap) that are
+visible in the broader test sweep but were not introduced by this
+lane.
+
+### Commit
+
+* `152dcfc02` — `AUDIT-N+27: dormant-core observability
+  shim-purity hardening (impl.py removes 4 local delegates;
+  observability_impl hosts the dual-mode bridge)`. Local commit
+  on `wip/2026-07-22-thegent-local-preservation` only; no upstream
+  push (preserves the archived upstream contract).
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: 100% (AUDIT-N+27 lane fully closed:
+  dual-mode bridge shape on 4 helpers, shim-purity contract pinned,
+  AUDIT-N+9 round-trip form preserved, 32 new tests + ruff clean,
+  zero new regressions).
+* **DAG tick**: `+1` (this hand-off). The carry-forward (a) from
+  SOTA Audit Pass 12 is closed; the Five-Day Goal continues with
+  one fewer open dormant-core lane.
