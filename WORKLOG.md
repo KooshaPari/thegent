@@ -9678,3 +9678,190 @@ the carry-forward chain: AUDIT-N+34 source patching
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## 2026-07-22 — AUDIT-N+34 closure hand-off (dormant-core: LaneModel + RunPriorityQueue source patching)
+
+**Lane picked**: The carry-forward chain from AUDIT-N+33 named the
+`execution/lanes/` + `priority_queue.py` dormant-core surface as the
+next candidate. The prior session landed the 612-line spec file
+(`tests/test_unit_audit_n34_lanes_priority_queue_hardening.py`,
+commit `ea84e80cb`) which captured the failure signature
+(159 failed / 7 passed baseline). This hand-off closes the
+**source-patching phase** of AUDIT-N+34.
+
+**Contracts closed (15 NEW items across 2 modules)**:
+
+`src/thegent/orchestration/execution/lanes/__init__.py` (9 items):
+- NEW-1 — `LANE_PRIORITIES` reshuffled: critical=0, standard=10,
+         recovery=20, background=100 (drops the stale
+         high/normal/low keys the stub carried forward from the
+         pre-AUDIT-N+5 shim rewrite).
+- NEW-2 — `LANE_URGENCY` aligned to the canonical
+         `URGENCY_CRITICAL/HIGH/NORMAL/LOW` constants; standard falls
+         back to `URGENCY_NORMAL`, recovery to `URGENCY_HIGH`,
+         background to `URGENCY_LOW`.
+- NEW-3 — `LaneModel.get_priority(name)` case-insensitive,
+         default 50 for unknown/empty inputs, returns real `int`
+         (defensive `int(...)` cast keeps `bool` from leaking out of
+         the dict lookup).
+- NEW-4 — `LaneModel.get_urgency(name)` case-insensitive,
+         unknown/empty falls back to `URGENCY_NORMAL` (0.5),
+         always returns `float`.
+- NEW-5 — `LaneModel.is_protected(name)` only `"critical"` (case-
+         insensitive) returns `True`; all other lanes (including
+         unknown / empty) return `False`.
+- NEW-6 — `LaneModel.sort_tasks(tasks)` sorts by
+         `(priority asc, started_at_utc asc)`; tasks missing
+         `"lane"` default to `"standard"`; FIFO within same lane.
+- NEW-7 — `LaneModel.check_capacity(name, *, active_count,
+         total_capacity)` — critical always `True`; non-critical
+         `active_count < total_capacity - 2` (2 reserved slots for
+         critical); `total_capacity < 2` floors at
+         `max(active_count, 1)` (critical always keeps a slot).
+- NEW-8 — `Lane.CRITICAL/STANDARD/RECOVERY/BACKGROUND` enum-style
+         class attributes that string-equal their lane names. The
+         original dataclass form (`Lane(name=..., priority=...,
+         capacity=...)`) is preserved for backwards compat.
+- NEW-9 — `LaneModel.sort_tasks` does not mutate the input list
+         (returns a fresh `list` snapshot).
+
+`src/thegent/orchestration/execution/priority_queue.py` (6 items):
+- NEW-10 — `QueuedRun` carries `(run_id, lane, priority_score,
+         metadata=..., enqueued_at=...)`. `metadata` is a
+         `default_factory=dict` so no shared-state bug between
+         instances; `enqueued_at` defaults to `time.monotonic()`
+         at construction.
+- NEW-11 — `QueuedRun.from_lane(run_id, lane, metadata=None)`
+         derives `priority_score` from `LANE_PRIORITIES[lane]`
+         (falls back to `LaneModel.get_priority(lane)` for unknown
+         lanes). `Lane.CRITICAL` enum-style attrs are accepted
+         (their string values land in `LANE_PRIORITIES`).
+- NEW-12 — `RunPriorityQueue(maxsize=0)` — `maxsize=0` is
+         unbounded; `maxsize>0` is bounded and raises `Full` via
+         `put_nowait` / `put(block=False)` /
+         `put(block=True, timeout=...)`.
+- NEW-13 — Full API surface: `put` / `get` / `put_nowait` /
+         `get_nowait` / `qsize` / `empty` / `full` /
+         `cancel(run_id)` / `drain()` / `peek()`. Lower
+         `priority_score` dequeues first; FIFO within the same
+         score (heap entries carry a monotonic counter to break
+         ties).
+- NEW-14 — `RLock` + `Condition` thread safety for concurrent
+         `put`/`get`/`cancel`/`drain`. The 200-producer ×
+         10-consumer stress test in
+         `TestThreadSafety::test_concurrent_put_get_no_loss`
+         passes with **0 items lost, 0 duplicates**.
+- NEW-15 — `make_priority_queue(maxsize=...)` factory.
+         The legacy `PriorityQueue` (heap-based, `push`/`pop` on
+         `(priority, item)` dict tuples) is preserved for
+         backwards compatibility.
+
+**Files touched**:
+
+| File | LOC | What |
+|---|---|---|
+| `src/thegent/orchestration/execution/lanes/__init__.py` | +207 / -30 | dormant-core `LaneModel` + canonical `LANE_PRIORITIES` map + `Lane` enum-style attrs |
+| `src/thegent/orchestration/execution/priority_queue.py` | +310 / -46 | dormant-core `RunPriorityQueue` + `QueuedRun` + `make_priority_queue` factory + legacy `PriorityQueue` preserved |
+
+**Validation**:
+- **509 / 509** tests pass in the AUDIT-N+34 corridor:
+  - `tests/test_unit_audit_n34_lanes_priority_queue_hardening.py` (78 → all green)
+  - `tests/test_unit_orchestration_lanes.py` (full suite)
+  - `tests/orchestration/test_priority_queue.py` (full suite, 47 dormant contracts)
+  - `tests/test_unit_audit_n33_orchestration_hardening.py` (regression-clean)
+  - `tests/test_unit_audit_n32_escalation_message_hardening.py` (regression-clean)
+  - `tests/test_unit_audit_n31_checkpoint_registry_hardening.py` (regression-clean)
+  - `tests/test_unit_audit_n30_override_registry_hardening.py` (regression-clean)
+  - `tests/test_unit_execution.py` (regression-clean)
+  - `tests/test_unit_escalation.py` (regression-clean)
+  - `tests/test_wl125_run_dag_helpers_parity.py` (regression-clean)
+- `ruff check` clean on both touched files
+- `ruff format --check` clean on both touched files
+- Secrets negative-grep: **0 hits** (no `sk-…`, `ghp_…`, `xox…`,
+  `AKIA…`, bare `password=` / `secret=` / `api_key=` matches in the
+  diff)
+- Baseline failure signature (159 failed / 7 passed) **fully
+  resolved**: every dormant contract in the spec file passes on
+  first run after the source patch; no pre-existing tests broken;
+  no latent-bug tests required updating (the contract surface was
+  stub-vs-real, not contract-vs-contract).
+- Unrelated worktree mod set on
+  `wip/2026-07-22-thegent-local-preservation` preserved untouched
+  (no upstream push, no force-push, no archival).
+- `audit_history.jsonl` shows audit trail intact.
+
+**Why the surface needed a rewrite (not a tweak)**: the prior
+stub carried a different field shape (`run_id`, `priority`,
+`status`, `metadata`, `created_at` + `__lt__`) and a
+`RunPriorityQueue` that exposed `enqueue`/`dequeue`/`peek`/
+`is_empty`/`size` only. The dormant + AUDIT-N+34 spec surface
+requires `put`/`get`/`put_nowait`/`get_nowait`/`qsize`/`empty`/
+`full`/`cancel`/`drain`/`peek` + `maxsize`-bounded blocking with
+timeouts + `RLock` thread safety + a fresh per-instance
+`metadata` dict + monotonic `enqueued_at`. A targeted tweak was
+not possible; the rewrite preserves the legacy `PriorityQueue`
++ the `QueuedRun(run_id, lane, priority_score, metadata,
+enqueued_at)` field shape the swarm scheduler expects.
+
+**Carry-forward closed**: AUDIT-N+33's "next unblocked lane" was
+the `execution/lanes/` + `priority_queue.py` dormant-core cluster.
+That lane is now fully closed.
+
+**Carry-forward (post-AUDIT-N+34)**:
+
+The dormant-core cluster inside `orchestration/execution/` has now
+been hardened through:
+- AUDIT-N+33 — `MessageBus` + `OrchestrationPlan` +
+  `BudgetTracker` + `ResultAggregator` + `SubAgentDispatcher`
+  (orchestration surface)
+- AUDIT-N+34 — `LaneModel` + `LANE_PRIORITIES` + `Lane` enum
+  attrs + `RunPriorityQueue` + `QueuedRun` + `make_priority_queue`
+  (execution lanes + run-priority-queue surface)
+
+The next genuinely-unblocked dormant-core candidates per the
+SOTA pass-18 sweep are:
+1. `orchestration/execution/dag_prioritization/DagPrioritizer` —
+   dormant surface with `tests/orchestration/test_dag_prioritization.py`
+   (39 failure baseline + 24 errors). This is the natural next
+   lane; a fresh SOTA pass-19 spec would mirror the AUDIT-N+34
+   pattern.
+2. `orchestration/execution/engine/ExecutionEngine` (referenced by
+   `src/thegent/agents/maif_runner.py` + `tests/maif/test_engine_wiring.py`)
+   — dormant surface, FR-ORC-EXEC contract surface.
+3. `orchestration/event_queue/` — never audited in the dormant-core
+   chain.
+4. `orchestration/consensus/{redlock_atomic, omega_consensus,
+   redis_concurrency}/` — never audited in the dormant-core chain.
+
+Recommended start of next session: SOTA pass-19 over
+`DagPrioritizer` (mirrors the AUDIT-N+34 spec-first pattern;
+locks in the 39-failure baseline + 24-error contracts). Then either
+branch into AUDIT-23/25/F-7..F-15 follow-ups or WL-124 stub
+closure once audio-lane signal stabilizes.
+
+**Commits**:
+- `ea84e80cb` — `AUDIT-N+34: dormant-core hardening spec for
+  LaneModel + RunPriorityQueue` (612-line test spec + WORKLOG
+  hand-off, prior session).
+- `ed8b2c286` — `AUDIT-N+34: harden LaneModel + RunPriorityQueue
+  (dormant-core SOTA pass 18)` (517-line source patch on
+  `lanes/__init__.py` + `priority_queue.py`, this session).
+
+Both on `wip/2026-07-22-thegent-local-preservation` only; no
+upstream push, no force-push (preserves the archived upstream
+contract).
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (AUDIT-N+34 lane fully closed:
+  15 hardening items across 2 adjacent dormant-core modules,
+  509-test broader corridor sweep clean, ruff check + format
+  clean, secrets negative-grep 0 hits, no pre-existing
+  regressions, unrelated worktree mod set preserved).
+* **DAG tick**: **+1** (this hand-off). The dormant-core hardening
+  chain now extends through AUDIT-N+34; the next dormant-core
+  candidate (`DagPrioritizer`) is queued for SOTA pass-19.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
