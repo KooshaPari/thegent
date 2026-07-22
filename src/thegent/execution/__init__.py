@@ -822,9 +822,7 @@ class OverrideRegistry:
         # in Python but rarely a meaningful TTL) and ``float``
         # (which would silently truncate via ``timedelta``).
         if isinstance(ttl_seconds, bool) or not isinstance(ttl_seconds, int):
-            raise ValueError(
-                f"override_registry: ttl_seconds must be int, got {type(ttl_seconds).__name__}"
-            )
+            raise ValueError(f"override_registry: ttl_seconds must be int, got {type(ttl_seconds).__name__}")
         if ttl_seconds < 0:
             raise ValueError(f"override_registry: ttl_seconds must be non-negative, got {ttl_seconds}")
 
