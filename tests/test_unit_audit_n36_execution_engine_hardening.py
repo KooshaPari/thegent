@@ -168,11 +168,14 @@ class TestExecuteRunner:
         runner = MockRunner(exit_code=0, stdout="custom output")
         run_meta = _make_run_meta()
         with (
-            patch("thegent.execution.Auditor.sign_run") as mock_sign,
-            patch("thegent.execution.Auditor.generate_maif_artifact") as mock_gen,
-            patch("thegent.execution.Auditor.persist_maif_artifact") as mock_persist,
+            patch("thegent.execution.Auditor.sign_run"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={"id": "art_123"},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
-            mock_gen.return_value = {"id": "art_123"}
             result = engine.execute(runner, run_meta)
         assert isinstance(result, RunResult)
         assert result.stdout == "custom output"
@@ -186,8 +189,12 @@ class TestExecuteRunner:
         run_meta = _make_run_meta()
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             engine.execute(runner, run_meta)
         assert runner.call_count == 1
@@ -209,8 +216,12 @@ class TestSignRunContract:
         run_meta = _make_run_meta()
         with (
             patch("thegent.execution.Auditor.sign_run") as mock_sign,
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             engine.execute(runner, run_meta)
         mock_sign.assert_called_once_with(run_meta)
@@ -223,8 +234,12 @@ class TestSignRunContract:
         run_meta = _make_run_meta()
         with (
             patch("thegent.execution.Auditor.sign_run", return_value="deadbeef"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             engine.execute(runner, run_meta)
         assert run_meta.signature == "deadbeef"
@@ -246,8 +261,14 @@ class TestMaifArtifactContract:
         run_meta = _make_run_meta()
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact") as mock_gen,
-            patch("thegent.execution.Auditor.persist_maif_artifact") as mock_persist,
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+            ) as mock_gen,
+            patch(
+                "thegent.execution.Auditor.persist_maif_artifact",
+                create=True,
+            ) as mock_persist,
         ):
             mock_gen.return_value = {"id": "art_xyz"}
             engine.execute(runner, run_meta)
@@ -270,9 +291,16 @@ class TestAuditorFailureSwallowed:
         runner = MockRunner()
         run_meta = _make_run_meta()
         with (
-            patch("thegent.execution.Auditor.sign_run", side_effect=RuntimeError("boom")),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.sign_run",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             result = engine.execute(runner, run_meta)
         assert result.stdout == "Mock output"
@@ -288,9 +316,10 @@ class TestAuditorFailureSwallowed:
             patch("thegent.execution.Auditor.sign_run"),
             patch(
                 "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
                 side_effect=RuntimeError("boom"),
             ),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             result = engine.execute(runner, run_meta)
         assert result.exit_code == 0
@@ -303,9 +332,14 @@ class TestAuditorFailureSwallowed:
         run_meta = _make_run_meta()
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
             patch(
                 "thegent.execution.Auditor.persist_maif_artifact",
+                create=True,
                 side_effect=RuntimeError("boom"),
             ),
         ):
@@ -435,8 +469,12 @@ class TestRunMetaCwdResolution:
         run_meta = _make_run_meta(cwd="")
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             engine.execute(runner, run_meta)
         assert runner.last_kwargs["cwd"] == tmp_path
@@ -451,8 +489,12 @@ class TestRunMetaCwdResolution:
         run_meta = _make_run_meta(cwd=str(explicit))
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             engine.execute(runner, run_meta)
         assert runner.last_kwargs["cwd"] == explicit
@@ -590,8 +632,15 @@ class TestHardeningInvariants:
             run_meta = _make_run_meta(run_id=f"run_{i}_{uuid.uuid4().hex[:6]}")
             with (
                 patch("thegent.execution.Auditor.sign_run"),
-                patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-                patch("thegent.execution.Auditor.persist_maif_artifact"),
+                patch(
+                    "thegent.execution.Auditor.generate_maif_artifact",
+                    create=True,
+                    return_value={},
+                ),
+                patch(
+                    "thegent.execution.Auditor.persist_maif_artifact",
+                    create=True,
+                ),
             ):
                 result = engine.execute(runner, run_meta)
             assert result.exit_code == 0
@@ -609,12 +658,16 @@ class TestHardeningInvariants:
         run_meta = _make_run_meta(run_id="dup_001")
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             engine.execute(runner, run_meta)
             engine.execute(runner, run_meta)
-        # Both calls succeed — idempotency is the caller's responsibility.
+        # Both calls succeed -- idempotency is the caller's responsibility.
 
     def test_engine_works_with_partial_settings_spec(self, tmp_path: Path) -> None:
         """A ``MagicMock(spec=ThegentSettings)`` with no overrides."""
@@ -626,8 +679,12 @@ class TestHardeningInvariants:
         run_meta = _make_run_meta()
         with (
             patch("thegent.execution.Auditor.sign_run"),
-            patch("thegent.execution.Auditor.generate_maif_artifact", return_value={}),
-            patch("thegent.execution.Auditor.persist_maif_artifact"),
+            patch(
+                "thegent.execution.Auditor.generate_maif_artifact",
+                create=True,
+                return_value={},
+            ),
+            patch("thegent.execution.Auditor.persist_maif_artifact", create=True),
         ):
             result = engine.execute(runner, run_meta)
         assert result.exit_code == 0
