@@ -11522,3 +11522,71 @@ unblock only) and are tracked as separate carry-forward work.
 
 ### Cockpit progress bar + DAG tick
 DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-DISPATCHCONFIG-001` closed.
+
+## Hand-off — 2026-07-23 — AUDIT-N+39 (dormant resilience cluster) integrated at LOCAL preservation tip bbd36a177 (SOTA pass-66..83)
+
+Lane: dormant-core AUDIT-N+39 resilience cluster merge onto
+LOCAL preservation tip. Goal zero: integrate the dormant
+resilience cluster (`feature/audit-n39-resilience-hardening`)
+on top of the LOCAL preservation branch
+`wip/2026-07-22-thegent-local-preservation` at tip `bbd36a177`
+(remote ref `5d64c523f` is stale; do not use), then cherry-pick
+the DispatchConfig fix from `fix/dispatchconfig-export`.
+
+Working tree: `audit-n39-merge-fresh` (new branch from
+preservation tip; do not push).
+
+Merge resolution:
+* WORKLOG.md only (no other conflicts; preservation AUDIT-N+71..N+99
+  governance lane changes did not touch the dormant resilience
+  cluster's source files).
+* Preservation's AUDIT-N+39 `speculative_strategies` hand-off
+  block kept at its position; feature's AUDIT-N+39 `dormant
+  resilience cluster` hand-off block appended directly after
+  the preservation block at the same conflict site. Both
+  `## Hand-off` blocks now in WORKLOG.md in date order:
+  - `2026-07-22 — AUDIT-N+39: dormant-core speculative_strategies hardening (SOTA pass-23)`
+  - `2026-07-23 — AUDIT-N+39: dormant resilience cluster hardening (SOTA pass-23)`
+
+Cherry-pick: `4557bf312 fix(dispatcher): expose DispatchConfig dataclass`
+applied cleanly on the dispatcher module + the
+`tests/test_unit_dispatcher_dispatchconfig.py` test file +
+WORKLOG.md handoff. DispatchConfig dataclass now exposed at
+`thegent.orchestration.dispatcher` so
+`tests/test_wl681x_lane_d.py` can collect.
+
+Verification:
+* `uv lock` — resolved 228 packages, litellm 1.88.1 → 1.90.2,
+  removed `phenotype-py-utils` (legacy local dep drop).
+* `uv sync` — installed venv with thegent + litellm + everything
+  to run pytest.
+* AUDIT-N+39 spec surface (`resilience_cluster_hardening` +
+  `speculative_strategies_hardening` +
+  `dispatcher_dispatchconfig`): **118 passed**, 0 failed
+  (75 + 40 + 3 = 118).
+* Dormant cluster (N+29..N+39 + `omega_consensus` +
+  `orchestration/test_redlock_atomic` +
+  `orchestration/test_redis_concurrency` +
+  `orchestration_recovery` + `defer_injection` + `smart_prune`):
+  **811 passed**, 0 failed.
+* `tests/test_wl681x_lane_d.py`: **12 passed + 4 pre-existing
+  failures** (TypeError: bus must be MessageBus, got _Index —
+  pre-existing out-of-scope; matches expected baseline).
+* `uv run ruff check src/thegent`: **5 pre-existing errors**
+  (acp_server S104 × 2, phench PLE0605, cost_predictor RUF012 × 2)
+  — out of scope for this merge.
+
+Anomalies:
+* Upstream branch tracks `wip/2026-07-22-thegent-local-preservation`
+  and reports `ahead 4` after the merge + cherry-pick (the merge
+  base is `bbd36a177`; the 4 ahead commits are the two feature
+  branch commits brought in by the merge plus the cherry-pick
+  and the merge commit itself).
+* `uv.lock` updated by `uv lock` (litellm bump + phenotype-py-utils
+  drop); staged status flag ` M uv.lock` reflects the
+  preservation-side dependency update path already
+  merged-in by `bbd36a177`-era commits and the sync command
+  re-resolution.
+
+### Cockpit progress bar + DAG tick
+DAG tick: **+1** (this hand-off). Lane `AUDIT-N+39-RESILIENCE-MERGE-LOCAL-001` closed.
