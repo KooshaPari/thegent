@@ -11280,3 +11280,57 @@ Lane: governance AUDIT-N+82 through N+99.
 * Chain: **N+30 → N+99** (70 consecutive passes, SOTA pass-83).
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## 2026-07-23: AUDIT-LANE-DISPATCHCONFIG-001 — DispatchConfig exposure fix (path B, dependency-unblock)
+
+### Goal
+Resolve the pre-existing pytest collection error
+`ImportError: cannot import name 'DispatchConfig' from 'thegent.orchestration.dispatcher'`
+that has blocked `task test` since before AUDIT-N+39.
+
+### Lane
+AUDIT-LANE-DISPATCHCONFIG-001 (path B — minimal unblock).
+
+### What landed
+* Added `DispatchConfig` (frozen dataclass) to
+  `src/thegent/orchestration/dispatcher/__init__.py` with a single
+  `hitl_enabled: bool = False` field. Only the kwargs exercised by the
+  legacy `tests/test_wl681x_lane_d.py` contract (lines 256, 285, 297,
+  316) are declared — the canonical dispatcher treats `config` as an
+  opaque attribute, so adding fields preemptively would be over-spec.
+* New regression test
+  `tests/test_unit_dispatcher_dispatchconfig.py` (3 tests) exercises
+  the import path, default value, and `hitl_enabled=True` round-trip.
+
+### TDD-RED → TDD-GREEN
+* RED — `uv run pytest tests/test_unit_dispatcher_dispatchconfig.py -v`
+  exits 0 with collection error:
+  `ImportError: cannot import name 'DispatchConfig' from
+  'thegent.orchestration.dispatcher'`.
+* GREEN — after adding `DispatchConfig`, same command reports
+  `3 passed`.
+
+### test_wl681x_lane_d.py collection
+`uv run pytest tests/test_wl681x_lane_d.py -v` now collects cleanly
+(`12 passed, 4 failed` in 20.05s). The 4 remaining failures are pre-existing
+runtime mismatches — the canonical `SubAgentDispatcher` enforces
+`bus: MessageBus` and no longer exposes `_execute_task` / `_check_hitl_gate`
+stub methods; these are outside the scope of path B (path B is import
+unblock only) and are tracked as separate carry-forward work.
+
+### Ruff
+* `ruff check` — All checks passed.
+* `ruff format --check` — 2 files already formatted.
+
+### Files touched
+* `src/thegent/orchestration/dispatcher/__init__.py` (+24 / -1)
+* `tests/test_unit_dispatcher_dispatchconfig.py` (NEW, 31 lines)
+
+### Carry-forward (not in this hand-off)
+* `tests/test_wl681x_lane_d.py` runtime failures (4) — needs the
+  canonical `SubAgentDispatcher` to expose `_execute_task` /
+  `_check_hitl_gate` / accept non-`MessageBus` capability indexes,
+  or the test needs to be re-written against the bus-only contract.
+
+### Cockpit progress bar + DAG tick
+DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-DISPATCHCONFIG-001` closed.
