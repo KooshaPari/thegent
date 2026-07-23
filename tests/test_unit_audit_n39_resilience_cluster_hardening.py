@@ -502,9 +502,7 @@ class TestSmartPrunerTripleLock:
             last_check_time=time.time(),
             idle_count=IDLE_COUNT_THRESHOLD,
         )
-        is_idle, is_complete, docs = pruner.check_triple_lock(
-            snap, "Task finished\n", time.time() - 10, time.time()
-        )
+        is_idle, is_complete, docs = pruner.check_triple_lock(snap, "Task finished\n", time.time() - 10, time.time())
         assert is_idle is True
         assert is_complete is True
         assert docs is True
