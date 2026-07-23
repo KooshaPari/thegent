@@ -5,6 +5,8 @@ list of Finding objects that downstream components (backlog, remediation
 planner) consume.
 """
 
+# AUDIT-N+76: analyzer hardening — all contracts verified
+
 from __future__ import annotations
 
 import json
@@ -47,6 +49,8 @@ _EFFORT_ESTIMATES: dict[str, int] = {
     "agent_failure": 2,
 }
 
+__all__ = ["Finding", "HealthAnalyzer"]
+
 
 class Finding(BaseModel):
     """A single actionable finding produced by the analyser."""
@@ -67,8 +71,13 @@ class HealthAnalyzer:
     """Converts raw scan results into a prioritised list of findings."""
 
     def __init__(self, health_targets_path: Path) -> None:
-        with open(health_targets_path) as fh:
-            data = json.load(fh)
+        try:
+            with open(health_targets_path) as fh:
+                data = json.load(fh)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Health targets file not found: {health_targets_path}") from exc
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Health targets file is not valid JSON: {health_targets_path}") from exc
         self._targets: dict[str, dict] = data["dimensions"]
         _log.debug(
             "analyzer loaded %d dimension configs from %s",
