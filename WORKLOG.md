@@ -10679,3 +10679,20 @@ already at `c5a94d4b7`; this closes the source loop.
   `667466b17`, still failing pending source harden).
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+41: dormant-core ShadowAuditGit hardening (SOTA pass-25) — source closure
+
+Lane: dormant-core AUDIT-N+41 source patch (SOTA pass-25). Spec was
+already at `667466b17`; this closes the source loop.
+
+* Restore `src/thegent/orchestration/state/audit_log.py`:
+  `ShadowAuditGit(audit_path=...)`, `init_shadow_repo`,
+  `commit_transaction` (local + `remote_host` snapshots,
+  `scan_secrets` scrubbing with fixture-token extras),
+  `get_log` / `get_diff`.
+* Validation: N+41 + dormant corridors **54 passed**; ruff clean.
+* Lane status: **AUDIT-N+41 closed**.
+* Next dormant-core candidates: `strategies/evidence/`,
+  `state/shm.py` (SharedMemoryManager).
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
