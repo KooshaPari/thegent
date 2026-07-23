@@ -1,7 +1,30 @@
-"""Session scraper for orchestration state.
+"""Session scraper for orchestration state (AUDIT-N+44 hardening).
 
-This module provides functionality for scraping session data
-from the orchestration state for monitoring and debugging.
+Hardening (AUDIT-N+44 — SOTA pass-28)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n44_session_scraper_hardening.py``
+(``FR-ORC-SS-001..015``).
+
+Provides ``SessionScraper(session_dir)`` for extracting session data
+from the orchestration state layer (WP-1006).
+
+# @trace AUDIT-N+44
+# @trace FR-ORC-SS-001
+# @trace FR-ORC-SS-002
+# @trace FR-ORC-SS-003
+# @trace FR-ORC-SS-004
+# @trace FR-ORC-SS-005
+# @trace FR-ORC-SS-006
+# @trace FR-ORC-SS-007
+# @trace FR-ORC-SS-008
+# @trace FR-ORC-SS-009
+# @trace FR-ORC-SS-010
+# @trace FR-ORC-SS-011
+# @trace FR-ORC-SS-012
+# @trace FR-ORC-SS-013
+# @trace FR-ORC-SS-014
+# @trace FR-ORC-SS-015
 """
 
 from __future__ import annotations

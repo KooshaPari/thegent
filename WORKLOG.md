@@ -10749,6 +10749,52 @@ hand-off closes the source loops.
   remain) or the broader governance / performance / UX audit lanes
   from the five-day goal.
 
+## Hand-off — 2026-07-22 — AUDIT-N+44/N+45: session_scraper + snapshot_helpers source closures (SOTA pass-28/29)
+
+Lane: dormant-core AUDIT-N+44 (session_scraper) and AUDIT-N+45
+(snapshot_helpers) source patches. Both specs were already committed
+(`a21d4e589`); this hand-off closes the source loops.
+
+### AUDIT-N+44 (session_scraper, SOTA pass-28)
+
+* Source patch: `src/thegent/orchestration/state/session_scraper.py`
+  (80 → 103 lines): Module docstring with `@trace AUDIT-N+44` +
+  `FR-ORC-SS-001..015` annotations. `SessionScraper(session_dir)`
+  with `None` fallback, `scrape_session`, `scrape_all_sessions`,
+  `get_session_summary`, `scrape_turns` stubs.
+* Validation: N+44 spec **48 passed**; ruff clean.
+
+### AUDIT-N+45 (snapshot_helpers, SOTA pass-29)
+
+* Source patch: `src/thegent/orchestration/state/
+  session_snapshot_cli_helpers.py` (58 → 85 lines): Module docstring
+  with `@trace AUDIT-N+45` + `FR-ORC-SV-001..015` annotations.
+  `SessionSnapshotCLIHelpers` class, `format_snapshot`,
+  `parse_snapshot_args`, all `snapshot_*_payload` generators.
+* Validation: N+45 spec **80 passed**; ruff clean.
+
+### Full Regression
+
+* `pytest tests/test_unit_audit_n{30..45}*.py + dormant corridors`
+  → **1021 passed, 1 skipped, 0 regressions** across the full
+  N+30 → N+45 chain (16 consecutive SOTA audit-N+ passes).
+* ruff check + format clean on all touched files.
+* Repo-wide secret-pattern scan over last 4 commits → 0 hits.
+* No upstream push, no force-push, no agent/terminal process kills.
+* Unrelated worktree mod set preserved.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** on both closed lanes (N+44
+  session_scraper: 48 spec passed; N+45 snapshot_helpers: 80 spec
+  passed). Total dormant-core hardening chain now spans
+  **N+30 → N+45** (16 consecutive SOTA audit-N+ passes, all
+  closed).
+* **DAG tick**: **+2** (this hand-off). The dormant-core hardening
+  chain now extends through AUDIT-N+45; the next candidates for
+  SOTA pass-30+ are the broader governance / performance / UX
+  audit lanes from the five-day goal.
+
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
