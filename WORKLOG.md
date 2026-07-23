@@ -10413,3 +10413,108 @@ module would warrant a follow-up AUDIT-N+39 lane).
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## Hand-off — 2026-07-22 — AUDIT-N+39: dormant-core speculative_strategies hardening (SOTA pass-23) — closure
+
+Lane: dormant-core AUDIT-N+39 hardening (SOTA pass-23). Goal
+zero: continue the dormant-core hardening chain begun in
+AUDIT-N+33 → AUDIT-N+38 by source-patching the speculative
+strategies module so every AUDIT-N+39 spec assertion
+passes without breaking the dormant corridor or any other
+SOTA audit-N+ invariant cluster.
+
+What was already committed (commit `53dbdf6fd`, the
+spec-first AUDIT-N+39 commit): the dormant-core AUDIT-N+39
+spec file
+(`tests/test_unit_audit_n39_speculative_strategies_hardening.py`,
+40 tests / 15 invariants, ``FR-ORC-SS-001..015``).
+
+What this hand-off finishes: the source patch so every
+spec assertion passes —
+
+* `src/thegent/orchestration/strategies/speculative_strategies/__init__.py`
+  (FR-ORC-SS-001 .. FR-ORC-SS-015 — 15 invariants, WP-5001):
+  - `SpeculativeStrategy` is a 5-member `enum.Enum`
+    (`RACE_FIRST`, `RACE_BEST`, `ADAPTIVE_TIMEOUT`,
+    `COST_QUALITY_TRADEOFF`, `EARLY_TERMINATION`) with
+    stable string values
+  - `SpeculativeConfig.__post_init__` normalises
+    `providers=None` → `["free", "claude", "gemini"]`,
+    preserves an explicit empty list (caller opt-out),
+    and rejects negative `timeout_ms` /
+    `historical_latency_p95_ms` /
+    `historical_quality_avg` with `ValueError`
+  - `compute_adaptive_timeout` returns
+    `max(base_timeout_ms, historical_p95_ms *
+    safety_multiplier)` with defaults `5000` / `1.5`
+  - `select_speculative_providers` caps non-cost
+    strategies at top-3 in input order; empty input → `[]`
+  - `COST_QUALITY_TRADEOFF` always includes `free`
+    (cost `0.0`), accumulates provider costs
+    (`free=0.0`, `claude=0.001`, unknown default `0.001`)
+    against `cost_budget`, never returns more than 3
+  - `should_terminate_early` uses strict `elapsed_ms >
+    timeout_ms` for hard timeout; `EARLY_TERMINATION`
+    additionally requires non-empty `other_results` AND
+    `elapsed_ms / timeout_ms > 0.5`; other strategies
+    never early-terminate on results alone
+  - `__all__` exposes the five public symbols
+
+Validation (all clean):
+
+* `pytest tests/test_unit_audit_n39_speculative_strategies_hardening.py`
+  → **40 passed** (15 invariants, ``FR-ORC-SS-001..015``)
+* `pytest tests/orchestration/test_speculative_strategies.py`
+  → **33 passed** (dormant corridor)
+* `pytest tests/test_unit_audit_n39_speculative_strategies_hardening.py
+  + tests/orchestration/test_speculative_strategies.py` → **73 passed**
+* `pytest tests/test_unit_audit_n{30..39}*.py +
+  tests/orchestration/test_speculative_strategies.py +
+  tests/orchestration/test_redlock_atomic.py +
+  tests/orchestration/test_redis_concurrency.py` →
+  **648 passed, 1 skipped, 0 regressions** across the full
+  dormant + SOTA audit-N+ invariant cluster (N+30 → N+39)
+* `ruff check + ruff format --check + py_compile` clean
+  on the touched file
+* gitleaks-equivalent secret-pattern scan on the diff →
+  0 leaks
+* No force-push to the archived upstream; local
+  preservation branch per project guidelines
+* Unrelated worktree mod set preserved (only the
+  dormant source + spec touched in this lane)
+
+Lane status: **AUDIT-N+39 closed**. The dormant-core
+hardening chain now extends through AUDIT-N+39. Next
+dormant-core candidates (queued for SOTA pass-24):
+`strategies/playbooks/` (25 dormant tests, 13+ invariants),
+`strategies/evidence/` (23 tests), `state/audit_log.py`
+(`ShadowAuditGit`, 21 tests), and `state/shm.py`
+(`SharedMemoryManager`, 32 tests) — ranked by
+size/complexity, smallest-first per the AUDIT-N+ chain
+pattern.
+
+* **DAG tick**: **+1** (this hand-off). The dormant-core
+  hardening chain now extends through AUDIT-N+39.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (AUDIT-N+39 lane fully
+  closed: 15 FR-ORC-SS-001 .. FR-ORC-SS-015 hardening
+  invariants, 40 new SOTA spec tests, 33 dormant
+  `test_speculative_strategies.py` tests now green after
+  the enum + dataclass + decision-helper redesign,
+  648/648 combined dormant cluster + SOTA audit-N+ chain
+  all green (N+30 → N+39), ruff check + format clean on
+  the changed file, gitleaks + secrets negative-grep 0
+  hits, no pre-existing regressions, unrelated worktree
+  mod set preserved).
+* **DAG tick**: **+1** (this hand-off). The dormant-core
+  hardening chain now extends through AUDIT-N+39; the
+  next dormant-core candidate
+  (`strategies/playbooks/` + `strategies/evidence/` +
+  `state/audit_log.py` + `state/shm.py`) is queued for
+  SOTA pass-24.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
