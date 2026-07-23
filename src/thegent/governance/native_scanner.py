@@ -1,7 +1,20 @@
-"""Native governance scanner (obfuscated triggers, Rust built)."""
+"""Native governance scanner (obfuscated triggers, Rust built).
+
+Hardening (AUDIT-N+99 — SOTA pass-83)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n99_native_scanner_hardening.py``
+(``FR-GOV-NS-001..015``).
+
+# @trace AUDIT-N+99
+"""
 
 import logging
 from typing import Any
+
+__all__ = [
+    "NativeGovernanceScanner",
+]
 
 logger = logging.getLogger(__name__)
 

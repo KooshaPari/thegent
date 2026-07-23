@@ -1,7 +1,21 @@
-"""Core policy management and evaluation (WP-3001, WP-3002)."""
+"""Core policy management and evaluation (WP-3001, WP-3002).
+
+Hardening (AUDIT-N+97 — SOTA pass-81)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n97_policy_hardening.py``
+(``FR-GOV-PO-001..015``).
+
+# @trace AUDIT-N+97
+"""
 
 import logging
 from typing import Any
+
+__all__ = [
+    "PolicyManager",
+    "LearningSession",
+]
 
 logger = logging.getLogger(__name__)
 
