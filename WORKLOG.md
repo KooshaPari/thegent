@@ -1998,6 +1998,66 @@ flipped field + AUDIT-2 envelope parity fix`.
   flipped-field walkthrough.
 * `src/thegent/ux/cli_sota.py` — `_render_report_text` /
   `_render_report_json` / `_render_report_junitxml` accept
+
+## Phase 3/4 Continuation — 2026-07-22 (AUDIT-N+47/N+48: governance kill_switch + constitution hardening, SOTA pass-31/32)
+
+Closes two governance dormant-core modules in the hardening chain.
+AUDIT-N+47 fixes two critical bugs in `kill_switch.py` (misplaced
+`import time` at file bottom and `self._improvement_rate` attribute
+reference instead of the `self_improvement_rate` parameter) and adds
+path-traversal guards. AUDIT-N+48 hardens `constitution.py` with
+path-traversal guards, `yaml.safe_load` with error handling, and
+`@trace` annotations.
+
+### AUDIT-N+47 (governance/kill_switch, SOTA pass-31)
+
+* Source patch: `src/thegent/governance/kill_switch.py` (39 → 57 lines):
+  - **Bug fix**: `import time` moved from bottom (line 39) to top of
+    file (was causing `NameError` at runtime on `activate()`)
+  - **Bug fix**: `self._improvement_rate` → `self_improvement_rate`
+    (parameter name, was referencing a non-existent attribute)
+  - Path-traversal guard: `__init__` rejects relative paths with
+    `ValueError`
+  - `@trace AUDIT-N+47` + `FR-GOV-KS-001..015` annotations on module
+    and all methods
+* Spec: `tests/test_unit_audit_n47_kill_switch_hardening.py` (24 tests,
+  15 invariants FR-GOV-KS-001..015).
+* Validation: N+47 spec **24 passed**; ruff clean.
+
+### AUDIT-N+48 (governance/constitution, SOTA pass-32)
+
+* Source patch: `src/thegent/governance/constitution.py` (80 → 108 lines):
+  - Path-traversal guard: `_load()` rejects relative paths with
+    `ValueError`
+  - `yaml.safe_load` with `try/except (yaml.YAMLError, OSError)` for
+    malformed YAML graceful fallback
+  - Removed `from thegent.infra import yaml_load` dependency; uses
+    stdlib `yaml` directly
+  - `@trace AUDIT-N+48` + `FR-GOV-CN-001..015` annotations on module,
+    classes, and methods
+* Spec: `tests/test_unit_audit_n48_constitution_hardening.py` (23 tests,
+  15 invariants FR-GOV-CN-001..015).
+* Validation: N+48 spec **23 passed**; ruff clean.
+
+### Full Regression
+
+* `pytest tests/test_unit_audit_n{30..48}*.py + dormant corridors`
+  → **1104 passed, 1 skipped, 0 regressions** across the full
+  N+30 → N+48 chain (19 consecutive SOTA audit-N+ passes).
+* ruff check + format clean on all touched files.
+* No secrets in the diff.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** on both closed lanes (N+47
+  kill_switch: 24 spec passed; N+48 constitution: 23 spec passed).
+  Total dormant-core hardening chain now spans **N+30 → N+48**
+  (19 consecutive SOTA audit-N+ passes, all closed).
+* **DAG tick**: **+2** (this hand-off). The dormant-core hardening
+  chain extends through AUDIT-N+48; next candidates for SOTA
+  pass-33+ are remaining governance modules (escalation,
+  evidence_ledger, cost_controller, vetter) or the performance
+  / UX audit lanes.
   `flipped=` for cross-renderer parity.
 * `tests/test_unit_cockpit_snapshot_flip_envelope.py` —
   **new** (17 tests, 5 classes).
