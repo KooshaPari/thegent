@@ -1,5 +1,13 @@
 """Team coordination and cross-team collaboration."""
 
+# Hardening (AUDIT-N+63 — SOTA pass-47)
+# --------------------------------------
+# Contract surface asserted by
+# ``tests/test_unit_audit_n63_team_coordinator_hardening.py``
+# (``FR-GOV-TW-001..015``).
+#
+# @trace AUDIT-N+63
+
 import logging
 from typing import Any
 
@@ -329,3 +337,6 @@ class TeamCoordinator:
             "assignments": assignments,
             "participants": [m.run_id for m in active_members],
         }
+
+
+__all__ = ["TeamCoordinator"]

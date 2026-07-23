@@ -5,6 +5,14 @@ computing governance placement recommendations from
 `docs/governance/TASK_CLASSIFIER_SCHEMA.yaml`.
 """
 
+# Hardening (AUDIT-N+61 — SOTA pass-45)
+# --------------------------------------
+# Contract surface asserted by
+# ``tests/test_unit_audit_n61_task_classifier_hardening.py``
+# (``FR-GOV-TC-001..015``).
+#
+# @trace AUDIT-N+61
+
 from __future__ import annotations
 
 from dataclasses import dataclass

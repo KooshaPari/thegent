@@ -6,6 +6,14 @@ for use in provider scoring and cost-aware routing decisions.
 See: docs/changes/research-economic-governance/design.md § 2.1
 """
 
+# Hardening (AUDIT-N+62 — SOTA pass-46)
+# --------------------------------------
+# Contract surface asserted by
+# ``tests/test_unit_audit_n62_metrics_hardening.py``
+# (``FR-GOV-MT-001..015``).
+#
+# @trace AUDIT-N+62
+
 from __future__ import annotations
 
 import json
@@ -309,9 +317,7 @@ class ProviderMetricsCollector:
         """
         return list(self._results)
 
-    def get_results_by_provider(
-        self, provider_id: str
-    ) -> list[ExecutionResult]:
+    def get_results_by_provider(self, provider_id: str) -> list[ExecutionResult]:
         """Get results for a specific provider.
 
         Args:
@@ -383,3 +389,14 @@ def initialize_metrics_collector(storage_dir: Path | None = None) -> MetricsColl
     global _metrics_collector
     _metrics_collector = MetricsCollector(storage_dir)
     return _metrics_collector
+
+
+__all__ = [
+    "ExecutionResult",
+    "AggregatedMetrics",
+    "MetricsCollector",
+    "ProviderMetricsCollector",
+    "ProviderMetricsSnapshot",
+    "get_metrics_collector",
+    "initialize_metrics_collector",
+]
