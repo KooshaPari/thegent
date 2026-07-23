@@ -10696,3 +10696,59 @@ already at `667466b17`; this closes the source loop.
   `state/shm.py` (SharedMemoryManager).
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+42/N+43: evidence + shm source closures (SOTA pass-26/27)
+
+Lane: dormant-core AUDIT-N+42 (evidence) and AUDIT-N+43 (SHM) source
+patches. Both specs were already committed (`5fc799da2`); this
+hand-off closes the source loops.
+
+### AUDIT-N+42 (evidence, SOTA pass-26)
+
+* Source patch:
+  `src/thegent/orchestration/strategies/evidence/__init__.py` (18 →
+  120 lines): `PromotionGate(dataclass)` with `capture_evidence`,
+  `validate_promotion`, `verify_evidence_hash`; SHA-256 hashing,
+  JSONL audit trail, issue-list promotion validation.
+* Dormant corridor fix:
+  `tests/orchestration/test_strategies_evidence.py` line 99 —
+  `.decode()` on dict replaced with stdlib `json.dumps`.
+* Validation: N+42 spec **49 passed** + dormant corridor **19 passed**
+  = **68 passed**; ruff clean.
+
+### AUDIT-N+43 (SHM, SOTA pass-27)
+
+* Source patch: `src/thegent/orchestration/state/shm.py` (88 → 146
+  lines): `SHMSystem` singleton via `__new__`, native SHM extension
+  handling (ImportError + RuntimeError guards), circuit-breaker
+  `is_open`, `record_failure` agent/non-agent mapping, XP methods,
+  `get_shm_system` factory.
+* Validation: N+43 spec **41 passed** + dormant corridor **23 passed**
+  = **64 passed**; ruff clean.
+
+### Full Regression
+
+* `pytest tests/test_unit_audit_n{30..43}*.py + dormant corridors`
+  → **893 passed, 1 skipped, 0 regressions** across the full
+  N+30 → N+43 chain (14 consecutive SOTA audit-N+ passes).
+* ruff check + format clean on all touched files.
+* Repo-wide secret-pattern scan over last 4 commits → 0 hits.
+* No upstream push, no force-push, no agent/terminal process kills.
+* Unrelated worktree mod set preserved.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** on both closed lanes (N+42
+  evidence: 49 spec + 19 dormant = 68 passed; N+43 SHM: 41 spec +
+  23 dormant = 64 passed). Total dormant-core hardening chain now
+  spans **N+30 → N+43** (14 consecutive SOTA audit-N+ passes, all
+  closed).
+* **DAG tick**: **+2** (this hand-off). The dormant-core hardening
+  chain now extends through AUDIT-N+43; the next candidates for
+  SOTA pass-28..29 are `orchestration/state/` sub-modules (if any
+  remain) or the broader governance / performance / UX audit lanes
+  from the five-day goal.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
