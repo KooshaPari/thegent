@@ -10660,3 +10660,22 @@ parallel child agents.
   then `playbooks/__init__.py` source patch (pass-24) and
   `audit_log.py` source patch (pass-25) to close the spec-only
   loops from this hand-off.
+
+## Hand-off — 2026-07-22 — AUDIT-N+40: dormant-core playbooks hardening (SOTA pass-24) — source closure
+
+Lane: dormant-core AUDIT-N+40 source patch (SOTA pass-24). Spec was
+already at `c5a94d4b7`; this closes the source loop.
+
+* Commit `63e1a58d3` — rewrite
+  `src/thegent/orchestration/strategies/playbooks/__init__.py`:
+  keyword-classified `get_playbook_for_failure` → ordered step
+  ladders; `execute_playbook_step(session_dir, step, run_id,
+  context)` fans out escalate/dlq_enqueue; pending envelope for
+  manual steps; `Playbook` dataclass-like public type.
+* Validation: N+40 + dormant corridor **71 passed**; N+30..39
+  **540 passed** / 0 regressions; ruff + format clean.
+* Lane status: **AUDIT-N+40 closed**.
+* Next: AUDIT-N+41 `ShadowAuditGit` source patch (spec at
+  `667466b17`, still failing pending source harden).
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
