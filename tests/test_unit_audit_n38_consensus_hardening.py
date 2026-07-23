@@ -257,10 +257,17 @@ class TestRedlockAcquireResultFrozen:
         assert dataclasses.is_dataclass(RedlockAcquireResult)
 
     def test_is_frozen(self) -> None:
-        """The result is immutable: ``frozen=True`` raises FrozenInstanceError on setattr."""
+        """The result is immutable: ``frozen=True`` raises ``FrozenInstanceError`` on setattr.
+
+        Uses ``type(result).__setattr__`` (matching the dormant
+        ``test_redlock_atomic.py::test_frozen_raises_on_setattr`` pattern)
+        so the assertion holds on Python 3.13 *and* 3.14 — Python 3.14
+        bypasses ``object.__setattr__`` for frozen dataclasses but the
+        generated descriptor still raises via ``type.__setattr__``.
+        """
         result = RedlockAcquireResult(acquired=True, lock_id="x", expires_at=1.0)
         with pytest.raises(dataclasses.FrozenInstanceError):
-            object.__setattr__(result, "acquired", False)
+            type(result).__setattr__(result, "acquired", False)
 
     def test_fields_success(self) -> None:
         result = RedlockAcquireResult(acquired=True, lock_id="abc", expires_at=99.0)
@@ -375,9 +382,9 @@ class TestRedlockControllerRelease:
         assert ctrl.release("wrong-id") is False
 
     def test_fallback_release_allows_re_acquire(self) -> None:
-        first = _fallback_controller().acquire()
+        """Releasing the active lock and acquiring again returns ``acquired=True``."""
         ctrl = _fallback_controller()
-        ctrl.acquire()
+        first = ctrl.acquire()
         ctrl.release(first.lock_id)
         second = ctrl.acquire()
         assert second.acquired is True
