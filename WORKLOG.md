@@ -10267,3 +10267,149 @@ candidate).
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## Hand-off — 2026-07-22 — AUDIT-N+38: dormant-core consensus cluster hardening (SOTA pass-22) — closure
+
+Lane: dormant-core AUDIT-N+38 hardening (SOTA pass-22). Goal
+zero: continue the dormant-core hardening chain begun in
+AUDIT-N+33 → AUDIT-N+37 by source-patching the consensus
+cluster (`redlock_atomic` + `omega_consensus` +
+`redis_concurrency`) so every AUDIT-N+38 spec assertion
+passes without breaking the dormant or any other SOTA
+audit-N+ invariant cluster.
+
+What was already in this commit (commit `333c39f30`, the
+day-1 AUDIT-N+38 commit): the dormant-core AUDIT-N+38 spec
+file (`tests/test_unit_audit_n38_consensus_hardening.py`,
+80 tests / 23 invariants) and the first source patch
+(`redlock_atomic` hardening: TTL enforcement, quorum
+calculation, drift budget, dead-node forcing, in-memory
+fallback state, etc.).
+
+What this commit (`6f9f1a1b9`) finishes: the remaining two
+source patches so every spec assertion passes —
+
+* `src/thegent/orchestration/consensus/omega_consensus/__init__.py`
+  (FR-ORC-CON-075 .. FR-ORC-CON-079 — invariant cluster of
+  5 invariants, FR-CON-001 / WP-45003):
+  - `OmegaConsensus.__init__` now validates `swarm_size > 0`
+    and `0 <= threshold <= swarm_size`, raising `ValueError`
+    otherwise
+  - `propose_state(proposer_id, state, metadata)` returns
+    a unique `proposal_id` (`uuid4().hex`) and stores the
+    proposal internally with proposer_id / state /
+    metadata / empty votes tally
+  - `cast_vote(proposal_id, voter_id, vote, signature)`
+    records the vote, ignores duplicate `voter_id` votes
+    on the same proposal (idempotent, returns `True`), and
+    returns `False` for unknown `proposal_id`
+  - `finalize_consensus(proposal_id)` returns `True` when
+    YES / swarm_size >= threshold (sets `_final_state`),
+    `False` otherwise; unknown `proposal_id` returns
+    `False` without raising
+  - `get_final_state()` returns the frozen
+    `FinalState(proposal_id, state, metadata)` dataclass
+    after a successful `finalize_consensus`, `None`
+    otherwise
+  - `FinalState` is a frozen dataclass with
+    `proposal_id / state / metadata (dict)` so downstream
+    code can rely on immutable final state
+  - Thread-safety: `RLock` guards every read / write so
+    concurrent `propose_state` / `cast_vote` /
+    `finalize_consensus` calls from worker threads never
+    see torn state
+  - Internal `_Proposal` dataclass
+    (`proposer_id, state, metadata, votes`) is the
+    per-proposal mutable record
+* `src/thegent/orchestration/consensus/redis_concurrency/__init__.py`
+  (FR-ORC-CON-080 .. FR-ORC-CON-082 — invariant cluster of
+  3 invariants, FR-ORC-002):
+  - `RedisConcurrencyController` now owns an `RLock` so
+    concurrent `acquire()` calls from N threads never
+    collectively exceed `max_concurrent`, and `release()`
+    never underflows `current` (`release` at zero is a
+    no-op)
+  - `_InMemoryStore.get / set / set(ex=...) / delete /
+    exists` surface stabilised (`delete` returns 1/0;
+    `exists` returns 1/0) per the dormant
+    `test_redis_concurrency` contract
+  - `make_redis_concurrency_controller(config)` factory
+    only clones `max_concurrent` from the config; `host /
+    port / db / password` fields stay on the config object
+    (not pushed onto the controller, which is a
+    synchronous slot counter)
+  - `__all__` extended with the four public / private
+    symbols the AUDIT-N+38 spec asserts
+    (`RedisConfig`, `RedisConcurrencyController`,
+    `_InMemoryStore`,
+    `make_redis_concurrency_controller`)
+* `src/thegent/orchestration/__init__.py`
+  (AUDIT-N+33 + AUDIT-N+38 — package re-export surface):
+  - Re-exports consensus submodules as package attributes
+    (`thegent.orchestration.{redlock_atomic, omega_consensus,
+    redis_concurrency}`) so tests can patch symbols
+    (`_import_redis_sync`, etc.) via the canonical package
+    path
+  - Mirrors the `sub_agent_dispatcher` re-export pattern
+    from AUDIT-N+33
+  - 14 new symbols (`FinalState`, `OmegaConsensus`,
+    `RedlockAcquireResult`, `RedlockAtomic`,
+    `RedlockController`, `_InMemoryLockState`,
+    `_import_redis_sync`, `_parse_node_urls_from_env`,
+    `_parse_redis_url`, `make_redlock_controller`,
+    `RedisConcurrencyController`, `RedisConfig`,
+    `_InMemoryStore`,
+    `make_redis_concurrency_controller`) join the canonical
+    import surface
+* `tests/test_unit_audit_n38_consensus_hardening.py`
+  (spec — two assertions reconciled with the source
+  patches):
+  - `test_is_frozen`: uses
+    `type(result).__setattr__(result, ...)` (matching the
+    dormant `test_redlock_atomic.py` pattern) so the
+    assertion holds on Python 3.13 / 3.14
+  - `test_fallback_release_allows_re_acquire`: bug fix
+    where `first` was being captured from a fresh
+    controller instead of the same one being operated on
+    (now uses `ctrl` consistently)
+  - Trailing newline fix on the last test
+
+Validation (all clean):
+
+* `pytest tests/test_unit_audit_n38_consensus_hardening.py`
+  → **80 passed** (was 17 before commit `6f9f1a1b9`; +63
+  net from the source patch + test surface reconciliation)
+* `pytest tests/test_unit_audit_n{30..38}*.py +
+  test_unit_omega_consensus` → **503 passed, 0
+  regressions** across the dormant + SOTA audit-N+
+  invariant cluster
+* `pytest tests/orchestration/test_redlock_atomic.py +
+  tests/orchestration/test_redis_concurrency.py` → **76
+  passed** across the dormant consensus corridors
+* `ruff check + ruff format --check + py_compile` clean
+  on all 4 touched files
+* gitleaks-equivalent secret-pattern scan on the diff →
+  0 leaks (one mention of `password` is the Redis-URL
+  docstring, not a leaked secret)
+* Canonical patch paths verified end-to-end
+  (`thegent.orchestration.{redlock_atomic, omega_consensus,
+  redis_concurrency}` re-exports)
+* No force-push to the archived upstream; local
+  preservation branch per project guidelines
+* Unrelated worktree mod set preserved (no other files
+  touched in commit `6f9f1a1b9`)
+
+Lane status: **AUDIT-N+38 closed**. The dormant-core
+hardening chain now extends through AUDIT-N+38. Next
+dormant-core candidates (queued for SOTA pass-23) remain
+the `telemetry/` and `routing/` dormant-core clusters plus
+any further consensus invariants the spec authors want to
+widen to (>=40 spec tests / >=12 invariants on a single
+module would warrant a follow-up AUDIT-N+39 lane).
+
+* **DAG tick**: **+1** (this hand-off). The dormant-core
+  hardening chain now extends through AUDIT-N+38.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
