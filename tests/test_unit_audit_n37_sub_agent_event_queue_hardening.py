@@ -318,9 +318,7 @@ class TestDispatcherEventPublishing:
         from thegent.orchestration.budget_tracker import BudgetExceededError
 
         mock_budget = MagicMock()
-        mock_budget.check.side_effect = BudgetExceededError(
-            node_id="req_budget_test", budget=0, actual=1
-        )
+        mock_budget.check.side_effect = BudgetExceededError(node_id="req_budget_test", budget=0, actual=1)
 
         q = _make_event_queue()
         dispatcher = SubAgentDispatcher(
@@ -415,9 +413,13 @@ class TestUnifiedWorkerDaemonSurface:
         daemon = UnifiedWorkerDaemon(event_queue=q)
         assert daemon._event_queue is q
 
-    def test_daemon_without_event_queue_is_none(self) -> None:
+    def test_daemon_falls_back_to_global_queue(self) -> None:
+        """When no event_queue is passed, the daemon binds to the global singleton."""
+        from thegent.orchestration.event_queue import get_global_event_queue, reset_global_event_queue
+
+        reset_global_event_queue()
         daemon = UnifiedWorkerDaemon()
-        assert daemon._event_queue is None
+        assert daemon._event_queue is get_global_event_queue()
 
     def test_dispatch_post_agent_run_hook_is_module_level(self) -> None:
         """_dispatch_post_agent_run_hook must be importable from the
@@ -445,7 +447,9 @@ class TestUnifiedWorkerDaemonSurface:
         daemon = UnifiedWorkerDaemon(event_queue=q)
         with patch("thegent.orchestration.unified_worker._dispatch_post_agent_run_hook") as mock_hook:
             task = asyncio.create_task(daemon._consume_events())
-            q.put(_make_event(request_id="req_x", event_type=SubAgentEventType.COMPLETED, payload={"agent_type": "audit"}))
+            q.put(
+                _make_event(request_id="req_x", event_type=SubAgentEventType.COMPLETED, payload={"agent_type": "audit"})
+            )
             # Give the consumer a chance to dequeue.
             for _ in range(20):
                 if mock_hook.call_count >= 1:
@@ -469,15 +473,16 @@ class TestUnifiedWorkerDaemonSurface:
 class TestDispatcherDispatchLock:
     """@trace FR-ORC-070"""
 
-    def test_dispatcher_has_event_rlock(self) -> None:
+    def test_dispatcher_has_dispatch_lock(self) -> None:
         """SubAgentDispatcher must expose an internal RLock for event publishing."""
         import threading
 
         dispatcher = SubAgentDispatcher(capability_index=CapabilityIndex())
-        # Either an internal _events_lock or a re-entrant lock on the queue
-        # publishes path is acceptable. The contract is: concurrent dispatch()
-        # calls do not corrupt the STARTED + COMPLETED pairing.
-        assert hasattr(dispatcher, "_events_lock") or hasattr(dispatcher, "_lock")
+        # The contract: a re-entrant lock guarding the STARTED + COMPLETED
+        # pair.  The actual attribute name in this build is
+        # ``_dispatch_lock`` (a ``threading.RLock``).
+        assert hasattr(dispatcher, "_dispatch_lock")
+        assert isinstance(dispatcher._dispatch_lock, type(threading.RLock()))
 
     def test_concurrent_dispatch_publishes_balanced_events(self) -> None:
         """N=16 threads dispatching concurrently must produce exactly 2N events (no lost pair)."""
