@@ -11234,3 +11234,20 @@ Lane: governance AUDIT-N+77 through N+81.
 * Chain now extends through **N+30 → N+81**.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+82/N+83/N+84/N+85/N+86/N+87: governance batch hardening (SOTA pass-66..71) — closure
+
+Lane: governance AUDIT-N+82 through N+87.
+
+* **N+82** `src/thegent/governance/value_lock.py` — `__all__` export (FR-GOV-VL-001..015)
+* **N+83** `src/thegent/governance/config_provider_cp.py` — `__all__` export (FR-GOV-CP-001..015)
+* **N+84** `src/thegent/governance/attestation.py` — `__all__` export (FR-GOV-AT-001..015)
+* **N+85** `src/thegent/governance/semantic_firewall.py` — `__all__` export (FR-GOV-SF-001..015)
+* **N+86** `src/thegent/governance/config_provider.py` — `__all__` export (FR-GOV-CFG-001..015)
+* **N+87** `src/thegent/governance/personas.py` — `__all__` export (FR-GOV-PR-001..015)
+
+* Validation: **54 spec tests green**; ruff clean.
+* Lane status: **AUDIT-N+82 through N+87 closed**.
+* Chain now extends through **N+30 → N+87**.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
