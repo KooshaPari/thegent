@@ -10990,3 +10990,14 @@ Lane: governance AUDIT-N+53 (`src/thegent/governance/breakers.py`).
 * Chain now extends through **N+30 → N+53**.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+54/N+55: audit + slo closures (SOTA pass-38/39)
+
+* N+54 `governance/audit.py`: absolute path guard, limit > 0,
+  `__all__ = [query_events, verify_chain]`
+* N+55 `governance/slo.py`: latency/error SLO guards, metrics copy,
+  reset, sample_count, rolling 100-window compliance
+* Validation: **36 passed**; ruff clean
+* Chain now **N+30 → N+55**
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
