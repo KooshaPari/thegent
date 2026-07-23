@@ -10904,3 +10904,57 @@ the 12-test dormant corridor (previously all failing).
 * **DAG tick**: **+1** (this hand-off). The dormant-core hardening
   chain extends through AUDIT-N+46; next candidates for SOTA
   pass-31+ are governance / performance / UX audit lanes.
+
+---
+
+## SOTA Pass-33/34 — AUDIT-N+49/N+50 (governance cost_controller + escalation)
+
+### Source patches applied
+
+* `src/thegent/governance/cost_controller.py` (165 → 182 lines):
+  - Module docstring with `@trace AUDIT-N+49` + `FR-GOV-CC-001..015`
+  - Path-traversal guard: `__init__` rejects relative `session_dir` or
+    `health_targets_path` with `ValueError`
+  - Graceful `FileNotFoundError` / `json.JSONDecodeError` fallback for
+    missing or malformed health-targets config (defaults to 20/day)
+  - `budget.get("tiers", {})` instead of `budget["tiers"]` (missing-key
+    resilience)
+  - `_persist` and `get_today_usage` now catch `json.JSONDecodeError`
+    per-line when scanning the JSONL ledger
+
+* `src/thegent/governance/escalation.py` (196 → 199 lines):
+  - Module docstring with `@trace AUDIT-N+50` + `FR-GOV-ES-001..015`
+
+### Spec files
+
+* `tests/test_unit_audit_n49_cost_controller_hardening.py` (33 tests,
+  15 invariants FR-GOV-CC-001..015): init guards, record_call,
+  get_today_usage, get_tier, can_spawn, calls_remaining, persist,
+  DailyUsage model, BudgetTier enum, edge cases
+* `tests/test_unit_audit_n50_escalation_hardening.py` (29 tests,
+  15 invariants FR-GOV-ES-001..015): init, escalate, list_items,
+  get_item, resolve, add legacy, auto-expiry, save/load roundtrip,
+  metadata, deadline, edge cases, corruption handling
+
+### Validation
+
+* `pytest tests/test_unit_audit_n49_cost_controller_hardening.py`:
+  33 passed
+* `pytest tests/test_unit_audit_n50_escalation_hardening.py`:
+  29 passed
+* `pytest tests/test_unit_audit_n{30..50}*.py + dormant corridors`:
+  **1166 passed, 1 skipped, 0 regressions** across the full
+  N+30 → N+50 chain (21 consecutive SOTA audit-N+ passes).
+* ruff check + format clean on all touched files.
+* No secrets in the diff.
+* No upstream push, no force-push, no agent/terminal process kills.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** on AUDIT-N+49/N+50 (33 + 29 =
+  62 spec tests passed). Total dormant-core hardening chain now spans
+  **N+30 → N+50** (21 consecutive SOTA audit-N+ passes, all closed).
+* **DAG tick**: **+2** (this hand-off). The dormant-core hardening
+  chain extends through AUDIT-N+50; next candidates for SOTA
+  pass-35+ are governance (evidence_ledger, cost_controller) /
+  performance / UX audit lanes.
