@@ -11201,3 +11201,20 @@ Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
   analyzer) or the broader performance / UX audit lanes.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+71/N+72/N+73/N+74/N+75/N+76: governance batch hardening (SOTA pass-55..60) — closure
+
+Lane: governance AUDIT-N+71 through N+76.
+
+* **N+71** `src/thegent/governance/input_guardrails.py` — `__all__`, cwd type guard, regex resilience (FR-GOV-IG-001..015)
+* **N+72** `src/thegent/governance/trust.py` — `__all__`, TTLCache thread-safety docstring (FR-GOV-TR-001..015)
+* **N+73** `src/thegent/governance/policy_federation.py` — `__all__` export (FR-GOV-PF-001..015)
+* **N+74** `src/thegent/governance/override_events.py` — `__all__` export (FR-GOV-OE-001..015)
+* **N+75** `src/thegent/governance/agent_deployer.py` — `__all__`, `max_concurrent >= 1`, non-empty `lifecycle_mode` (FR-GOV-AD-001..015)
+* **N+76** `src/thegent/governance/analyzer.py` — `__all__`, `FileNotFoundError`/`JSONDecodeError` guards (FR-GOV-AN-001..015)
+
+* Validation: **161 spec tests green** (59 + 51 + 51); ruff clean.
+* Lane status: **AUDIT-N+71 through N+76 closed**.
+* Chain now extends through **N+30 → N+76**.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
