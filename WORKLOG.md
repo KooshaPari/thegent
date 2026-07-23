@@ -10958,3 +10958,20 @@ the 12-test dormant corridor (previously all failing).
   chain extends through AUDIT-N+50; next candidates for SOTA
   pass-35+ are governance (evidence_ledger, cost_controller) /
   performance / UX audit lanes.
+
+## Hand-off — 2026-07-22 — AUDIT-N+51/N+52: evidence_ledger + vetter source closures (SOTA pass-35/36)
+
+Lane: governance AUDIT-N+51 (EvidenceLedger) and AUDIT-N+52 (Vetter).
+
+* Specs: `tests/test_unit_audit_n51_evidence_ledger_hardening.py`,
+  `tests/test_unit_audit_n52_vetter_hardening.py`
+* Source: `src/thegent/governance/evidence_ledger.py`,
+  `src/thegent/governance/vetter.py`
+* Validation: N+51/N+52 **85 passed**; wl094 vetter corridor
+  **35 passed**; ruff clean.
+* Lane status: **AUDIT-N+51 and AUDIT-N+52 closed**.
+* Chain now extends through **N+30 → N+52**.
+* Next candidates: remaining governance / performance / UX
+  dormant modules not yet covered by an audit-N+ lane.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
