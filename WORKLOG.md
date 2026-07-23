@@ -10975,3 +10975,18 @@ Lane: governance AUDIT-N+51 (EvidenceLedger) and AUDIT-N+52 (Vetter).
   dormant modules not yet covered by an audit-N+ lane.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+53: CircuitBreaker hardening (SOTA pass-37) — closure
+
+Lane: governance AUDIT-N+53 (`src/thegent/governance/breakers.py`).
+
+* Spec: `tests/test_unit_audit_n53_breakers_hardening.py` (26 tests,
+  FR-GOV-CB-001..015)
+* Source: absolute `session_dir`, positive `threshold_usd_per_min`,
+  strict `>` spike check, `reset` / `last_event`, corrupt JSONL
+  skip, `__all__ = ["CircuitBreaker"]`
+* Validation: **26 passed**; ruff clean.
+* Lane status: **AUDIT-N+53 closed**.
+* Chain now extends through **N+30 → N+53**.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
