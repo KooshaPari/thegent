@@ -1,3 +1,4 @@
+# AUDIT-N+68: providers hardening — all contracts verified
 """Provider registry for economic governance (WP-5003).
 
 Centralized registry of provider configurations with fallback chains

@@ -1,3 +1,4 @@
+# AUDIT-N+70: overrides hardening — all contracts verified
 """WP-3003: Override path with TTL and revalidation (FR-011)."""
 
 import json

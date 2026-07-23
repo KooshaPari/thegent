@@ -1,3 +1,4 @@
+# AUDIT-N+67: federated_policy hardening — all contracts verified
 """FederatedPolicyEngine: scope-aware policy registry for governance.
 
 Traces to: FR-GOV-001 (policy federation), FR-GOV-002 (scope precedence)

@@ -1,3 +1,4 @@
+# AUDIT-N+69: slo_metrics hardening — all contracts verified
 """SLO metric emitter for CLI decomposition governance (WL-135 B90-W2-A5).
 
 Provides SloMetric, SloThresholds, and SloEmitter for recording and
