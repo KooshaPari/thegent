@@ -11251,3 +11251,32 @@ Lane: governance AUDIT-N+82 through N+87.
 * Chain now extends through **N+30 → N+87**.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+82-99: governance completion (SOTA pass-66..83) — closure
+
+Lane: governance AUDIT-N+82 through N+99.
+
+* **N+82** `value_lock.py` — `__all__` (FR-GOV-VL-001..015)
+* **N+83** `config_provider_cp.py` — `__all__` (FR-GOV-CP-001..015)
+* **N+84** `attestation.py` — `__all__` (FR-GOV-AT-001..015)
+* **N+85** `semantic_firewall.py` — `__all__` (FR-GOV-SF-001..015)
+* **N+86** `config_provider.py` — `__all__` (FR-GOV-CFG-001..015)
+* **N+87** `personas.py` — `__all__` (FR-GOV-PR-001..015)
+* **N+88** `forensics.py` — `__all__` (FR-GOV-FR-001..015)
+* **N+89** `override_expired.py` — `__all__` (FR-GOV-OE-001..015)
+* **N+90** `adapter_policy.py` — `__all__` (FR-GOV-AP-001..015, skip on broken dep)
+* **N+91** `control_vectors.py` — `__all__` (FR-GOV-CV-001..015)
+* **N+92** `cost_aggregation.py` — `__all__` (FR-GOV-CA-001..015)
+* **N+93** `plugin_lifecycle.py` — `__all__` (FR-GOV-PL-001..015)
+* **N+94** `redaction.py` — `__all__` (FR-GOV-RD-001..015)
+* **N+95** `dlq_integration.py` — `__all__` (FR-GOV-DLQ-001..015, skip on broken dep)
+* **N+96** `support.py` — `__all__` (FR-GOV-SUP-001..015)
+* **N+97** `policy.py` — `__all__` (FR-GOV-PO-001..015)
+* **N+98** `evidence_graph.py` — `__all__` (FR-GOV-EG-001..015)
+* **N+99** `native_scanner.py` — `__all__` (FR-GOV-NS-001..015)
+
+* Validation: **130 spec tests green** (7 skipped on pre-existing broken deps); ruff clean.
+* Lane status: **GOVERNANCE LANE COMPLETE** — all 75 non-stub modules now have hardening specs.
+* Chain: **N+30 → N+99** (70 consecutive passes, SOTA pass-83).
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
