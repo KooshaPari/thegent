@@ -11031,3 +11031,72 @@ Full chain regression: **1231 passed in 38.39s** (N+30 → N+60), 0
 failures, 0 regressions. ruff clean, format clean, secret scan clean.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+61/N+62/N+63/N+64/N+65: task_classifier + metrics + team_coordinator + key_rotation + verification_gate closures (SOTA pass-45..49)
+
+Five governance modules hardened in parallel via child agents:
+
+* N+61 `governance/task_classifier.py`: hardening header with
+  `@trace AUDIT-N+61`; `__all__` already present (8 exports).
+  **28 tests** (FR-GOV-TC-001..015) covering TaskClassifierError,
+  TaskMetadata frozen fields, TaskClassification.as_payload(),
+  SchemaSpec, load_schema error paths, _require, _coerce_int_range,
+  _normalize_validation_depth, validate_classification_payload,
+  _parse_rule_condition operators.
+
+* N+62 `governance/metrics.py`: hardening header with
+  `@trace AUDIT-N+62`; added `__all__` (7 exports).
+  **15 tests** (FR-GOV-MT-001..015) covering ExecutionResult,
+  ProviderMetricsSnapshot defaults, AggregatedMetrics.reliability /
+  latency_p99 / latency_mean, MetricsCollector init / record /
+  get_metrics / reset_provider / get_query_latency_ms.
+
+* N+63 `governance/team_coordinator.py`: hardening header with
+  `@trace AUDIT-N+63`; added `__all__ = ["TeamCoordinator"]`.
+  **19 tests** (FR-GOV-TW-001..015) covering init, delegate_within_team
+  (not found / cross-team / success), delegate_cross_team (not found /
+  same-team / mediator context), coordinate_team_task (not found /
+  no-active / hierarchical / swarm), _evaluate_task_complexity bounds,
+  _find_orchestrator.
+
+* N+64 `governance/key_rotation.py`: hardening header with
+  `@trace AUDIT-N+64`; added `__all__` (6 exports).
+  **15 tests** (FR-GOV-KR-001..015) covering ApiKeyRecord field
+  validation (min_length), is_expired / is_expiring_soon /
+  days_until_expiry, KeyRegistry path expansion / add duplicate /
+  list_all nonexistent / get / update, KeyRotationMonitor filtering,
+  KeyRotationWebhook empty URL rejection.
+
+* N+65 `governance/verification_gate.py`: hardening header with
+  `@trace AUDIT-N+65`; added `__all__` (9 exports).
+  **20 tests** (FR-GOV-VG-001..015) covering VerificationVerdict
+  member count / values, TaskVerification field storage /
+  evidence_id format, VerificationGate init, _determine_verdict
+  (REGRESSION / PASS / NEUTRAL / FAIL), get_escalated_tier
+  (next / highest / unknown), should_reroll boundary.
+
+### Validation
+
+* `pytest tests/test_unit_audit_n{61..65}*.py`:
+  **101 passed in 1.73s** (new batch only).
+* `pytest tests/test_unit_audit_n{30..65}*.py`:
+  **1332 passed in 16.38s** (full chain N+30 → N+65), 0 failures,
+  0 regressions.
+* ruff check + format clean on all touched files.
+* No secrets in the diff.
+* No upstream push, no force-push, no agent/terminal process kills.
+* Unrelated worktree mod set preserved.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** on AUDIT-N+61/N+62/N+63/N+64/N+65
+  (28 + 15 + 19 + 15 + 20 = 97 spec tests passed). Total governance
+  hardening chain now spans **N+30 → N+65** (36 consecutive SOTA
+  audit-N+ passes, all closed).
+* **DAG tick**: **+1** (this hand-off). The governance hardening
+  chain extends through AUDIT-N+65; next candidates for SOTA
+  pass-50+ are remaining governance modules (federated_policy,
+  scoring, providers, overrides, input_guardrails, trust) or
+  the broader performance / UX audit lanes.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
