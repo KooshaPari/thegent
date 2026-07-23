@@ -1,4 +1,5 @@
 """Package: thegent.phench - re-exports from local phench implementation."""
+
 from __future__ import annotations
 
 from . import service
@@ -12,5 +13,7 @@ from .models import *
 from .runner import *
 from .store import *
 
-# Alias for convenience
-__all__ = list(service.__all__) + (list(models.__all__) if hasattr(models, '__all__') else [])
+# Keep export discovery aligned with the implementation modules.
+__all__ = list(service.__all__) + (  # noqa: PLE0605 -- dynamic re-export API is intentional
+    list(models.__all__) if hasattr(models, "__all__") else []
+)

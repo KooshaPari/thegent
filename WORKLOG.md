@@ -11590,3 +11590,15 @@ Anomalies:
 
 ### Cockpit progress bar + DAG tick
 DAG tick: **+1** (this hand-off). Lane `AUDIT-N+39-RESILIENCE-MERGE-LOCAL-001` closed.
+
+## AUDIT-LANE-RUFF-PRESERVATION-001 — preservation ruff 5-error sweep
+
+Lane: preservation Ruff hygiene catalogued by `audit-ruff-catalog`.
+
+* **S104 ×2** — `src/thegent/adapters/acp_server.py`: retained the intentional `0.0.0.0` ACP server defaults with narrowly scoped, justified `noqa` annotations for all-interface reachability.
+* **PLE0605 ×1** — `src/thegent/phench/__init__.py`: retained intentional dynamic `__all__` re-export discovery with a narrowly scoped, justified `noqa` annotation.
+* **RUF012 ×2** — `src/thegent/planning/cost_predictor/__init__.py`: annotated both mutable class dictionaries with `ClassVar` and added a focused regression test for keys, typing, and instance shadowing isolation.
+* TDD red: Ruff reported the catalogued **5 errors**; the focused regression test failed on the missing `ClassVar` annotation.
+* Validation: Ruff source sweep clean; **1 regression test passed**; format check clean.
+* Existing surface: **0 passed, 0 failed, 1 collection error** because `tests/test_wl681x_lane_d.py` cannot import pre-existing `DispatchConfig` from `thegent.orchestration.dispatcher`.
+* DAG tick: **+1**.
