@@ -3,6 +3,8 @@
 Foundation for the vetter governance chain (WL-090). Fail fast, fail loudly.
 No silent fallbacks. No legacy shims.
 
+# @trace AUDIT-N+52
+# @trace FR-GOV-VT-001..015
 # @trace FR-VET-090
 # @trace WL-090
 # @trace WL-097
@@ -11,14 +13,18 @@ No silent fallbacks. No legacy shims.
 from __future__ import annotations
 
 import abc
+import logging
 import re
 import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -29,6 +35,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class VetterOutcome(StrEnum):
     """Three-verdict taxonomy for individual check results.
 
+    # @trace FR-GOV-VT-001
     # @trace FR-VET-090
     """
 
@@ -40,6 +47,7 @@ class VetterOutcome(StrEnum):
 class VetterSeverity(StrEnum):
     """Severity levels for VetterPolicy.
 
+    # @trace FR-GOV-VT-002
     # @trace FR-VET-090
     """
 
@@ -59,6 +67,7 @@ class VetterResult(BaseModel):
 
     Immutable via model_config frozen=True.
 
+    # @trace FR-GOV-VT-003..007
     # @trace FR-VET-090
     """
 
@@ -72,12 +81,12 @@ class VetterResult(BaseModel):
 
     @property
     def is_pass(self) -> bool:
-        """True iff outcome is APPROVED. # @trace FR-VET-090"""
+        """True iff outcome is APPROVED. # @trace FR-GOV-VT-006 # @trace FR-VET-090"""
         return self.outcome == VetterOutcome.APPROVED
 
     @property
     def is_fail(self) -> bool:
-        """True iff outcome is not APPROVED. # @trace FR-VET-090"""
+        """True iff outcome is not APPROVED. # @trace FR-GOV-VT-006 # @trace FR-VET-090"""
         return not self.is_pass
 
     @classmethod
@@ -88,7 +97,7 @@ class VetterResult(BaseModel):
         reason: str = "",
         **metadata: Any,
     ) -> VetterResult:
-        """Create an APPROVED result. # @trace FR-VET-090"""
+        """Create an APPROVED result. # @trace FR-GOV-VT-003 # @trace FR-VET-090"""
         return cls(
             outcome=VetterOutcome.APPROVED,
             reason=reason,
@@ -105,7 +114,7 @@ class VetterResult(BaseModel):
         reason: str,
         **metadata: Any,
     ) -> VetterResult:
-        """Create a REJECTED result. # @trace FR-VET-090"""
+        """Create a REJECTED result. # @trace FR-GOV-VT-004 # @trace FR-VET-090"""
         return cls(
             outcome=VetterOutcome.REJECTED,
             reason=reason,
@@ -122,7 +131,7 @@ class VetterResult(BaseModel):
         reason: str,
         **metadata: Any,
     ) -> VetterResult:
-        """Create a REVISION_REQUESTED result. # @trace FR-VET-090"""
+        """Create a REVISION_REQUESTED result. # @trace FR-GOV-VT-005 # @trace FR-VET-090"""
         return cls(
             outcome=VetterOutcome.REVISION_REQUESTED,
             reason=reason,
@@ -142,6 +151,7 @@ class VetterPolicy(BaseModel):
 
     Mutable: enabled state can be toggled via disable()/enable().
 
+    # @trace FR-GOV-VT-008
     # @trace FR-VET-090
     """
 
@@ -153,15 +163,15 @@ class VetterPolicy(BaseModel):
     description: str = ""
 
     def disable(self) -> None:
-        """Disable this policy. # @trace FR-VET-090"""
+        """Disable this policy. # @trace FR-GOV-VT-008 # @trace FR-VET-090"""
         self.enabled = False
 
     def enable(self) -> None:
-        """Enable this policy. # @trace FR-VET-090"""
+        """Enable this policy. # @trace FR-GOV-VT-008 # @trace FR-VET-090"""
         self.enabled = True
 
     def to_dict(self) -> dict[str, Any]:
-        """Return model as plain dict. # @trace FR-VET-090"""
+        """Return model as plain dict. # @trace FR-GOV-VT-008 # @trace FR-VET-090"""
         return self.model_dump()
 
 
@@ -178,29 +188,31 @@ class VetterCheck(abc.ABC):
     - policy (property): VetterPolicy — associated policy
     - run(payload) -> VetterResult — execute the check
 
+    # @trace FR-GOV-VT-009
     # @trace FR-VET-090
     """
 
     @property
     @abc.abstractmethod
     def name(self) -> str:
-        """Unique name for this check. # @trace FR-VET-090"""
+        """Unique name for this check. # @trace FR-GOV-VT-009 # @trace FR-VET-090"""
 
     @property
     @abc.abstractmethod
     def policy(self) -> VetterPolicy:
-        """Associated policy governing this check. # @trace FR-VET-090"""
+        """Associated policy governing this check. # @trace FR-GOV-VT-009 # @trace FR-VET-090"""
 
     @abc.abstractmethod
     def run(self, payload: dict[str, Any]) -> VetterResult:
         """Execute the check against payload. Fail fast, fail loudly.
 
+        # @trace FR-GOV-VT-009
         # @trace FR-VET-090
         """
 
     @property
     def is_enabled(self) -> bool:
-        """True iff the associated policy is enabled. # @trace FR-VET-090"""
+        """True iff the associated policy is enabled. # @trace FR-GOV-VT-009 # @trace FR-VET-090"""
         return self.policy.enabled
 
 
@@ -223,10 +235,46 @@ __all__ = [
 # Pattern to extract .py filenames from unified diff
 _PY_FILE_RE = re.compile(r"^(?:\+\+\+|---)\s+(?:a/|b/)?(\S+\.py)", re.MULTILINE)
 
+# Shell metacharacters that must never appear in subprocess arguments
+_SHELL_META_RE = re.compile(r"[|&;`\$\n]")
+
 
 def _extract_changed_py_files(diff_text: str) -> list[str]:
-    """Extract unique .py filenames from a unified diff header. # @trace WL-097"""
+    """Extract unique .py filenames from a unified diff header. # @trace FR-GOV-VT-014 # @trace WL-097"""
     return list(dict.fromkeys(_PY_FILE_RE.findall(diff_text)))
+
+
+def _validate_cwd(cwd: str | None) -> str | None:
+    """Validate and resolve a cwd path, rejecting traversal attempts.
+
+    # @trace FR-GOV-VT-010..011
+    """
+    if not cwd or not isinstance(cwd, str) or not cwd.strip():
+        return None
+    # Check raw path for '..' segments BEFORE resolving (resolve would strip them)
+    raw_parts = Path(cwd).parts
+    if ".." in raw_parts:
+        raise ValueError(f"cwd path contains '..' segments: {cwd}")
+    resolved = Path(cwd).resolve()
+    return str(resolved)
+
+
+def _filter_injection_files(files: list[str], check_name: str) -> list[str]:
+    """Remove files containing shell metacharacters and log a warning.
+
+    # @trace FR-GOV-VT-013
+    """
+    safe: list[str] = []
+    for f in files:
+        if _SHELL_META_RE.search(f):
+            logger.warning(
+                "[%s] filtered file with shell metacharacters: %r",
+                check_name,
+                f,
+            )
+        else:
+            safe.append(f)
+    return safe
 
 
 @dataclass
@@ -243,6 +291,7 @@ class TestPassVetterCheck:
     Fail fast: non-zero exit code -> passed=False, message contains the
     truncated test output.  No silent error handling.
 
+    # @trace FR-GOV-VT-010..012
     # @trace WL-097
     """
 
@@ -256,10 +305,16 @@ class TestPassVetterCheck:
     def check(self, output: str, context: dict[str, Any] | None = None) -> VetterCheckResult:
         """Run pytest on changed Python files extracted from the diff.
 
+        # @trace FR-GOV-VT-010..012
         # @trace WL-097
         """
         context = context or {}
+
+        # --- path-traversal guard (FR-GOV-VT-010) ---
+        resolved_cwd = _validate_cwd(self.cwd or context.get("cwd"))
+
         changed_files = _extract_changed_py_files(output)
+        changed_files = _filter_injection_files(changed_files, self.name)
 
         cmd: list[str] = [self.test_runner, *self.extra_args]
         if changed_files and self.scope == "changed_files":
@@ -270,7 +325,7 @@ class TestPassVetterCheck:
                 cmd,
                 capture_output=True,
                 timeout=self.timeout_seconds,
-                cwd=self.cwd or context.get("cwd"),
+                cwd=resolved_cwd,
             )
         except subprocess.TimeoutExpired:
             return VetterCheckResult(
@@ -278,6 +333,13 @@ class TestPassVetterCheck:
                 passed=False,
                 message=f"Test runner timed out after {self.timeout_seconds}s",
                 metadata={"timeout": True, "files_tested": changed_files},
+            )
+        except (OSError, ValueError) as exc:
+            return VetterCheckResult(
+                check_name=self.name,
+                passed=False,
+                message=f"Subprocess error: {exc}",
+                metadata={"error": str(exc), "files_tested": changed_files},
             )
 
         combined_output = (proc.stdout or b"").decode(errors="replace") + (proc.stderr or b"").decode(errors="replace")
@@ -308,6 +370,7 @@ class RuffVetterCheck:
     Fail fast: non-zero ruff exit code -> passed=False, message contains
     the full ruff output.  No silent error handling.
 
+    # @trace FR-GOV-VT-011,013
     # @trace WL-097
     """
 
@@ -319,10 +382,16 @@ class RuffVetterCheck:
     def check(self, output: str, context: dict[str, Any] | None = None) -> VetterCheckResult:
         """Run ruff linter on changed Python files extracted from the diff.
 
+        # @trace FR-GOV-VT-011,013
         # @trace WL-097
         """
         context = context or {}
+
+        # --- path-traversal guard (FR-GOV-VT-011) ---
+        resolved_cwd = _validate_cwd(self.cwd or context.get("cwd"))
+
         changed_files = _extract_changed_py_files(output)
+        changed_files = _filter_injection_files(changed_files, self.name)
 
         if not changed_files:
             return VetterCheckResult(
@@ -341,7 +410,7 @@ class RuffVetterCheck:
         proc = shim_run(
             cmd,
             capture_output=True,
-            cwd=self.cwd or context.get("cwd"),
+            cwd=resolved_cwd,
         )
 
         ruff_output = (proc.stdout or b"").decode(errors="replace") + (proc.stderr or b"").decode(errors="replace")
@@ -363,6 +432,7 @@ class RuffVetterCheck:
 class VetterCheckResult(BaseModel):
     """Result returned by a VetterCheck.
 
+    # @trace FR-GOV-VT-015
     # @trace WL-097
     """
 
