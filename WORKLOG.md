@@ -11001,3 +11001,33 @@ Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 * Chain now **N+30 → N+55**
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+56/N+57/N+58/N+59/N+60: compliance + drift + handoff + health_score + hitl closures (SOTA pass-40..44)
+
+Five governance modules hardened in parallel via child agents:
+
+* N+56 `governance/compliance.py`: absolute path guards on
+  ComplianceAuditTrail / EvidenceStore / RetentionEnforcer /
+  ComplianceExporter; JSONL corruption resilience in list_all() and
+  _read_jsonl(); `__all__` exports 13 symbols. **26 tests**
+  (FR-GOV-CP-001..015).
+* N+57 `governance/drift.py`: absolute path guard on DriftDetector;
+  `__all__ = ["DriftDetector"]`. **23 tests**
+  (FR-GOV-DR-001..015).
+* N+58 `governance/handoff.py`: absolute path guard on
+  HandoffIntegrity; input validation rejects empty prompts;
+  `__all__ = ["HandoffIntegrity"]`. **18 tests**
+  (FR-GOV-HO-001..015).
+* N+59 `governance/health_score.py`: absolute path guard on
+  HealthScoreComputer; JSON corruption guard; score bounds assertion
+  0..100; `__all__` exports 5 symbols. **25 tests**
+  (FR-GOV-HS-001..015).
+* N+60 `governance/hitl.py`: absolute path guards on
+  GovernanceEventLog / HITLApprovalWorkflow; JSONL corruption
+  resilience; `__all__` exports 6 symbols. **28 tests**
+  (FR-GOV-HL-001..015).
+
+Full chain regression: **1231 passed in 38.39s** (N+30 → N+60), 0
+failures, 0 regressions. ruff clean, format clean, secret scan clean.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
