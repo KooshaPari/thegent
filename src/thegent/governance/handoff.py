@@ -1,16 +1,45 @@
+"""WP-16005: Verifies that delegated prompts are complete and context-aware.
+
+Hardening (AUDIT-N+58 — SOTA pass-37)
+---------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n58_handoff_hardening.py``
+(``FR-GOV-HO-001..015``).
+
+# @trace AUDIT-N+58
+"""
+
+from __future__ import annotations
+
 import re
 from pathlib import Path
 from typing import Any
+
+_MAX_PROMPT_LEN = 100_000
 
 
 class HandoffIntegrity:
     """WP-16005: Verifies that delegated prompts are complete and context-aware."""
 
     def __init__(self, workspace_root: Path) -> None:
+        workspace_root = Path(workspace_root)
+        # FR-GOV-HO-002 — absolute path required.
+        if not workspace_root.is_absolute():
+            raise ValueError(f"workspace_root must be an absolute path (got {workspace_root!s})")
         self.workspace_root = workspace_root
 
     def analyze_prompt(self, prompt: str) -> dict[str, Any]:
-        """Analyze a prompt for potential missing context."""
+        """Analyze a prompt for potential missing context.
+
+        ``FR-GOV-HO-008``: raises ``ValueError`` on empty / whitespace prompts.
+        ``FR-GOV-HO-010``: cap prompt length at ``_MAX_PROMPT_LEN``.
+        """
+        # FR-GOV-HO-008 / FR-GOV-HO-009 — reject empty / whitespace-only.
+        if not prompt or not prompt.strip():
+            raise ValueError("prompt must not be empty or whitespace-only")
+        # FR-GOV-HO-010 — enforce max length.
+        if len(prompt) > _MAX_PROMPT_LEN:
+            raise ValueError(f"prompt exceeds max length {_MAX_PROMPT_LEN} (got {len(prompt)})")
         findings = []
         warnings = []
 
@@ -131,6 +160,9 @@ class HandoffIntegrity:
         Returns:
             Tuple of (is_valid, error_message)
         """
+        # FR-GOV-HO-013 — reject empty / whitespace prompts.
+        if not prompt or not prompt.strip():
+            return False, "prompt must not be empty or whitespace-only"
         analysis = self.analyze_prompt(prompt)
 
         if analysis["completeness_score"] < min_completeness_score:
@@ -140,3 +172,6 @@ class HandoffIntegrity:
             return False, f"Found issues: {', '.join(analysis['findings'][:2])}"
 
         return True, "Handoff prompt is valid"
+
+
+__all__ = ["HandoffIntegrity"]

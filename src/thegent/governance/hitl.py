@@ -1,6 +1,14 @@
 """Human-in-the-loop (HITL) coordination and approval workflows (WP-3001, WP-3008).
 
 Traces to: G-GP-05, FR-GOV-HITL (WL-019)
+
+Hardening (AUDIT-N+60 — SOTA pass-37)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n60_hitl_hardening.py``
+(``FR-GOV-HL-001..015``).
+
+# @trace AUDIT-N+60
 """
 
 from __future__ import annotations
@@ -65,7 +73,11 @@ class GovernanceEventLog:
     """Writes and reads governance events from governance_events.jsonl (WL-019-A)."""
 
     def __init__(self, session_dir: Path) -> None:
-        self.session_dir = Path(session_dir)
+        # FR-GOV-HL-002 — absolute path required.
+        _path = Path(session_dir)
+        if not _path.is_absolute():
+            raise ValueError(f"session_dir must be an absolute path (got {_path!s})")
+        self.session_dir = _path
         self.events_path = self.session_dir / "governance_events.jsonl"
 
     def emit(self, event: dict[str, Any]) -> None:
@@ -140,6 +152,9 @@ class PolicyEngine:
         self.settings = settings
         _raw_dir = session_dir or getattr(settings, "session_dir", None)
         self.session_dir = Path(_raw_dir).expanduser().resolve() if _raw_dir else Path.cwd()
+        # FR-GOV-HL-004 — absolute path required.
+        if not self.session_dir.is_absolute():
+            raise ValueError(f"session_dir must be an absolute path (got {self.session_dir!s})")
         self._event_log = GovernanceEventLog(self.session_dir)
 
     def evaluate_hitl(self, run_context: RunContext) -> HITLDecision:
@@ -150,6 +165,9 @@ class PolicyEngine:
         - Emit await_approval event to governance_events.jsonl
         - Return HITLDecision(required=True, run_id=..., policy=...)
         """
+        # FR-GOV-HL-007 — run_id must be non-empty.
+        if not run_context.run_id or not run_context.run_id.strip():
+            raise ValueError("run_context.run_id must be a non-empty string")
         hitl_enabled: bool = bool(getattr(self.settings, "hitl_enabled", False))
         checkpoints: list[str] = list(getattr(self.settings, "hitl_checkpoints", ["pre_execution"]))
 
@@ -296,7 +314,11 @@ class HITLApprovalWorkflow:
     """
 
     def __init__(self, session_dir: Path) -> None:
-        self.session_dir = Path(session_dir)
+        # FR-GOV-HL-004 — absolute path required.
+        _path = Path(session_dir)
+        if not _path.is_absolute():
+            raise ValueError(f"session_dir must be an absolute path (got {_path!s})")
+        self.session_dir = _path
         self._event_log = GovernanceEventLog(self.session_dir)
 
     def approve(self, run_id: str, reason: str | None = None) -> dict[str, Any]:
@@ -453,3 +475,13 @@ class HITLManager:
     def is_approved(self, request_id: str) -> bool:
         """Check if a request has been approved."""
         return self._approvals.get(request_id, False)
+
+
+__all__ = [
+    "HITLDecision",
+    "RunContext",
+    "GovernanceEventLog",
+    "PolicyEngine",
+    "HITLApprovalWorkflow",
+    "HITLManager",
+]

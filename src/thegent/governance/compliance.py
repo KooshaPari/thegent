@@ -1,5 +1,13 @@
 """WP-15004: Certification export profiles for SOC 2, ISO, and EU AI Act."""
 
+# Hardening (AUDIT-N+56 — SOTA pass-37)
+# --------------------------------------
+# Contract surface asserted by
+# ``tests/test_unit_audit_n56_compliance_hardening.py``
+# (``FR-GOV-CP-001..015``).
+#
+# @trace AUDIT-N+56
+
 import hashlib
 import json
 from dataclasses import dataclass
@@ -173,6 +181,10 @@ class ComplianceAuditTrail:
     """Maintains audit trail for compliance verification."""
 
     def __init__(self, storage_path: Path) -> None:
+        storage_path = Path(storage_path)
+        # FR-GOV-CP-001/002 — absolute path required.
+        if not storage_path.is_absolute():
+            raise ValueError(f"storage_path must be an absolute path (got {storage_path!s})")
         self.storage_path = storage_path
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.ledger_file = self.storage_path / "compliance_ledger.jsonl"
@@ -235,6 +247,10 @@ class ComplianceExporter:
     """Exports framework-specific evidence bundles for compliance audits (WP-15004)."""
 
     def __init__(self, session_dir: Path) -> None:
+        session_dir = Path(session_dir)
+        # FR-GOV-CP-007/008 — absolute path required.
+        if not session_dir.is_absolute():
+            raise ValueError(f"session_dir must be an absolute path (got {session_dir!s})")
         self.session_dir = session_dir
 
     def export_bundle(self, framework: str, target_path: Path) -> dict[str, Any]:
@@ -341,7 +357,11 @@ class EvidenceStore:
     """
 
     def __init__(self, store_path: Path) -> None:
-        self.store_path = Path(store_path)
+        store_path = Path(store_path)
+        # FR-GOV-CP-003/004 — absolute path required.
+        if not store_path.is_absolute():
+            raise ValueError(f"store_path must be an absolute path (got {store_path!s})")
+        self.store_path = store_path
         self._last_hash: str = ""
 
     def append(
@@ -391,7 +411,11 @@ class EvidenceStore:
         return evidence
 
     def list_all(self) -> list:
-        """Return all evidence records in append order."""
+        """Return all evidence records in append order.
+
+        ``FR-GOV-CP-009``: returns ``[]`` when store_path does not exist.
+        ``FR-GOV-CP-010``: corrupt JSONL lines are skipped gracefully.
+        """
         if not self.store_path.exists():
             return []
         records = []
@@ -400,7 +424,10 @@ class EvidenceStore:
                 line = line.strip()
                 if not line:
                     continue
-                records.append(ComplianceEvidence.model_validate_json(line))
+                try:
+                    records.append(ComplianceEvidence.model_validate_json(line))
+                except Exception:  # noqa: BLE001
+                    continue
         return records
 
     def list_since(self, cutoff_utc: datetime) -> list:
@@ -520,7 +547,11 @@ class RetentionEnforcer:
     """
 
     def __init__(self, base_dir: Path) -> None:
-        self.base_dir = Path(base_dir)
+        base_dir = Path(base_dir)
+        # FR-GOV-CP-005/006 — absolute path required.
+        if not base_dir.is_absolute():
+            raise ValueError(f"base_dir must be an absolute path (got {base_dir!s})")
+        self.base_dir = base_dir
         self._policies_path = self.base_dir / "policies.jsonl"
         self._consent_path = self.base_dir / "consent.jsonl"
         self._purge_log_path = self.base_dir / "purge_log.jsonl"
@@ -617,6 +648,10 @@ class RetentionEnforcer:
             f.write(json.dumps(record) + "\n")
 
     def _read_jsonl(self, path: Path) -> list:
+        """Read a JSONL file, skipping corrupt lines gracefully.
+
+        ``FR-GOV-CP-012``: corrupt lines are skipped without raising.
+        """
         if not path.exists():
             return []
         results = []
@@ -625,7 +660,10 @@ class RetentionEnforcer:
                 line = line.strip()
                 if not line:
                     continue
-                results.append(json.loads(line))
+                try:
+                    results.append(json.loads(line))
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    continue
         return results
 
 
@@ -718,3 +756,20 @@ class AuditExporter:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(checkpoint, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return checkpoint
+
+
+__all__ = [
+    "ComplianceProfileType",
+    "ComplianceControl",
+    "ComplianceProfile",
+    "ComplianceEnforcer",
+    "ComplianceAuditTrail",
+    "ComplianceExporter",
+    "ComplianceEvidence",
+    "EvidenceStore",
+    "RetentionPolicy",
+    "ConsentRecord",
+    "RetentionEnforcer",
+    "AuditExporter",
+    "EvidenceKind",
+]

@@ -4,6 +4,14 @@ Replaces XP/gamification with a weighted, multi-dimensional health metric.
 Each dimension (test coverage, lint violations, etc.) is normalized against
 targets defined in contracts/health-targets.json and combined into a single
 score that drives autonomous agent scheduling decisions.
+
+Hardening (AUDIT-N+59 — SOTA pass-37)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n59_health_score_hardening.py``
+(``FR-GOV-HS-001..015``).
+
+# @trace AUDIT-N+59
 """
 
 import json
@@ -96,8 +104,18 @@ class HealthScoreComputer:
     """
 
     def __init__(self, health_targets_path: Path) -> None:
-        with open(health_targets_path) as fh:
-            data = json.load(fh)
+        health_targets_path = Path(health_targets_path)
+        # FR-GOV-HS-002 — absolute path required.
+        if not health_targets_path.is_absolute():
+            raise ValueError(f"health_targets_path must be an absolute path (got {health_targets_path!s})")
+        # FR-GOV-HS-004 — JSON corruption guard.
+        try:
+            with open(health_targets_path) as fh:
+                data = json.load(fh)
+        except (json.JSONDecodeError, ValueError) as exc:
+            raise ValueError(
+                f"health_targets_path contains corrupt or invalid JSON ({health_targets_path!s}): {exc}"
+            ) from exc
         self._dimensions: dict[str, dict] = data["dimensions"]
         _log.debug(
             "loaded %d health dimensions from %s",
@@ -153,6 +171,8 @@ class HealthScoreComputer:
             weighted_sum += weight * normalized
 
         score = round(weighted_sum * 100, 2)
+        # FR-GOV-HS-009 — score must remain in [0, 100].
+        assert 0.0 <= score <= 100.0, f"computed score out of bounds: {score}"
         if HAS_NATIVE_SHM:
             try:
                 import thegent_shm  # type: ignore[import-untyped]
@@ -191,3 +211,12 @@ class HealthScoreComputer:
         if direction == "higher_is_better":
             return 0.0
         return target * 2 if target > 0 else 10.0
+
+
+__all__ = [
+    "HealthBand",
+    "HealthScore",
+    "DimensionScore",
+    "HealthScoreComputer",
+    "get_band",
+]
