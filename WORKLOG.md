@@ -10798,3 +10798,49 @@ Lane: dormant-core AUDIT-N+44 (session_scraper) and AUDIT-N+45
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## Phase 3/4 Continuation — 2026-07-22 (AUDIT-N+46: discovery hardening, SOTA pass-30)
+
+Closes the strategies/discovery dormant-core module. The 20-line stub
+is replaced with a full singleton + native extension + scan_agents
+implementation that satisfies both the 24-test AUDIT-N+46 spec and
+the 12-test dormant corridor (previously all failing).
+
+### AUDIT-N+46 (strategies/discovery, SOTA pass-30)
+
+* Source patch: `src/thegent/orchestration/strategies/discovery/__init__.py`
+  (20 → 83 lines): Module docstring with `@trace AUDIT-N+46` +
+  `FR-ORC-DC-001..015` annotations. `DiscoverySystem(dataclass)` with
+  singleton `__new__`, `_init_singleton` via lazy
+  `from thegent import config` (mock-patch-safe), native extension
+  loading with `ImportError` + generic `Exception` fallback,
+  `is_native_active()`, `scan_agents()` with interface delegation
+  and exception guard, `get_discovery_system()` factory.
+* Spec: `tests/test_unit_audit_n46_discovery_hardening.py` (24 tests,
+  15 invariants FR-ORC-DC-001..015).
+* Validation: N+46 spec **24 passed**; dormant corridor
+  `test_strategies_discovery.py` **12 passed**; ruff clean.
+* Key fix: lazy import `from thegent import config` in
+  `_init_singleton()` instead of top-level `from thegent.config
+  import ThegentSettings` — resolves the classic Python mock-patch
+  binding issue where `@patch("thegent.config.ThegentSettings")`
+  cannot reach a name imported via `from X import Y`.
+
+### Full Regression
+
+* `pytest tests/test_unit_audit_n{30..46}*.py + dormant corridors`
+  → **1057 passed, 1 skipped, 0 regressions** across the full
+  N+30 → N+46 chain (17 consecutive SOTA audit-N+ passes).
+* ruff check + format clean on all touched files.
+* No secrets in the diff.
+* No upstream push, no force-push, no agent/terminal process kills.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** on AUDIT-N+46 (24 spec + 12
+  dormant corridor = 36 passed). Total dormant-core hardening chain
+  now spans **N+30 → N+46** (17 consecutive SOTA audit-N+ passes,
+  all closed).
+* **DAG tick**: **+1** (this hand-off). The dormant-core hardening
+  chain extends through AUDIT-N+46; next candidates for SOTA
+  pass-31+ are governance / performance / UX audit lanes.
