@@ -1,11 +1,23 @@
 """WP-33002: Behavioral Steering via Semantic Injection.
 Influences black-box agents by proactively modifying their environment and context.
 Injects 'control vectors' (semantic hints, mock tools, system state) to steer behavior.
+
+Hardening (AUDIT-N+91 — SOTA pass-75)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n91_control_vectors_hardening.py``
+(``FR-GOV-CV-001..015``).
+
+# @trace AUDIT-N+91
 """
 
 import logging
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "ControlVectorManager",
+]
 
 _log = logging.getLogger(__name__)
 

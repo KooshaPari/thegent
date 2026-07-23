@@ -3,6 +3,14 @@
 Enforces trust-based admission rules for provider adapters.
 
 OPT-008: LRU cache for policy evaluation results (with TTL) - <50ms repeated evaluations.
+
+Hardening (AUDIT-N+90 — SOTA pass-74)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n90_adapter_policy_hardening.py``
+(``FR-GOV-AP-001..015``).
+
+# @trace AUDIT-N+90
 """
 
 from typing import Any
@@ -10,6 +18,10 @@ from typing import Any
 from cachetools import TTLCache
 
 from thegent.contracts.capability_registry import CapabilityRegistry
+
+__all__ = [
+    "AdapterAdmissionPolicy",
+]
 
 
 class AdapterAdmissionPolicy:

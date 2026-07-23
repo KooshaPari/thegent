@@ -1,8 +1,21 @@
-"""Per-run cost aggregation."""
+"""Per-run cost aggregation.
+
+Hardening (AUDIT-N+92 — SOTA pass-76)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n92_cost_aggregation_hardening.py``
+(``FR-GOV-CA-001..015``).
+
+# @trace AUDIT-N+92
+"""
 
 import logging
 from datetime import UTC, datetime
 from typing import Any
+
+__all__ = [
+    "CostAggregator",
+]
 
 logger = logging.getLogger(__name__)
 
