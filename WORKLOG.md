@@ -10111,3 +10111,159 @@ AUDIT-N+34 / AUDIT-N+35 / AUDIT-N+36 spec-first pattern).
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+---
+
+## AUDIT-N+37 Hand-off (dormant-core SOTA pass-21: SubAgentEventQueue + SubAgentDispatcher + UnifiedWorkerDaemon)
+
+**Status**: Closed. 16 hardening invariants (FR-ORC-060 ..
+FR-ORC-075), 28 new SOTA spec tests (`tests/test_unit_audit_n37_sub_agent_event_queue_hardening.py`),
+30 dormant `test_wl085_sub_agent_events.py` tests now green
+(were 28-pass/2-fail before).
+
+**Scope delivered**:
+
+- Hardened `SubAgentEventQueue` in
+  `src/thegent/orchestration/event_queue/__init__.py`: thread-safe
+  `collections.deque` FIFO under `threading.RLock`, with an
+  `asyncio.Event` lazily bound to the consumer's running loop so
+  sync `put()` from any thread can `call_soon_threadsafe(evt.set)`
+  to wake async `get()` / `stream()`.  Deliberately avoids
+  `asyncio.Queue` to dodge the documented Python 3.10+ GC
+  lifecycle hazard (the prior async-Queue-backed design hung the
+  test runner indefinitely when the queue went out of scope on a
+  non-loop thread).  Public surface keeps `put()`,
+  `get_nowait()`, `drain_nowait()` (returns a defensive list
+  copy), `qsize` / `empty` / `maxsize` properties, `stats()`
+  snapshot, `get()` / `stream(timeout=)` async surfaces, and the
+  `get_global_event_queue()` / `reset_global_event_queue()` /
+  `get_event_queue()` singleton helpers (now
+  `threading.Lock`-guarded).
+- Dual-compat `protocol.py` constructors: `SubAgentEvent`,
+  `SubAgentRequest`, `SubAgentResult` now accept BOTH the historical
+  positional ctors (`SubAgentRequest(request_id, task)`,
+  `SubAgentEvent(event_type, data)`, `SubAgentResult(request_id, success, result)`)
+  AND the dormant WL-085 kwargs ctors
+  (`SubAgentRequest(agent_type=..., task=...)`,
+  `SubAgentEvent(request_id=..., event_type=..., payload=...)`,
+  `SubAgentResult(request_id=..., agent_type=..., status=..., result=...)`).
+- Added `event_queue=` and `budget_tracker=` kwargs to
+  `SubAgentDispatcher`; `dispatch()` accepts BOTH a `PlanNode`
+  (canonical WL-082 corridor, preserved untouched) AND a
+  `SubAgentRequest` (dormant WL-085 contract, wrapped in a synthetic
+  `PlanNode` adapter via `_wrap_sub_agent_request_as_plan_node`).
+  When `event_queue` is bound, `dispatch()` publishes
+  `SubAgentEventType.STARTED` before and `SubAgentEventType.COMPLETED`
+  after the bus message; `BudgetExceededError` from
+  `budget_tracker.check(...)` suppresses COMPLETED (STARTED is
+  still emitted); broken event_queue (QueueFull / RuntimeError) is
+  silently swallowed so the dispatch path is never blocked.
+  Internal `_dispatch_lock` (RLock) guards concurrent dispatchers
+  (16-thread x 1-iter stress run in the spec verifies started ==
+  completed == 16).
+- Added `UnifiedWorkerDaemon(event_queue=...)` with
+  `_consume_events()` async generator (CancelledError-clean
+  shutdown) and module-level
+  `_dispatch_post_agent_run_hook(run_id=, extra_context=)` symbol
+  for test-harness patching.  When `event_queue` is omitted the
+  daemon falls back to `get_global_event_queue()`.  COMPLETED
+  events trigger `_dispatch_post_agent_run_hook(run_id=
+  event.request_id, extra_context={'output_context':
+  event.payload})` which forwards to
+  `thegent.governance.post_agent_run_hook.post_agent_run(...)`
+  with sensible empty defaults for `run_metadata` / `audit_log`.
+  A misbehaving hook never breaks the consumer loop
+  (defensive try/except + DEBUG/WARNING logging).
+
+**Validation** (focused runs, all green):
+
+- `tests/test_wl085_sub_agent_events.py` — 30/30 dormant
+  contract tests pass (event_queue + dispatcher + worker daemon).
+- `tests/test_unit_audit_n37_sub_agent_event_queue_hardening.py` —
+  28/28 spec tests pass (FR-ORC-060 .. FR-ORC-075).
+- `tests/test_wl082_sub_agent_dispatcher.py` — 32/32 WL-082 bus+plan
+  corridor unbroken.
+- `tests/test_unit_audit_n36_execution_engine_hardening.py` —
+  34/34 AUDIT-N+36 corridor unbroken.
+- **Combined dormant cluster**: 124/124 (90 dormant wiring/spec
+  + 34 AUDIT-N+36).
+- `ruff check` — 0 violations on the 5 changed files
+  (1 W292 trailing newline fixed in `unified_worker.py`).
+- `ruff format` — 3 files reformatted (event_queue + protocol +
+  spec test); cluster re-run still 124/124.
+- `gitleaks detect --source ...` (default ruleset, no git) — no
+  leaks found on the 5 changed files / 20.93 KB.
+- Negative-grep `grep -rEn "(api_key|secret|password|token).*=.[\"][A-Za-z0-9]{16,}"
+  ...` — 0 hits.
+
+**Carry-forward (post-AUDIT-N+37)**:
+
+The dormant-core cluster inside `orchestration/` has now been
+hardened through:
+- AUDIT-N+33 — `MessageBus` + `OrchestrationPlan` +
+  `BudgetTracker` + `ResultAggregator` + `SubAgentDispatcher`
+- AUDIT-N+34 — `LaneModel` + `LANE_PRIORITIES` + `Lane` enum +
+  `RunPriorityQueue` + `QueuedRun` + `make_priority_queue`
+- AUDIT-N+35 — `DagPrioritizer` + `DagTask` + `DagCycleError` +
+  `DependencyRouter` (CPM)
+- AUDIT-N+36 — `ExecutionEngine` (FR-ORC-EXEC primary contract)
+- AUDIT-N+37 — `SubAgentEventQueue` (FIFO + concurrency safety +
+  asyncio bridge) + `SubAgentDispatcher.dispatch(SubAgentRequest)`
+  with `event_queue=` STARTED/COMPLETED publishing +
+  `UnifiedWorkerDaemon(event_queue=)` consumer + post-run hook
+  bridge (FR-ORC-060 .. FR-ORC-075, 16 new invariants).
+
+The next genuinely-unblocked dormant-core candidates per the
+SOTA pass-22+ sweep are:
+1. `orchestration/consensus/{redlock_atomic, omega_consensus,
+   redis_concurrency}/` — never audited in the dormant-core
+   chain (recommended next: smallest unblocked cluster; mirrors
+   the AUDIT-N+34 / AUDIT-N+35 / AUDIT-N+36 / N+37 spec-first
+   pattern).
+2. `orchestration/sub_agent_dispatcher/` deeper lanes
+   (WL-089 / AgentResult / PlanNode cross-module refactor) — a
+   much larger surface that requires touching the dispatcher's
+   canonical PlanNode path; deferred until the consensus chain
+   is closed first.
+
+Recommended start of next session: SOTA pass-22 over the
+`consensus/` modules (3 modules, never audited, fresh dormant
+candidate).
+
+**Commits** (local-only on
+`wip/2026-07-22-thegent-local-preservation`, no upstream push):
+- `d04c4e976` — AUDIT-N+37 dormant-core SubAgentEventQueue
+  hardening spec (SOTA pass-21)
+- `44341b6e1` — AUDIT-N+37 source: harden `SubAgentEventQueue`
+  (thread-safe FIFO + asyncio.Event bridge, 387-line
+  re-write)
+- `101ca7d16` — AUDIT-N+37 source: dual-compat
+  SubAgentEvent/Request/Result ctors (historical + dormant)
+- `07ceb43a3` — AUDIT-N+37 source: dormant SubAgentRequest
+  dispatch + event_queue + budget_tracker on
+  `SubAgentDispatcher.dispatch()`
+- `a25b313c1` — AUDIT-N+37 source: UnifiedWorkerDaemon event
+  consumer + post-run hook bridge
+- `58300180e` — AUDIT-N+37: align hardening spec attribute
+  expectations to source (`qsize` is a property, ruff format
+  pass)
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: **100%** (AUDIT-N+37 lane fully
+  closed: 16 FR-ORC-060 .. FR-ORC-075 hardening invariants, 28
+  new SOTA spec tests, 30 dormant `test_wl085_sub_agent_events.py`
+  tests now green after the deque+asyncio.Event design, 124/124
+  combined dormant cluster + corridor all green, ruff check +
+  format clean on the 5 changed files, gitleaks + secrets
+  negative-grep 0 hits, no pre-existing regressions, unrelated
+  worktree mod set preserved).
+* **DAG tick**: **+1** (this hand-off). The dormant-core
+  hardening chain now extends through AUDIT-N+37; the next
+  dormant-core candidate (`consensus/{redlock_atomic,
+  omega_consensus, redis_concurrency}/`) is queued for SOTA
+  pass-22.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+(no upstream push — local preservation branch per project
+guidelines).
