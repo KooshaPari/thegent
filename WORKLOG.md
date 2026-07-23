@@ -11218,3 +11218,19 @@ Lane: governance AUDIT-N+71 through N+76.
 * Chain now extends through **N+30 → N+76**.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+## Hand-off — 2026-07-22 — AUDIT-N+77/N+78/N+79/N+80/N+81: governance batch hardening (SOTA pass-61..65) — closure
+
+Lane: governance AUDIT-N+77 through N+81.
+
+* **N+77** `src/thegent/governance/compliance_reports.py` — `__all__`, `export_report` parent mkdir, deterministic rollup (FR-GOV-CR-001..015)
+* **N+78** `src/thegent/governance/meta.py` — `__all__`, `validate_action` blocks delete/config actions (FR-GOV-MT-001..015)
+* **N+79** `src/thegent/governance/ledger.py` — `__all__` export (FR-GOV-LG-001..015)
+* **N+80** `src/thegent/governance/tee_check.py` — `__all__`, `TEEType` upgraded to `StrEnum` (FR-GOV-TC-001..015)
+* **N+81** `src/thegent/governance/costs.py` — `__all__`, `get_cost_feedback` uses `"status"` key (FR-GOV-CS-001..015)
+
+* Validation: **74 spec tests green**; 235 regression clean; ruff clean.
+* Lane status: **AUDIT-N+77 through N+81 closed**.
+* Chain now extends through **N+30 → N+81**.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
