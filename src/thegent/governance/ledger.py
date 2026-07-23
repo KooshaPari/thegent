@@ -1,10 +1,24 @@
-"""WP-5006: Ledger integrity verification."""
+"""WP-5006: Ledger integrity verification.
+
+Hardening (AUDIT-N+79 — SOTA pass-63)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n79_ledger_hardening.py``
+(``FR-GOV-LG-001..015``).
+
+# @trace AUDIT-N+79
+"""
 
 import hashlib
 import json
 import logging
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "LedgerVerifier",
+    "IncidentLedger",
+]
 
 _log = logging.getLogger(__name__)
 

@@ -1,10 +1,23 @@
-"""Automated compliance reporting."""
+"""Automated compliance reporting.
+
+Hardening (AUDIT-N+77 — SOTA pass-61)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n77_compliance_reports_hardening.py``
+(``FR-GOV-CR-001..015``).
+
+# @trace AUDIT-N+77
+"""
 
 import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "ComplianceReporter",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +166,7 @@ class ComplianceReporter:
             Path to exported file
         """
         content = self.generate_report(compliance_data, format)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(content)
         logger.info(f"Exported compliance report: {output_path}")
         return output_path
