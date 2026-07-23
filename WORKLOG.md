@@ -10518,3 +10518,145 @@ pattern.
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 (no upstream push — local preservation branch per project
 guidelines).
+
+## Session Resume — 2026-07-22 (Parallel-lane expansion)
+
+**Operator:** Forge (resumed session, second pass on
+`wip/2026-07-22-thegent-local-preservation`). Picked up immediately
+after the AUDIT-N+39 hand-off. The five-day goal continues.
+
+### Inspect → Decide
+
+Working tree at session start was already clean (the two AUDIT-N+39
+commits + the WORKLOG hand-off were in from the previous turn). The
+next two dormant-core candidates were unblocked and clearly
+independent:
+
+1. `src/thegent/orchestration/strategies/playbooks/` — 25 dormant
+   tests at `tests/orchestration/test_playbooks*.py`. Surface
+   already mature (`get_playbook_for_failure`,
+   `execute_playbook_step`, `Playbook` ladder-of-steps dataclass).
+2. `src/thegent/orchestration/state/audit_log.py` — 21 dormant
+   tests across `tests/test_audit_log.py` +
+   `tests/orchestration/test_audit_log_distributed.py`. Surface
+   is a `ShadowAuditGit(audit_path)` with `init_shadow_repo`,
+   `commit_transaction(episode_id, changed_files, message,
+   remote_host=None)`, `get_log(limit=, episode_id=)`, `get_diff(hash)`.
+
+Both are spec-first candidates with no source coupling — perfect for
+parallel child agents.
+
+### Parallel Lane: AUDIT-N+40 (playbooks, SOTA pass-24)
+
+* **Spec commit**: `c5a94d4b7` — `AUDIT-N+40: dormant-core
+  playbooks hardening spec (SOTA pass-24)`
+* **Spec file**: `tests/test_unit_audit_n40_playbooks_hardening.py`
+  (707 lines, 48 spec tests across 10 classes, 15 invariants
+  `FR-ORC-PB-001..015`)
+* **Source patch**: deferred to a future session (the spec is the
+  contract; the dormant source at
+  `src/thegent/orchestration/strategies/playbooks/__init__.py`
+  is the next SOTA pass-24 source-patch target).
+* **Invariants**:
+  `FR-ORC-PB-001` keyword-classifier (14 canonical categories),
+  `FR-ORC-PB-002..008` per-category ladders (timeout, rate-limit,
+  auth, network, malformed-response, contract-drift, state-
+  corruption, budget-exceeded, circuit-open, policy-deny,
+  retry-exhausted, checkpoint-failed, rollback), `FR-ORC-PB-009`
+  empty/unknown fallback ladder, `FR-ORC-PB-010` every ladder
+  terminates in `escalate` or `resume_or_escalate`, `FR-ORC-PB-011`
+  `execute_playbook_step` accepts `context=None`, `FR-ORC-PB-012`
+  `step="escalate"` routes to `EscalationQueue.add(...)`,
+  `FR-ORC-PB-013` `step="escalate"` + `context=None` uses safe
+  defaults, `FR-ORC-PB-014` `step="dlq_enqueue"` builds `RunMeta`
+  and calls `DLQManager.enqueue`, `FR-ORC-PB-015` unknown steps
+  return `{"status": "pending"}` and `playbooks.__all__` exposes
+  the three public symbols.
+* **Validation**: ruff check + ruff format clean; pytest collects
+  48/48 tests; 45 expected failures + 3 accidental passes (the
+  stub `Playbook` already declares `name`/`steps`/`execute`).
+
+### Parallel Lane: AUDIT-N+41 (audit_log, SOTA pass-25)
+
+* **Spec commit**: `667466b17` — `AUDIT-N+41: dormant-core
+  shadow_audit_log hardening spec (SOTA pass-25)`
+* **Spec file**: `tests/test_unit_audit_n41_audit_log_hardening.py`
+  (544 lines, 25 spec tests across 7 classes, 15 invariants
+  `FR-ORC-AL-001..015`)
+* **Source patch**: deferred to a future session (spec-only this
+  pass; source-patch will land on top of the now-correct dormant
+  corridor expectations).
+* **Invariants**:
+  `FR-ORC-AL-001` `ShadowAuditGit(audit_path=...)` public surface,
+  `FR-ORC-AL-002/003` `init_shadow_repo` creates `.git` and is
+  idempotent, `FR-ORC-AL-004/005` `commit_transaction` local copy
+  into `snapshots/`, `FR-ORC-AL-006/007` `remote_host`
+  creates subdirectory and is annotated in commit subject,
+  `FR-ORC-AL-008` `scan_secrets` is the single scrubbing hook,
+  `FR-ORC-AL-009` secrets are redacted before copy, `FR-ORC-AL-010
+  /011` empty `changed_files` is a no-op and missing source file
+  raises `FileNotFoundError`, `FR-ORC-AL-012/013` `get_log` honours
+  `limit` + `episode_id`, `FR-ORC-AL-014` `get_diff(hash)` returns
+  the committed content string, `FR-ORC-AL-015` `__all__` exposes
+  `ShadowAuditGit`.
+* **Secret-cleanup note**: the original draft of this spec
+  contained an OpenAI-prefix-shaped literal string (the
+  `sk-` prefix followed by 48 alphanumerics) as a scrubbing
+  fixture, mirroring the dormant corridor's
+  `test_audit_log_distributed.py` fixture. That prefix
+  pattern would have triggered gitleaks + pre-commit secret
+  scanners, so it was replaced before commit with a
+  `fixture-`-prefixed opaque sentinel string
+  (`fixture-opaque-token-DO-NOT-USE-0000...`) —
+  semantically equivalent for the scrubbing invariant
+  (the test only requires that *any* opaque token be redacted,
+  not the specific OpenAI-shaped prefix). Repo-wide secret
+  scan over the last 4 commits: 0 leaks.
+* **Validation**: ruff check + ruff format clean; pytest collects
+  25/25 tests; expected failures pending source patch.
+
+### Validation Summary
+
+* `pytest tests/test_unit_audit_n{30..41}*.py + dormant
+  corridors (test_speculative_strategies, test_redlock_atomic,
+  test_redis_concurrency, test_audit_log, test_audit_log_distributed)`
+  → **751 tests collected** (no parse errors anywhere in the
+  full N+30 → N+41 chain).
+* `pytest tests/test_unit_audit_n{30..39}*.py + dormant
+  corridors` → **648 passed, 1 skipped, 0 regressions** (closed
+  lanes still green after the parallel-lane expansion).
+* `ruff check` + `ruff format --check` on
+  `tests/test_unit_audit_n40_playbooks_hardening.py` +
+  `tests/test_unit_audit_n41_audit_log_hardening.py` +
+  `src/thegent/orchestration/strategies/speculative_strategies/__init__.py`
+  → all clean.
+* Repo-wide secret-pattern grep (`sk-[a-z0-9]{20,}`,
+  `ghp_[a-z0-9]{20,}`, `aws_*key.*=`) over last 4 commits →
+  0 hits.
+* Branch hygiene: working tree clean after this hand-off
+  commit; only spec files + source patch + WORKLOG modified;
+  unrelated worktree (`wip/2026-07-17-bundle-zsh-scripts-into-thegent`)
+  + chore branch (`chore/repoint-phenodesign-templates`)
+  preserved unchanged.
+* No upstream push, no force-push, no agent/terminal process
+  kills.
+
+### Cockpit Progress Bar + DAG Tick
+
+* **Cockpit progress bar**: 100% on the closed lane (AUDIT-N+39
+  speculative_strategies: 40 spec tests + 33 dormant tests, all
+  green). Parallel-lane spec expansion: AUDIT-N+40 (48 tests
+  spec'd, source-patch pending) + AUDIT-N+41 (25 tests spec'd,
+  source-patch pending). Total dormant-core hardening chain
+  coverage now spans **N+30 → N+41** (12 consecutive SOTA
+  audit-N+ passes: 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+  closed; 40, 41 spec-only, queued for source-patch).
+* **DAG tick**: **+2** (this hand-off). The dormant-core
+  hardening chain now extends through AUDIT-N+41 spec. The
+  next dormant-core candidates (in smallest-first priority
+  order for the future SOTA pass-26..27 source patches):
+  `strategies/evidence/` (23 dormant tests),
+  `state/shm.py` (`SharedMemoryManager`, 32 dormant tests),
+  then `playbooks/__init__.py` source patch (pass-24) and
+  `audit_log.py` source patch (pass-25) to close the spec-only
+  loops from this hand-off.
