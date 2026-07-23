@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 keywords = [ "ai", "agent", "mcp", "orchestration", "automation", "cli", "factory", "droid", "codex", "claude",]
 classifiers = [ "Development Status :: 4 - Beta", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Operating System :: OS Independent",]
-dependencies = [ "httpx>=0.28.1", "typer>=0.16.0", "rich>=13.9.4", "pydantic>=2.12.5", "pydantic-settings>=2.8.1", "python-dotenv>=1.0.1", "tenacity>=9.0.0", "pyyaml>=6.0.2", "ruamel.yaml>=0.18.6", "fastmcp[tasks]>=3.0.0", "starlette>=0.46.0", "uvicorn>=0.34.0", "granian>=1.7.4", "opentelemetry-api>=1.31.0", "opentelemetry-sdk>=1.31.0", "tomlkit>=0.13.2", "rtoml>=0.12.0", "tomli>=2.2.1", "tomli_w>=1.0.0", "cachetools>=5.5.2", "PersistDict>=0.2.0", "watchdog>=6.0.0", "watchfiles>=1.0.4", "fastjsonschema>=2.21.1", "psutil>=7.0.0", "pybreaker>=1.2.0", "textual>=1.0.0", "duckduckgo-search>=7.3.2", "praw>=7.8.1", "apscheduler>=3.10.4", "feedparser>=6.0.11", "arxiv>=2.1.3", "scholarly>=1.7.11", "playwright>=1.50.0", "extism>=1.0.2; platform_system == 'Darwin' and platform_machine == 'arm64'", "ujson>=5.12.0; implementation_name == 'pypy'", "orjson; implementation_name == 'cpython'", "Pillow>=12.2.0", "structlog>=24.0.0", "GitPython>=3.1.47", "PyJWT>=2.12.0", "lxml>=6.1.0", "phenotype-py-utils @ git+https://github.com/KooshaPari/phenotype-python-sdk.git@main",]
+dependencies = [ "httpx>=0.28.1", "typer>=0.16.0", "rich>=13.9.4", "pydantic>=2.12.5", "pydantic-settings>=2.8.1", "python-dotenv>=1.0.1", "tenacity>=9.0.0", "pyyaml>=6.0.2", "ruamel.yaml>=0.18.6", "fastmcp[tasks]>=3.0.0", "starlette>=0.46.0", "uvicorn>=0.34.0", "granian>=1.7.4", "opentelemetry-api>=1.31.0", "opentelemetry-sdk>=1.31.0", "tomlkit>=0.13.2", "rtoml>=0.12.0", "tomli>=2.2.1", "tomli_w>=1.0.0", "cachetools>=5.5.2", "PersistDict>=0.2.0", "watchdog>=6.0.0", "watchfiles>=1.0.4", "fastjsonschema>=2.21.1", "psutil>=7.0.0", "pybreaker>=1.2.0", "textual>=1.0.0", "duckduckgo-search>=7.3.2", "praw>=7.8.1", "apscheduler>=3.10.4", "feedparser>=6.0.11", "arxiv>=2.1.3", "scholarly>=1.7.11", "playwright>=1.50.0", "extism>=1.0.2; platform_system == 'Darwin' and platform_machine == 'arm64'", "ujson>=5.12.0; implementation_name == 'pypy'", "orjson; implementation_name == 'cpython'", "Pillow>=12.2.0", "structlog>=24.0.0", "GitPython>=3.1.47", "PyJWT>=2.12.0", "lxml>=6.1.0",]
 [[project.authors]]
 name = "Koosha Paridehpour"
 email = "kooshapari@gmail.com"
@@ -43,9 +43,6 @@ antigma = "thegent.rust_wrappers:antigma"
 [tool.uv]
 managed = true
 override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
-
-[tool.uv.sources]
-phenotype-py-utils = { git = "https://github.com/KooshaPari/phenotype-python-sdk.git", branch = "main" }
 
 [tool.uv.workspace]
 members = [ "packages/*", "modules/*",]
