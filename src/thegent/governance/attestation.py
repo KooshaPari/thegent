@@ -1,4 +1,13 @@
-"""WP-5008: Compliance attestation generator."""
+"""WP-5008: Compliance attestation generator.
+
+Hardening (AUDIT-N+84 — SOTA pass-68)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n84_attestation_hardening.py``
+(``FR-GOV-AT-001..015``).
+
+# @trace AUDIT-N+84
+"""
 
 import json
 import logging
@@ -6,6 +15,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from thegent.config import ThegentSettings
+
+__all__ = [
+    "AttestationGenerator",
+    "AuditReportGenerator",
+]
 
 _log = logging.getLogger(__name__)
 
