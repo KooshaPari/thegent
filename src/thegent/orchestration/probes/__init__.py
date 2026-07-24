@@ -1,74 +1,92 @@
-"""Orchestration probes module for health checking."""
+"""Orchestration probes module (AUDIT-N+39 hardened).
+
+Health probes are pluggable ``HealthProbe`` instances; the runners
+``run_pre_promote_probes`` and ``run_post_rollback_probes`` return a
+``{passed, findings}`` shape where ``findings`` is the list of
+``ProbeResult.to_dict()`` payloads (so callers can serialise to JSON
+without coupling to the dataclass).
+"""
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+__all__ = [
+    "HealthProbe",
+    "ProbeResult",
+    "run_post_rollback_probes",
+    "run_pre_promote_probes",
+]
 
-__all__ = ["HealthProbe", "ProbeResult", "run_post_rollback_probes", "run_pre_promote_probes"]
 
-
+@dataclass
 class ProbeResult:
-    """Result of a health probe."""
+    """Result of a single probe run.
 
-    def __init__(self, name: str, healthy: bool, message: str = "") -> None:
-        self.name = name
-        self.healthy = healthy
-        self.message = message
+    @trace FR-RES-007
+    """
+
+    name: str
+    healthy: bool
+    message: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {"name": self.name, "healthy": self.healthy, "message": self.message}
 
 
 class HealthProbe:
-    """Health probe for orchestration."""
+    """A single named health probe.
 
-    def __init__(self, name: str) -> None:
+    @trace FR-RES-007
+
+    Subclasses override ``check()`` to perform the actual health
+    check. ``healthy=True`` is the default (no-op probe).
+    """
+
+    def __init__(self, name: str, *, healthy: bool = True) -> None:
         self.name = name
+        self._default_healthy = healthy
 
     def check(self) -> ProbeResult:
-        """Check health."""
-        return ProbeResult(self.name, healthy=True)
+        return ProbeResult(self.name, self._default_healthy, "")
 
     def is_healthy(self) -> bool:
-        """Check if probe is healthy."""
         return self.check().healthy
 
 
-def run_post_rollback_probes(_tmp_path: Path | None = None) -> dict[str, Any]:
-    """Run health probes after a rollback operation.
-
-    Args:
-        _tmp_path: Optional path for temporary files
-
-    Returns:
-        Dict with passed status and findings
-    """
-    probes = [
-        HealthProbe("database"),
-        HealthProbe("cache"),
-        HealthProbe("queue"),
-    ]
+def _run_probes(probes: list[HealthProbe], tmp_path: Path | None) -> dict[str, Any]:
     results = [probe.check() for probe in probes]
-    all_passed = all(r.healthy for r in results)
-    return {"passed": all_passed, "findings": [r.to_dict() for r in results]}
+    passed = all(r.healthy for r in results)
+    return {
+        "passed": passed,
+        "findings": [r.to_dict() for r in results],
+        "tmp_path": str(tmp_path) if tmp_path else None,
+    }
 
 
 def run_pre_promote_probes(_tmp_path: Path | None = None) -> dict[str, Any]:
-    """Run health probes before promotion.
+    """Run the pre-promotion probe battery.
 
-    Args:
-        _tmp_path: Optional path for temporary files
-
-    Returns:
-        Dict with passed status and findings
+    @trace FR-RES-008
     """
     probes = [
         HealthProbe("code_quality"),
         HealthProbe("test_coverage"),
         HealthProbe("documentation"),
     ]
-    results = [probe.check() for probe in probes]
-    all_passed = all(r.healthy for r in results)
-    return {"passed": all_passed, "findings": [r.to_dict() for r in results]}
+    return _run_probes(probes, _tmp_path)
+
+
+def run_post_rollback_probes(_tmp_path: Path | None = None) -> dict[str, Any]:
+    """Run the post-rollback probe battery.
+
+    @trace FR-RES-008
+    """
+    probes = [
+        HealthProbe("database"),
+        HealthProbe("cache"),
+        HealthProbe("queue"),
+    ]
+    return _run_probes(probes, _tmp_path)

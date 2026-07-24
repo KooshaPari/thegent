@@ -1,12 +1,25 @@
 """WP-28002: Semantic Firewall for Model Output.
 Analyzes model outputs for semantic violations, alignment drift, and forbidden patterns.
 Sits between the model and the final execution environment.
+
+Hardening (AUDIT-N+85 — SOTA pass-69)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n85_semantic_firewall_hardening.py``
+(``FR-GOV-SF-001..015``).
+
+# @trace AUDIT-N+85
 """
 
 import logging
 import re
 
 from pydantic import BaseModel
+
+__all__ = [
+    "FirewallRule",
+    "SemanticFirewall",
+]
 
 _log = logging.getLogger(__name__)
 

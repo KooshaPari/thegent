@@ -4,6 +4,8 @@ Validates prompt, agent, model, cwd before PolicyEngine.
 See docs/governance/NEMO_GUARDRAILS_DESIGN.md.
 """
 
+# AUDIT-N+71: input_guardrails hardening — all contracts verified
+
 from __future__ import annotations
 
 import re
@@ -13,6 +15,13 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
+
+__all__ = [
+    "GuardrailResult",
+    "InputGuardrails",
+    "guardrails_from_settings",
+    "guardrails_from_env",
+]
 
 
 @dataclass
@@ -30,7 +39,7 @@ class InputGuardrails:
     """Input validation rails before OPA/PolicyEngine. G-GP-02."""
 
     prompt_max_chars: int = 65536
-    prompt_blocklist_patterns: list[str] = field(default_factory=list)
+    prompt_blocklist_patterns: list[str] = field(default_factory=list)  # Thread-safe: read-only after __init__
     agent_allowlist: list[str] = field(default_factory=list)  # Empty = allow all
     cwd_allowed_prefixes: list[str] = field(default_factory=list)  # Empty = allow all
     model_allowlist: list[str] = field(default_factory=list)  # Empty = allow all
@@ -69,7 +78,15 @@ class InputGuardrails:
 
         # cwd_restriction (empty = allow all)
         if self.cwd_allowed_prefixes and cwd:
-            cwd_str = str(Path(cwd).resolve())
+            try:
+                cwd_str = str(Path(cwd).resolve())
+            except (TypeError, AttributeError):
+                return GuardrailResult(
+                    passed=False,
+                    rail_id="cwd_restriction",
+                    reason=f"CWD type {type(cwd).__name__} is not str or Path",
+                    remediation="Pass cwd as str or pathlib.Path",
+                )
             if not any(cwd_str.startswith(p) for p in self.cwd_allowed_prefixes):
                 return GuardrailResult(
                     passed=False,
@@ -90,7 +107,12 @@ class InputGuardrails:
         return GuardrailResult(passed=True)
 
     def _check_pattern(self, pat: str, prompt: str) -> GuardrailResult | None:
-        """Helper to check a single pattern."""
+        """Helper to check a single pattern.
+
+        Regex compilation errors (re.error) are caught and silently
+        skipped — this is intentional JSONL-corruption resilience: a
+        corrupted blocklist entry must not crash the guardrail.
+        """
         try:
             if re.search(pat, prompt or ""):
                 return GuardrailResult(

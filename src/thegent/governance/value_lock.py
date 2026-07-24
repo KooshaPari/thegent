@@ -1,6 +1,14 @@
 """WP-29001: Value-Lock (Immutable Ethical Constraints).
 Provides a mechanism to lock core agent values and ethical constraints.
 Ensures that even if self-evolution occurs, fundamental alignment principles cannot be removed.
+
+Hardening (AUDIT-N+82 — SOTA pass-66)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n82_value_lock_hardening.py``
+(``FR-GOV-VL-001..015``).
+
+# @trace AUDIT-N+82
 """
 
 import hashlib
@@ -8,6 +16,11 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
+
+__all__ = [
+    "LockedPrinciple",
+    "ValueLock",
+]
 
 from pydantic import BaseModel
 

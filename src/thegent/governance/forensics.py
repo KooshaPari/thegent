@@ -1,9 +1,22 @@
-"""Forensic incident replay and post-mortem analysis (WP-15002)."""
+"""Forensic incident replay and post-mortem analysis (WP-15002).
+
+Hardening (AUDIT-N+88 — SOTA pass-72)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n88_forensics_hardening.py``
+(``FR-GOV-FR-001..015``).
+
+# @trace AUDIT-N+88
+"""
 
 import orjson as json
 from typing import Any
 
 from thegent.governance.ledger import IncidentLedger
+
+__all__ = [
+    "IncidentReplayer",
+]
 
 
 class IncidentReplayer:

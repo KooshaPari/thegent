@@ -1,17 +1,32 @@
 """WP-23003: Attestable Execution Environments (TEE) check.
 
 Provides verification logic for secure enclave execution.
+
+Hardening (AUDIT-N+80 — SOTA pass-64)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n80_tee_check_hardening.py``
+(``FR-GOV-TC-001..015``).
+
+# @trace AUDIT-N+80
 """
 
 import logging
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
+
+__all__ = [
+    "TEEType",
+    "TEEAttestation",
+    "TEEChecker",
+    "get_tee_attestation",
+]
 
 _log = logging.getLogger(__name__)
 
 
-class TEEType(Enum):
+class TEEType(StrEnum):
     NONE = "none"
     AWS_NITRO = "aws_nitro"
     INTEL_SGX = "intel_sgx"

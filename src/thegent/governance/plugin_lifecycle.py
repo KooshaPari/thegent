@@ -1,10 +1,23 @@
 """WP-10008: Plugin lifecycle and conformance checks.
 
 Manages the registration and conformance validation of system plugins.
+
+Hardening (AUDIT-N+93 — SOTA pass-77)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n93_plugin_lifecycle_hardening.py``
+(``FR-GOV-PL-001..015``).
+
+# @trace AUDIT-N+93
 """
 
 from enum import StrEnum
 from typing import Any
+
+__all__ = [
+    "PluginStatus",
+    "PluginLifecycleManager",
+]
 
 
 class PluginStatus(StrEnum):

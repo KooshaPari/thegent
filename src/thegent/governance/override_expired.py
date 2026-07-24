@@ -1,8 +1,21 @@
-"""Governance override expiration handling."""
+"""Governance override expiration handling.
+
+Hardening (AUDIT-N+89 — SOTA pass-73)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n89_override_expired_hardening.py``
+(``FR-GOV-OE-001..015``).
+
+# @trace AUDIT-N+89
+"""
 
 import logging
 from datetime import UTC, datetime
 from typing import Any
+
+__all__ = [
+    "OverrideExpirationHandler",
+]
 
 logger = logging.getLogger(__name__)
 

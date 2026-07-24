@@ -1,11 +1,23 @@
 """WP-12006: Evidence graph and export bundling.
 
 Builds a closed-loop graph of all evidence artifacts and provides deterministic export bundling.
+
+Hardening (AUDIT-N+98 — SOTA pass-82)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n98_evidence_graph_hardening.py``
+(``FR-GOV-EG-001..015``).
+
+# @trace AUDIT-N+98
 """
 
 import json
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "EvidenceGraph",
+]
 
 
 class EvidenceGraph:

@@ -1,7 +1,21 @@
-"""WP-15005: End-user support mode with automatic PII and secret redaction."""
+"""WP-15005: End-user support mode with automatic PII and secret redaction.
+
+Hardening (AUDIT-N+96 — SOTA pass-80)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n96_support_hardening.py``
+(``FR-GOV-SUP-001..015``).
+
+# @trace AUDIT-N+96
+"""
 
 import re
 from typing import Any
+
+__all__ = [
+    "SupportRedactor",
+    "SupportModeSession",
+]
 
 
 class SupportRedactor:

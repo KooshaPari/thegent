@@ -1469,7 +1469,7 @@ wheels = [
 
 [[package]]
 name = "litellm"
-version = "1.88.1"
+version = "1.90.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1485,9 +1485,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "tokenizers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/ea/f99ececb7f22703fe120f1d8be9ffb749ec9453fbbbbbebc0d6a6b4d7864/litellm-1.88.1.tar.gz", hash = "sha256:89c6b74cc7912d6365793006ff951c0450fe847625008dfe49de8a7dc4529aa5", size = 13885969, upload-time = "2026-06-09T01:06:25.192Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/00/4187e33818d0de19fd602214ce15a6e1cfa5bf04fb50a6e59606214a92df/litellm-1.90.2.tar.gz", hash = "sha256:b536603894ba2a0ccd14a6f1ebeb5f46cc35b19d4537e8fda7bfdfc7757f19d3", size = 14819154, upload-time = "2026-07-01T02:29:58.397Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/9a/8f8909201b4bebaf96498c09226f6baa8540086a4c4188ad57d7dfbd97c1/litellm-1.88.1-py3-none-any.whl", hash = "sha256:369b84e57d9426582ddc35e731956ddb6618cda97cc44e4e4d2dfa75982a6e3a", size = 15276206, upload-time = "2026-06-09T01:06:16.72Z" },
+    { url = "https://files.pythonhosted.org/packages/24/30/3afa7b212ce1f9bb8b6fa5f58c631f437c1d7b3a025e4e4ed6b01b3d28ad/litellm-1.90.2-py3-none-any.whl", hash = "sha256:6fb46f485150cc861be62a62d670f94d33adbd26991091befeb51bcdfdad34f6", size = 16612720, upload-time = "2026-07-01T02:29:55.215Z" },
 ]
 
 [[package]]
@@ -2089,15 +2089,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/44/6a/ef71ca638ee3d34651fe346f449b8194d2d8fe9ce4da36d34f8d39309f6e/persistdict-0.2.14.tar.gz", hash = "sha256:c59a6172de39834f8bb9ea6a13246dd45110723cfbdf11f1dc4a3024cda0e1b5", size = 29318, upload-time = "2025-03-13T13:56:38.756Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e2/01/a876a897bdcb1662ab617f1497578b60293eb40560991e2d28fb96b96677/persistdict-0.2.14-py3-none-any.whl", hash = "sha256:5ead65a1721120dd142d553320af6e8cbc4fc7921c0566799be1fd501d7caa58", size = 23887, upload-time = "2025-03-13T13:56:31.762Z" },
-]
-
-[[package]]
-name = "phenotype-py-utils"
-version = "0.1.0"
-source = { git = "https://github.com/KooshaPari/phenotype-py-utils.git?tag=v0.1.0#7bbc42b183c48c09daa3693219b5c5d60cdd05cf" }
-dependencies = [
-    { name = "python-dateutil" },
-    { name = "pyyaml" },
 ]
 
 [[package]]
@@ -3485,7 +3476,6 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "orjson", marker = "implementation_name == 'cpython'" },
     { name = "persistdict" },
-    { name = "phenotype-py-utils" },
     { name = "pillow" },
     { name = "playwright" },
     { name = "praw" },
@@ -3566,14 +3556,13 @@ requires-dist = [
     { name = "granian", specifier = ">=1.7.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.140.0" },
-    { name = "litellm", marker = "extra == 'dev'", specifier = "==1.88.1" },
+    { name = "litellm", marker = "extra == 'dev'", specifier = "==1.90.2" },
     { name = "lxml", specifier = ">=6.1.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
     { name = "opentelemetry-api", specifier = ">=1.31.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.31.0" },
     { name = "orjson", marker = "implementation_name == 'cpython'" },
     { name = "persistdict", specifier = ">=0.2.0" },
-    { name = "phenotype-py-utils", git = "https://github.com/KooshaPari/phenotype-py-utils.git?tag=v0.1.0" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "playwright", specifier = ">=1.50.0" },
     { name = "praw", specifier = ">=7.8.1" },
@@ -3621,7 +3610,7 @@ provides-extras = ["dev", "fast"]
 [package.metadata.requires-dev]
 dev = [
     { name = "hypothesis", specifier = ">=6.140.0" },
-    { name = "litellm", specifier = "==1.88.1" },
+    { name = "litellm", specifier = "==1.90.2" },
     { name = "mypy", specifier = ">=1.19.1" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "ruff", specifier = ">=0.15.1" },
