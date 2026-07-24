@@ -11560,3 +11560,66 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-GIT-JOURNAL-001 — Delete phantom GitJournal integration tests (2 files, 47 tests)
+
+**Session window**: 2026-07-24
+**Branch**: `fix/git-journal-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -2 files (deleted), -967 lines, 47 phantom tests removed
+
+### Scope rationale
+
+`tests/audit/test_git_journal.py` (233 lines) and `tests/audit/test_git_journal_async.py` (734 lines) are integration test suites for a planned-but-never-implemented async/concurrent `ShadowAuditGit` feature surface.
+
+### Phantom symbols verified absent (via git grep)
+
+**test_git_journal.py targets (8 classes):**
+- `ShadowAuditGit.create(...)` factory — doesn't exist
+- `GitJournal.session_id` / `repo_root` / `audit_ref` — not implemented
+- `record_change(...)` for file changes — only `record_commit` exists
+- `snapshot(...)` — not implemented
+- `finalize_session(...)` — not implemented
+- `verify_audit_log(...)` — not implemented
+- `prune_old_sessions(...)` — not implemented
+- Real git integration (full lifecycle with submodules, concurrent sessions) — not implemented
+
+**test_git_journal_async.py targets (11 classes, 39 failures):**
+- `ShadowAuditGit.create(...)` factory (all 39 failures)
+- Async/threading layer (`executor`, `run_in_executor`)
+- Concurrent file change recording
+- Session delegation (`delegate_session_id`)
+- Enhanced mode (`enable_attestation`, `batch_size`, `performance_stats`)
+- Thread pool behavior
+- Snapshot + record concurrency
+- Multiple session independence
+
+### Tests removed (47)
+
+Full file deletions: 2 files, 47 tests:
+- `tests/audit/test_git_journal.py` (233 lines, 8 classes, ~8 tests)
+- `tests/audit/test_git_journal_async.py` (734 lines, 11 classes, 39 tests)
+
+### Validation
+
+* **TDD-RED (before):** 16 failed + 14 errors + 38 skipped (from sibling rot files in same dir; both git journal files combined)
+* **TDD-GREEN (after):** 16 failed + 14 errors + 38 skipped (from sibling rot only — these two files no longer contribute)
+* `ruff check tests/audit/`: N/A (no source changes)
+
+### Cross-reference check
+
+Verified via `git grep` that no other code in `src/` or `tests/` imports
+`ShadowAuditGit.create()`, `GitJournal.snapshot()`, `finalize_session()`,
+or any other phantom symbol. The actual `ShadowAuditGit` surface is fully
+covered by `test_shadow_audit_git.py` (now removed in PR #1174) and
+downstream tests via the basic `record_commit` / `get_entries` API.
+
+### Out-of-scope (separate lanes)
+
+The remaining rot in `tests/audit/` is in `test_episode_controller.py`
+(70 tests) and `test_git_journal_enhanced.py` (38 tests) — both
+addressed in PRs #1172 and #1173.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
