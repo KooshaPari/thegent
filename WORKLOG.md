@@ -11334,3 +11334,33 @@ unblock only) and are tracked as separate carry-forward work.
 
 ### Cockpit progress bar + DAG tick
 DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-DISPATCHCONFIG-001` closed.
+
+## 2026-07-23: AUDIT-LANE-WL681X-001 — dispatcher lane-D test surface alignment (canonical bus contract)
+
+### What changed
+* Rewrote the 4 runtime-failing dispatcher tests in
+  `tests/test_wl681x_lane_d.py` to construct
+  `SubAgentDispatcher(bus=MessageBus(), ...)` and exercise the public
+  `dispatch_plan()` path instead of removed `_execute_task()` /
+  `_check_hitl_gate()` stubs.
+* Preserved WL-6815 / WL-6898 coverage for runner success, non-zero exit,
+  HITL metadata at the runner boundary, no-runner bus routing, and captured
+  runner exceptions.
+* Added `tests/test_unit_dispatcher_canonical_contract.py` to lock the
+  explicit `MessageBus` constructor and public dispatch surface.
+
+### TDD-RED → TDD-GREEN
+* RED — lane-D baseline: **12 passed, 4 failed**; all 4 failures were
+  `TypeError: bus must be MessageBus, got _Index`.
+* GREEN — lane-D plus canonical contract: **17 passed, 0 failed**.
+* Broader AUDIT-N+33/N+37/N+38/N+39 cluster: **216 passed, 0 failed**.
+
+### Ruff
+* Task-owned tests: `ruff check` passed; `ruff format --check` reports
+  **2 files already formatted**.
+* The requested source-wide baseline remains outside this lane: 5 existing
+  lint findings and 219 existing format deltas in unrelated `src/thegent`
+  files; no unrelated source was modified.
+
+### Cockpit progress bar + DAG tick
+DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-WL681X-001` closed.
