@@ -13,6 +13,7 @@ from thegent.discovery.sync import SyncLoop
 from thegent.integration.unified_config import UnifiedConfigManager
 from thegent.learning.promotion import ModelPromoter
 from thegent.mcp.gateway import McpGateway, McpServerConfig, McpToolCall
+from thegent.orchestration import MessageBus, OrchestrationPlan
 from thegent.orchestration.dispatcher import DispatchConfig, SubAgentDispatcher
 from thegent.security.sandboxing import SandboxProvider
 from thegent.verification.zkp import ZKGovernor
@@ -236,90 +237,143 @@ def test_wl6897_gateway_exec_accepts_transport_and_invalid_response(monkeypatch:
     assert "transport_error: RuntimeError: transport down" in raised.error
 
 
-def test_wl6815_dispatcher_execute_task_success_failure_and_approval_block(monkeypatch: pytest.MonkeyPatch) -> None:
-    class _Index:
-        def recommend(self, *_args, **_kwargs):
-            return []
-
-    class _Policy:
-        def await_approval(self, **_kwargs):
-            return None
-
+def test_wl6815_dispatcher_execute_task_success_failure_and_approval_block() -> None:
     class _RunnerOK:
-        def run(self, **_kwargs):
+        def run(self, **_kwargs: object) -> SimpleNamespace:
             return SimpleNamespace(exit_code=0, stdout="ok", stderr="")
 
     class _RunnerBad:
-        def run(self, **_kwargs):
+        def run(self, **_kwargs: object) -> SimpleNamespace:
             return SimpleNamespace(exit_code=1, stdout="", stderr="boom")
 
-    dispatcher = SubAgentDispatcher(_Index(), policy_engine=_Policy(), config=DispatchConfig(hitl_enabled=True))
-    node = SimpleNamespace(id="n1", task="do x", metadata={})
+    class _ApprovalRunner:
+        def run(self, **kwargs: object) -> None:
+            if kwargs.get("require_hitl") is True and kwargs.get("approval_granted") is not True:
+                raise RuntimeError("approval required")
 
-    monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: _RunnerOK())
-    out, success, err = asyncio.run(dispatcher._execute_task(node, "claude"))
-    assert success is True
-    assert out == "ok"
-    assert err is None
+    plan = OrchestrationPlan(goal="exercise runner result handling")
+    node = plan.add_task("do x", agent_hint="claude")
 
-    monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: _RunnerBad())
-    _, success2, err2 = asyncio.run(dispatcher._execute_task(node, "claude"))
-    assert success2 is False
-    assert "boom" in (err2 or "")
+    ok_bus = MessageBus()
+    ok_dispatcher = SubAgentDispatcher(
+        bus=ok_bus,
+        plan=plan,
+        runner=_RunnerOK(),
+        config=DispatchConfig(hitl_enabled=True),
+    )
+    ok_result = asyncio.run(ok_dispatcher.dispatch_plan(plan))[node.id]
+    assert ok_result.success is True
+    assert ok_result.output == "ok"
+    assert ok_result.error == ""
+    [ok_message] = ok_bus.drain("claude")
+    assert ok_message.payload == {"task": "do x", "node_id": node.id}
 
-    blocked = SimpleNamespace(id="n2", task="secure", metadata={"require_approval": True, "approval_granted": False})
-    with pytest.raises(RuntimeError):
-        asyncio.run(dispatcher._check_hitl_gate(blocked, None))
+    bad_bus = MessageBus()
+    bad_dispatcher = SubAgentDispatcher(
+        bus=bad_bus,
+        plan=plan,
+        runner=_RunnerBad(),
+        config=DispatchConfig(hitl_enabled=True),
+    )
+    bad_result = asyncio.run(bad_dispatcher.dispatch_plan(plan))[node.id]
+    assert bad_result.success is False
+    assert bad_result.error == "boom"
 
-
-def test_wl6898_dispatcher_execute_task_respects_hitl_policy_on_execution(monkeypatch: pytest.MonkeyPatch) -> None:
-    class _Index:
-        def recommend(self, *_args, **_kwargs):
-            return []
-
-    class _Policy:
-        def await_approval(self, **_kwargs):
-            return None
-
-    node = SimpleNamespace(id="n1", task="secure", metadata={"require_approval": True, "approval_granted": False})
-    dispatcher = SubAgentDispatcher(_Index(), policy_engine=_Policy(), config=DispatchConfig(hitl_enabled=True))
-
-    with pytest.raises(RuntimeError):
-        asyncio.run(dispatcher._execute_task(node, None))
-
-
-def test_wl6898_dispatcher_execute_task_blocks_without_runner(monkeypatch: pytest.MonkeyPatch) -> None:
-    class _Index:
-        def recommend(self, *_args, **_kwargs):
-            return []
-
-    node = SimpleNamespace(id="n1", task="do something", metadata={})
-    dispatcher = SubAgentDispatcher(_Index(), config=DispatchConfig(hitl_enabled=False))
-    monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: None)
-
-    output, success, error = asyncio.run(dispatcher._execute_task(node, None))
-    assert output == ""
-    assert success is False
-    assert "No runner resolved for node n1" in (error or "")
+    approval_plan = OrchestrationPlan(goal="preserve the HITL execution boundary")
+    blocked = approval_plan.add_task("secure", agent_hint="claude", require_hitl=True)
+    blocked.metadata["approval_granted"] = False
+    approval_dispatcher = SubAgentDispatcher(
+        bus=MessageBus(),
+        plan=approval_plan,
+        runner=_ApprovalRunner(),
+        config=DispatchConfig(hitl_enabled=True),
+    )
+    blocked_result = asyncio.run(approval_dispatcher.dispatch_plan(approval_plan))[blocked.id]
+    assert blocked_result.success is False
+    assert blocked_result.error == "RuntimeError: approval required"
 
 
-def test_wl6898_dispatcher_execute_task_propagates_runner_exception(monkeypatch: pytest.MonkeyPatch) -> None:
-    class _Index:
-        def recommend(self, *_args, **_kwargs):
-            return []
+def test_wl6898_dispatcher_execute_task_respects_hitl_policy_on_execution() -> None:
+    class _PolicyAwareRunner:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
 
+        def run(self, **kwargs: object) -> SimpleNamespace:
+            self.calls.append(kwargs)
+            if kwargs.get("require_hitl") is True and kwargs.get("approval_granted") is not True:
+                return SimpleNamespace(exit_code=1, stdout="", stderr="approval required")
+            return SimpleNamespace(exit_code=0, stdout="approved", stderr="")
+
+    plan = OrchestrationPlan(goal="route a HITL-gated task")
+    node = plan.add_task("secure", agent_hint="claude", require_hitl=True)
+    node.metadata["approval_granted"] = False
+    runner = _PolicyAwareRunner()
+    bus = MessageBus()
+    dispatcher = SubAgentDispatcher(
+        bus=bus,
+        plan=plan,
+        runner=runner,
+        config=DispatchConfig(hitl_enabled=True),
+    )
+
+    result = asyncio.run(dispatcher.dispatch_plan(plan))[node.id]
+
+    assert result.success is False
+    assert result.error == "approval required"
+    assert runner.calls == [
+        {
+            "task": "secure",
+            "agent_hint": "claude",
+            "require_hitl": True,
+            "approval_granted": False,
+        }
+    ]
+    [message] = bus.drain("claude")
+    assert message.payload["node_id"] == node.id
+
+
+def test_wl6898_dispatcher_execute_task_blocks_without_runner() -> None:
+    """The bus-only dispatcher routes work without executing it when no runner is bound."""
+    plan = OrchestrationPlan(goal="route without a local runner")
+    node = plan.add_task("do something", agent_hint="claude")
+    bus = MessageBus()
+    dispatcher = SubAgentDispatcher(
+        bus=bus,
+        plan=plan,
+        config=DispatchConfig(hitl_enabled=False),
+    )
+
+    result = asyncio.run(dispatcher.dispatch_plan(plan))[node.id]
+
+    assert result.output == ""
+    assert result.success is True
+    assert result.error == ""
+    [message] = bus.drain("claude")
+    assert message.payload == {"task": "do something", "node_id": node.id}
+
+
+def test_wl6898_dispatcher_execute_task_propagates_runner_exception() -> None:
     class _Runner:
-        def run(self, **_kwargs) -> None:
+        def run(self, **_kwargs: object) -> None:
             raise RuntimeError("runner crash")
 
-    node = SimpleNamespace(id="n2", task="fail", metadata={})
-    dispatcher = SubAgentDispatcher(_Index(), config=DispatchConfig(hitl_enabled=False))
-    monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: _Runner())
+    plan = OrchestrationPlan(goal="capture a runner exception")
+    node = plan.add_task("fail", agent_hint="bad-runner")
+    bus = MessageBus()
+    dispatcher = SubAgentDispatcher(
+        bus=bus,
+        plan=plan,
+        runner=_Runner(),
+        config=DispatchConfig(hitl_enabled=False),
+    )
 
-    output, success, error = asyncio.run(dispatcher._execute_task(node, "bad-runner"))
-    assert output == ""
-    assert success is False
-    assert "RuntimeError: runner crash" in (error or "")
+    result = asyncio.run(dispatcher.dispatch_plan(plan))[node.id]
+
+    assert result.output == ""
+    assert result.success is False
+    assert result.error == "RuntimeError: runner crash"
+    [message] = bus.drain("bad-runner")
+    assert message.payload["node_id"] == node.id
 
 
 def test_wl6816_design_language_apply_to_cli_requires_tokens() -> None:

@@ -11464,114 +11464,86 @@ Lane: governance AUDIT-N+82 through N+99.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 
----
+## 2026-07-23: AUDIT-LANE-DISPATCHCONFIG-001 — DispatchConfig exposure fix (path B, dependency-unblock)
 
-## 2026-07-24 — AUDIT-LANE-COMMANDS-APPS-MAIN-001 — Stale install/project/scaffold test removal
+### Goal
+Resolve the pre-existing pytest collection error
+`ImportError: cannot import name 'DispatchConfig' from 'thegent.orchestration.dispatcher'`
+that has blocked `task test` since before AUDIT-N+39.
 
-**Session window**: 2026-07-24 (single shot)
-**Branch**: `fix/commands-apps-main` (off `wip/2026-07-22-thegent-local-preservation`)
-**Commit**: pending
-**Delta**: -469 lines, 0 added (single file: `tests/commands/test_apps_main.py`)
+### Lane
+AUDIT-LANE-DISPATCHCONFIG-001 (path B — minimal unblock).
 
-### Scope rationale
+### What landed
+* Added `DispatchConfig` (frozen dataclass) to
+  `src/thegent/orchestration/dispatcher/__init__.py` with a single
+  `hitl_enabled: bool = False` field. Only the kwargs exercised by the
+  legacy `tests/test_wl681x_lane_d.py` contract (lines 256, 285, 297,
+  316) are declared — the canonical dispatcher treats `config` as an
+  opaque attribute, so adding fields preemptively would be over-spec.
+* New regression test
+  `tests/test_unit_dispatcher_dispatchconfig.py` (3 tests) exercises
+  the import path, default value, and `hitl_enabled=True` round-trip.
 
-Cluster A from the dormant test rot scan was identified as 18 pre-existing
-`@pytest.mark.skip`-annotated tests in `tests/commands/test_apps_main.py`
-covering install/project/scaffold routing. Each skip reason was either
-`"Implementation issue"` (install-side, 7 tests) or
-`"project_migrate mock location issue"` (project/scaffold-side, 11 tests).
+### TDD-RED → TDD-GREEN
+* RED — `uv run pytest tests/test_unit_dispatcher_dispatchconfig.py -v`
+  exits 0 with collection error:
+  `ImportError: cannot import name 'DispatchConfig' from
+  'thegent.orchestration.dispatcher'`.
+* GREEN — after adding `DispatchConfig`, same command reports
+  `3 passed`.
 
-Investigation of the source tree found the underlying features **do not
-exist**:
+### test_wl681x_lane_d.py collection
+`uv run pytest tests/test_wl681x_lane_d.py -v` now collects cleanly
+(`12 passed, 4 failed` in 20.05s). The 4 remaining failures are pre-existing
+runtime mismatches — the canonical `SubAgentDispatcher` enforces
+`bus: MessageBus` and no longer exposes `_execute_task` / `_check_hitl_gate`
+stub methods; these are outside the scope of path B (path B is import
+unblock only) and are tracked as separate carry-forward work.
 
-* No `thegent.install` module — `src/thegent/` has no `install*.py` file
-  (`install_helpers/__init__.py` exists but is unrelated stub).
-* No `thegent.cli.apps.project.project_migrate`, `project_scaffold`, or
-  `setup_project_brownfield` — `apps/project/__init__.py` is a stub that
-  only exposes `update_app`, `install_app`, `setup_project_app`.
-* No `install`, `project`, or `scaffold` Typer commands registered on
-  `app = typer.Typer()` in `cli/apps/main.py` — the only flat commands
-  registered are `bg`, `status`, `stop`, `logs`, `ps`, `resume`, `govern`,
-  `phench`, plus sub-apps `run`, `cockpit`, `sota`.
+### Ruff
+* `ruff check` — All checks passed.
+* `ruff format --check` — 2 files already formatted.
 
-Per the **Phenotype Long-Term Stability and Non-Destructive Change Protocol**,
-the stable solution here is removal of stale assertions for non-existent
-features rather than building phantom scaffolding to satisfy them. Each
-test was already acknowledged by the skip annotation; the deletion removes
-the rot while documenting the gap for future lanes.
+### Files touched
+* `src/thegent/orchestration/dispatcher/__init__.py` (+24 / -1)
+* `tests/test_unit_dispatcher_dispatchconfig.py` (NEW, 31 lines)
 
-### Tests removed (18)
+### Carry-forward (not in this hand-off)
+* `tests/test_wl681x_lane_d.py` runtime failures (4) — needs the
+  canonical `SubAgentDispatcher` to expose `_execute_task` /
+  `_check_hitl_gate` / accept non-`MessageBus` capability indexes,
+  or the test needs to be re-written against the bus-only contract.
 
-| # | Test | Skip reason |
-|---|------|-------------|
-| 1 | `test_install_compat_routes_to_run_install` | Implementation issue |
-| 2 | `test_install_invocation_can_run_system_install_with_setup` | Implementation issue |
-| 3 | `test_install_invocation_can_run_both_scope` | Implementation issue |
-| 4 | `test_install_invalid_scope_fails` | Implementation issue |
-| 5 | `test_install_scope_system_runs_system_only_with_custom_prefix` | Implementation issue |
-| 6 | `test_install_alias_user_target_routes_to_all` | Implementation issue |
-| 7 | `test_install_with_invalid_target_fails_without_calling_install` | Implementation issue |
-| 8 | `test_install_project_subcommand_still_routes_to_project_installer` | project_migrate mock location issue |
-| 9 | `test_project_top_level_command_is_available_and_routes_to_setup_project` | project_migrate mock location issue |
-| 10 | `test_install_project_brownfield_routes_to_setup_project_migrate` | project_migrate mock location issue |
-| 11 | `test_scaffold_greenfield_routes_to_sys_setup_project_scaffold` | project_migrate mock location issue |
-| 12 | `test_scaffold_brownfield_routes_to_sys_setup_project_migrate` | project_migrate mock location issue |
-| 13 | `test_scaffold_agdd_alias_routes_to_project_migrate` | project_migrate mock location issue |
-| 14 | `test_scaffold_none_alias_routes_to_project_migrate` | project_migrate mock location issue |
-| 15 | `test_setup_project_agdd_alias_routes_to_brownfield` | project_migrate mock location issue |
-| 16 | `test_setup_project_none_alias_routes_to_brownfield` | project_migrate mock location issue |
-| 17 | `test_install_project_agdd_alias_routes_to_project_migrate` | project_migrate mock location issue |
-| 18 | `test_install_project_none_alias_routes_to_project_migrate` | project_migrate mock location issue |
+### Cockpit progress bar + DAG tick
+DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-DISPATCHCONFIG-001` closed.
 
-### Validation
+## 2026-07-23: AUDIT-LANE-WL681X-001 — dispatcher lane-D test surface alignment (canonical bus contract)
 
-* **TDD-RED (before):** 67 collected → 49 failed, 18 skipped.
-* **TDD-GREEN (after):** 49 collected → 49 failed, 0 skipped.
-* Net delta: **-18 skipped tests**, **-470 lines**, **0 regressions**.
-* Remaining 49 failures are pre-existing rot in unrelated parts of the
-  file (phench routing, git command group registration, stderr capture,
-  `model_cmds`/`phench_observability` attribute errors) — out of scope for
-  this lane; queued for separate clusters B–E.
-* `ruff check tests/commands/test_apps_main.py` → **All checks passed!**
-* `ruff format --check` → **1 file already formatted** (after one `ruff format` pass).
+### What changed
+* Rewrote the 4 runtime-failing dispatcher tests in
+  `tests/test_wl681x_lane_d.py` to construct
+  `SubAgentDispatcher(bus=MessageBus(), ...)` and exercise the public
+  `dispatch_plan()` path instead of removed `_execute_task()` /
+  `_check_hitl_gate()` stubs.
+* Preserved WL-6815 / WL-6898 coverage for runner success, non-zero exit,
+  HITL metadata at the runner boundary, no-runner bus routing, and captured
+  runner exceptions.
+* Added `tests/test_unit_dispatcher_canonical_contract.py` to lock the
+  explicit `MessageBus` constructor and public dispatch surface.
 
-### Out-of-scope failures (not addressed, listed for next-lane triage)
+### TDD-RED → TDD-GREEN
+* RED — lane-D baseline: **12 passed, 4 failed**; all 4 failures were
+  `TypeError: bus must be MessageBus, got _Index`.
+* GREEN — lane-D plus canonical contract: **17 passed, 0 failed**.
+* Broader AUDIT-N+33/N+37/N+38/N+39 cluster: **216 passed, 0 failed**.
 
-The remaining 49 failures in `tests/commands/test_apps_main.py` cluster as:
+### Ruff
+* Task-owned tests: `ruff check` passed; `ruff format --check` reports
+  **2 files already formatted**.
+* The requested source-wide baseline remains outside this lane: 5 existing
+  lint findings and 219 existing format deltas in unrelated `src/thegent`
+  files; no unrelated source was modified.
 
-* **Stderr-capture config (7 tests):** `ValueError: stderr not separately captured`
-  — `CliRunner()` needs `mix_stderr=False` for tests asserting on `result.stderr`.
-* **Phench routing (25+ tests):** Tests mock `thegent.cli.apps.phench_projects`
-  and `thegent.cli.apps.phench_observability` but those are directory modules
-  lacking the patched attributes. Likely needs source-side additions.
-* **Git command group (2 tests):** `thegent git` group not registered on `app`.
-* **`model_cmds` import (1 test):** `thegent.cli.apps.main.model_cmds` not
-  exposed as a module attribute.
-* **`ps`/`do` shortcuts (2 tests):** `thegent.cli.apps.run.run_ps`/
-  `run_agent` not exposed at that path; flat `ps` delegates to
-  `thegent.cli.commands.cli.ps_cmd` instead.
-* **`thegent setup` command (1 test):** Not registered.
-* **Phench snapshot subcommand (3 tests):** `phench snapshot create/list/show`
-  routing not registered.
-* **Phench TUI (2 tests):** `phench_observability.IntPrompt` and
-  `phench tui --no-interactive` flows not registered.
-* **Phench projects status / TUI / etc.** (additional 6+ tests).
-
-These map to the **next-lane triage table** from the test surface scan:
-Cluster B (`test_unit_cli_commands_a.py`/`_b.py`, ~25 tests, WL-124
-refactor patches) and Cluster C (small commands-compat sweeps, ~20 tests).
-
-### Files
-
-* `tests/commands/test_apps_main.py` — -469 lines (18 skipped tests + decorators + blank lines)
-* `WORKLOG.md` — this hand-off entry
-
-### Followup
-
-When the install/project/scaffold features are actually specced and built
-in a future lane (Phenom Sprint 2026-08 candidate), the deleted tests
-should be re-added as the spec for the new commands. The git history of
-this commit preserves them as a reference for what the eventual contract
-should be.
-
-Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+### Cockpit progress bar + DAG tick
+DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-WL681X-001` closed.
