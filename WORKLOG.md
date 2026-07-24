@@ -11560,3 +11560,91 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-COMMANDS-COMPAT-PHASE-1-001 — Cluster C small-file phantom test removal
+
+**Session window**: 2026-07-24
+**Branch**: `fix/commands-compat-sweep` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -84 lines (3 test files), 0 added
+
+### Scope rationale
+
+Cluster C from the dormant test rot scan was identified as ~20 tests
+across 8 files. Actual baseline is **116 failed, 6 passed, 22 skipped**
+— the audit underestimated by 5-10x, matching the pattern from
+Clusters A and B.
+
+The largest two files (`test_doctor.py` 39 failures, `test_sync.py`
+50 failures) account for **89 of 116 failures** and test partially-
+implemented features (`SyncApp._add_completion`, `DoctorRunner.run_checks`,
+etc.). These need either (a) implementation work in source or (b) large
+phantom-feature deletions across ~500 lines of test code.
+
+Phase 1 takes the **tractable subset**: the 3 small files (10 failures
+total) where all tests mock phantom symbols that don't exist anywhere in
+source (`snapshot_daily_totals_cmd`, `dump_categories_cmd`, `team_*_cmd`,
+`snapshot_daily_*_cmd` on `thegent.cli.commands.team_cmds`).
+
+Per the established Cluster A pattern, these phantom-feature assertions
+are removed rather than building scaffolding for features that don't
+exist. The remaining `@pytest.mark.skip` tests in each file document
+the gap for future lanes.
+
+### Tests removed (10)
+
+**`tests/commands/test_cli_init_snapshot_dump_totals_exports.py` (3):**
+
+* `test_cli_exports_snapshot_daily_totals_cmd` — `snapshot_daily_totals_cmd` phantom
+* `test_cli_exports_dump_categories_cmd` — `dump_categories_cmd` phantom
+* `test_exported_objects_are_callable` — depends on both phantoms
+
+**`tests/commands/test_apps_team.py` (3):**
+
+* `test_team_hierarchy_routes_to_team_commands` — `team_hierarchy_cmd` phantom
+* `test_team_crew_routes_to_team_commands` — `team_crew_cmd` phantom
+* `test_team_list_rejects_invalid_format` — depends on TeamApp methods
+
+**`tests/commands/test_memory_app_daily_filter_routing.py` (4):**
+
+* `test_memory_snapshot_daily_totals_forwards_trigger_tag_since` — phantom
+* `test_memory_snapshot_daily_export_forwards_trigger_tag_since` — phantom
+* `test_memory_snapshot_daily_index_help_mentions_since` — `daily-index` subcommand phantom
+* `test_memory_snapshot_daily_index_omitted_filters_pass_none` — phantom
+
+### Validation
+
+* **TDD-RED (before):** Cluster C 116 failed, 6 passed, 22 skipped
+* **TDD-GREEN (after Phase 1):** Cluster C **106 failed, 6 passed, 22 skipped**
+* **Net delta:** -10 failures, 0 new passes, 4 skipped remain as documentation
+* `ruff check` on 3 modified files: **All checks passed!**
+* `ruff format --check`: **3 files already formatted**
+
+### Out-of-scope (Phase 2 — queued)
+
+The remaining **106 failures** in Cluster C concentrate in:
+
+* `tests/commands/test_doctor.py` (39 failures, doctor checks not implemented)
+* `tests/commands/test_sync_board_autopilot_cli.py` (17 failures, sync serializer helpers)
+* `tests/commands/test_sync.py` (50 failures, sync CLI registration testing phantom `sync_app`)
+
+**Total phantom/deletion scope: ~106 tests across 3 files.**
+
+Two viable Phase 2 strategies:
+
+1. **Implement** (slow, stable): Add `_add_completion`, `reset`, `status`,
+   `run_checks` methods to SyncApp and DoctorRunner classes; add
+   `sync_app` to `thegent.main`. ~10-15 source files, ~1000+ LOC.
+
+2. **Delete phantom tests** (faster, like Phase 1): Delete the ~106
+   phantom-feature tests, document the gaps in WORKLOG. ~1500 lines
+   removed across 3 test files.
+
+The Cluster B pattern (Phase 1 = re-exports + small fixes, Phase 2 =
+bigger surface additions) suggests that for Cluster C, the reverse
+pattern (Phase 1 = deletions, Phase 2 = targeted implementations) is
+the right approach.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
