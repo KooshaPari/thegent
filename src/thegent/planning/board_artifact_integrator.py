@@ -231,11 +231,11 @@ class BoardArtifactIntegrator:
     """Integrator for board artifacts from various sources."""
     
     EXECUTION_BOARD_PATTERNS: ClassVar[list[str]] = [
-        r"CLIPPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_(\d{4}-\d{2}-\d{2})\.(csv|json|md)",
+        r"CLIPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_(\d{4}-\d{2}-\d{2})\.(csv|json|md)",
         r"EXECUTION_BOARD_(\d{4}-\d{2}-\d{2})\.(csv|json|md)",
     ]
-    
-    GITHUB_IMPORT_PATTERN = r"GITHUB_PROJECT_IMPORT_([A-Z_]+)_(\d{4}-\d{2}-\d{2})\.csv"
+
+    GITHUB_IMPORT_PATTERN = r"GITHUB_PROJECT_IMPORT_([A-Z0-9_]+)_(\d{4}-\d{2}-\d{2})\.csv"
     
     def __init__(self, board_artifacts_dir: Path | str | None = None) -> None:
         """Initialize the board artifact integrator.

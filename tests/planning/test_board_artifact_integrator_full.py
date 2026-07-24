@@ -80,7 +80,7 @@ class TestBoardArtifactParserJson:
         from thegent.planning.board_artifact_integrator import BoardArtifactParser
 
         json_file = tmp_path / "test.json"
-        json_file.write_text(json.dumps([{"id": "TST-001", "title": "Task1", "status": "BACKLOG", "priority": "P0"}]))
+        json_file.write_text(json.dumps([{"id": "TST-001", "title": "Task1", "status": "BACKLOG", "priority": "P0"}]).decode("utf-8"))
         parser = BoardArtifactParser()
         items = parser.parse_json(json_file)
         assert len(items) == 1
@@ -91,7 +91,7 @@ class TestBoardArtifactParserJson:
         from thegent.planning.board_artifact_integrator import BoardArtifactParser
 
         json_file = tmp_path / "test.json"
-        json_file.write_text(json.dumps({"items": [{"id": "TST-001", "title": "Task1"}]}))
+        json_file.write_text(json.dumps({"items": [{"id": "TST-001", "title": "Task1"}]}).decode("utf-8"))
         parser = BoardArtifactParser()
         items = parser.parse_json(json_file)
         assert len(items) == 1
@@ -217,8 +217,8 @@ class TestBoardArtifactIntegratorFindArtifacts:
 
         board_dir = tmp_path / "planning"
         board_dir.mkdir()
-        (board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json").write_text(
-            json.dumps([{"id": "T1", "title": "Task1"}])
+        (board_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json").write_text(
+            json.dumps([{"id": "T1", "title": "Task1"}]).decode("utf-8")
         )
         integrator = BoardArtifactIntegrator(board_artifacts_dir=board_dir)
         artifacts = integrator.find_board_artifacts()
@@ -257,7 +257,7 @@ class TestBoardArtifactIntegratorIngest:
             "id,title,status\nT1,CSVTask,IN_PROGRESS\n"
         )
         (board_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json").write_text(
-            json.dumps([{"id": "T1", "title": "JSONTask", "status": "BACKLOG"}])
+            json.dumps([{"id": "T1", "title": "JSONTask", "status": "BACKLOG"}]).decode("utf-8")
         )
         integrator = BoardArtifactIntegrator(board_artifacts_dir=board_dir)
         items = integrator.ingest_artifacts()
