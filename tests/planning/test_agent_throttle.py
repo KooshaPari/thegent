@@ -38,6 +38,16 @@ def _make_throttle_result(action: str, count: int = 0, limit: int = 20) -> _Thro
     return _ThrottleResult(action=action, count=count, limit=limit, message=f"test {action}")
 
 
+def _non_blocked_do_next() -> dict[str, object]:
+    """Return a do_next payload that does NOT trip the pre-work hard gate."""
+    return {
+        "next_items": [],
+        "count": 0,
+        "sources_checked": [],
+        "governance_blocked": False,
+    }
+
+
 # ---------------------------------------------------------------------------
 # get_active_agent_count tests
 # ---------------------------------------------------------------------------
@@ -256,6 +266,7 @@ class TestTryLaunchNextThrottle:
                 ],
             ),
             patch("time.sleep") as mock_sleep,
+            patch("thegent.cli.commands.impl.do_next_impl", return_value=_non_blocked_do_next()),
         ):
             asyncio.get_event_loop().run_until_complete(system._try_launch_next())
 
@@ -287,6 +298,7 @@ class TestTryLaunchNextThrottle:
                 "thegent.planning.auto_launch.compute_dynamic_limit",
                 return_value=(10, {}),
             ),
+            patch("thegent.cli.commands.impl.do_next_impl", return_value=_non_blocked_do_next()),
         ):
             asyncio.get_event_loop().run_until_complete(system._try_launch_next())
 
@@ -314,6 +326,7 @@ class TestTryLaunchNextThrottle:
                 "thegent.planning.auto_launch.compute_dynamic_limit",
                 return_value=(10, {}),
             ),
+            patch("thegent.cli.commands.impl.do_next_impl", return_value=_non_blocked_do_next()),
         ):
             asyncio.get_event_loop().run_until_complete(system._try_launch_next())
 

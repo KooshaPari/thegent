@@ -89,6 +89,9 @@ def test_entity_operation_sync_dispatches_source_batches(tmp_path: Path, monkeyp
             calls.append("queues")
             return 3
 
+        def close(self) -> None:
+            pass
+
     monkeypatch.setattr("thegent.planning.workstream_entities.WorkstreamDB", _FakeDB)
     monkeypatch.setattr(
         "thegent.planning.workstream_entities.ThegentSettings", lambda: type("S", (), {"session_dir": tmp_path})()
