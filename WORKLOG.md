@@ -11560,3 +11560,70 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-GIT-JOURNAL-ENHANCED-001 — Delete phantom git journal enhanced test file
+
+**Session window**: 2026-07-24
+**Branch**: `fix/git-journal-enhanced-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -1 file (deleted), -729 lines, 38 phantom tests removed
+
+### Scope rationale
+
+Per the dormant test rot audit, `tests/audit/test_git_journal_enhanced.py` is
+explicitly marked for investigation via file-wide skip annotation:
+`pytest.mark.skip(reason="Multiple pre-existing test failures - needs investigation")`.
+
+Investigation confirmed all 38 tests are phantom-feature tests for the
+planned-but-never-implemented `GitJournalEnhanced` P1 enhancements
+(file watching, native scanner detection, attestation, batching).
+
+### Phantom symbols verified absent (via git grep)
+
+The test file expects these on `GitJournalEnhanced`:
+- `repo_root`, `session_id`, `track_secrets`, `auto_commit`, `enable_watching`,
+  `enable_attestation`, `batch_size` — none exist in `__init__` signature
+- `record_file_change` — not implemented
+- `_check_native_scanner` — not implemented
+- `_scrub_with_native_scanner` — not implemented
+- `verify_attestation` — not implemented
+- `get_attestations` — not implemented
+- `finalize_session` — not implemented
+- `get_audit_log` — not implemented
+- `_pending_changes`, `_attestations`, `_blob_cache`, `_watcher`, `audit_ref` — not implemented
+
+The actual `GitJournalEnhanced` class only has `export_json` (and inherits
+the basic shadow_audit_git operations).
+
+### Tests removed (38)
+
+Full file deletion: `tests/audit/test_git_journal_enhanced.py` (729 lines).
+
+The file contained 11 test classes:
+- `TestGitJournalEnhancedInit` (5) — testing phantom __init__ signature
+- `TestNativeScannerDetection` (4) — testing phantom `_check_native_scanner`
+- `TestScrubWithNativeScanner` (4) — testing phantom `_scrub_with_native_scanner`
+- `TestRecordFileChangeBatching` (5) — testing phantom `record_file_change`
+- `TestFlushBatch` (3) — testing phantom batch flushing
+- `TestHashObjectCached` (2) — testing phantom `_blob_cache`
+- `TestAttestation` (5) — testing phantom attestation API
+- `TestPerformanceStats` (2) — testing phantom stats
+- `TestFinalizeSession` (4) — testing phantom `finalize_session`
+- `TestFileWatching` (4) — testing phantom watcher (watchman/fswatch)
+- `TestGitJournalEnhancedIntegration` (2) — integration with above phantoms
+
+### Validation
+
+* **TDD-RED (before):** 38 skipped (file-wide annotation)
+* **TDD-GREEN (after):** File deleted from test suite
+* `ruff check tests/audit/`: N/A (no source changes)
+
+### Cross-reference check
+
+No external references to `test_git_journal_enhanced.py` were found
+via `git grep`. The actual `GitJournalEnhanced.export_json` is tested
+via `tests/audit/test_shadow_audit_git.py` (which works correctly).
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
