@@ -11536,8 +11536,143 @@ Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 
 ### Files changed
 
-- `src/thegent/planning/auto_launch.py` — governance gate, `ps_impl` import fix, lowercased throttle-limit message.
-- `src/thegent/planning/board_artifact_integrator.py` — `CLIPROXYAPI` typo + github project-name digit support.
-- `tests/planning/test_agent_throttle.py` — `_non_blocked_do_next()` helper, throttle-only tests patched.
-- `tests/planning/test_board_artifact_integrator_full.py` — `.decode("utf-8")` for orjson compat; one `CLIPPROXYAPI` → `CLIPROXYAPI` typo.
-- `tests/planning/test_workstream_entities.py` — `_FakeDB.close()`.
+The remaining ~39 unique missing symbols are listed below for the
+follow-on PR:
+
+**Command functions (need `from thegent.cli.commands.X import Y` in __init__.py):**
+
+* `escalate_add_cmd`, `escalate_list_cmd`, `escalate_resolve_impl`,
+  `escalate_resolve_cmd`
+* `sweep_cmd`, `purge_cmd`, `archive_cmd`, `benchmark_cmd`
+* `observe_summary_cmd`, `feedback_cmd`, `cockpit_cmd`
+* `closure_pack_cmd`, `migration_cmd`, `drift_cmd`, `plan_analyze_cmd`
+* `dag_checkpoints_cmd`, `events_cmd`, `history_cmd`, `inspect_cmd`
+* `list_droids_cmd`, `list_models_cmd`
+* `logs_cmd`, `pause_cmd`, `policy_show_cmd`, `ps_cmd`, `resume_cmd`,
+  `session_contract_health_gate_cmd`, `session_contract_health_trend_cmd`,
+  `session_contracts_cmd`, `status_cmd`, `stop_cmd`, `wait_cmd`
+
+**Helper functions and constants:**
+
+* `_compose_owner_tag`, `_export_format_from_suffix`,
+  `_infer_export_format`, `_list_antigravity_models`, `_list_claude_models`,
+  `_list_codex_models_fallback`, `_list_copilot_models_fallback`,
+  `_list_gemini_models`, `_list_glm_models`, `_list_minimax_models`,
+  `_resolve_cwd`, `_scope_key`, `_write_health_gate_export`,
+  `_write_report_export`
+* `Columns` (from rich), `get_registry`, `list_agent_names`,
+  `RunRegistry`, `subprocess`
+
+### Followup
+
+Phase 2 PR will be opened once Phase 1 lands. After both phases, the
+cluster should drop from 169 failures to a much smaller residual that
+can be triaged test-by-test.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-CLI-COMMANDS-WL124-002 — Namespace exports Phase 2
+
+**Session window**: 2026-07-24 (Phase 2 follow-on)
+**Branch**: `fix/cli-commands-wl124` (continuation of Phase 1 commit)
+**Commit**: pending
+**Delta**: +123 / -7 (single file: `src/thegent/cli/__init__.py`)
+
+### Scope rationale
+
+Phase 2 extends the re-export surface to cover the remaining 35
+`*_cmd` wrappers and helpers from the Phase 1 followup list. The
+canonical homes live in dedicated modules (`plan_cmds`, `session_cmds`,
+`infra_cmds`, `model_cmds`, `governance_cmds`, `governance/governance_impl`,
+`dag_run_cmd_impl`, `_cli_shared`); this layer is a pure re-export
+surface.
+
+### Re-exports added (35)
+
+**Command wrappers (~24):**
+
+* `escalate_add_cmd`, `escalate_list_cmd`, `escalate_resolve_cmd`,
+  `escalate_resolve_impl` (from governance_cmds, governance_impl)
+* `dag_checkpoints_cmd` (from cli_dag)
+* `dag_list_cmd`, `dag_status_cmd`, `dag_ready_cmd`, `dag_update_cmd`,
+  `dag_validate_cmd` (from plan_cmds)
+* `plan_analyze_cmd`, `closure_pack_cmd` (from plan_cmds)
+* `list_droids_cmd`, `list_models_cmd`, `list_agents_cmd` (from model_cmds)
+* `feedback_cmd`, `history_cmd`, `events_cmd`, `inspect_cmd`,
+  `logs_cmd`, `pause_cmd`, `ps_cmd`, `resume_cmd`, `status_cmd`,
+  `stop_cmd`, `wait_cmd`, `session_contracts_cmd`,
+  `session_contract_health_gate_cmd`, `session_contract_health_trend_cmd`
+  (from session_cmds)
+* `cockpit_cmd`, `purge_cmd`, `observe_summary_cmd`, `archive_cmd`,
+  `benchmark_cmd` (from infra_cmds)
+* `sweep_cmd`, `policy_show_cmd`, `migration_cmd`, `drift_cmd`
+  (from governance_cmds)
+
+**Helpers and constants (~11):**
+
+* `_resolve_cwd` (from dag_run_cmd_impl)
+* `_compose_owner_tag`, `_scope_key` (from _cli_shared)
+* `_list_antigravity_models`, `_list_claude_models`,
+  `_list_codex_models_fallback`, `_list_copilot_models_fallback`,
+  `_list_gemini_models`, `_list_glm_models`, `_list_minimax_models`
+  (from model_cmds)
+* `RunRegistry` (class), `list_agent_names` (from agents.registry)
+* `subprocess` (stdlib re-export)
+
+### Skipped (non-existent features — phantom symbols)
+
+The following symbols are referenced by tests but do **not exist**
+anywhere in the source tree. They are phantom features that the
+test surface was written against but never built. Per the long-term
+stability protocol, removing these tests (similar to Cluster A) is
+preferred over building phantom scaffolding:
+
+| Symbol | Test count | Source status |
+|--------|------------|---------------|
+| `_find_session_meta` | 32 | Phantom — does not exist |
+| `_parse_dag_full` | 20 | Phantom |
+| `_parse_dag_session` | 18 | Phantom |
+| `_export_format_from_suffix` | 18 | Phantom |
+| `_write_report_export` | 9 | Phantom |
+| `_resolve_droids_dir` | 8 | Phantom |
+| `_write_health_gate_export` | 6 | Phantom |
+| `_list_cursor_models` | 6 | Phantom |
+| `_infer_export_format` | 6 | Phantom |
+| `_atomic_write` | 2 | Phantom |
+
+Total phantom-symbol test count: **125 tests**.
+
+### Real symbols still failing (partial overlap)
+
+* `escalate_resolve_impl` (4 tests): re-exported on `thegent.cli` but
+  tests patch at `thegent.cli.commands._cli_shared.escalate_resolve_impl`.
+  This requires `_cli_shared` to also re-export the symbol — out of
+  scope for this PR (would expand to 4+ source-file edits).
+* `get_registry` (2 tests): lives in `thegent.contracts` but tests
+  patch at `thegent.cli.get_registry`. Out of scope.
+* `Columns` (2 tests): does not exist anywhere — phantom.
+* `thegent.contracts.registry` attribute errors (2 tests): different
+  contract module path issue — out of scope.
+
+### Validation
+
+* **TDD-RED (before Phase 1):** 169 failed, 3 passed, 41 skipped
+* **TDD-RED (after Phase 1):** 169 failed, 3 passed, 41 skipped
+* **TDD-GREEN (after Phase 2):** **155 failed, 17 passed, 41 skipped**
+* **Net delta from Phase 1 baseline: -14 failures, +14 passes**
+* `ruff check src/thegent/cli/__init__.py`: **All checks passed!**
+* `ruff format --check`: **1 file left unchanged**
+
+### Followup (Phase 3 — queued)
+
+Phase 3 would address the remaining 155 failures, of which:
+- **~125 phantom-symbol tests** — candidate for deletion per Cluster A pattern
+- **~30 real-symbol tests** — require additional source changes
+  (e.g., `_cli_shared` re-exports of escalate_resolve_impl,
+   `_write_health_gate_export` / `_write_report_export` forwarders)
+
+Phase 3 PR will be opened after Phase 1+2 are reviewed/merged.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
