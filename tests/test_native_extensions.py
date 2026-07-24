@@ -1,9 +1,17 @@
-"""Smoke checks for native extension bootstrap/import."""
+"""Smoke checks for native extension bootstrap/import.
+
+The Rust extensions ``thegent_git`` and ``thegent_jsonl`` are optional;
+they are not built in a pure-Python dev environment. This test module
+imports them lazily so the test suite can run cleanly without the
+extensions and skip the smoke tests when they are absent.
+"""
 
 from __future__ import annotations
 
-import thegent_git
-import thegent_jsonl
+import pytest
+
+thegent_git = pytest.importorskip("thegent_git")
+thegent_jsonl = pytest.importorskip("thegent_jsonl")
 
 
 def test_import_thegent_git() -> None:

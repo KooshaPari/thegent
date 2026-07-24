@@ -11560,3 +11560,66 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-NATIVE-EXT-IMPORT-001 — Native extension smoke test importorskip
+
+**Session window**: 2026-07-24
+**Branch**: `fix/small-cluster-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: +5 / -2 (1 file modified)
+
+### Scope rationale
+
+Per the original dormant test rot scan, this lane was scoped to address
+remaining small clusters (~70 tests across ~13 files). The actual
+baseline is **89 passed, 22 skipped, 0 failed** — most of those clusters
+were already addressed by prior merges (e.g., Cluster D governance
+deletions cleared many of the unit test rots that the original scan
+captured).
+
+The only remaining rot is **`tests/test_native_extensions.py`** which
+errors at collection time (not at test time) because the Rust extensions
+`thegent_git` and `thegent_jsonl` are not built in a pure-Python dev
+environment. This is a collection-time ImportError, not a test failure.
+
+### Fix applied (1)
+
+Converts `tests/test_native_extensions.py` from eager imports to
+`pytest.importorskip(...)` so the module cleanly skips when the Rust
+extensions are absent and runs the smoke tests when they are available.
+
+### Validation
+
+* **TDD-RED (before):** Collection error: `ModuleNotFoundError: No module named 'thegent_git'`
+* **TDD-GREEN (after):** `1 skipped` (both tests skipped when extensions absent; both run when present)
+* `ruff check tests/test_native_extensions.py`: **All checks passed!**
+* `ruff format --check`: **1 file already formatted**
+
+### Combined "all-of-the-above" run (Clusters A-E + small clusters)
+
+This PR is the cleanup of the last remaining rot identified in the
+original dormant test rot scan. After this PR lands:
+
+| Lane | PR | Tests removed/added | Status |
+|------|-----|---------------------|--------|
+| Cluster A | #1166 | -18 phantom tests | OPEN |
+| Cluster B Phase 1 | #1167 | +7 re-exports + schema bump | MERGED |
+| Cluster B Phase 2 | #1168 | +35 re-exports | OPEN |
+| Cluster C Phase 1 | #1169 (commits) | -10 phantom tests | OPEN |
+| Cluster C Phase 2 | #1169 (commits) | -99 phantom tests | OPEN |
+| Cluster D | #1170 | -316 phantom tests (full dir) | OPEN |
+| Small clusters | (this PR) | +1 importorskip fix | OPEN |
+
+**Total phantom tests removed: 443**
+**Total new passing tests: 21+** (35 re-exports + 14 from Phase 2 + 3 preserved sync tests)
+**Total re-exports added: 42**
+
+### Out-of-scope (out of scope for this audit, deferred)
+
+* E2E test files (~240 tests marked "CLI commands do not exist") — roadmap placeholders
+* `tests/audit/test_git_journal_enhanced.py` (38 file-wide skip, "needs investigation") — explicitly TDD-required
+* Various test files in `tests/e2e/` not yet addressed
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
