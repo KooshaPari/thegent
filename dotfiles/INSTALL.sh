@@ -49,6 +49,24 @@ cp "$DOTFILES/claude/AGENTS.md" "$HOME_DIR/.claude/AGENTS.md" && echo -e "${GREE
 cp "$DOTFILES/claude/settings.json" "$HOME_DIR/.claude/settings.json" && echo -e "${GREEN}✓${NC} settings.json copied"
 chmod 600 "$HOME_DIR/.claude/settings.json"
 
+# Bundled zsh scripts (stow package under shell/stow/)
+# Source-of-truth for: worktree-governance, fork-guardian, protected-processes,
+# safeguards, org-secrets, refresh-zsh-cache. See shell/stow/README.md.
+echo ""
+echo "Installing bundled zsh scripts via stow..."
+if [ -d "$DOTFILES/shell/stow" ]; then
+  if command -v stow >/dev/null 2>&1; then
+    ( cd "$DOTFILES/shell/stow" && stow --target="$HOME_DIR" --restow . ) \
+      && echo -e "${GREEN}✓${NC} zsh bundle installed via stow" \
+      || echo -e "${YELLOW}⚠${NC} stow returned non-zero; bundle may be partially linked. Inspect with 'stow --target=$HOME_DIR -n -v .' from shell/stow/"
+  else
+    echo -e "${YELLOW}⚠${NC} 'stow' not found on PATH — skipping shell/stow/ bundle install"
+    echo -e "${YELLOW}  ${NC} Install GNU Stow (brew install stow) and re-run, or copy files from shell/stow/ manually"
+  fi
+else
+  echo -e "${YELLOW}⚠${NC} shell/stow/ not present in this checkout — skipping bundle install"
+fi
+
 echo ""
 echo -e "${GREEN}✓ All dotfiles installed successfully!${NC}"
 echo ""
@@ -56,4 +74,11 @@ echo "Next steps:"
 echo "  1. Reload your shell: exec \$SHELL"
 echo "  2. Run pre-commit install in any project: pre-commit install"
 echo "  3. Verify git config: git config --list | grep user"
+echo "  4. (Optional) Source the stow'd zsh scripts from ~/.zshrc:"
+echo "       for f in ~/.zsh-worktree-governance.zsh \\"
+echo "                ~/.zsh-fork-guardian.zsh \\"
+echo "                ~/.zsh-protected-processes.zsh \\"
+echo "                ~/.zsh-safeguards.zsh; do"
+echo "         [[ -f \"\$f\" ]] && source \"\$f\""
+echo "       done"
 echo ""

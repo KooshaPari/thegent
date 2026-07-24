@@ -154,6 +154,7 @@ def resolve_session_backend() -> Any:
     """Resolve the session backend (zmx by default)."""
     try:
         from thegent.session.zmx_backend import ZmxBackend
+
         return ZmxBackend()
     except ImportError:
         return None
@@ -463,7 +464,11 @@ class ACPServerAdapter:
             except Exception as e:
                 pass
 
-    async def run_http(self, host: str = "0.0.0.0", port: int = ACP_DEFAULT_PORT) -> None:
+    async def run_http(
+        self,
+        host: str = "0.0.0.0",  # noqa: S104 -- intentional all-interface bind for ACP reachability
+        port: int = ACP_DEFAULT_PORT,
+    ) -> None:
         """Run the server in HTTP mode."""
         import uvicorn
 
@@ -475,6 +480,7 @@ class ACPServerAdapter:
 def get_runner(name: str) -> Any:
     """Get an agent runner by name from the registry."""
     from thegent.agents import registry
+
     return registry.get_runner(name)
 
 
@@ -488,7 +494,11 @@ app = typer.Typer(help="ACP Server CLI")
 @app.command()
 def serve(
     http: bool = typer.Option(False, "--http", help="Run HTTP server"),
-    host: str = typer.Option("0.0.0.0", "--host", help="Host to bind"),
+    host: str = typer.Option(
+        "0.0.0.0",  # noqa: S104 -- intentional all-interface bind for ACP reachability
+        "--host",
+        help="Host to bind",
+    ),
     port: int = typer.Option(ACP_DEFAULT_PORT, "--port", help="Port to bind"),
 ) -> None:
     """Start the ACP server."""

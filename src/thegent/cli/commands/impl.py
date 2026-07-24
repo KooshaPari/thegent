@@ -40,7 +40,7 @@ def _impl_globals() -> dict[str, Any]:
 _EAGAIN_ERRNOS = {errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR}
 
 # Health payload schema version
-HEALTH_PAYLOAD_SCHEMA_VERSION = "1.0"
+HEALTH_PAYLOAD_SCHEMA_VERSION = "3.0"
 
 
 # Retry if eagain decorator

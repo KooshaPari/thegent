@@ -1,11 +1,12 @@
 """Stub module."""
-from typing import Any
+
+from typing import Any, ClassVar
 
 
 class CostPredictor:
     """Predictor for operation costs."""
 
-    _MODEL_COSTS: dict[str, float] = {
+    _MODEL_COSTS: ClassVar[dict[str, float]] = {
         "claude-sonnet-4.5": 15.0,
         "gpt-4o-mini": 3.0,
         "gemini-3-flash": 1.0,
@@ -13,7 +14,7 @@ class CostPredictor:
         "default": 1.0,
     }
 
-    _ACTION_MULTIPLIERS: dict[str, float] = {
+    _ACTION_MULTIPLIERS: ClassVar[dict[str, float]] = {
         "learning": 1.2,
         "inference": 1.0,
         "default": 1.0,
