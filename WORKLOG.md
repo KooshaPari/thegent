@@ -11560,3 +11560,62 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-SHADOW-AUDIT-GIT-001 — Delete phantom ShadowAuditGit phantom-feature tests
+
+**Session window**: 2026-07-24
+**Branch**: `fix/shadow-audit-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -1 file (deleted), -218 lines, 15 phantom tests removed
+
+### Scope rationale
+
+`tests/audit/test_shadow_audit_git.py` produces 15 failures, all targeting
+phantom API. The test file expects a feature surface that does not exist
+on the actual `ShadowAuditGit` class.
+
+### Phantom symbols verified absent (via git grep)
+
+The test file expects these on `ShadowAuditGit`/`AuditEntry`:
+
+| Category | Phantom symbol | Status |
+|----------|----------------|--------|
+| `AuditEntry.__init__` | `(project_id, sha, message, diff)` with auto `id`, `created_at` | actual is `(id, project_id, sha, message, diff, timestamp)` |
+| `record_commit` return type | object with `.sha`, `.diff`, `.message` | actual returns `int` (lastrowid) |
+| `get_audit_log` method | exists with phantom signature | actual is `get_entries(project_id, limit)` |
+| `export_audit(project_id, out_path)` | writes JSON to file path | actual is `export_json(project_id) -> dict` |
+| Secret scrubbing | `REDACTED` markers in diffs | no scrubbing implemented |
+
+### Tests removed (15)
+
+Full file deletion: `tests/audit/test_shadow_audit_git.py` (218 lines, 5 test classes):
+
+| Class | Tests | Phantom target |
+|-------|-------|----------------|
+| `TestAuditEntry` | 2 | phantom auto `id` / `created_at` |
+| `TestRecordCommit` | 6 | phantom return type + secret scrubbing |
+| `TestGetAuditLog` | 4 | phantom `get_audit_log` method |
+| `TestExportAudit` | 2 | phantom `export_audit` (file path) |
+| `TestShadowPersistence` | 1 | phantom persistence API |
+
+### Validation
+
+* **TDD-RED (before):** 15 failed, 1 passed (basic audit file fixture)
+* **TDD-GREEN (after):** File deleted from test suite
+* `ruff check tests/audit/`: N/A (no source changes)
+
+### Cross-reference check
+
+Verified via `git grep` that the only consumer was the test file (deleted).
+Actual `ShadowAuditGit` is exposed via `thegent.audit.shadow_audit_git` and
+correctly tested via `tests/audit/test_git_journal.py` (basic tests).
+
+### Out-of-scope (separate lanes)
+
+The phantom rot in `tests/audit/test_git_journal_async.py` (39 failures) and
+`tests/audit/test_git_journal.py` are addressed in separate audit lanes
+per-cluster handoff protocol.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
