@@ -11280,3 +11280,115 @@ Lane: governance AUDIT-N+82 through N+99.
 * Chain: **N+30 → N+99** (70 consecutive passes, SOTA pass-83).
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-COMMANDS-APPS-MAIN-001 — Stale install/project/scaffold test removal
+
+**Session window**: 2026-07-24 (single shot)
+**Branch**: `fix/commands-apps-main` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -469 lines, 0 added (single file: `tests/commands/test_apps_main.py`)
+
+### Scope rationale
+
+Cluster A from the dormant test rot scan was identified as 18 pre-existing
+`@pytest.mark.skip`-annotated tests in `tests/commands/test_apps_main.py`
+covering install/project/scaffold routing. Each skip reason was either
+`"Implementation issue"` (install-side, 7 tests) or
+`"project_migrate mock location issue"` (project/scaffold-side, 11 tests).
+
+Investigation of the source tree found the underlying features **do not
+exist**:
+
+* No `thegent.install` module — `src/thegent/` has no `install*.py` file
+  (`install_helpers/__init__.py` exists but is unrelated stub).
+* No `thegent.cli.apps.project.project_migrate`, `project_scaffold`, or
+  `setup_project_brownfield` — `apps/project/__init__.py` is a stub that
+  only exposes `update_app`, `install_app`, `setup_project_app`.
+* No `install`, `project`, or `scaffold` Typer commands registered on
+  `app = typer.Typer()` in `cli/apps/main.py` — the only flat commands
+  registered are `bg`, `status`, `stop`, `logs`, `ps`, `resume`, `govern`,
+  `phench`, plus sub-apps `run`, `cockpit`, `sota`.
+
+Per the **Phenotype Long-Term Stability and Non-Destructive Change Protocol**,
+the stable solution here is removal of stale assertions for non-existent
+features rather than building phantom scaffolding to satisfy them. Each
+test was already acknowledged by the skip annotation; the deletion removes
+the rot while documenting the gap for future lanes.
+
+### Tests removed (18)
+
+| # | Test | Skip reason |
+|---|------|-------------|
+| 1 | `test_install_compat_routes_to_run_install` | Implementation issue |
+| 2 | `test_install_invocation_can_run_system_install_with_setup` | Implementation issue |
+| 3 | `test_install_invocation_can_run_both_scope` | Implementation issue |
+| 4 | `test_install_invalid_scope_fails` | Implementation issue |
+| 5 | `test_install_scope_system_runs_system_only_with_custom_prefix` | Implementation issue |
+| 6 | `test_install_alias_user_target_routes_to_all` | Implementation issue |
+| 7 | `test_install_with_invalid_target_fails_without_calling_install` | Implementation issue |
+| 8 | `test_install_project_subcommand_still_routes_to_project_installer` | project_migrate mock location issue |
+| 9 | `test_project_top_level_command_is_available_and_routes_to_setup_project` | project_migrate mock location issue |
+| 10 | `test_install_project_brownfield_routes_to_setup_project_migrate` | project_migrate mock location issue |
+| 11 | `test_scaffold_greenfield_routes_to_sys_setup_project_scaffold` | project_migrate mock location issue |
+| 12 | `test_scaffold_brownfield_routes_to_sys_setup_project_migrate` | project_migrate mock location issue |
+| 13 | `test_scaffold_agdd_alias_routes_to_project_migrate` | project_migrate mock location issue |
+| 14 | `test_scaffold_none_alias_routes_to_project_migrate` | project_migrate mock location issue |
+| 15 | `test_setup_project_agdd_alias_routes_to_brownfield` | project_migrate mock location issue |
+| 16 | `test_setup_project_none_alias_routes_to_brownfield` | project_migrate mock location issue |
+| 17 | `test_install_project_agdd_alias_routes_to_project_migrate` | project_migrate mock location issue |
+| 18 | `test_install_project_none_alias_routes_to_project_migrate` | project_migrate mock location issue |
+
+### Validation
+
+* **TDD-RED (before):** 67 collected → 49 failed, 18 skipped.
+* **TDD-GREEN (after):** 49 collected → 49 failed, 0 skipped.
+* Net delta: **-18 skipped tests**, **-470 lines**, **0 regressions**.
+* Remaining 49 failures are pre-existing rot in unrelated parts of the
+  file (phench routing, git command group registration, stderr capture,
+  `model_cmds`/`phench_observability` attribute errors) — out of scope for
+  this lane; queued for separate clusters B–E.
+* `ruff check tests/commands/test_apps_main.py` → **All checks passed!**
+* `ruff format --check` → **1 file already formatted** (after one `ruff format` pass).
+
+### Out-of-scope failures (not addressed, listed for next-lane triage)
+
+The remaining 49 failures in `tests/commands/test_apps_main.py` cluster as:
+
+* **Stderr-capture config (7 tests):** `ValueError: stderr not separately captured`
+  — `CliRunner()` needs `mix_stderr=False` for tests asserting on `result.stderr`.
+* **Phench routing (25+ tests):** Tests mock `thegent.cli.apps.phench_projects`
+  and `thegent.cli.apps.phench_observability` but those are directory modules
+  lacking the patched attributes. Likely needs source-side additions.
+* **Git command group (2 tests):** `thegent git` group not registered on `app`.
+* **`model_cmds` import (1 test):** `thegent.cli.apps.main.model_cmds` not
+  exposed as a module attribute.
+* **`ps`/`do` shortcuts (2 tests):** `thegent.cli.apps.run.run_ps`/
+  `run_agent` not exposed at that path; flat `ps` delegates to
+  `thegent.cli.commands.cli.ps_cmd` instead.
+* **`thegent setup` command (1 test):** Not registered.
+* **Phench snapshot subcommand (3 tests):** `phench snapshot create/list/show`
+  routing not registered.
+* **Phench TUI (2 tests):** `phench_observability.IntPrompt` and
+  `phench tui --no-interactive` flows not registered.
+* **Phench projects status / TUI / etc.** (additional 6+ tests).
+
+These map to the **next-lane triage table** from the test surface scan:
+Cluster B (`test_unit_cli_commands_a.py`/`_b.py`, ~25 tests, WL-124
+refactor patches) and Cluster C (small commands-compat sweeps, ~20 tests).
+
+### Files
+
+* `tests/commands/test_apps_main.py` — -469 lines (18 skipped tests + decorators + blank lines)
+* `WORKLOG.md` — this hand-off entry
+
+### Followup
+
+When the install/project/scaffold features are actually specced and built
+in a future lane (Phenom Sprint 2026-08 candidate), the deleted tests
+should be re-added as the spec for the new commands. The git history of
+this commit preserves them as a reference for what the eventual contract
+should be.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
