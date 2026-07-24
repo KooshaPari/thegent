@@ -21,11 +21,9 @@ def get_server_meta_impl(
     """Build server metadata payload for thegent://meta."""
     from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
     from thegent.models.catalog import ROUTE_SCHEMA_VERSION
-    from thegent.operations import Operation
-    from thegent.orchestration_modes import MultiAgentMode
     from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
-    return {
+    result: dict[str, Any] = {
         "server": "thegent",
         "version": "1.0",
         "capabilities": ["tools", "resources", "prompts", "progress", "elicitation", "event_store"],
@@ -37,9 +35,20 @@ def get_server_meta_impl(
         "output_parser_schema_version": OUTPUT_PARSER_SCHEMA_VERSION,
         "route_schema_version": ROUTE_SCHEMA_VERSION,
         "contract_schema_version": CONTRACT_SCHEMA_VERSION,
-        "operations": [op.value for op in Operation],
-        "orchestration_modes": [m.value for m in MultiAgentMode],
     }
+    try:
+        from thegent.operations import Operation
+
+        result["operations"] = [op.value for op in Operation]
+    except (ImportError, TypeError):
+        result["operations"] = []
+    try:
+        from thegent.orchestration_modes import MultiAgentMode
+
+        result["orchestration_modes"] = [m.value for m in MultiAgentMode]
+    except (ImportError, TypeError):
+        result["orchestration_modes"] = []
+    return result
 
 
 def sweep_impl(

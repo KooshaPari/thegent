@@ -1,9 +1,22 @@
-"""WP-10002: ControlPlaneConfigProvider implementation for Control Plane Phase 2."""
+"""WP-10002: ControlPlaneConfigProvider implementation for Control Plane Phase 2.
+
+Hardening (AUDIT-N+83 — SOTA pass-67)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n83_config_provider_cp_hardening.py``
+(``FR-GOV-CP-001..015``).
+
+# @trace AUDIT-N+83
+"""
 
 import logging
 from typing import Any
 
 import httpx
+
+__all__ = [
+    "ControlPlaneConfigProvider",
+]
 
 logger = logging.getLogger(__name__)
 

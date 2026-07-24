@@ -12,6 +12,7 @@ Traces to:
 
 from __future__ import annotations
 
+import json as _stdlib_json
 import orjson as json
 import tempfile
 from pathlib import Path
@@ -239,7 +240,12 @@ def test_load_from_file_registers_rules() -> None:
         },
     ]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as fh:
-        json.dump(data, fh)
+        # NOTE: orjson exposes ``dumps`` (bytes) but no ``dump`` stream
+        # writer. Use stdlib ``json.dump`` for this hot path so the file
+        # is materialised on disk rather than buffered as bytes. The
+        # rest of the file uses ``orjson.dumps`` for performance where
+        # bytes are acceptable.
+        _stdlib_json.dump(data, fh)
         tmp_path = Path(fh.name)
 
     try:
@@ -258,7 +264,7 @@ def test_load_from_file_scope_case_insensitive() -> None:
     """FR-GOV-001: scope field in JSON is case-insensitive."""
     data = [{"rule_id": "r1", "scope": "global", "condition": "flag", "action": "deny", "priority": 1}]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as fh:
-        json.dump(data, fh)
+        _stdlib_json.dump(data, fh)
         tmp_path = Path(fh.name)
     try:
         engine = FederatedPolicyEngine()

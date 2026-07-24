@@ -1,4 +1,7 @@
-"""WP-3008: Escalation SLA and governance queue (FR-028)."""
+"""WP-3008: Escalation SLA and governance queue (FR-028).
+
+@trace AUDIT-N+50  FR-GOV-ES-001..015
+"""
 
 import json
 import logging

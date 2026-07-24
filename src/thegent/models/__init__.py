@@ -39,6 +39,13 @@ def route_contract(provider: str) -> dict[str, Any]:
     return {"provider": provider, "supports_streaming": True, "supports_function_calling": True}
 
 
+def resolve_route_contract(provider: str) -> dict[str, Any] | None:
+    """Resolve routing contract for a provider. Returns None if not found."""
+    if provider:
+        return route_contract(provider)
+    return None
+
+
 def filter_models_for_provider(provider: str) -> list[str]:
     """Filter models by provider."""
     return []
@@ -49,5 +56,6 @@ __all__ = [
     "filter_models_for_provider",
     "normalize_model_id",
     "resolve_route",
+    "resolve_route_contract",
     "route_contract",
 ]

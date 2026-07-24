@@ -1,4 +1,32 @@
-"""Session snapshot CLI helpers."""
+"""Session snapshot CLI helpers (AUDIT-N+45 hardening).
+
+Hardening (AUDIT-N+45 — SOTA pass-29)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n45_snapshot_helpers_hardening.py``
+(``FR-ORC-SV-001..015``).
+
+Provides ``SessionSnapshotCLIHelpers`` class and payload generators
+for session snapshot CLI display and export.
+
+# @trace AUDIT-N+45
+# @trace FR-ORC-SV-001
+# @trace FR-ORC-SV-002
+# @trace FR-ORC-SV-003
+# @trace FR-ORC-SV-004
+# @trace FR-ORC-SV-005
+# @trace FR-ORC-SV-006
+# @trace FR-ORC-SV-007
+# @trace FR-ORC-SV-008
+# @trace FR-ORC-SV-009
+# @trace FR-ORC-SV-010
+# @trace FR-ORC-SV-011
+# @trace FR-ORC-SV-012
+# @trace FR-ORC-SV-013
+# @trace FR-ORC-SV-014
+# @trace FR-ORC-SV-015
+"""
+
 from __future__ import annotations
 from typing import Any
 

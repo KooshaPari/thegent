@@ -1,8 +1,23 @@
-"""WP-10001: ConfigProvider protocol and implementations for Control Plane Phase 1."""
+"""WP-10001: ConfigProvider protocol and implementations for Control Plane Phase 1.
+
+Hardening (AUDIT-N+86 — SOTA pass-70)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n86_config_provider_hardening.py``
+(``FR-GOV-CFG-001..015``).
+
+# @trace AUDIT-N+86
+"""
 
 from typing import Any, Protocol, runtime_checkable
 
 from thegent.config import ThegentSettings
+
+__all__ = [
+    "ConfigProvider",
+    "EnvConfigProvider",
+    "get_config_provider",
+]
 
 
 @runtime_checkable

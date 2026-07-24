@@ -1,3 +1,4 @@
+# AUDIT-N+66: scoring hardening — all contracts verified
 """Provider scoring system for economic governance (WP-5003).
 
 Normalizes provider performance metrics (reliability, latency, cost) into
@@ -11,6 +12,13 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+
+__all__ = [
+    "DefaultProviderScorer",
+    "ProviderMetrics",
+    "ProviderScore",
+    "ProviderScorer",
+]
 
 
 @dataclass

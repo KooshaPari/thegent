@@ -15,7 +15,6 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands import _cli_shared
 from thegent.cli.commands._cli_shared import (
     _normalize_output_format,
     _resolve_run_id,
@@ -32,7 +31,7 @@ def escalate_add_cmd(
     priority: int = 0,
 ) -> None:
     """Add a blocked run to the escalation queue (WP-3008)."""
-    from thegent.cli.commands.impl import escalate_add_impl
+    from thegent.cli.governance.governance_impl import escalate_add_impl
 
     payload = {
         "run_id": run_id,
@@ -55,7 +54,7 @@ def escalate_list_cmd(
     format: str | None = None,
 ) -> None:
     """List governance escalation queue (WP-3008)."""
-    from thegent.cli.commands.impl import escalate_list_impl
+    from thegent.cli.governance.governance_impl import escalate_list_impl
 
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     fmt = _normalize_output_format(format)
@@ -95,11 +94,20 @@ def sweep_cmd(
     format: str | None = None,
 ) -> None:
     """WP-3005: Policy drift sweep - runs drift detection, budget check, past-SLA escalations."""
-    from thegent.cli.commands.impl import sweep_impl
+    from thegent.cli.governance.governance_impl import sweep_impl
+
+    # AUDIT-N+10: forward the canonical 5-kwarg signature. The handler
+    # passes default budget values (matching the pre-extraction behaviour)
+    # and a no-op calibration updater.
+    def _default_calibration_update() -> dict[str, Any]:
+        return {"updated": False, "calibration": None}
 
     result = sweep_impl(
         drift_window=drift_window,
+        structural_budget=5.0,
+        semantic_budget=10.0,
         include_audit=include_audit,
+        update_calibration_fn=_default_calibration_update,
     )
     fmt = _normalize_output_format(format)
     if fmt == "json":
@@ -134,7 +142,9 @@ def sweep_cmd(
 def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved") -> None:
     """Mark an escalation item as resolved (WP-3008)."""
     rid = _resolve_run_id(run_id)
-    ok = _cli_shared.escalate_resolve_impl(run_id=rid, resolution=resolution)
+    from thegent.cli.governance.governance_impl import escalate_resolve_impl
+
+    ok = escalate_resolve_impl(run_id=rid, resolution=resolution)
     if ok:
         console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
@@ -144,7 +154,7 @@ def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved"
 def escalate_approve_cmd(run_id: str | None = None) -> None:
     """Approve an escalation, recording an override for the owner (G-GP-05)."""
     rid = _resolve_run_id(run_id)
-    from thegent.cli.commands.impl import escalate_approve_impl
+    from thegent.cli.governance.governance_impl import escalate_approve_impl
 
     ok = escalate_approve_impl(run_id=rid)
     if ok:
@@ -159,7 +169,7 @@ def govern_approve_cmd(run_id: str, reason: str | None = None) -> None:
     Reads pending approvals from governance_events.jsonl, updates status to
     'approved', and triggers continuation of the blocked run.
     """
-    from thegent.cli.commands.impl import govern_approve_impl
+    from thegent.cli.governance.governance_impl import govern_approve_impl
     from thegent.cli.governance.governance import govern_get_pending_approval_impl
     from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
 
@@ -186,7 +196,7 @@ def govern_reject_cmd(run_id: str, reason: str | None = None) -> None:
     Reads pending approvals from governance_events.jsonl, updates status to
     'rejected', and cancels the blocked run.
     """
-    from thegent.cli.commands.impl import govern_reject_impl
+    from thegent.cli.governance.governance_impl import govern_reject_impl
 
     result = govern_reject_impl(run_id=run_id, reason=reason)
     console.print(
@@ -196,8 +206,8 @@ def govern_reject_cmd(run_id: str, reason: str | None = None) -> None:
 
 def govern_list_pending_cmd(format: str | None = None) -> None:
     """WL-019-B: List all pending HITL approval requests (G-GP-05)."""
-    from thegent.cli.commands.impl import govern_list_pending_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent.cli.governance.governance_impl import govern_list_pending_impl
+    from thegent.cli.governance.diff_renderer import DiffPayload, DiffRenderer
 
     items = govern_list_pending_impl()
     fmt = _normalize_output_format(format)

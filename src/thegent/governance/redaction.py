@@ -1,7 +1,20 @@
-"""Automatic PII and secret redaction for support mode and compliance (WP-15003)."""
+"""Automatic PII and secret redaction for support mode and compliance (WP-15003).
+
+Hardening (AUDIT-N+94 — SOTA pass-78)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n94_redaction_hardening.py``
+(``FR-GOV-RD-001..015``).
+
+# @trace AUDIT-N+94
+"""
 
 import re
 from typing import ClassVar
+
+__all__ = [
+    "PIIRedactor",
+]
 
 
 class PIIRedactor:

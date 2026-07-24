@@ -1,4 +1,5 @@
 """Stub module."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,6 +9,7 @@ from typing import Any
 @dataclass
 class RemoteDispatchConfig:
     """Configuration for remote dispatch."""
+
     endpoint: str = "http://localhost:8000"
     timeout: int = 30
     max_retries: int = 3
@@ -61,4 +63,9 @@ def adapt_result_to_sub_agent_result(result: Any) -> dict[str, Any]:
     }
 
 
-__all__ = ["RemoteDispatchBackend", "RemoteDispatchConfig", "adapt_request_to_agent_task", "adapt_result_to_sub_agent_result"]
+__all__ = [
+    "RemoteDispatchBackend",
+    "RemoteDispatchConfig",
+    "adapt_request_to_agent_task",
+    "adapt_result_to_sub_agent_result",
+]

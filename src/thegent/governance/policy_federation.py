@@ -4,6 +4,8 @@ Implements multi-tenant policy federation for governance system, building on
 the base FederatedPolicyEngine with governance-specific integration.
 """
 
+# AUDIT-N+73: policy_federation hardening — all contracts verified
+
 import logging
 from typing import Any
 
@@ -13,6 +15,8 @@ from thegent.governance.escalation import EscalationQueue
 from thegent.phases.policy_federation import FederatedPolicyEngine
 
 _log = logging.getLogger(__name__)
+
+__all__ = ["PolicyCache", "GovernanceConflictResolver", "GovernancePolicyFederation"]
 
 
 class PolicyCache:

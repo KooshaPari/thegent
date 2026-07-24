@@ -1,9 +1,22 @@
-"""Escalation queue DLQ integration."""
+"""Escalation queue DLQ integration.
+
+Hardening (AUDIT-N+95 — SOTA pass-79)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n95_dlq_integration_hardening.py``
+(``FR-GOV-DLQ-001..015``).
+
+# @trace AUDIT-N+95
+"""
 
 import logging
 from typing import Any
 
 from thegent.research.governance_dlq import EscalationQueueDLQ
+
+__all__ = [
+    "GovernanceDLQIntegration",
+]
 
 logger = logging.getLogger(__name__)
 

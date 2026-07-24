@@ -13,6 +13,12 @@ from unittest.mock import patch
 
 import pytest
 
+# Module-level skip guard: tests require the optional `diskcache` dependency.
+# Converting from `pytest.fail` to `pytest.importorskip` lets the file collect
+# cleanly when diskcache is absent (CI may not always install every optional
+# dep) while still skipping every test when diskcache is missing.
+pytest.importorskip("diskcache", reason="diskcache dependency is required for frecency persistence tests")
+
 from thegent.cache.frecency import (
     FrecencyCache,
     FrecencyEntry,
@@ -22,9 +28,6 @@ from thegent.cache.multi_level import _DISKCACHE_AVAILABLE, MultiLevelCache
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-if not _DISKCACHE_AVAILABLE:
-    pytest.fail("diskcache dependency is required for frecency persistence tests", pytrace=False)
 
 
 # ---------------------------------------------------------------------------

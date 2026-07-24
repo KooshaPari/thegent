@@ -20,8 +20,6 @@ from thegent.cli.commands.impl import (
     _atomic_write,
     _build_continuation_prompt,
     _check_dag_cycles,
-    _coerce_issue_types,
-    _compact_health_snapshot_log,
     _dag_path,
     _dag_update_task,
     _ensure_contract_version_header,
@@ -30,17 +28,27 @@ from thegent.cli.commands.impl import (
     _escape_cell,
     _get_ready_task_ids,
     _hash_health_payload,
-    _health_scope_key,
-    _load_previous_health_snapshot,
-    _observe_summary_freshness_bucket,
     _parse_dag_full,
     _parse_depends_on,
-    _resolve_health_policy,
     _serialize_dag,
     _validate_dag,
     _validate_task_id,
     dag_list_impl,
     dag_raw_impl,
+)
+
+# AUDIT-N+19 Phase 4: helpers with a new contract live in
+# ``session_health_impl`` (canonical home). Import them from there so the
+# AUDIT-N+9 legacy contract on ``impl`` (re-exported from
+# ``observability_impl``) stays untouched and the AUDIT-N+9 parity
+# surface holds.
+from thegent.cli.commands.session_health_impl import (  # noqa: E402
+    _coerce_issue_types,
+    _compact_health_snapshot_log,
+    _health_scope_key,
+    _load_previous_health_snapshot,
+    _observe_summary_freshness_bucket,
+    _resolve_health_policy,
 )
 
 # ---------------------------------------------------------------------------
@@ -772,7 +780,7 @@ class TestDagProbeCmd:
 class TestBuildContinuationPrompt:
     """Tests for _build_continuation_prompt."""
 
-    @patch("thegent.cli.commands.session_meta_impl._load_prior_session_output", return_value="prior output text")
+    @patch("thegent.cli.commands.session_impl._load_prior_session_output", return_value="prior output text")
     def test_prompt_includes_prior_context(self, mock_load) -> None:
         # @trace FR-CLI-180
         settings = MagicMock()
@@ -781,7 +789,7 @@ class TestBuildContinuationPrompt:
         assert "do next thing" in result
         assert "Continuing from prior session" in result
 
-    @patch("thegent.cli.commands.session_meta_impl._load_prior_session_output", return_value="")
+    @patch("thegent.cli.commands.session_impl._load_prior_session_output", return_value="")
     def test_prompt_no_prior_output(self, mock_load) -> None:
         # @trace FR-CLI-181
         settings = MagicMock()
@@ -794,7 +802,7 @@ class TestBuildContinuationPrompt:
         result = _build_continuation_prompt(settings, "", "do next thing")
         assert result == "do next thing"
 
-    @patch("thegent.cli.commands.session_meta_impl._load_prior_session_output", side_effect=["output A", "output B"])
+    @patch("thegent.cli.commands.session_impl._load_prior_session_output", side_effect=["output A", "output B"])
     def test_prompt_multiple_sessions(self, mock_load) -> None:
         # @trace FR-CLI-183
         settings = MagicMock()
@@ -1002,7 +1010,7 @@ class TestHealthTrendImpl:
             "blocked_count": 0,
             "issue_types": [],
         }
-        snap_path.write_text(json.dumps(snapshot, sort_keys=True).decode() + "\n", encoding="utf-8")
+        snap_path.write_text(json.dumps(snapshot, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
         from thegent.cli.commands.impl import session_contract_health_trend_impl
@@ -1032,7 +1040,7 @@ class TestHealthTrendImpl:
 class TestLoadPreviousHealthSnapshot:
     """Tests for _load_previous_health_snapshot."""
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_log_path")
     def test_load_from_file(self, mock_path, tmp_path) -> None:
         # @trace FR-CLI-191
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1042,14 +1050,14 @@ class TestLoadPreviousHealthSnapshot:
             "scope_key": scope_key,
             "blocked_ratio": 0.1,
         }
-        snap_path.write_text(json.dumps(record, sort_keys=True).decode() + "\n", encoding="utf-8")
+        snap_path.write_text(json.dumps(record, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
         result = _load_previous_health_snapshot(scope_key)
         assert result is not None
         assert result["blocked_ratio"] == 0.1
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_log_path")
     def test_load_no_matching_scope(self, mock_path, tmp_path) -> None:
         # @trace FR-CLI-192
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1058,13 +1066,13 @@ class TestLoadPreviousHealthSnapshot:
             "scope_key": {"payload_type": "gate", "owner": "alice"},
             "blocked_ratio": 0.5,
         }
-        snap_path.write_text(json.dumps(record, sort_keys=True).decode() + "\n", encoding="utf-8")
+        snap_path.write_text(json.dumps(record, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
         result = _load_previous_health_snapshot({"payload_type": "gate", "owner": "bob"})
         assert result is None
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_log_path")
     def test_load_no_file(self, mock_path, tmp_path) -> None:
         # @trace FR-CLI-193
         mock_path.return_value = tmp_path / "nonexistent.jsonl"
@@ -1081,8 +1089,8 @@ class TestLoadPreviousHealthSnapshot:
 class TestCompactHealthSnapshotLog:
     """Tests for _compact_health_snapshot_log."""
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
-    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=3)
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_max_lines", return_value=3)
     def test_compacts_when_over_limit(self, _mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-194
         snap_path = tmp_path / "snapshots.jsonl"
@@ -1095,8 +1103,8 @@ class TestCompactHealthSnapshotLog:
         remaining_lines = [l for l in snap_path.read_text(encoding="utf-8").splitlines() if l.strip()]
         assert len(remaining_lines) == 3
 
-    @patch("thegent.cli.commands.impl._health_snapshot_log_path")
-    @patch("thegent.cli.commands.impl._health_snapshot_max_lines", return_value=100)
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_log_path")
+    @patch("thegent.cli.commands.session_health_impl._health_snapshot_max_lines", return_value=100)
     def test_no_compact_when_under_limit(self, _mock_max, mock_path, tmp_path) -> None:
         # @trace FR-CLI-195
         snap_path = tmp_path / "snapshots.jsonl"

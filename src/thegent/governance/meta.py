@@ -1,6 +1,14 @@
 """WP-20004: Meta-Governance & Constitutional AI.
 Provides high-level, human-aligned rules (constitution) for all agent operations.
 Inspired by Constitutional AI principles (Anthropic).
+
+Hardening (AUDIT-N+78 — SOTA pass-62)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n78_meta_hardening.py``
+(``FR-GOV-MT-001..015``).
+
+# @trace AUDIT-N+78
 """
 
 import json
@@ -8,6 +16,12 @@ import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
+
+__all__ = [
+    "ConstitutionalPrinciple",
+    "Rule",
+    "MetaGovernance",
+]
 
 _log = logging.getLogger(__name__)
 
@@ -108,8 +122,7 @@ class MetaGovernance:
             if rule.principle == ConstitutionalPrinciple.SAFETY and (
                 "delete" in action_description.lower() or "config" in action_description.lower()
             ):
-                if "system" in action_description.lower():
-                    return False, f"Action violates {rule.rule_id} ({rule.principle.value}): {rule.description}"
+                return False, f"Action violates {rule.rule_id} ({rule.principle.value}): {rule.description}"
 
             if rule.principle == ConstitutionalPrinciple.PRIVACY and ("secret" in tags or "credential" in tags):
                 return False, f"Action violates {rule.rule_id} ({rule.principle.value}): {rule.description}"

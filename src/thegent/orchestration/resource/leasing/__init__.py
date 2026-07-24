@@ -1,10 +1,12 @@
 """Stub module."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class EditLeaseManager:
     """Manager for edit leases."""
+
     lease_id: str
     resource: str
     holder: str
@@ -13,6 +15,7 @@ class EditLeaseManager:
     def is_valid(self) -> bool:
         """Check if lease is still valid."""
         import time
+
         return time.time() < self.expires_at
 
 

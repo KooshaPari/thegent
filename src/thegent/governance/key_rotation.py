@@ -1,4 +1,11 @@
 # @trace WL-051
+# Hardening (AUDIT-N+64 — SOTA pass-48)
+# --------------------------------------
+# Contract surface asserted by
+# ``tests/test_unit_audit_n64_key_rotation_hardening.py``
+# (``FR-GOV-KR-001..015``).
+#
+# @trace AUDIT-N+64
 """WL-051: API key rotation monitoring and webhook notification.
 
 Implements:
@@ -283,3 +290,13 @@ class KeyRotationWebhook:
 def make_expiry_utc(days_from_now: int) -> str:
     """Return an ISO-8601 UTC datetime string for N days from now."""
     return (datetime.now(UTC) + timedelta(days=days_from_now)).isoformat()
+
+
+__all__ = [
+    "ApiKeyRecord",
+    "KeyRegistry",
+    "KeyRotationMonitor",
+    "KeyRotationWebhook",
+    "KeyRotationWarning",
+    "make_expiry_utc",
+]

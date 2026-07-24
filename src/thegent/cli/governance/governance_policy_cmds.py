@@ -14,6 +14,7 @@ from pathlib import Path
 
 import typer
 
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
@@ -23,6 +24,15 @@ from thegent.cli.commands._cli_shared import (
     _normalize_output_format,
     console,
 )
+from thegent.ux.cli_errors import print_exc
+
+# AUDIT-N+2 (Phase 3/4 nineteenth closure pass): the policy-side
+# ``signatures_verify_cmd`` defensive envelope now routes through
+# :func:`thegent.ux.cli_errors.print_exc` so a malicious or buggy
+# exception payload (``[red]pwned[/red]``) cannot inject Rich markup
+# into an operator terminal. Same end-to-end render-safety contract
+# GOV-1 pinned for ``govern.py`` + AUDIT-N+1 pinned for ``run_app.py``.
+err_console = Console(stderr=True)
 
 
 def policy_show_cmd() -> None:
@@ -359,7 +369,10 @@ def signatures_verify_cmd(run_id: str) -> None:
             raise typer.Exit(1)
 
     except Exception as e:
-        console.print(f"[red]Failed to verify artifact: {e}[/red]")
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # exception payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal.
+        print_exc(err_console, "signatures verify failed:", e)
         raise typer.Exit(1)
 
 

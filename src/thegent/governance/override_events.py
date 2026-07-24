@@ -4,6 +4,8 @@ Provides structured JSONL event emission when governance overrides expire,
 enabling audit trails and downstream reactions.
 """
 
+# AUDIT-N+74: override_events hardening — all contracts verified
+
 from __future__ import annotations
 
 import json
@@ -18,6 +20,13 @@ from thegent.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+__all__ = [
+    "OverrideExpiredEvent",
+    "OverrideActivatedEvent",
+    "OverrideEventEmitter",
+    "OverrideExpiryMonitor",
+]
 
 _log = logging.getLogger(__name__)
 

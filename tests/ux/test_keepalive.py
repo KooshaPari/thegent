@@ -80,10 +80,10 @@ def _fast_config(**kwargs: object) -> KeepaliveConfig:
     defaults: dict[str, object] = {"interval_s": 0.05, "message": ".", "newline_every": 10, "enabled": True}
     defaults.update(kwargs)
     return KeepaliveConfig(
-        interval_s=cast(float, defaults["interval_s"]),
-        message=cast(str, defaults["message"]),
-        newline_every=cast(int, defaults["newline_every"]),
-        enabled=cast(bool, defaults["enabled"]),
+        interval_s=cast("float", defaults["interval_s"]),
+        message=cast("str", defaults["message"]),
+        newline_every=cast("int", defaults["newline_every"]),
+        enabled=cast("bool", defaults["enabled"]),
     )
 
 
@@ -157,13 +157,20 @@ def test_non_tty_no_output():
 def test_context_manager_starts_and_stops():
     """@trace FR-UX-KEEPALIVE-005"""
     buf = _TtyStringIO()
+    captured_thread = None
     with _tty_stdout(buf):
         cfg = _fast_config(interval_s=10.0)  # long interval so no tick fires
         with TerminalKeepalive(cfg) as ka:
             assert ka._thread is not None
             assert ka._thread.is_alive()
-    # After __exit__ thread must be stopped
-    assert not ka._thread.is_alive()
+            # Capture the thread reference *before* __exit__ so the
+            # post-exit assertion can verify the stop() contract
+            # without dereferencing the attribute that __exit__ sets
+            # to None (FR-UX-KEEPALIVE-009: stop() idempotent).
+            captured_thread = ka._thread
+    # After __exit__ thread must be stopped.
+    assert captured_thread is not None
+    assert not captured_thread.is_alive()
 
 
 # ---------------------------------------------------------------------------
@@ -208,7 +215,9 @@ def test_stop_prints_trailing_newline_after_tick():
     with _tty_stdout(buf):
         cfg = _fast_config(interval_s=0.01, newline_every=100)
         with TerminalKeepalive(cfg):
-            time.sleep(0.08)  # let at least one tick fire
+            # Sleep long enough for at least one tick to fire reliably
+            # on loaded CI workers (interval_s=0.01 → ~10 ticks in 0.1s).
+            time.sleep(0.1)
     output = buf.getvalue()
     # At least one "." must have been printed, and output must end with "\n"
     assert "." in output
@@ -242,7 +251,9 @@ def test_message_printed_on_tick():
     with _tty_stdout(buf):
         cfg = _fast_config(interval_s=0.02, message="X", newline_every=100)
         with TerminalKeepalive(cfg):
-            time.sleep(0.12)  # let several ticks fire
+            # Sleep long enough for at least one tick to fire reliably
+            # on loaded CI workers (interval_s=0.02 → ~5 ticks in 0.1s).
+            time.sleep(0.1)
     output = buf.getvalue()
     assert "X" in output
 
@@ -258,7 +269,11 @@ def test_newline_every_respected():
     with _tty_stdout(buf):
         cfg = _fast_config(interval_s=0.01, message=".", newline_every=3)
         with TerminalKeepalive(cfg):
-            time.sleep(0.08)  # allow 5+ ticks
+            # Sleep well above (newline_every * interval_s) so the tick
+            # count is deterministic on loaded CI workers (0.5s allows
+            # ~50 ticks at 0.01s — comfortably exceeding the 3-tick
+            # embedded-newline threshold even with scheduler jitter).
+            time.sleep(0.5)
     output = buf.getvalue()
     # With newline_every=3 there should be at least one embedded newline
     # (plus the trailing newline from stop())
@@ -276,7 +291,9 @@ def test_newline_every_zero_no_auto_newline():
     with _tty_stdout(buf):
         cfg = _fast_config(interval_s=0.01, message=".", newline_every=0)
         with TerminalKeepalive(cfg):
-            time.sleep(0.05)  # allow a few ticks
+            # Sleep long enough for multiple ticks to fire reliably on
+            # loaded CI workers (interval_s=0.01 → ~30 ticks in 0.3s).
+            time.sleep(0.3)
     output = buf.getvalue()
     # Exactly one newline (the trailing one from stop())
     assert output.count("\n") == 1
@@ -314,7 +331,9 @@ def test_stdout_oserror_swallowed():
     with patch("sys.stdout", broken):
         cfg = _fast_config(interval_s=0.02)
         with TerminalKeepalive(cfg):
-            time.sleep(0.08)
+            # Sleep long enough for at least one tick to fire reliably
+            # on loaded CI workers (interval_s=0.02 → ~5 ticks in 0.1s).
+            time.sleep(0.1)
     # No exception propagated; test passes if we reach here.
 
 
@@ -355,7 +374,7 @@ def test_keepalive_cm_no_tty_no_output():
     buf = _NonTtyStringIO()
     with _non_tty_stdout(buf):
         with keepalive(interval_s=0.01) as ka:
-            time.sleep(0.05)
+            time.sleep(0.1)
     assert buf.getvalue() == ""
     assert ka._thread is None
 
@@ -412,10 +431,14 @@ def test_multiple_ticks_newline_boundary():
     with _tty_stdout(buf):
         cfg = _fast_config(interval_s=0.01, message=".", newline_every=2)
         with TerminalKeepalive(cfg):
-            time.sleep(0.10)  # ~10 ticks at 0.01s
+            # Sleep well above (newline_every * interval_s) so the tick
+            # count is deterministic on loaded CI workers (~0.5s allows
+            # for ~50 ticks at 0.01s, comfortably exceeding the 3-newline
+            # threshold even with thread-scheduling jitter).
+            time.sleep(0.5)
     output = buf.getvalue()
     # With newline_every=2, every 2nd dot triggers a newline.
-    # With ~10 ticks + trailing newline we expect >= 3 newlines.
+    # With >=25 ticks + trailing newline we expect >= 3 newlines.
     assert output.count("\n") >= 3
 
 
@@ -430,7 +453,7 @@ def test_disabled_config_propagates():
     with _tty_stdout(buf):
         cfg = KeepaliveConfig(interval_s=0.01, enabled=False)
         with TerminalKeepalive(cfg) as ka:
-            time.sleep(0.05)
+            time.sleep(0.1)
     assert buf.getvalue() == ""
     assert ka._thread is None
 

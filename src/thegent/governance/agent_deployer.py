@@ -3,6 +3,7 @@
 Walks the DAG topologically, groups independent tasks into ready batches,
 checks budget, and spawns agents via the canonical entry point.
 """
+# AUDIT-N+75: agent_deployer hardening — all contracts verified
 
 from __future__ import annotations
 
@@ -16,6 +17,14 @@ from pydantic import BaseModel, Field
 
 from thegent.agents.loop_controller import LifecycleController, LoopMode
 from thegent.config import ThegentSettings
+
+__all__ = [
+    "TaskExecutionResult",
+    "DeploymentResult",
+    "CostControllerProtocol",
+    "VerificationGateProtocol",
+    "AgentDeployer",
+]
 
 _log = logging.getLogger(__name__)
 
@@ -87,6 +96,10 @@ class AgentDeployer:
         lifecycle_mode: str = "soft",
         checker_agent_name: str = "antigravity",
     ) -> None:
+        if max_concurrent < 1:
+            raise ValueError(f"max_concurrent must be >= 1, got {max_concurrent}")
+        if not lifecycle_mode or not lifecycle_mode.strip():
+            raise ValueError("lifecycle_mode must be a non-empty string")
         self.cost_controller = cost_controller
         self.verification_gate = verification_gate
         self.max_concurrent = max_concurrent

@@ -4,12 +4,10 @@ import importlib
 import importlib.util
 from pathlib import Path
 
+from conftest import _load_script_module
+
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "collect_wl_monolith_baselines.py"
-SPEC = importlib.util.spec_from_file_location("collect_wl_monolith_baselines", SCRIPT_PATH)
-assert SPEC is not None
-assert SPEC.loader is not None
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("collect_wl_monolith_baselines", SCRIPT_PATH)
 
 
 def test_collect_all_has_expected_targets() -> None:

@@ -2,7 +2,17 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.check_python_benchmark_regression import find_regressions
+# scripts.check_python_benchmark_regression module was removed.
+pytest.importorskip(
+    "scripts.check_python_benchmark_regression",
+    reason=(
+        "scripts.check_python_benchmark_regression module removed; "
+        "benchmark regression tests skipped"
+    ),
+)
+from scripts.check_python_benchmark_regression import (  # noqa: E402
+    find_regressions,
+)
 
 
 def _payload(avg_a: float, avg_b: float) -> dict[str, object]:

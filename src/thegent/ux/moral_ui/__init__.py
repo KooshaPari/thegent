@@ -7,6 +7,7 @@ from typing import Any
 @dataclass
 class ArbitrationResult:
     """Result of moral arbitration."""
+
     decision: str = ""
     reasoning: str = ""
     confidence: float = 0.0
@@ -19,6 +20,7 @@ __all__ = ["ArbitrationResult", "MoralDilemma"]
 @dataclass
 class MoralDilemma:
     """Represents a moral dilemma for ethical decision-making."""
+
     id: str = ""
     scenario: str = ""
     options: list[str] = field(default_factory=list)

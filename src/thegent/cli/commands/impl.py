@@ -7,8 +7,9 @@ the main CLI module.
 from __future__ import annotations
 
 import errno
-import getpass
 import math
+import os
+import sys
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -21,15 +22,31 @@ if TYPE_CHECKING:
     from thegent.contracts.telemetry import ContractTelemetry
     from thegent.execution import EscalationQueue
 
+
+def _impl_globals() -> dict[str, Any]:
+    """Return the live ``impl`` module's ``__dict__``.
+
+    AUDIT-N+16 (WL-125 closure): wrapper functions that forward resolver
+    callbacks (e.g. ``log_path_resolver=impl._health_snapshot_log_path``)
+    must look the callback up on the **current** module globals each call,
+    not on the closure cell created at definition time. Otherwise
+    ``monkeypatch.setattr("thegent.cli.commands.impl.<callback>", ...)``
+    patches in ``tests/test_wl125_*_parity.py`` would not be observed.
+    """
+    return sys.modules[__name__].__dict__
+
+
 # EAGAIN/EWOULDBLOCK errno numbers for retry logic
 _EAGAIN_ERRNOS = {errno.EAGAIN, errno.EWOULDBLOCK, errno.EINTR}
 
 # Health payload schema version
 HEALTH_PAYLOAD_SCHEMA_VERSION = "1.0"
 
+
 # Retry if eagain decorator
 def _retry_if_eagain(func: Any) -> Any:
     """Retry function if EAGAIN error occurs."""
+
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         max_retries = 3
         for attempt in range(max_retries):
@@ -37,118 +54,58 @@ def _retry_if_eagain(func: Any) -> Any:
                 return func(*args, **kwargs)
             except OSError as e:
                 if e.errno in _EAGAIN_ERRNOS and attempt < max_retries - 1:
-                    time.sleep(0.1 * (2 ** attempt))
+                    time.sleep(0.1 * (2**attempt))
                     continue
                 raise
         return None
+
     return wrapper
 
 
 # Backoff delay function
 def _backoff_delay(attempt: int, base: float = 1.0, max_delay: float = 60.0) -> float:
     """Calculate exponential backoff delay."""
-    return min(base * (2 ** attempt), max_delay)
+    return min(base * (2**attempt), max_delay)
 
 
 # Atomic write function
-def _atomic_write(path: Path, content: str) -> None:
-    """Atomically write content to a file."""
-    import tempfile
-    import os
-    path_str = str(path)
-    from pathlib import Path
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, dir=str(Path(path_str).parent) or ".") as f:
-        f.write(content)
-        temp_path = f.name
-    os.rename(temp_path, path_str)
+def _atomic_write(path: Path, content: str, *, backup: bool = False) -> None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._atomic_write`.
+
+    The canonical atomic-write helper lives in :mod:`dag_impl` and
+    supports an optional ``backup=True`` kwarg that copies the existing
+    file to ``<path>.bak`` before swapping in the new content.
+    """
+    from thegent.cli.commands import dag_impl as _dag_impl
+
+    return _dag_impl._atomic_write(path, content, backup=backup)
 
 
 # Spawn with eagain retry
 def _spawn_with_eagain_retry(cmd: list[str], **kwargs: Any) -> Any:
     """Spawn process with EAGAIN retry logic."""
     import subprocess
+
     max_retries = 3
     for attempt in range(max_retries):
         try:
             return subprocess.run(cmd, **kwargs)
         except OSError as e:
             if e.errno in _EAGAIN_ERRNOS and attempt < max_retries - 1:
-                time.sleep(0.1 * (2 ** attempt))
+                time.sleep(0.1 * (2**attempt))
                 continue
             raise
     return None
 
 
-def _append_observe_summary_snapshot(snapshots: list, snapshot: dict[str, Any]) -> None:
-    """Append observe summary snapshot to list."""
-    snapshots.append(snapshot)
+# AUDIT-N+14: ``_resolve_cwd`` lives in :mod:`thegent.cli.commands.session_impl`
+# (canonical home). The local stub is removed so the AUDIT-N+12 re-export
+# binds the canonical 4-arg form (with caching + project-indicator scan).
+# Legacy callers must import from ``thegent.cli.commands.session_impl``
+# directly or via ``thegent.cli.commands.impl._resolve_cwd`` (re-export).
 
-
-def _validate_image_capability(image_path: str) -> bool:
-    """Validate that image capability is available."""
-    from pathlib import Path
-    return Path(image_path).exists()
-
-
-def _resolve_audio_transcript_for_output(transcript: dict[str, Any]) -> dict[str, Any]:
-    """Resolve audio transcript for output."""
-    return {
-        "transcript": transcript.get("text", ""),
-        "duration": transcript.get("duration", 0.0),
-    }
-
-
-def _resolve_grounding_sources_for_output(sources: list[dict]) -> list[dict[str, Any]]:
-    """Resolve grounding sources for output."""
-    return [{"source": s.get("source", ""), "content": s.get("content", "")[:100]} for s in sources]
-
-
-def _inject_time_constraint(prompt: str, timeout: int) -> str:
-    """Inject time constraint into prompt.
-
-    Args:
-        prompt: The prompt to inject constraint into.
-        timeout: Timeout in seconds.
-
-    Returns:
-        Prompt with time constraint injected.
-    """
-    tool_calls = max(1, round(timeout / 2.3))
-    constraint = f"\n\nTIME CONSTRAINT: Complete in {timeout}s (~{tool_calls} tool calls).\n"
-    return prompt + constraint
-
-
-def _resolve_cwd(cwd: Path | None) -> Path | None:
-    """Resolve the working directory for the CLI.
-
-    Args:
-        cwd: Explicitly specified directory, or None to infer.
-
-    Returns:
-        Resolved Path or None if ambiguous.
-
-    Raises:
-        typer.BadParameter: If explicitly specified directory doesn't exist.
-    """
-    if cwd is not None:
-        expanded = cwd.expanduser()
-        if not expanded.exists():
-            raise typer.BadParameter(f"Directory does not exist: {cwd}")
-        return expanded.resolve()
-
-    # Try to infer from project indicators
-    current = Path.cwd()
-
-    # Check current and parents for .git, .factory, or pyproject.toml
-    for parent in [current, *current.parents]:
-        if (parent / ".git").exists():
-            return parent
-        if (parent / ".factory").exists():
-            return parent
-        if (parent / "pyproject.toml").exists():
-            return parent
-
-    return None  # Ambiguous
+# AUDIT-N+14: ``_resolve_droids_dir`` lives here (impl.py is the canonical
+# home — it is not a session-lifecycle helper).
 
 
 def _resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
@@ -169,54 +126,21 @@ def _resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
     return settings.factory_droids_dir.expanduser().resolve()
 
 
-def _compose_owner_tag(
-    user: str,
-    cwd: Path,
-    scope: str | None = None,
-) -> str:
-    """Compose the owner tag for a session.
+# AUDIT-N+14: ``_compose_owner_tag`` and ``_default_owner_tag`` live in
+# :mod:`thegent.cli.commands.session_impl` (canonical home). The local stubs
+# are removed so the AUDIT-N+12 re-export binds the canonical 4-arg form
+# (with ``{pid}`` / ``{cwd}`` placeholder expansion + ``THGENT_OWNER_TAG``
+# env override).
 
-    Args:
-        user: The username.
-        cwd: The working directory.
-        scope: Optional scope suffix.
-
-    Returns:
-        Composed owner tag.
-    """
-    base = f"{user}:{cwd.name}"
-    if scope:
-        # Expand placeholders
-        scope = scope.replace("{pid}", str(__import__("os").getpid()))
-        scope = scope.replace("{cwd}", cwd.name)
-        return f"{base}:{scope}"
-    return base
-
-
-def _default_owner_tag(cwd: Path) -> str:
-    """Get the default owner tag for the given directory.
-
-    Args:
-        cwd: The working directory.
-
-    Returns:
-        Default owner tag.
-    """
-    import os
-
-    # Check for explicit override
-    explicit = os.environ.get("THGENT_OWNER_TAG")
-    if explicit:
-        return explicit
-
-    user = getpass.getuser()
-    scope = os.environ.get("THGENT_OWNER_SCOPE")
-    return _compose_owner_tag(user, cwd, scope=scope)
+# AUDIT-N+14: ``_write_session_state`` and ``_normalize_image_paths`` stay
+# here (impl.py is the canonical home — they are not session-lifecycle
+# helpers).
 
 
 def _write_session_state(session_dir: Path, state: dict[str, Any]) -> None:
     """Write session state to disk."""
     import json
+
     state_file = session_dir / "session_state.json"
     state_file.write_text(json.dumps(state))
 
@@ -224,226 +148,64 @@ def _write_session_state(session_dir: Path, state: dict[str, Any]) -> None:
 def _normalize_image_paths(paths: list[str]) -> list[str]:
     """Normalize image paths."""
     from pathlib import Path
+
     return [str(Path(p).expanduser().resolve()) for p in paths]
 
 
-def _build_audio_summary_metadata(duration: float, format: str = "wav") -> dict[str, Any]:
-    """Build audio summary metadata."""
-    return {
-        "duration": duration,
-        "format": format,
-        "sample_rate": 16000,
-    }
-
-
-def _build_run_event_details(event: dict[str, Any]) -> dict[str, Any]:
-    """Build run event details."""
-    return {
-        "event": event,
-        "timestamp": time.time(),
-    }
-
-
-def _append_health_snapshot(snapshots: list, snapshot: dict[str, Any]) -> None:
-    """Append health snapshot to list."""
-    snapshots.append(snapshot)
-
-
-def observe_summary_impl(
-    limit: int = 500,
-    drift_window: int = 50,
-    structural_budget_pct: float = 5.0,
-    semantic_budget_pct: float = 10.0,
-    provider: str | None = None,
-    top_escalations: int = 5,
-    trend_samples: int | None = None,
-    **kwargs: Any,
-) -> dict[str, Any]:
-    """Implementation for observe summary command.
-
-    Args:
-        limit: Maximum number of events to analyze.
-        drift_window: Window size for drift detection.
-        structural_budget_pct: Budget for structural drift.
-        semantic_budget_pct: Budget for semantic drift.
-        provider: Optional provider filter.
-        top_escalations: Number of top escalations to show.
-        trend_samples: Number of trend samples to include.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Summary result dictionary.
-    """
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import EscalationQueue
-    from pathlib import Path
-
-    # Initialize telemetry and escalation queue
-    session_dir = Path(__import__("os").getenv("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
-
-    telemetry = ContractTelemetry(session_dir)
-    escalation_queue = EscalationQueue(session_dir)
-
-    # Get KPIs
-    kpis = telemetry.get_fallback_kpis(
-        limit=limit,
-        structural_budget_pct=structural_budget_pct,
-        semantic_budget_pct=semantic_budget_pct,
-        provider=provider,
-    )
-
-    # Get drift status
-    drift = telemetry.get_drift_budget_status(
-        structural_budget_pct=structural_budget_pct,
-        semantic_budget_pct=semantic_budget_pct,
-        limit=limit,
-    )
-
-    # Get escalations
-    pending = escalation_queue.list_pending(limit=top_escalations)
-    past_sla = escalation_queue.list_pending(past_sla_only=True, limit=top_escalations)
-
-    # Determine status
-    status = "ok"
-    if drift.get("within_budget") is not True:
-        status = "critical"
-    elif kpis.get("fallback_rate", 0) > 0.1:
-        status = "degraded"
-    elif pending:
-        status = "warning"
-
-    # Generate alerts
-    alerts = []
-    if status == "critical":
-        alerts.append("Escalation backlog critical")
-    elif status == "degraded":
-        alerts.append("Fallback rate above threshold")
-
-    result = {
-        "status": status,
-        "kpis": {
-            "total_events": kpis.get("total", 0),
-            "fallback_rate": kpis.get("fallback_rate", 0),
-            "success_rate": kpis.get("success_rate", 0),
-            "avg_confidence": kpis.get("avg_confidence", 0),
-        },
-        "drift": drift,
-        "escalation": {
-            "backlog_count": len(pending),
-            "past_sla_count": len(past_sla),
-            "top_escalations_count": top_escalations,
-            "top_escalations": past_sla[:top_escalations],
-        },
-        "alerts": alerts,
-    }
-
-    # Handle trend samples
-    if trend_samples is not None:
-        result["trend_summary"] = {
-            "enabled": True,
-            "trend_samples_requested": trend_samples,
-            "trend_effective_samples": trend_samples,
-            "history_sample_count": 0,
-            "trend_snapshot_health": "good",
-        }
-        result["generated_query"] = {
-            "trend_samples": trend_samples,
-        }
-
-    return result
-
-
-class DagDocument:
-    """DAG document representation for CLI."""
-
-    def __init__(self, name: str = "") -> None:
-        """Initialize DAG document."""
-        self.name = name
-        self.nodes: list[dict[str, Any]] = []
-        self.edges: list[tuple[str, str]] = []
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {"name": self.name, "nodes": self.nodes, "edges": self.edges}
-
-
 class DagPrioritizer:
-    """Prioritizer for DAG nodes."""
+    """Prioritizer for DAG nodes.
+
+    Thin placeholder — canonical prioritization lives in
+    :mod:`thegent.cli.commands.dag_impl`. Retained here only so legacy
+    callers that import :class:`DagPrioritizer` from ``impl`` keep
+    working during the AUDIT-N+19 Phase 4 migration.
+    """
 
     def __init__(self) -> None:
         self.priorities: dict[str, int] = {}
 
     def prioritize(self, nodes: list[str]) -> list[str]:
-        """Prioritize nodes by their priority values."""
+        """Prioritize DAG nodes by their priority values."""
         return sorted(nodes, key=lambda n: self.priorities.get(n, 999))
 
 
-def run_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
-    """Run the implementation.
-
-    Args:
-        prompt: The prompt to execute.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Result dictionary.
-    """
-    return {
-        "prompt": prompt,
-        "status": "completed",
-        "result": "",
-    }
+# AUDIT-N+19: ``DagDocument`` lives in :mod:`thegent.cli.commands.dag_impl`
+# (canonical dataclass home). Re-export here so legacy callers (and the
+# AUDIT-N+11 identity contract) continue to bind to the canonical type.
+from thegent.cli.commands.dag_impl import DagDocument as DagDocument  # noqa: F401,E402,PLC0414
 
 
-def logs_impl(
-    limit: int = 100,
-    filter_text: str | None = None,
+def run_impl(
+    prompt: str,
+    audio_files: list[str] | None = None,
+    google_grounding: bool = False,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Implementation for logs command.
+    """Run the implementation.
 
-    Args:
-        limit: Maximum number of log entries to return.
-        filter_text: Optional text filter for logs.
-        **kwargs: Additional keyword arguments.
+    Thin delegate to
+    :func:`thegent.cli.commands.run.impl_core_runners.run_impl_core`,
+    which is the AUDIT-N+16 canonical home for the dispatch shim (it
+    threads ``impl_ns`` and forwards every caller kwarg verbatim to
+    :func:`thegent.cli.services.run_execution_core_helpers.run_impl_core`).
+    The full execution pipeline (Pareto routing, policy, escalation,
+    MAIF, observability) lives in the extracted core; this wrapper
+    exists to keep the public CLI surface stable.
 
-    Returns:
-        Log entries result dictionary.
+    AUDIT-N+28: ``audio_files`` + ``google_grounding`` are explicit kwargs
+    (pinned by ``tests/test_wl116_audio_inputs.py::test_run_impl_accepts_audio_files_and_google_grounding``)
+    so callers see them in ``inspect.signature(run_impl)`` without having
+    to grep through ``**kwargs``. Both are forwarded to the canonical
+    helper verbatim alongside every other caller kwarg.
     """
-    return {
-        "logs": [],
-        "count": 0,
-        "limit": limit,
-        "filter": filter_text,
-    }
+    from thegent.cli.commands.run.impl_core_runners import run_impl_core
 
-
-def ps_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for ps command."""
-    return {"processes": []}
+    return run_impl_core(prompt=prompt, audio_files=audio_files, google_grounding=google_grounding, **kwargs)
 
 
 def list_models_impl(**kwargs: Any) -> dict[str, Any]:
     """Implementation for list models command."""
     return {"models": []}
-
-
-def status_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for status command."""
-    return {"status": "ok", "version": "1.0.0"}
-
-
-def resume_impl(session_id: str, **kwargs: Any) -> dict[str, Any]:
-    """Implementation for resume command.
-
-    Args:
-        session_id: The session ID to resume.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Resume result dictionary.
-    """
-    return {"session_id": session_id, "status": "resumed"}
 
 
 def list_impl(**kwargs: Any) -> dict[str, Any]:
@@ -471,42 +233,464 @@ def session_list_impl(session_ids: list[str] | None = None, **kwargs: Any) -> di
     return {"sessions": [], "count": 0, "session_ids": session_ids or []}
 
 
-def bg_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for background command.
+def bg_impl(prompt: str, **kwargs: Any) -> dict[str, Any]:
+    """Background-run implementation.
 
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Background result dictionary.
+    Thin delegate to
+    :func:`thegent.cli.commands.run.impl_core_runners.bg_impl_core`,
+    mirroring :func:`run_impl`'s delegation contract. The canonical home
+    for the dispatch shim threads ``impl_ns`` and forwards every caller
+    kwarg verbatim to
+    :func:`thegent.cli.services.run_execution_core_helpers.bg_impl_core`.
     """
-    return {"status": "ok", "message": "Background task started"}
+    from thegent.cli.commands.run.impl_core_runners import bg_impl_core
 
+    return bg_impl_core(prompt=prompt, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+14: real session-lifecycle entry-point implementations
+# Pinned by tests/test_unit_cli_impl_session.py (FR-CLI-100..150).
+# Each function uses ``impl.<x>`` references for the canonical imports
+# above so ``@patch("thegent.cli.commands.impl.<x>", ...)`` decorators
+# continue to work.
+# ---------------------------------------------------------------------------
+
+
+def status_impl(session_id: str, include_contract: bool = False, **kwargs: Any) -> dict[str, Any]:
+    """Return the canonical status payload for a session.
+
+    Resolves the session-meta file via :func:`_find_session_meta`, reads
+    it, computes ``running`` via :func:`_is_pid_running`, and composes
+    the canonical status string via :func:`_resolve_session_status`.
+    Returns ``{"error": ...}`` if the session is not found.
+
+    Pinned by ``TestStatusImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    pid = int(meta.get("pid") or 0)
+    running = _is_pid_running(pid)
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    status = _resolve_session_status(meta, paths["rc"], running=running)
+    exit_code = meta.get("exit_code")
+    if exit_code is None and paths["rc"].exists():
+        try:
+            exit_code = int(paths["rc"].read_text(encoding="utf-8").strip())
+        except ValueError:
+            exit_code = None
+    result: dict[str, Any] = {
+        "session_id": session_id,
+        "status": status,
+        "running": running,
+        "exit_code": exit_code,
+        "pid": pid,
+        "owner": meta.get("owner"),
+        "agent": meta.get("agent"),
+    }
+    if include_contract:
+        if "route_contract" in meta:
+            result["route_contract"] = meta["route_contract"]
+        if "route_request" in meta:
+            result["route_request"] = meta["route_request"]
+    return result
+
+
+def stop_impl(
+    session_id: str,
+    force: bool = False,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Stop a running session by signaling its PID.
+
+    Sends ``SIGTERM`` (graceful) or ``SIGKILL`` (``force=True``) to the
+    session PID via :func:`os.killpg`. Returns ``{"status": "stopped"}``
+    / ``{"status": "stopped_force"}`` on success, ``{"status": "error", ...}``
+    on OS errors, or ``{"status": "not_running"}`` if the session is
+    already stopped.
+
+    Pinned by ``TestStopImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    import os as _os
+    import signal as _signal
+
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    pid = int(meta.get("pid") or 0)
+    if not _is_pid_running(pid):
+        return {"status": "not_running", "session_id": session_id}
+    sig = _signal.SIGKILL if force else _signal.SIGTERM
+    try:
+        _os.killpg(pid, sig)
+    except OSError as exc:
+        return {"status": "error", "error": str(exc), "session_id": session_id}
+    return {
+        "status": "stopped_force" if force else "stopped",
+        "session_id": session_id,
+    }
+
+
+def wait_impl(
+    session_id: str,
+    timeout: float | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Wait for a session to finish, optionally bounded by ``timeout``.
+
+    Returns ``{"exit_code": int, "timed_out": bool}`` on success or
+    ``{"error": ...}`` if the session is not found.
+
+    Pinned by ``TestWaitImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    pid = int(meta.get("pid") or 0)
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    timed_out = False
+    if _is_pid_running(pid):
+        deadline = (time.time() + timeout) if timeout else None
+        while _is_pid_running(pid):
+            if deadline is not None and time.time() >= deadline:
+                timed_out = True
+                break
+            time.sleep(0.1)
+    exit_code = meta.get("exit_code")
+    if exit_code is None and paths["rc"].exists():
+        try:
+            exit_code = int(paths["rc"].read_text(encoding="utf-8").strip())
+        except ValueError:
+            exit_code = None
+    return {
+        "session_id": session_id,
+        "exit_code": exit_code,
+        "timed_out": timed_out,
+    }
+
+
+def logs_impl(
+    session_id: str,
+    stderr: bool = False,
+    tail: int | None = None,
+    **kwargs: Any,
+) -> str:
+    """Return the canonical logs payload for a session as a string.
+
+    Returns stdout by default, stderr when ``stderr=True``, and the
+    last ``tail`` lines when ``tail`` is set. The test contract pins
+    the return type as ``str`` (with error prefixes inlined).
+
+    Pinned by ``TestLogsImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return f"Error: {exc}"
+    if not meta_path.exists():
+        return f"Error: session meta not found: {session_id}"
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    log_path = paths["stderr"] if stderr else paths["stdout"]
+    if not log_path.exists():
+        return f"Log file missing: {log_path.name}"
+    content = log_path.read_text(encoding="utf-8")
+    if tail is not None:
+        lines = content.splitlines()
+        content = "\n".join(lines[-tail:])
+    return content
+
+
+def session_meta_impl(session_id: str, **kwargs: Any) -> dict[str, Any]:
+    """Return the canonical session-meta payload.
+
+    Pinned by ``TestSessionMetaImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter as exc:
+        return {"error": str(exc), "session_id": session_id}
+    if not meta_path.exists():
+        return {"error": f"session meta not found: {session_id}", "session_id": session_id}
+    meta = _read_session_meta(meta_path)
+    return {
+        "session_id": session_id,
+        "agent": meta.get("agent"),
+        "owner": meta.get("owner"),
+        "started_at_utc": meta.get("started_at_utc"),
+        "metadata": meta,
+    }
+
+
+# ---------------------------------------------------------------------------
+# WL-125 helper-attribute stubs (monkeypatch sites for run_post_surface_helpers,
+# run_session_helpers, and pre_work_gate_helpers). The canonical owners of
+# these symbols live in their respective service helpers; impl merely exposes
+# them so monkeypatch.setattr("thegent.cli.commands.impl.<name>", ...) resolves.
+# ---------------------------------------------------------------------------
+
+
+def _resolve_latest_session_id(settings: Any) -> str:
+    """Resolve the most recent session id under ``settings.session_dir``.
+
+    The canonical implementation lives in ``thegent.cli.services.run_session_helpers``.
+    This thin delegation ensures the WL-125 patch site
+    ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.<x>", ...)``
+    is observed by callers that invoke ``impl._resolve_latest_session_id``.
+    """
+
+    return run_session_helpers.resolve_latest_session_id(settings=settings)
+
+
+def _normalize_contract_string(value: Any) -> str | None:
+    """Normalize a state-contract field to a stripped string or ``None``.
+
+    Delegates to ``thegent.cli.services.run_session_helpers`` so the WL-125
+    patch sites can replace the canonical implementation at test time.
+    """
+
+    return run_session_helpers.normalize_contract_string(value)
+
+
+def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
+    """Default ``session_send_impl`` dispatcher used by ``resume_impl``.
+
+    The canonical implementation lives in
+    ``thegent.cli.services.run_session_helpers``; this stub exists so the
+    WL-125 patch site
+    ``monkeypatch.setattr("thegent.cli.commands.impl.session_send_impl", ...)``
+    resolves cleanly when no override is supplied.
+    """
+
+    return run_session_helpers.session_send_impl(
+        session_id=session_id,
+        message=message,
+        msg_type=msg_type,
+    )
+
+
+def list_agents_impl() -> list[dict[str, str]]:
+    """List agent backends exposed via the MCP ``agents`` resource.
+
+    Thin delegate to :func:`run_post_surface_helpers.list_agents_impl`
+    so WL-125 monkeypatch sites that target ``impl.list_agents_impl``
+    (e.g. ``tests/test_unit_mcp.py``) resolve cleanly.
+    """
+    return run_post_surface_helpers.list_agents_impl()
+
+
+def events_impl(
+    run_id: str | None = None,
+    limit: int = 100,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """Return run-registry events filtered by ``run_id`` and capped by ``limit``.
+
+    The canonical registry file lives at ``<session_dir>/run_registry.jsonl``
+    and contains one JSON object per line.
+
+    Pinned by ``TestEventsImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    import orjson as _json
+
+    settings = ThegentSettings()
+    registry_path = Path(settings.session_dir) / "run_registry.jsonl"
+    if not registry_path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    for raw in registry_path.read_text(encoding="utf-8").splitlines():
+        if not raw.strip():
+            continue
+        try:
+            obj = _json.loads(raw)
+        except Exception:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        events.append(obj)
+    if run_id is not None:
+        events = [e for e in events if e.get("run_id") == run_id]
+    if limit is not None and limit > 0:
+        events = events[-limit:]
+    return events
+
+
+def history_impl(limit: int = 50, **kwargs: Any) -> list[dict[str, Any]]:
+    """Return the most-recent runs from the run registry.
+
+    Pinned by ``TestHistoryImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
+    if hasattr(registry, "list_runs"):
+        runs = registry.list_runs(limit=limit)
+        return list(runs or [])
+    # Fallback: read the canonical registry file when list_runs is unavailable.
+    return events_impl(run_id=None, limit=limit)
+
+
+def ps_impl(
+    all: bool = False,  # noqa: A002 — test surface
+    owner: str | None = None,
+    include_contract: bool = False,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """List session-process rows.
+
+    When ``all=True`` scans every scope dir under ``session_dir``;
+    otherwise filters to the current owner (or ``owner=``).
+
+    Pinned by ``TestPsImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    settings = ThegentSettings()
+    session_root = Path(settings.session_dir)
+    if all:
+        owner_filter: str | None = None
+        scope_dirs: list[Path] = sorted(p for p in session_root.iterdir() if p.is_dir())
+    else:
+        owner_filter = owner or _default_owner_tag(Path.cwd())
+        scope_dirs = _session_scope_dirs(session_root, owner_filter)
+    rows: list[dict[str, Any]] = []
+    for scope_dir in scope_dirs:
+        for meta_path in sorted(scope_dir.glob("*.json")):
+            try:
+                meta = _read_session_meta(meta_path)
+            except Exception:
+                continue
+            sid = meta.get("session_id") or meta_path.stem
+            pid = int(meta.get("pid") or 0)
+            running = bool(_is_pid_running(pid))
+            if owner_filter is not None and meta.get("owner") != owner_filter:
+                continue
+            prompt = str(meta.get("prompt") or "")
+            prompt_preview = prompt if len(prompt) <= 40 else prompt[:40] + "..."
+            row: dict[str, Any] = {
+                "id": sid,
+                "session_id": sid,
+                "owner": meta.get("owner"),
+                "agent": meta.get("agent"),
+                "pid": pid,
+                "running": running,
+                "started_at_utc": meta.get("started_at_utc"),
+                "status": _resolve_session_status(meta, scope_dir / f"{sid}.rc", running=running),
+                "prompt_preview": prompt_preview,
+            }
+            if include_contract and "route_contract" in meta:
+                row["route_contract"] = meta["route_contract"]
+            rows.append(row)
+    return rows
+
+
+def inspect_impl(
+    session_ids: list[str],
+    owner: str | None = None,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
+    """Return a list of inspect payloads for one or more sessions.
+
+    When ``session_ids`` is empty, scans all sessions owned by
+    ``owner`` (or the default owner tag if ``owner`` is ``None``).
+
+    Pinned by ``TestInspectImpl`` in tests/test_unit_cli_impl_session.py.
+    """
+    if not session_ids and owner is None:
+        return []
+    settings = ThegentSettings()
+    results: list[dict[str, Any]] = []
+    if not session_ids:
+        # Owner-discovery path: scan every scope dir for the owner prefix.
+        owner_tag = owner or _default_owner_tag(Path.cwd())
+        scope_dirs = _session_scope_dirs(Path(settings.session_dir), owner_tag)
+        for scope_dir in scope_dirs:
+            for meta_path in sorted(scope_dir.glob("*.json")):
+                sid = meta_path.stem
+                results.extend(_inspect_one(settings, sid))
+        return results
+    for sid in session_ids:
+        results.extend(_inspect_one(settings, sid))
+    return results
+
+
+def _inspect_one(settings: ThegentSettings, session_id: str) -> list[dict[str, Any]]:
+    """Helper: build the inspect payload for a single session."""
+    try:
+        meta_path = _find_session_meta(settings, session_id)
+    except typer.BadParameter:
+        return []
+    if not meta_path.exists():
+        return []
+    meta = _read_session_meta(meta_path)
+    paths = _session_paths(Path(settings.session_dir), session_id)
+    stdout_text = ""
+    if paths["stdout"].exists():
+        stdout_text = paths["stdout"].read_text(encoding="utf-8")
+    return [
+        {
+            "session_id": session_id,
+            "owner": meta.get("owner"),
+            "agent": meta.get("agent"),
+            "logs": stdout_text,
+            "pid": meta.get("pid"),
+        }
+    ]
+
+
+# NOTE: ``history_impl`` and ``events_impl`` are defined earlier in this
+# module (canonical single home — AUDIT-N+14 removed the duplicate
+# definitions that previously shadowed the canonical pair).
 
 __all__ = [
+    # AUDIT-N+9: observability surface (canonical home: observability_impl)
     "_inject_time_constraint",
-    "_resolve_cwd",
-    "_resolve_droids_dir",
-    "_compose_owner_tag",
-    "_default_owner_tag",
-    "_EAGAIN_ERRNOS",
-    "_backoff_delay",
-    "_retry_if_eagain",
-    "_atomic_write",
-    "_spawn_with_eagain_retry",
     "_append_observe_summary_snapshot",
     "_validate_image_capability",
     "_resolve_audio_transcript_for_output",
     "_resolve_grounding_sources_for_output",
-    "HEALTH_PAYLOAD_SCHEMA_VERSION",
-    "_write_session_state",
-    "_normalize_image_paths",
-    "_build_audio_summary_metadata",
-    "_build_run_event_details",
     "_append_health_snapshot",
     "observe_summary_impl",
-    "DagDocument",
-    "DagPrioritizer",
+    # AUDIT-N+13: dormant-core trend payload wire-up.
+    "_build_observe_trend_block",
+    "_build_observe_trend_payload",
+    # AUDIT-N+12: session lifecycle surface (canonical home: session_impl)
+    "_is_pid_running",
+    "_scope_key",
+    "_session_paths",
+    "_new_session_id",
+    "_save_session_meta",
+    "_read_session_meta",
+    "_find_session_meta",
+    "_resolve_session_status",
+    "_resolve_agent_model",
+    "_load_prior_session_output",
+    "_CONTINUATION_TAIL_CHARS",
+    "_CWD_CACHE",
+    "_session_dir",
+    "_session_scope_dirs",
+    "_build_continuation_prompt",
+    # AUDIT-N+12: I/O helpers (canonical home: impl.py)
+    "_resolve_cwd",
+    "_resolve_droids_dir",
+    "_compose_owner_tag",
+    "_default_owner_tag",
+    "_backoff_delay",
+    "_retry_if_eagain",
+    "_atomic_write",
+    "_spawn_with_eagain_retry",
+    "_EAGAIN_ERRNOS",
+    "_write_session_state",
+    "_normalize_image_paths",
+    # Public entry points (canonical home: impl.py)
     "run_impl",
     "logs_impl",
     "ps_impl",
@@ -516,65 +700,289 @@ __all__ = [
     "list_impl",
     "session_list_impl",
     "bg_impl",
-    "_build_continuation_prompt",
-    "_build_observe_summary_trend_scope",
-    "dag_list_impl",
-    "_append_context_usage",
-    "_check_dag_cycles",
-    "dag_raw_impl",
-    "_coerce_issue_types",
-    "_classify_observe_summary_trend_health",
-    "list_agents_impl",
-    "_compact_health_snapshot_log",
-    "_session_state_path",
+    # AUDIT-N+18 / WL-125: orchestration wrappers (canonical home:
+    # thegent.cli.services.work_stream_orchestration).
+    "do_next_impl",
+    "wait_next_impl",
+    "spawn_next_impl",
+    "work_stream_claim_impl",
+    "work_stream_complete_impl",
+    "incorporate_impl",
+    "continuity_snapshot_impl",
+    # DAG model classes (canonical home: impl.py)
+    "DagDocument",
+    "DagPrioritizer",
 ]
 
 
-def _compact_health_snapshot_log(log_path: str, max_entries: int = 1000) -> int:
-    """Compact health snapshot log by keeping only recent entries.
+# AUDIT-N+9: re-export observability surface for backward compat with
+# external callers that still import from thegent.cli.commands.impl
+from thegent.cli.commands.observability_impl import (  # noqa: F401
+    observe_summary_impl,
+    _inject_time_constraint,
+    _append_observe_summary_snapshot,
+    _append_health_snapshot,
+    _build_observe_summary_trend_scope,
+    _build_observe_trend_block,
+    _build_observe_trend_payload,
+    _classify_observe_summary_trend_health,
+    _compact_health_snapshot_log,
+    _hash_health_payload,
+    _hash_observe_summary_payload,
+    _hash_observe_summary_trend_scope,
+    _load_observe_summary_snapshots,
+    _load_previous_health_snapshot,
+    _observe_summary_freshness_bucket,
+    _parse_observe_summary_env_float,
+    _parse_observe_summary_env_int,
+    _parse_observe_summary_timestamp,
+    _resolve_audio_transcript_for_output,
+    _resolve_grounding_sources_for_output,
+    _resolve_health_policy,
+    _run_background_session_observer,
+    _validate_image_capability,
+    _build_audio_summary_metadata,
+    _build_run_event_details,
+    _health_scope_key,
+)
 
-    Args:
-        log_path: Path to the log file.
-        max_entries: Maximum number of entries to keep.
+# AUDIT-N+27: no WL-120 shadow wrappers for the AUDIT-N+9 moved helpers
+# (``_resolve_audio_transcript_for_output`` /
+# ``_resolve_grounding_sources_for_output`` /
+# ``_build_audio_summary_metadata`` / ``_build_run_event_details``).
+# Each is a single canonical implementation in
+# :mod:`thegent.cli.commands.observability_impl` (which dispatches to the
+# service modules) so the WL-125 monkeypatch sites
+# (``impl.run_event_helpers.<name>``, ``impl.run_audio_helpers.<name>``,
+# ``impl.run_input_helpers.<name>``) are observed via the shared module
+# identity between ``impl`` and ``observability_impl`` for the imported
+# service modules. The re-export block above is the AUDIT-N+9 identity
+# contract — ``impl.<name> is observability_impl.<name>`` for every
+# member of :data:`tests.test_unit_audit_n9_observability_impl_extraction_parity.MOVED_HELPERS`.
 
-    Returns:
-        Number of entries removed.
+
+def _resolve_agent_model(
+    agent: str,
+    model: str | None = None,
+    mode: str = "full",
+    settings: Any = None,
+) -> str:
+    """WL-125 thin delegate to :func:`run_session_helpers.resolve_agent_model`.
+
+    Routes through ``run_session_helpers`` (not ``run_model_helpers``)
+    so that monkeypatch sites targeting
+    ``impl.run_session_helpers.resolve_agent_model`` are observed.
     """
-    return 0
+    from thegent.cli.services import run_session_helpers as _rsh
+
+    return _rsh.resolve_agent_model(
+        agent=agent,
+        model=model,
+        mode=mode,
+        settings=settings,
+    )
+
+
+# AUDIT-N+12: re-export the session-lifecycle surface from
+# :mod:`thegent.cli.commands.session_impl`. These helpers previously
+# lived inline in ``impl.py`` but were never reachable because the
+# surface was incomplete (missing ``_CONTINUATION_TAIL_CHARS``,
+# ``_CWD_CACHE``, ``_load_prior_session_output``,
+# ``_resolve_agent_model`` 4-arg form, etc.). Extracting them into a
+# canonical module preserves the ``impl.<x>`` import path for legacy
+# callers and ``tests/test_unit_cli_impl_session.py`` patch sites.
+# AUDIT-N+16 (WL-125 closure): wrapped in try/except so partially-stubbed
+# ``session_impl`` modules (used by ``tests/test_wl125_*_parity.py`` to
+# isolate ``impl.py`` import surface) don't fail. Falls back to
+# module-level sentinel attributes that callers can ``monkeypatch``.
+_SESSION_IMPL_REEXPORTS = (
+    "_CONTINUATION_TAIL_CHARS",
+    "_CWD_CACHE",
+    "_is_pid_running",
+    "_scope_key",
+    "_session_paths",
+    "_new_session_id",
+    "_save_session_meta",
+    "_read_session_meta",
+    "_find_session_meta",
+    "_resolve_session_status",
+    "_resolve_cwd",
+    "_compose_owner_tag",
+    "_default_owner_tag",
+    "_load_prior_session_output",
+    "_build_continuation_prompt",
+    "_session_dir",
+    "_session_scope_dirs",
+    "_run_background_session_observer",
+    # WL-125: _resolve_agent_model intentionally excluded — the
+    # canonical definition at line ~783 delegates through
+    # run_session_helpers so monkeypatch sites targeting
+    # impl.run_session_helpers.resolve_agent_model are observed.
+)
+try:
+    from thegent.cli.commands import session_impl as _session_impl  # noqa: F401
+
+    _sym: str  # noqa: F842 - always bound below
+    for _sym in _SESSION_IMPL_REEXPORTS:
+        try:
+            globals()[_sym] = getattr(_session_impl, _sym)
+        except AttributeError:  # pragma: no cover - defensive
+            globals()[_sym] = None
+except ImportError:  # pragma: no cover - defensive
+    for _sym in _SESSION_IMPL_REEXPORTS:
+        globals().setdefault(_sym, None)
+del _SESSION_IMPL_REEXPORTS
+# AUDIT-N+12: surface ``thegent.cli.services.run_observe_helpers`` as a
+# module attribute on ``impl`` so legacy ``monkeypatch.setattr`` sites
+# like ``monkeypatch.setattr("thegent.cli.commands.impl.run_observe_helpers.<x>", ...)``
+# (in ``tests/test_wl125_run_observe_helpers_parity.py``) resolve.
+from thegent.cli.services import run_observe_helpers  # noqa: F401
+
+
+# AUDIT-N+12: surface ``thegent.cli.services.observability`` as a module
+# attribute on ``impl`` so the WL-120 reconciliation tests can monkeypatch
+# the dormant trend/escalation builders via
+# ``monkeypatch.setattr("thegent.cli.commands.impl.services_observability.<x>", ...)``.
+from thegent.cli.services import observability as services_observability  # noqa: F401
+
+
+# AUDIT-N+16 (WL-125 closure): surface ``thegent.cli.services.prompt_constraint_helpers``
+# as a module attribute on ``impl`` so legacy ``monkeypatch.setattr`` sites like
+# ``monkeypatch.setattr("thegent.cli.commands.impl.prompt_constraint_helpers.<x>", ...)``
+# (in ``tests/test_wl125_prompt_constraint_helpers_parity.py``) resolve.
+from thegent.cli.services import prompt_constraint_helpers  # noqa: F401
+
+
+# AUDIT-N+16 (WL-125 closure): surface canonical ``thegent.cli.services`` helper
+# modules as attributes on ``impl`` so legacy ``monkeypatch.setattr`` sites
+# like ``monkeypatch.setattr("thegent.cli.commands.impl.<svc_module>.<x>", ...)``
+# (in ``tests/test_wl125_*_parity.py``) resolve. These are thin re-exports:
+# canonical implementations live in the respective ``services`` submodules.
+from thegent.cli.services import pre_work_gate_helpers  # noqa: F401
+from thegent.cli.services import process_helpers  # noqa: F401
+from thegent.cli.services import retry_helpers  # noqa: F401
+from thegent.cli.services import run_audio_helpers  # noqa: F401
+from thegent.cli.services import run_dag_helpers  # noqa: F401
+from thegent.cli.services import run_event_helpers  # noqa: F401
+from thegent.cli.services import run_health_helpers  # noqa: F401
+from thegent.cli.services import run_input_helpers  # noqa: F401
+from thegent.cli.services import run_model_helpers  # noqa: F401
+from thegent.cli.services import run_post_surface_helpers  # noqa: F401
+from thegent.cli.services import run_session_helpers  # noqa: F401
+from thegent.cli.services import run_workstream_helpers  # noqa: F401
+from thegent.cli.services import session_id_helpers  # noqa: F401
+from thegent.cli.services import session_path_helpers  # noqa: F401
+from thegent.cli.services import spawn_retry_helpers  # noqa: F401
+
+
+# AUDIT-N+16 (WL-125 closure): re-export the ``SECONDS_PER_TOOL_CALL`` constant
+# from the canonical home so external callers (and
+# ``tests/test_wl125_prompt_constraint_helpers_parity.py``) can read it via
+# ``thegent.cli.commands.impl.SECONDS_PER_TOOL_CALL``. NOTE: We deliberately do
+# NOT re-define ``_inject_time_constraint`` here — the canonical version is
+# re-exported from ``observability_impl`` above (AUDIT-N+9 identity contract)
+# and now delegates to ``prompt_constraint_helpers.inject_time_constraint`` at
+# runtime (AUDIT-N+16). This satisfies the WL-125 patch site contract:
+# ``monkeypatch.setattr("thegent.cli.commands.impl.prompt_constraint_helpers.inject_time_constraint", ...)``
+# is observed by the next ``impl._inject_time_constraint(...)`` call.
+try:
+    from thegent.cli.services.prompt_constraint_helpers import (  # noqa: F401
+        SECONDS_PER_TOOL_CALL,
+    )
+except ImportError:  # pragma: no cover - defensive
+    SECONDS_PER_TOOL_CALL = 2.3  # type: ignore[assignment, has-type]
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+14: re-export the canonical imports so the test mocks at
+# ``thegent.cli.commands.impl.<x>`` resolve. Each test patches names like
+# ``thegent.cli.commands.impl.resolve_agent`` / ``impl.subprocess`` /
+# ``impl.ThegentSettings`` / ``impl.MigrationController`` / etc.; without
+# these re-exports the ``@patch(...)`` decorators raise
+# ``AttributeError: module ... does not have the attribute '...'``.
+# ---------------------------------------------------------------------------
+from thegent.agents import get_fallback_agents, get_runner, resolve_agent  # noqa: F401
+from thegent.agents.base import AgentRunner, RunResult  # noqa: F401
+from thegent.agents.resilience import is_usage_limit  # noqa: F401
+from thegent.cli.commands._cli_shared import RunRegistry  # noqa: F401
+from thegent.config import ThegentSettings  # noqa: F401
+from thegent.contracts.telemetry import (  # noqa: F401
+    ContractTelemetry,
+    rank_providers_by_parser_quality,
+)
+import subprocess as _subprocess  # noqa: F401
+from thegent.execution import (  # noqa: F401
+    AgentSource,
+    Auditor,
+    CircuitBreakerRegistry,
+    ConcurrencyController,
+    FreshnessValidator,
+    InterruptionTracker,
+    InteractivityMode,
+    LoadClassifier,
+    OverrideRegistry,
+    PolicyEngine,
+    RunMeta,
+    TrustBoundaryValidator,
+)
+from thegent.output_parser import extract_condensed  # noqa: F401
+
+# Aliases that the test patch sites reference.
+subprocess = _subprocess
+ThegentSettingsCls = ThegentSettings
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+14: real entry-point implementations
+# ---------------------------------------------------------------------------
+# AUDIT-N+10: re-export governance / escalation / HITL / data-protection
+# surface for backward compat with external callers (and the legacy
+# ``tests/test_unit_cli_*.py`` patch sites) that still import from
+# ``thegent.cli.commands.impl``. The canonical home for these 9 symbols
+# is :mod:`thegent.cli.governance.governance_impl`.
+from thegent.cli.governance.governance_impl import (  # noqa: F401
+    escalate_add_impl,
+    escalate_approve_impl,
+    escalate_list_impl,
+    escalate_resolve_impl,
+    govern_approve_impl,
+    govern_reject_impl,
+    govern_list_pending_impl,
+    harness_register_host_impl,
+    get_data_protection_status_impl,
+    sweep_impl,
+)
 
 
 # Session state path helper
 def _session_state_path(session_id: str) -> str:
     """Get session state path for session."""
     import os
+
     base = os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions")
     return str(Path(base) / session_id / "session_state.json")
 
 
 def _coerce_issue_types(issues: list[dict[str, Any]]) -> list[str]:
-    """Coerce issue dictionaries to type strings.
+    """Coerce issue-type values to a list of strings.
 
     Args:
-        issues: List of issue dictionaries.
+        issues: List of issue dicts (each may have a ``type`` key).
 
     Returns:
-        List of issue type strings.
+        List of issue type strings (``"unknown"`` for entries missing it).
     """
     return [issue.get("type", "unknown") for issue in issues]
 
 
-def _classify_observe_summary_trend_health(
-    trend_data: dict[str, Any],
-) -> str:
-    """Classify the health of observe summary trend data.
+def _health_snapshot_log_path() -> Path:
+    """WL-125 delegate to :func:`run_health_helpers.health_snapshot_log_path`."""
+    return run_health_helpers.health_snapshot_log_path()
 
-    Args:
-        trend_data: Trend data dictionary.
 
-    Returns:
-        Health classification string.
-    """
-    return "healthy"
+def _health_snapshot_max_lines() -> int:
+    """WL-125 delegate to :func:`run_health_helpers.health_snapshot_max_lines`."""
+    return run_health_helpers.health_snapshot_max_lines()
 
 
 def _check_dag_cycles(dag: dict[str, Any]) -> list[list[str]]:
@@ -589,60 +997,24 @@ def _check_dag_cycles(dag: dict[str, Any]) -> list[list[str]]:
     return []
 
 
-def dag_raw_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for DAG raw command.
+def dag_raw_impl(*, cd: Path | None = None, **kwargs: Any) -> dict[str, Any]:  # noqa: F811
+    """AUDIT-N+19: delegate to :func:`dag_impl.dag_raw_impl`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Raw DAG result dictionary.
-    """
-    return {"nodes": [], "edges": []}
+    return _dag_impl.dag_raw_impl(cd=cd)
 
 
-def _build_continuation_prompt(context: dict[str, Any]) -> str:
-    """Build a continuation prompt from context.
-
-    Args:
-        context: Context dictionary.
-
-    Returns:
-        Continuation prompt string.
-    """
-    return "Continue from where you left off."
+# AUDIT-N+14: ``_build_continuation_prompt`` lives in
+# :mod:`thegent.cli.commands.session_impl` (canonical home, 4-arg form
+# with ``include_stderr`` keyword). The local stub is removed so the
+# AUDIT-N+12 re-export binds the canonical form.
 
 
-def _build_observe_summary_trend_scope(
-    trend_samples: int | None = None,
-    limit: int = 500,
-) -> dict[str, Any]:
-    """Build observe summary trend scope parameters.
+def dag_list_impl(*, cd: Path | None = None, **kwargs: Any) -> dict[str, Any]:  # noqa: F811
+    """AUDIT-N+19: delegate to :func:`dag_impl.dag_list_impl`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        trend_samples: Number of trend samples.
-        limit: Maximum events to analyze.
-
-    Returns:
-        Trend scope dictionary.
-    """
-    return {
-        "trend_samples": trend_samples,
-        "limit": limit,
-        "enabled": trend_samples is not None,
-    }
-
-
-def dag_list_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for DAG list command.
-
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        DAG list result dictionary.
-    """
-    return {"items": [], "count": 0}
+    return _dag_impl.dag_list_impl(cd=cd)
 
 
 def _append_context_usage(snapshot: dict[str, Any], usage: dict[str, Any]) -> None:
@@ -657,296 +1029,101 @@ def _append_context_usage(snapshot: dict[str, Any], usage: dict[str, Any]) -> No
     snapshot["context_usage"].append(usage)
 
 
-def _dag_path(dag_id: str) -> str:
-    """Get the file path for a DAG document.
+def _dag_path(cwd: Path | None) -> tuple[Path | None, Path | None]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._dag_path`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_id: DAG document identifier.
-
-    Returns:
-        File path string.
-    """
-    from pathlib import Path
-    import os
-    base_dir = os.environ.get("THGENT_DAG_DIR", "/tmp/thegent/dags")
-    return str(Path(base_dir) / f"{dag_id}.json")
+    return _dag_impl._dag_path(cwd)
 
 
-def _dag_update_task(dag_id: str, task_id: str, updates: dict[str, Any]) -> None:
-    """Update a task in a DAG document.
+def _dag_update_task(  # noqa: F811 - canonical AUDIT-N+19 dispatch
+    doc: Any,
+    task_id: str,
+    *,
+    status: str | None = None,
+    session_id: str | None = None,
+) -> Any:
+    """AUDIT-N+19: delegate to :func:`dag_impl._dag_update_task`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_id: DAG document identifier.
-        task_id: Task identifier.
-        updates: Dictionary of updates to apply.
-    """
-
-
-def list_agents_impl(**kwargs: Any) -> dict[str, Any]:
-    """Implementation for list agents command.
-
-    Args:
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        List of agents result dictionary.
-    """
-    return {"agents": [], "count": 0}
+    return _dag_impl._dag_update_task(
+        doc,
+        task_id,
+        status=status,
+        session_id=session_id,
+    )
 
 
-def _ensure_contract_version_header(headers: dict[str, str]) -> dict[str, str]:
-    """Ensure contract version header is present.
+def _ensure_contract_version_header(doc: Any) -> None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._ensure_contract_version_header`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        headers: Dictionary of headers.
-
-    Returns:
-        Updated headers with contract version.
-    """
-    if "X-Contract-Version" not in headers:
-        headers["X-Contract-Version"] = "1.0"
-    return headers
+    return _dag_impl._ensure_contract_version_header(doc)
 
 
-def session_meta_impl(session_id: str, **kwargs: Any) -> dict[str, Any]:
-    """Implementation for session metadata command.
-
-    Args:
-        session_id: The session ID.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        Session metadata result dictionary.
-    """
-    return {"session_id": session_id, "metadata": {}}
+# NOTE: ``session_meta_impl`` is defined earlier in this module
+# (canonical real implementation — AUDIT-N+14 removed the legacy stub).
 
 
-def _ensure_dag_file(dag_path: str, **kwargs: Any) -> bool:
-    """Ensure a DAG file exists.
+def _ensure_dag_file(path: str | Path) -> Any:
+    """AUDIT-N+19: delegate to :func:`dag_impl._ensure_dag_file`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_path: Path to the DAG file.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        True if file exists or was created.
-    """
-    from pathlib import Path
-    path = Path(dag_path)
-    if path.exists():
-        return True
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("{}")
-    return True
+    return _dag_impl._ensure_dag_file(path)
 
 
-def _ensure_evidence_header(headers: dict[str, str]) -> dict[str, str]:
-    """Ensure evidence header is present.
+def _ensure_evidence_header(doc: Any) -> None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._ensure_evidence_header`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        headers: Dictionary of headers.
-
-    Returns:
-        Updated headers with evidence.
-    """
-    if "X-Evidence-Version" not in headers:
-        headers["X-Evidence-Version"] = "1.0"
-    return headers
+    return _dag_impl._ensure_evidence_header(doc)
 
 
 def _escape_cell(value: str) -> str:
-    """Escape a cell value for CSV output.
+    """AUDIT-N+19: delegate to :func:`dag_impl._escape_cell`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        value: The cell value to escape.
-
-    Returns:
-        Escaped cell value.
-    """
-    if "," in value or '"' in value or "\n" in value:
-        return '"' + value.replace('"', '""') + '"'
-    return value
+    return _dag_impl._escape_cell(value)
 
 
-def _get_ready_task_ids(dag: dict[str, Any]) -> list[str]:
-    """Get IDs of tasks that are ready to execute.
+def _get_ready_task_ids(tasks: list[dict[str, Any]]) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._get_ready_task_ids`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag: DAG dictionary.
-
-    Returns:
-        List of ready task IDs.
-    """
-    tasks = dag.get("tasks", [])
-    ready = []
-    for task in tasks:
-        if task.get("status") == "ready":
-            ready.append(task.get("id", ""))
-    return [r for r in ready if r]
-
-
-def _hash_health_payload(payload: dict[str, Any]) -> str:
-    """Generate hash of a health payload.
-
-    Args:
-        payload: Health payload dictionary.
-
-    Returns:
-        Hash string.
-    """
-    import hashlib
-    import json
-    content = json.dumps(payload, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-
-def _health_scope_key(session_id: str, scope: str) -> str:
-    """Generate health scope key.
-
-    Args:
-        session_id: The session ID.
-        scope: The scope string.
-
-    Returns:
-        Scoped key string.
-    """
-    return f"health:{session_id}:{scope}"
-
-
-def _hash_observe_summary_payload(payload: dict[str, Any]) -> str:
-    """Generate hash of an observe summary payload.
-
-    Args:
-        payload: Observe summary payload dictionary.
-
-    Returns:
-        Hash string.
-    """
-    import hashlib
-    import json
-    content = json.dumps(payload, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
-
-
-def _load_previous_health_snapshot(session_dir: Path) -> dict[str, Any] | None:
-    """Load the previous health snapshot from session directory.
-
-    Args:
-        session_dir: The session directory path.
-
-    Returns:
-        Previous health snapshot dictionary or None.
-    """
-    import json
-    snapshot_file = session_dir / "health_snapshot.json"
-    if snapshot_file.exists():
-        return json.loads(snapshot_file.read_text())
-    return None
-
-
-def _hash_observe_summary_trend_scope(trend_scope: dict[str, Any]) -> str:
-    """Generate hash of observe summary trend scope.
-
-    Args:
-        trend_scope: Trend scope dictionary.
-
-    Returns:
-        Hash string.
-    """
-    import hashlib
-    import json
-    content = json.dumps(trend_scope, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
+    return _dag_impl._get_ready_task_ids(tasks)
 
 
 # Constants for health snapshot management
 _health_snapshot_max_lines = 1000
 
 
-def _observe_summary_freshness_bucket(timestamp: float) -> str:
-    """Determine freshness bucket for observe summary timestamp.
+def _parse_dag_full(path: Path) -> Any:  # noqa: F811 - AUDIT-N+19 canonical dispatch
+    """AUDIT-N+19: delegate to :func:`dag_impl._parse_dag_full`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        timestamp: Unix timestamp.
-
-    Returns:
-        Freshness bucket string (e.g., "fresh", "stale", "expired").
-    """
-    import time
-    age = time.time() - timestamp
-    if age < 300:  # 5 minutes
-        return "fresh"
-    elif age < 3600:  # 1 hour
-        return "stale"
-    else:
-        return "expired"
+    return _dag_impl._parse_dag_full(path)
 
 
-def _parse_dag_full(dag_content: str) -> dict[str, Any]:
-    """Parse full DAG content from string.
+def _parse_depends_on(depends_on: Any) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._parse_depends_on`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag_content: Raw DAG content string.
-
-    Returns:
-        Parsed DAG dictionary.
-    """
-    import json
-    return json.loads(dag_content)
+    return _dag_impl._parse_depends_on(depends_on)
 
 
-def _load_observe_summary_snapshots(
-    session_dir: Path,
-    limit: int = 100,
-) -> list[dict[str, Any]]:
-    """Load observe summary snapshots from session directory.
-
-    Args:
-        session_dir: The session directory path.
-        limit: Maximum number of snapshots to load.
-
-    Returns:
-        List of observe summary snapshots.
-    """
-    import json
-    snapshots = []
-    snapshots_dir = session_dir / "observe_snapshots"
-    if snapshots_dir.exists():
-        for f in sorted(snapshots_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:limit]:
-            try:
-                snapshots.append(json.loads(f.read_text()))
-            except Exception:
-                pass
-    return snapshots
-
-
-def _parse_depends_on(depends_on: str | list[str] | None) -> list[str]:
-    """Parse depends_on field from task.
-
-    Args:
-        depends_on: Depends on specification (string, list, or None).
-
-    Returns:
-        List of dependency IDs.
-    """
-    if depends_on is None:
-        return []
-    if isinstance(depends_on, str):
-        return [d.strip() for d in depends_on.split(",") if d.strip()]
-    if isinstance(depends_on, list):
-        return [str(d) for d in depends_on]
-    return []
-
-
-def _normalize_output_format(format: str) -> str:
+def _normalize_output_format(format: str | None) -> str:
     """Normalize output format string.
 
     Args:
-        format: Format string (e.g., "json", "csv", "md").
+        format: Format string (e.g., "json", "csv", "md"). May be ``None``
+            or empty; defaults to ``"rich"`` from the
+            ``THGENT_OUTPUT_FORMAT`` env var when unset.
 
     Returns:
         Normalized format string.
     """
+    if not format:
+        format = os.environ.get("THGENT_OUTPUT_FORMAT", "rich")
     format = format.lower().strip()
     if format in ("json", "jsonl"):
         return "json"
@@ -954,204 +1131,58 @@ def _normalize_output_format(format: str) -> str:
         return "csv"
     if format in ("md", "markdown"):
         return "md"
+    if format in ("rich", "table", "human", ""):
+        return "rich"
     return format
 
 
-def _resolve_health_policy(policy_name: str | None = None) -> dict[str, Any]:
-    """Resolve health policy by name.
+def _serialize_dag(doc: Any) -> str:
+    """AUDIT-N+19: delegate to :func:`dag_impl._serialize_dag`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        policy_name: Name of the health policy (or None for default).
-
-    Returns:
-        Health policy dictionary.
-    """
-    if policy_name is None:
-        policy_name = "default"
-    return {
-        "name": policy_name,
-        "thresholds": {
-            "fallback_rate": 0.1,
-            "success_rate": 0.95,
-        },
-    }
+    return _dag_impl._serialize_dag(doc)
 
 
-def _parse_observe_summary_env_float(
-    env_var: str,
-    default: float,
-) -> float:
-    """Parse observe summary environment variable as float.
+def _validate_dag(doc: Any) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._validate_dag`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        env_var: Environment variable name.
-        default: Default value if not set or invalid.
-
-    Returns:
-        Parsed float value.
-    """
-    import os
-    try:
-        return float(os.environ.get(env_var, default))
-    except (ValueError, TypeError):
-        return default
+    return _dag_impl._validate_dag(doc)
 
 
-def _parse_observe_summary_env_int(
-    env_var: str,
-    default: int,
-) -> int:
-    """Parse observe summary environment variable as int.
+def _check_dag_cycles(tasks: list[dict[str, Any]]) -> list[str]:
+    """AUDIT-N+19: delegate to :func:`dag_impl._check_dag_cycles`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        env_var: Environment variable name.
-        default: Default value if not set or invalid.
-
-    Returns:
-        Parsed int value.
-    """
-    import os
-    try:
-        return int(os.environ.get(env_var, default))
-    except (ValueError, TypeError):
-        return default
+    return _dag_impl._check_dag_cycles(tasks)
 
 
-def _serialize_dag(dag: dict[str, Any], format: str = "json") -> str:
-    """Serialize DAG to string.
+def _validate_task_id(task_id: str) -> str | None:
+    """AUDIT-N+19: delegate to :func:`dag_impl._validate_task_id`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        dag: DAG dictionary.
-        format: Output format (json or yaml).
-
-    Returns:
-        Serialized DAG string.
-    """
-    import json
-    if format == "yaml":
-        import yaml
-        return yaml.dump(dag)
-    return json.dumps(dag, indent=2)
+    return _dag_impl._validate_task_id(task_id)
 
 
-def _validate_dag(dag: dict[str, Any]) -> list[str]:
-    """Validate DAG structure.
-
-    Args:
-        dag: DAG dictionary.
-
-    Returns:
-        List of validation error messages (empty if valid).
-    """
-    errors = []
-    if "tasks" not in dag:
-        errors.append("DAG missing 'tasks' field")
-    else:
-        task_ids = {t.get("id") for t in dag["tasks"]}
-        for task in dag["tasks"]:
-            depends_on = task.get("depends_on", [])
-            for dep in depends_on:
-                if dep not in task_ids:
-                    errors.append(f"Task '{task.get('id')}' depends on unknown task '{dep}'")
-    return errors
-
-
-def _parse_observe_summary_timestamp(ts: str | float | None) -> float:
-    """Parse observe summary timestamp.
-
-    Args:
-        ts: Timestamp string, float, or None.
-
-    Returns:
-        Unix timestamp as float.
-    """
-    import time
-    if ts is None:
-        return time.time()
-    if isinstance(ts, float):
-        return ts
-    if isinstance(ts, str):
-        try:
-            return float(ts)
-        except ValueError:
-            pass
-    return time.time()
-
-
-def _validate_task_id(task_id: str) -> bool:
-    """Validate task ID format.
-
-    Args:
-        task_id: Task ID to validate.
-
-    Returns:
-        True if valid, False otherwise.
-    """
-    import re
-    return bool(re.match(r'^[a-zA-Z0-9_-]+$', task_id))
-
-
-def _resolve_agent_model(model: str | None = None) -> str:
-    """Resolve agent model from configuration or default.
-
-    Args:
-        model: Explicitly specified model or None.
-
-    Returns:
-        Resolved model name.
-    """
-    import os
-    if model:
-        return model
-    return os.environ.get("THGENT_DEFAULT_MODEL", "claude-sonnet-4-5")
+# AUDIT-N+12: ``_resolve_agent_model`` (canonical 4-arg form), and
+# all other session-lifecycle helpers (see :mod:`session_impl`) are
+# re-exported via the AUDIT-N+12 re-export block below. The legacy
+# 1-arg inline stub has been removed; legacy callers must update
+# to the canonical 4-arg signature or use the module-level helper
+# directly.
 
 
 def _resolve_prompt(prompt: str | None = None, prompt_file: str | None = None) -> str:
-    """Resolve prompt from argument or file.
+    """AUDIT-N+19: delegate to :func:`dag_impl._resolve_prompt`."""
+    from thegent.cli.commands import dag_impl as _dag_impl
 
-    Args:
-        prompt: Explicitly specified prompt or None.
-        prompt_file: Path to file containing prompt or None.
-
-    Returns:
-        Resolved prompt string.
-    """
-    if prompt:
-        return prompt
-    if prompt_file:
-        from pathlib import Path
-        return Path(prompt_file).read_text()
-    return ""
+    return _dag_impl._resolve_prompt(prompt=prompt, prompt_file=prompt_file)
 
 
-def _run_background_session_observer(session_id: str, **kwargs: Any) -> None:
-    """Run background session observer.
-
-    Args:
-        session_id: Session ID to observe.
-        **kwargs: Additional keyword arguments.
-    """
-    # Stub: observer runs in background
-
-
-def _session_scope_dirs(session_id: str) -> dict[str, Path]:
-    """Get session scope directories.
-
-    Args:
-        session_id: Session ID.
-
-    Returns:
-        Dictionary of scope name to directory path.
-    """
-    import os
-    base = Path(os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
-    session_dir = base / session_id
-    return {
-        "base": session_dir,
-        "logs": session_dir / "logs",
-        "artifacts": session_dir / "artifacts",
-        "state": session_dir / "state",
-    }
+# AUDIT-N+14: ``_session_scope_dirs`` lives in
+# :mod:`thegent.cli.commands.session_impl` (canonical home, 2-arg form
+# ``(session_dir, owner)`` returning ``list[Path]``). The local stub is
+# removed so the AUDIT-N+12 re-export binds the canonical form.
 
 
 def _session_status_for(session_id: str) -> str:
@@ -1164,6 +1195,7 @@ def _session_status_for(session_id: str) -> str:
         Session status string (running, completed, failed, unknown).
     """
     import os
+
     base = Path(os.environ.get("THGENT_SESSION_DIR", "/tmp/thegent/sessions"))
     session_dir = base / session_id
     lock_file = session_dir / ".lock"
@@ -1177,18 +1209,599 @@ def _session_status_for(session_id: str) -> str:
     return "completed"
 
 
-def get_server_meta_impl(server_name: str, **kwargs: Any) -> dict[str, Any]:
-    """Get server metadata implementation.
+def get_server_meta_impl(server_name: str = "thegent", **kwargs: Any) -> dict[str, Any]:
+    """Build the MCP server-meta payload for thegent://meta.
 
-    Args:
-        server_name: Server name.
-        **kwargs: Additional keyword arguments.
+    Delegates to the canonical
+    :func:`thegent.cli.services.observability.get_server_meta_impl`
+    with the schema-version parameters that the MCP tool surface
+    requires.  The ``server_name`` positional arg is accepted for
+    backward-compatibility with the ``impl.py`` call-site but is
+    forwarded as ``server_name="thegent"`` to the canonical helper.
+    """
+    from thegent.cli.services.observability import (
+        get_server_meta_impl as _canonical_meta,
+    )
 
-    Returns:
-        Server metadata dictionary.
+    # Canonical health payload types served by the MCP tool surface.
+    _health_types = (
+        "session_contract_health_gate",
+        "session_contract_health_report",
+        "session_contract_health_trend",
+    )
+    _observe_types = ("observe_summary",)
+    _profiles = ["strict_ci", "warn_only"]
+
+    return _canonical_meta(
+        health_payload_schema_version="health-schema-v1",
+        health_payload_types=_health_types,
+        observe_summary_payload_schema_version="observe-summary-schema-v1",
+        observe_summary_payload_types=_observe_types,
+        health_policy_profiles=_profiles,
+    )
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+16 (WL-125 closure): thin delegation wrappers that shadow the
+# AUDIT-N+9 / AUDIT-N+12 re-exports above so that legacy
+# ``monkeypatch.setattr("thegent.cli.commands.impl.<svc_module>.<x>", ...)``
+# patch sites observe the patched callable on next invocation. Each wrapper
+# is a 1-3 line forward to the canonical module function so the WL-125
+# delegation contract is satisfied.
+# ---------------------------------------------------------------------------
+
+_DEFAULT_IMAGE_SUFFIXES: frozenset[str] = frozenset({".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff"})
+
+
+def _model_supports_vision(model: str) -> bool:
+    """Default vision-capability check (returns True; override via monkeypatch).
+
+    AUDIT-N+16: bound as the default ``model_supports_vision_impl`` callback
+    for :func:`_validate_image_capability` so legacy test patch sites
+    (``monkeypatch.setattr("thegent.cli.commands.impl._model_supports_vision", ...)``
+    in ``tests/test_wl114_image_flag.py``) continue to work.
+    """
+    return True
+
+
+# -- process / retry / spawn_retry -----------------------------------------
+# WL-125 closure: ``_is_pid_running`` is re-exported from
+# ``session_impl`` (canonical home) as a thin live-lookup delegate
+# to ``process_helpers.is_pid_running``. The monkeypatch site
+# ``monkeypatch.setattr("thegent.cli.commands.impl.process_helpers.is_pid_running", ...)``
+# is observed. Canonical home is :mod:`thegent.cli.commands.session_impl`.
+
+
+def _backoff_delay(attempt: int, *, max_delay: float = 60.0) -> float:
+    """WL-125 delegate to :func:`retry_helpers.backoff_delay`."""
+    return retry_helpers.backoff_delay(attempt=attempt, max_delay=max_delay)
+
+
+def _retry_if_eagain(exc: BaseException) -> bool:
+    """WL-125 delegate to :func:`spawn_retry_helpers.retry_if_eagain`."""
+    return spawn_retry_helpers.retry_if_eagain(exc)
+
+
+# -- pre-work gate helpers ------------------------------------------------
+
+
+def _pre_work_gate_defaults() -> dict[str, Any]:
+    """WL-125 delegate to :func:`pre_work_gate_helpers.pre_work_gate_defaults`."""
+    return pre_work_gate_helpers.pre_work_gate_defaults()
+
+
+def _pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]:
+    """WL-125 delegate to :func:`pre_work_gate_helpers.pre_work_gate_thresholds`."""
+    return pre_work_gate_helpers.pre_work_gate_thresholds(project_dir)
+
+
+def _evidence_age_minutes(path: Path) -> int:
+    """WL-125 delegate to :func:`pre_work_gate_helpers.evidence_age_minutes`."""
+    return pre_work_gate_helpers.evidence_age_minutes(path)
+
+
+def _pre_work_governance_block_payload(
+    *,
+    project_dir: Path,
+    thresholds: dict[str, Any],
+    violations: list[dict[str, Any]],
+    config_source: str,
+) -> dict[str, Any]:
+    """WL-125 delegate to :func:`pre_work_gate_helpers.pre_work_governance_block_payload`."""
+    return pre_work_gate_helpers.pre_work_governance_block_payload(
+        project_dir=project_dir,
+        thresholds=thresholds,
+        violations=violations,
+        config_source=config_source,
+    )
+
+
+def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
+    """WL-125 delegate to :func:`pre_work_gate_helpers.enforce_pre_work_hard_gate`."""
+    return pre_work_gate_helpers.enforce_pre_work_hard_gate(project_dir)
+
+
+# -- run_audio_helpers ----------------------------------------------------
+# AUDIT-N+27: no AUDIT-N+9 shadow wrapper for ``_build_audio_summary_metadata``.
+# The observability_impl re-export (``impl._build_audio_summary_metadata is
+# obs._build_audio_summary_metadata``) is pinned by the AUDIT-N+9 identity
+# test in tests/test_unit_audit_n9_observability_impl_extraction_parity.py.
+# The WL-125 module-attribute re-export above is sufficient — legacy callers
+# that need ``run_audio_helpers.build_audio_summary_metadata`` delegate
+# through that module attribute.
+
+
+# -- run_event_helpers ----------------------------------------------------
+# AUDIT-N+27: no AUDIT-N+9 shadow wrapper for ``_resolve_audio_transcript_for_output`` /
+# ``_build_run_event_details``: the same AUDIT-N+9 identity contract applies
+# (see observability_impl re-export block). WL-125 callers reach the
+# canonical implementation via ``impl.run_event_helpers.<x>``.
+
+
+# -- run_health_helpers ---------------------------------------------------
+# AUDIT-N+9 identity contract: ``impl._hash_health_payload``,
+# ``impl._append_health_snapshot``, and ``impl._compact_health_snapshot_log``
+# resolve to ``observability_impl.<same_name>``. The AUDIT-N+9 re-export
+# block at the top of this file binds those names. The WL-125 functional
+# contract is observed through the ``run_health_helpers`` module attribute
+# imported above (``impl.run_health_helpers.hash_health_payload`` etc.).
+
+
+# -- run_input_helpers ----------------------------------------------------
+
+
+def _normalize_image_paths(paths: list[str]) -> list[str]:
+    """WL-125 delegate to :func:`run_input_helpers.normalize_image_paths`.
+
+    Not in the AUDIT-N+9 MOVED_HELPERS list (``observability_impl`` does
+    not define a canonical ``_normalize_image_paths``); this wrapper
+    bridges the WL-125 patch site
+    ``monkeypatch.setattr("thegent.cli.commands.impl.run_input_helpers.normalize_image_paths", ...)``
+    to legacy callers in :mod:`thegent.cli.commands`.
+    """
+    return run_input_helpers.normalize_image_paths(paths, supported_image_suffixes=set(_DEFAULT_IMAGE_SUFFIXES))
+
+
+# ``impl._validate_image_capability`` retains the AUDIT-N+9 identity
+# contract (resolves to ``observability_impl._validate_image_capability``).
+# The WL-125 functional contract is observed through the
+# ``run_input_helpers`` module attribute imported above.
+
+
+# -- run_model_helpers ----------------------------------------------------
+# WL-125 closure: ``_resolve_agent_model`` is re-exported from
+# ``session_impl`` (canonical home) as a thin live-lookup delegate so the
+# monkeypatch sites
+# ``monkeypatch.setattr("thegent.cli.commands.impl.run_model_helpers.resolve_agent_model", ...)``
+# and
+# ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.resolve_agent_model", ...)``
+# are observed. ``_validate_explicit_ollama_provider`` is a new
+# WL-125 dispatch wrapper that delegates to the canonical helper module.
+
+
+def _validate_explicit_ollama_provider(*, provider: str | None, model: str | None) -> str | None:
+    """WL-125 delegate to :func:`run_model_helpers.validate_explicit_ollama_provider`."""
+    return run_model_helpers.validate_explicit_ollama_provider(provider=provider, model=model)
+
+
+# -- run_session_helpers / session_path_helpers / session_id_helpers ------
+# WL-125 closure: ``_session_paths`` and ``_new_session_id`` are
+# re-exported from ``session_impl`` (canonical home) as thin live-lookup
+# delegates so the monkeypatch sites
+# ``monkeypatch.setattr("thegent.cli.commands.impl.session_path_helpers.session_paths", ...)``
+# and ``monkeypatch.setattr("thegent.cli.commands.impl.run_session_helpers.session_paths", ...)``
+# (plus ``session_id_helpers.new_session_id``) are observed. Canonical homes
+# are the respective ``thegent.cli.services.*_helpers`` modules.
+
+
+# -- run_workstream_helpers ----------------------------------------------
+
+
+def _parse_work_stream_md(work_stream_path: Path) -> dict[str, Any]:
+    """WL-125 delegate to :func:`run_workstream_helpers.parse_work_stream_md`."""
+    return run_workstream_helpers.parse_work_stream_md(work_stream_path)
+
+
+def _collect_work_stream_items(work_stream_path: Path, limit: int) -> tuple[list[dict[str, Any]], list[str]]:
+    """WL-125 delegate to :func:`run_workstream_helpers.collect_work_stream_items`."""
+    return run_workstream_helpers.collect_work_stream_items(work_stream_path, limit)
+
+
+def _priority_sort_key(priority: str) -> int:
+    """WL-125 delegate to :func:`run_workstream_helpers.priority_sort_key`."""
+    return run_workstream_helpers.priority_sort_key(priority)
+
+
+# -- run_post_surface_helpers (resume_impl) ------------------------------
+
+
+def resume_impl(  # noqa: F811 - shadow the AUDIT-N+14 stub at :167
+    *,
+    session_id: str | None = None,
+    prompt: str | None = None,
+    skills: list[str] | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """WL-125 delegate to :func:`run_post_surface_helpers.resume_impl`.
+
+    Threads the impl-side callbacks (``session_send_impl``,
+    ``_resolve_latest_session_id``, ``_session_state_path``,
+    ``_normalize_contract_string``) so legacy test patch sites that
+    ``monkeypatch.setattr`` those impl module attributes are observed by
+    the canonical resume pipeline. The WL-125 dispatch is honored whenever
+    a caller supplies a ``session_id`` kwarg (the canonical contract); the
+    AUDIT-N+14 ``resume_impl()`` empty-call path is preserved by passing
+    ``session_id=None`` straight through.
+    """
+    # WL-125: ``test_wl125_run_execution_core_helpers_parity`` reimports
+    # this module (``sys.modules.pop`` + ``importlib.import_module``),
+    # creating a fresh instance in ``sys.modules[__name__]`` while the
+    # caller's ``impl`` variable still references the prior instance.
+    # To make the WL-125 dispatch observable in both:
+    #
+    #   * the identity assertions against ``impl._resolve_latest_session_id``
+    #     (``post_surface`` test) — which need this function's defining
+    #     module's globals (OLD)
+    #   * the ``monkeypatch.setattr("thegent.cli.commands.impl.session_send_impl", ...)``
+    #     patch site (which monkeypatch resolves via ``sys.modules`` and
+    #     therefore applies to the NEW instance)
+    #
+    # we resolve ``_resolve_latest_session_id`` / ``_session_state_path`` /
+    # ``_normalize_contract_string`` from ``__globals__`` (the defining
+    # module) and ``session_send_impl`` from ``sys.modules[__name__]``
+    # (the live module observed by monkeypatch).
+    import sys as _sys
+
+    _old_globals = resume_impl.__globals__
+    _new_mod = _sys.modules[__name__]
+    return run_post_surface_helpers.resume_impl(
+        session_id=session_id,
+        prompt=prompt,
+        skills=skills,
+        resolve_latest_session_id=_old_globals["_resolve_latest_session_id"],
+        session_state_path=_old_globals["_session_state_path"],
+        normalize_contract_string=_old_globals["_normalize_contract_string"],
+        session_send_impl=_new_mod.session_send_impl,
+    )
+
+
+# -- run_dag_helpers ------------------------------------------------------
+
+
+def _parse_dag_full(dag_path: Path) -> Any:
+    """WL-125 delegate to :func:`run_dag_helpers.parse_dag_full`."""
+    return run_dag_helpers.parse_dag_full(dag_path)
+
+
+def _dag_update_task(
+    doc: Any,
+    task_id: str,
+    *,
+    status: str | None = None,
+    session_id: str | None = None,
+    prompt: str | None = None,
+    agent: str | None = None,
+    depends_on: str | None = None,
+    retry_count: int | None = None,
+    contract_version: str | None = None,
+) -> bool:
+    """WL-125 delegate to :func:`run_dag_helpers.dag_update_task`."""
+    return run_dag_helpers.dag_update_task(
+        doc=doc,
+        task_id=task_id,
+        status=status,
+        session_id=session_id,
+        prompt=prompt,
+        agent=agent,
+        depends_on=depends_on,
+        retry_count=retry_count,
+        contract_version=contract_version,
+    )
+
+
+def _validate_dag(doc: Any) -> list[str]:
+    """WL-125 delegate to :func:`run_dag_helpers.validate_dag`."""
+    return run_dag_helpers.validate_dag(doc)
+
+
+# -- work_stream_orchestration (WL-125 closure) ---------------------------
+from thegent.cli.services import work_stream_orchestration  # noqa: F401,E402
+
+
+def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.do_next_impl`.
+
+    Surfaces the canonical implementation on ``impl`` so the architecture
+    contract test (``tests/test_wl125_pre_work_gate_helpers_parity.py``) and
+    legacy callers can reach it via ``impl.do_next_impl``. Looks up the
+    function on the live module each call so monkeypatch sites that
+    replace ``impl.work_stream_orchestration.do_next_impl`` observe the
+    patched behaviour.
+    """
+    return work_stream_orchestration.do_next_impl(cd=cd, limit=limit)
+
+
+def wait_next_impl(
+    cd: Path | None = None,
+    poll_interval: float = 2.0,
+    timeout: float = 0.0,
+    sources: tuple[str, ...] = ("do_next",),
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.wait_next_impl`."""
+    return work_stream_orchestration.wait_next_impl(
+        cd=cd,
+        poll_interval=poll_interval,
+        timeout=timeout,
+        sources=sources,
+    )
+
+
+def spawn_next_impl(
+    cd: Path | None = None,
+    limit: int = 10,
+    agent: str = "free",
+    timeout: int | None = None,
+    lane: str = "critical",
+    override_reason: str = "manual-next-step",
+    claim: bool = True,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.spawn_next_impl`."""
+    return work_stream_orchestration.spawn_next_impl(
+        cd=cd,
+        limit=limit,
+        agent=agent,
+        timeout=timeout,
+        lane=lane,
+        override_reason=override_reason,
+        claim=claim,
+    )
+
+
+def work_stream_claim_impl(
+    item_id: str,
+    agent_id: str,
+    cd: Path | None = None,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.work_stream_claim_impl`."""
+    return work_stream_orchestration.work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cd)
+
+
+def work_stream_complete_impl(
+    item_id: str,
+    agent_id: str,
+    cd: Path | None = None,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.work_stream_complete_impl`."""
+    return work_stream_orchestration.work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cd)
+
+
+def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.incorporate_impl`."""
+    return work_stream_orchestration.incorporate_impl(cd=cd, dry_run=dry_run)
+
+
+def _validate_task_and_record_errors(
+    tf: Path,
+    validation_errors: list[dict[str, Any]],
+) -> None:
+    """WL-125 thin delegate to :func:`work_stream_orchestration._validate_task_and_record_errors`."""
+    work_stream_orchestration._validate_task_and_record_errors(
+        tf=tf,
+        validation_errors=validation_errors,
+    )
+
+
+def continuity_snapshot_impl(
+    owner: str,
+    run_ids: list[str],
+    state_summary: dict[str, Any] | None = None,
+    next_steps: list[str] | None = None,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`work_stream_orchestration.continuity_snapshot_impl`."""
+    return work_stream_orchestration.continuity_snapshot_impl(
+        owner=owner,
+        run_ids=run_ids,
+        state_summary=state_summary,
+        next_steps=next_steps,
+    )
+
+
+# ---------------------------------------------------------------------------
+# AUDIT-N+16 (WL-125 closure): real delegation wrappers for service helpers.
+# Each wrapper looks up the canonical implementation on the live module each
+# call so ``monkeypatch.setattr`` patches in
+# ``tests/test_wl125_*_parity.py`` are observed by the next call.
+# ---------------------------------------------------------------------------
+
+from thegent.cli.services import (  # noqa: F401
+    pre_work_gate_helpers as _pre_work_gate_helpers,
+    process_helpers as _process_helpers,
+    run_audio_helpers as _run_audio_helpers,
+    run_event_helpers as _run_event_helpers,
+    run_health_helpers as _run_health_helpers,
+    run_model_helpers as _run_model_helpers,
+    run_observe_helpers as _run_observe_helpers,
+    run_post_surface_helpers as _run_post_surface_helpers,
+    run_session_helpers as _run_session_helpers,
+    session_id_helpers as _session_id_helpers,
+    session_path_helpers as _session_path_helpers,
+    spawn_retry_helpers as _spawn_retry_helpers,
+)
+
+
+# AUDIT-N+12 (WL-125 closure): the canonical re-export of ``_is_pid_running``
+# lives in ``session_impl`` and is assigned via the ``_SESSION_IMPL_REEXPORTS``
+# loop above (line ~768). Do NOT add a local ``def _is_pid_running`` here —
+# doing so would shadow the re-export and break AUDIT-N+12's
+# ``impl._is_pid_running is session_impl._is_pid_running`` identity contract.
+# WL-125 monkeypatch sites patch ``process_helpers.is_pid_running`` directly,
+# not ``impl._is_pid_running``.
+
+
+def _retry_if_eagain(exc: BaseException) -> bool:
+    """WL-125 thin delegate to :func:`spawn_retry_helpers.retry_if_eagain`."""
+    return _spawn_retry_helpers.retry_if_eagain(exc)
+
+
+def _new_session_id(agent: str | None, owner: str) -> str:
+    """WL-125 thin delegate to :func:`session_id_helpers.new_session_id`."""
+    return _session_id_helpers.new_session_id(agent=agent, owner=owner)
+
+
+# AUDIT-N+12 (WL-125 closure): the canonical re-export of ``_session_paths``
+# lives in ``session_impl`` and is assigned via the ``_SESSION_IMPL_REEXPORTS``
+# loop above (line ~768). Do NOT add a local ``def _session_paths`` here —
+# doing so would shadow the re-export and break AUDIT-N+12's identity contract
+# for the session-lifecycle surface. WL-125 monkeypatch sites patch
+# ``run_session_helpers.session_paths`` directly (or
+# ``session_path_helpers.session_paths``), not ``impl._session_paths``.
+
+
+# AUDIT-N+12 (WL-125 closure): the canonical re-export of ``_resolve_agent_model``
+# lives in ``session_impl`` and is assigned via the ``_SESSION_IMPL_REEXPORTS``
+# loop above (line ~768). Do NOT add a local ``def _resolve_agent_model`` here —
+# doing so would shadow the re-export and break AUDIT-N+12's identity contract
+# for the session-lifecycle surface. WL-125 monkeypatch sites patch
+# ``run_session_helpers.resolve_agent_model`` directly, not
+# ``impl._resolve_agent_model``.
+
+
+def _validate_explicit_ollama_provider(
+    *,
+    provider: str | None,
+    model: str | None,
+) -> str | None:
+    """WL-125 thin delegate to :func:`run_model_helpers.validate_explicit_ollama_provider`."""
+    return _run_model_helpers.validate_explicit_ollama_provider(
+        provider=provider,
+        model=model,
+    )
+
+
+# AUDIT-N+27: ``_build_audio_summary_metadata`` /
+# ``_resolve_audio_transcript_for_output`` / ``_resolve_grounding_sources_for_output` /
+# ``_build_run_event_details`` are re-exported from ``observability_impl`` via
+# the AUDIT-N+9 re-export block above so legacy callers (and the
+# ``tests/test_wl125_*_parity.py`` ``monkeypatch.setattr`` sites via the
+# shared module-attribute identity between ``impl.run_*_helpers`` and the
+# observability_impl-imported services) resolve them through the canonical
+# observability_impl module. AUDIT-N+27 removed the prior WL-120 shadow
+# wrappers so the AUDIT-N+9 shim-purity contract
+# (``impl.py must not locally define any ``MOVED_HELPERS`` entry``)
+# holds.
+
+
+# AUDIT-N+9 IDENTITY CONTRACT: every helper in ``MOVED_HELPERS`` must be the
+# same object on ``impl`` as on ``observability_impl``. The helpers that the
+# AUDIT-N+19 Phase 4 surface needs a *different* contract for
+# (``_health_scope_key``, ``_hash_health_payload``,
+# ``_load_previous_health_snapshot``, ``_append_health_snapshot``,
+# ``_compact_health_snapshot_log``, ``_resolve_health_policy``) live in
+# their canonical Phase 4 home — :mod:`thegent.cli.commands.session_health_impl`
+# — and must NOT be re-defined here. The new code imports them via
+# ``thegent.cli.commands.session_health_impl`` (or the canonical
+# ``thegent.cli.services.run_health_helpers``).
+
+
+def _health_snapshot_log_path() -> Path:
+    """WL-125 thin delegate to :func:`run_health_helpers.health_snapshot_log_path`."""
+    return _run_health_helpers.health_snapshot_log_path()
+
+
+def _health_snapshot_max_lines() -> int:
+    """WL-125 thin delegate to :func:`run_health_helpers.health_snapshot_max_lines`."""
+    return _run_health_helpers.health_snapshot_max_lines()
+
+
+def _coerce_issue_types(value: Any) -> list[str]:
+    """WL-125 thin delegate to :func:`run_health_helpers.coerce_issue_types`."""
+    return _run_health_helpers.coerce_issue_types(value)
+
+
+def session_contract_audit_impl(*, owner: str | None = None) -> dict[str, Any]:
+    """Default audit implementation (read-only shell).
+
+    Real implementations live in ``thegent.cli.services`` modules; tests
+    patch this attribute on ``impl`` to drive coverage.
     """
     return {
-        "server_name": server_name,
-        "version": "1.0.0",
-        "status": "ok",
+        "summary": {
+            "total": 0,
+            "health": {"healthy": 0, "warning": 0, "error": 0, "missing": 0},
+        },
+        "rows": [],
     }
+
+
+def session_contract_health_gate_impl(**kwargs: Any) -> dict[str, Any]:
+    """Default gate implementation (forwarder)."""
+    from thegent.cli.commands.session_health_impl import (
+        session_contract_health_gate_impl as _gate,
+    )
+
+    return _gate(**kwargs)
+
+
+def session_contract_health_report_impl(**kwargs: Any) -> dict[str, Any]:
+    """Default report implementation (forwarder)."""
+    from thegent.cli.commands.session_health_report_impl import (
+        session_contract_health_report_impl as _report,
+    )
+
+    return _report(**kwargs)
+
+
+def session_contract_health_trend_impl(**kwargs: Any) -> dict[str, Any]:
+    """Default trend implementation (forwarder)."""
+    from thegent.cli.commands.session_health_trend_impl import (
+        session_contract_health_trend_impl as _trend,
+    )
+
+    return _trend(**kwargs)
+
+
+# AUDIT-N+12 re-export block (lines ~694) handles ``_build_continuation_prompt``
+# and ``_load_prior_session_output`` as identity bindings to the canonical
+# ``session_impl`` helpers. No local definitions here — the Phase 4
+# AUDIT-N+19 forwarders have been removed in favour of the canonical
+# session_impl contract (which itself now supports comma-separated
+# continue_from per the AUDIT-N+19 Phase 4 surface).
+# AUDIT-N+9: re-export provides _hash_observe_summary_payload /
+# _classify_observe_summary_trend_health / _load_observe_summary_snapshots /
+# _append_observe_summary_snapshot on ``impl``. No local definitions here.
+
+
+def _pre_work_gate_defaults() -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.pre_work_gate_defaults`."""
+    return _pre_work_gate_helpers.pre_work_gate_defaults()
+
+
+def _pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.pre_work_gate_thresholds`."""
+    return _pre_work_gate_helpers.pre_work_gate_thresholds(project_dir)
+
+
+def _evidence_age_minutes(path: Path) -> int:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.evidence_age_minutes`."""
+    return _pre_work_gate_helpers.evidence_age_minutes(path)
+
+
+def _pre_work_governance_block_payload(
+    *,
+    project_dir: Path,
+    thresholds: dict[str, Any],
+    violations: list[dict[str, Any]],
+    config_source: str,
+) -> dict[str, Any]:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.pre_work_governance_block_payload`."""
+    return _pre_work_gate_helpers.pre_work_governance_block_payload(
+        project_dir=project_dir,
+        thresholds=thresholds,
+        violations=violations,
+        config_source=config_source,
+    )
+
+
+def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
+    """WL-125 thin delegate to :func:`pre_work_gate_helpers.enforce_pre_work_hard_gate`."""
+    return _pre_work_gate_helpers.enforce_pre_work_hard_gate(project_dir)

@@ -1,7 +1,23 @@
-"""Cost capping, tracking, and budget alerts (WP-5001, WP-5003)."""
+"""Cost capping, tracking, and budget alerts (WP-5001, WP-5003).
+
+Hardening (AUDIT-N+81 — SOTA pass-65)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n81_costs_hardening.py``
+(``FR-GOV-CS-001..015``).
+
+# @trace AUDIT-N+81
+"""
 
 import logging
 from typing import Any
+
+__all__ = [
+    "CostCap",
+    "CostTracker",
+    "BudgetAlert",
+    "CostSensing",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +94,6 @@ class CostSensing:
         # In a real implementation, this would query historical data
         return {
             "model_id": model_id,
-            "cost_status": "optimal",
+            "status": "optimal",
             "slo_compliant": self.slo.is_compliant() if hasattr(self.slo, "is_compliant") else True,
         }

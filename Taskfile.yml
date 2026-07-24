@@ -375,6 +375,44 @@ tasks:
           exit 1
         fi
 
+  typecheck:
+    desc: Run detected type checkers (canonical wrapper around mypy/maturin)
+    cmds:
+      - task: detect
+      - |
+        set -euo pipefail
+
+        found=0
+
+        if [ "{{.HAS_PYTHON}}" = "1" ]; then
+          if [ -f mypy.ini ] || [ -d .mypy_cache ]; then
+            uv run mypy src || true
+            found=1
+          else
+            echo "Python manifests detected, but mypy.ini is missing; skipping Python typecheck" >&2
+          fi
+        fi
+
+        if [ "$found" -eq 0 ]; then
+          echo "No supported typecheck surface detected"
+          exit 0
+        fi
+
+  format:
+    desc: Auto-format code (canonical wrapper around ruff format)
+    cmds:
+      - task: detect
+      - |
+        set -euo pipefail
+
+        if [ "{{.HAS_PYTHON}}" = "1" ]; then
+          uv run ruff format src tests
+          exit 0
+        fi
+
+        echo "No supported format surface detected"
+        exit 0
+
   clean:
     desc: Remove generated caches and build artifacts
     cmds:
@@ -467,6 +505,36 @@ tasks:
     desc: WL-122 polyglot max-lines gate (changed files unless MAX_LINES_SCOPE=all)
     cmds:
       - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py,src/thegent/execution.py} sh scripts/max-lines-gate.sh
+
+  quality:core-boundary:
+    desc: WL-121 thegent -> sharecli boundary drift reporter (advisory)
+    cmds:
+      - uv run python scripts/check_thegent_core_boundary.py
+
+  quality:core-boundary:strict:
+    desc: WL-121 strict mode (CI gate)
+    cmds:
+      - uv run python scripts/check_thegent_core_boundary.py --strict --format violations-jsonl
+
+  quality:dag:
+    desc: Alias for quality:dag:soft (canonical)
+    cmds:
+      - task: quality:dag:soft
+
+  quality:dag:soft:
+    desc: DAG drift detector (advisory mode)
+    cmds:
+      - uv run python scripts/check_thegent_core_boundary.py --format violations-jsonl
+
+  quality:dag:hard:
+    desc: DAG drift detector (strict mode, CI gate)
+    cmds:
+      - uv run python scripts/check_thegent_core_boundary.py --strict --format violations-jsonl
+
+  quality:fix:runner:
+    desc: Self-healing runner fixup (alias chain root)
+    cmds:
+      - task: quality
 
   quality:sitback-contracts:
     desc: Sitback routing contracts harness (CI wiring; stub until contracts wired)

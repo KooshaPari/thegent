@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -102,7 +105,18 @@ def session_paths(*, base: Path, session_id: str) -> dict[str, Path]:
 
 
 def new_session_id(*, agent: str | None, owner: str) -> str:
-    return session_id_helpers.new_session_id(agent=agent, owner=owner)
+    """Compose ``<UTC-timestamp>-<agent>-p<pid>-<8-hex-digest>`` session id.
+
+    WL-125: this facade format is intentionally distinct from
+    :func:`session_id_helpers.new_session_id` (the AUDIT-N+12-pin format).
+    The ``run_session_helpers`` facade exposes a timestamped variant for
+    the WL-125 dispatcher path; the AUDIT-N+12 canonical home delegates to
+    ``session_id_helpers`` instead.
+    """
+    now = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    digest = hashlib.sha1(f"{time.time_ns()}:{os.getpid()}:{owner}".encode()).hexdigest()[:8]
+    agent_tag = agent or "any"
+    return f"{now}-{agent_tag}-p{os.getpid()}-{digest}"
 
 
 __all__ = [

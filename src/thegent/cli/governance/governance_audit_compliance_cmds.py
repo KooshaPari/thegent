@@ -12,6 +12,7 @@ import uuid
 
 import typer
 
+from rich.console import Console
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
@@ -20,6 +21,20 @@ from thegent.cli.commands._cli_shared import (
     _normalize_output_format,
     console,
 )
+from thegent.ux.cli_errors import print_exc
+
+# AUDIT-N+2 (Phase 3/4 nineteenth closure pass): sweep the
+# ``cli/governance/``, ``infra/``, ``mesh/``, and ``cli/services/`` trees
+# for the same ``console.print(f"[red]…{e}…[/red]")`` Rich-markup
+# injection pattern the AUDIT-N+1 lane closed inside ``cli/apps/``.
+# A malicious or buggy exception payload containing ``[red]pwned[/red]``
+# would otherwise render as colour through ``Console.print``'s default
+# ANSI path on operator terminals that enable colours by default. The
+# envelope render-path now routes through
+# :func:`thegent.ux.cli_errors.print_exc` so the user-influenced payload
+# is assembled as Rich ``Text`` (no re-parse) — preserving the GOV-1
+# end-to-end render-safety contract on the governance surface.
+err_console = Console(stderr=True)
 
 
 def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
@@ -118,7 +133,10 @@ def signatures_verify_cmd(run_id: str) -> None:
             raise typer.Exit(1)
 
     except Exception as e:
-        console.print(f"[red]Failed to verify artifact: {e}[/red]")
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # exception payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal.
+        print_exc(err_console, "signatures verify failed:", e)
         raise typer.Exit(1)
 
 

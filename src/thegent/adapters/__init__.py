@@ -41,6 +41,17 @@ from thegent.adapters.plugin_host_adapter import (
     get_plugin_host,
 )
 
+# Execution I/O adapters — decomposition seams for the run/bg orchestrators.
+# See ``thegent.adapters.execution_io`` for the AUDIT-N+5 hand-off context.
+from thegent.adapters.execution_io import (
+    LeaseToken,
+    ProcessEnvironmentBuilder,
+    ProcessSpawner,
+    ResourceLockManager,
+    ShadowWorkspaceManager,
+    SpawnResult,
+)
+
 __all__ = [
     # Ports
     "HTTPClientPort",
@@ -62,6 +73,13 @@ __all__ = [
     "PluginHostConfig",
     "LoadedPlugin",
     "get_plugin_host",
+    # Execution I/O seams (AUDIT-N+5)
+    "LeaseToken",
+    "ProcessEnvironmentBuilder",
+    "ProcessSpawner",
+    "ResourceLockManager",
+    "ShadowWorkspaceManager",
+    "SpawnResult",
     # Decorators
     "register_driver",
     "register_router",

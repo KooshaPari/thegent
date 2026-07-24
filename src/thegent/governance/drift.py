@@ -1,4 +1,13 @@
-"""WP-3005: Policy drift detection and sweep."""
+"""WP-3005: Policy drift detection and sweep.
+
+Hardening (AUDIT-N+57 — SOTA pass-37)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n57_drift_hardening.py``
+(``FR-GOV-DR-001..015``).
+
+# @trace AUDIT-N+57
+"""
 
 import json
 import logging
@@ -17,9 +26,13 @@ class DriftDetector:
     """Detects drift in policy state and cleans up stale overrides."""
 
     def __init__(self, settings: ThegentSettings) -> None:
+        # FR-GOV-DR-002 — absolute session_dir required.
+        session_dir = Path(settings.session_dir)
+        if not session_dir.is_absolute():
+            raise ValueError(f"session_dir must be an absolute path (got {session_dir!s})")
         self.settings = settings
         self.om = OverrideManager(settings)
-        self.drift_log = settings.session_dir / "policy_drift.jsonl"
+        self.drift_log = session_dir / "policy_drift.jsonl"
 
     def detect_drift(self) -> dict[str, Any]:
         """
@@ -103,10 +116,17 @@ class DriftDetector:
         return {"overrides_cleaned": cleaned}
 
     def _log_drift(self, report: dict[str, Any]) -> None:
-        """Append drift report to log."""
-        self.settings.session_dir.mkdir(parents=True, exist_ok=True)
-        with self.drift_log.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(report) + "\n")
+        """Append drift report to JSONL log.
+
+        ``FR-GOV-DR-011``. Corrupt-write resilience: failures are logged
+        as warnings so the caller is never interrupted.
+        """
+        try:
+            self.settings.session_dir.mkdir(parents=True, exist_ok=True)
+            with self.drift_log.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(report) + "\n")
+        except OSError as exc:
+            _log.warning("Failed to write drift log %s: %s", self.drift_log, exc)
 
     def _check_override_file(self, f: Path, report: dict[str, Any]) -> None:
         """Helper to check a single override file for drift."""
@@ -139,3 +159,8 @@ class DriftDetector:
                         report["drift_detected"] = True
         except Exception as e:
             _log.error("Failed to check override %s: %s", f, e)
+
+
+__all__ = [
+    "DriftDetector",
+]

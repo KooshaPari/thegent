@@ -1,10 +1,22 @@
 """WP-12007: Persona profiles and access constraints.
 
 Defines role-based access limits and defaults for different operator personas.
+
+Hardening (AUDIT-N+87 — SOTA pass-71)
+--------------------------------------
+Contract surface asserted by
+``tests/test_unit_audit_n87_personas_hardening.py``
+(``FR-GOV-PR-001..015``).
+
+# @trace AUDIT-N+87
 """
 
 from pathlib import Path
 from typing import Any
+
+__all__ = [
+    "PersonaManager",
+]
 
 
 class PersonaManager:

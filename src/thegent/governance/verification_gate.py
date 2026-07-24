@@ -4,6 +4,14 @@ Re-runs targeted scanner dimensions after each agent task completes to verify
 improvement, detect regressions, and determine pass/fail verdicts.
 """
 
+# Hardening (AUDIT-N+65 — SOTA pass-49)
+# --------------------------------------
+# Contract surface asserted by
+# ``tests/test_unit_audit_n65_verification_gate_hardening.py``
+# (``FR-GOV-VG-001..015``).
+#
+# @trace AUDIT-N+65
+
 from __future__ import annotations
 
 import logging
@@ -227,3 +235,16 @@ class VerificationGate:
     def should_reroll(self, attempts: int) -> bool:
         """Return True if the task should be retried based on attempt count."""
         return attempts < self.max_rerolls
+
+
+__all__ = [
+    "AGENT_TIER_ESCALATION",
+    "DEFAULT_MAX_REROLLS",
+    "HealthComputerProtocol",
+    "ScannerProtocol",
+    "ScanResultProtocol",
+    "TaskExecutionProtocol",
+    "TaskVerification",
+    "VerificationGate",
+    "VerificationVerdict",
+]

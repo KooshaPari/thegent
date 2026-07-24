@@ -7,7 +7,14 @@ to use the shared implementations (V9-T3-6 wave 2).
 
 from __future__ import annotations
 
-from phenotype_py_utils import (
+import pytest
+
+# phenotype_py_utils is an optional external package; skip if not installed.
+pytest.importorskip(
+    "phenotype_py_utils",
+    reason="phenotype_py_utils optional dep not installed; py_utils smoke skipped",
+)
+from phenotype_py_utils import (  # noqa: E402
     iso_now,
     load_config,
     parse_args,

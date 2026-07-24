@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import importlib.util
 import orjson as json
 from pathlib import Path
 
 import yaml
 
+from conftest import _load_script_module
+
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_thegent_core_boundary.py"
-SPEC = importlib.util.spec_from_file_location("check_thegent_core_boundary", SCRIPT_PATH)
-assert SPEC is not None
-assert SPEC.loader is not None
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("check_thegent_core_boundary", SCRIPT_PATH)
 ROOT = Path(__file__).resolve().parents[1]
 
 

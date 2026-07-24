@@ -204,8 +204,8 @@ class TestThegentRun:
         data = _json_content(result)
         assert data["exit_code"] == 0
         call_args = mock_run_impl.call_args
-        assert call_args[0][3] == "full"  # mode arg
-        assert call_args[0][4] == 300  # timeout arg
+        assert call_args.kwargs.get("mode") == "full"  # mode kwarg
+        assert call_args.kwargs.get("timeout") == 300  # timeout kwarg
 
 
 @pytest.mark.unit
@@ -882,6 +882,98 @@ class TestThegentSessionContractHealthReportTool:
         data = _json_content(result)
         assert data["status"] == "healthy"
         assert result.meta["total"] == 8
+
+    # @trace FR-MCP-069
+    @patch("thegent.mcp.server.session_contract_health_report_impl")
+    def test_health_report_tool_meta_envelope(self, mock_impl: MagicMock) -> None:
+        """Meta block contains all _contract_health_meta fields."""
+        mock_impl.return_value = {
+            "schema_version": "health-schema-v1",
+            "payload_type": "session_contract_health_report",
+            "status": "healthy",
+            "total": 12,
+            "healthy_count": 10,
+            "unhealthy_count": 2,
+            "blocked_count": 1,
+            "policy_profile": "strict_ci",
+            "decision_reasons": ["blocked"],
+            "top_blocked_count": 5,
+            "blocked_sessions_cap": 25,
+        }
+        from thegent.mcp.server import thegent_session_contract_health_report
+
+        result = thegent_session_contract_health_report()
+        meta = result.meta
+        assert meta["status"] == "healthy"
+        assert meta["total"] == 12
+        assert meta["healthy_count"] == 10
+        assert meta["unhealthy_count"] == 2
+        assert meta["blocked_count"] == 1
+        assert meta["policy_profile"] == "strict_ci"
+        assert meta["decision_reasons"] == ["blocked"]
+        assert meta["top_blocked_count"] == 5
+        assert meta["blocked_sessions_cap"] == 25
+
+    # @trace FR-MCP-070
+    @patch("thegent.mcp.server.session_contract_health_report_impl")
+    def test_health_report_tool_error_envelope(self, mock_impl: MagicMock) -> None:
+        """MCPBudgetExceeded returns error _ToolResult."""
+        from thegent.mcp.server.mcp_perf_gates import MCPBudgetExceeded
+
+        mock_impl.side_effect = MCPBudgetExceeded("tool_invoke_ms", 120.0, 100.0)
+        from thegent.mcp.server import thegent_session_contract_health_report
+
+        result = thegent_session_contract_health_report()
+        assert "MCP budget exceeded" in result.content
+        assert result.structured_content == {}
+        assert result.meta == {}
+
+    # @trace FR-MCP-071
+    @patch("thegent.mcp.server.session_contract_health_report_impl")
+    def test_health_report_tool_param_passthrough(self, mock_impl: MagicMock) -> None:
+        """All params pass through to impl correctly."""
+        mock_impl.return_value = {
+            "status": "healthy",
+            "total": 3,
+            "healthy_count": 3,
+        }
+        from thegent.mcp.server import thegent_session_contract_health_report
+
+        thegent_session_contract_health_report(
+            session_id="s-123",
+            policy_profile="strict_ci",
+            strict=True,
+            min_healthy_ratio=0.95,
+            owner="alice",
+            all=True,
+            top_blocked=15,
+        )
+        call_kwargs = mock_impl.call_args[1]
+        assert call_kwargs["policy_profile"] == "strict_ci"
+        assert call_kwargs["strict"] is True
+        assert call_kwargs["min_healthy_ratio"] == 0.95
+        assert call_kwargs["owner"] == "alice"
+        assert call_kwargs["all"] is True
+        assert call_kwargs["top_blocked"] == 15
+
+    # @trace FR-MCP-072
+    @patch("thegent.mcp.server.session_contract_health_report_impl")
+    def test_health_report_tool_structured_content(self, mock_impl: MagicMock) -> None:
+        """structured_content matches the raw impl payload."""
+        raw_payload = {
+            "schema_version": "health-schema-v1",
+            "payload_type": "session_contract_health_report",
+            "status": "healthy",
+            "total": 5,
+            "healthy_count": 5,
+            "unhealthy_count": 0,
+            "blocked_count": 0,
+        }
+        mock_impl.return_value = raw_payload
+        from thegent.mcp.server import thegent_session_contract_health_report
+
+        result = thegent_session_contract_health_report()
+        assert result.structured_content == raw_payload
 
 
 @pytest.mark.unit

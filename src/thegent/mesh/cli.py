@@ -10,9 +10,18 @@ from thegent.config import ThegentSettings
 from thegent.infra.shim_subprocess import run as shim_run
 from thegent.mesh.agent_patterns import run_detection
 from thegent.mesh.mesh import MeshManager
+from thegent.ux.cli_errors import print_exc
 
 app = typer.Typer(help="Agent Mesh Coordination commands")
 console = Console()
+
+# AUDIT-N+2 (Phase 3/4 nineteenth closure pass): the mesh ``list``
+# command defensive envelope now routes through
+# :func:`thegent.ux.cli_errors.print_exc` so a malicious or buggy
+# exception payload (``[red]pwned[/red]``) cannot inject Rich markup
+# into an operator terminal. Same end-to-end render-safety contract
+# GOV-1 pinned for ``govern.py`` + AUDIT-N+1 pinned for ``run_app.py``.
+err_console = Console(stderr=True)
 
 # Queue subcommand group
 queue_app = typer.Typer(help="Distributed task queue (Phase 11)")
@@ -230,7 +239,10 @@ def _load_mesh_manifest(table: Table, manifest: Path) -> None:
 
             table.add_row(str(pid), agent_type, status, workdir)
     except Exception as e:
-        console.print(f"[red]Error reading {manifest.name}: {e}[/red]")
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # exception payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal.
+        print_exc(err_console, "mesh list failed:", e)
 
 
 @app.command("discover")

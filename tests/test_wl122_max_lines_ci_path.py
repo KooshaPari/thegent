@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 
+from conftest import _load_script_module
+
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_wl122_max_lines_canonical_path.py"
-SPEC = importlib.util.spec_from_file_location("check_wl122_max_lines_canonical_path", SCRIPT_PATH)
-assert SPEC and SPEC.loader
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("check_wl122_max_lines_canonical_path", SCRIPT_PATH)
 
 
 def _ci_with_task_setup(*lines: str) -> str:

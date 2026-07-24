@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import importlib.util
 import orjson as json
 from pathlib import Path
 
+from conftest import _load_script_module
+
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_deprecated_quality_aliases.py"
-SPEC = importlib.util.spec_from_file_location("check_deprecated_quality_aliases", SCRIPT_PATH)
-assert SPEC is not None
-assert SPEC.loader is not None
-MODULE = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(MODULE)
+MODULE = _load_script_module("check_deprecated_quality_aliases", SCRIPT_PATH)
 
 
 def _mapping() -> dict[str, object]:
