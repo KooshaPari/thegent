@@ -11466,97 +11466,112 @@ Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 
 ---
 
-## 2026-07-24 — AUDIT-LANE-CLI-COMMANDS-WL124-001 — Namespace exports Phase 1
+## 2026-07-24 — AUDIT-LANE-COMMANDS-APPS-MAIN-001 — Stale install/project/scaffold test removal
 
-**Session window**: 2026-07-24
-**Branch**: `fix/cli-commands-wl124` (off `wip/2026-07-22-thegent-local-preservation`)
+**Session window**: 2026-07-24 (single shot)
+**Branch**: `fix/commands-apps-main` (off `wip/2026-07-22-thegent-local-preservation`)
 **Commit**: pending
-**Delta**: +32 / -11 (4 files)
+**Delta**: -469 lines, 0 added (single file: `tests/commands/test_apps_main.py`)
 
 ### Scope rationale
 
-Cluster B from the dormant test rot scan was identified as ~25 tests in
-`tests/test_unit_cli_commands_a.py` + `tests/test_unit_cli_commands_b.py`
-broken by WL-124 module-split refactoring. The repo contains
-`CLI_TESTS_ROOT_CAUSE_ANALYSIS.md` documenting the root cause (test
-patches no longer match where commands call functions).
+Cluster A from the dormant test rot scan was identified as 18 pre-existing
+`@pytest.mark.skip`-annotated tests in `tests/commands/test_apps_main.py`
+covering install/project/scaffold routing. Each skip reason was either
+`"Implementation issue"` (install-side, 7 tests) or
+`"project_migrate mock location issue"` (project/scaffold-side, 11 tests).
 
-**Actual baseline:** 169 failed, 3 passed, 41 skipped — the WL-124 rot
-is significantly broader than the analysis doc estimated (15 broken
-tests). It includes 46 unique missing symbol patterns:
-- ~30 `*_cmd` command function imports
-- 7 internal helper/constant exports
-- 1 schema version mismatch (test expects 3.0, source defines 1.0)
+Investigation of the source tree found the underlying features **do not
+exist**:
 
-**Phase 1 scope:** This PR addresses the 7 most-touched symbols and
-the schema-version mismatch (8 fixes). The remaining ~30 command-function
-imports are queued for **Phase 2** (`AUDIT-LANE-CLI-COMMANDS-WL124-002`)
-once we confirm Phase 1 review is clean.
+* No `thegent.install` module — `src/thegent/` has no `install*.py` file
+  (`install_helpers/__init__.py` exists but is unrelated stub).
+* No `thegent.cli.apps.project.project_migrate`, `project_scaffold`, or
+  `setup_project_brownfield` — `apps/project/__init__.py` is a stub that
+  only exposes `update_app`, `install_app`, `setup_project_app`.
+* No `install`, `project`, or `scaffold` Typer commands registered on
+  `app = typer.Typer()` in `cli/apps/main.py` — the only flat commands
+  registered are `bg`, `status`, `stop`, `logs`, `ps`, `resume`, `govern`,
+  `phench`, plus sub-apps `run`, `cockpit`, `sota`.
 
-### Fixes applied (8)
+Per the **Phenotype Long-Term Stability and Non-Destructive Change Protocol**,
+the stable solution here is removal of stale assertions for non-existent
+features rather than building phantom scaffolding to satisfy them. Each
+test was already acknowledged by the skip annotation; the deletion removes
+the rot while documenting the gap for future lanes.
 
-| # | Change | Rationale |
-|---|--------|-----------|
-| 1 | Re-export `console` from `_cli_shared` in `thegent.cli.__init__` | Tests patch `thegent.cli.console` |
-| 2 | Re-export `_default_owner_tag` from `plan_cmds` in `thegent.cli.__init__` | Tests patch `thegent.cli._default_owner_tag` |
-| 3 | Re-export `_normalize_output_format` from `_cli_shared` | Tests patch `thegent.cli._normalize_output_format` |
-| 4 | Re-export `resolve_agent` from `agents.registry` (canonical home) | Tests patch `thegent.cli.resolve_agent` |
-| 5 | Re-export `AGENT_LABELS` from `agents.registry` | Tests patch `thegent.cli.AGENT_LABELS` |
-| 6 | Re-export `time` (stdlib module) | Tests patch `thegent.cli.time` for `wait_cmd` timeout tests |
-| 7 | Re-export `_write_health_trend_export` from `_cli_shared` | Tests import `_write_health_trend_export` from `thegent.cli` |
-| 8 | Bump `HEALTH_PAYLOAD_SCHEMA_VERSION` `"1.0"` → `"3.0"` in 3 source files | Tests assert `schema_version: 3.0` |
+### Tests removed (18)
 
-### Source files modified (4)
-
-* `src/thegent/cli/__init__.py` — +29 / -2 (7 new exports + docstring update)
-* `src/thegent/cli/commands/impl.py` — +1 / -1 (schema version)
-* `src/thegent/cli/commands/session_health_impl.py` — +1 / -1 (schema version)
-* `src/thegent/cli_helpers/runtime_helpers.py` — +1 / -1 (schema version) + ruff format
+| # | Test | Skip reason |
+|---|------|-------------|
+| 1 | `test_install_compat_routes_to_run_install` | Implementation issue |
+| 2 | `test_install_invocation_can_run_system_install_with_setup` | Implementation issue |
+| 3 | `test_install_invocation_can_run_both_scope` | Implementation issue |
+| 4 | `test_install_invalid_scope_fails` | Implementation issue |
+| 5 | `test_install_scope_system_runs_system_only_with_custom_prefix` | Implementation issue |
+| 6 | `test_install_alias_user_target_routes_to_all` | Implementation issue |
+| 7 | `test_install_with_invalid_target_fails_without_calling_install` | Implementation issue |
+| 8 | `test_install_project_subcommand_still_routes_to_project_installer` | project_migrate mock location issue |
+| 9 | `test_project_top_level_command_is_available_and_routes_to_setup_project` | project_migrate mock location issue |
+| 10 | `test_install_project_brownfield_routes_to_setup_project_migrate` | project_migrate mock location issue |
+| 11 | `test_scaffold_greenfield_routes_to_sys_setup_project_scaffold` | project_migrate mock location issue |
+| 12 | `test_scaffold_brownfield_routes_to_sys_setup_project_migrate` | project_migrate mock location issue |
+| 13 | `test_scaffold_agdd_alias_routes_to_project_migrate` | project_migrate mock location issue |
+| 14 | `test_scaffold_none_alias_routes_to_project_migrate` | project_migrate mock location issue |
+| 15 | `test_setup_project_agdd_alias_routes_to_brownfield` | project_migrate mock location issue |
+| 16 | `test_setup_project_none_alias_routes_to_brownfield` | project_migrate mock location issue |
+| 17 | `test_install_project_agdd_alias_routes_to_project_migrate` | project_migrate mock location issue |
+| 18 | `test_install_project_none_alias_routes_to_project_migrate` | project_migrate mock location issue |
 
 ### Validation
 
-* **TDD-RED (before):** 169 failed, 3 passed, 41 skipped
-* **TDD-GREEN (after):** 169 failed, 3 passed, 41 skipped
-* **Net delta:** 0 visible test count change (the 7 exports don't change
-  the count because the affected tests fail on OTHER missing symbols
-  first). The fixes are correct individually; the aggregate counter is
-  unchanged because Phase 2 is needed.
-* `ruff check` on all 4 modified files: **All checks passed!**
-* `ruff format --check`: **3 already formatted, 1 reformatted** (after one pass)
+* **TDD-RED (before):** 67 collected → 49 failed, 18 skipped.
+* **TDD-GREEN (after):** 49 collected → 49 failed, 0 skipped.
+* Net delta: **-18 skipped tests**, **-470 lines**, **0 regressions**.
+* Remaining 49 failures are pre-existing rot in unrelated parts of the
+  file (phench routing, git command group registration, stderr capture,
+  `model_cmds`/`phench_observability` attribute errors) — out of scope for
+  this lane; queued for separate clusters B–E.
+* `ruff check tests/commands/test_apps_main.py` → **All checks passed!**
+* `ruff format --check` → **1 file already formatted** (after one `ruff format` pass).
 
-### Out-of-scope (Phase 2 — queued)
+### Out-of-scope failures (not addressed, listed for next-lane triage)
 
-The remaining ~39 unique missing symbols are listed below for the
-follow-on PR:
+The remaining 49 failures in `tests/commands/test_apps_main.py` cluster as:
 
-**Command functions (need `from thegent.cli.commands.X import Y` in __init__.py):**
+* **Stderr-capture config (7 tests):** `ValueError: stderr not separately captured`
+  — `CliRunner()` needs `mix_stderr=False` for tests asserting on `result.stderr`.
+* **Phench routing (25+ tests):** Tests mock `thegent.cli.apps.phench_projects`
+  and `thegent.cli.apps.phench_observability` but those are directory modules
+  lacking the patched attributes. Likely needs source-side additions.
+* **Git command group (2 tests):** `thegent git` group not registered on `app`.
+* **`model_cmds` import (1 test):** `thegent.cli.apps.main.model_cmds` not
+  exposed as a module attribute.
+* **`ps`/`do` shortcuts (2 tests):** `thegent.cli.apps.run.run_ps`/
+  `run_agent` not exposed at that path; flat `ps` delegates to
+  `thegent.cli.commands.cli.ps_cmd` instead.
+* **`thegent setup` command (1 test):** Not registered.
+* **Phench snapshot subcommand (3 tests):** `phench snapshot create/list/show`
+  routing not registered.
+* **Phench TUI (2 tests):** `phench_observability.IntPrompt` and
+  `phench tui --no-interactive` flows not registered.
+* **Phench projects status / TUI / etc.** (additional 6+ tests).
 
-* `escalate_add_cmd`, `escalate_list_cmd`, `escalate_resolve_impl`,
-  `escalate_resolve_cmd`
-* `sweep_cmd`, `purge_cmd`, `archive_cmd`, `benchmark_cmd`
-* `observe_summary_cmd`, `feedback_cmd`, `cockpit_cmd`
-* `closure_pack_cmd`, `migration_cmd`, `drift_cmd`, `plan_analyze_cmd`
-* `dag_checkpoints_cmd`, `events_cmd`, `history_cmd`, `inspect_cmd`
-* `list_droids_cmd`, `list_models_cmd`
-* `logs_cmd`, `pause_cmd`, `policy_show_cmd`, `ps_cmd`, `resume_cmd`,
-  `session_contract_health_gate_cmd`, `session_contract_health_trend_cmd`,
-  `session_contracts_cmd`, `status_cmd`, `stop_cmd`, `wait_cmd`
+These map to the **next-lane triage table** from the test surface scan:
+Cluster B (`test_unit_cli_commands_a.py`/`_b.py`, ~25 tests, WL-124
+refactor patches) and Cluster C (small commands-compat sweeps, ~20 tests).
 
-**Helper functions and constants:**
+### Files
 
-* `_compose_owner_tag`, `_export_format_from_suffix`,
-  `_infer_export_format`, `_list_antigravity_models`, `_list_claude_models`,
-  `_list_codex_models_fallback`, `_list_copilot_models_fallback`,
-  `_list_gemini_models`, `_list_glm_models`, `_list_minimax_models`,
-  `_resolve_cwd`, `_scope_key`, `_write_health_gate_export`,
-  `_write_report_export`
-* `Columns` (from rich), `get_registry`, `list_agent_names`,
-  `RunRegistry`, `subprocess`
+* `tests/commands/test_apps_main.py` — -469 lines (18 skipped tests + decorators + blank lines)
+* `WORKLOG.md` — this hand-off entry
 
 ### Followup
 
-Phase 2 PR will be opened once Phase 1 lands. After both phases, the
-cluster should drop from 169 failures to a much smaller residual that
-can be triaged test-by-test.
+When the install/project/scaffold features are actually specced and built
+in a future lane (Phenom Sprint 2026-08 candidate), the deleted tests
+should be re-added as the spec for the new commands. The git history of
+this commit preserves them as a reference for what the eventual contract
+should be.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
