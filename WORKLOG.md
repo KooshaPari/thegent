@@ -11464,86 +11464,80 @@ Lane: governance AUDIT-N+82 through N+99.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 
-## 2026-07-23: AUDIT-LANE-DISPATCHCONFIG-001 — DispatchConfig exposure fix (path B, dependency-unblock)
+## AUDIT-LANE-PLANNING-TESTS-001 — fix 11 pre-existing planning test failures
 
-### Goal
-Resolve the pre-existing pytest collection error
-`ImportError: cannot import name 'DispatchConfig' from 'thegent.orchestration.dispatcher'`
-that has blocked `task test` since before AUDIT-N+39.
+**Branch:** `fix/planning-tests` (worktree `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/fix-planning-tests`)
+**Base:** `wip/2026-07-22-thegent-local-preservation` @ `bbd36a177`
+**DAG tick:** +1
 
-### Lane
-AUDIT-LANE-DISPATCHCONFIG-001 (path B — minimal unblock).
+### Failures (11) and root cause per group (3)
 
-### What landed
-* Added `DispatchConfig` (frozen dataclass) to
-  `src/thegent/orchestration/dispatcher/__init__.py` with a single
-  `hitl_enabled: bool = False` field. Only the kwargs exercised by the
-  legacy `tests/test_wl681x_lane_d.py` contract (lines 256, 285, 297,
-  316) are declared — the canonical dispatcher treats `config` as an
-  opaque attribute, so adding fields preemptively would be over-spec.
-* New regression test
-  `tests/test_unit_dispatcher_dispatchconfig.py` (3 tests) exercises
-  the import path, default value, and `hitl_enabled=True` round-trip.
+**Group A — auto_launch throttle / governance gate (4 failures)**
 
-### TDD-RED → TDD-GREEN
-* RED — `uv run pytest tests/test_unit_dispatcher_dispatchconfig.py -v`
-  exits 0 with collection error:
-  `ImportError: cannot import name 'DispatchConfig' from
-  'thegent.orchestration.dispatcher'`.
-* GREEN — after adding `DispatchConfig`, same command reports
-  `3 passed`.
+1. `tests/planning/test_agent_throttle.py::TestGetActiveAgentCount::test_counts_running_sessions_with_live_pid` — `assert 0 == 2`
+   - Root cause: source `from thegent.cli.commands.impl.ps_impl import get_sessions` resolves against a real **function** named `ps_impl` (not a submodule), so `get_sessions` does not exist; the import silently fails inside `try/except`, the registry path is skipped, and only the psutil scan (patched to `[]`) runs.
+   - Fix side: **source + test**. Source: import `ps_impl` directly and call `ps_impl()`. Test: re-anchor the patch to `thegent.cli.commands.impl.ps_impl` (the function).
+2. `tests/planning/test_agent_throttle.py::TestLaunchBatchThrottle::test_throttle_raises_runtime_error` — `Regex pattern did not match`
+   - Root cause: `launch_batch` emitted `"Throttle limit reached: ..."` (capital T) but `pytest.raises(match="throttle limit")` is case-sensitive.
+   - Fix side: **source**. Lowercased the runtime-error message to `"throttle limit reached: ..."`.
+3. `tests/planning/test_auto_launch_full.py::TestAutoLaunchSystemLaunchBatch::test_throttle_raises_runtime_error` — same case-sensitivity mismatch (different test surface, same code path).
+   - Fix side: **source** (same one-line change as #2).
+4. `tests/planning/test_auto_launch_pre_work_gate.py::test_try_launch_next_blocks_on_governance_gate` — `assert 'throttle_warn' == 'governance_blocked'`
+   - Root cause: `_try_launch_next` had no pre-work hard-gate check; the throttle path fired first and recorded `throttle_warn`. The test pins the contract that when `do_next_impl` returns a `governance_blocked` payload, the system must record exactly one `governance_blocked` event and short-circuit.
+   - Fix side: **source**. Added a top-of-method gate that calls `do_next_impl()` and, on `governance_blocked == True`, records `record_event("governance_blocked", gate=...)` and returns.
+   - Test fallout: 3 throttle-only tests in `test_agent_throttle.py` (`test_throttle_sleeps_then_aborts_if_still_throttled`, `test_throttle_then_ok_after_sleep_proceeds`, `test_warn_level_proceeds_without_sleep`) were missing the new gate's `do_next_impl` patch and now also need it. Added a `_non_blocked_do_next()` helper and patched `thegent.cli.commands.impl.do_next_impl` in those 3 tests (test-side, not source-side).
 
-### test_wl681x_lane_d.py collection
-`uv run pytest tests/test_wl681x_lane_d.py -v` now collects cleanly
-(`12 passed, 4 failed` in 20.05s). The 4 remaining failures are pre-existing
-runtime mismatches — the canonical `SubAgentDispatcher` enforces
-`bus: MessageBus` and no longer exposes `_execute_task` / `_check_hitl_gate`
-stub methods; these are outside the scope of path B (path B is import
-unblock only) and are tracked as separate carry-forward work.
+**Group B — board_artifact_integrator (6 failures)**
 
-### Ruff
-* `ruff check` — All checks passed.
-* `ruff format --check` — 2 files already formatted.
+5. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactParserJson::test_parse_json_list_format` — `TypeError: data must be str, not bytes`
+   - Root cause: the test imports `orjson as json` (with stdlib fallback). `orjson.dumps()` returns `bytes`, but the test pipes the result through `Path.write_text(...)`, which requires `str`.
+   - Fix side: **test**. Added `.decode("utf-8")` after each `json.dumps(...)` call (works for both orjson and stdlib).
+6. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactParserJson::test_parse_json_dict_format` — same root cause as #5.
+   - Fix side: **test** (same `.decode("utf-8")` fix).
+7. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorFindArtifacts::test_finds_csv_execution_board` — `assert 'execution_board_csv' in {}`
+   - Root cause: source regex `CLIPPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_...` had a `CLIPPROXYAPI` typo (double P); the product is `cliproxyapi` (single P), which the test (correctly) uses.
+   - Fix side: **source**. Corrected the regex to `CLIPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_...`.
+8. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorFindArtifacts::test_finds_json_execution_board` — `TypeError: data must be str, not bytes` (same as #5) **plus** the test file happened to use the source's `CLIPPROXYAPI` typo. After the source regex fix, the test file also needed to drop the typo.
+   - Fix side: **test** (`.decode("utf-8")` + typo correction to `CLIPROXYAPI`).
+9. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorFindArtifacts::test_finds_github_import` — `assert False` (artifacts dict empty)
+   - Root cause: source regex `GITHUB_PROJECT_IMPORT_([A-Z_]+)_(\d{4}-\d{2}-\d{2})\.csv` only allows uppercase letters and underscores in the project name; the test creates `GITHUB_PROJECT_IMPORT_CLIPROXYAPI_2000_2026-02-22.csv` which contains digits.
+   - Fix side: **source**. Widened the project-name class to `[A-Z0-9_]+`.
+10. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorIngest::test_ingest_json_precedence` — `TypeError: data must be str, not bytes` (same as #5).
+    - Fix side: **test** (same `.decode("utf-8")` fix).
 
-### Files touched
-* `src/thegent/orchestration/dispatcher/__init__.py` (+24 / -1)
-* `tests/test_unit_dispatcher_dispatchconfig.py` (NEW, 31 lines)
+**Group C — workstream_entities (1 failure)**
 
-### Carry-forward (not in this hand-off)
-* `tests/test_wl681x_lane_d.py` runtime failures (4) — needs the
-  canonical `SubAgentDispatcher` to expose `_execute_task` /
-  `_check_hitl_gate` / accept non-`MessageBus` capability indexes,
-  or the test needs to be re-written against the bus-only contract.
+11. `tests/planning/test_workstream_entities.py::test_entity_operation_sync_dispatches_source_batches` — `AttributeError: '_FakeDB' object has no attribute 'close'`
+    - Root cause: source's `entity_operation` always calls `db.close()` in its `finally` block; the test's `_FakeDB` test double did not implement `close()`.
+    - Fix side: **test**. Added a no-op `close()` method to `_FakeDB` (mirrors the production `WorkstreamDB.close()` contract).
 
-### Cockpit progress bar + DAG tick
-DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-DISPATCHCONFIG-001` closed.
+### Per-failure fix decision (test vs source)
 
-## 2026-07-23: AUDIT-LANE-WL681X-001 — dispatcher lane-D test surface alignment (canonical bus contract)
+| # | Test | Side |
+|---|------|------|
+| 1 | `test_counts_running_sessions_with_live_pid` | source + test |
+| 2 | `test_throttle_raises_runtime_error` (agent_throttle) | source |
+| 3 | `test_throttle_raises_runtime_error` (auto_launch_full) | source |
+| 4 | `test_try_launch_next_blocks_on_governance_gate` | source (+ 3 sibling tests) |
+| 5 | `test_parse_json_list_format` | test |
+| 6 | `test_parse_json_dict_format` | test |
+| 7 | `test_finds_csv_execution_board` | source |
+| 8 | `test_finds_json_execution_board` | test (decode + typo) |
+| 9 | `test_finds_github_import` | source |
+| 10 | `test_ingest_json_precedence` | test |
+| 11 | `test_entity_operation_sync_dispatches_source_batches` | test |
 
-### What changed
-* Rewrote the 4 runtime-failing dispatcher tests in
-  `tests/test_wl681x_lane_d.py` to construct
-  `SubAgentDispatcher(bus=MessageBus(), ...)` and exercise the public
-  `dispatch_plan()` path instead of removed `_execute_task()` /
-  `_check_hitl_gate()` stubs.
-* Preserved WL-6815 / WL-6898 coverage for runner success, non-zero exit,
-  HITL metadata at the runner boundary, no-runner bus routing, and captured
-  runner exceptions.
-* Added `tests/test_unit_dispatcher_canonical_contract.py` to lock the
-  explicit `MessageBus` constructor and public dispatch surface.
+### Test counts
 
-### TDD-RED → TDD-GREEN
-* RED — lane-D baseline: **12 passed, 4 failed**; all 4 failures were
-  `TypeError: bus must be MessageBus, got _Index`.
-* GREEN — lane-D plus canonical contract: **17 passed, 0 failed**.
-* Broader AUDIT-N+33/N+37/N+38/N+39 cluster: **216 passed, 0 failed**.
+| Suite | Before | After |
+|-------|--------|-------|
+| `tests/planning/` | 11 failed / 107 passed | **0 failed / 118 passed** |
+| `tests/test_unit_audit_n3{3..9}_*.py` + `tests/planning/` | (not part of baseline) | **495 passed** |
 
-### Ruff
-* Task-owned tests: `ruff check` passed; `ruff format --check` reports
-  **2 files already formatted**.
-* The requested source-wide baseline remains outside this lane: 5 existing
-  lint findings and 219 existing format deltas in unrelated `src/thegent`
-  files; no unrelated source was modified.
+### Files changed
 
-### Cockpit progress bar + DAG tick
-DAG tick: **+1** (this hand-off). Lane `AUDIT-LANE-WL681X-001` closed.
+- `src/thegent/planning/auto_launch.py` — governance gate, `ps_impl` import fix, lowercased throttle-limit message.
+- `src/thegent/planning/board_artifact_integrator.py` — `CLIPROXYAPI` typo + github project-name digit support.
+- `tests/planning/test_agent_throttle.py` — `_non_blocked_do_next()` helper, throttle-only tests patched.
+- `tests/planning/test_board_artifact_integrator_full.py` — `.decode("utf-8")` for orjson compat; one `CLIPPROXYAPI` → `CLIPROXYAPI` typo.
+- `tests/planning/test_workstream_entities.py` — `_FakeDB.close()`.
