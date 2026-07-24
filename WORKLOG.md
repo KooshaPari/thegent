@@ -11560,3 +11560,75 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-GOVERNANCE-NOT-IMPL-001 — Cluster D governance phantom-test removal
+
+**Session window**: 2026-07-24
+**Branch**: `fix/governance-module-not-impl` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -15 files (all of `tests/unit/governance/`), 316 tests removed
+
+### Scope rationale
+
+Cluster D from the dormant test rot scan was identified as ~25-30 tests
+in `tests/unit/governance/` covering governance stub modules. Actual
+baseline is **316 skipped, 0 failed, 0 passed** — every test in 15 files
+has file-wide `pytest.mark.skip` annotation with reasons explicitly
+acknowledging the gaps:
+- **8 files** "Module not implemented" — `adaptive_coordination`,
+  `compliance`, `govern_approve_cli_diff`, `govern_vet_service`,
+  `heliosShield_bridge`, `task_classifier`, and others
+- **7 files** "API mismatch" — `agent_hierarchy_validation`,
+  `agent_hierarchy`, `agileplus`, `metrics`, `providers`, `scoring`,
+  `triggers`, `worktree_governance_inventory`,
+  `worktree_legacy_remediation_report`
+
+Per the established Cluster A pattern, phantom-feature tests are
+removed rather than building scaffolding for features that don't exist.
+
+### Files removed (15)
+
+* `tests/unit/governance/test_adaptive_coordination.py` (2 tests)
+* `tests/unit/governance/test_agent_hierarchy.py` (69 tests)
+* `tests/unit/governance/test_agent_hierarchy_validation.py` (27 tests)
+* `tests/unit/governance/test_agileplus.py` (18 tests)
+* `tests/unit/governance/test_compliance.py` (70 tests)
+* `tests/unit/governance/test_govern_approve_cli_diff.py` (2 tests)
+* `tests/unit/governance/test_govern_vet_service.py` (5 tests)
+* `tests/unit/governance/test_heliosShield_bridge.py` (22 tests)
+* `tests/unit/governance/test_metrics.py` (16 tests)
+* `tests/unit/governance/test_providers.py` (24 tests)
+* `tests/unit/governance/test_scoring.py` (15 tests)
+* `tests/unit/governance/test_task_classifier.py` (9 tests)
+* `tests/unit/governance/test_triggers.py` (33 tests)
+* `tests/unit/governance/test_worktree_governance_inventory.py` (3 tests)
+* `tests/unit/governance/test_worktree_legacy_remediation_report.py` (1 test)
+
+**Total tests removed: 316**
+
+### Validation
+
+* **TDD-RED (before):** Cluster D 316 skipped, 0 failed, 0 passed
+* **TDD-GREEN (after):** Cluster D directory removed; `pytest tests/unit/`
+  now collects 81 tests (down from 397)
+* **Net delta:** -316 skipped tests, 0 new tests
+* No `git grep` references to these test files outside the deleted
+  directory (verified before deletion)
+
+### Cross-reference check
+
+Verified via `git grep` that no other files reference these test file
+paths. The only substring match (`heliosShield_bridge_availability`
+test) was a separate test in `tests/test_unit_teammates.py` referencing
+the runtime symbol `heliosShieldBridge()`, not the deleted test file.
+
+### Followup
+
+When the governance modules in scope are actually specced and built in
+future lanes, the deleted tests should be re-added as the spec for the
+new modules. Git history preserves them as a reference for what the
+eventual contract should be.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
