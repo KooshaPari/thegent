@@ -11560,3 +11560,98 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-25 — AUDIT-LANE-E2E-PHANTOM-001 — Delete 22 e2e + unit phantom-test files (304 phantom tests)
+
+**Session window**: 2026-07-25
+**Branch**: `fix/e2e-phantom-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -22 files (deleted), -2571 lines, 304 phantom tests removed
+
+### Scope rationale
+
+21 e2e files in `tests/e2e/` plus `tests/unit/test_git_parallelism.py` are
+file-wide skip-annotated with phantom-feature skip reasons. All 304 tests
+target CLI commands that don't exist in the current implementation.
+
+### Phantom symbols verified absent (via git grep)
+
+All 22 files follow one of two skip patterns:
+
+1. **CLI command does not exist** (21 e2e files):
+   ```python
+   pytestmark = pytest.mark.skip(
+       reason="CLI command 'X' does not exist in current implementation"
+   )
+   ```
+   Affected commands: `acp`, `cliproxy`, `compliance`, `config`, `dag`,
+   `deferral`, `go`, `guardrails`, `hierarchy`, `inbox_teammate`,
+   `infra_utility`, `lsp_mcp`, `memory_models`, `models_recover_search`,
+   `next35c`, `observe_interruption`, `orchestrate_crew`, `plan`,
+   `priority`, `project_team_research`, `template_bdd`
+
+2. **API mismatch** (1 unit file):
+   ```python
+   pytestmark = pytest.mark.skip(
+       reason="API mismatch - requires full WorktreePool implementation"
+   )
+   ```
+
+### Files removed (22)
+
+| File | Tests | Skip pattern |
+|------|-------|--------------|
+| `tests/e2e/test_acp_agent_commands.py` | 11 | "CLI command 'acp' does not exist" |
+| `tests/e2e/test_cliproxy_commands.py` | 9 | "CLI command 'cliproxy' does not exist" |
+| `tests/e2e/test_compliance_config_commands.py` | 13 | "CLI commands 'compliance', 'config' do not exist" |
+| `tests/e2e/test_dag_deferral_commands.py` | 14 | "CLI commands 'dag', 'deferral' do not exist" |
+| `tests/e2e/test_final_batch.py` | 28 | "CLI commands do not exist" |
+| `tests/e2e/test_finance_forensics_federation_commands.py` | 14 | similar |
+| `tests/e2e/test_govern_go_commands.py` | 13 | "CLI command 'go' does not exist" |
+| `tests/e2e/test_govern_guardrails_hierarchy_commands.py` | 18 | similar |
+| `tests/e2e/test_inbox_teammate_workstream_commands.py` | 21 | similar |
+| `tests/e2e/test_infra_utility_commands.py` | 22 | similar |
+| `tests/e2e/test_lsp_mcp_commands.py` | 14 | similar |
+| `tests/e2e/test_memory_models_commands.py` | 14 | similar |
+| `tests/e2e/test_models_recover_search_commands.py` | 14 | similar |
+| `tests/e2e/test_next35c_lane7.py` | 5 | similar |
+| `tests/e2e/test_observe_interruption_learning_trust_commands.py` | 23 | similar |
+| `tests/e2e/test_orchestrate_crew_commands.py` | 13 | similar |
+| `tests/e2e/test_plan_commands.py` | 14 | similar |
+| `tests/e2e/test_priority_commands.py` | 12 | similar |
+| `tests/e2e/test_project_team_research_commands.py` | 14 | similar |
+| `tests/e2e/test_teams_workspace_validator_commands.py` | 17 | similar |
+| `tests/e2e/test_template_bdd.py` | 7 | similar |
+| `tests/unit/test_git_parallelism.py` | 20 | "API mismatch - requires full WorktreePool" |
+
+**Total: 22 files, 304 phantom tests, 2571 lines**
+
+### Validation
+
+* **TDD-RED (before):** 304 skipped across 22 files (all file-wide annotations)
+* **TDD-GREEN (after):** Files deleted from collection surface
+* `ruff check`: N/A (no source changes)
+
+### Cross-reference check
+
+Verified via `git grep` that the only consumers were the test files
+themselves. The e2e tests do not gate any production code path; they
+were roadmap placeholders for unimplemented CLI commands.
+
+### Out-of-scope (separate lanes)
+
+The remaining e2e files (test_cli_*, test_readme_*, test_next35_*,
+test_next70*, test_governance_*, test_real_app_*, etc.) are real
+contract tests with active test coverage. Not addressed in this lane.
+
+The remaining rot in `tests/test_unit_cli_commands_a.py` (90 failures)
+is mixed phantom + mock setup issues. Some failures will resolve when
+Cluster B (PRs #1167+#1168) re-exports merge into wip. Address in
+separate lane if needed.
+
+`tests/test_wl007_rust_binary_smoke.py` (real rot, slow cargo builds)
+is out of scope for test rot cleanup.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
