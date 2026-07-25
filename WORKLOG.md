@@ -11560,3 +11560,66 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-25 — AUDIT-LANE-RESEARCH-CHAOS-ROT-001 — Delete 3 phantom-feature files across research/ and chaos/ (3 tests, 1 stub module)
+
+**Session window**: 2026-07-25
+**Branch**: `fix/research-chaos-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -3 files (deleted), -138 lines, 3 phantom tests + 1 stub module removed
+
+### Scope rationale
+
+Three phantom-test files plus one auto-generated stub module, all violating
+CLAUDE.md "no fallback implementations" convention.
+
+### Phantom symbols verified absent (via git grep)
+
+**tests/research/test_cost_sensitivity.py (1 test):**
+- `CostSensitivityFramework(baseline_config=..., experiment_a_config=..., experiment_b_config=...)` signature
+- `framework.run_experiment(...)`, `framework.analyze()`, `results["...]["avg_latency_ms"]`, `results["...]["avg_cost"]`
+- All phantom
+
+**src/thegent/research/cost_sensitivity.py:**
+- Auto-generated stub module per docstring:
+  > WARNING: This is an auto-generated stub module.
+  > The actual implementation was moved/deleted during repository restructuring.
+  > This stub exists for backwards compatibility with existing tests.
+- Only consumer was the phantom test (deleted in this PR)
+
+**tests/chaos/test_resilience.py (2 tests):**
+- `thegent.agents.loop_controller.run_impl` — not implemented
+- Tests: `test_lifecycle_loop_resilience_to_transient_failures`, `test_lifecycle_loop_stops_on_permanent_failure`
+- Mock targets: `thegent.agents.loop_controller.run_impl`
+
+### Files removed (3)
+
+| File | Lines | Type |
+|------|-------|------|
+| `tests/research/test_cost_sensitivity.py` | 29 | phantom test (1 test) |
+| `src/thegent/research/cost_sensitivity.py` | 29 | stub module (forbidden by CLAUDE.md) |
+| `tests/chaos/test_resilience.py` | 80 | phantom test (2 tests) |
+
+### Validation
+
+* **TDD-RED (before):** 3 failures (1 research + 2 chaos)
+* **TDD-GREEN (after):** Files deleted from collection surface
+* `ruff check`: N/A (no source changes other than stub deletion)
+
+### Cross-reference check
+
+Verified via `git grep` that the only consumer of `CostSensitivityFramework`
+was the test file (deleted). Other source files exist at `phases/cost_sensitivity.py`
+which is a separate module not affected by this PR.
+
+### Out-of-scope (separate lanes)
+
+* `tests/mojo/test_wl133_deterministic_fixtures.py` (1 failure): real rot due to broken Mojo environment (`unable to locate module 'python'`), not phantom rot.
+* `tests/protocols/test_wl*.py` (492 failures): real rot due to renamed functions (`_validate_turn_submit_approval_payload` → `_resolve_turn_submit_approval_payload`), not phantom rot.
+* `tests/routing/` (108 failures): real rot, requires source/test alignment.
+* `tests/maif/` (89 failures): real rot, requires investigation.
+* `tests/muxless/`, `tests/session/`, `tests/agent_roles/` (60-70 failures): real rot, requires investigation.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
