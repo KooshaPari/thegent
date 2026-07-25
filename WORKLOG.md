@@ -11560,3 +11560,61 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-SMALL-SKIP-ROT-001 — Delete 3 file-wide-skip phantom test files
+
+**Session window**: 2026-07-24
+**Branch**: `fix/small-skip-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -3 files (deleted), -397 lines, 25 phantom tests removed
+
+### Scope rationale
+
+Three test files are file-wide skip-annotated with skip reason explicitly
+acknowledging the underlying feature is unimplemented. All 25 tests are
+phantom-feature tests for symbols verified absent via `git grep`.
+
+### Phantom symbols verified absent (via git grep)
+
+**tests/test_validated_mixin.py (12 tests, 236 lines):**
+- `validated_dataclass` decorator — file sets `validated_dataclass = None`
+- `ContextManagerMixin` — not implemented
+- `AsyncContextMixin` — not implemented
+- Skip reason: "validated_dataclass and ContextManagerMixin not implemented"
+
+**tests/commands/test_domain_map.py (7 tests, 79 lines):**
+- `thegent domain map` subcommand — not implemented
+- Skip reason: file-wide skip annotation
+
+**tests/commands/test_model_cmds_cliproxyctl_delegation.py (6 tests, 82 lines):**
+- `_parse_cliproxyctl_envelope` helper function — not in `model_cmds_list`
+- `cliproxyctl.machine.v1` schema_version parser — not implemented
+- Skip reason: file-wide skip annotation
+
+### Tests removed (25)
+
+Full file deletions: 3 files, 25 tests total
+
+### Validation
+
+* **TDD-RED (before):** 0 fail, 25 skipped (file-wide annotations)
+* **TDD-GREEN (after):** Files deleted from collection surface
+* `ruff check`: N/A (no source changes)
+
+### Cross-reference check
+
+Verified via `git grep` that no other code in `src/` or `tests/` imports
+`validated_dataclass`, `ContextManagerMixin`, `AsyncContextMixin`,
+`thegent domain map`, `_parse_cliproxyctl_envelope`, or any other phantom
+symbol. The placeholders are isolated to the test files.
+
+### Out-of-scope (separate lanes)
+
+The remaining file-wide skip test files (e.g., `test_install.py`,
+`test_powershell_support.py`, `test_unit_install_manager.py` — 1 test each)
+contain real test functions for partially-implemented features. These are
+addressed in subsequent audit lanes if/when the underlying features land.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
