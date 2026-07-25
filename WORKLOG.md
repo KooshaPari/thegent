@@ -11560,3 +11560,52 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-EMPTY-PLACEHOLDERS-001 — Delete 3 empty file-wide skip placeholder test files
+
+**Session window**: 2026-07-24
+**Branch**: `fix/empty-placeholder-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -3 files (deleted), -38 lines, 0 actual tests removed
+
+### Scope rationale
+
+Three test files in `tests/` are pure placeholders — they contain only a
+file-level docstring + `pytest.mark.skip(...)` annotation and **zero test
+functions**. They contribute nothing to the test suite and only pollute
+collection output.
+
+### Files removed (3)
+
+| File | Lines | Docstring summary |
+|------|-------|-------------------|
+| `tests/test_unit_cli_observe.py` | 12 | "Observe commands are not yet implemented. Tests are for future functionality under 'observe' subcommand." |
+| `tests/test_unit_cli_dag.py` | 14 | "DAG commands have been moved to 'plan' subcommand. These tests expect 'dag' as a top-level command which no longer exists." |
+| `tests/test_unit_cli_governance.py` | 12 | (file-wide skip for unimplemented `governance` CLI namespace) |
+
+All three were:
+- 12-14 lines each
+- Contained 0 test functions (just a docstring + skip marker)
+- File-wide skipped with no active test coverage
+
+### Validation
+
+* **TDD-RED (before):** 0 fail, 0 collected (file-wide skip on empty file)
+* **TDD-GREEN (after):** File deleted from collection surface
+* `ruff check`: N/A (no source changes)
+
+### Cross-reference check
+
+Verified via `git grep` that no other code in `src/` or `tests/` imports
+these files. They were only registered for pytest collection, not imported.
+
+### Out-of-scope (separate lanes)
+
+The remaining file-wide skip test files contain real test functions but
+are skipped pending implementation (e.g., `test_validated_mixin.py` 12
+tests, `test_domain_map.py` 7 tests). These are addressed in subsequent
+audit lanes if/when the underlying features land.
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
