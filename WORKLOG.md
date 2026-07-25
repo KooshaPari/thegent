@@ -11560,3 +11560,51 @@ cluster should drop from 169 failures to a much smaller residual that
 can be triaged test-by-test.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
+
+---
+
+## 2026-07-24 — AUDIT-LANE-PLACEHOLDER-1TEST-001 — Delete 3 placeholder test files with single test_placeholder stub
+
+**Session window**: 2026-07-24
+**Branch**: `fix/placeholder-1test-rot` (off `wip/2026-07-22-thegent-local-preservation`)
+**Commit**: pending
+**Delta**: -3 files (deleted), -27 lines, 3 placeholder tests removed
+
+### Scope rationale
+
+Three test files are identical placeholders — each contains a file-level
+docstring, `pytest.mark.skip(reason="Module import dependencies not yet
+resolved")`, and a single `test_placeholder()` function with a docstring.
+
+### Files removed (3)
+
+| File | Lines | Skip reason |
+|------|-------|-------------|
+| `tests/test_install.py` | 9 | "Module import dependencies not yet resolved" |
+| `tests/test_powershell_support.py` | 9 | "Module import dependencies not yet resolved" |
+| `tests/test_unit_install_manager.py` | 9 | "Module import dependencies not yet resolved" |
+
+All three files are identical structure: docstring + skip marker +
+`test_placeholder()` stub. They provide zero coverage.
+
+### Tests removed (3)
+
+Each file had 1 placeholder test (`test_placeholder`).
+
+### Validation
+
+* **TDD-RED (before):** 0 fail, 3 skipped (placeholder)
+* **TDD-GREEN (after):** Files deleted from collection surface
+* `ruff check`: N/A (no source changes)
+
+### Cross-reference check
+
+Verified via `git grep` that no other code in `src/` or `tests/` imports
+these files. They were only registered for pytest collection.
+
+### Out-of-scope (separate lanes)
+
+The remaining file-wide skip test files with real tests (none remain
+after PR #1177).
+
+Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
