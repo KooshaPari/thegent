@@ -27,3 +27,12 @@ def test_service_release_and_merge_delegate(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(service.merger, "merge", lambda *args, **kwargs: called.setdefault("args", args))
     result = service.merge(MergeCommand("base", "ours", "theirs"), "out")
     assert result == ("base", "ours", "theirs", "out")
+
+
+def test_events_redact_secrets_and_bound_payload(tmp_path: Path):
+    service = CommandShareService(tmp_path / "mesh")
+    service.enqueue({"api_key": "secret", "nested": {"password": "pw", "ok": "x" * 500}})
+    event = service.events[-1]
+    assert event.payload["payload"]["api_key"] == "[REDACTED]"
+    assert event.payload["payload"]["nested"]["password"] == "[REDACTED]"
+    assert len(event.payload["payload"]["nested"]["ok"]) <= 256

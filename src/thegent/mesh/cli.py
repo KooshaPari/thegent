@@ -28,18 +28,18 @@ def queue_enqueue(
     """Enqueue a new task into the distributed mesh queue."""
     import json
 
-    from thegent.mesh.task_queue import MaildirQueue
+    from thegent.mesh.command_share import CommandShareService
 
     settings = ThegentSettings()
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
-    queue = MaildirQueue(root / "queue")
+    service = CommandShareService(root)
 
     try:
         task_data = json.loads(payload)
     except json.JSONDecodeError:
         task_data = {"text": payload}
 
-    task_id = queue.enqueue(task_data, priority=priority)
+    task_id = service.enqueue(task_data, priority=priority)
     console.print(f"[bold green]Task enqueued![/bold green] ID: [cyan]{task_id}[/cyan]")
 
 
@@ -52,13 +52,13 @@ def queue_dequeue(
     """Claim the highest-priority task from the queue."""
     import json
 
-    from thegent.mesh.task_queue import MaildirQueue
+    from thegent.mesh.command_share import CommandShareService
 
     settings = ThegentSettings()
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
-    queue = MaildirQueue(root / "queue")
+    service = CommandShareService(root)
 
-    envelope = queue.dequeue(owner=agent_id)
+    envelope = service.dequeue(owner_id=agent_id)
     if not envelope:
         console.print("[yellow]Queue is empty.[/yellow]")
         return
@@ -68,7 +68,7 @@ def queue_dequeue(
     console.print(json.dumps(envelope, indent=2))
 
     if ack:
-        queue.ack(task_id)
+        service.ack(task_id, actor_id=agent_id or "system")
         console.print(f"[dim]Task {task_id} acknowledged and removed.[/dim]")
 
 
@@ -77,13 +77,13 @@ def queue_list(
     mesh_root: str | None = typer.Option(None, "--mesh-root", help="Path to mesh root"),
 ) -> None:
     """List all pending and in-flight tasks in the queue."""
-    from thegent.mesh.task_queue import MaildirQueue
+    from thegent.mesh.command_share import CommandShareService
 
     settings = ThegentSettings()
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
-    queue = MaildirQueue(root / "queue")
+    service = CommandShareService(root)
 
-    tasks = queue.list_pending()
+    tasks = service.queue.list_pending()
     if not tasks:
         console.print("[yellow]No tasks in queue.[/yellow]")
         return

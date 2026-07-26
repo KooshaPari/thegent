@@ -20,6 +20,7 @@ IGNORED_PREFIXES = (
 )
 
 SUBSTRATE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("thegent_cli_share", "queue"),
     ("thegent.mesh.task_queue", "queue"),
     ("thegent.mesh.smart_merge", "merge-worktree"),
     ("thegent.mesh.git_parallelism", "merge-worktree"),

@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
+from collections.abc import Mapping
 
 from .cache import Singleflight
 from .contracts import (
@@ -29,7 +30,19 @@ class CommandShareService:
         self.events: list[MeshEvent] = []
 
     def _emit(self, event_type: EventType, actor_id: str, payload: dict[str, Any]) -> None:
-        self.events.append(MeshEvent(event_type, actor_id, uuid4().hex, payload=payload))
+        self.events.append(MeshEvent(event_type, actor_id, uuid4().hex, payload=self._redact(payload)))
+
+    @classmethod
+    def _redact(cls, value: Any, *, key: str = "") -> Any:
+        if any(secret in key.lower() for secret in ("secret", "token", "password", "api_key", "apikey")):
+            return "[REDACTED]"
+        if isinstance(value, Mapping):
+            return {str(k): cls._redact(v, key=str(k)) for k, v in value.items()}
+        if isinstance(value, list):
+            return [cls._redact(v) for v in value[:32]]
+        if isinstance(value, str):
+            return value[:256]
+        return value
 
     def _claim_path(self, key: CommandKey) -> Path:
         return self.mesh_root / "command-claims" / key.value
@@ -54,7 +67,7 @@ class CommandShareService:
     def enqueue(self, payload: dict[str, Any], priority: int = 5, owner_id: str | None = None) -> str:
         command = EnqueueTaskCommand(payload, priority, owner_id)
         task_id = self.queue.enqueue(dict(command.payload), command.priority)
-        self._emit(EventType.TASK_ENQUEUED, owner_id or "system", {"task_id": task_id})
+        self._emit(EventType.TASK_ENQUEUED, owner_id or "system", {"task_id": task_id, "payload": dict(command.payload)})
         return task_id
 
     def dequeue(self, owner_id: str | None = None) -> dict[str, Any] | None:
