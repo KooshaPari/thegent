@@ -56,3 +56,15 @@ def test_result_path_confined_to_mesh_root(tmp_path: Path):
     assert service.confine_result_path("results/out.json").parent == tmp_path / "mesh" / "results"
     with pytest.raises(ValueError):
         service.confine_result_path("../escape")
+
+
+def test_redacted_event_replay_retains_correlation(tmp_path: Path):
+    service = CommandShareService(tmp_path / "mesh")
+    service.enqueue({"token": "hidden", "message": "ok"})
+    event = service.events[-1]
+    replay = event.__class__(
+        event.event_type, event.actor_id, event.correlation_id,
+        payload=event.payload, event_id=event.event_id, occurred_at=event.occurred_at,
+    )
+    assert replay.correlation_id == event.correlation_id
+    assert replay.payload["payload"]["token"] == "[REDACTED]"
