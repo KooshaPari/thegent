@@ -11464,67 +11464,77 @@ Lane: governance AUDIT-N+82 through N+99.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 
----
+## AUDIT-LANE-PLANNING-TESTS-001 — fix 11 pre-existing planning test failures
 
-## 2026-07-24 — AUDIT-LANE-CLI-COMMANDS-WL124-001 — Namespace exports Phase 1
+**Branch:** `fix/planning-tests` (worktree `/Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/fix-planning-tests`)
+**Base:** `wip/2026-07-22-thegent-local-preservation` @ `bbd36a177`
+**DAG tick:** +1
 
-**Session window**: 2026-07-24
-**Branch**: `fix/cli-commands-wl124` (off `wip/2026-07-22-thegent-local-preservation`)
-**Commit**: pending
-**Delta**: +32 / -11 (4 files)
+### Failures (11) and root cause per group (3)
 
-### Scope rationale
+**Group A — auto_launch throttle / governance gate (4 failures)**
 
-Cluster B from the dormant test rot scan was identified as ~25 tests in
-`tests/test_unit_cli_commands_a.py` + `tests/test_unit_cli_commands_b.py`
-broken by WL-124 module-split refactoring. The repo contains
-`CLI_TESTS_ROOT_CAUSE_ANALYSIS.md` documenting the root cause (test
-patches no longer match where commands call functions).
+1. `tests/planning/test_agent_throttle.py::TestGetActiveAgentCount::test_counts_running_sessions_with_live_pid` — `assert 0 == 2`
+   - Root cause: source `from thegent.cli.commands.impl.ps_impl import get_sessions` resolves against a real **function** named `ps_impl` (not a submodule), so `get_sessions` does not exist; the import silently fails inside `try/except`, the registry path is skipped, and only the psutil scan (patched to `[]`) runs.
+   - Fix side: **source + test**. Source: import `ps_impl` directly and call `ps_impl()`. Test: re-anchor the patch to `thegent.cli.commands.impl.ps_impl` (the function).
+2. `tests/planning/test_agent_throttle.py::TestLaunchBatchThrottle::test_throttle_raises_runtime_error` — `Regex pattern did not match`
+   - Root cause: `launch_batch` emitted `"Throttle limit reached: ..."` (capital T) but `pytest.raises(match="throttle limit")` is case-sensitive.
+   - Fix side: **source**. Lowercased the runtime-error message to `"throttle limit reached: ..."`.
+3. `tests/planning/test_auto_launch_full.py::TestAutoLaunchSystemLaunchBatch::test_throttle_raises_runtime_error` — same case-sensitivity mismatch (different test surface, same code path).
+   - Fix side: **source** (same one-line change as #2).
+4. `tests/planning/test_auto_launch_pre_work_gate.py::test_try_launch_next_blocks_on_governance_gate` — `assert 'throttle_warn' == 'governance_blocked'`
+   - Root cause: `_try_launch_next` had no pre-work hard-gate check; the throttle path fired first and recorded `throttle_warn`. The test pins the contract that when `do_next_impl` returns a `governance_blocked` payload, the system must record exactly one `governance_blocked` event and short-circuit.
+   - Fix side: **source**. Added a top-of-method gate that calls `do_next_impl()` and, on `governance_blocked == True`, records `record_event("governance_blocked", gate=...)` and returns.
+   - Test fallout: 3 throttle-only tests in `test_agent_throttle.py` (`test_throttle_sleeps_then_aborts_if_still_throttled`, `test_throttle_then_ok_after_sleep_proceeds`, `test_warn_level_proceeds_without_sleep`) were missing the new gate's `do_next_impl` patch and now also need it. Added a `_non_blocked_do_next()` helper and patched `thegent.cli.commands.impl.do_next_impl` in those 3 tests (test-side, not source-side).
 
-**Actual baseline:** 169 failed, 3 passed, 41 skipped — the WL-124 rot
-is significantly broader than the analysis doc estimated (15 broken
-tests). It includes 46 unique missing symbol patterns:
-- ~30 `*_cmd` command function imports
-- 7 internal helper/constant exports
-- 1 schema version mismatch (test expects 3.0, source defines 1.0)
+**Group B — board_artifact_integrator (6 failures)**
 
-**Phase 1 scope:** This PR addresses the 7 most-touched symbols and
-the schema-version mismatch (8 fixes). The remaining ~30 command-function
-imports are queued for **Phase 2** (`AUDIT-LANE-CLI-COMMANDS-WL124-002`)
-once we confirm Phase 1 review is clean.
+5. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactParserJson::test_parse_json_list_format` — `TypeError: data must be str, not bytes`
+   - Root cause: the test imports `orjson as json` (with stdlib fallback). `orjson.dumps()` returns `bytes`, but the test pipes the result through `Path.write_text(...)`, which requires `str`.
+   - Fix side: **test**. Added `.decode("utf-8")` after each `json.dumps(...)` call (works for both orjson and stdlib).
+6. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactParserJson::test_parse_json_dict_format` — same root cause as #5.
+   - Fix side: **test** (same `.decode("utf-8")` fix).
+7. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorFindArtifacts::test_finds_csv_execution_board` — `assert 'execution_board_csv' in {}`
+   - Root cause: source regex `CLIPPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_...` had a `CLIPPROXYAPI` typo (double P); the product is `cliproxyapi` (single P), which the test (correctly) uses.
+   - Fix side: **source**. Corrected the regex to `CLIPROXYAPI_(\d+)_ITEM_EXECUTION_BOARD_...`.
+8. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorFindArtifacts::test_finds_json_execution_board` — `TypeError: data must be str, not bytes` (same as #5) **plus** the test file happened to use the source's `CLIPPROXYAPI` typo. After the source regex fix, the test file also needed to drop the typo.
+   - Fix side: **test** (`.decode("utf-8")` + typo correction to `CLIPROXYAPI`).
+9. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorFindArtifacts::test_finds_github_import` — `assert False` (artifacts dict empty)
+   - Root cause: source regex `GITHUB_PROJECT_IMPORT_([A-Z_]+)_(\d{4}-\d{2}-\d{2})\.csv` only allows uppercase letters and underscores in the project name; the test creates `GITHUB_PROJECT_IMPORT_CLIPROXYAPI_2000_2026-02-22.csv` which contains digits.
+   - Fix side: **source**. Widened the project-name class to `[A-Z0-9_]+`.
+10. `tests/planning/test_board_artifact_integrator_full.py::TestBoardArtifactIntegratorIngest::test_ingest_json_precedence` — `TypeError: data must be str, not bytes` (same as #5).
+    - Fix side: **test** (same `.decode("utf-8")` fix).
 
-### Fixes applied (8)
+**Group C — workstream_entities (1 failure)**
 
-| # | Change | Rationale |
-|---|--------|-----------|
-| 1 | Re-export `console` from `_cli_shared` in `thegent.cli.__init__` | Tests patch `thegent.cli.console` |
-| 2 | Re-export `_default_owner_tag` from `plan_cmds` in `thegent.cli.__init__` | Tests patch `thegent.cli._default_owner_tag` |
-| 3 | Re-export `_normalize_output_format` from `_cli_shared` | Tests patch `thegent.cli._normalize_output_format` |
-| 4 | Re-export `resolve_agent` from `agents.registry` (canonical home) | Tests patch `thegent.cli.resolve_agent` |
-| 5 | Re-export `AGENT_LABELS` from `agents.registry` | Tests patch `thegent.cli.AGENT_LABELS` |
-| 6 | Re-export `time` (stdlib module) | Tests patch `thegent.cli.time` for `wait_cmd` timeout tests |
-| 7 | Re-export `_write_health_trend_export` from `_cli_shared` | Tests import `_write_health_trend_export` from `thegent.cli` |
-| 8 | Bump `HEALTH_PAYLOAD_SCHEMA_VERSION` `"1.0"` → `"3.0"` in 3 source files | Tests assert `schema_version: 3.0` |
+11. `tests/planning/test_workstream_entities.py::test_entity_operation_sync_dispatches_source_batches` — `AttributeError: '_FakeDB' object has no attribute 'close'`
+    - Root cause: source's `entity_operation` always calls `db.close()` in its `finally` block; the test's `_FakeDB` test double did not implement `close()`.
+    - Fix side: **test**. Added a no-op `close()` method to `_FakeDB` (mirrors the production `WorkstreamDB.close()` contract).
 
-### Source files modified (4)
+### Per-failure fix decision (test vs source)
 
-* `src/thegent/cli/__init__.py` — +29 / -2 (7 new exports + docstring update)
-* `src/thegent/cli/commands/impl.py` — +1 / -1 (schema version)
-* `src/thegent/cli/commands/session_health_impl.py` — +1 / -1 (schema version)
-* `src/thegent/cli_helpers/runtime_helpers.py` — +1 / -1 (schema version) + ruff format
+| # | Test | Side |
+|---|------|------|
+| 1 | `test_counts_running_sessions_with_live_pid` | source + test |
+| 2 | `test_throttle_raises_runtime_error` (agent_throttle) | source |
+| 3 | `test_throttle_raises_runtime_error` (auto_launch_full) | source |
+| 4 | `test_try_launch_next_blocks_on_governance_gate` | source (+ 3 sibling tests) |
+| 5 | `test_parse_json_list_format` | test |
+| 6 | `test_parse_json_dict_format` | test |
+| 7 | `test_finds_csv_execution_board` | source |
+| 8 | `test_finds_json_execution_board` | test (decode + typo) |
+| 9 | `test_finds_github_import` | source |
+| 10 | `test_ingest_json_precedence` | test |
+| 11 | `test_entity_operation_sync_dispatches_source_batches` | test |
 
-### Validation
+### Test counts
 
-* **TDD-RED (before):** 169 failed, 3 passed, 41 skipped
-* **TDD-GREEN (after):** 169 failed, 3 passed, 41 skipped
-* **Net delta:** 0 visible test count change (the 7 exports don't change
-  the count because the affected tests fail on OTHER missing symbols
-  first). The fixes are correct individually; the aggregate counter is
-  unchanged because Phase 2 is needed.
-* `ruff check` on all 4 modified files: **All checks passed!**
-* `ruff format --check`: **3 already formatted, 1 reformatted** (after one pass)
+| Suite | Before | After |
+|-------|--------|-------|
+| `tests/planning/` | 11 failed / 107 passed | **0 failed / 118 passed** |
+| `tests/test_unit_audit_n3{3..9}_*.py` + `tests/planning/` | (not part of baseline) | **495 passed** |
 
-### Out-of-scope (Phase 2 — queued)
+### Files changed
 
 The remaining ~39 unique missing symbols are listed below for the
 follow-on PR:
@@ -11563,72 +11573,106 @@ Working tree target branch: `wip/2026-07-22-thegent-local-preservation`
 
 ---
 
-## 2026-07-24 — AUDIT-LANE-GOVERNANCE-NOT-IMPL-001 — Cluster D governance phantom-test removal
+## 2026-07-24 — AUDIT-LANE-CLI-COMMANDS-WL124-002 — Namespace exports Phase 2
 
-**Session window**: 2026-07-24
-**Branch**: `fix/governance-module-not-impl` (off `wip/2026-07-22-thegent-local-preservation`)
+**Session window**: 2026-07-24 (Phase 2 follow-on)
+**Branch**: `fix/cli-commands-wl124` (continuation of Phase 1 commit)
 **Commit**: pending
-**Delta**: -15 files (all of `tests/unit/governance/`), 316 tests removed
+**Delta**: +123 / -7 (single file: `src/thegent/cli/__init__.py`)
 
 ### Scope rationale
 
-Cluster D from the dormant test rot scan was identified as ~25-30 tests
-in `tests/unit/governance/` covering governance stub modules. Actual
-baseline is **316 skipped, 0 failed, 0 passed** — every test in 15 files
-has file-wide `pytest.mark.skip` annotation with reasons explicitly
-acknowledging the gaps:
-- **8 files** "Module not implemented" — `adaptive_coordination`,
-  `compliance`, `govern_approve_cli_diff`, `govern_vet_service`,
-  `heliosShield_bridge`, `task_classifier`, and others
-- **7 files** "API mismatch" — `agent_hierarchy_validation`,
-  `agent_hierarchy`, `agileplus`, `metrics`, `providers`, `scoring`,
-  `triggers`, `worktree_governance_inventory`,
-  `worktree_legacy_remediation_report`
+Phase 2 extends the re-export surface to cover the remaining 35
+`*_cmd` wrappers and helpers from the Phase 1 followup list. The
+canonical homes live in dedicated modules (`plan_cmds`, `session_cmds`,
+`infra_cmds`, `model_cmds`, `governance_cmds`, `governance/governance_impl`,
+`dag_run_cmd_impl`, `_cli_shared`); this layer is a pure re-export
+surface.
 
-Per the established Cluster A pattern, phantom-feature tests are
-removed rather than building scaffolding for features that don't exist.
+### Re-exports added (35)
 
-### Files removed (15)
+**Command wrappers (~24):**
 
-* `tests/unit/governance/test_adaptive_coordination.py` (2 tests)
-* `tests/unit/governance/test_agent_hierarchy.py` (69 tests)
-* `tests/unit/governance/test_agent_hierarchy_validation.py` (27 tests)
-* `tests/unit/governance/test_agileplus.py` (18 tests)
-* `tests/unit/governance/test_compliance.py` (70 tests)
-* `tests/unit/governance/test_govern_approve_cli_diff.py` (2 tests)
-* `tests/unit/governance/test_govern_vet_service.py` (5 tests)
-* `tests/unit/governance/test_heliosShield_bridge.py` (22 tests)
-* `tests/unit/governance/test_metrics.py` (16 tests)
-* `tests/unit/governance/test_providers.py` (24 tests)
-* `tests/unit/governance/test_scoring.py` (15 tests)
-* `tests/unit/governance/test_task_classifier.py` (9 tests)
-* `tests/unit/governance/test_triggers.py` (33 tests)
-* `tests/unit/governance/test_worktree_governance_inventory.py` (3 tests)
-* `tests/unit/governance/test_worktree_legacy_remediation_report.py` (1 test)
+* `escalate_add_cmd`, `escalate_list_cmd`, `escalate_resolve_cmd`,
+  `escalate_resolve_impl` (from governance_cmds, governance_impl)
+* `dag_checkpoints_cmd` (from cli_dag)
+* `dag_list_cmd`, `dag_status_cmd`, `dag_ready_cmd`, `dag_update_cmd`,
+  `dag_validate_cmd` (from plan_cmds)
+* `plan_analyze_cmd`, `closure_pack_cmd` (from plan_cmds)
+* `list_droids_cmd`, `list_models_cmd`, `list_agents_cmd` (from model_cmds)
+* `feedback_cmd`, `history_cmd`, `events_cmd`, `inspect_cmd`,
+  `logs_cmd`, `pause_cmd`, `ps_cmd`, `resume_cmd`, `status_cmd`,
+  `stop_cmd`, `wait_cmd`, `session_contracts_cmd`,
+  `session_contract_health_gate_cmd`, `session_contract_health_trend_cmd`
+  (from session_cmds)
+* `cockpit_cmd`, `purge_cmd`, `observe_summary_cmd`, `archive_cmd`,
+  `benchmark_cmd` (from infra_cmds)
+* `sweep_cmd`, `policy_show_cmd`, `migration_cmd`, `drift_cmd`
+  (from governance_cmds)
 
-**Total tests removed: 316**
+**Helpers and constants (~11):**
+
+* `_resolve_cwd` (from dag_run_cmd_impl)
+* `_compose_owner_tag`, `_scope_key` (from _cli_shared)
+* `_list_antigravity_models`, `_list_claude_models`,
+  `_list_codex_models_fallback`, `_list_copilot_models_fallback`,
+  `_list_gemini_models`, `_list_glm_models`, `_list_minimax_models`
+  (from model_cmds)
+* `RunRegistry` (class), `list_agent_names` (from agents.registry)
+* `subprocess` (stdlib re-export)
+
+### Skipped (non-existent features — phantom symbols)
+
+The following symbols are referenced by tests but do **not exist**
+anywhere in the source tree. They are phantom features that the
+test surface was written against but never built. Per the long-term
+stability protocol, removing these tests (similar to Cluster A) is
+preferred over building phantom scaffolding:
+
+| Symbol | Test count | Source status |
+|--------|------------|---------------|
+| `_find_session_meta` | 32 | Phantom — does not exist |
+| `_parse_dag_full` | 20 | Phantom |
+| `_parse_dag_session` | 18 | Phantom |
+| `_export_format_from_suffix` | 18 | Phantom |
+| `_write_report_export` | 9 | Phantom |
+| `_resolve_droids_dir` | 8 | Phantom |
+| `_write_health_gate_export` | 6 | Phantom |
+| `_list_cursor_models` | 6 | Phantom |
+| `_infer_export_format` | 6 | Phantom |
+| `_atomic_write` | 2 | Phantom |
+
+Total phantom-symbol test count: **125 tests**.
+
+### Real symbols still failing (partial overlap)
+
+* `escalate_resolve_impl` (4 tests): re-exported on `thegent.cli` but
+  tests patch at `thegent.cli.commands._cli_shared.escalate_resolve_impl`.
+  This requires `_cli_shared` to also re-export the symbol — out of
+  scope for this PR (would expand to 4+ source-file edits).
+* `get_registry` (2 tests): lives in `thegent.contracts` but tests
+  patch at `thegent.cli.get_registry`. Out of scope.
+* `Columns` (2 tests): does not exist anywhere — phantom.
+* `thegent.contracts.registry` attribute errors (2 tests): different
+  contract module path issue — out of scope.
 
 ### Validation
 
-* **TDD-RED (before):** Cluster D 316 skipped, 0 failed, 0 passed
-* **TDD-GREEN (after):** Cluster D directory removed; `pytest tests/unit/`
-  now collects 81 tests (down from 397)
-* **Net delta:** -316 skipped tests, 0 new tests
-* No `git grep` references to these test files outside the deleted
-  directory (verified before deletion)
+* **TDD-RED (before Phase 1):** 169 failed, 3 passed, 41 skipped
+* **TDD-RED (after Phase 1):** 169 failed, 3 passed, 41 skipped
+* **TDD-GREEN (after Phase 2):** **155 failed, 17 passed, 41 skipped**
+* **Net delta from Phase 1 baseline: -14 failures, +14 passes**
+* `ruff check src/thegent/cli/__init__.py`: **All checks passed!**
+* `ruff format --check`: **1 file left unchanged**
 
-### Cross-reference check
+### Followup (Phase 3 — queued)
 
-Verified via `git grep` that no other files reference these test file
-paths. The only substring match (`heliosShield_bridge_availability`
-test) was a separate test in `tests/test_unit_teammates.py` referencing
-the runtime symbol `heliosShieldBridge()`, not the deleted test file.
+Phase 3 would address the remaining 155 failures, of which:
+- **~125 phantom-symbol tests** — candidate for deletion per Cluster A pattern
+- **~30 real-symbol tests** — require additional source changes
+  (e.g., `_cli_shared` re-exports of escalate_resolve_impl,
+   `_write_health_gate_export` / `_write_report_export` forwarders)
 
-### Followup
-
-When the governance modules in scope are actually specced and built in
-future lanes, the deleted tests should be re-added as the spec for the
-new modules. Git history preserves them as a reference for what the
-eventual contract should be.
+Phase 3 PR will be opened after Phase 1+2 are reviewed/merged.
 
 Working tree target branch: `wip/2026-07-22-thegent-local-preservation`

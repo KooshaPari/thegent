@@ -85,8 +85,8 @@ def get_active_agent_count() -> int:
     tracked_pids: set[int] = set()
     
     try:
-        from thegent.cli.commands.impl.ps_impl import get_sessions
-        sessions = get_sessions()
+        from thegent.cli.commands.impl import ps_impl
+        sessions = ps_impl()
         for session in sessions:
             if session.get("status") == "running":
                 pid = session.get("pid")
@@ -257,8 +257,20 @@ class AutoLaunchSystem:
     async def _try_launch_next(self) -> None:
         """Try to launch the next ready work item.
         
-        Checks throttle status and launches if within limits.
+        Checks governance gate and throttle status before launching.
         """
+        # Pre-work hard-gate (WP-HG-05): if the do_next fallback is blocked
+        # by governance, do not proceed to throttle or launch paths.
+        try:
+            from thegent.cli.commands.impl import do_next_impl
+            do_next_result = do_next_impl()
+        except Exception:
+            do_next_result = None
+        if isinstance(do_next_result, dict) and do_next_result.get("governance_blocked"):
+            gate = (do_next_result.get("governance_block") or {}).get("gate")
+            self.record_event("governance_blocked", gate=gate)
+            return
+
         result = check_agent_throttle()
         
         if result.action == "hard_stop":
@@ -344,7 +356,7 @@ class AutoLaunchSystem:
             raise RuntimeError(msg)
         
         if result.action == "throttle":
-            msg = f"Throttle limit reached: {result.count} active (limit: {result.limit}). Cannot launch batch."
+            msg = f"throttle limit reached: {result.count} active (limit: {result.limit}). Cannot launch batch."
             self.record_event("batch_throttled", count=result.count, limit=result.limit)
             raise RuntimeError(msg)
         
