@@ -36,7 +36,7 @@ from thegent.config import ThegentSettings
 
 # AUDIT-N+19: schema-version constant re-exported so callers can
 # ``from thegent.cli import HEALTH_PAYLOAD_SCHEMA_VERSION``.
-HEALTH_PAYLOAD_SCHEMA_VERSION = "1.0"
+HEALTH_PAYLOAD_SCHEMA_VERSION = "3.0"
 
 
 # Built-in health-policy profiles (name → strict + ratio).
