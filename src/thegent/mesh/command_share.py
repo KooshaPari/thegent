@@ -70,6 +70,19 @@ class CommandShareService:
         self._emit(EventType.TASK_ENQUEUED, owner_id or "system", {"task_id": task_id, "payload": dict(command.payload)})
         return task_id
 
+    def confine_result_path(self, relative_path: str) -> Path:
+        """Resolve a result path beneath the mesh root, rejecting traversal/symlinks."""
+        candidate = (self.mesh_root / relative_path).resolve()
+        root = self.mesh_root.resolve()
+        if root not in candidate.parents and candidate != root:
+            raise ValueError("result path escapes mesh root")
+        current = self.mesh_root
+        for part in Path(relative_path).parts:
+            current /= part
+            if current.is_symlink():
+                raise ValueError("result path traverses symlink")
+        return candidate
+
     def dequeue(self, owner_id: str | None = None) -> dict[str, Any] | None:
         task = self.queue.dequeue(owner_id)
         if task:
@@ -83,6 +96,12 @@ class CommandShareService:
     def nack(self, task_id: str, actor_id: str = "system") -> None:
         self.queue.nack(task_id)
         self._emit(EventType.TASK_NACKED, actor_id, {"task_id": task_id})
+
+    def reclaim(self, owner_id: str) -> int:
+        count = self.queue.reclaim_owner(owner_id)
+        if count:
+            self._emit(EventType.TASK_RECLAIMED, owner_id, {"count": count})
+        return count
 
     def merge(self, command: MergeCommand, output: str, *, path_hint: str | None = None) -> Any:
         result = self.merger.merge(command.base, command.ours, command.theirs, output, path_hint=path_hint)
