@@ -3,27 +3,58 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    }
   },
   "customizations": {
     "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.ruff": "explicit",
+          "source.organizeImports.ruff": "explicit"
+        },
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      },
       "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "charliermarsh.ruff"
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker"
       ]
     }
   },
-  "postCreateCommand": "pip install uv && (uv sync 2>/dev/null && uv run pip install -e . 2>/dev/null || pip install -e . 2>/dev/null || uv tool install thegent 2>/dev/null || pip install thegent 2>/dev/null) || true",
-  "postStartCommand": "thegent --help >/dev/null 2>&1 || true",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "thegent --help >/dev/null 2>&1 || uv run python -m thegent --help >/dev/null 2>&1 || true",
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/.local/bin"
+    "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/.local/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1"
   },
-  "forwardPorts": [3847],
+  "forwardPorts": [3847, 20128],
   "portsAttributes": {
     "3847": {
       "label": "thegent MCP",
       "onAutoForward": "notify"
+    },
+    "20128": {
+      "label": "OmniRoute dispatch",
+      "onAutoForward": "notify"
     }
-  }
+  },
+  "containerUser": "vscode",
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true
 }

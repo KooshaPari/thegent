@@ -181,7 +181,9 @@ From inside Claude Code, the same dispatch is available via the bundled `thegent
 # Clone and install
 git clone https://github.com/KooshaPari/thegent
 cd thegent
-uv sync --all-extras
+make install        # or: uv sync --all-extras
+make test           # or: pytest -q
+make lint           # or: ruff check src tests
 
 # Bootstrap your system
 thegent install -t all --scope both --full
@@ -190,6 +192,19 @@ thegent doctor
 # Run your first agent
 thegent run free "Analyze the current directory structure"
 ```
+
+> **New here?** Run `make help` to see every target, or `make quality` for
+> the canonical lint + test gate. The Makefile is a thin pass-through over
+> `Taskfile.yml` (so `task` owners get identical behaviour).
+
+### Onboarding paths
+
+| Audience | Start here |
+|----------|-----------|
+| Python contributor | `make install && make test && make lint` |
+| Dotfiles / system bootstrap | `thegent install -t all --scope both --full` |
+| Devcontainer user | Open in VS Code → "Reopen in Container" → `post-create.sh` runs automatically |
+| Consumer repo | `bash scripts/distribution/bootstrap-project.sh <path>` |
 
 For Windows:
 
