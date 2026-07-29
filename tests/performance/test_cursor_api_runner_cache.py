@@ -24,7 +24,7 @@ class TestCursorApiReachabilityCache:
         self._clear_cache()
 
         with patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable") as mock_check:
-            mock_check.return_value = (True, False)
+            mock_check.return_value = (True, False, 200)
 
             first = _is_cursor_api_reachable("http://localhost:8080", "tok")
             second = _is_cursor_api_reachable("http://localhost:8080", "tok")
@@ -40,7 +40,7 @@ class TestCursorApiReachabilityCache:
         self._clear_cache()
 
         with patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable") as mock_check:
-            mock_check.return_value = (False, False)
+            mock_check.return_value = (False, False, None)
 
             result = _is_cursor_api_reachable("http://localhost:9999", "tok2")
 
@@ -55,11 +55,11 @@ class TestCursorApiReachabilityCache:
 
         with patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable") as mock_check:
             # First call: connection error — result not cached
-            mock_check.return_value = (False, True)
+            mock_check.return_value = (False, True, None)
             _is_cursor_api_reachable("http://localhost:8080", "tok")
 
             # Second call: should re-probe (cache was not populated)
-            mock_check.return_value = (True, False)
+            mock_check.return_value = (True, False, 200)
             result = _is_cursor_api_reachable("http://localhost:8080", "tok")
 
         assert result is True

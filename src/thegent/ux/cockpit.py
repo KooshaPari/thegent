@@ -51,7 +51,46 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
+from thegent.i18n.aria import annotate
+
 _log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# ARIA annotation helpers
+# ---------------------------------------------------------------------------
+
+
+def _annotate_pane_close(
+    closing_line: str,
+    *,
+    label: str,
+    role: str = "status",
+    aria_live: str = "polite",
+) -> str:
+    """Return ``closing_line`` with an ARIA annotation trailer appended.
+
+    The trailer rides on the closing ``└─...─┘`` border of a pane so
+    the metadata travels with the box without disturbing the row
+    layout (the box's right border stays aligned). An empty ``label``
+    falls back to the bare closing line so callers can opt out of
+    annotation by passing ``label=""``.
+
+    L17 I18n/A11y: the cockpit renderers surface WAI-ARIA-style
+    metadata so screen readers and TUI inspection tooling can pick up
+    the pane's role + live-region semantics without scraping free-form
+    text. ``role="status"`` + ``aria-live="polite"`` is the task-brief
+    default for live status panes; ``role="log"`` is used for the
+    decision-history pane.
+    """
+    if not label:
+        return closing_line
+    return annotate(
+        closing_line,
+        role=role,
+        aria_live=aria_live,
+        aria_label=label,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -953,10 +992,32 @@ class OperatorCockpit:
         lock-aware and may be invoked from tests / debug utilities
         without the outer lock; the production ``render`` path is the
         only one that locks.
+
+        ARIA (L17 I18n/A11y): each pane is invoked with an ``aria_label``
+        derived from :attr:`CockpitConfig.pane_labels` so the rendered
+        output emits ARIA annotation trailers (e.g. ``[role=status
+        aria-live=polite aria-label="Live Runs"]``) on the closing
+        border of each pane. The headers/decisions/traffic/dormant_core
+        panes also get their own labels so downstream tooling
+        (screen readers, TUI inspectors) can identify the region
+        without scraping free-form text.
         """
         cfg = self.config
-        # 1. Header — title + progress bar (P-081)
-        header = self._render_header()
+        # Resolve labels defensively; older configs (pre-AUDIT-N+15 / +18 / +22)
+        # may not have every key, so the grid reflects only the configured
+        # subset. ``pane_labels.get(...)`` returns the default and is
+        # never missing.
+        runs_label = cfg.pane_labels.get(CockpitPane.RUNS, "Live Runs")
+        lanes_label = cfg.pane_labels.get(CockpitPane.LANES, "Lane Distribution")
+        confidence_label = cfg.pane_labels.get(CockpitPane.CONFIDENCE, "Confidence (P50/P95)")
+        overrides_label = cfg.pane_labels.get(CockpitPane.OVERRIDES, "Active Overrides")
+        traffic_label = cfg.pane_labels.get(CockpitPane.TRAFFIC, "Traffic")
+        dormant_label = cfg.pane_labels.get(CockpitPane.DORMANT_CORE, "Dormant Core")
+        decisions_label = "Decision History"
+
+        # 1. Header — title + progress bar (P-081). The header lands
+        #    in a ``region`` so screen readers flag it as a landmark.
+        header = self._render_header(aria_label=cfg.title)
 
         # 2. Optional override-expiry banner (WP-3003 -> WP-4001 bridge).
         #    Surfaces the most recent governance.override.expired events
@@ -964,11 +1025,11 @@ class OperatorCockpit:
         #    than waiting for the next JSONL tail.
         banner = self._render_override_banner()
 
-        # 3. The four panes
-        runs_lines = self._render_runs_pane()
-        lanes_lines = self._render_lanes_pane()
-        conf_lines = self._render_confidence_pane()
-        ovr_lines = self._render_overrides_pane()
+        # 3. The four panes (ARIA-annotated on the closing border).
+        runs_lines = self._render_runs_pane(aria_label=runs_label)
+        lanes_lines = self._render_lanes_pane(aria_label=lanes_label)
+        conf_lines = self._render_confidence_pane(aria_label=confidence_label)
+        ovr_lines = self._render_overrides_pane(aria_label=overrides_label)
 
         # 4. Compose into 2x2 grid
         body_lines: list[str] = []
@@ -984,23 +1045,23 @@ class OperatorCockpit:
         #    existing override-history UX (different stream): every
         #    recorded ``DecisionNotice`` shows up with verdict glyph +
         #    age so operators can trace governance denies without
-        #    tailing the JSONL.
-        decisions_lines = self._render_decisions_pane()
+        #    tailing the JSONL. Uses ``role="log"`` per ARIA conventions.
+        decisions_lines = self._render_decisions_pane(aria_label=decisions_label)
         # 6. AUDIT-N+15: fourth row — traffic pane (full-width). When a
         #    ``TrafficDashboard`` is attached via ``attach_traffic``, this
         #    surfaces live count/rps/error_rate/p50/p95 so operators see
         #    traffic without tailing a separate dashboard. Without a
         #    dashboard attached the pane is omitted entirely so the
         #    layout reflects only attached subsystems.
-        traffic_lines = self._render_traffic_pane_lines()
+        traffic_lines = self._render_traffic_pane_lines(aria_label=traffic_label)
         # 7. AUDIT-N+18: fifth row — dormant-core pane (full-width). When a
-        #    dormant-core source is attached via ``attach_dormant_core``,
+        #    dormant-core source is attached via ``attach_dormant_core`,
         #    this surfaces live escalation count, past-SLA count,
         #    freshness bucket, and the AUDIT-N+13 ``wl120_dormant_round_trip``
         #    side-channel flag so operators see the dormant-core
-        #    reconciliation inline alongside the traffic pane. Without
-        #    a source attached the pane is omitted entirely.
-        dormant_lines = self._render_dormant_core_pane_lines()
+        #    reconciliation inline alongside the traffic pane. Without a
+        #    source attached the pane is omitted entirely.
+        dormant_lines = self._render_dormant_core_pane_lines(aria_label=dormant_label)
         body = (
             "\n".join(body_lines)
             + "\n"
@@ -1060,7 +1121,7 @@ class OperatorCockpit:
             return _render_override_banner_text(last_override, now)
         return _render_decision_deny_banner(last_deny, now)  # type: ignore[arg-type]
 
-    def _render_header(self) -> str:
+    def _render_header(self, *, aria_label: str | None = None) -> str:
         """Render the header line (title + progress bar + tick clock).
 
         NEW-19 (SOTA fourth-pass): reads ``self._state.last_progress``,
@@ -1075,6 +1136,11 @@ class OperatorCockpit:
         :meth:`tick` — see NEW-18). The misleading F-13 comment block
         has been removed; the clock-injection contract is now stated
         once and accurately.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        header line is suffixed with an ARIA annotation trailer so
+        screen readers can pick up the cockpit's landmark role.
+        Default ``None`` preserves the unannotated output.
         """
         with self._lock:
             cfg = self.config
@@ -1083,15 +1149,27 @@ class OperatorCockpit:
             last_tick_at = self._state.last_tick_at
         bar = _progress_bar(done, total)
         ts = time.strftime("%H:%M:%S", time.localtime(last_tick_at))
-        return f"  {cfg.title}   {cfg.progress_label}: {bar}   tick={ts} (#{frame_idx + 1})"
+        header = f"  {cfg.title}   {cfg.progress_label}: {bar}   tick={ts} (#{frame_idx + 1})"
+        if aria_label:
+            header = annotate(header, role="region", aria_label=aria_label)
+        return header
 
-    def _render_runs_pane(self) -> list[str]:
+    def _render_runs_pane(self, *, aria_label: str | None = None) -> list[str]:
         """Render the live-runs pane rows.
 
         NEW-19 (SOTA fourth-pass): copies ``self._state.runs`` under
         ``self._lock`` so a concurrent ``tick`` cannot replace the dict
         mid-iteration and tear a row that the operator sees in their
         terminal.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA
+        annotation trailer (e.g.
+        ``[role=status aria-live=polite aria-label="Live Runs"]``)
+        so screen readers and TUI inspection tooling can pick up
+        the pane's role + live-region semantics without scraping
+        free-form text. Default ``None`` preserves the original
+        unannotated output for callers that have not opted in.
         """
         cfg = self.config
         with self._lock:
@@ -1110,15 +1188,23 @@ class OperatorCockpit:
                 lines.append(f"│ {_format_run_row(ev):<38} │")
             if total_runs > MAX_RUNS_PANE_ROWS:
                 lines.append(f"│  … {total_runs - MAX_RUNS_PANE_ROWS} more            │")
-        lines.append("└──────────────────────────────────────┘")
+        closing = "└──────────────────────────────────────┘"
+        if aria_label is not None:
+            closing = _annotate_pane_close(closing, label=aria_label)
+        lines.append(closing)
         return lines
 
-    def _render_lanes_pane(self) -> list[str]:
+    def _render_lanes_pane(self, *, aria_label: str | None = None) -> list[str]:
         """Render the lane-distribution pane rows.
 
         NEW-19 (SOTA fourth-pass): copies ``self._state.runs`` under
         ``self._lock`` so a concurrent ``tick`` cannot replace the dict
         between ``list(...)`` and ``Counter(...)``.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA annotation
+        trailer so screen readers can pick up the pane's role + live
+        semantics. Default ``None`` preserves the unannotated output.
         """
         cfg = self.config
         with self._lock:
@@ -1133,16 +1219,24 @@ class OperatorCockpit:
             for lane, count in sorted(counts.items()):
                 bar = _progress_bar(count, max(counts.values()), width=12)
                 lines.append(f"│  {lane:<10} {count:3d}  {bar:<18} │")
-        lines.append("└──────────────────────────────────────┘")
+        closing = "└──────────────────────────────────────┘"
+        if aria_label is not None:
+            closing = _annotate_pane_close(closing, label=aria_label)
+        lines.append(closing)
         return lines
 
-    def _render_confidence_pane(self) -> list[str]:
+    def _render_confidence_pane(self, *, aria_label: str | None = None) -> list[str]:
         """Render the confidence (P50/P95) sparkline pane rows.
 
         NEW-19 (SOTA fourth-pass): copies ``self._state.confidence_history``
         under ``self._lock`` so a concurrent ``tick`` cannot append to
         the bounded deque between the materialise-to-list step and
         the percentile computation.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA annotation
+        trailer so screen readers can pick up the pane's role + live
+        semantics. Default ``None`` preserves the unannotated output.
         """
         cfg = self.config
         # ``confidence_history`` is a bounded ``deque`` to prevent unbounded
@@ -1166,15 +1260,23 @@ class OperatorCockpit:
         # Pad to same height as lanes pane
         while len(lines) < 4:
             lines.append("│                                      │")
-        lines.append("└──────────────────────────────────────┘")
+        closing = "└──────────────────────────────────────┘"
+        if aria_label is not None:
+            closing = _annotate_pane_close(closing, label=aria_label)
+        lines.append(closing)
         return lines
 
-    def _render_overrides_pane(self) -> list[str]:
+    def _render_overrides_pane(self, *, aria_label: str | None = None) -> list[str]:
         """Render the active-overrides pane rows.
 
         NEW-19 (SOTA fourth-pass): copies ``self._state.overrides``
         under ``self._lock`` so a concurrent ``tick`` cannot replace
         the dict mid-iteration.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA annotation
+        trailer so screen readers can pick up the pane's role + live
+        semantics. Default ``None`` preserves the unannotated output.
         """
         cfg = self.config
         with self._lock:
@@ -1193,7 +1295,10 @@ class OperatorCockpit:
                 lines.append(f"│ {_format_override_row(ev):<38} │")
             if total_ovrs > MAX_OVERRIDE_PANE_ROWS:
                 lines.append(f"│  … {total_ovrs - MAX_OVERRIDE_PANE_ROWS} more            │")
-        lines.append("└──────────────────────────────────────┘")
+        closing = "└──────────────────────────────────────┘"
+        if aria_label is not None:
+            closing = _annotate_pane_close(closing, label=aria_label)
+        lines.append(closing)
         return lines
 
     def _render_dormant_core_pane(self) -> str:
@@ -1226,12 +1331,17 @@ class OperatorCockpit:
         lines = self._render_dormant_core_pane_lines()
         return "\n".join(lines)
 
-    def _render_dormant_core_pane_lines(self) -> list[str]:
+    def _render_dormant_core_pane_lines(self, *, aria_label: str | None = None) -> list[str]:
         """Render the AUDIT-N+18 DORMANT_CORE pane rows as a list of strings.
 
         Internal helper used by :meth:`_render_grid_locked` to splice
         the dormant-core pane into the grid layout. Returns ``[]``
         when no source is attached.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA annotation
+        trailer so screen readers can pick up the pane's role + live
+        semantics. Default ``None`` preserves the unannotated output.
         """
         cfg = self.config
         with self._lock:
@@ -1258,12 +1368,15 @@ class OperatorCockpit:
         if payload is None:
             err_marker = "  (dormant-core source errored)  "
             pad = max(0, interior - len(err_marker))
+            footer = footer_line
+            if aria_label is not None:
+                footer = _annotate_pane_close(footer, label=aria_label)
             return [
                 header_line,
                 f"│{err_marker}{'':<{pad}}│",
                 empty_line,
                 empty_line,
-                footer_line,
+                footer,
             ]
         # AUDIT-N+13 envelope keys (defensive lookup — see the docstring
         # for the canonical names). Nested ``trend_summary`` /
@@ -1295,7 +1408,10 @@ class OperatorCockpit:
         # Hard-enforce width so the border lines stay aligned even when
         # the source envelope contains unexpectedly long tokens.
         body_lines = [_pad_box_row(row, interior) for row in body_lines]
-        return [header_line, *body_lines, footer_line]
+        footer = footer_line
+        if aria_label is not None:
+            footer = _annotate_pane_close(footer, label=aria_label)
+        return [header_line, *body_lines, footer]
 
     def _render_traffic_pane(self) -> str:
         """Render the AUDIT-N+15 TRAFFIC pane rows as a single string.
@@ -1325,12 +1441,17 @@ class OperatorCockpit:
         lines = self._render_traffic_pane_lines()
         return "\n".join(lines)
 
-    def _render_traffic_pane_lines(self) -> list[str]:
+    def _render_traffic_pane_lines(self, *, aria_label: str | None = None) -> list[str]:
         """Render the AUDIT-N+15 TRAFFIC pane rows as a list of strings.
 
         Internal helper used by :meth:`_render_grid_locked` to splice
         the traffic pane into the grid layout. Returns ``[]`` when no
         dashboard is attached.
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA annotation
+        trailer so screen readers can pick up the pane's role + live
+        semantics. Default ``None`` preserves the unannotated output.
         """
         cfg = self.config
         with self._lock:
@@ -1345,10 +1466,13 @@ class OperatorCockpit:
         try:
             snap = dashboard.summary()
         except Exception:  # noqa: BLE001 - never crash the cockpit.
+            closing = "└─────────────────────────────────┘"
+            if aria_label is not None:
+                closing = _annotate_pane_close(closing, label=aria_label)
             lines.append("│  (traffic dashboard error)       │")
             lines.append("│                                 │")
             lines.append("│                                 │")
-            lines.append("└─────────────────────────────────┘")
+            lines.append(closing)
             return lines
         count = int(snap.get("count", 0))
         rps = float(snap.get("rps", 0.0))
@@ -1362,10 +1486,13 @@ class OperatorCockpit:
             lines.append(f"│ {by_status:<33} │")
         else:
             lines.append("│ (no events yet)                  │")
-        lines.append("└─────────────────────────────────┘")
+        closing = "└─────────────────────────────────┘"
+        if aria_label is not None:
+            closing = _annotate_pane_close(closing, label=aria_label)
+        lines.append(closing)
         return lines
 
-    def _render_decisions_pane(self) -> list[str]:
+    def _render_decisions_pane(self, *, aria_label: str | None = None) -> list[str]:
         """Render the decision-history stream (WP-3001 -> WP-4001 inline view).
 
         Full-width row sitting under the 2x2 grid. Shows the most recent
@@ -1385,6 +1512,12 @@ class OperatorCockpit:
         reads cannot compute ages against a different clock than the
         one used to write the ``evaluated_at`` timestamp (same family
         as NEW-18 + NEW-20 on ``_render_override_banner``).
+
+        ARIA (L17 I18n/A11y): when ``aria_label`` is supplied, the
+        closing ``└─...─┘`` border is suffixed with an ARIA annotation
+        trailer using ``role="log"`` (the audit log role) so screen
+        readers can pick up the pane's role + semantics. Default
+        ``None`` preserves the unannotated output.
         """
         with self._lock:
             now = self._clock()
@@ -1402,7 +1535,10 @@ class OperatorCockpit:
             total = len(decisions)
             if total > MAX_DECISION_PANE_ROWS:
                 lines.append(f"│  … {total - MAX_DECISION_PANE_ROWS} older decisions hidden       │")
-        lines.append("└─────────────────────────────────────────────────┘")
+        closing = "└─────────────────────────────────────────────────┘"
+        if aria_label is not None:
+            closing = _annotate_pane_close(closing, label=aria_label, role="log")
+        lines.append(closing)
         return lines
 
     @staticmethod
