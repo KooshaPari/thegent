@@ -183,12 +183,20 @@ def run_impl_core(
     image_paths: list[str] | None = None,
     audio_files: list[str] | None = None,
     google_grounding: bool = False,
+    failover: bool = False,
     impl_ns: Any | None = None,
 ) -> dict[str, Any]:
     """
     Run an agent or droid with the given prompt.
     Returns dict with keys: stdout, stderr, exit_code, timed_out.
     Model-first: agent=None, model set; provider hint for routing.
+
+    ``failover`` is accepted for parity with the CLI surface
+    (``--failover`` is forwarded by ``run_app._run_callback``) and
+    with :func:`bg_impl_core` which consumes it when building a
+    subprocess command.  Foreground runs do not spawn a subprocess
+    so the flag has no direct effect here; downstream callers may
+    inspect the value via the contract layer if needed.
     """
     if impl_ns is None:
         raise ValueError("impl_ns is required")

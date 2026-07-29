@@ -67,3 +67,18 @@ local.env
 *.temp
 **/temp/
 **/tmp/
+# thegent-specific carve-outs (L27 hardening)
+.worktrees/
+.shadow-*/
+.shadow-run*/
+.factory/
+.factory-seed/
+bench/
+benchmark/
+benchmarks/
+harbor-test/
+recordings/
+var/
+e2e/
+test_clode/
+.factory/

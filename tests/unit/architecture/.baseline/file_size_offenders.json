@@ -1,0 +1,30 @@
+[
+  {
+    "lines": 2594,
+    "path": "src/thegent/execution/__init__.py"
+  },
+  {
+    "lines": 2411,
+    "path": "src/thegent/phench/service.py"
+  },
+  {
+    "lines": 2347,
+    "path": "src/thegent/ux/cli_cockpit.py"
+  },
+  {
+    "lines": 1807,
+    "path": "src/thegent/cli/commands/impl.py"
+  },
+  {
+    "lines": 1780,
+    "path": "src/thegent/ux/cockpit.py"
+  },
+  {
+    "lines": 1705,
+    "path": "src/thegent/cli/services/run_execution_core_helpers.py"
+  },
+  {
+    "lines": 1521,
+    "path": "src/thegent/cli/commands/observability_impl.py"
+  }
+]
