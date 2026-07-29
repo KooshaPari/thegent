@@ -139,7 +139,11 @@ worktrees/
 # Ignore root-level thegent/ only, not src/thegent/
 /thegent/
 !src/thegent/
-scripts/
+scripts/*
+!scripts/*.sh
+!scripts/*.py
+!scripts/*.toml
+!scripts/distribution/
 colab/
 archive/
 trace/
@@ -174,6 +178,12 @@ package-lock.json
 target/
 target-*/
 coverage/
+# Canonical secret-bearing artefacts (WL L27 secrets-scan invariants)
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.yaml
 # ===== End standard hygiene ignores =====
 
 # ===== Phenotype-org standard hygiene (do not edit) =====

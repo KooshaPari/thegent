@@ -32,7 +32,7 @@ UV   := $(shell command -v uv 2>/dev/null)
 .PHONY: help install dev test lint format typecheck quality clean \
         setup doctor audit scorecard build coverage check precommit \
         sync boot phen onboard sota security harden version \
-        validate-makefile test-quick dep-audit
+        validate-makefile test-quick dep-audit secrets-scan
 
 # ---------------------------------------------------------------------------
 # Help (default target)
@@ -218,3 +218,11 @@ validate-makefile: ## Self-test the Makefile pass-through invariants
 # runs in <50ms. Non-zero exit on the first violation.
 dep-audit: ## Self-test dependency surface (L11 lane)
 	@bash scripts/check_dependency_invariants.sh
+
+# `secrets-scan` runs the L27 secrets-invariants static checker. Verifies
+# gitleaks.toml / trufflehog.yml / .gitignore are present, complete, and
+# free of common drift / hygiene issues, then performs an advisory sniff
+# for live-key patterns outside the canonical allowlist. Safe for
+# pre-commit hooks; runs in <1s.
+secrets-scan: ## Self-test secrets-scan surface (L27 lane)
+	@bash scripts/check_secrets_invariants.sh
