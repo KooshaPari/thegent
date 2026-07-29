@@ -1,6 +1,6 @@
 # Audit Scorecard — `thegent`
 
-**Overall:** 82/100  **Grade:** B+ 🟡
+**Overall:** 83/100  **Grade:** B+ 🟡
 
 | Pillar | Score | Grade | Emoji |
 |--------|-------|-------|-------|
@@ -50,8 +50,8 @@ src/thegent/infra/cache_v2.py:419
 src/thegent/infra/project_tenancy.py:429
 src/thegent/infra/multi_runtime_diagnostics.py:455
 
-### L2 Dev Loop — 60/100 (C)
-1332 test files, 0 collected, 0 errors.
+### L2 Dev Loop — 85/100 (A-)
+1332 test files, 21632 collected, 0 errors.
 
 ### L3 Agent Loop — 40/100 (D-)
 CLI: MISSING. CI: 25 workflows.
@@ -1643,10 +1643,10 @@ Makefile: 0, Devcontainer: 1, Setup: 4, README: 1.
     ]
   },
   "collection": {
-    "collected": 0,
+    "collected": 21632,
     "errors": 0,
     "timeout": false,
-    "raw_output": "/bin/sh: python: command not found\n"
+    "raw_output": "21632 tests collected in 13.74s\n"
   },
   "cli": {
     "exists": false,

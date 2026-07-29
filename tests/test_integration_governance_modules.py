@@ -1,4 +1,4 @@
-"""Integration tests for governance modules (semantic_firewall, redaction, costs).
+"""Integration tests for governance modules (semantic_firewall, redaction, costs, tee_check, policy).
 
 Exercises the real implementations to validate behavior end-to-end
 with actual data, no mocks.
@@ -11,8 +11,10 @@ from __future__ import annotations
 import pytest
 
 from thegent.governance.costs import CostTracker
+from thegent.governance.policy import PolicyManager
 from thegent.governance.redaction import PIIRedactor
 from thegent.governance.semantic_firewall import SemanticFirewall
+from thegent.governance.tee_check import TEEAttestation, TEEChecker, TEEType
 
 pytestmark = pytest.mark.integration
 
@@ -175,3 +177,106 @@ class TestCostTrackerIntegration:
         tracker.record_cost("multi-model", cost=0.02)
         cost = tracker.get_session_cost("multi-model")
         assert cost == pytest.approx(0.17)
+
+
+# ---------------------------------------------------------------------------
+# TEEChecker — check, enforce_tee
+# ---------------------------------------------------------------------------
+
+
+class TestTEECheckerIntegration:
+    """End-to-end tests for TEEChecker attestation flow."""
+
+    def test_mock_mode_returns_attested(self):
+        """Mock mode should return an attested TEEAttestation."""
+        checker = TEEChecker(mock_mode=True)
+        attestation = checker.check()
+        assert attestation.is_attested is True
+        assert attestation.tee_type == TEEType.MOCK
+        assert attestation.provider_id == "mock-tee-provider"
+        assert attestation.measurement_hash is not None
+        assert attestation.firmware_version is not None
+
+    def test_mock_mode_measurement_hash_format(self):
+        """Mock measurement hash should follow sha256 format."""
+        checker = TEEChecker(mock_mode=True)
+        attestation = checker.check()
+        assert attestation.measurement_hash.startswith("sha256:")
+
+    def test_enforce_tee_passes_in_mock(self):
+        """enforce_tee should not raise in mock mode."""
+        checker = TEEChecker(mock_mode=True)
+        checker.enforce_tee()  # should not raise
+
+    def test_non_mock_returns_non_attested_on_desktop(self):
+        """Non-mock mode on a desktop should return non-attested (no /dev/nsm)."""
+        import os
+        if os.path.exists("/dev/nsm"):
+            pytest.skip("Running inside AWS Nitro — attestation expected")
+        checker = TEEChecker(mock_mode=False)
+        attestation = checker.check()
+        # Desktop without TEE hardware: not attested
+        assert attestation.is_attested is False
+        assert attestation.tee_type == TEEType.NONE
+
+    def test_attestation_dataclass_fields(self):
+        """TEEAttestation should have all expected fields."""
+        att = TEEAttestation(
+            tee_type=TEEType.MOCK,
+            is_attested=True,
+            provider_id="test",
+            measurement_hash="sha256:abc",
+            firmware_version="1.0",
+        )
+        assert att.tee_type == TEEType.MOCK
+        assert att.is_attested is True
+        assert att.provider_id == "test"
+        assert att.measurement_hash == "sha256:abc"
+        assert att.firmware_version == "1.0"
+
+    def test_tee_type_enum_completeness(self):
+        """TEEType enum should have all expected variants."""
+        expected = {"none", "aws_nitro", "intel_sgx", "amd_sev", "azure_tdx", "mock"}
+        actual = {t.value for t in TEEType}
+        assert expected == actual
+
+
+# ---------------------------------------------------------------------------
+# PolicyManager — get_policy, update
+# ---------------------------------------------------------------------------
+
+
+class TestPolicyManagerIntegration:
+    """End-to-end tests for PolicyManager lifecycle."""
+
+    def test_empty_policy_returns_none(self):
+        """Empty manager should return None for unknown keys."""
+        pm = PolicyManager()
+        assert pm.get_policy("nonexistent") is None
+
+    def test_initial_policies(self):
+        """Initial policies should be retrievable."""
+        pm = PolicyManager(initial_policies={"max_tokens": 4096, "timeout": 30})
+        assert pm.get_policy("max_tokens") == 4096
+        assert pm.get_policy("timeout") == 30
+
+    def test_update_adds_policies(self):
+        """update() should add new policies."""
+        pm = PolicyManager()
+        pm.update({"enable_cache": True, "retry_count": 3})
+        assert pm.get_policy("enable_cache") is True
+        assert pm.get_policy("retry_count") == 3
+
+    def test_update_overrides_existing(self):
+        """update() should override existing policies."""
+        pm = PolicyManager(initial_policies={"max_tokens": 2048})
+        pm.update({"max_tokens": 8192})
+        assert pm.get_policy("max_tokens") == 8192
+
+    def test_update_merges(self):
+        """update() should merge with existing policies, not replace."""
+        pm = PolicyManager(initial_policies={"a": 1, "b": 2})
+        pm.update({"b": 99, "c": 3})
+        assert pm.get_policy("a") == 1
+        assert pm.get_policy("b") == 99
+        assert pm.get_policy("c") == 3
