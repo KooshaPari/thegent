@@ -201,3 +201,4 @@ llvm-cov-*
 *.proposed
 .draft/
 # ===== End standard hygiene =====
+.factory/
