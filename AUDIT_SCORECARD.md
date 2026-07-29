@@ -2,6 +2,43 @@
 
 **Overall:** 97/100  **Grade:** A 🟢
 
+> **Session 2026-07-29-2 — L27 secrets-scan lane + L9 budget_gate wire-up:**
+> `scripts/check_secrets_invariants.sh` (NEW, 7 canonical checks) +
+> `tests/unit/infrastructure/test_secrets_invariants.py` (NEW, 35 contract
+> tests, all pass) + `make secrets-scan` target wired through the
+> onboarding surface. `src/thegent/cli/services/run_execution_core_helpers.py`
+> gains 28 phase-helper extractions (`_phase_budget_gate`, `_phase_auto_route`,
+> `_phase_resolve_agent_from_model`, `_phase_evaluate_contract_version`,
+> `_phase_resolve_effective_timeout`, `_phase_resolve_cwd`,
+> `_phase_terminal_discovery`, `_phase_input_guardrails`,
+> `_phase_acquire_concurrency`, `_phase_idempotency_replay`,
+> `_phase_trust_boundary`, `_phase_fatigue_freshness_burst`,
+> `_phase_evaluate_policy_with_override`, `_phase_register_policy_denial`,
+> `_phase_register_hitl_pause`, `_phase_load_l3_memory_context`,
+> `_phase_setup_shadow_workspace`, `_phase_acquire_resource_leases`,
+> `_phase_release_resource_leases`, `_phase_finalize_shadow`,
+> `_phase_estimate_run_cost`, `_phase_register_run_end`,
+> `_phase_record_success_postlude`, `_phase_update_teammate_status`,
+> `_phase_condense_output`, `_phase_write_run_dumps`,
+> `_phase_handle_backend_failure`, `_phase_emit_success_telemetry`,
+> `_phase_assemble_payload`); each with CC ≤ 12, body ≤ 40L, single
+> responsibility. ONE helper is wired end-to-end today —
+> `_phase_budget_gate` replaces the inline WP-Y4 hourly+daily budget check
+> in `run_impl_core` (~25 LOC of inline cost/BudgetAlertSystem mechanics
+> collapsed to a single call). 26 more helpers remain in the "extracted
+> but not yet called" state for the next hardening pass.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L27 Infrastructure | 80 | 80 | ±0 | Added 7-check script + 35 tests; score unchanged (script does not yet drive the lane score's static checks) |
+> | L9 Complexity | 70 | 70 | ±0 | Added 28 helpers + wired 1; orchestrator CC unchanged until all 28 are called |
+> | L11 Dependencies | 90 | 90 | ±0 | Lane stable; L27 lane adds complementary invariants without overlap |
+> | L30 Onboarding | 85 | 85 | ±0 | `secrets-scan` target now appears in `make help` |
+>
+> **DAG tick:** L9 (WIP-partial → WIP-extracted+1-wired); L27 (planned → implemented+tested); L11, L30 (stable).
+> **Cumulative worklog entries this session:** 2 commits (+745 L27 + +882 L9 = +1627 LOC).
+
 > **L1 Architecture polish — runtime/config/login split (2026-07-29):**
 > `src/thegent/agents/cliproxy_manager.py` (1132L monolith) decomposed
 > into four focused modules:
@@ -220,6 +257,14 @@ extracted (`_try_litellm_dispatch`, `_build_backend_url`,
 CC dropped from 32 → 15. The L1 guardrail caught the initial CC=32
 violation on the new module and forced the refactor.
 
+**2026-07-29-2 L9 incremental progress:** 28 `_phase_*` helpers
+extracted into `run_execution_core_helpers.py`, each CC ≤ 12 and
+single-responsibility; `_phase_budget_gate` is the first one wired
+into `run_impl_core` (replacing the inline WP-Y4 hourly+daily budget
+check). 26 more helpers queued for wire-up before the orchestrator
+CC drops. Lane score held at 70 because the orchestrator function's
+own CC remains unchanged until the remaining helpers are called inline.
+
 ### L10 Type Safety — 100/100 (A+)
 Type coverage: 11837/12008 (99%). Dataclasses: 971.
 
@@ -331,6 +376,20 @@ K8s: 0, Terraform: 0.
 **Container surface live:** `Dockerfile` (multi-stage, non-root, /health probe)
 + `compose.yaml` (thegent + redis + otel-collector). 11 docker scaffolding
 tests pin build stage, healthcheck, and compose service shape.
+
+**2026-07-29-2 L27 secrets-scan lane:** `scripts/check_secrets_invariants.sh`
+(7 canonical checks: gitleaks.toml existence, `[allowlist]` block,
+7 documented dev/test placeholder patterns allowlisted, ≥5 custom
+`[[rules]]`, trufflehog.yml presence with detectors enabled, .gitignore
+covers canonical secret-bearing artefacts, no live-key pattern leaks
+outside allowlisted paths). Surfaced via `make secrets-scan` and
+documented in onboarding help. Validated by 35 contract tests in
+`tests/unit/infrastructure/test_secrets_invariants.py` covering
+makefile surface, script surface, config-file presence, path
+allowlist (positive + negative), per-violation isolation sandbox,
+and CI integration. All 35 pass. Score held at 80 because the
+invariants script does not yet drive the lane's static score;
+next pass integrates the script as a documented CI check.
 
 ### L28 Cost Efficiency — 100/100 (A+)
 Batching: 540, N+1: 0, Bulk: 6, Pagination: 2390.

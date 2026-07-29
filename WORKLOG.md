@@ -12373,3 +12373,90 @@ Lanes: 30 | A+: 16 | A: 5 | A-: 7 | B+: 2 | B: 2
 [██████████████████████████████████████████████░░░░] 97.0%
 A+: 16 | A: 4 | A-: 8 | B+: 1 | B: 1
 ```
+
+## Session 10 — L27 secrets-scan lane + L9 budget_gate wire-up (2026-07-29)
+
+### Diff vs Session 9
+- L9 Complexity: 70 (B) → **70 (B)** (±0, lane stable while helpers
+  are extracted but not yet wired)
+- L27 Infrastructure: 80 (B+) → **80 (B+)** (±0, invariants script
+  implemented but not yet driving lane score's static checks)
+- Overall: 97 → **97** (held)
+
+### Changes
+- **L27 secrets-scan lane shipped**: `scripts/check_secrets_invariants.sh`
+  (NEW) implementing 7 canonical checks:
+  1. `gitleaks.toml` exists, non-empty, TOML parseable.
+  2. `gitleaks.toml` has `[allowlist]` block.
+  3. Gitleaks allowlist covers 7 documented dev/test placeholder
+     patterns (AKIA test AWS key, Stripe test key, OpenAI test key,
+     Anthropic test key, GitHub PAT test pattern, Fine-grained PAT
+     test pattern, Slack token test pattern).
+  4. `gitleaks.toml` declares ≥ 5 custom `[[rules]]`.
+  5. `trufflehog.yml` exists, non-empty, `detectors` enabled.
+  6. `.gitignore` excludes canonical secret-bearing artefacts
+     (`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`,
+     `secrets.yaml`).
+  7. Advisory sniff: no live-key pattern leaks outside allowlisted
+     paths (`tests/`, `docs/`, `.github/`, `*.md`, `*_test.py`,
+     `*_test.go`, etc.).
+- Wired into build surface via `make secrets-scan` (Makefile
+  gains a new target with docstring that appears in `make help`).
+- Surfaced `.gitignore` gap (`scripts/` → `scripts/*` + negation
+  rules) so canonical lane scripts are tracked like
+  `scripts/check_dependency_invariants.sh` is already.
+- Contract-pinned by `tests/unit/infrastructure/test_secrets_invariants.py`
+  (NEW, 35 tests, all green):
+  - 5 makefile surface tests (target presence, no-docstring, etc.).
+  - 6 script surface tests (executable, env-friendly, error format,
+    idempotent).
+  - 5 config-file presence tests (gitleaks exists/non-empty,
+    trufflehog exists/non-empty, scan both via the script).
+  - 16 path-allowlist tests (positive: `tests/`, `_test.py`,
+    `*.md`, etc.; negative: raw repo paths, nested docs, fake test
+    files).
+  - 3 sandbox integration tests (`test_script_passes_when_sandbox_is_valid`,
+    `test_script_per_check_isolation`, `test_script_alert_message_quality`).
+
+- **L9 wire-up (1 of 28 helpers)**: `_phase_budget_gate(settings, rid)`
+  extracted to `src/thegent/cli/services/run_execution_core_helpers.py`
+  and wired into `run_impl_core`, replacing the inline WP-Y4
+  hourly+daily budget check (BudgetAlertSystem instantiation,
+  add_spend check, hourly limit check, daily limit check). Body of
+  the inline section collapsed to one call returning a `dict | None`
+  with all four checks. 27 more helpers (`_phase_auto_route`,
+  `_phase_evaluate_contract_version`, `_phase_resolve_cwd`,
+  `_phase_input_guardrails`, …) sit in the same module ready for
+  the next hardening pass.
+
+### DAG tick
+```
+✓ L1   cliproxy split (4 modules)        [runtime/config/login] 85  A-
+✓ L2   validate-makefile                [script+target]        90  A
+✓ L11  dep-invariants linter            [5 checks]             90  A
+✓ L15  session endpoints (3+5)          [openapi_surface]      85  A-
+✓ L16  TUI Compositor hardening        [contract-pinned]      95  A
+✓ L17  Locale scaffolding (en/fr)      [locale_loader]        90  A
+✓ L27  secrets-scan invariants          [script+tests]         80  B+
+✓ L30  Makefile pass-through           [12 contract tests]    85  A-
+~ L9   28 helpers extracted / 1 wired   [WIP-extracted+1]      70  B
+○ L19  archive_hot_paths helper         [next]                 88  A-
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[██████████████████████████████████████████████░░░░] 97.0%
+A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
+```
+
+### Stats
+- Files added: 2 (script + test, ~745 LOC L27)
+- Files changed: 4 (`.gitignore`, `Makefile`,
+  `run_execution_core_helpers.py`, `gitleaks.toml` indirect via
+  validation)
+- Helpers extracted: 28 to `run_execution_core_helpers.py`
+- Helpers wired: 1 (`_phase_budget_gate`)
+- Tests added: 35 (all pass)
+- Tests verified still-green: 86 (cockpit parity), 5 (test_wl086),
+  5 (test_wl125), 3 (test_wl129), 6 (test_wl130)
+- Commits: 2 (L27 first; L9 wire-up second)
