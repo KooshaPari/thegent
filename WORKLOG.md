@@ -12290,3 +12290,38 @@ red_lanes_remaining:    []
   `scripts/check_secrets_invariants.sh` mirroring the dep-audit
   pattern, gated on gitleaks/trufflehog configs already in the
   repo. Push to A-.
+
+## Session 8 — L1 Architecture runtime split (2026-07-29)
+
+### Diff vs Session 7
+- L1 Architecture: 75 (B) → **80 (B+)** (+5)
+
+### Changes
+- Extracted 17 process-management primitives (`resolve_binary`,
+  `binary_available`, `is_proxy_reachable`, `is_adapter_running`,
+  `adapter_script_path`, `is_adapter_fallback_allowed`,
+  `_start_raw_proxy`, `_start_proxy_and_wait`, `ensure_proxy_running`,
+  `start_proxy_managed`, `kill_proxy`, plus 6 underscore aliases)
+  from `src/thegent/agents/cliproxy_manager.py` (1132L) into
+  the new use_case module
+  `src/thegent/use_cases/manage_cliproxy_runtime.py` (~440L, all
+  functions CC ≤ 15).
+- `cliproxy_manager.py` shim now re-exports the runtime symbols,
+  dropping from 1132L to 944L while preserving every legacy import.
+- Contract pinned by
+  `tests/unit/architecture/test_manage_cliproxy_runtime.py`
+  (47/47 pass).
+
+### DAG tick
+```
+✓ L1   runtime split complete           [manage_cliproxy_runtime] 80  B+
+○ L9   run_impl_core CC=211 refactor    [next]                     70  B
+○ L19  archive_hot_paths helper         [next]                     88  A-
+○ L27  secrets-scan + check_secrets     [next]                     80  B+
+```
+
+### Cockpit progress bar
+```
+[████████████████████████████████████████████████░░] 95.5%
+Lanes: 30 | A+: 16 | A: 5 | A-: 7 | B+: 2 | B: 2
+```

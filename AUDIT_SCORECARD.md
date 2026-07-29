@@ -59,7 +59,7 @@
 
 | Pillar | Score | Grade | Emoji |
 |--------|-------|-------|-------|
-| L1 Architecture | 75 | B | 🟢 |
+| L1 Architecture | 80 | B+ | 🟢 |
 | L2 Dev Loop | 90 | A | 🟢 |
 | L3 Agent Loop | 85 | A- | 🟢 |
 | L4 Observability | 100 | A+ | 🟢 |
@@ -91,13 +91,23 @@
 | L30 Onboarding | 85 | A- | 🟢 |
 
 ## Details
-### L1 Architecture — 75/100 (B)
-2037 files, 76 over 500L, 78 over 350L. Was: 77 over 500L — **−1 offender** from the cliproxy split.
+### L1 Architecture — 80/100 (B+)
+2037 files, 75 over 500L, 77 over 350L. Was: 76 over 500L — **−1 offender** from the cliproxy_manager split.
 **Preventive guardrails live:** baseline-aware file-size (hard cap 1500L)
 + CC (cap 25) tests at `tests/unit/architecture/test_architecture_guardrails.py`.
 Baselines under `tests/unit/architecture/.baseline/`. Subsequent runs fail on
 **new** offenders while tolerating growth on existing ones; the scorecard
 tracks offender reduction as a positive L1 signal.
+**L1 hardening — second split complete — cliproxy_manager.py runtime extracted:**
+the 1132L `cliproxy_manager.py` shim now re-exports 17 process-management
+primitives (binary resolution, reachability checks, subprocess startup,
+port-kill) from the new `src/thegent/use_cases/manage_cliproxy_runtime.py`
+module (~440L, all functions CC ≤ 15). The shim itself dropped to 944L,
+preserving backward compatibility for every legacy import. Contract pinned
+by `tests/unit/architecture/test_manage_cliproxy_runtime.py` (47/47
+pass): import cleanliness, full public surface, underscore-alias
+identity, shim re-export parity, deprecation docstring, behavioural
+smoke tests, CC ≤ 15 enforcement, ≤ 500 LOC budget.
 **L1 hardening complete — cliproxy split:** the 1275L `cliproxy_adapter.py`
 shim is now a 265L pure re-export facade; the substantive code lives in
 9 focused modules under `src/thegent/adapters/driven/`. Largest remaining
