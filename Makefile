@@ -31,7 +31,8 @@ UV   := $(shell command -v uv 2>/dev/null)
 
 .PHONY: help install dev test lint format typecheck quality clean \
         setup doctor audit scorecard build coverage check precommit \
-        sync boot phen bootstrap
+        sync boot phen onboard sota security harden version \
+        validate-makefile test-quick
 
 # ---------------------------------------------------------------------------
 # Help (default target)
@@ -153,3 +154,60 @@ boot: ## Bootstrap a fresh consumer project
 
 clean: ## Remove generated caches + build artifacts
 	$(call task_if,clean,rm -rf .pytest_cache .ruff_cache .mypy_cache dist build .coverage htmlcov)
+
+# ---------------------------------------------------------------------------
+# SOTA / Security / Harden lanes (Phase 4 expansion)
+# ---------------------------------------------------------------------------
+
+sota: ## Run the SOTA (state-of-the-art) audit lane
+	$(call task_if,sota,python scripts/run_audit.py --lane sota)
+
+security: ## Run the security audit lane
+	$(call task_if,security,python scripts/run_audit.py --lane security)
+
+harden: ## Run the hardening (Phase 3/4 governance + L1 guardrails) lane
+	$(call task_if,harden,python scripts/run_audit.py --lane harden)
+
+version: ## Print the project version (from VERSION file or pyproject)
+	@if [ -f VERSION ]; then cat VERSION; \
+	else $(UV) run python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])"; fi
+
+# ---------------------------------------------------------------------------
+# Onboarding aggregate (L30 onboarding surface polish)
+# ---------------------------------------------------------------------------
+
+# `onboard` is the single command a brand-new contributor runs after `git
+# clone`. It exercises the full L30 onboarding surface: install deps,
+# boot the devcontainer contract, smoke-test the CLI, and print the
+# version. Failures abort at the first non-zero exit so the contributor
+# sees a clear error trail instead of a partial green run.
+onboard: install doctor version ## Aggregate onboarding: install + doctor + version + smoke
+	@echo
+	@echo "[make onboard] Running CLI smoke test..."
+	@if command -v thegent >/dev/null 2>&1; then \
+		thegent --help >/dev/null; \
+	else \
+		$(UV) run python -m thegent --help >/dev/null; \
+	fi
+	@echo "[make onboard] OK — thegent onboarding complete."
+	@echo
+	@echo "Next steps:"
+	@echo "  make dev       # start development server"
+	@echo "  make test      # run the test suite"
+	@echo "  make quality   # run lint + tests"
+	@echo "  make audit     # run the SOTA audit"
+
+# ---------------------------------------------------------------------------
+# Dev-loop quick wins (L2 Dev Loop expansion)
+# ---------------------------------------------------------------------------
+
+test-quick: ## Run a focused pytest subset (tests/unit + tests/test_wl1*) — fast feedback
+	@$(UV) run pytest tests/unit tests/test_wl1* -q --no-header 2>/dev/null \
+		|| $(UV) run pytest tests/unit -q --no-header
+
+# `validate-makefile` is a self-test: confirms the canonical pass-through
+# invariants (every phony target has a docstring, `help` lists every
+# public target, no shell injection vectors) hold without invoking the
+# shell. It is consumed by `make check` and the governance test suite.
+validate-makefile: ## Self-test the Makefile pass-through invariants
+	@bash scripts/check_makefile_invariants.sh

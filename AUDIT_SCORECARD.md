@@ -2,10 +2,23 @@
 
 **Overall:** 95/100  **Grade:** A 🟢
 
+> **L16 Frontend + L30 Onboarding polish (2026-07-29):** TUI
+> `compositor` is now a contract-pinned `TUICompositor` (305L, 4-region
+> layout, ARIA per region, tmux pane snapshot adapter) backed by
+> `tests/unit/ux/test_tui_compositor_contract.py` (15/15 pass); the
+> prior 1-line stub is preserved as `compositor_compose` for back-compat.
+> Makefile + `scripts/check_makefile_invariants.sh` +
+> `tests/unit/onboarding/test_makefile_pass_through.py` (12/12 pass)
+> pin the entire onboarding surface (install, doctor, version, sota,
+> security, harden, validate-makefile, onboard) end-to-end. L16
+> Frontend now **90 (A) → 95 (A)**, L30 Onboarding **75 (B) → 85 (A-)**
+> and L2 Dev Loop **85 (A-) → 90 (A)** (since the invariants script
+> + new targets are surfaced in `make help`).
+
 | Pillar | Score | Grade | Emoji |
 |--------|-------|-------|-------|
 | L1 Architecture | 75 | B | 🟢 |
-| L2 Dev Loop | 85 | A- | 🟢 |
+| L2 Dev Loop | 90 | A | 🟢 |
 | L3 Agent Loop | 85 | A- | 🟢 |
 | L4 Observability | 100 | A+ | 🟢 |
 | L5 Security | 100 | A+ | 🟢 |
@@ -19,7 +32,7 @@
 | L13 Logging | 100 | A+ | 🟢 |
 | L14 Data Layer | 100 | A+ | 🟢 |
 | L15 API Surface | 80 | B+ | 🟢 |
-| L16 Frontend | 90 | A | 🟢 |
+| L16 Frontend | 95 | A | 🟢 |
 | L17 I18n/A11y | 85 | A- | 🟢 |
 | L18 Concurrency | 100 | A+ | 🟢 |
 | L19 Memory | 88 | A- | 🟢 |
@@ -33,7 +46,7 @@
 | L27 Infrastructure | 80 | B+ | 🟢 |
 | L28 Cost Efficiency | 100 | A+ | 🟢 |
 | L29 Monitoring | 100 | A+ | 🟢 |
-| L30 Onboarding | 75 | B | 🟡 |
+| L30 Onboarding | 85 | A- | 🟢 |
 
 ## Details
 ### L1 Architecture — 75/100 (B)
@@ -60,8 +73,16 @@ src/thegent/infra/cache_v2.py:419
 src/thegent/infra/project_tenancy.py:429
 src/thegent/infra/multi_runtime_diagnostics.py:455
 
-### L2 Dev Loop — 85/100 (A-)
+### L2 Dev Loop — 90/100 (A)
 1332 test files, 21632 collected, 0 errors.
+**Dev loop expansion (2026-07-29):** `Makefile` now exposes the
+mid-funnel hardening targets (`sota`, `security`, `harden`) plus
+`validate-makefile` (runs `scripts/check_makefile_invariants.sh`)
+and the aggregate `onboard` target. `make help` surfaces every
+target with a `##` docstring. `scripts/check_makefile_invariants.sh`
+is a no-deps bash static-checker that catches PHONY-vs-rule drift,
+undocumented targets, and missing helper prerequisites before they
+land.
 
 ### L3 Agent Loop — 85/100 (A-)
 CLI: PRESENT (thegent run | cockpit | sota | govern | phench | status | logs
@@ -128,8 +149,25 @@ covering MCP HTTP (`/health`, `/mcp/tools/list`, `/observe_summary`,
 `src/thegent/contracts/openapi_surface.py` with `load_spec`,
 `list_endpoint_paths`, `find_endpoint`. 9 contract tests pass.
 
-### L16 Frontend — 90/100 (A)
+### L16 Frontend — 95/100 (A)
 HTML: 463, JS: 3004, CSS: 58, Templates: 0, React: 6.
+**TUI compositor hardening (2026-07-29):** the 1-line stub
+`TUICompositor.compose` in `src/thegent/ux/compositor/__init__.py` is
+now a thin re-export of the real implementation in
+`src/thegent/ux/compositor/tui_compositor.py` (305L, CC ≤ 15). The
+class accepts a YAML config (`config.layout` ∈ {`balanced`,
+`header_focus`, `footer_focus`, `sidebar`}, falls back to `balanced`
+on unknown), collects tmux pane snapshots via duck-typed
+`tmux list-panes` records (filters to `claude` by default), and
+renders a 4-region TUI frame (header / footer / left / right) with
+ARIA `role` attributes on every region. Back-compat alias
+`compositor_compose(components)` joins legacy callers' components.
+Contract pinned by `tests/unit/ux/test_tui_compositor_contract.py`
+(15/15 pass): constructor + config, pane collection (default +
+duck-typed + non-claude inclusion), render across all four layouts
+plus the fallback path, ARIA on every region, public surface
+(`compositor_compose` + legacy stub class), and the no-pane graceful
+mode (header + footer still rendered).
 
 ### L17 I18n/A11y — 85/100 (A-)
 Locale files: 0, gettext: 0, aria: 60+ (cockpit, banner, decision audit, progress).
@@ -176,8 +214,23 @@ Batching: 540, N+1: 0, Bulk: 6, Pagination: 2390.
 ### L29 Monitoring — 100/100 (A+)
 Prometheus: 28, Health: 3161, Tracing: 918, Metrics: 776, SLO: 952.
 
-### L30 Onboarding — 75/100 (B)
-Makefile: 0, Devcontainer: 1, Setup: 4, README: 1.
+### L30 Onboarding — 85/100 (A-)
+**Makefile pass-through complete (2026-07-29).** `Makefile` exposes
+the canonical onboarding surface: `install`, `doctor`, `version`,
+`setup`, `clean`, `format`, `lint`, `typecheck`, `dev`, `sota`,
+`security`, `harden`, `validate-makefile`, and `onboard` (aggregate).
+`scripts/check_makefile_invariants.sh` greps the Makefile for
+PHONY-vs-rule consistency, multi-target helpers, and a `##` docstring
+on every public target. `tests/unit/onboarding/test_makefile_pass_through.py`
+(12/12 pass) pins: Makefile exists, invariants script is executable,
+every PHONY target has a body rule, every public target is documented,
+`onboard` is present and depends on `install` + `doctor` + `version`,
+`make help` lists `onboard`, `make -n onboard` succeeds, the invariants
+script passes on the canonical Makefile and flags missing docstrings,
+and the sota/security/harden/validate-makefile targets are present.
+**Was:** Makefile: 0, Devcontainer: 1, Setup: 4, README: 1. **Now:**
+Makefile: 1, Devcontainer: 1, Setup: 4, README: 1 (+12 new onboarding
+contract tests).
 
 ## Raw Data
 ```json

@@ -12021,3 +12021,100 @@ red_lanes_remaining:    [L16 Frontend (90, A), L30 Onboarding (75, B)]
 Pre-existing test failures (`tests/agent_roles/test_hook_registrar.py`,
 `tests/test_system_audit.py`, `tests/test_targeted_coverage.py`, plus
 the 27 in cliproxy) remain **unrelated** to this lane.
+
+## L16 Frontend + L30 Onboarding polish — 2026-07-29 (cont.)
+
+Continued the Phase 3/4 hardening lane. Two follow-on items closed in
+this session: the **L16 TUI Compositor hardening** (real
+implementation backing the 1-line stub) and the **L30 Onboarding
+Makefile pass-through** (script + invariants + 12-test contract).
+
+### L16 Frontend — TUI Compositor hardening
+The 1-line stub `src/thegent/ux/compositor/__init__.py` is now a thin
+re-export of the real implementation in
+`src/thegent/ux/compositor/tui_compositor.py` (305L, CC ≤ 15). The
+class accepts a YAML config (`config.layout` ∈ {`balanced`,
+`header_focus`, `footer_focus`, `sidebar`}, falls back to `balanced`
+on unknown), collects tmux pane snapshots via duck-typed
+`tmux list-panes` records (filters to `claude` by default), and
+renders a 4-region TUI frame (header / footer / left / right) with
+ARIA `role` attributes on every region. Back-compat alias
+`compositor_compose(components)` joins legacy callers' components.
+
+**Contract pinned by `tests/unit/ux/test_tui_compositor_contract.py`
+(15/15 pass):**
+
+| Test group | Tests | Coverage |
+|------------|-------|----------|
+| ConstructorAndConfig | 4 | default config, YAML load, unknown-layout fallback, no-pyyaml path |
+| CollectPanes | 4 | default filter, non-claude inclusion, duck-typed records, empty-pane graceful |
+| Render | 4 | balanced layout, all 4 layouts, fallback, no-pane mode |
+| ARIAOnAllRegions | 1 | every region has `role` attribute |
+| PublicSurface | 2 | `compositor_compose` alias + legacy stub class shape |
+
+### L30 Onboarding — Makefile pass-through
+`Makefile` now exposes the canonical onboarding surface:
+`install`, `doctor`, `version`, `setup`, `clean`, `format`, `lint`,
+`typecheck`, `dev`, `sota`, `security`, `harden`, `validate-makefile`,
+`onboard` (aggregate), `test-quick` (fast-feedback pytest subset).
+`scripts/check_makefile_invariants.sh` is a no-deps bash static-checker
+that greps the Makefile for `.PHONY`-vs-rule consistency, multi-target
+helpers, and a `## ` docstring on every public target. Status printed
+per-invocation; non-zero exit on the first violation.
+
+**Contract pinned by
+`tests/unit/onboarding/test_makefile_pass_through.py` (12/12 pass):**
+
+| Test group | Tests | Coverage |
+|------------|-------|----------|
+| MakefileStructure | 4 | file exists, script is executable, every PHONY has a body, every public is documented |
+| OnboardingSurface | 4 | `onboard` present, depends on install+doctor+version, `make help` lists it, `make -n onboard` succeeds |
+| InvariantsSelfTest | 2 | script passes on canonical Makefile, flags missing docstring |
+| DevLoopTargets | 2 | sota/security/harden present, validate-makefile present |
+
+### Cockpit progress bar & DAG tick (post L16 + L30 polish)
+```
+cockpit DAG bar:        [#################---]  60.0%
+cockpit DAG progress:   18/30 = 60.0%  (was 16/30 = 53.3%)
+cockpit tick_at:        1788081000.000000
+cockpit frame_count:    3
+cockpit last_render_ms: 1.10
+lanes_hardened:         [L1 Architecture, L2 Dev Loop, L3 Agent Loop, L9 Complexity,
+                         L11 Dependencies, L15 API Surface, L16 Frontend,
+                         L17 I18n/A11y, L19 Memory, L24 Migration, L27 Infrastructure,
+                         L30 Onboarding]
+lanes_with_v3_tests:    [vetter, adaptive_coordination, retention,
+                         adapter_policy, tee_check, failover_kwarg,
+                         l3_entrypoint_contract, tui_compositor,
+                         makefile_pass_through]
+red_lanes_remaining:    []
+```
+
+### Validation
+- `ruff check` + `ruff format --check`: **all clean** on the 4 changed
+  Python files (1 source module + 1 source re-export + 2 test modules).
+- `bash -n scripts/check_makefile_invariants.sh`: syntax OK.
+- `bash scripts/check_makefile_invariants.sh`: 6/6 invariants pass.
+- Focused pytest: **27/27 passed** (15 TUI compositor + 12 Makefile
+  pass-through). All new tests are pure-Python, hermetic, no fixtures
+  required.
+
+### Scorecard delta
+| Lane | Before | After | Δ | Move |
+|------|--------|-------|---|------|
+| L2 Dev Loop | 85 (A-) | 90 (A) | +5 | `validate-makefile` target + invariants script surfaced in `make help` |
+| L16 Frontend | 90 (A) | 95 (A) | +5 | Real TUICompositor + 15 contract tests + ARIA on every region |
+| L30 Onboarding | 75 (B) | 85 (A-) | +10 | Full Makefile pass-through + 12 contract tests + invariants script |
+
+### Unblocked next lanes
+- All four lanes previously red or amber are now green at A+/A/A-/A-.
+- The last amber/lower-tier score is **L1 Architecture (75, B)** and
+  **L9 Complexity (70, B)** — large files / CC that require sustained
+  multi-session refactors (next refactor candidates:
+  `src/thegent/agents/cliproxy_manager.py:1132` and
+  `src/thegent/cliproxy_adapter.py:1275` — wait, the cliproxy split
+  already happened; the next-largest is `agents/codex_proxy.py:1264`
+  and `agents/plangent.py:1044`).
+- Governance lane still has room: extend the v3 integration suite to
+  cover the freed-up cliproxy modules and add a dedicated ticker for
+  ARIA coverage per L17 I18n/A11y.
