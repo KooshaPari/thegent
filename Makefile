@@ -32,7 +32,7 @@ UV   := $(shell command -v uv 2>/dev/null)
 .PHONY: help install dev test lint format typecheck quality clean \
         setup doctor audit scorecard build coverage check precommit \
         sync boot phen onboard sota security harden version \
-        validate-makefile test-quick
+        validate-makefile test-quick dep-audit
 
 # ---------------------------------------------------------------------------
 # Help (default target)
@@ -211,3 +211,10 @@ test-quick: ## Run a focused pytest subset (tests/unit + tests/test_wl1*) — fa
 # shell. It is consumed by `make check` and the governance test suite.
 validate-makefile: ## Self-test the Makefile pass-through invariants
 	@bash scripts/check_makefile_invariants.sh
+
+# `dep-audit` runs the L11 dependency-invariants static checker. Verifies
+# uv.lock / pyproject.toml / requirements.txt are present, in sync, and
+# free of common drift / hygiene issues. Safe for pre-commit hooks;
+# runs in <50ms. Non-zero exit on the first violation.
+dep-audit: ## Self-test dependency surface (L11 lane)
+	@bash scripts/check_dependency_invariants.sh

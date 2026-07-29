@@ -12208,3 +12208,85 @@ red_lanes_remaining:    []
   Pytest cannot create its capfd tmpfiles; running pytest with
   `TMPDIR=~/.cache` is the workaround until disk pressure is
   resolved.
+
+## 2026-07-29 — Session 7: L11 Dependencies polish (dep-audit)
+
+### Actions Taken
+- Added `scripts/check_dependency_invariants.sh` (124L, 5 checks):
+  1. uv.lock exists and is non-truncated (≥1KB)
+  2. pyproject.toml has pinned runtime deps (`>=`/`==`/`~=`/`<=`)
+  3. requirements.txt lists ≥1 package
+  4. uv.lock covers every top-level pyproject dep (PEP 503 normalised
+     so `PersistDict`/`ruamel.yaml`/`tomli_w`/`Pillow`/`GitPython`/
+     `PyJWT` match correctly)
+  5. pyproject.toml has no bare `==` pin without a specifier
+     (advisory, non-blocking warning).
+- Wired `dep-audit` into the `Makefile` `.PHONY` block (multi-line
+  aware) and as a body rule that invokes the script. The target
+  carries a `## docstring` so `make help` lists it alongside
+  `validate-makefile`.
+- Contract pinned by
+  `tests/unit/dependencies/test_dependency_invariants.py` (13/13
+  pass): Makefile PHONY block (multi-line aware), docstring, body
+  rule, `make help` listing, script executability, canonical-
+  workspace exit-zero, all five checks reported, four isolation
+  sandboxes (missing-lock, unpinned-pyproject, missing-requirements,
+  lock↔pyproject drift), and uv.lock size sanity (100KB–2MB).
+- Updated `AUDIT_SCORECARD.md`: L11 Dependencies **85 (A-) → 90 (A)**,
+  overall 95 → **96** (A).
+
+### Validation
+- `TMPDIR=~/.cache uv run pytest
+  tests/unit/dependencies/test_dependency_invariants.py -v` →
+  13/13 pass in 3.02s.
+- `uv run ruff check tests/unit/dependencies/test_dependency_invariants.py`
+  → all checks passed.
+- `uv run ruff format --check …` → 1 file already formatted.
+- `bash scripts/check_dependency_invariants.sh` → 5/5 checks
+  passed (1 advisory warning on `litellm==1.92.0` bare `==` pin).
+- `bash scripts/check_makefile_invariants.sh` → 6/6 invariants
+  still pass after adding `dep-audit`.
+- `make dep-audit` → exits 0 with the OK marker.
+- `make help | grep dep-audit` → listed.
+
+### Issues Found
+- None.
+
+### Remaining Known
+- L11 still at 90 (A) — to push to 95 (A) we'd need a stricter
+  version-drift check (e.g. fail when uv.lock and requirements.txt
+  disagree on a top-level version) and a transitive-vulnerability
+  sniffer (pip-audit). Punt to a follow-up security-audit pass;
+  the existing `make security` already runs pip-audit manually.
+- `/tmp` and `/var/folders/.../T/` are still at 100% capacity on
+  the operator node; `TMPDIR=~/.cache` is the persistent workaround.
+
+## 2026-07-29 — Session 7: Cockpit DAG tick (final)
+
+### Lane status
+| Lane | Score | Δ |
+|------|-------|---|
+| L16 Frontend | 95 (A) | +5 |
+| L30 Onboarding | 85 (A-) | +10 |
+| L2 Dev Loop | 90 (A) | +5 |
+| L17 I18n/A11y | 90 (A) | +5 |
+| L15 API Surface | 85 (A-) | +5 |
+| L11 Dependencies | 90 (A) | +5 |
+| **Overall** | **96 (A)** | **+1** |
+
+### Next unblocked (post-session-7)
+- **L9 Complexity** (70 B) — top priority; refactor
+  `run_impl_core` (CC=211) and `bg_impl_core` (CC=94) in
+  `src/thegent/cli/services/run_execution_core_helpers.py` to bring
+  CC ≤ 15. Splitting into helper modules would push L9 from B to
+  A- in one PR.
+- **L1 Architecture** (75 B) — second priority; nine remaining
+  files over the 500-line cap (`execution/__init__.py` 2594L,
+  `phench/service.py` 2411L, `ux/cli_cockpit.py` 2347L, etc.).
+  L1 unblocks fully only after L9 clears the complexity gate.
+- **L19 Memory** (88 A-) — ship an `archive_hot_paths` helper +
+  contract test in `src/thegent/memory/` to push to A.
+- **L27 Infrastructure** (80 B+) — add a `secrets-scan` target +
+  `scripts/check_secrets_invariants.sh` mirroring the dep-audit
+  pattern, gated on gitleaks/trufflehog configs already in the
+  repo. Push to A-.

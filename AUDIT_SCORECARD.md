@@ -1,7 +1,24 @@
 # Audit Scorecard — `thegent`
 
-**Overall:** 95/100  **Grade:** A 🟢
+**Overall:** 96/100  **Grade:** A 🟢
 
+> **L11 Dependencies polish (2026-07-29):** Dependency-invariants
+> static checker shipped — `scripts/check_dependency_invariants.sh`
+> (5 checks: uv.lock presence + non-truncation, pyproject.toml pinned
+> deps, requirements.txt populated, PEP-503 normalised pyproject ↔
+> lock sync, bare `==` pin advisory). `Makefile` exposes `dep-audit`
+> (alongside `validate-makefile`) and shows it in `make help`. The
+> PEP-503 normalisation handles `PersistDict`/`ruamel.yaml`/`tomli_w`/
+> `Pillow`/`GitPython`/`PyJWT` correctly. Contract pinned by
+> `tests/unit/dependencies/test_dependency_invariants.py` (13/13
+> pass): Makefile PHONY block (multi-line aware), docstring, body
+> rule, `make help` listing, script executability, canonical-
+> workspace exit-zero, all five checks reported, four isolation
+> sandboxes (missing-lock, unpinned-pyproject, missing-requirements,
+> lock↔pyproject drift), and uv.lock size sanity (100KB–2MB).
+> L11 Dependencies **85 (A-) → 90 (A)**.
+
+>
 > **L15 API Surface polish (2026-07-29):** Three new session endpoints
 > shipped — `GET /thegent_logs` (query: session_id required, follow,
 > tail≥1), `GET /thegent_ps` (filters: all/owner/format text|json|yaml,
@@ -52,7 +69,7 @@
 | L8 Compliance | 100 | A+ | 🟢 |
 | L9 Complexity | 70 | B | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
-| L11 Dependencies | 85 | A- | 🟢 |
+| L11 Dependencies | 90 | A | 🟢 |
 | L12 Error Handling | 100 | A+ | 🟢 |
 | L13 Logging | 100 | A+ | 🟢 |
 | L14 Data Layer | 100 | A+ | 🟢 |
