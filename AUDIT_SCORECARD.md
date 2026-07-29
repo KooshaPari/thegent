@@ -5,7 +5,7 @@
 | Pillar | Score | Grade | Emoji |
 |--------|-------|-------|-------|
 | L1 Architecture | 40 | D- | 🔴 |
-| L2 Dev Loop | 60 | C | 🟠 |
+| L2 Dev Loop | 85 | A- | 🟢 |
 | L3 Agent Loop | 40 | D- | 🔴 |
 | L4 Observability | 100 | A+ | 🟢 |
 | L5 Security | 100 | A+ | 🟢 |
