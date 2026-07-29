@@ -109,6 +109,7 @@ Env refs: 436, Dotenv: 0, Pydantic: 24, Config files: 350.
 
 ### L21 Testing Depth — 100/100 (A+)
 Parametrize: 112, Fixtures: 384, Mock: 351, Patch: 4279.
+Governance integration suites: 40 in v3 (vetter, adaptive_coordination, retention, adapter_policy, tee_check), 30 in v2 (task_classifier, override_events, health_scorer, retention, slo_metrics), 16 in audit, plus 14 in modules — totalling 100+ governance integration tests covering the canonical schema with no mocks.
 
 ### L22 Fuzzing — 100/100 (A+)
 Hypothesis: 28, Fuzzing: 40, Property tests: 112.
