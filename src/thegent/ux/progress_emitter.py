@@ -143,6 +143,108 @@ def _coerce_float(value: object) -> float | None:
     return None
 
 
+def _extract_raw_fields(
+    tick: ProgressTick | None,
+    overrides: Mapping[str, object],
+    default_total: int,
+    clock: Callable[[], float],
+) -> tuple[object, object, object, object, object | None, object]:
+    """Resolve ``done``/``total``/``label``/``lane``/``eta_s``/``emitted_at``.
+
+    Returns the raw (un-coerced) values from either an existing tick or
+    the override kwargs, falling back to emitter defaults. Splitting this
+    out keeps :meth:`ProgressTickEmitter._materialise` readable.
+    """
+    if tick is None:
+        return (
+            overrides.get("done", 0),
+            overrides.get("total", default_total),
+            overrides.get("label", ""),
+            overrides.get("lane", ""),
+            overrides.get("eta_s", None),
+            overrides.get("emitted_at", clock()),
+        )
+    return (
+        overrides.get("done", tick.done),
+        overrides.get("total", tick.total),
+        overrides.get("label", tick.label),
+        overrides.get("lane", tick.lane),
+        overrides.get("eta_s", tick.eta_s),
+        overrides.get("emitted_at", tick.emitted_at),
+    )
+
+
+def _coerce_done_total(
+    raw_done: object,
+    raw_total: object,
+) -> tuple[int, int] | None:
+    """Validate ``done`` / ``total`` are real non-negative integers.
+
+    Returns ``None`` when either field is non-numeric, ``bool``, or
+    ``raw_total < 0``. The caller logs the drop and short-circuits.
+    """
+    coerced_done = _coerce_int(raw_done)
+    coerced_total = _coerce_int(raw_total)
+    if coerced_done is None or coerced_total is None:
+        _LOGGER.debug(
+            "dropping tick with non-numeric done/total: %r/%r",
+            raw_done,
+            raw_total,
+        )
+        return None
+    if coerced_total < 0:
+        _LOGGER.debug("dropping tick with negative total: %r", raw_total)
+        return None
+    return coerced_done, coerced_total
+
+
+def _coerce_eta(raw_eta: object) -> float | None:
+    """Coerce ``eta_s`` to a finite float, returning ``None`` when invalid."""
+    if raw_eta is None:
+        return None
+    return _coerce_float(raw_eta)
+
+
+def _coerce_emitted(
+    raw_emitted: object,
+    clock: Callable[[], float],
+) -> float:
+    """Coerce ``emitted_at`` to a float, falling back to ``clock()`` on failure."""
+    if raw_emitted is None:
+        return clock()
+    try:
+        return float(raw_emitted)
+    except (TypeError, ValueError):
+        return clock()
+
+
+def _build_tick_or_none(
+    coerced_done: int,
+    coerced_total: int,
+    raw_label: object,
+    raw_lane: object,
+    coerced_eta: float | None,
+    emitted: float,
+) -> ProgressTick | None:
+    """Build a :class:`ProgressTick`, returning ``None`` on construction failure.
+
+    The :func:`_clamp_tick` final step happens in the caller so we keep
+    this helper focused on dataclass assembly.
+    """
+    try:
+        return ProgressTick(
+            done=coerced_done,
+            total=coerced_total,
+            label=str(raw_label) if raw_label is not None else "",
+            lane=str(raw_lane) if raw_lane is not None else "",
+            eta_s=coerced_eta,
+            emitted_at=emitted,
+        )
+    except (TypeError, ValueError) as exc:
+        _LOGGER.debug("dropping tick with invalid fields: %s", exc)
+        return None
+
+
 def _clamp_tick(tick: ProgressTick) -> ProgressTick:
     """Clamp ``done`` to ``[0, total]`` and reject non-finite floats.
 
@@ -357,64 +459,31 @@ class ProgressTickEmitter:
 
         Returns ``None`` when the payload is malformed so callers can short
         circuit via :attr:`ProgressEmitResult.dropped`.
+
+        The body is intentionally short — each step delegates to a named
+        helper that is independently unit-testable (see the helper
+        docstrings for individual contracts).
         """
-        # 1. Determine the raw fields.
-        if tick is None:
-            raw_done: object = overrides.get("done", 0)
-            raw_total: object = overrides.get("total", self._default_total)
-            raw_label: object = overrides.get("label", "")
-            raw_lane: object = overrides.get("lane", "")
-            raw_eta: object | None = overrides.get("eta_s", None)
-            raw_emitted: object = overrides.get("emitted_at", self._clock())
-        else:
-            raw_done = overrides.get("done", tick.done)
-            raw_total = overrides.get("total", tick.total)
-            raw_label = overrides.get("label", tick.label)
-            raw_lane = overrides.get("lane", tick.lane)
-            raw_eta = overrides.get("eta_s", tick.eta_s)
-            raw_emitted = overrides.get("emitted_at", tick.emitted_at)
+        raw = _extract_raw_fields(tick, overrides, self._default_total, self._clock)
+        raw_done, raw_total, raw_label, raw_lane, raw_eta, raw_emitted = raw
 
-        # 2. Coerce numerics, rejecting bool / nan / inf / wrong type.
-        coerced_done = _coerce_int(raw_done)
-        coerced_total = _coerce_int(raw_total)
-        if coerced_done is None or coerced_total is None:
-            _LOGGER.debug(
-                "dropping tick with non-numeric done/total: %r/%r",
-                raw_done,
-                raw_total,
-            )
+        done_total = _coerce_done_total(raw_done, raw_total)
+        if done_total is None:
             return None
-        # Negative totals are nonsensical for the cockpit (no bar to render
-        # against); reject the payload rather than silently floor to zero so
-        # upstream callers learn about bad input.
-        if coerced_total < 0:
-            _LOGGER.debug("dropping tick with negative total: %r", raw_total)
+        coerced_done, coerced_total = done_total
+
+        coerced_eta = _coerce_eta(raw_eta)
+        emitted = _coerce_emitted(raw_emitted, self._clock)
+        base = _build_tick_or_none(
+            coerced_done,
+            coerced_total,
+            raw_label,
+            raw_lane,
+            coerced_eta,
+            emitted,
+        )
+        if base is None:
             return None
-
-        if raw_eta is None:
-            coerced_eta: float | None = None
-        else:
-            coerced_eta = _coerce_float(raw_eta)
-
-        # 3. Build the tick.
-        try:
-            emitted = float(raw_emitted) if raw_emitted is not None else self._clock()
-        except (TypeError, ValueError):
-            emitted = self._clock()
-        try:
-            base = ProgressTick(
-                done=coerced_done,
-                total=coerced_total,
-                label=str(raw_label) if raw_label is not None else "",
-                lane=str(raw_lane) if raw_lane is not None else "",
-                eta_s=coerced_eta,
-                emitted_at=emitted,
-            )
-        except (TypeError, ValueError) as exc:
-            _LOGGER.debug("dropping tick with invalid fields: %s", exc)
-            return None
-
-        # 4. Clamp and return.
         return _clamp_tick(base)
 
     def _forward(self, sink: object, tick: ProgressTick) -> None:
