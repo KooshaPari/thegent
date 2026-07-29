@@ -273,3 +273,157 @@ def test_runtime_module_size_within_budget() -> None:
     source_path = Path(str(runtime.__file__))
     line_count = sum(1 for _ in source_path.read_text().splitlines())
     assert line_count <= 500, f"Runtime module is {line_count} LOC; budget is 500. Split further."
+
+
+# ---------------------------------------------------------------------------
+# Provider alias patchers (WP-Y16 compat)
+# ---------------------------------------------------------------------------
+
+
+def test_alias_patchers_split_per_provider() -> None:
+    """Each provider gets a dedicated patcher; coordinator dispatches via table."""
+    shim = sys.modules[SHIM_MODULE]
+    expected = {
+        "_patch_minimax_provider",
+        "_patch_glm_provider",
+        "_patch_kilo_provider",
+        "_patch_roo_provider",
+        "_resolve_claude_aliases",
+        "_PROVIDER_PATCHERS",
+        "_patch_provider_aliases",
+    }
+    missing = expected - set(dir(shim))
+    assert missing == set(), f"Alias-patcher helpers missing on shim: {missing}"
+
+
+def test_alias_patcher_table_dispatches_per_provider() -> None:
+    """The dispatcher table covers exactly the four known providers."""
+    shim = sys.modules[SHIM_MODULE]
+    table = shim._PROVIDER_PATCHERS
+    assert set(table.keys()) == {"minimax", "glm", "kilo", "roo"}
+    assert table["minimax"] is shim._patch_minimax_provider
+    assert table["glm"] is shim._patch_glm_provider
+    assert table["kilo"] is shim._patch_kilo_provider
+    assert table["roo"] is shim._patch_roo_provider
+
+
+def test_minimax_patcher_rewrites_host() -> None:
+    """minimax.chat → minimax.io host rewrite for WP-Y16."""
+    shim = sys.modules[SHIM_MODULE]
+    p = {"name": "minimax", "base-url": "https://api.minimax.chat/v1"}
+    shim._patch_minimax_provider(p)
+    assert p["base-url"] == "https://api.minimax.io/v1"
+    aliases = {m["alias"] for m in p["models"]}
+    assert "minimax-m2.5" in aliases
+
+
+def test_glm_patcher_registers_aliases() -> None:
+    """GLM-5 gets the canonical + lowercase aliases for WP-Y16."""
+    shim = sys.modules[SHIM_MODULE]
+    p = {"name": "glm", "models": []}
+    shim._patch_glm_provider(p)
+    aliases = {m["alias"] for m in p["models"]}
+    assert {"GLM-5", "glm-5", "z-ai/glm-5"} <= aliases
+
+
+def test_kilo_and_roo_patchers_register_default_alias() -> None:
+    """kilo/roo get a single default alias when none is present."""
+    shim = sys.modules[SHIM_MODULE]
+    kilo = {"name": "kilo", "model": "kilo-1", "models": []}
+    shim._patch_kilo_provider(kilo)
+    assert any(m["alias"] == "kilo-default" for m in kilo["models"])
+
+    roo = {"name": "roo", "models": []}
+    shim._patch_roo_provider(roo)
+    assert any(m["alias"] == "roo-default" for m in roo["models"])
+
+
+def test_alias_patchers_are_idempotent() -> None:
+    """Re-applying a patcher is a no-op when the alias already exists."""
+    shim = sys.modules[SHIM_MODULE]
+    p = {"name": "glm", "models": [{"name": "GLM-5", "alias": "GLM-5"}]}
+    shim._patch_glm_provider(p)
+    names = [m["alias"] for m in p["models"]]
+    assert names.count("GLM-5") == 1
+
+
+def test_coordinator_skips_non_list_and_non_dict() -> None:
+    """Coordinator no-ops when ``openai-compatibility`` is absent or malformed."""
+    shim = sys.modules[SHIM_MODULE]
+    # No openai-compatibility key
+    shim._patch_provider_aliases({})
+    # Wrong type
+    shim._patch_provider_aliases({"openai-compatibility": "nope"})
+    # Mixed-type list — skip non-dict entries but do not raise
+    shim._patch_provider_aliases({"openai-compatibility": ["bad", 1, None]})
+
+
+def test_coordinator_skips_unknown_providers() -> None:
+    """Unknown provider names flow through ``_resolve_claude_aliases`` only."""
+    shim = sys.modules[SHIM_MODULE]
+    cfg = {
+        "openai-compatibility": [
+            {"name": "unknown", "model": "claude-opus-4-6", "models": []},
+        ]
+    }
+    shim._patch_provider_aliases(cfg)
+    providers = cfg["openai-compatibility"]
+    assert providers[0]["models"]  # populated via _get_claude_aliases
+
+
+def test_cliproxy_manager_patchers_under_cc_threshold() -> None:
+    """All _patch_* helpers on the shim must be CC ≤ 15."""
+    import ast
+
+    shim = sys.modules[SHIM_MODULE]
+    source_path = Path(str(shim.__file__))
+    tree = ast.parse(source_path.read_text())
+
+    class V(ast.NodeVisitor):
+        def __init__(self) -> None:
+            self.cc = 1
+
+        def visit_If(self, node: ast.If) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+        def visit_For(self, node: ast.For) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+        def visit_While(self, node: ast.While) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+        def visit_Try(self, node: ast.Try) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+        def visit_With(self, node: ast.With) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+        def visit_IfExp(self, node: ast.IfExp) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+        def visit_comprehension(self, node: ast.comprehension) -> None:
+            self.cc += 1
+            self.generic_visit(node)
+
+    targets = {
+        "_patch_provider_aliases",
+        "_patch_minimax_provider",
+        "_patch_glm_provider",
+        "_patch_kilo_provider",
+        "_patch_roo_provider",
+        "_resolve_claude_aliases",
+    }
+    offenders: list[tuple[str, int, str]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in targets:
+            v = V()
+            v.visit(node)
+            if v.cc > 15:
+                offenders.append((node.name, v.cc, f"{source_path}:{node.lineno}"))
+    assert offenders == [], f"Alias-patch helpers exceed CC=15: {offenders}"

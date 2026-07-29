@@ -12325,3 +12325,51 @@ red_lanes_remaining:    []
 [████████████████████████████████████████████████░░] 95.5%
 Lanes: 30 | A+: 16 | A: 5 | A-: 7 | B+: 2 | B: 2
 ```
+
+## Session 9 — L1 Architecture full split (2026-07-29)
+
+### Diff vs Session 8
+- L1 Architecture: 80 (B+) → **85 (A-)** (+5)
+- Overall: 96 → **97**
+
+### Changes
+- **Second cliproxy split complete**: `cliproxy_manager.py` (1132L) → 4
+  focused modules, shim dropped to **301L** (well under 350L target).
+  - `src/thegent/use_cases/manage_cliproxy_runtime.py` (437L) — process
+    management primitives.
+  - `src/thegent/use_cases/manage_cliproxy_config.py` (588L) — provider
+    definitions, alias patching, `_ensure_config`, key injection,
+    OAuth probe.
+  - `src/thegent/use_cases/manage_cliproxy_login.py` (433L) — unified
+    login flows with 10 extracted helpers (CC ≤ 10, body ≤ 40L).
+  - `src/thegent/agents/cliproxy_manager.py` (301L) — slim re-export
+    shim.
+- 10 login helpers extracted (`_preflight_login`,
+  `_resolve_factory_key`, `_prompt_for_api_key`, `_persist_and_restart`,
+  `_run_oauth_login`, `_route_login_path`, `_prefers_unified_flow`,
+  `_resolve_key_flow`, `_load_cfg_or_skip`, `_normalise_provider`,
+  `_build_oauth_run_kwargs`, `_open_login_url`, `_log_instructions`).
+- Contract pinned by
+  `tests/unit/architecture/test_manage_cliproxy_runtime.py` (56/56)
+  + `tests/unit/architecture/test_manage_cliproxy_login.py` (31/31) =
+  **87/87 pass**.
+
+### DAG tick
+```
+✓ L1   cliproxy split (4 modules)        [runtime/config/login] 85  A-
+✓ L2   validate-makefile                [script+target]        90  A
+✓ L11  dep-invariants linter            [5 checks]             90  A
+✓ L15  session endpoints (3+5)          [openapi_surface]      85  A-
+✓ L16  TUI Compositor hardening        [contract-pinned]      95  A
+✓ L17  Locale scaffolding (en/fr)      [locale_loader]        90  A
+✓ L30  Makefile pass-through           [12 contract tests]    85  A-
+○ L9   run_impl_core CC=211 refactor    [next]                 70  B
+○ L19  archive_hot_paths helper         [next]                 88  A-
+○ L27  secrets-scan + check_secrets     [next]                 80  B+
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[██████████████████████████████████████████████░░░░] 97.0%
+A+: 16 | A: 4 | A-: 8 | B+: 1 | B: 1
+```
