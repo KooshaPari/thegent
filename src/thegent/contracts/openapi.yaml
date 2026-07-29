@@ -196,6 +196,79 @@ paths:
                 type: object
                 additionalProperties: true
 
+  /thegent_logs:
+    get:
+      tags: [mcp, sessions]
+      summary: Fetch session logs.
+      operationId: thegentLogs
+      parameters:
+        - in: query
+          name: session_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: follow
+          schema: { type: boolean, default: false }
+        - in: query
+          name: tail
+          schema: { type: integer, default: 20, minimum: 1 }
+      responses:
+        "200":
+          description: Log lines.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogsResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /thegent_ps:
+    get:
+      tags: [mcp, sessions]
+      summary: List sessions.
+      operationId: thegentPs
+      parameters:
+        - in: query
+          name: all
+          schema: { type: boolean, default: false }
+        - in: query
+          name: owner
+          schema: { type: string }
+        - in: query
+          name: format
+          schema: { type: string, enum: [text, json, yaml] }
+        - in: query
+          name: include_contract
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Session inventory.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionListResponse"
+
+  /thegent_resume:
+    post:
+      tags: [mcp, sessions]
+      summary: Resume a paused session.
+      operationId: thegentResume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeRequest"
+      responses:
+        "200":
+          description: Resume outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
 components:
   responses:
     ValidationError:
@@ -279,6 +352,55 @@ components:
             p95: { type: number }
             p99: { type: number }
         health_score: { type: number, minimum: 0, maximum: 100 }
+
+    LogsResponse:
+      type: object
+      required: [session_id, lines]
+      properties:
+        session_id: { type: string }
+        follow: { type: boolean }
+        tail: { type: integer }
+        lines:
+          type: array
+          items: { type: string }
+        truncated: { type: boolean, default: false }
+
+    SessionListEntry:
+      type: object
+      required: [session_id, status]
+      properties:
+        session_id: { type: string }
+        status: { type: string, enum: [pending, running, paused, completed, failed, cancelled] }
+        owner: { type: string }
+        started_at: { type: string, format: date-time }
+        contract_version: { type: string }
+        include_contract: { type: boolean }
+
+    SessionListResponse:
+      type: object
+      required: [sessions]
+      properties:
+        sessions:
+          type: array
+          items: { $ref: "#/components/schemas/SessionListEntry" }
+        total: { type: integer }
+        format: { type: string, enum: [text, json, yaml] }
+
+    ResumeRequest:
+      type: object
+      required: [session_id]
+      properties:
+        session_id: { type: string }
+        contract_version: { type: string }
+
+    ResumeResponse:
+      type: object
+      required: [session_id, accepted]
+      properties:
+        session_id: { type: string }
+        accepted: { type: boolean }
+        resumed_at: { type: string, format: date-time }
+        message: { type: string }
 
     ValidationError:
       type: object

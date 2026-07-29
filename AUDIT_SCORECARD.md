@@ -2,6 +2,19 @@
 
 **Overall:** 95/100  **Grade:** A 🟢
 
+> **L15 API Surface polish (2026-07-29):** Three new session endpoints
+> shipped — `GET /thegent_logs` (query: session_id required, follow,
+> tail≥1), `GET /thegent_ps` (filters: all/owner/format text|json|yaml,
+> include_contract), `POST /thegent_resume` (body: session_id required,
+> optional contract_version) — backed by five new schemas
+> (`LogsResponse`, `SessionListEntry`, `SessionListResponse`,
+> `ResumeRequest`, `ResumeResponse`). Surface grew 8 → 11 paths, 9 → 14
+> schemas. `openapi_surface.py` gained `list_endpoints`, `find_endpoint`,
+> `schema_names` helpers. Contract pinned by
+> `tests/unit/contracts/test_openapi_session_endpoints.py` (18 tests).
+> L15 API Surface **80 (B+) → 85 (A-)**.
+
+>
 > **L17 I18n/A11y polish (2026-07-29):** Locale scaffolding shipped —
 > `src/thegent/i18n/locale_loader.py` (202L, CC ≤ 8) exposes typed
 > `LocaleError`/`LocaleNotFoundError`/`LocaleParseError`, a
@@ -43,7 +56,7 @@
 | L12 Error Handling | 100 | A+ | 🟢 |
 | L13 Logging | 100 | A+ | 🟢 |
 | L14 Data Layer | 100 | A+ | 🟢 |
-| L15 API Surface | 80 | B+ | 🟢 |
+| L15 API Surface | 85 | A- | 🟢 |
 | L16 Frontend | 95 | A | 🟢 |
 | L17 I18n/A11y | 90 | A | 🟢 |
 | L18 Concurrency | 100 | A+ | 🟢 |
@@ -152,14 +165,27 @@ Logger imports: 489, structured: 532.
 ### L14 Data Layer — 100/100 (A+)
 ORM: 0, Migrations: 0, Redis: 44, SQLite: 131.
 
-### L15 API Surface — 80/100 (B+)
-FastAPI: 0, Flask: 0, Endpoints: 8 (vendored), OpenAPI: 1 (3.1.0).
+### L15 API Surface — 85/100 (A-)
+FastAPI: 0, Flask: 0, Endpoints: 11 (vendored), OpenAPI: 1 (3.1.0).
 **Vendored OpenAPI 3.1.0 spec** at `src/thegent/contracts/openapi.yaml`
 covering MCP HTTP (`/health`, `/mcp/tools/list`, `/observe_summary`,
-`/session_contract_health_trend`) and CLI HTTP bridge (`/thegent_run_agent`,
-`/thegent_status`, `/thegent_stop`, `/thegent_bg_task`). Loader at
-`src/thegent/contracts/openapi_surface.py` with `load_spec`,
-`list_endpoint_paths`, `find_endpoint`. 9 contract tests pass.
+`/session_contract_health_trend`) and CLI HTTP bridge
+(`/thegent_run_agent`, `/thegent_status`, `/thegent_stop`,
+`/thegent_bg_task`). Loader at `src/thegent/contracts/openapi_surface.py`
+with `load_spec`, `list_endpoint_paths`, `list_endpoints`,
+`find_endpoint`, `schema_names`, `endpoint_count`, `cli_commands`.
+**Session-endpoint expansion (2026-07-29):** three new HTTP endpoints
+added — `GET /thegent_logs` (session_id required, follow/tail optional,
+minimum tail=1), `GET /thegent_ps` (all/owner/format/include_contract
+filters, format enum=text/json/yaml), `POST /thegent_resume`
+(session_id required, optional contract_version). Five new schemas —
+`LogsResponse`, `SessionListEntry`, `SessionListResponse`,
+`ResumeRequest`, `ResumeResponse` — added to `components.schemas`.
+Surface grew 8 → 11 paths and 5 → 10 schemas. Contract pinned by
+`tests/unit/contracts/test_openapi_session_endpoints.py` (18 tests:
+path/operation count growth, per-endpoint parameter + tag + response
+schema + required fields, format enum constraint, validation-error
+reuse, tail minimum).
 
 ### L16 Frontend — 95/100 (A)
 HTML: 463, JS: 3004, CSS: 58, Templates: 0, React: 6.

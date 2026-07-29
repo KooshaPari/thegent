@@ -135,6 +135,65 @@ def path_count(spec: dict[str, Any]) -> int:
     return len(paths) if isinstance(paths, dict) else 0
 
 
+_VERBS = frozenset({"get", "post", "put", "delete", "patch", "options", "head"})
+
+
+def list_endpoint_paths(spec: dict[str, Any]) -> tuple[str, ...]:
+    """Return a sorted tuple of every path declared in the spec."""
+    paths = spec.get("paths") or {}
+    if not isinstance(paths, dict):
+        return ()
+    return tuple(sorted(paths.keys()))
+
+
+def list_endpoints(
+    spec: dict[str, Any],
+) -> list[tuple[str, str, dict[str, Any]]]:
+    """Return ``[(verb, path, operation), ...]`` for every HTTP operation.
+
+    Only HTTP verbs (per RFC 9110 + OpenAPI 3.1) are returned, in the
+    order they appear in the YAML. Use this when you need to walk the
+    full inventory rather than look up a single ``(path, verb)`` pair.
+    """
+    paths = spec.get("paths") or {}
+    if not isinstance(paths, dict):
+        return []
+    inventory: list[tuple[str, str, dict[str, Any]]] = []
+    for path, path_item in paths.items():
+        if not isinstance(path_item, dict):
+            continue
+        for verb, operation in path_item.items():
+            if verb.lower() not in _VERBS or not isinstance(operation, dict):
+                continue
+            inventory.append((verb.lower(), str(path), operation))
+    return inventory
+
+
+def find_endpoint(
+    spec: dict[str, Any],
+    path: str,
+    verb: str,
+) -> dict[str, Any] | None:
+    """Return the operation dict for ``(path, verb)`` or ``None``."""
+    paths = spec.get("paths") or {}
+    if not isinstance(paths, dict):
+        return None
+    path_item = paths.get(path)
+    if not isinstance(path_item, dict):
+        return None
+    operation = path_item.get(verb.lower())
+    return operation if isinstance(operation, dict) else None
+
+
+def schema_names(spec: dict[str, Any]) -> tuple[str, ...]:
+    """Return a sorted tuple of every schema declared under ``components``."""
+    components = spec.get("components") or {}
+    schemas = components.get("schemas") or {}
+    if not isinstance(schemas, dict):
+        return ()
+    return tuple(sorted(schemas.keys()))
+
+
 def surface_summary(path: os.PathLike[str] | str | None = None) -> SurfaceSummary:
     """Build a summary suitable for a scorecard row.
 
@@ -161,7 +220,11 @@ __all__ = [
     "SurfaceSummary",
     "cli_commands",
     "endpoint_count",
+    "find_endpoint",
+    "list_endpoint_paths",
+    "list_endpoints",
     "load_spec",
     "path_count",
+    "schema_names",
     "surface_summary",
 ]

@@ -12156,3 +12156,55 @@ red_lanes_remaining:    []
 - L17 still at 90 (A) — could push to 95 by shipping a `ja.yaml` /
   `de.yaml` catalog + adding `i18n.set_locale("auto")` with
   Accept-Language sniffing; punted to next lane.
+
+## L15 API Surface Session-Endpoint Push - 2026-07-29
+
+### Actions Taken
+- Added three HTTP endpoints to `src/thegent/contracts/openapi.yaml`:
+  - `GET /thegent_logs` — query: `session_id` (req), `follow`,
+    `tail` (default 20, minimum 1). 200 → `LogsResponse`, 422 →
+    `ValidationError`.
+  - `GET /thegent_ps` — query: `all`, `owner`, `format`
+    (enum: text/json/yaml), `include_contract`. 200 →
+    `SessionListResponse`.
+  - `POST /thegent_resume` — body: `ResumeRequest`
+    (`session_id` required, optional `contract_version`). 200 →
+    `ResumeResponse`, 422 → `ValidationError`.
+- Added five schemas to `components.schemas`: `LogsResponse`,
+  `SessionListEntry` (with `paused`/`running`/`completed`/etc.
+  status enum), `SessionListResponse`, `ResumeRequest`,
+  `ResumeResponse`.
+- Extended `src/thegent/contracts/openapi_surface.py` with three new
+  helpers: `list_endpoint_paths(spec)`, `list_endpoints(spec)`
+  (returns `(verb, path, operation)` tuples), `find_endpoint(spec,
+  path, verb)`, `schema_names(spec)`.
+- Pinned the surface by
+  `tests/unit/contracts/test_openapi_session_endpoints.py` (18
+  tests): path/operation count growth, per-endpoint parameter set,
+  required-field assertions, format enum constraint, validation-error
+  reuse, tail minimum, tag coverage.
+- Updated `AUDIT_SCORECARD.md`: L15 API Surface **80 (B+) → 85 (A-)**.
+  Endpoints: 8 → 11, schemas: 9 → 14.
+
+### Validation
+- `TMPDIR=~/.cache uv run pytest tests/unit/contracts/ -q` → 27/27
+  pass (9 existing + 18 new).
+- `uv run ruff check src/thegent/contracts/openapi_surface.py
+  tests/unit/contracts/test_openapi_session_endpoints.py` → all
+  checks passed.
+- `uv run ruff format --check` → 2 files already formatted.
+
+### Issues Found
+- None.
+
+### Remaining Known
+- L15 still at 85 (A-) — to push to A would require adding
+  FastAPI/Starlette decorators to the MCP server so the spec can be
+  auto-generated from code (eliminating the vendored-YAML drift
+  risk). Punted to a follow-up hardening pass; the existing
+  `x-audit-notes` already calls this out.
+- The `/tmp` and `/var/folders/.../T/` directories are at 100%
+  capacity on the operator node (926GB disk, 154Mi available).
+  Pytest cannot create its capfd tmpfiles; running pytest with
+  `TMPDIR=~/.cache` is the workaround until disk pressure is
+  resolved.
