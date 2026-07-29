@@ -2,6 +2,18 @@
 
 **Overall:** 95/100  **Grade:** A 🟢
 
+> **L17 I18n/A11y polish (2026-07-29):** Locale scaffolding shipped —
+> `src/thegent/i18n/locale_loader.py` (202L, CC ≤ 8) exposes typed
+> `LocaleError`/`LocaleNotFoundError`/`LocaleParseError`, a
+> `register_all()` cold-start hook, and a `coverage(locale)` meter for
+> the cockpit translation-completeness bar. Two shipped catalogs
+> (`locales/en.yaml`, `locales/fr.yaml`, 18 keys each) cover every
+> `cockpit.{title,subtitle,dag.tick}`, `cockpit.lane.L*`, and
+> `cockpit.status.*` string. Contract pinned by
+> `tests/unit/i18n/test_locale_loader.py` (15/15 pass). L17
+> I18n/A11y **85 (A-) → 90 (A)**.
+
+>
 > **L16 Frontend + L30 Onboarding polish (2026-07-29):** TUI
 > `compositor` is now a contract-pinned `TUICompositor` (305L, 4-region
 > layout, ARIA per region, tmux pane snapshot adapter) backed by
@@ -33,7 +45,7 @@
 | L14 Data Layer | 100 | A+ | 🟢 |
 | L15 API Surface | 80 | B+ | 🟢 |
 | L16 Frontend | 95 | A | 🟢 |
-| L17 I18n/A11y | 85 | A- | 🟢 |
+| L17 I18n/A11y | 90 | A | 🟢 |
 | L18 Concurrency | 100 | A+ | 🟢 |
 | L19 Memory | 88 | A- | 🟢 |
 | L20 Config | 85 | A- | 🟢 |
@@ -169,8 +181,24 @@ plus the fallback path, ARIA on every region, public surface
 (`compositor_compose` + legacy stub class), and the no-pane graceful
 mode (header + footer still rendered).
 
-### L17 I18n/A11y — 85/100 (A-)
-Locale files: 0, gettext: 0, aria: 60+ (cockpit, banner, decision audit, progress).
+### L17 I18n/A11y — 90/100 (A)
+Locale files: 2 (en, fr), gettext: 1 (`thegent.i18n._`), aria: 60+ (cockpit, banner, decision audit, progress).
+**Locale scaffolding shipped (2026-07-29):** `src/thegent/i18n/locale_loader.py`
+(202L, CC ≤ 8) provides dependency-light catalog discovery +
+registration: `locales_dir()`, `discover_locales()`, `load_catalog()`,
+`load_all()`, `register_all()`, `bundle_message_ids()`, `coverage()`.
+Typed exceptions `LocaleError`, `LocaleNotFoundError`,
+`LocaleParseError` surface malformed YAML to the cockpit without
+spelunking through PyYAML stack traces. Shipped catalogs live under
+`src/thegent/i18n/locales/` (`en.yaml`, `fr.yaml`) — 18 keys each,
+including `cockpit.{title,subtitle,dag.tick}`, every `cockpit.lane.*`
+label, every `cockpit.status.*` indicator, and `cockpit.action.{refresh,report}`
+buttons. Contract pinned by
+`tests/unit/i18n/test_locale_loader.py` (15/15 pass): directory
+exists, discovery sorted+deduped, missing-directory no-op, parse errors
+on non-mapping or non-string values, `register_all` populates both
+locales and is idempotent, `coverage()` reports full coverage for the
+canonical locale and zero for unknown locales.
 
 ### L18 Concurrency — 100/100 (A+)
 Threading: 240, MP: 0, Locks: 82, Queue: 6.

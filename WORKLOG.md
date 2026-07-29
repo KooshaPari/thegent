@@ -12118,3 +12118,41 @@ red_lanes_remaining:    []
 - Governance lane still has room: extend the v3 integration suite to
   cover the freed-up cliproxy modules and add a dedicated ticker for
   ARIA coverage per L17 I18n/A11y.
+
+## L17 I18n/A11y Locale Scaffolding Push - 2026-07-29
+
+### Actions Taken
+- Added `src/thegent/i18n/locale_loader.py` (202L, CC ≤ 8) with typed
+  `LocaleError`/`LocaleNotFoundError`/`LocaleParseError`, discovery
+  (`locales_dir`, `discover_locales`), per-locale loading
+  (`load_catalog`, `load_all`), registration (`register_all`),
+  coverage metering (`coverage`, `bundle_message_ids`).
+- Shipped two locale catalogs under `src/thegent/i18n/locales/`
+  (`en.yaml`, `fr.yaml`) with 18 keys each — covers every
+  `cockpit.{title,subtitle,dag.tick}`, `cockpit.lane.L*`, and
+  `cockpit.status.*` message-id plus `cockpit.action.{refresh,report}`
+  buttons.
+- Contract pinned by `tests/unit/i18n/test_locale_loader.py` (15/15
+  pass): directory exists + sorted + deduped discovery, missing-dir
+  no-op, `LocaleNotFoundError` on unknown locale, `LocaleParseError`
+  on non-mapping or non-string YAML, `register_all` populates both
+  locales, idempotent on repeated calls, full coverage for canonical
+  locale, zero coverage for unknown locale.
+- Updated `AUDIT_SCORECARD.md`: L17 I18n/A11y **85 (A-) → 90 (A)**.
+  Locale files: 0 → 2, gettext: 0 → 1 (`thegent.i18n._`).
+
+### Validation
+- `uv run pytest tests/unit/i18n/ -q` → 91/91 pass (76 existing + 15
+  new locale_loader tests).
+- `uv run ruff check src/thegent/i18n/ tests/unit/i18n/test_locale_loader.py`
+  → all checks passed.
+- `uv run ruff format --check` on the two new Python files → already
+  formatted.
+
+### Issues Found
+- None.
+
+### Remaining Known
+- L17 still at 90 (A) — could push to 95 by shipping a `ja.yaml` /
+  `de.yaml` catalog + adding `i18n.set_locale("auto")` with
+  Accept-Language sniffing; punted to next lane.

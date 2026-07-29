@@ -1,0 +1,21 @@
+# Canonical English locale catalog for thegent.
+# Keys here must match the message-ids used at the call site
+# (e.g. i18n._("cockpit.title")).
+cockpit.title: TheGent Cockpit
+cockpit.subtitle: "Five-day goal — Day {day} of {total}"
+cockpit.lane.L1: Architecture
+cockpit.lane.L2: Dev Loop
+cockpit.lane.L9: Complexity
+cockpit.lane.L11: Dependencies
+cockpit.lane.L16: Frontend
+cockpit.lane.L17: "I18n / A11y"
+cockpit.lane.L19: Memory
+cockpit.lane.L26: Event Driven
+cockpit.lane.L27: Infrastructure
+cockpit.lane.L30: Onboarding
+cockpit.status.green: On track
+cockpit.status.yellow: Watch
+cockpit.status.red: Blocked
+cockpit.dag.tick: "DAG tick #{tick} — {lanes} lanes · {tests} tests · score {score}"
+cockpit.action.refresh: Refresh scorecard
+cockpit.action.report: Report progress

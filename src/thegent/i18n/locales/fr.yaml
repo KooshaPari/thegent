@@ -1,0 +1,20 @@
+# French locale catalog for thegent.
+# Keys must match the English canonical catalog one-for-one.
+cockpit.title: Cockpit TheGent
+cockpit.subtitle: "Objectif sur cinq jours — Jour {day} sur {total}"
+cockpit.lane.L1: Architecture
+cockpit.lane.L2: Boucle de dev
+cockpit.lane.L9: Complexité
+cockpit.lane.L11: Dépendances
+cockpit.lane.L16: Frontend
+cockpit.lane.L17: "i18n / a11y"
+cockpit.lane.L19: Mémoire
+cockpit.lane.L26: Piloté par événements
+cockpit.lane.L27: Infrastructure
+cockpit.lane.L30: Onboarding
+cockpit.status.green: Sur la cible
+cockpit.status.yellow: À surveiller
+cockpit.status.red: Bloqué
+cockpit.dag.tick: "Tick DAG n°{tick} — {lanes} lanes · {tests} tests · score {score}"
+cockpit.action.refresh: Rafraîchir le scorecard
+cockpit.action.report: Rapport de progression
