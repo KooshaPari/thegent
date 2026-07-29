@@ -219,10 +219,27 @@ class ProgressTickEmitter:
     # ------------------------------------------------------------- mutators
 
     def bind(self, sink: ProgressSink | OperatorCockpit | None) -> "ProgressTickEmitter":
-        """Bind or rebind the sink. Returns ``self`` for chaining."""
+        """Bind or rebind the sink. Returns ``self`` for chaining.
+
+        The emitter retains a strong reference for the lifetime of the
+        emitter itself. Callers that need to release the sink should
+        either drop the emitter or rebind with ``None``. The bounded
+        :class:`OperatorCockpit` decision / confidence deques mean a
+        single long-lived emitter does not accumulate unbounded state
+        even when many sinks are rotated through.
+        """
         with self._lock:
             self._sink = sink
         return self
+
+    def release(self) -> "ProgressTickEmitter":
+        """Drop the reference to the current sink.
+
+        Convenience wrapper around ``bind(None)`` that makes the
+        intent obvious at the call site (closes L19 leak path for
+        long-running sessions).
+        """
+        return self.bind(None)
 
     def __repr__(self) -> str:  # pragma: no cover - cosmetic
         """Read-only debug repr (F-10, SOTA third-pass).
