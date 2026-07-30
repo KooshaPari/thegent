@@ -259,11 +259,17 @@ violation on the new module and forced the refactor.
 
 **2026-07-29-2 L9 incremental progress:** 28 `_phase_*` helpers
 extracted into `run_execution_core_helpers.py`, each CC ≤ 12 and
-single-responsibility; `_phase_budget_gate` is the first one wired
-into `run_impl_core` (replacing the inline WP-Y4 hourly+daily budget
-check). 26 more helpers queued for wire-up before the orchestrator
-CC drops. Lane score held at 70 because the orchestrator function's
-own CC remains unchanged until the remaining helpers are called inline.
+single-responsibility. **14 of 28 wired into `run_impl_core`:**
+`_phase_budget_gate` (initial); 9 early-phase helpers
+(`auto_route`, `resolve_agent_from_model`, `evaluate_contract_version`,
+`resolve_effective_timeout`, `resolve_cwd`, `terminal_discovery`,
+`input_guardrails`, `idempotency_replay`, `trust_boundary`); 5
+mid-phase helpers (`acquire_concurrency`, `fatigue_freshness_burst`,
+`evaluate_policy_with_override`, `register_policy_denial`,
+`register_hitl_pause`). 14 helpers remaining (post-mid, pre-failure,
+post-success). Lane score held at 70 because the orchestrator
+function's own CC remains unchanged until all helpers are called
+inline. Target: lift to B+ 80 once CC drops below 18.
 
 ### L10 Type Safety — 100/100 (A+)
 Type coverage: 11837/12008 (99%). Dataclasses: 971.
