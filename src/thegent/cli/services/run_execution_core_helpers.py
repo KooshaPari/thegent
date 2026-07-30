@@ -1044,78 +1044,15 @@ def run_impl_core(
     )
 
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
-    if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
-        try:
-            from thegent.utils.routing_impl.auto_router import auto_route
-
-            ar = auto_route(
-                prompt=prompt,
-                classifier_model=settings.auto_router_classifier_model,
-                use_classifier=settings.auto_router_use_classifier,
-                min_quality=settings.auto_router_min_quality,
-                max_cost_weight=settings.auto_router_max_cost_weight,
-            )
-            if ar:
-                agent = ar.agent
-                model = ar.model
-                _log.info(
-                    "Auto router: %s/%s (complexity=%s)",
-                    agent,
-                    model,
-                    ar.complexity,
-                )
-                if ar.route_trace and include_contract:
-                    rt = ar.route_trace
-                    route_contract = {
-                        "provider": rt.provider,
-                        "model_alias": rt.model_alias,
-                        "backend_type": "proxy",
-                        "degraded_mode": getattr(rt, "degraded_mode", False),
-                        "role": getattr(rt, "role", None),
-                        "route_trace": {
-                            "selected_offer_id": rt.selected_offer_id,
-                            "pareto_set": rt.pareto_set,
-                            "fallback_chain": [{"provider": p, "model": m} for p, m in (rt.fallback_chain or [])],
-                            "scores": rt.scores,
-                            "shadow_multiplier": rt.shadow_multiplier,
-                        },
-                    }
-                    route_request = dict(route_request or {})
-                    route_request.update(
-                        {
-                            "requested_model": "auto",
-                            "policy": "pareto",
-                            "resolved_agent": ar.agent,
-                            "resolved_model_alias": ar.model,
-                            "complexity": ar.complexity,
-                        }
-                    )
-            else:
-                agent = "antigravity"
-                model = "gemini-3-flash"
-                _log.warning("Auto router failed; fallback to antigravity/gemini-3-flash")
-        except Exception as e:
-            _log.warning("Auto router error: %s; fallback to antigravity/gemini-3-flash", e)
-            agent = "antigravity"
-            model = "gemini-3-flash"
+    agent, model, route_contract, route_request = _phase_auto_route(
+        settings, agent, model, prompt, include_contract, route_contract, route_request
+    )
 
     if agent is None and model:
-        from thegent.models import normalize_model_id
-        from thegent.models.catalog import ModelCatalog, resolve_route
-
-        model_id = normalize_model_id(model)
-        route = resolve_route(model_id, provider_hint=provider)
-        if route is None:
-            routes = ModelCatalog.routes_for(model_id)
-            available = ", ".join(sorted({r.provider for r in routes})) if routes else "none"
-            suffix = f" Available: {available}." if available != "none" else ""
-            return {
-                "error": f"Model '{model}' not available via provider '{provider or 'any'}'.{suffix}",
-                "agents": available,
-                "exit_code": 1,
-                "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-            }
-        agent = route[0]
+        agent_or_error, err_payload = _phase_resolve_agent_from_model(model, provider, rid)
+        if err_payload is not None:
+            return err_payload
+        agent = agent_or_error
     agent = resolve_agent(agent or "")
     from thegent.agents.grounding import GEMINI_GROUNDING_AGENTS
 
@@ -1130,107 +1067,26 @@ def run_impl_core(
         }
 
     # WP-X1/V7: Contract Migration & Version Negotiation
-    from thegent.contracts.migration import MigrationController
-    from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-
-    migrator = MigrationController()
-    requested_version = contract_version or CONTRACT_SCHEMA_VERSION
-    mig_res = migrator.evaluate_version("csm", requested_version)
-    contract_deprecation_warning: str | None = None
-
-    if not mig_res["allowed"]:
-        return {
-            "error": f"Contract version rejected: {mig_res['reason']}",
-            "exit_code": 1,
-            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-        }
-
-    if mig_res["status"] == "deprecated":
-        # We allow it but should log/warn (CLI will print it via run_cmd if we pass it)
-        contract_deprecation_warning = (
-            f"Contract version '{requested_version}' is deprecated: {mig_res.get('reason', 'no reason provided')}"
-        )
-        _log.warning(contract_deprecation_warning)
+    _allowed, _contract_error, contract_deprecation_warning = _phase_evaluate_contract_version(contract_version, rid)
+    if _contract_error is not None:
+        return _contract_error
 
     # ConfigProvider: resolve config (Phase 1: EnvConfigProvider; Phase 2+: CP when URL set)
-    _config: dict[str, Any] | None = None
-    if config_provider is not None:
-        request_overrides: dict[str, Any] = {}
-        if timeout is not None:
-            request_overrides["default_timeout"] = timeout
-        _config = config_provider.resolve(tenant_id=tenant_id, request_overrides=request_overrides)
-    effective_timeout = (
-        timeout
-        if timeout is not None
-        else (_config.get("default_timeout", settings.default_timeout) if _config else settings.default_timeout)
-    )
-    if agent == "claude":
-        _min_claude = (
-            _config.get("default_timeout_claude", getattr(settings, "default_timeout_claude", 300))
-            if _config
-            else getattr(settings, "default_timeout_claude", 300)
-        )
-        # Ensure _min_claude is a number for mocks
-        try:
-            _min_claude = float(_min_claude)
-            effective_timeout = max(float(effective_timeout), _min_claude)
-        except (TypeError, ValueError) as exc:
-            _log.debug("Invalid claude timeout override '%s'; using existing timeout: %s", _min_claude, exc)
+    effective_timeout = _phase_resolve_effective_timeout(settings, config_provider, timeout, agent, tenant_id)
 
     prompt = _inject_time_constraint_local(prompt, int(effective_timeout), summary_mode=not full)
 
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
-        return {
-            "error": "Ambiguous cwd detected. Run inside a project directory or pass --cd with a valid project path.",
-            "exit_code": 1,
-            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-        }
+    cwd, cwd_error = _phase_resolve_cwd(cd, rid)
+    if cwd_error is not None:
+        return cwd_error
 
     # Terminal reuse suggestion (light management)
-    if impl_ns is None:
-        raise ValueError("impl_ns is required")
-    _bind_impl_namespace(impl_ns)
-
-    settings = ThegentSettings()
-    if settings.terminal_management_enabled:
-        try:
-            import importlib
-
-            routing_mod = importlib.import_module("thegent.utils.routing_impl")
-            TaskRouter = getattr(routing_mod, "TaskRouter", None)
-            if TaskRouter:
-                router = TaskRouter(settings)
-                existing_pane = router.find_active_terminal_for_path(str(cwd))
-                if existing_pane:
-                    console.print(
-                        f"[bold yellow]Found existing terminal session for this path: {existing_pane}[/bold yellow]"
-                    )
-                    console.print(f"[dim]You can attach with: thegent terminal attach {existing_pane}[/dim]")
-        except Exception as e:
-            _log.debug(f"Terminal discovery failed: {e}")
+    _phase_terminal_discovery(settings, cwd)
 
     # G-GP-02: Input guardrails before PolicyEngine
-    if impl_ns is None:
-        raise ValueError("impl_ns is required")
-    _bind_impl_namespace(impl_ns)
-
-    settings = ThegentSettings()
-    if settings.input_guardrails_enabled:
-        try:
-            from thegent.governance.input_guardrails import guardrails_from_env
-
-            guardrails = guardrails_from_env()
-            gr = guardrails.check(prompt=prompt, agent=agent or "", model=model, cwd=cwd)
-            if not gr.passed:
-                return {
-                    "error": f"Input guardrail failed ({gr.rail_id}): {gr.reason}",
-                    "remediation": gr.remediation,
-                    "exit_code": 1,
-                    "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-                }
-        except Exception as exc:
-            _log.debug("Input guardrail check failed; continuing without guardrail result: %s", exc)
+    guardrail_error = _phase_input_guardrails(prompt, agent, model, cwd, rid)
+    if guardrail_error is not None:
+        return guardrail_error
 
     # Concurrency control (WP-5001): Advanced resource-based dynamic limits
     from thegent.execution import ConcurrencyController
@@ -1305,23 +1161,9 @@ def run_impl_core(
     registry = RunRegistry(settings.session_dir)
 
     # WP-1003/WP-1008: Idempotency / Replay Detection
-    # OPT-019: Use bloom filter for fast negative lookup before full registry scan
-    if idempotency_token:
-        # Generate session_id from token for bloom filter lookup
-        session_id_from_token = f"run_{hashlib.sha256(idempotency_token.encode()).hexdigest()[:8]}"
-        # Fast path: if not in bloom filter, definitely doesn't exist
-        if registry.session_exists(session_id_from_token):
-            # Might exist, do full lookup
-            existing = registry.find_by_token(idempotency_token)
-            if existing and existing.get("status") == "completed":
-                _log.info("Replay detected for token %s; skipping execution.", idempotency_token)
-                return {
-                    "stdout": existing.get("stdout", ""),
-                    "stderr": existing.get("stderr", ""),
-                    "exit_code": existing.get("exit_code", 0),
-                    "run_id": existing.get("run_id"),
-                    "replayed": True,
-                }
+    replay_payload = _phase_idempotency_replay(registry, idempotency_token)
+    if replay_payload is not None:
+        return replay_payload
 
     from thegent.execution import (
         Auditor,
@@ -1344,14 +1186,10 @@ def run_impl_core(
         escalation_sla_minutes = 30
 
     # WP-3007: Trust Boundary Checks
-    last_env = trust_boundary.get_last_environment()
-    allowed, boundary_reason = trust_boundary.validate_transition(last_env, settings.environment.lower())
-    if not allowed:
-        return {
-            "error": f"Trust boundary violation: {boundary_reason}",
-            "exit_code": 1,
-            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-        }
+    trust_error = _phase_trust_boundary(settings, trust_boundary)
+    if trust_error is not None:
+        trust_error["run_id"] = rid
+        return trust_error
 
     # WP-4004: Interruption Controls
     from thegent.execution import InterruptionTracker
