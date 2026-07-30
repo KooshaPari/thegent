@@ -457,3 +457,52 @@ def test_script_passes_when_sandbox_is_valid(sandbox: Path, tmp_path: Path) -> N
     result = _run_script_in_sandbox(tmp_path, sandbox)
     assert result.returncode == 0, f"valid sandbox failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
     assert "[make secrets-scan] OK" in result.stdout, f"expected OK marker; got: {result.stdout!r}"
+
+
+# ---------------------------------------------------------------------------
+# CI gate integration — pins the workflow file that runs the script
+# on every push + PR so violations actually break the build.
+# ---------------------------------------------------------------------------
+
+CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "secrets-scan.yml"
+
+
+def test_ci_workflow_exists() -> None:
+    """``.github/workflows/secrets-scan.yml`` must exist (the L27 CI gate)."""
+    assert CI_WORKFLOW.exists(), f"missing CI workflow: {CI_WORKFLOW}"
+    content = CI_WORKFLOW.read_text(encoding="utf-8")
+    assert content.startswith("name:"), "CI workflow must declare a name"
+    assert "Secrets Scan" in content, "CI workflow name should reference Secrets Scan"
+
+
+def test_ci_workflow_runs_the_invariants_script() -> None:
+    """CI workflow must invoke ``scripts/check_secrets_invariants.sh``."""
+    content = CI_WORKFLOW.read_text(encoding="utf-8")
+    assert "check_secrets_invariants.sh" in content, (
+        "CI workflow must run the invariants script so violations break the build"
+    )
+    assert "make secrets-scan" in content, (
+        "CI workflow must also exercise the Makefile target so the L30 "
+        "onboarding surface is wired through CI"
+    )
+
+
+def test_ci_workflow_triggers_on_push_and_pull_request() -> None:
+    """CI workflow must run on push and pull_request events."""
+    content = CI_WORKFLOW.read_text(encoding="utf-8")
+    # Check the on: block contains both triggers (multi-line YAML).
+    assert "push:" in content and "pull_request:" in content, (
+        "CI workflow must trigger on push and pull_request so the L27 "
+        "static check runs on every commit"
+    )
+
+
+def test_ci_workflow_uses_minimal_permissions() -> None:
+    """CI workflow must request only ``contents: read`` (no write scopes)."""
+    import yaml  # type: ignore[import-not-found]
+
+    data = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    perms = (data or {}).get("permissions") or {}
+    assert perms == {"contents": "read"}, (
+        f"CI workflow permissions drifted from least-privilege; got {perms!r}"
+    )
