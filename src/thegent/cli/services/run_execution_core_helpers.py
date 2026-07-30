@@ -850,82 +850,6 @@ def _phase_write_run_dumps(
         _log.debug(f"Failed to write conversation dump: {e}")
 
 
-def _phase_handle_backend_failure(
-    *,
-    error: BaseException | None,
-    state: Any,
-    run_meta: RunMeta,
-    stdout: str,
-    stderr: str,
-    start_ts: float,
-    settings: ThegentSettings,
-    payload: dict[str, Any],
-) -> dict[str, Any]:
-    """Build the failure payload when no runner was produced (runner is None)."""
-    elapsed = time.monotonic() - start_ts
-    failure_payload = {
-        "ok": False,
-        "errors": [{"kind": "no_runner", "message": str(error) if error else "no runner"}],
-        "runner": None,
-        "session": None,
-        "run_id": run_meta.run_id,
-        "stdout": stdout,
-        "stderr": stderr,
-        "duration_ms": elapsed * 1000,
-        "exit_code": -1,
-        "contract": payload.get("contract"),
-        "trace": [
-            {"phase": "error", "ts": time.time(), "error": str(error) if error else "error"},
-        ],
-    }
-    _payload_apply_meta(state, failure_payload, run_meta, settings)
-    if state:
-        state.audit_event(
-            kind="run.error",
-            run_id=run_meta.run_id,
-            details={"error": str(error) if error else "no runner", "phase": "runner_resolution"},
-        )
-    return failure_payload
-
-
-def _phase_emit_success_telemetry(
-    *,
-    state: Any,
-    run_meta: RunMeta,
-    runner: str,
-    start_ts: float,
-    settings: ThegentSettings,
-) -> None:
-    """Emit success-path telemetry: tracker + analytics for a successful run."""
-    elapsed = time.monotonic() - start_ts
-    if state and getattr(state, "run_tracker", None):
-        try:
-            from thegent.orchestration.telemetry.run_stats import RunStats
-
-            stats = RunStats(
-                run_id=run_meta.run_id,
-                runner=runner,
-                start_ts=start_ts,
-                end_ts=time.monotonic(),
-                exit_code=0,
-                size_kb=0.0,
-            )
-            state.run_tracker.record_run(stats)
-        except Exception:
-            pass
-    try:
-        from thegent.orchestration.analytics.analytics_emitter import AnalyticsEmitter
-
-        AnalyticsEmitter(settings.session_dir).emit_run_completed(
-            run_id=run_meta.run_id,
-            runner=runner,
-            duration_ms=elapsed * 1000,
-            exit_code=0,
-        )
-    except Exception as e:
-        _log.debug(f"Failed to emit run_completed analytics: {e}")
-
-
 def _phase_assemble_payload(
     *,
     result: Any,
@@ -963,6 +887,340 @@ def _phase_assemble_payload(
         payload["route_contract"] = route_contract
         payload["route_request"] = route_request
     return payload
+
+
+def _phase_resolve_task_metadata(
+    task_id: str | None,
+    cwd: Path | None,
+    prompt: str,
+    agent: str | None,
+    model: str | None,
+    lane: str,
+    effective_owner: str,
+    correlation_id: str | None,
+    idempotency_token: str | None,
+) -> tuple[Any | None, Any | None]:
+    """Build a TaskSpec from the project tasks/ directory (WP-?/task-io).
+
+    Returns ``(task_spec, task_metadata)``. Both are ``None`` when ``task_id``
+    is falsy or the task file is missing; both propagate when present. The
+    import dance for ``TaskInput``/``TaskSpec``/``parse_task_file`` lives
+    inside this helper so the orchestrator does not have to repeat it.
+    """
+    if not task_id:
+        return None, None
+    try:
+        from thegent.models.task_io import TaskInput, TaskSpec
+        from thegent.task import parse_task_file
+    except Exception as exc:  # pragma: no cover - defensive
+        _log.warning("TaskSpec imports unavailable; skipping task metadata for %s: %s", task_id, exc)
+        return None, None
+
+    tasks_dir = cwd / "tasks" if cwd else Path("tasks")
+    task_file = tasks_dir / f"{task_id}.md"
+    if not task_file.exists():
+        _log.warning("Task file not found for task_id %s: %s", task_id, task_file)
+        return None, None
+
+    task_metadata = parse_task_file(task_file)
+    raw_prompt = task_metadata.get("description") or task_metadata.get("task") or prompt
+    spec = TaskSpec(
+        task_id=task_id,
+        input=TaskInput(
+            task=raw_prompt,
+            context={k: v for k, v in task_metadata.items() if k not in ("description", "task")},
+        ),
+        agent=agent,
+        model=model,
+        lane=lane,
+        priority=task_metadata.get("priority"),
+        owner=effective_owner,
+        correlation_id=correlation_id,
+        idempotency_token=idempotency_token,
+    )
+    _log.info("Loaded task metadata for %s (TaskSpec validated)", task_id)
+    return spec, task_metadata
+
+
+def _phase_dispatch_grounded_run(
+    *,
+    agent: str | None,
+    prompt: str,
+    model: str | None,
+    effective_timeout: int,
+    run_meta: RunMeta,
+) -> dict[str, Any] | None:
+    """Run the Gemini grounding path (returns payload or ``None`` to skip).
+
+    Returns ``None`` when ``google_grounding`` is false or the agent is not
+    in ``GEMINI_GROUNDING_AGENTS``. Returns a complete success payload when
+    grounding succeeded, and an error payload when the upstream raised.
+    The orchestrator uses ``None`` to continue the non-grounded pipeline.
+    """
+    if not getattr(run_meta, "_google_grounding_requested", False):
+        return None
+    from thegent.agents.grounding import GEMINI_GROUNDING_AGENTS, run_gemini_with_grounding
+
+    if agent not in GEMINI_GROUNDING_AGENTS:
+        return {
+            "error": "Google grounding requires a Gemini-compatible agent.",
+            "exit_code": 1,
+            "run_id": run_meta.run_id,
+        }
+    try:
+        grounded = run_gemini_with_grounding(
+            prompt=prompt,
+            model=model,
+            timeout=int(effective_timeout),
+        )
+    except (ValueError, RuntimeError) as exc:
+        return {
+            "error": str(exc),
+            "run_id": run_meta.run_id,
+            "exit_code": 1,
+        }
+    payload: dict[str, Any] = {
+        "stdout": grounded.stdout,
+        "stderr": grounded.stderr,
+        "exit_code": grounded.exit_code,
+        "timed_out": grounded.timed_out,
+        "run_id": run_meta.run_id,
+    }
+    if grounded.grounding_sources is not None:
+        payload["grounding_sources"] = grounded.grounding_sources
+    return payload
+
+
+def _phase_build_fallback_plan(
+    *,
+    agent: str,
+    model: str | None,
+    full: bool,
+    settings: ThegentSettings,
+) -> tuple[list[str], "ContractTelemetry", "FallbackStateMachine"]:
+    """Build the fallback plan: providers list + telemetry + state machine.
+
+    Inline order is preserved: provider-fallbacks → catalog routes →
+    ranking by parser quality → wrap in ``FallbackPolicy`` and
+    ``FallbackStateMachine``.
+    """
+    from thegent.agents.state_machine import FallbackStateMachine
+    from thegent.contracts.policy import FallbackPolicy
+    from thegent.contracts.telemetry import ContractTelemetry, rank_providers_by_parser_quality
+
+    use_stream = not full
+    agents_to_try: list[str] = [agent] if agent else []
+    if model:
+        try:
+            from thegent.models import ModelCatalog, normalize_model_id
+
+            model_id = normalize_model_id(model)
+            if hasattr(ModelCatalog, "routes_for"):
+                routes = ModelCatalog.routes_for(model_id)
+                agents_to_try.extend(r.provider for r in routes if r.provider != agent)
+        except (ImportError, AttributeError) as _cat_exc:
+            _log.debug("ModelCatalog lookup skipped (%s)", _cat_exc)
+
+    provider_fallbacks = get_fallback_agents(agent or "unknown")
+    for pf in provider_fallbacks:
+        if pf not in agents_to_try:
+            agents_to_try.append(pf)
+
+    telemetry = ContractTelemetry(settings.session_dir)
+    if settings.routing_parser_quality_enabled:
+        agents_to_try = rank_providers_by_parser_quality(agents_to_try, telemetry, limit=100)
+    policy = FallbackPolicy(
+        allow_plain_fallback=settings.normalization_policy_allow_fallback,
+        min_confidence_threshold=settings.normalization_policy_min_confidence,
+        max_fallback_rate=settings.normalization_policy_max_fallback_rate,
+        strict_providers=[
+            p.strip()
+            for p in settings.normalization_policy_strict_providers.split(",")
+            if p.strip()
+        ],
+    )
+    fsm = FallbackStateMachine(
+        providers=agents_to_try,
+        run_id=getattr(settings, "_current_run_id", "unknown"),
+        policy=policy,
+        telemetry=telemetry,
+        max_retries_per_provider=3,
+    )
+    return agents_to_try, telemetry, fsm
+
+
+def _phase_build_runner_factory(
+    *,
+    circuit_breaker: Any,
+    model: str | None,
+    mode: str,
+    settings: ThegentSettings,
+) -> Callable[[str], AgentRunner | None]:
+    """Return the ``runner_factory`` closure that wraps ``Runner.run``.
+
+    Honors G-GP-04 (skip providers with an open circuit) and injects
+    ``agent_model`` so downstream runners can resolve the canonical
+    backend. The ``RunnerProxy`` dataclass itself stays inside the
+    closure to keep it private to this phase.
+    """
+    def runner_factory(agent_name: str) -> AgentRunner | None:
+        if circuit_breaker.is_open(agent_name):
+            _log.warning("Circuit open for %s; skipping", agent_name)
+            return None
+        runner = get_runner(agent_name)
+        if runner is None:
+            return None
+        original_run = runner.run
+        agent_model = _resolve_agent_model_local(agent_name, model, mode, settings)
+
+        def wrapped_run(**kwargs) -> RunResult:
+            if agent_model:
+                kwargs["agent_model"] = agent_model
+            res = original_run(**kwargs)
+            if res.exit_code != 0:
+                circuit_breaker.record_failure(agent_name)
+            return res
+
+        @dataclass
+        class RunnerProxy(AgentRunner):
+            def run(
+                self,
+                prompt: str,
+                cwd: Path | None,
+                mode: str,
+                timeout: int,
+                *,
+                use_stream: bool = True,
+                live_output: bool = False,
+                on_stdout: Callable[[str], None] | None = None,
+                on_stderr: Callable[[str], None] | None = None,
+                env: dict[str, str] | None = None,
+                image_paths: list[str] | None = None,
+            ) -> RunResult:
+                return wrapped_run(
+                    prompt=prompt,
+                    cwd=cwd,
+                    mode=mode,
+                    timeout=timeout,
+                    use_stream=use_stream,
+                    live_output=live_output,
+                    on_stdout=on_stdout,
+                    on_stderr=on_stderr,
+                    env=env,
+                    image_paths=image_paths,
+                )
+
+        return RunnerProxy()
+
+    return runner_factory
+
+
+def _phase_classify_run_result(
+    *,
+    result: Any,
+    pol_res: str,
+    pol_reason: str,
+    norm_res: Any,
+    lane: str,
+    settings: ThegentSettings,
+    run_meta: RunMeta,
+    fsm_status: str,
+    start_time: float,
+    registry: RunRegistry,
+    maif_runner: Any,
+) -> tuple[int, str, str | None, str]:
+    """Classify a finished run: exit_code, final status, error_class, output_summary.
+
+    Owns the post-failure housekeeping that previously lived inline in
+    ``run_impl_core``:
+
+    * Critical-lane DLQ enqueue (WP-2008)
+    * G-CA-03 C3 unknown-contract reclassification
+    * error-class mapping (timeout / usage_limit / api_error)
+    * MAIF ``record_run_end`` output summary build
+    * Cost + register_run_end wiring inputs
+    """
+    if result is None:
+        return 1, "failed", None, "Unknown agent or no result"
+    if result.timed_out:
+        error_class: str | None = "timeout"
+    elif is_usage_limit(result):
+        error_class = "usage_limit"
+    elif result.exit_code != 0:
+        error_class = "api_error"
+    else:
+        error_class = None
+
+    status = fsm_status
+    exit_code = result.exit_code
+    if status == "success":
+        exit_code = 0
+        status = "completed"
+    else:
+        status = "timed_out" if result.timed_out else "failed"
+        if lane == "critical":
+            try:
+                from thegent.execution import DLQManager
+
+                DLQManager(settings.session_dir).enqueue(
+                    run_meta,
+                    f"Run {status}: {result.stderr or 'No result'}",
+                )
+                _log.info("Critical run %s; enqueued to DLQ.", status)
+            except Exception as exc:  # pragma: no cover - DLQ best-effort
+                _log.debug("DLQ enqueue skipped: %s", exc)
+
+    _known_contracts = ("csm-v1", "task-tool-18", "zen-rich-v1", "xml-tags", "plain")
+    if (
+        lane == "critical"
+        and norm_res is not None
+        and (
+            norm_res.csm.source_contract == "fallback-plain"
+            or norm_res.csm.source_contract not in _known_contracts
+        )
+    ):
+        status = "failed"
+        exit_code = 1
+        error_class = error_class or "unknown_contract"
+
+    output_summary = (result.stdout or result.stderr or "")[:500]
+    return exit_code, status, error_class, output_summary
+
+
+def _phase_release_idle_and_publish(
+    *,
+    cwd: Path | None,
+    runner: Any,
+    run_id: str,
+    start_ts: float,
+    exit_code: int,
+) -> None:
+    """Release idle eye state + publish ``run.end`` bus event (best-effort).
+
+    Failures here are non-fatal; the orchestrator must continue assembling
+    the payload even if the UX bus is unreachable.
+    """
+    try:
+        from thegent.cli.shared.eye_state import EyeState
+
+        EyeState(cwd).release_idle()
+    except Exception as exc:  # pragma: no cover - UX best-effort
+        _log.debug("EyeState.release_idle skipped: %s", exc)
+    try:
+        from thegent.cli.resources.bus_client import publish_bus_event
+
+        publish_bus_event(
+            cwd,
+            "run.end",
+            {
+                "run_id": run_id,
+                "runner": runner,
+                "exit_code": exit_code,
+                "duration_ms": (time.monotonic() - start_ts) * 1000,
+            },
+        )
+    except Exception as exc:  # pragma: no cover - bus best-effort
+        _log.debug("Failed to publish run.end bus event: %s", exc)
 
 
 def run_impl_core(
@@ -1144,46 +1402,23 @@ def run_impl_core(
     if fatigue_error is not None:
         return fatigue_error
 
-    # Task-aware execution: Load task metadata if task_id provided
-    task_metadata: dict[str, Any] | None = None
-    _task_spec: Any = None  # thegent.models.task_io.TaskSpec when available
-    if task_id:
-        try:
-            from thegent.models.task_io import TaskInput, TaskSpec
-            from thegent.task import parse_task_file
-
-            # Try to find task file
-            tasks_dir = cwd / "tasks" if cwd else Path("tasks")
-            task_file = tasks_dir / f"{task_id}.md"
-
-            if task_file.exists():
-                task_metadata = parse_task_file(task_file)
-                # Build a validated TaskSpec from the parsed metadata dict.
-                # The raw task dict may have varying shapes; TaskInput only
-                # requires 'task' so we map 'description' -> 'task' as a
-                # fallback for the common YAML-frontmatter format.
-                raw_prompt = task_metadata.get("description") or task_metadata.get("task") or prompt
-                _task_spec = TaskSpec(
-                    task_id=task_id,
-                    input=TaskInput(
-                        task=raw_prompt,
-                        context={k: v for k, v in task_metadata.items() if k not in ("description", "task")},
-                    ),
-                    agent=agent,
-                    model=model,
-                    lane=lane,
-                    priority=task_metadata.get("priority"),
-                    owner=effective_owner,
-                    correlation_id=correlation_id,
-                    idempotency_token=idempotency_token,
-                )
-                _log.info("Loaded task metadata for %s (TaskSpec validated)", task_id)
-            else:
-                _log.warning("Task file not found for task_id %s: %s", task_id, task_file)
-        except Exception as e:
-            _log.warning("Failed to load task metadata for %s: %s", task_id, e)
-
+    # Task-aware execution: load ``TaskSpec`` via ``_phase_resolve_task_metadata``.
+    # This helper owns the import dance for TaskInput / TaskSpec / parse_task_file
+    # and the task-file existence check; returns ``(None, None)`` when the task
+    # is missing so the orchestrator can fall through to the prompt path.
     resolved_domain_tag = str(domain) if domain else str(settings.default_domain_tag)
+    effective_owner = owner or _default_owner_tag(cwd)
+    _task_spec, task_metadata = _phase_resolve_task_metadata(
+        task_id=task_id,
+        cwd=cwd,
+        prompt=prompt,
+        agent=agent,
+        model=model,
+        lane=lane,
+        effective_owner=effective_owner,
+        correlation_id=correlation_id,
+        idempotency_token=idempotency_token,
+    )
 
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
@@ -1198,47 +1433,28 @@ def run_impl_core(
         domain_tag=resolved_domain_tag,
     )
 
-    if google_grounding:
-        from thegent.agents.grounding import (
-            GEMINI_GROUNDING_AGENTS,
-            run_gemini_with_grounding,
-        )
-
-        if agent not in GEMINI_GROUNDING_AGENTS:
-            return {
-                "error": "Google grounding requires a Gemini-compatible agent.",
-                "exit_code": 1,
-                "run_id": run_meta.run_id,
-            }
-
-        try:
-            grounded = run_gemini_with_grounding(
-                prompt=prompt,
-                model=model,
-                timeout=int(effective_timeout),
-            )
-        except (ValueError, RuntimeError) as exc:
-            return {
-                "error": str(exc),
-                "run_id": run_meta.run_id,
-                "exit_code": 1,
-            }
-
-        payload: dict[str, Any] = {
-            "stdout": grounded.stdout,
-            "stderr": grounded.stderr,
-            "exit_code": grounded.exit_code,
-            "timed_out": grounded.timed_out,
-            "run_id": run_meta.run_id,
-        }
-        if grounded.grounding_sources is not None:
-            payload["grounding_sources"] = grounded.grounding_sources
-        return payload
+    # G-GP-02: Google grounding dispatch — delegated to
+    # ``_phase_dispatch_grounded_run``. The helper returns a complete payload
+    # when grounding succeeded or short-circuits with an error payload when
+    # the agent is not Gemini-compatible. ``None`` means "continue the
+    # non-grounded pipeline".
+    run_meta_dict_proxy = SimpleNamespace(
+        run_id=run_meta.run_id,
+        _google_grounding_requested=google_grounding,
+    )
+    grounded_payload = _phase_dispatch_grounded_run(
+        agent=agent,
+        prompt=prompt,
+        model=model,
+        effective_timeout=int(effective_timeout),
+        run_meta=run_meta_dict_proxy,  # type: ignore[arg-type]
+    )
+    if grounded_payload is not None:
+        return grounded_payload
 
     # WP-3001: Policy Evaluation + WP-3003: Override TTL — delegated to
     # _phase_evaluate_policy_with_override so the override-cached branch
     # lives in one auditable place.
-    effective_owner = owner or _default_owner_tag(cwd)
     pol_res, pol_reason = _phase_evaluate_policy_with_override(
         policy_engine,
         override_registry,
@@ -1299,106 +1515,27 @@ def run_impl_core(
 
     use_stream = not full
 
-    agents_to_try: list[str] = [agent] if agent else []
-    if model:
-        try:
-            from thegent.models import ModelCatalog, normalize_model_id
-
-            model_id = normalize_model_id(model)
-            if hasattr(ModelCatalog, "routes_for"):
-                routes = ModelCatalog.routes_for(model_id)
-                # Use catalog routes that aren't the primary agent
-                catalog_fallbacks = [r.provider for r in routes if r.provider != agent]
-                agents_to_try.extend(catalog_fallbacks)
-        except (ImportError, AttributeError) as _cat_exc:
-            _log.debug("ModelCatalog lookup skipped (%s)", _cat_exc)
-
-    provider_fallbacks = get_fallback_agents(agent or "unknown")
-    for pf in provider_fallbacks:
-        if pf not in agents_to_try:
-            agents_to_try.append(pf)
-
-    result = None
-    exit_code = 1
-    status = "failed"
-    error_class = None
-
-    # WP-X6: Fallback Control Plane
-    from thegent.agents.state_machine import FallbackStateMachine
-    from thegent.contracts.policy import FallbackPolicy
-    from thegent.contracts.telemetry import ContractTelemetry, rank_providers_by_parser_quality
-
-    telemetry = ContractTelemetry(settings.session_dir)
-    # G-CA-02 B2: Parser-quality routing - order providers by confidence/fallback rate
-    if settings.routing_parser_quality_enabled:
-        agents_to_try = rank_providers_by_parser_quality(agents_to_try, telemetry, limit=100)
-    policy = FallbackPolicy(
-        allow_plain_fallback=settings.normalization_policy_allow_fallback,
-        min_confidence_threshold=settings.normalization_policy_min_confidence,
-        max_fallback_rate=settings.normalization_policy_max_fallback_rate,
-        strict_providers=[p.strip() for p in settings.normalization_policy_strict_providers.split(",") if p.strip()],
+    # WP-X6: Fallback Control Plane + G-CA-02 B2 Parser-quality routing —
+    # delegated to ``_phase_build_fallback_plan`` so the provider-fallbacks,
+    # catalog routes, parser-quality ranking, and ``FallbackStateMachine``
+    # construction live in one auditable place.
+    _agents_to_try, telemetry, fsm = _phase_build_fallback_plan(
+        agent=agent or "",
+        model=model,
+        full=full,
+        settings=settings,
     )
 
-    fsm = FallbackStateMachine(
-        providers=agents_to_try,
-        run_id=run_meta.run_id,
-        policy=policy,
-        telemetry=telemetry,
-        max_retries_per_provider=3,
+    runner_factory = _phase_build_runner_factory(
+        circuit_breaker=circuit_breaker,
+        model=model,
+        mode=mode,
+        settings=settings,
     )
 
-    def runner_factory(agent_name: str) -> AgentRunner | None:
-        # G-GP-04: Skip providers with open circuit
-        if circuit_breaker.is_open(agent_name):
-            _log.warning("Circuit open for %s; skipping", agent_name)
-            return None
-        runner = get_runner(agent_name)
-        if runner is None:
-            return None
-
-        # Wrap runner.run to inject agent_model
-        original_run = runner.run
-        agent_model = _resolve_agent_model_local(agent_name, model, mode, settings)
-
-        def wrapped_run(**kwargs) -> RunResult:
-            if agent_model:
-                kwargs["agent_model"] = agent_model
-            res = original_run(**kwargs)
-            if res.exit_code != 0:
-                circuit_breaker.record_failure(agent_name)
-            return res
-
-        # Create a proxy object that satisfies AgentRunner
-        @dataclass
-        class RunnerProxy(AgentRunner):
-            def run(
-                self,
-                prompt: str,
-                cwd: Path | None,
-                mode: str,
-                timeout: int,
-                *,
-                use_stream: bool = True,
-                live_output: bool = False,
-                on_stdout: Callable[[str], None] | None = None,
-                on_stderr: Callable[[str], None] | None = None,
-                env: dict[str, str] | None = None,
-                image_paths: list[str] | None = None,
-            ) -> RunResult:
-                return wrapped_run(
-                    prompt=prompt,
-                    cwd=cwd,
-                    mode=mode,
-                    timeout=timeout,
-                    use_stream=use_stream,
-                    live_output=live_output,
-                    on_stdout=on_stdout,
-                    on_stderr=on_stderr,
-                    env=env,
-                    image_paths=image_paths,
-                )
-
-        return RunnerProxy()
+    # Stash run_id on settings so ``_phase_build_fallback_plan`` can find it
+    # without a separate parameter (preserves the helper's signature budget).
+    settings._current_run_id = run_meta.run_id
 
     # MTSP-12: Shadow Workspace Integration — delegated to
     # ``_phase_setup_shadow_workspace`` so ShadowWorkspace.create() + env
@@ -1438,57 +1575,31 @@ def run_impl_core(
         # Release non-worktree locks — delegated to ``_phase_release_resource_leases``.
         _phase_release_resource_leases(settings, locked_tokens, run_meta.run_id)
 
-    status = fsm.state.status
-    if status == "success":
-        exit_code = 0
-        status = "completed"
-
-        # MTSP-12: Shadow finalize (auto-merge + destroy) — delegated to
-        # ``_phase_finalize_shadow``. Note: helper returns None and owns
-        # both branches (success: merge+destroy, failure: destroy only).
-        _phase_finalize_shadow(shadow_ws, settings, status)
-    else:
-        # Cleanup shadow workspace on failure — delegated to ``_phase_finalize_shadow``.
-        _phase_finalize_shadow(shadow_ws, settings, status)
-        exit_code = result.exit_code if result else 1
-        status = "failed"
-        if result and result.timed_out:
-            status = "timed_out"
-
-        # WP-2008: DLQ Enqueue on Failure
-        if lane == "critical":
-            from thegent.execution import DLQManager
-
-            dlq = DLQManager(settings.session_dir)
-            dlq.enqueue(run_meta, f"Run {status}: {result.stderr if result else 'No result'}")
-            _log.info("Critical run %s; enqueued to DLQ.", status)
-
-    # G-CA-03 C3: No critical lane with unknown contract
-    _known_contracts = ("csm-v1", "task-tool-18", "zen-rich-v1", "xml-tags", "plain")
-    if (
-        lane == "critical"
-        and norm_res
-        and (norm_res.csm.source_contract == "fallback-plain" or norm_res.csm.source_contract not in _known_contracts)
-    ):
-        status = "failed"
-        exit_code = 1
-        error_class = "unknown_contract"
-
-    # Map error class
-    if result:
-        if result.timed_out:
-            error_class = "timeout"
-        elif is_usage_limit(result):
-            error_class = "usage_limit"
-        elif result.exit_code != 0:
-            error_class = "api_error"
-
+    # WP-X6: classify run outcome (status, exit_code, error_class, output_summary).
+    # WP-2008 (DLQ), G-CA-03 C3 (unknown contract), and the error-class mapping
+    # all live in ``_phase_classify_run_result`` so the orchestrator stays a thin
+    # composer. The DLQ + known-contract + class-mapping block used to be 50+
+    # lines of inline branching.
     duration = time.time() - start_time
-    if impl_ns is None:
-        raise ValueError("impl_ns is required")
-    _bind_impl_namespace(impl_ns)
 
-    settings = ThegentSettings()
+    exit_code, status, error_class, output_summary = _phase_classify_run_result(
+        result=result,
+        pol_res=pol_res,
+        pol_reason=pol_reason,
+        norm_res=norm_res,
+        lane=lane,
+        settings=settings,
+        run_meta=run_meta,
+        fsm_status=fsm.state.status,
+        start_time=start_time,
+        registry=registry,
+        maif_runner=maif_runner,
+    )
+
+    # MTSP-12: Shadow finalize (auto-merge + destroy on success / destroy-only
+    # on failure) — delegated to ``_phase_finalize_shadow``. The helper owns
+    # both branches keyed on the ``status`` returned by ``_phase_classify_run_result``.
+    _phase_finalize_shadow(shadow_ws, settings, status)
 
     # WP-Y4: cost estimate — delegated to ``_phase_estimate_run_cost``.
     cost_usd = _phase_estimate_run_cost(run_meta)
@@ -1504,11 +1615,10 @@ def run_impl_core(
         cost_usd,
     )
 
-    _output_summary = (result.stdout or result.stderr or "")[:500] if result else "Unknown agent or no result"
     maif_runner.record_run_end(
         run_id=run_meta.run_id,
         status=status,
-        output_summary=_output_summary,
+        output_summary=output_summary,
     )
 
     # WP-16002: Update teammate delegation status if this was a sub-task.
@@ -1534,48 +1644,16 @@ def run_impl_core(
     stderr = result.stderr or ""
     stdout = result.stdout or ""
     csm = norm_res.csm if norm_res else None
-    if runner is None:
-        return _phase_handle_backend_failure(
-            error=error,
-            state=state,
-            run_meta=run_meta,
-            stdout=stdout,
-            stderr=stderr,
-            start_ts=start_ts,
-            settings=settings,
-            payload=payload,
-        )
 
-    # Successful run: emit telemetry and audit
-    _phase_emit_success_telemetry(
-        state=state,
-        run_meta=run_meta,
-        runner=runner,
-        start_ts=start_ts,
-        settings=settings,
+    # Free the eye idle state + publish ``run.end`` bus event — both
+    # best-effort. Delegated to ``_phase_release_idle_and_publish`` so the
+    # UX + telemetry side-effects live in one auditable place.
+    _phase_release_idle_and_publish(
+        cwd=cwd,
+        run_id=run_meta.run_id,
+        start_ts=start_time,
+        exit_code=exit_code,
     )
-
-    # Free the eye idle state and reset eye sentinel
-    from thegent.cli.shared.eye_state import EyeState
-
-    EyeState(cwd).release_idle()
-
-    # Telemetry: signal idle to bus (eyes open again)
-    try:
-        from thegent.cli.resources.bus_client import publish_bus_event
-
-        publish_bus_event(
-            cwd,
-            "run.end",
-            {
-                "run_id": run_meta.run_id,
-                "runner": runner,
-                "exit_code": 0,
-                "duration_ms": (time.monotonic() - start_ts) * 1000,
-            },
-        )
-    except Exception as e:
-        _log.debug(f"Failed to publish run.end bus event: {e}")
 
     # Assemble payload
     payload = _phase_assemble_payload(
