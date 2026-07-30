@@ -12460,3 +12460,36 @@ A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
 - Tests verified still-green: 86 (cockpit parity), 5 (test_wl086),
   5 (test_wl125), 3 (test_wl129), 6 (test_wl130)
 - Commits: 2 (L27 first; L9 wire-up second)
+
+## Session 11 — L9 mid-phase helper wire-up (2026-07-29)
+
+### Lane updates
+```
+~ L9   28 helpers extracted / 14 wired   [WIP-extracted+14]     70  B
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[██████████████████████████████████████████████░░░░] 97.0%
+A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
+```
+
+### DAG tick
+- 14 / 28 helpers wired into `run_impl_core`. 5 mid-phase helpers
+  added this session: `acquire_concurrency`, `fatigue_freshness_burst`,
+  `evaluate_policy_with_override`, `register_policy_denial`,
+  `register_hitl_pause`.
+- 14 remaining: 2 post-mid (`load_l3_memory_context`, `setup_shadow_workspace`),
+  6 pre-failure (`acquire_resource_leases`, `release_resource_leases`,
+  `finalize_shadow`, `estimate_run_cost`, `register_run_end`,
+  `record_success_postlude`), 6 post-success (`update_teammate_status`,
+  `condense_output`, `write_run_dumps`, `handle_backend_failure`,
+  `emit_success_telemetry`, `assemble_payload`).
+
+### Stats
+- Files added: 1 (test_wl131 ~156 LOC)
+- Files changed: 2 (`run_execution_core_helpers.py` -122 net LOC,
+  `AUDIT_SCORECARD.md` +6 LOC)
+- Tests added: 12 (all pass)
+- Tests verified still-green: 165 (full related regression suite)
+- Commits: 2 (WL131 wire-up; AUDIT-SCORECARD update)
