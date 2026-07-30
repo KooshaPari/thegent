@@ -786,11 +786,18 @@ def _phase_record_success_postlude(
 
 def _phase_update_teammate_status(
     settings: ThegentSettings,
-    task_id: str,
+    task_id: str | None,
     status: str,
     result: Any,
 ) -> None:
-    """Update teammate delegation status (WP-16002)."""
+    """Update teammate delegation status (WP-16002).
+
+    No-op when ``task_id`` is falsy so the orchestrator can always
+    call this without a guard. Exceptions are swallowed + logged at
+    debug level to avoid poisoning the run on telemetry failure.
+    """
+    if not task_id:
+        return
     try:
         from thegent.governance.teammates import TeammateManager
 
@@ -801,17 +808,6 @@ def _phase_update_teammate_status(
         mgr.update_status(task_id, status, summary=summary)
     except Exception as e:
         _log.debug("Failed to update teammate delegation status: %s", e)
-
-
-def _phase_condense_output(result: Any, norm_res: Any, use_stream: bool) -> str:
-    """Pick the condensed stdout to surface (CSM summary / fallback)."""
-    if not use_stream or not result:
-        return result.stdout or "" if result else ""
-    csm = norm_res.csm if norm_res else None
-    if csm:
-        return csm.summary
-    condensed = condense_stream_to_display(result.stdout or "")
-    return condensed or extract_condensed(result.stdout or "")
 
 
 def _phase_write_run_dumps(
@@ -1516,19 +1512,11 @@ def run_impl_core(
     )
 
     # WP-16002: Update teammate delegation status if this was a sub-task.
-    # Remains inline because it depends on the just-computed ``status`` string
-    # and the ``task_id`` kwarg binding (no helper signature pinned yet).
-    if getattr(run_meta, "task_id", None):
-        try:
-            from thegent.governance.teammates import TeammateManager
-
-            mgr = TeammateManager(settings.cache_dir / "teammates.json")
-            _stdout = (result.stdout or "") if result else ""
-            _stderr = (result.stderr or "") if result else ""
-            summary = _stdout[:500] if status == "completed" else (_stderr[:500] or "Failed without stderr")
-            mgr.update_status(run_meta.task_id, status, summary=summary)
-        except Exception as e:
-            _log.debug("Failed to update teammate delegation status: %s", e)
+    # Delegated to ``_phase_update_teammate_status``; the helper is a
+    # no-op when ``task_id`` is falsy so the orchestrator can call it
+    # unconditionally without the prior ``getattr(run_meta, "task_id", None)``
+    # guard.
+    _phase_update_teammate_status(settings, getattr(run_meta, "task_id", None), status, result)
 
     # WP-3007/WP-2007/WP-3002: trust boundary record + evidence lint + MAIF
     # artifact generation. Delegated to ``_phase_record_success_postlude``
