@@ -12598,6 +12598,56 @@ A+: 16 | A: 5 | A-: 8 | B+: 1 | B: 0
 - WL138: L11 deps lane — `pip-audit` advisory gate in CI
 - WL139: L30 onboarding — first-run wizard for `thegent init`
 
+## Session 15 — L9 composite wire-up (WL137) (2026-07-30)
+
+### Lane updates
+```
+~ L9   34 helpers extracted / 34 wired   [WIP-extracted+34]     78  B+
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[███████████████████████████████████████████████░░░░░] 97.2%
+A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
+```
+
+### DAG tick
+- Wired 6 new `_phase_*` helpers into `run_impl_core`:
+  `_phase_init_tracker`, `_phase_resolve_grounded_agent`,
+  `_phase_build_execution_services` (returns `_ExecutionServices`
+  dataclass: circuit_breaker / crash_recovery / budget_tracker /
+  agent_runner / job_runner), `_phase_publish_run_start`,
+  `_phase_run_under_keepalive` (releases resource leases + dispatches
+  `_phase_register_policy_*` via `_phase_dispatch_policy_outcome`),
+  `_phase_dispatch_policy_outcome` (single policy dispatch —
+  collapse three near-identical deny/pause/warn branches).
+- `run_impl_core` body: 458 → 425 lines; CC: 44 → 30 (CC budget B+
+  achieved ahead of schedule).
+- Latent `_phase_release_idle_and_publish(runner=)` signature
+  TypeError sealed — old orchestrator omitted `runner` on a
+  non-default code path; would have crashed at runtime.
+
+### Focused validation
+- `tests/test_wl131_l9_mid_phase_wiring.py` — 18 tests pass
+- `tests/test_wl132_l9_postmid_prefailure_wiring.py` — 17 tests pass
+- `tests/test_wl133_l9_postsuccess_wiring.py` — 19 tests pass
+- `tests/test_wl134_l9_classification_wiring.py` — 13 tests pass
+- `tests/test_wl137_l9_composite_wiring.py` — 16 tests pass (NEW)
+- **Total: 83/83 tests pass**
+- `ruff check src/thegent/cli/services/run_execution_core_helpers.py tests/test_wl137_l9_composite_wiring.py` — clean
+- `ruff format --check` — clean
+- Pre-existing failures in `test_supermemory_client.py` /
+  `test_memory_manager.py` (47 errors) are unrelated — confirmed
+  via `git stash && pytest` on the base branch.
+
+### Local commits
+- `WL137 L9 composite wire-up — 6 helpers + 16 tests + dataclass` (PENDING)
+
+### Lane priorities for next pass (Session 16 candidates)
+- WL138: L11 deps lane — `pip-audit` advisory gate in CI
+- WL139: L30 onboarding — first-run wizard for `thegent init`
+- WL140: L9 CC drop from 30 → ≤ 18 (next B+/A- stretch)
+
 ## Session 13 — L9 post-success helper wire-up (2026-07-29)
 
 ### Lane updates

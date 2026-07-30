@@ -1184,15 +1184,17 @@ def _phase_classify_run_result(
 def _phase_release_idle_and_publish(
     *,
     cwd: Path | None,
-    runner: Any,
+    runner: Any = None,
     run_id: str,
     start_ts: float,
     exit_code: int,
 ) -> None:
     """Release idle eye state + publish ``run.end`` bus event (best-effort).
 
-    Failures here are non-fatal; the orchestrator must continue assembling
-    the payload even if the UX bus is unreachable.
+    ``runner`` defaults to ``None`` so legacy call sites that omitted the
+    kwarg (e.g. ``run_impl_core`` before WL137) continue to work without a
+    TypeError. Failures inside the helper are non-fatal; the orchestrator
+    must continue assembling the payload even if the UX bus is unreachable.
     """
     try:
         from thegent.cli.shared.eye_state import EyeState
@@ -1215,6 +1217,253 @@ def _phase_release_idle_and_publish(
         )
     except Exception as exc:  # pragma: no cover - bus best-effort
         _log.debug("Failed to publish run.end bus event: %s", exc)
+
+
+# ----------------------------------------------------------------------------
+# WL137 — Composite phase helpers (L9 final hardening pass).
+#
+# These helpers own bundle-extraction blocks that were inline inside
+# ``run_impl_core``. Each helper keeps CC ≤ 8 and body ≤ 40 lines so the
+# orchestrator can shrink to a thin composer (target: CC ≤ 18, body ≤ 280L).
+# ----------------------------------------------------------------------------
+
+
+@dataclass
+class _ExecutionServices:
+    """Bundle of per-run execution helpers resolved once by the orchestrator.
+
+    The dataclass exists so ``run_impl_core`` can stay a thin composer
+    instead of constructing six registries inline. Fields are typed as
+    ``Any`` because the canonical home of these types is the
+    ``thegent.execution`` package which is expensive to import eagerly.
+    """
+
+    circuit_breaker: Any
+    trust_boundary: Any
+    override_registry: Any
+    policy_engine: Any
+    auditor: Any
+    maif_runner: Any
+    escalation_sla_minutes: int
+
+
+def _phase_init_tracker(
+    settings: ThegentSettings,  # noqa: ARG001  # reserved for future adapter wiring
+    run_id: str | None,
+) -> tuple[str, Any]:
+    """Initialize the cost tracker and resolve the canonical run_id.
+
+    Returns ``(rid, tracker)`` where ``rid`` is the user-supplied
+    ``run_id`` or a fresh ``run_<8-hex>``. The tracker is the canonical
+    cost singleton from ``thegent.cost.tracker``.
+    """
+    from thegent.cost.tracker import get_run_cost_tracker
+
+    tracker = get_run_cost_tracker()
+    rid = run_id or f"run_{uuid.uuid4().hex[:8]}"
+    tracker.start_run(rid)
+    return rid, tracker
+
+
+def _phase_finalize_tracker(tracker: Any) -> None:
+    """End the cost-tracker run (best-effort).
+
+    Symmetric companion to :func:`_phase_init_tracker`; named separately so
+    the orchestrator's end-of-run block stays one delegated line. Failures
+    here are non-fatal — they only affect cost telemetry.
+    """
+    if tracker is None:
+        return
+    try:
+        tracker.end_run()
+    except Exception as exc:  # pragma: no cover - cost tracking best-effort
+        _log.debug("Cost tracker end_run failed: %s", exc)
+
+
+def _phase_resolve_grounded_agent(
+    *,
+    agent_name: str | None,
+    model: str | None,
+    provider: str | None,
+    google_grounding: bool,
+    rid: str,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """Resolve ``agent`` (from model alias when needed) and enforce grounding.
+
+    Returns ``(agent, error_payload)``. When the input requires model-based
+    resolution and that resolution raises, ``error_payload`` is non-None
+    and the orchestrator short-circuits with it. When ``google_grounding``
+    is True and the resolved agent is not Gemini-backed, ``error_payload``
+    is also non-None. ``agent`` may be ``None`` only when a short-circuit
+    occurred; on success it is the canonical agent name (or ``""``).
+    """
+    agent = agent_name
+    if agent is None and model:
+        agent_or_error, err_payload = _phase_resolve_agent_from_model(model, provider, rid)
+        if err_payload is not None:
+            return None, err_payload
+        agent = agent_or_error
+    agent = resolve_agent(agent or "")
+
+    if google_grounding:
+        from thegent.agents.grounding import GEMINI_GROUNDING_AGENTS
+
+        if agent not in GEMINI_GROUNDING_AGENTS:
+            return (
+                None,
+                {
+                    "error": (
+                        f"Google grounding requires a Gemini-backed agent; received '{agent}'."
+                        " Use a Gemini or antigravity agent."
+                    ),
+                    "exit_code": 1,
+                    "run_id": rid,
+                },
+            )
+    return agent, None
+
+
+def _phase_build_execution_services(
+    settings: ThegentSettings,
+    registry: RunRegistry,
+) -> _ExecutionServices:
+    """Construct the per-run execution service bundle.
+
+    Returns the ``_ExecutionServices`` dataclass with one instance of each
+    per-run registry (audit, circuit-breaker, override, policy, trust-
+    boundary) plus the MAIFRunner and the resolved escalation SLA minutes.
+    """
+    from thegent.execution import (
+        Auditor,
+        CircuitBreakerRegistry,
+        OverrideRegistry,
+        PolicyEngine,
+        TrustBoundaryValidator,
+    )
+
+    circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
+    trust_boundary = TrustBoundaryValidator(settings.session_dir)
+    override_registry = OverrideRegistry(settings.session_dir)
+    policy_engine = PolicyEngine(settings)
+    auditor = Auditor(registry.registry_path)
+    maif_runner = MAIFRunner()
+    escalation_sla_minutes = 30
+    try:
+        escalation_sla_minutes = int(settings.escalation_sla_minutes)
+    except (TypeError, ValueError):
+        escalation_sla_minutes = 30
+    return _ExecutionServices(
+        circuit_breaker=circuit_breaker,
+        trust_boundary=trust_boundary,
+        override_registry=override_registry,
+        policy_engine=policy_engine,
+        auditor=auditor,
+        maif_runner=maif_runner,
+        escalation_sla_minutes=escalation_sla_minutes,
+    )
+
+
+def _phase_publish_run_start(
+    *,
+    registry: RunRegistry,
+    maif_runner: Any,
+    run_meta: RunMeta,
+    prompt: str,
+) -> None:
+    """Publish the run-start event to both registry + MAIF runners.
+
+    Combines ``registry.register_start`` and ``maif_runner.record_run_start``
+    into one auditable place so the orchestrator's CC stays low.
+    """
+    registry.register_start(run_meta)
+    maif_runner.record_run_start(
+        run_id=run_meta.run_id,
+        owner=run_meta.owner or "unknown",
+        prompt=prompt or "",
+        agent=run_meta.agent or "unknown",
+    )
+
+
+def _phase_run_under_keepalive(
+    *,
+    fsm: Any,
+    runner_factory: Any,
+    prompt: str,
+    agent_cwd: Path,
+    mode: str,
+    effective_timeout: int,
+    use_stream: bool,
+    shadow_env: dict[str, str] | None,
+    settings: ThegentSettings,
+    locked_tokens: list[tuple[Path, Any]],
+    rid: str,
+) -> tuple[Any, Any]:
+    """Execute ``fsm.run`` inside a keepalive context, releasing leases.
+
+    The ``try/finally`` ensures the non-worktree leases are released even
+    when the keepalive context or the FSM crashes. ``settings`` resolves
+    the keepalive interval (default 30s) so the orchestrator can hand in
+    any settings instance. Returns ``(result, norm_res)`` so the
+    orchestrator can keep classifying the outcome.
+    """
+    from thegent.ux.keepalive import keepalive as _keepalive
+
+    keepalive_interval = float(getattr(settings, "keepalive_interval", 30.0))
+    try:
+        with _keepalive(interval_s=keepalive_interval):
+            result, norm_res = fsm.run(
+                runner_factory=runner_factory,
+                prompt=prompt,
+                cwd=agent_cwd,
+                mode=mode,
+                timeout=effective_timeout,
+                use_stream=use_stream,
+                env=shadow_env,
+            )
+    finally:
+        _phase_release_resource_leases(settings, locked_tokens, rid)
+    return result, norm_res
+
+
+def _phase_dispatch_policy_outcome(
+    *,
+    pol_res: str,
+    pol_reason: str,
+    run_meta: RunMeta,
+    settings: ThegentSettings,
+    registry: RunRegistry,
+    services: _ExecutionServices,
+) -> dict[str, Any] | None:
+    """Dispatch ``pol_res`` to deny / pause / warn side-effects.
+
+    ``deny`` and ``pause`` short-circuit with a return payload; ``warn``
+    prints the warning to the operator console and returns ``None`` so
+    the orchestrator can continue. Any other ``pol_res`` value also
+    returns ``None`` (allowed).
+    """
+    if pol_res == "deny":
+        return _phase_register_policy_denial(
+            run_meta,
+            services.escalation_sla_minutes,
+            pol_reason,
+            registry,
+        )
+    if pol_res == "pause":
+        return _phase_register_hitl_pause(
+            settings,
+            run_meta,
+            registry,
+            services.escalation_sla_minutes,
+            pol_reason,
+        )
+    if pol_res == "warn":
+        # AUDIT-N+2: route through ``print_exc`` so a malicious
+        # policy-engine payload (``[red]pwned[/red]``) cannot inject
+        # Rich markup into the operator's terminal. The helper
+        # accepts any ``object`` (not just ``Exception``) per F-15's
+        # signature widening.
+        print_exc(console, "Policy Warning:", pol_reason, style="yellow")
+    return None
 
 
 def run_impl_core(
@@ -1276,11 +1525,9 @@ def run_impl_core(
     _bind_impl_namespace(impl_ns)
 
     settings = ThegentSettings()
-    from thegent.cost.tracker import get_run_cost_tracker
-
-    tracker = get_run_cost_tracker()
-    rid = run_id or f"run_{uuid.uuid4().hex[:8]}"
-    tracker.start_run(rid)
+    # WL137: bundle tracker init + rid generation into a single helper so the
+    # orchestrator stays a thin composer (CC stays low).
+    rid, tracker = _phase_init_tracker(settings, run_id)
 
     # WP-Y4: Budget check before starting
     budget_block = _phase_budget_gate(settings, rid)
@@ -1297,23 +1544,20 @@ def run_impl_core(
         settings, agent, model, prompt, include_contract, route_contract, route_request
     )
 
-    if agent is None and model:
-        agent_or_error, err_payload = _phase_resolve_agent_from_model(model, provider, rid)
-        if err_payload is not None:
-            return err_payload
-        agent = agent_or_error
-    agent = resolve_agent(agent or "")
-    from thegent.agents.grounding import GEMINI_GROUNDING_AGENTS
-
-    if google_grounding and agent not in GEMINI_GROUNDING_AGENTS:
-        return {
-            "error": (
-                f"Google grounding requires a Gemini-backed agent; received '{agent}'."
-                " Use a Gemini or antigravity agent."
-            ),
-            "exit_code": 1,
-            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-        }
+    # WL137: combined agent-from-model resolution + Google-grounding precondition
+    # delegate to a single helper so the orchestrator does not need to chain
+    # three if/return blocks inline. ``_phase_resolve_grounded_agent`` owns
+    # the import + GEMINI_GROUNDING_AGENTS membership check.
+    _agent, _grounding_err = _phase_resolve_grounded_agent(
+        agent_name=agent,
+        model=model,
+        provider=provider,
+        google_grounding=google_grounding,
+        rid=rid,
+    )
+    if _grounding_err is not None:
+        return _grounding_err
+    agent = _agent
 
     # WP-X1/V7: Contract Migration & Version Negotiation
     _allowed, _contract_error, contract_deprecation_warning = _phase_evaluate_contract_version(contract_version, rid)
@@ -1356,25 +1600,16 @@ def run_impl_core(
     if replay_payload is not None:
         return replay_payload
 
-    from thegent.execution import (
-        Auditor,
-        CircuitBreakerRegistry,
-        OverrideRegistry,
-        PolicyEngine,
-        TrustBoundaryValidator,
-    )
-
-    circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
-    trust_boundary = TrustBoundaryValidator(settings.session_dir)
-    override_registry = OverrideRegistry(settings.session_dir)
-    policy_engine = PolicyEngine(settings)
-    auditor = Auditor(registry.registry_path)
-    maif_runner = MAIFRunner()
-    escalation_sla_minutes = 30
-    try:
-        escalation_sla_minutes = int(settings.escalation_sla_minutes)
-    except (TypeError, ValueError):
-        escalation_sla_minutes = 30
+    # WL137: bundle the per-run execution services into a single dataclass so
+    # the orchestrator stays a thin composer (CC ↓, inlined 18 lines).
+    services = _phase_build_execution_services(settings, registry)
+    circuit_breaker = services.circuit_breaker
+    trust_boundary = services.trust_boundary
+    override_registry = services.override_registry
+    policy_engine = services.policy_engine
+    auditor = services.auditor
+    maif_runner = services.maif_runner
+    escalation_sla_minutes = services.escalation_sla_minutes
 
     # WP-3007: Trust Boundary Checks
     trust_error = _phase_trust_boundary(settings, trust_boundary)
@@ -1464,39 +1699,26 @@ def run_impl_core(
     # WP-3002: Signing
     run_meta.signature = auditor.sign_run(run_meta)
 
-    # WP-3008: Policy denial — escalate + register_start + register_end.
-    if pol_res == "deny":
-        return _phase_register_policy_denial(
-            run_meta,
-            escalation_sla_minutes,
-            pol_reason,
-            registry,
-        )
+    # WL137: deny/pause/warn dispatch (was three inline branches) + the
+    # subsequent register_start + record_run_start pair both moved into
+    # standalone helpers so the orchestrator's CC ↓. ``policy_payload``
+    # is non-None only when the policy engine short-circuits.
+    policy_payload = _phase_dispatch_policy_outcome(
+        pol_res=pol_res,
+        pol_reason=pol_reason,
+        run_meta=run_meta,
+        settings=settings,
+        registry=registry,
+        services=services,
+    )
+    if policy_payload is not None:
+        return policy_payload
 
-    # G-GP-05: HITL Pause Flow — checkpoint + escalate via _phase_register_hitl_pause.
-    if pol_res == "pause":
-        return _phase_register_hitl_pause(
-            settings,
-            run_meta,
-            registry,
-            escalation_sla_minutes,
-            pol_reason,
-        )
-
-    if pol_res == "warn":
-        # AUDIT-N+2: route through ``print_exc`` so a malicious
-        # policy-engine payload (``[red]pwned[/red]``) cannot inject
-        # Rich markup into the operator's terminal. The helper
-        # accepts any ``object`` (not just ``Exception``) per F-15's
-        # signature widening.
-        print_exc(console, "Policy Warning:", pol_reason, style="yellow")
-
-    registry.register_start(run_meta)
-    maif_runner.record_run_start(
-        run_id=run_meta.run_id,
-        owner=run_meta.owner or "unknown",
-        prompt=prompt or "",
-        agent=run_meta.agent or "unknown",
+    _phase_publish_run_start(
+        registry=registry,
+        maif_runner=maif_runner,
+        run_meta=run_meta,
+        prompt=prompt,
     )
     start_time = time.time()
 
@@ -1546,28 +1768,23 @@ def run_impl_core(
         return lease_result
     locked_tokens: list[tuple[Path, Any]] = lease_result
 
-    if impl_ns is None:
-        raise ValueError("impl_ns is required")
-    _bind_impl_namespace(impl_ns)
-
-    settings = ThegentSettings()
-    _keepalive_interval = float(getattr(settings, "keepalive_interval", 30.0))
-    from thegent.ux.keepalive import keepalive as _keepalive
-
-    try:
-        with _keepalive(interval_s=_keepalive_interval):
-            result, norm_res = fsm.run(
-                runner_factory=runner_factory,
-                prompt=prompt,
-                cwd=agent_cwd,
-                mode=mode,
-                timeout=effective_timeout,
-                use_stream=use_stream,
-                env=shadow_env,
-            )
-    finally:
-        # Release non-worktree locks — delegated to ``_phase_release_resource_leases``.
-        _phase_release_resource_leases(settings, locked_tokens, run_meta.run_id)
+    # WL137: keepalive-wrapped fsm.run + lease release consolidated into
+    # ``_phase_run_under_keepalive``. The duplicate ``_bind_impl_namespace``
+    # + ``settings = ThegentSettings()`` re-bind was a no-op (already done
+    # at the top of the orchestrator) so it is removed.
+    result, norm_res = _phase_run_under_keepalive(
+        fsm=fsm,
+        runner_factory=runner_factory,
+        prompt=prompt,
+        agent_cwd=agent_cwd,
+        mode=mode,
+        effective_timeout=effective_timeout,
+        use_stream=use_stream,
+        shadow_env=shadow_env,
+        settings=settings,
+        locked_tokens=locked_tokens,
+        rid=run_meta.run_id,
+    )
 
     # WP-X6: classify run outcome (status, exit_code, error_class, output_summary).
     # WP-2008 (DLQ), G-CA-03 C3 (unknown contract), and the error-class mapping
@@ -1664,11 +1881,10 @@ def run_impl_core(
         route_request=route_request,
     )
 
-    # End cost tracking
-    from thegent.cost.tracker import get_run_cost_tracker
-
-    tracker = get_run_cost_tracker()
-    tracker.end_run()
+    # End cost tracking — delegated to ``_phase_finalize_tracker`` so the
+    # redundant re-import of ``thegent.cost.tracker`` stays out of the
+    # orchestrator body (WL137 cleanup).
+    _phase_finalize_tracker(tracker)
 
     # WP-DX-024: Always write conversation dumps to docs/ (research-always-write-dumps)
     _phase_write_run_dumps(settings, run_meta.run_id, cwd, prompt, stdout, result)

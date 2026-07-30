@@ -40,6 +40,14 @@ _POST_MID_AND_PRE_FAILURE_HELPERS = (
     "_phase_record_success_postlude",
 )
 
+# WL137 indirect: ``_phase_release_resource_leases`` is now invoked from
+# ``_phase_run_under_keepalive`` (the keepalive context's ``finally``
+# clause) instead of being called inline by ``run_impl_core``. Both call
+# sites remain valid for the contract.
+_INDIRECT_DELEGATION = {
+    "_phase_release_resource_leases": ("_phase_run_under_keepalive",),
+}
+
 
 @pytest.fixture(scope="module")
 def run_impl_core_source() -> str:
@@ -47,10 +55,36 @@ def run_impl_core_source() -> str:
     return inspect.getsource(helpers.run_impl_core)
 
 
+@pytest.fixture(scope="module")
+def helpers_module():
+    return importlib.import_module("thegent.cli.services.run_execution_core_helpers")
+
+
 @pytest.mark.parametrize("phase_name", list(_POST_MID_AND_PRE_FAILURE_HELPERS))
-def test_run_impl_core_delegates_to_phase_helpers(phase_name: str, run_impl_core_source: str) -> None:
-    """``run_impl_core`` must call each post-mid / pre-failure helper, not inline the body."""
-    assert f"{phase_name}(" in run_impl_core_source, (
+def test_run_impl_core_delegates_to_phase_helpers(phase_name: str, run_impl_core_source: str, helpers_module) -> None:
+    """``run_impl_core`` must call each post-mid / pre-failure helper, not inline the body.
+
+    WL137 indirection: ``_phase_release_resource_leases`` is invoked from
+    ``_phase_run_under_keepalive`` instead of directly from
+    ``run_impl_core``. Both call sites remain valid for the contract.
+    """
+    if f"{phase_name}(" in run_impl_core_source:
+        return
+
+    indirect_helpers = _INDIRECT_DELEGATION.get(phase_name, ())
+    for delegator in indirect_helpers:
+        assert f"{delegator}(" in run_impl_core_source, (
+            f"Expected run_impl_core to delegate to {phase_name} either "
+            f"directly or via {delegator}; neither call site found."
+        )
+        delegator_src = inspect.getsource(getattr(helpers_module, delegator))
+        assert f"{phase_name}(" in delegator_src, (
+            f"Indirect delegator {delegator} must invoke {phase_name}; "
+            f"re-inlining the body defeats the WL137 refactor."
+        )
+        return
+
+    pytest.fail(
         f"Expected run_impl_core to delegate to {phase_name} helper for "
         f"post-mid / pre-failure parity with the pre-extraction monolith."
     )

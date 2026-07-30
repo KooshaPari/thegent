@@ -36,6 +36,19 @@ _MID_PHASE_HELPERS = (
     "_phase_register_hitl_pause",
 )
 
+# WL137 indirect: deny + hitl-pause are now invoked from
+# ``_phase_dispatch_policy_outcome`` instead of ``run_impl_core`` directly,
+# because the orchestrator delegates the pol_res branch table to that
+# helper. Both call sites are still required; the test accepts either.
+_INDIRECT_DISPATCH_FROM_RUN_IMPL_CORE = "_phase_dispatch_policy_outcome"
+
+# Indirect helpers: the helper name → the calling helper inside
+# ``run_impl_core`` that ultimately invokes it.
+_INDIRECT_DELEGATION = {
+    "_phase_register_policy_denial": ("_phase_dispatch_policy_outcome",),
+    "_phase_register_hitl_pause": ("_phase_dispatch_policy_outcome",),
+}
+
 
 @pytest.fixture(scope="module")
 def run_impl_core_source() -> str:
@@ -43,10 +56,40 @@ def run_impl_core_source() -> str:
     return inspect.getsource(helpers.run_impl_core)
 
 
+@pytest.fixture(scope="module")
+def helpers_module():
+    return importlib.import_module("thegent.cli.services.run_execution_core_helpers")
+
+
 @pytest.mark.parametrize("phase_name", list(_MID_PHASE_HELPERS))
-def test_run_impl_core_delegates_mid_phases_to_extracted_helpers(phase_name: str, run_impl_core_source: str) -> None:
-    """``run_impl_core`` must call each mid-phase helper, not inline the body."""
-    assert f"{phase_name}(" in run_impl_core_source, (
+def test_run_impl_core_delegates_mid_phases_to_extracted_helpers(phase_name: str, run_impl_core_source: str, helpers_module) -> None:
+    """``run_impl_core`` must call each mid-phase helper, not inline the body.
+
+    WL137 indirection: ``_phase_register_policy_denial`` and
+    ``_phase_register_hitl_pause`` are now invoked from
+    ``_phase_dispatch_policy_outcome`` instead of run_impl_core directly.
+    Both call sites are acceptable for the contract.
+    """
+    if f"{phase_name}(" in run_impl_core_source:
+        return
+
+    # Fall back: check that run_impl_core calls an indirect delegator that
+    # itself calls the helper. This keeps the regression relevant for WL137.
+    indirect_helpers = _INDIRECT_DELEGATION.get(phase_name, ())
+    for delegator in indirect_helpers:
+        assert f"{delegator}(" in run_impl_core_source, (
+            f"Expected run_impl_core to delegate to {phase_name} either "
+            f"directly or via {delegator}; neither call site found. "
+            f"Re-inlining will balloon run_impl_core's CC past 44."
+        )
+        delegator_src = inspect.getsource(getattr(helpers_module, delegator))
+        assert f"{phase_name}(" in delegator_src, (
+            f"Indirect delegator {delegator} must invoke {phase_name}; "
+            f"re-inlining the body into {delegator} defeats the WL137 refactor."
+        )
+        return
+
+    pytest.fail(
         f"Expected run_impl_core to delegate to {phase_name} helper for "
         f"mid-phase parity with the pre-extraction monolith."
     )

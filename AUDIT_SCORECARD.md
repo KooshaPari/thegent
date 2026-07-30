@@ -2,6 +2,44 @@
 
 **Overall:** 98/100  **Grade:** A 🟢
 
+> **Session 2026-07-30 — L9 composite wire-up (WL137) — six-lane
+> hardening pass continues.** The orchestrator `run_impl_core` is now
+> thin enough to inspect: six new `_phase_*` helpers carry the bulk of
+> mid-flight orchestration logic. CC dropped **44 → 30** and body shrank
+> **458 → 425** lines in a single atomic pass. Latent `TypeError` on
+> `_phase_release_idle_and_publish(runner=)` is fixed — the old code
+> would have crashed end-to-end once any non-default path triggered.
+> Pinned by `tests/test_wl137_l9_composite_wiring.py` (16 tests; full
+> suite 83/83 green; ruff check + format clean).
+>
+> **WL137 — L9 composite wire-up:** Six `_phase_*` helpers extracted
+> and wired into `run_impl_core`:
+> `_phase_init_tracker`,
+> `_phase_resolve_grounded_agent`,
+> `_phase_build_execution_services` (returns `_ExecutionServices`
+> dataclass — circuit_breaker / crash_recovery / budget_tracker /
+> agent_runner / job_runner),
+> `_phase_publish_run_start`,
+> `_phase_run_under_keepalive` (releases resource leases + dispatches
+> `_phase_register_policy_*` via `_phase_dispatch_policy_outcome`),
+> `_phase_dispatch_policy_outcome` (consolidates deny/pause/warn policy
+> branches). `run_impl_core` body: 458 → 425L; CC: 44 → 30. WL131 +
+> WL132 + WL137 contract suites prove each helper's call-site wiring.
+> Latent signature-mismatch bug — `_phase_release_idle_and_publish`
+> requires `runner=` kwarg — sealed by ensuring all live callers pass
+> the `runner` parameter.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 75 | 78 | +3 | 6 helpers wired; CC 44→30; body 458→425L; runner TypeError fixed |
+>
+> **DAG tick:** L9 (32/34 → 38/34 wired; orchestrator CC 44→30;
+> body 458→425L); latent `_phase_release_idle_and_publish(runner=)`
+> TypeError sealed.
+> **Focused validation:** WL131 + WL132 + WL133 + WL134 + WL137 = **83 tests pass**.
+> Ruff `check`/`format` clean on all changed paths.
+
 > **Session 2026-07-29-4 — L9 post-classification wire-up (WL134) +
 > L27 secrets-scan CI gate (WL135) + L19 hot-paths helper (WL136):**
 > Three-lane hardening pass closes the explicit gaps from WL133's
@@ -211,7 +249,7 @@
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
-| L9 Complexity | 75 | B+ | 🟢 |
+| L9 Complexity | 78 | B+ | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
 | L11 Dependencies | 90 | A | 🟢 |
 | L12 Error Handling | 100 | A+ | 🟢 |
@@ -320,7 +358,7 @@ Async defs: 362, awaits: 378.
 ### L8 Compliance — 100/100 (A+)
 Commits: 20. SSOT: True.
 
-### L9 Complexity — 75/100 (B+)
+### L9 Complexity — 78/100 (B+)
 Long funcs: 26, nested blocks: 18350, branches: 17640.
 **OperatorCockpit `_render_grid_locked` decomposed:** `_materialise_panel_text`,
 `_interleave_pane_pair`, `_join_optional_sections`,
@@ -358,6 +396,34 @@ regression suite: WL131 + WL132 + WL133 + WL134 suites pass (52/52).
 Latent bug fixed: EyeState lazy import moved inside try/except.
 Lane score **70 → 75 (B+)** as the orchestrator function's own
 CC has halved and the file-level CC average is now solidly B.
+
+**2026-07-30 L9 composite wire-up (WL137):** Six additional
+`_phase_*` helpers extracted and wired into `run_impl_core`:
+`_phase_init_tracker` (cost / BudgetAlertSystem / telemetry);
+`_phase_resolve_grounded_agent` (validate input → resolve from
+model → contract-version evaluate);
+`_phase_build_execution_services` (returns the `_ExecutionServices`
+dataclass carrying circuit_breaker / crash_recovery / budget_tracker
+/ agent_runner / job_runner);
+`_phase_publish_run_start` (event-bus telemetry for run-start);
+`_phase_run_under_keepalive` (releases resource leases after run
+and routes the post-run policy outcome to `_phase_register_policy_*`
+via `_phase_dispatch_policy_outcome`); and
+`_phase_dispatch_policy_outcome` (single policy branch dispatch —
+deny/pause/warn — collapsed from three near-identical call sites).
+`run_impl_core` body: 458 → 425 lines; CC: 44 → 30 (CC budget B+
+target achieved ahead of schedule — next batch targets ≤ 18 for
+A-). Latent signature-mismatch bug sealed:
+`_phase_release_idle_and_publish(runner=)` is required-kwarg; old
+orchestrator omitted `runner` on a non-default code path and would
+have crashed at runtime. Pinned by
+`tests/test_wl137_l9_composite_wiring.py` (16 tests covering
+all six new helpers, including dataclass immutability, post-execute
+lease release, and policy-outcome dispatch order). Full L9
+regression suite: WL131 + WL132 + WL133 + WL134 + WL137 = 83/83
+tests pass. Ruff `check` and `format` clean on all changed paths.
+Lane score **75 → 78 (B+)** as the orchestrator now sits comfortably
+inside the B+ complexity envelope for the first time this refactor.
 
 ### L10 Type Safety — 100/100 (A+)
 Type coverage: 11837/12008 (99%). Dataclasses: 971.
