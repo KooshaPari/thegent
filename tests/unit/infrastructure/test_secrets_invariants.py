@@ -482,8 +482,7 @@ def test_ci_workflow_runs_the_invariants_script() -> None:
         "CI workflow must run the invariants script so violations break the build"
     )
     assert "make secrets-scan" in content, (
-        "CI workflow must also exercise the Makefile target so the L30 "
-        "onboarding surface is wired through CI"
+        "CI workflow must also exercise the Makefile target so the L30 onboarding surface is wired through CI"
     )
 
 
@@ -492,8 +491,7 @@ def test_ci_workflow_triggers_on_push_and_pull_request() -> None:
     content = CI_WORKFLOW.read_text(encoding="utf-8")
     # Check the on: block contains both triggers (multi-line YAML).
     assert "push:" in content and "pull_request:" in content, (
-        "CI workflow must trigger on push and pull_request so the L27 "
-        "static check runs on every commit"
+        "CI workflow must trigger on push and pull_request so the L27 static check runs on every commit"
     )
 
 
@@ -503,6 +501,4 @@ def test_ci_workflow_uses_minimal_permissions() -> None:
 
     data = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     perms = (data or {}).get("permissions") or {}
-    assert perms == {"contents": "read"}, (
-        f"CI workflow permissions drifted from least-privilege; got {perms!r}"
-    )
+    assert perms == {"contents": "read"}, f"CI workflow permissions drifted from least-privilege; got {perms!r}"

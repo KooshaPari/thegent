@@ -182,7 +182,7 @@ def test_phase_classify_run_result_maps_timeout_to_error_class(helpers_module) -
     run_meta = SimpleNamespace(run_id="run-x", owner="alice")
 
     with patch.object(helpers_module, "_log") as mock_log:
-        exit_code, status, error_class, output_summary = helpers_module._phase_classify_run_result(
+        _exit_code, status, error_class, output_summary = helpers_module._phase_classify_run_result(  # noqa: RUF059
             result=result,
             pol_res="allow",
             pol_reason="",

@@ -35,7 +35,7 @@ def memory_mesh(tmp_path: Path) -> MemoryMeshV2:
     """Per-test sqlite memory mesh in a tmp dir."""
     db = tmp_path / "memory_v2.db"
     mesh = MemoryMeshV2(db_path=db)
-    yield mesh
+    return mesh
     # Cleanup is implicit (tmp_path); mesh itself holds no resources.
 
 
@@ -78,6 +78,7 @@ def test_archive_hot_paths_honours_access_counts_threshold(memory_mesh: MemoryMe
     assert {row["event_type"] for row in rows} == {"hot_path_archive"}
     archived_keys = {row["metadata"] for row in rows}
     import json
+
     metas = {json.loads(m)["key"] for m in archived_keys}
     assert metas == {"hot", "warm"}
 
@@ -103,7 +104,8 @@ def test_archive_hot_paths_skips_missing_keys_safely(memory_mesh: MemoryMeshV2) 
 
 
 def test_archive_hot_paths_recovers_from_record_episode_failure(
-    memory_mesh: MemoryMeshV2, monkeypatch: pytest.MonkeyPatch,
+    memory_mesh: MemoryMeshV2,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``record_episode`` failures are logged and skipped, not raised."""
     memory_mesh.set_working("ok", "value-ok")
@@ -147,6 +149,7 @@ def test_archive_hot_paths_metadata_carries_access_count(memory_mesh: MemoryMesh
         threshold=5,
     )
     import json
+
     rows = memory_mesh.get_episodes("t-7")
     assert len(rows) == 1
     meta = json.loads(rows[0]["metadata"])

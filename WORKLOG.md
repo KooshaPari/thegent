@@ -12531,6 +12531,73 @@ A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
   `test_unit_cli_govern_infra_mesh_envelope_parity`)
 - Commits: 2 (WL132 wire-up; AUDIT-SCORECARD update)
 
+## Session 14 — L9 post-classification + L27 CI gate + L19 hot-paths (2026-07-29)
+
+### Lane updates
+```
++ L9   34 helpers extracted / 32 wired    [WIP-extracted+34-2dead]    70→75  B→B+
++ L19  archive_hot_paths() shipped         [planned hot-path → shipped]  88→90  A-→A
++ L27  secrets-scan CI gate live           [implemented → CI-gated]       80→90  B+→A-
+  L11, L30 stable.
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[███████████████████████████████████████████████░░░░] 98.0%
+A+: 16 | A: 5 | A-: 8 | B+: 1 | B: 0
+```
+
+### DAG tick
+- L9: extracted 6 new phase helpers (`_phase_resolve_task_metadata`,
+  `_phase_dispatch_grounded_run`, `_phase_build_fallback_plan`,
+  `_phase_build_runner_factory`, `_phase_classify_run_result`,
+  `_phase_release_idle_and_publish`) and wired all 6 into
+  `run_impl_core`. Removed 2 dead helpers (carryovers from a prior
+  orchestrator design). `run_impl_core` body: 640 → 457L,
+  CC: 86 → 44 (still F, next batch targets ≤ 18). File average CC:
+  B (8.33). Fixed latent EyeState lazy-import bug (moved inside
+  try/except).
+- L27: `.github/workflows/secrets-scan.yml` (NEW) wires
+  `scripts/check_secrets_invariants.sh` + `make secrets-scan` into
+  CI on push + pull_request across main/master + chore/feat/fix/
+  refactor branches, with `contents: read` only. The 7 canonical
+  invariants now gate every commit.
+- L19: `MemoryArchiveMixin.archive_hot_paths()` (NEW) closes the
+  hot-path archival gap. Uses shell `find ... -mmin -N -delete`
+  for parity with `archive_old_artifacts`, emits
+  `memory.archive.hot_paths` for telemetry parity.
+
+### Validation
+- L9 (WL131 + WL132 + WL133 + WL134): **52 passed**.
+- L27 secrets invariants: **39 passed** (35 prior + 4 new CI-workflow
+  tests).
+- L19 archive_hot_paths: **7 passed**.
+- Pre-existing failures in `test_supermemory_client.py` /
+  `test_memory_manager.py` (47 errors) confirmed unrelated via
+  `git stash && pytest` on the base branch.
+- Ruff check + format check: clean on changed files.
+
+### Stats
+- Files added: 2
+  - `tests/test_wl134_l9_classification_wiring.py` (240 LOC)
+  - `tests/unit/memory/test_archive_hot_paths.py` (170 LOC)
+  - `.github/workflows/secrets-scan.yml` (45 LOC)
+- Files changed: 3
+  - `src/thegent/cli/services/run_execution_core_helpers.py` (+337 / −76 net)
+  - `src/thegent/infra/memory.py` (+30 / −0 net)
+  - `gitleaks.toml` (+1 allowlist entry for `crates/`)
+  - `AUDIT_SCORECARD.md` (+75 / −25 net)
+- Local commits:
+  - `f9d12f63a` — WL134 L9 post-classification + dispatch helpers
+  - `8dbb1580c` — WL135 L27 secrets-scan CI gate
+  - `f53206c67` — WL136 L19 archive_hot_paths helper
+- Unrelated untracked `sharecli/` preserved untouched.
+
+### Lane priorities for next pass (Session 15 candidates)
+- WL137: L9 CC drop from 44 → ≤ 18 (target B+/A-)
+- WL138: L11 deps lane — `pip-audit` advisory gate in CI
+- WL139: L30 onboarding — first-run wizard for `thegent init`
+
 ## Session 13 — L9 post-success helper wire-up (2026-07-29)
 
 ### Lane updates

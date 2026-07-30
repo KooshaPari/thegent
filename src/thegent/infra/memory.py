@@ -178,9 +178,7 @@ class MemoryMeshV2:
             # access_counts entries for absent keys are advisory and
             # do not represent archivable state.
             hot = sorted(
-                key
-                for key, count in access_counts.items()
-                if count >= threshold and key in self.working_memory
+                key for key, count in access_counts.items() if count >= threshold and key in self.working_memory
             )
         for key in hot:
             value = self.working_memory.get(key)

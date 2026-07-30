@@ -1033,11 +1033,7 @@ def _phase_build_fallback_plan(
         allow_plain_fallback=settings.normalization_policy_allow_fallback,
         min_confidence_threshold=settings.normalization_policy_min_confidence,
         max_fallback_rate=settings.normalization_policy_max_fallback_rate,
-        strict_providers=[
-            p.strip()
-            for p in settings.normalization_policy_strict_providers.split(",")
-            if p.strip()
-        ],
+        strict_providers=[p.strip() for p in settings.normalization_policy_strict_providers.split(",") if p.strip()],
     )
     fsm = FallbackStateMachine(
         providers=agents_to_try,
@@ -1063,6 +1059,7 @@ def _phase_build_runner_factory(
     backend. The ``RunnerProxy`` dataclass itself stays inside the
     closure to keep it private to this phase.
     """
+
     def runner_factory(agent_name: str) -> AgentRunner | None:
         if circuit_breaker.is_open(agent_name):
             _log.warning("Circuit open for %s; skipping", agent_name)
@@ -1174,10 +1171,7 @@ def _phase_classify_run_result(
     if (
         lane == "critical"
         and norm_res is not None
-        and (
-            norm_res.csm.source_contract == "fallback-plain"
-            or norm_res.csm.source_contract not in _known_contracts
-        )
+        and (norm_res.csm.source_contract == "fallback-plain" or norm_res.csm.source_contract not in _known_contracts)
     ):
         status = "failed"
         exit_code = 1
@@ -1408,7 +1402,7 @@ def run_impl_core(
     # is missing so the orchestrator can fall through to the prompt path.
     resolved_domain_tag = str(domain) if domain else str(settings.default_domain_tag)
     effective_owner = owner or _default_owner_tag(cwd)
-    _task_spec, task_metadata = _phase_resolve_task_metadata(
+    _task_spec, _task_metadata = _phase_resolve_task_metadata(  # noqa: RUF059 (documented contract)
         task_id=task_id,
         cwd=cwd,
         prompt=prompt,
@@ -1519,7 +1513,7 @@ def run_impl_core(
     # delegated to ``_phase_build_fallback_plan`` so the provider-fallbacks,
     # catalog routes, parser-quality ranking, and ``FallbackStateMachine``
     # construction live in one auditable place.
-    _agents_to_try, telemetry, fsm = _phase_build_fallback_plan(
+    _agents_to_try, _telemetry, fsm = _phase_build_fallback_plan(  # noqa: RUF059 (documented contract)
         agent=agent or "",
         model=model,
         full=full,
