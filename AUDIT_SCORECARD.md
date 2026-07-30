@@ -2,6 +2,24 @@
 
 **Overall:** 97/100  **Grade:** A 🟢
 
+> **Session 2026-07-29-3 — L9 post-success helper wire-up (WL133):**
+> `_phase_update_teammate_status` is now called unconditionally from
+> `run_impl_core`; its falsy-task path is a no-op and telemetry failures remain
+> non-fatal. The dead `_phase_condense_output` helper was removed because its
+> logic is already owned by `_phase_assemble_payload`. AST verification confirms
+> all **28/28** remaining `_phase_*` helpers are called by `run_impl_core`.
+> Contract coverage: `tests/test_wl133_l9_postsuccess_wiring.py` plus the WL131/WL132
+> suites, **39 passed**. L9 remains 70/B until the scorecard's complexity metric
+> is recalculated against the current orchestrator.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 70 | 70 | ±0 | 28/28 extracted helpers now wired; score held pending metric refresh |
+>
+> **DAG tick:** L9 (WIP-extracted+23-wired → WIP-extracted+28-wired); dead helper removed.
+> **Focused validation:** 39 tests passed; Ruff check and format check clean.
+>
 > **Session 2026-07-29-2 — L27 secrets-scan lane + L9 budget_gate wire-up:**
 > `scripts/check_secrets_invariants.sh` (NEW, 7 canonical checks) +
 > `tests/unit/infrastructure/test_secrets_invariants.py` (NEW, 35 contract

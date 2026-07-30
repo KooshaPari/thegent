@@ -12530,3 +12530,36 @@ A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
   `test_wl132`, `test_unit_audit_n5`, `n6`, `n11`, `n28`,
   `test_unit_cli_govern_infra_mesh_envelope_parity`)
 - Commits: 2 (WL132 wire-up; AUDIT-SCORECARD update)
+
+## Session 13 — L9 post-success helper wire-up (2026-07-29)
+
+### Lane updates
+```
+~ L9   28 helpers extracted / 28 wired   [WIP-extracted+28]     70  B
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[██████████████████████████████████████████████░░░░] 97.0%
+A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
+```
+
+### DAG tick
+- Wired `_phase_update_teammate_status` into `run_impl_core`; the helper is
+  now safe to call unconditionally and remains non-fatal when teammate
+  telemetry fails.
+- Removed dead `_phase_condense_output`; stream condensation is already owned
+  by `_phase_assemble_payload`.
+- AST verification confirms all 28 remaining `_phase_*` helpers are called by
+  `run_impl_core`.
+
+### Validation
+- Focused WL131/WL132/WL133 regression suites: **39 passed**.
+- Ruff check and format check: **clean** (only existing removed-rule warnings).
+
+### Stats
+- Files added: 1 (`tests/test_wl133_l9_postsuccess_wiring.py`, 183 LOC)
+- Files changed: 2 (`run_execution_core_helpers.py` −26 net LOC,
+  `AUDIT_SCORECARD.md` updated with current 28/28 state)
+- Local commit: `806d2357f` (`WL133: wire teammate status post-success helper`)
+- Unrelated untracked `sharecli/` preserved untouched.
