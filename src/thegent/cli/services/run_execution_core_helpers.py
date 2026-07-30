@@ -480,6 +480,7 @@ def _phase_fatigue_freshness_burst(
     settings: ThegentSettings,
     registry_path: Path | None,
     lane: str,
+    rid: str,
 ) -> dict[str, Any] | None:
     """Combined fatigue + freshness + burst checks (WP-4004 / WP-4005 / WP-5002)."""
     from thegent.execution import (
@@ -511,10 +512,10 @@ def _phase_fatigue_freshness_burst(
     load_level = lc.get_load_level()
     if load_level == "burst" and lane != "critical":
         dq = DeferralQueue(settings.session_dir)
-        rid = f"run_def_{uuid.uuid4().hex[:8]}"
-        dq.defer(rid, "System in burst mode; non-critical deferral active")
+        burst_rid = rid or f"run_def_{uuid.uuid4().hex[:8]}"
+        dq.defer(burst_rid, "System in burst mode; non-critical deferral active")
         console.print("[bold yellow]BURST MODE:[/bold yellow] Non-critical task deferred to queue.")
-        return {"error": "System in burst mode. Task deferred.", "exit_code": 1, "run_id": rid}
+        return {"error": "System in burst mode. Task deferred.", "exit_code": 1, "run_id": burst_rid}
     return None
 
 
@@ -1088,68 +1089,10 @@ def run_impl_core(
     if guardrail_error is not None:
         return guardrail_error
 
-    # Concurrency control (WP-5001): Advanced resource-based dynamic limits
-    from thegent.execution import ConcurrencyController
-
-    # Detect harness type from agent or environment
-    harness_type = None
-    if agent:
-        if "codex" in agent.lower() or "dex" in agent.lower():
-            harness_type = "codex"
-        elif "claude" in agent.lower() or "clode" in agent.lower():
-            harness_type = "claude"
-        elif "droid" in agent.lower() or "roid" in agent.lower():
-            harness_type = "droid"
-
-    cc = ConcurrencyController(
-        settings.session_dir,
-        max_concurrency=settings.max_concurrency,
-        use_load_based=settings.concurrency_load_based,
-    )
-    if not cc.acquire(
-        lane=lane,
-        priority=lane,
-    ):
-        # WP-16002: Update teammate delegation status if this was a sub-task
-        if task_id:
-            try:
-                from thegent.governance.teammates import TeammateManager
-
-                mgr = TeammateManager(settings.cache_dir / "teammates.json")
-                mgr.update_status(
-                    task_id, "failed", summary="Run blocked: Concurrency limit reached (resource contention)."
-                )
-            except Exception as e:
-                _log.debug("Failed to update teammate delegation status: %s", e)
-
-        # Get current resource-based limit and bottlenecks for error message
-        if settings.concurrency_load_based:
-            from thegent.orchestration.resource.load_based_limits import (
-                LimitGateConfig,
-                compute_dynamic_limit,
-                sample_resources,
-            )
-
-            snapshot = sample_resources()
-            config = LimitGateConfig.from_dict(settings.model_dump())
-            effective_limit, _details = compute_dynamic_limit(snapshot, config)
-
-            bottlenecks = cc.get_bottlenecks() if hasattr(cc, "get_bottlenecks") else {}
-            bottleneck_msg = ""
-            if bottlenecks.get("resource_contention"):
-                bottleneck_msg = f" Resource contention detected: {len(bottlenecks['resource_contention'])} issue(s)."
-
-            return {
-                "error": f"Resource-based concurrency limit reached (current: {effective_limit} slots).{bottleneck_msg} Task queued or blocked.",
-                "exit_code": 1,
-                "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-                "bottlenecks": bottlenecks,
-            }
-        return {
-            "error": f"Concurrency limit reached ({settings.max_concurrency}). Task queued or blocked.",
-            "exit_code": 1,
-            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
-        }
+    # WP-5001: Concurrency control — delegated to _phase_acquire_concurrency.
+    concurrency_error = _phase_acquire_concurrency(settings, lane, task_id, rid)
+    if concurrency_error is not None:
+        return concurrency_error
 
     # WP-5001: Speculative Execution Mode
     if speculative:
@@ -1191,50 +1134,19 @@ def run_impl_core(
         trust_error["run_id"] = rid
         return trust_error
 
-    # WP-4004: Interruption Controls
-    from thegent.execution import InterruptionTracker
-
-    it = InterruptionTracker(settings.session_dir)
-    fatigue = it.get_fatigue_score()
-    if fatigue > 0.8:
-        _log.warning("High fatigue detected (%.2f); recommending non-critical deferral.", fatigue)
-        if lane != "critical":
-            console.print("[bold yellow]ADVISORY:[/bold yellow] High system fatigue. Deferring non-critical task.")
-            return {"error": "System fatigue limit reached. Task deferred.", "exit_code": 1}
-
-    effective_owner = owner or _default_owner_tag(cwd)
-
-    # WP-4005: State Freshness Checks
-    # ROB-011: Stale-state detection with freshness timestamps
-    from thegent.execution import FreshnessValidator
-
-    fv = FreshnessValidator(settings.session_dir)
-    registry_path = getattr(registry, "registry_path", None)
-    if isinstance(registry_path, (str, Path, os.PathLike)):
-        registry_path = Path(registry_path)
-    else:
-        if registry_path is not None:
-            _log.warning("Skipping freshness check; unexpected registry path type: %r", type(registry_path))
-        registry_path = None
-    freshness_issues: list[str] = []
-    if registry_path is not None:
-        freshness_issues = fv.validate_action([registry_path])
-    if freshness_issues:
-        _log.warning("Freshness issues detected: %s", freshness_issues)
-        if lane == "critical":
-            return {"error": f"ROB-011: State freshness violation in critical lane: {freshness_issues}", "exit_code": 1}
-
-    # WP-5002: Burst Load Classification
-    from thegent.execution import DeferralQueue, LoadClassifier
-
-    lc = LoadClassifier(settings.session_dir)
-    load_level = lc.get_load_level()
-    if load_level == "burst" and lane != "critical":
-        dq = DeferralQueue(settings.session_dir)
-        rid = run_id or f"run_def_{uuid.uuid4().hex[:8]}"
-        dq.defer(rid, "System in burst mode; non-critical deferral active")
-        console.print("[bold yellow]BURST MODE:[/bold yellow] Non-critical task deferred to queue.")
-        return {"error": "System in burst mode. Task deferred.", "exit_code": 1, "run_id": rid}
+    # WP-4004/WP-4005/WP-5002: Combined fatigue + freshness + burst checks
+    # delegated to _phase_fatigue_freshness_burst. ``registry_path`` is
+    # resolved here (orchestrator owns the registry) so the helper stays
+    # storage-agnostic.
+    _registry_path = getattr(registry, "registry_path", None)
+    if isinstance(_registry_path, (str, Path, os.PathLike)):
+        _registry_path = Path(_registry_path)
+    elif _registry_path is not None:
+        _log.warning("Skipping freshness check; unexpected registry path type: %r", type(_registry_path))
+        _registry_path = None
+    fatigue_error = _phase_fatigue_freshness_burst(settings, _registry_path, lane, rid)
+    if fatigue_error is not None:
+        return fatigue_error
 
     # Task-aware execution: Load task metadata if task_id provided
     task_metadata: dict[str, Any] | None = None
@@ -1327,20 +1239,18 @@ def run_impl_core(
             payload["grounding_sources"] = grounded.grounding_sources
         return payload
 
-    # WP-3001: Policy Evaluation
-    pol_res, pol_reason = policy_engine.evaluate(run_meta, registry=registry)
-
-    # WP-3003: Overrides with TTL (revalidation on expiry)
-    if pol_res == "deny":
-        if override_reason:
-            console.print(f"[bold yellow]Policy OVERRIDE applied:[/bold yellow] {override_reason}")
-            override_registry.record(effective_owner, override_reason, settings.override_ttl_seconds)
-            pol_res = "allow"
-            pol_reason = f"Overridden: {pol_reason}"
-        elif override_registry.has_unexpired(effective_owner):
-            console.print("[dim]Policy override (cached, within TTL)[/dim]")
-            pol_res = "allow"
-            pol_reason = f"Overridden (cached): {pol_reason}"
+    # WP-3001: Policy Evaluation + WP-3003: Override TTL — delegated to
+    # _phase_evaluate_policy_with_override so the override-cached branch
+    # lives in one auditable place.
+    effective_owner = owner or _default_owner_tag(cwd)
+    pol_res, pol_reason = _phase_evaluate_policy_with_override(
+        policy_engine,
+        override_registry,
+        run_meta,
+        registry,
+        effective_owner,
+        override_reason,
+    )
 
     run_meta.policy_result = pol_res
     run_meta.policy_reason = pol_reason
@@ -1348,56 +1258,24 @@ def run_impl_core(
     # WP-3002: Signing
     run_meta.signature = auditor.sign_run(run_meta)
 
+    # WP-3008: Policy denial — escalate + register_start + register_end.
     if pol_res == "deny":
-        # WP-3008: Add to escalation queue for SLA tracking
-        escalate_add_impl(
-            run_id=run_meta.run_id,
-            reason=pol_reason,
-            sla_minutes=escalation_sla_minutes,
-            owner=run_meta.owner,
-            agent=run_meta.agent,
-            lane=run_meta.lane,
+        return _phase_register_policy_denial(
+            run_meta,
+            escalation_sla_minutes,
+            pol_reason,
+            registry,
         )
-        registry.register_start(run_meta)
-        registry.register_end(
-            run_id=run_meta.run_id,
-            exit_code=1,
-            status="failed",
-            ended_at_utc=datetime.now(UTC).isoformat(),
-            duration_s=0.0,
-            error_class="policy_violation",
-        )
-        return {"error": f"Policy Violation: {pol_reason}", "exit_code": 1}
 
-    # G-GP-05: HITL Pause Flow
+    # G-GP-05: HITL Pause Flow — checkpoint + escalate via _phase_register_hitl_pause.
     if pol_res == "pause":
-        from thegent.execution import CheckpointRegistry
-
-        registry.register_start(run_meta)
-        registry.register_pause(run_meta.run_id, reason=pol_reason)
-
-        ckpt_registry = CheckpointRegistry(settings.session_dir)
-        ckpt_registry.create_checkpoint(
-            reason=f"HITL Pause: {pol_reason}",
-            dag_content=run_meta.model_dump_json(),
-            owner=run_meta.owner,
+        return _phase_register_hitl_pause(
+            settings,
+            run_meta,
+            registry,
+            escalation_sla_minutes,
+            pol_reason,
         )
-
-        escalate_add_impl(
-            run_id=run_meta.run_id,
-            reason=f"HITL Pause: {pol_reason}",
-            sla_minutes=escalation_sla_minutes,
-            owner=run_meta.owner,
-            agent=run_meta.agent,
-            lane=run_meta.lane,
-            priority=1,  # High priority for HITL
-        )
-        return {
-            "error": f"HITL PAUSE: {pol_reason}. Escalated for approval.",
-            "exit_code": 0,
-            "status": "paused",
-            "run_id": run_meta.run_id,
-        }
 
     if pol_res == "warn":
         # AUDIT-N+2: route through ``print_exc`` so a malicious
