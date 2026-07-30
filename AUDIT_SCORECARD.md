@@ -257,19 +257,29 @@ extracted (`_try_litellm_dispatch`, `_build_backend_url`,
 CC dropped from 32 → 15. The L1 guardrail caught the initial CC=32
 violation on the new module and forced the refactor.
 
-**2026-07-29-2 L9 incremental progress:** 28 `_phase_*` helpers
+**2026-07-29-2 L9 incremental progress:** 29 `_phase_*` helpers
 extracted into `run_execution_core_helpers.py`, each CC ≤ 12 and
-single-responsibility. **14 of 28 wired into `run_impl_core`:**
+single-responsibility. **23 of 29 wired into `run_impl_core`:**
 `_phase_budget_gate` (initial); 9 early-phase helpers
 (`auto_route`, `resolve_agent_from_model`, `evaluate_contract_version`,
 `resolve_effective_timeout`, `resolve_cwd`, `terminal_discovery`,
 `input_guardrails`, `idempotency_replay`, `trust_boundary`); 5
 mid-phase helpers (`acquire_concurrency`, `fatigue_freshness_burst`,
 `evaluate_policy_with_override`, `register_policy_denial`,
-`register_hitl_pause`). 14 helpers remaining (post-mid, pre-failure,
-post-success). Lane score held at 70 because the orchestrator
+`register_hitl_pause`); **WL132 wire-up of 8 post-mid + pre-failure
+helpers** (`load_l3_memory_context`, `setup_shadow_workspace`,
+`acquire_resource_leases`, `release_resource_leases`,
+`finalize_shadow`, `estimate_run_cost`, `register_run_end`,
+`record_success_postlude`). 6 helpers remaining (post-success:
+`update_teammate_status`, `condense_output`, `write_run_dumps`,
+`handle_backend_failure`, `emit_success_telemetry`,
+`assemble_payload`). Lane score held at 70 because the orchestrator
 function's own CC remains unchanged until all helpers are called
 inline. Target: lift to B+ 80 once CC drops below 18.
+**WL132 reduction:** `run_impl_core` shed 85 lines (730 → 645),
+CC dropped to 97 (from ~109); full regression suite green
+(`test_wl131_l9_mid_phase_wiring` + `test_wl132_l9_postmid_prefailure_wiring`
++ 9-file audit regression, 183 tests pass).
 
 ### L10 Type Safety — 100/100 (A+)
 Type coverage: 11837/12008 (99%). Dataclasses: 971.

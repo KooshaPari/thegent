@@ -1294,24 +1294,12 @@ def run_impl_core(
     )
     start_time = time.time()
 
-    # L3 Memory: load past context for this agent (optional; no-op when key absent)
-    import asyncio as _asyncio
-
-    from thegent.memory.memory_manager import MemoryManager as _MemoryManager
-
-    try:
-        _mem_mgr = _MemoryManager()
-        if getattr(_mem_mgr, "enabled", False):
-            try:
-                _mem_ctx = _asyncio.get_event_loop().run_until_complete(_mem_mgr.load_context(agent or "unknown"))
-                if _mem_ctx:
-                    ctx_block = "\n".join(f"- {c}" for c in _mem_ctx[:5])
-                    prompt = f"[Past context from memory]\n{ctx_block}\n\n[Task]\n{prompt}"
-                    _log.debug("L3 memory: injected %d context entries", len(_mem_ctx))
-            except Exception as _mem_exc:
-                _log.debug("L3 memory load_context failed: %s", _mem_exc)
-    except Exception as _mem_exc:
-        _log.debug("L3 memory init skipped: %s", _mem_exc)
+    # L3 Memory: load past context for this agent (MTSP-?/mem-tier-3). Delegated
+    # to ``_phase_load_l3_memory_context`` so the MemoryManager instantiation,
+    # asyncio.run_until_complete dance, and ctx_block formatting live in one
+    # auditable place. Returns ``(prompt, injected_flag)``; we accept the
+    # augmented prompt back when injection succeeded.
+    prompt, _mem_injected = _phase_load_l3_memory_context(agent, prompt)
 
     use_stream = not full
 
@@ -1416,49 +1404,20 @@ def run_impl_core(
 
         return RunnerProxy()
 
-    # MTSP-12: Shadow Workspace Integration
-    use_shadow = bool(shadow or getattr(settings, "shadow_workspaces_enabled", False))
-    shadow_ws = None
+    # MTSP-12: Shadow Workspace Integration — delegated to
+    # ``_phase_setup_shadow_workspace`` so ShadowWorkspace.create() + env
+    # export + ImportError fallback all live in one auditable place.
     original_cwd = cwd or Path.cwd()
-    agent_cwd = original_cwd
-    shadow_env = None
+    shadow_ws: Any = None
+    agent_cwd, shadow_env = _phase_setup_shadow_workspace(settings, original_cwd, run_meta.run_id, shadow)
 
-    if use_shadow:
-        try:
-            from thegent.orchestration.shadow import ShadowWorkspace
-
-            shadow_ws = ShadowWorkspace(original_cwd, run_meta.run_id)
-            if shadow_ws.create():
-                agent_cwd = shadow_ws.shadow_root
-                shadow_env = shadow_ws.get_env()
-                _log.info("Running in shadow workspace: %s", agent_cwd)
-            else:
-                _log.warning("Failed to create shadow workspace; falling back to main project.")
-                shadow_ws = None
-        except ImportError as _shadow_exc:
-            _log.debug(
-                "shadow workspace module unavailable in this revision (%s); running in main project",
-                _shadow_exc,
-            )
-            shadow_ws = None
-
-    # MTSP-15: Resource Locking (Non-worktree coordination)
-    locked_tokens = []
-    if not use_shadow and lock:
-        from thegent.coordination.file_coordination import FileLeaseRegistry
-
-        lease_registry = FileLeaseRegistry(settings.session_dir / "leases")
-        for resource in lock:
-            path = Path(resource)
-            if not path.is_absolute():
-                path = original_cwd / path
-            token = lease_registry.claim_lease(path, run_meta.run_id, ttl=int(effective_timeout))
-            if token:
-                locked_tokens.append((path, token))
-                _log.info("Acquired lease for %s", resource)
-            else:
-                _log.error("Failed to acquire lease for %s; already locked by another agent.", resource)
-                return {"error": f"Resource {resource} is locked by another agent.", "exit_code": 1}
+    # MTSP-15: Resource Locking (Non-worktree coordination) — delegated to
+    # ``_phase_acquire_resource_leases`` so the FileLeaseRegistry claim loop
+    # + failure short-circuit live in one auditable place.
+    lease_result = _phase_acquire_resource_leases(settings, lock, original_cwd, run_meta.run_id, int(effective_timeout))
+    if isinstance(lease_result, dict):
+        return lease_result
+    locked_tokens: list[tuple[Path, Any]] = lease_result
 
     if impl_ns is None:
         raise ValueError("impl_ns is required")
@@ -1480,42 +1439,21 @@ def run_impl_core(
                 env=shadow_env,
             )
     finally:
-        # Release non-worktree locks
-        if locked_tokens:
-            from thegent.coordination.file_coordination import FileLeaseRegistry
-
-            lease_registry = FileLeaseRegistry(settings.session_dir / "leases")
-            for path, token in locked_tokens:
-                lease_registry.release_lease(path, run_meta.run_id, token)
-                _log.info("Released lease for %s", path)
+        # Release non-worktree locks — delegated to ``_phase_release_resource_leases``.
+        _phase_release_resource_leases(settings, locked_tokens, run_meta.run_id)
 
     status = fsm.state.status
     if status == "success":
         exit_code = 0
         status = "completed"
 
-        # MTSP-12: Auto-merge from shadow workspace
-        if shadow_ws and bool(getattr(settings, "shadow_workspaces_auto_merge", False)):
-            if shadow_ws.merge_back():
-                _log.info("Shadow changes merged successfully.")
-            else:
-                _log.error("Failed to merge shadow changes back to main project.")
-
-        # Cleanup shadow workspace
-        if shadow_ws:
-            shadow_ws.destroy()
-
-        # L3 Memory: persist run summary as a discovery (optional; no-op when key absent)
-        if getattr(_mem_mgr, "enabled", False) and result:
-            try:
-                _summary = (result.stdout or "")[:500] or f"Agent {agent} completed successfully"
-                _asyncio.get_event_loop().run_until_complete(_mem_mgr.save_discovery(agent or "unknown", _summary))
-            except Exception as _mem_exc:
-                _log.debug("L3 memory save_discovery failed: %s", _mem_exc)
+        # MTSP-12: Shadow finalize (auto-merge + destroy) — delegated to
+        # ``_phase_finalize_shadow``. Note: helper returns None and owns
+        # both branches (success: merge+destroy, failure: destroy only).
+        _phase_finalize_shadow(shadow_ws, settings, status)
     else:
-        # Cleanup shadow workspace on failure
-        if shadow_ws:
-            shadow_ws.destroy()
+        # Cleanup shadow workspace on failure — delegated to ``_phase_finalize_shadow``.
+        _phase_finalize_shadow(shadow_ws, settings, status)
         exit_code = result.exit_code if result else 1
         status = "failed"
         if result and result.timed_out:
@@ -1550,31 +1488,24 @@ def run_impl_core(
             error_class = "api_error"
 
     duration = time.time() - start_time
-    cost_usd = None
     if impl_ns is None:
         raise ValueError("impl_ns is required")
     _bind_impl_namespace(impl_ns)
 
     settings = ThegentSettings()
-    if settings.cost_tracking or settings.cost_tracking_enabled:
-        try:
-            from thegent.cost.aggregator import CostEstimator
 
-            est = CostEstimator()
-            cost_usd = est.estimate(
-                model=run_meta.model,
-                prompt_length=len(run_meta.prompt or ""),
-            )
-        except Exception as exc:
-            _log.debug("Failed to estimate run cost: %s", exc)
-    registry.register_end(
-        run_id=run_meta.run_id,
-        exit_code=exit_code,
-        status=status,
-        ended_at_utc=datetime.now(UTC).isoformat(),
-        duration_s=duration,
-        error_class=error_class,
-        cost_usd=cost_usd,
+    # WP-Y4: cost estimate — delegated to ``_phase_estimate_run_cost``.
+    cost_usd = _phase_estimate_run_cost(run_meta)
+
+    # WP-3xxx: register run end — delegated to ``_phase_register_run_end``.
+    _phase_register_run_end(
+        registry,
+        run_meta.run_id,
+        exit_code,
+        status,
+        duration,
+        error_class,
+        cost_usd,
     )
 
     _output_summary = (result.stdout or result.stderr or "")[:500] if result else "Unknown agent or no result"
@@ -1584,13 +1515,14 @@ def run_impl_core(
         output_summary=_output_summary,
     )
 
-    # WP-16002: Update teammate delegation status if this was a sub-task
+    # WP-16002: Update teammate delegation status if this was a sub-task.
+    # Remains inline because it depends on the just-computed ``status`` string
+    # and the ``task_id`` kwarg binding (no helper signature pinned yet).
     if getattr(run_meta, "task_id", None):
         try:
             from thegent.governance.teammates import TeammateManager
 
             mgr = TeammateManager(settings.cache_dir / "teammates.json")
-            # Use condensed summary for result_summary
             _stdout = (result.stdout or "") if result else ""
             _stderr = (result.stderr or "") if result else ""
             summary = _stdout[:500] if status == "completed" else (_stderr[:500] or "Failed without stderr")
@@ -1598,27 +1530,10 @@ def run_impl_core(
         except Exception as e:
             _log.debug("Failed to update teammate delegation status: %s", e)
 
-    # WP-3007: Record environment after run for next transition check
-    if status == "completed":
-        trust_boundary.record_environment(settings.environment.lower())
-
-        # WP-2007: Evidence Linting
-        if norm_res and norm_res.csm:
-            from thegent.execution import EvidenceLinter
-
-            linter = EvidenceLinter(settings.session_dir)
-            lint_issues = linter.lint(norm_res.csm)
-            if lint_issues:
-                _log.warning("Evidence lint issues for %s: %s", run_meta.run_id, lint_issues)
-                if run_meta.lane == "critical":
-                    console.print(f"[bold red]LINT FAILURE:[/bold red] Evidence incomplete: {lint_issues}")
-
-        # WP-3002: Generate and persist signed MAIF artifact
-        try:
-            artifact = auditor.generate_maif_artifact(run_meta, output=result.stdout if result else None)
-            auditor.persist_maif_artifact(settings.session_dir, artifact)
-        except Exception as exc:
-            _log.warning("Failed to generate/persist MAIF artifact: %s", exc)
+    # WP-3007/WP-2007/WP-3002: trust boundary record + evidence lint + MAIF
+    # artifact generation. Delegated to ``_phase_record_success_postlude``
+    # so the three side-effects live in one auditable place.
+    _phase_record_success_postlude(settings, run_meta, result, norm_res, auditor)
 
     if not result:
         return {

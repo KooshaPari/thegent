@@ -12493,3 +12493,40 @@ A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
 - Tests added: 12 (all pass)
 - Tests verified still-green: 165 (full related regression suite)
 - Commits: 2 (WL131 wire-up; AUDIT-SCORECARD update)
+
+## Session 12 — L9 post-mid + pre-failure wire-up (2026-07-29)
+
+### Lane updates
+```
+~ L9   29 helpers extracted / 23 wired   [WIP-extracted+23]     70  B
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[██████████████████████████████████████████████░░░░] 97.0%
+A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
+```
+
+### DAG tick
+- 23 / 29 helpers wired into `run_impl_core`. 8 post-mid + pre-failure
+  helpers added this session:
+  - post-mid: `load_l3_memory_context`, `setup_shadow_workspace`
+  - pre-failure: `acquire_resource_leases`, `release_resource_leases`,
+    `finalize_shadow`, `estimate_run_cost`, `register_run_end`,
+    `record_success_postlude`
+- 6 remaining: post-success (`update_teammate_status`, `condense_output`,
+  `write_run_dumps`, `handle_backend_failure`, `emit_success_telemetry`,
+  `assemble_payload`).
+- Orchestrator metrics: `run_impl_core` 730 → 645 lines (−85), CC 109 → 97.
+
+### Stats
+- Files added: 1 (test_wl132 ~188 LOC)
+- Files changed: 2 (`run_execution_core_helpers.py` −85 net LOC,
+  `AUDIT_SCORECARD.md` +10 LOC)
+- Tests added: 18 (all pass — parametrized delegation checks +
+  forbidden-fragment guards + line-count + signature contracts)
+- Tests verified still-green: 183 (10-file related regression suite
+  including `test_wl125`, `test_wl129`, `test_wl130`, `test_wl131`,
+  `test_wl132`, `test_unit_audit_n5`, `n6`, `n11`, `n28`,
+  `test_unit_cli_govern_infra_mesh_envelope_parity`)
+- Commits: 2 (WL132 wire-up; AUDIT-SCORECARD update)
