@@ -126,6 +126,80 @@ class MemoryMeshV2:
             cursor = conn.execute("SELECT * FROM episodic_log WHERE task_id = ? ORDER BY timestamp ASC", (task_id,))
             return [dict(row) for row in cursor]
 
+    # --- Hot-path archival (WL-136 / L19 memory hygiene) ---
+
+    def archive_hot_paths(
+        self,
+        task_id: str,
+        *,
+        access_counts: dict[str, int] | None = None,
+        threshold: int = 5,
+    ) -> list[str]:
+        """Archive hot working-memory keys into the episodic log.
+
+        A key is "hot" when its access count meets or exceeds
+        ``threshold``. Hot keys represent data that the agent is
+        consulting repeatedly; their full content should be persisted
+        to episodic memory so a session restart doesn't lose context,
+        while the working-memory slot is freed for new state.
+
+        Args:
+            task_id: Identifier used to group archived episodes in the
+                episodic log (lets ``get_episodes`` reconstruct the
+                session timeline).
+            access_counts: Optional override mapping ``key -> access
+                count``. When ``None`` (the common case) every key in
+                ``working_memory`` is treated as hot and archived.
+                Callers that maintain their own access counter (e.g.
+                via a ``Counter`` over a public read API) can pass it
+                here to honour their own definition of "hot".
+            threshold: Minimum access count required to qualify a key
+                as hot. Ignored when ``access_counts`` is ``None`` (in
+                which case everything qualifies, matching the legacy
+                ``clear_working`` behaviour but preserving content).
+
+        Returns:
+            Sorted list of archived keys (deterministic for snapshot
+            tests).
+
+        Notes:
+            Best-effort: ``record_episode`` failures are logged and
+            skipped so a transient DB error doesn't break the calling
+            code path. The corresponding working-memory key is only
+            cleared after the archive succeeds.
+        """
+        if access_counts is None:
+            # No counter supplied — treat every working-memory key as
+            # hot. This preserves the WL-136 contract: the function is
+            # safe to call unconditionally as part of session teardown.
+            hot = sorted(self.working_memory.keys())
+        else:
+            # Only count keys that are actually in working memory;
+            # access_counts entries for absent keys are advisory and
+            # do not represent archivable state.
+            hot = sorted(
+                key
+                for key, count in access_counts.items()
+                if count >= threshold and key in self.working_memory
+            )
+        for key in hot:
+            value = self.working_memory.get(key)
+            if value is None:
+                continue
+            try:
+                self.record_episode(
+                    task_id=task_id,
+                    event_type="hot_path_archive",
+                    content=f"{key}={value!r}",
+                    outcome="archived",
+                    metadata={"key": key, "access_count": (access_counts or {}).get(key)},
+                )
+            except Exception as exc:  # noqa: BLE001 — best-effort, see docstring
+                _log.warning("hot_path_archive skipped for key %r: %s", key, exc)
+                continue
+            self.working_memory.pop(key, None)
+        return hot
+
     # --- Tier 3: Semantic Memory (Knowledge Graph) ---
 
     def add_knowledge(self, node: MemoryNode, relations: list[MemoryEdge] | None = None) -> None:
