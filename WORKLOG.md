@@ -12648,6 +12648,64 @@ A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
 - WL139: L30 onboarding — first-run wizard for `thegent init`
 - WL140: L9 CC drop from 30 → ≤ 18 (next B+/A- stretch)
 
+## Session 16 — L11 pip-audit advisory gate (WL138) (2026-07-30)
+
+### Lane updates
+```
+~ L11  uv.lock / pyproject.toml / requirements.txt invariants       95  A
+       pip-audit advisory gate (script + 7 contract tests + CI)
+```
+
+### Cockpit progress bar (30 lanes)
+```
+[██████████████████████████████████████████████░░░░] 97.5%
+A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
+```
+
+### DAG tick
+- Shipped `scripts/check_pip_audit_invariants.sh` (NEW, 6 canonical checks):
+  tool-presence (native + `uvx --from pip-audit` fallback), uv.lock
+  presence + non-truncation, `uv export --frozen` parse, pip-audit
+  JSON parse, HIGH-severity ceiling, baseline snapshot parity.
+  Honour `PIP_AUDIT_NO_NETWORK=1` to exercise the offline path.
+- Shipped `tests/unit/dependencies/test_pip_audit_invariants.py` (NEW,
+  7 contract tests) pinning script executability, the six-step
+  exit-zero contract, five isolation sandboxes (missing-lock,
+  lock-truncated, fake-pip-audit-script, frozen-export-failure,
+  pypi-service-down), the baseline delta-check, and the canonical
+  workspace run; Makefile PHONY + `make help` assertions piggy-back.
+- Wired `pip-audit` target into `Makefile` (`.PHONY` block, `## `
+  docstring, body rule) and seeded `help/audit/pip-audit-baseline.json`
+  from the first live run (2 UNKNOWN-severity findings:
+  `click==8.1.8 → 8.3.3`; `gitpython==3.1.54 → 3.1.55` — well below
+  the HIGH ceiling).
+- Added `.github/workflows/pip-audit.yml` (NEW, Linux + Python 3.13,
+  installs uv + pip-audit, runs `bash scripts/check_pip_audit_invariants.sh`
+  and `make pip-audit`, 10-min budget). Ignored
+  `help/audit/pip-audit-current.json` (per-run scratch) while tracking
+  the baseline. `SECURITY.md` updated to reference both new artefacts.
+- L11 Dependencies **90 → 95 (A)**.
+
+### Focused validation
+- `tests/unit/dependencies/test_pip_audit_invariants.py` — **7/7 pass**
+- `tests/unit/dependencies/test_dependency_invariants.py` — 13/13 pass (regression)
+- `tests/unit/onboarding/test_makefile_pass_through.py` — 12/12 pass (regression)
+- `tests/unit/infrastructure/test_secrets_invariants.py` — 35/35 pass (regression)
+- `bash scripts/check_pip_audit_invariants.sh` — 6/6 checks pass (live OSV + PyPI)
+- `PIP_AUDIT_NO_NETWORK=1 bash scripts/check_pip_audit_invariants.sh` — 6/6 checks pass (offline)
+- `make pip-audit` — OK (live, ~120s)
+- `make help` — `pip-audit` appears next to `dep-audit` / `secrets-scan`
+- `ruff check scripts tests/unit/dependencies` — clean
+
+### Stats
+- Files added: 2 (`scripts/check_pip_audit_invariants.sh`,
+  `tests/unit/dependencies/test_pip_audit_invariants.py`)
+- Files changed: 4 (`Makefile` +12 LOC, `AUDIT_SCORECARD.md` +20 LOC
+  L11 narrative + pillar bump 90→95, `SECURITY.md` +4 LOC, `.gitignore`
+  +2 LOC, `.github/workflows/pip-audit.yml` NEW)
+- New tracked artefact: `help/audit/pip-audit-baseline.json` (16 613 bytes)
+- Local commit pending; unrelated untracked `sharecli/` preserved untouched.
+
 ## Session 13 — L9 post-success helper wire-up (2026-07-29)
 
 ### Lane updates

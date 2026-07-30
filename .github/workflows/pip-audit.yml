@@ -1,0 +1,54 @@
+name: pip-audit
+
+# L11 Dependencies lane — pip-audit advisory gate.
+#
+# Runs `make pip-audit` against every push + PR. The underlying
+# script (scripts/check_pip_audit_invariants.sh) verifies:
+#   * pip-audit is available (native or via uvx)
+#   * uv.lock is present, non-truncated, and non-empty
+#   * uv export --frozen produces a parseable requirements file
+#   * pip-audit emits parseable JSON against the frozen requirements
+#   * Severity gate: no findings at or above HIGH
+#   * Baseline snapshot: current run does not introduce new vulnerabilities
+#
+# The advisory gate depends on the OSV + PyPI services; runs in
+# ~60–120s on Linux. The PIP_AUDIT_NO_NETWORK escape hatch is
+# honoured by the script for offline pre-commit use.
+
+on:
+  push:
+    branches: [main, master, chore/**, feat/**, fix/**, refactor/**]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${ github.workflow }-${ github.ref }
+  cancel-in-progress: true
+
+jobs:
+  pip-audit:
+    name: Dependency advisory gate (L11)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: false
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install uv + pip-audit
+        run: |
+          python -m pip install --upgrade pip "uv>=0.4.0"
+          python -m pip install --upgrade pip-audit
+      - name: Run pip-audit gate
+        run: bash scripts/check_pip_audit_invariants.sh
+      - name: Verify Makefile target
+        run: |
+          set -euo pipefail
+          make pip-audit

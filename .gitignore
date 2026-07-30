@@ -192,6 +192,8 @@ secrets.yaml
 *.audit.json
 audit_scorecard.json
 AUDIT_SCORECARD.md
+# L11 pip-audit advisory gate: baseline is tracked, current-run scratch is not
+help/audit/pip-audit-current.json
 
 # Test artifacts
 *.test

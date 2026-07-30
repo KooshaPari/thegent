@@ -251,7 +251,7 @@
 | L8 Compliance | 100 | A+ | 🟢 |
 | L9 Complexity | 78 | B+ | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
-| L11 Dependencies | 90 | A | 🟢 |
+| L11 Dependencies | 95 | A | 🟢 |
 | L12 Error Handling | 100 | A+ | 🟢 |
 | L13 Logging | 100 | A+ | 🟢 |
 | L14 Data Layer | 100 | A+ | 🟢 |
@@ -428,8 +428,28 @@ inside the B+ complexity envelope for the first time this refactor.
 ### L10 Type Safety — 100/100 (A+)
 Type coverage: 11837/12008 (99%). Dataclasses: 971.
 
-### L11 Dependencies — 85/100 (A-)
+### L11 Dependencies — 95/100 (A)
 Lock: True, Requirements: True, has_requirements: True.
+**pip-audit advisory gate (2026-07-30):** live OSV + PyPI audit is now
+the canonical L11 control. `scripts/check_pip_audit_invariants.sh` ships
+six checks (tool presence, uv.lock presence, `uv export --frozen` parse,
+pip-audit JSON parse, HIGH-severity ceiling, baseline snapshot
+parity). Live run on the current lockfile reports **2 UNKNOWN-severity
+findings** (`click==8.1.8` → `8.3.3`; `gitpython==3.1.54` → `3.1.55`),
+both at or below MEDIUM — well under the HIGH ceiling — and seeds
+`help/audit/pip-audit-baseline.json` as the reference snapshot.
+`tests/unit/dependencies/test_pip_audit_invariants.py` (7 contract
+tests) pins script executability, the six-step exit-zero contract, all
+five isolation sandboxes (missing-lock, lock-truncated, fake-pip-audit
+script, frozen-export-failure, pypi-service-down), the baseline
+delta-check, the canonical-workspace run, the Makefile PHONY block
+(multi-line aware), and the `make help` listing. The new
+`.github/workflows/pip-audit.yml` gate runs the script + `make
+pip-audit` on every push + PR; `SECURITY.md` now references both
+artefacts. `make pip-audit` appears in `make help` next to
+`dep-audit` and `secrets-scan`. Run locally with `PIP_AUDIT_NO_NETWORK=1
+make pip-audit` for offline pre-commit. L11 Dependencies **85 (A-) →
+95 (A)**.
 
 ### L12 Error Handling — 100/100 (A+)
 Try blocks: 1967, bare excepts: 0, custom exceptions: 117, retry: 10.

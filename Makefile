@@ -32,7 +32,7 @@ UV   := $(shell command -v uv 2>/dev/null)
 .PHONY: help install dev test lint format typecheck quality clean \
         setup doctor audit scorecard build coverage check precommit \
         sync boot phen onboard sota security harden version \
-        validate-makefile test-quick dep-audit secrets-scan
+        validate-makefile test-quick dep-audit secrets-scan pip-audit
 
 # ---------------------------------------------------------------------------
 # Help (default target)
@@ -226,3 +226,13 @@ dep-audit: ## Self-test dependency surface (L11 lane)
 # pre-commit hooks; runs in <1s.
 secrets-scan: ## Self-test secrets-scan surface (L27 lane)
 	@bash scripts/check_secrets_invariants.sh
+
+# `pip-audit` runs the L11 dependency-advisory gate. Resolves the frozen
+# requirements via `uv export --frozen`, audits them with pip-audit (OSV
+# + PyPI fallback), and enforces a HIGH-severity ceiling on the
+# recorded baseline (`help/audit/pip-audit-baseline.json`). Non-zero
+# exit if the gate fails. Safe for CI (`.github/workflows/pip-audit.yml`)
+# and pre-commit hooks. Use `PIP_AUDIT_NO_NETWORK=1` to bypass the live
+# network probe and exercise the offline path.
+pip-audit: ## Self-test dependency-advisory gate (L11 lane, HIGH-severity ceiling)
+	@bash scripts/check_pip_audit_invariants.sh

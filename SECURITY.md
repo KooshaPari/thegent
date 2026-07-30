@@ -26,11 +26,13 @@ Keep dependencies updated and review security advisories regularly.
 
 ## Dependency Scanning
 
-[01;31m[K# [m[Kthegent regularly scans dependencies for known vulnerabilities:
+# thegent regularly scans dependencies for known vulnerabilities:
 
-- pip-audit
+- pip-audit — enforced via [`scripts/check_pip_audit_invariants.sh`](scripts/check_pip_audit_invariants.sh) (HIGH-severity ceiling, baseline snapshot at `help/audit/pip-audit-baseline.json`) and gated by the [`pip-audit` CI workflow](.github/workflows/pip-audit.yml).
 - Dependabot for automated updates
 - Security advisories from Safety DB
+
+Run locally with `make pip-audit` (or `PIP_AUDIT_NO_NETWORK=1 make pip-audit` for the offline path).
 
 ## Threat Model
 
