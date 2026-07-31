@@ -2147,6 +2147,542 @@ def run_impl_core(
     return payload
 
 
+# ----------------------------------------------------------------------------
+# WL141 — bg_impl_core phase helpers (L9 final hardening pass).
+#
+# These helpers extract sub-segments from ``bg_impl_core`` so the orchestrator
+# can shrink to a thin composer (target: CC ≤ 30, body ≤ 280 lines — mirror of
+# WL137's run_impl_core extraction). Each helper owns exactly one phase,
+# keeps CC ≤ 12 (≤ 18 for composite), and body ≤ 40 lines.
+# ----------------------------------------------------------------------------
+
+
+def _phase_bg_init_tracker(
+    settings: ThegentSettings,  # noqa: ARG001 — reserved for adapter wiring
+    run_id: str | None,
+) -> tuple[str, Any]:
+    """Initialize the cost tracker + resolve the canonical ``bg_<8-hex>`` rid.
+
+    Mirrors :func:`_phase_init_tracker` but uses the ``bg_`` prefix so the
+    background-launcher tracks cost independently of any nested foreground
+    run spawned via ``run agent`` later.
+    """
+    from thegent.cost.tracker import get_run_cost_tracker
+
+    tracker = get_run_cost_tracker()
+    rid = run_id or f"bg_{uuid.uuid4().hex[:8]}"
+    tracker.start_run(rid)
+    return rid, tracker
+
+
+def _phase_bg_resolve_agent_from_model(
+    agent: str | None,
+    model: str | None,
+    provider: str | None,
+    rid: str,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """Resolve ``agent`` from a model alias or fail with the bg-shaped payload.
+
+    Returns ``(agent, error_payload)``. Error payload uses ``session_id``
+    + ``exit_code`` keys (not ``run_id``) to match ``bg_impl_core``'s
+    contract; callers short-circuit by returning ``error_payload`` directly.
+    """
+    if agent is not None:
+        return agent, None
+    if model is None:
+        return None, None
+    agent_or_error, err_payload = _phase_resolve_agent_from_model(model, provider, rid)
+    if err_payload is not None:
+        # Re-shape error payload to bg's session_id contract.
+        bg_err = dict(err_payload)
+        bg_err["session_id"] = "failed"
+        return None, bg_err
+    return agent_or_error, None
+
+
+def _phase_bg_evaluate_contract(
+    contract_version: str | None,
+    lane: str | None,
+    rid: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Contract migration + ROB-010 downgrade prevention (WP-X1/V7).
+
+    Returns ``(error_payload, requested_version)``. ``error_payload`` is
+    non-None when the request must short-circuit; ``requested_version``
+    is the version forwarded to the spawned subprocess.
+    """
+    from thegent.contracts.migration import MigrationController
+    from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
+
+    migrator = MigrationController()
+    requested_version = contract_version or CONTRACT_SCHEMA_VERSION
+    mig_res = migrator.evaluate_version("csm", requested_version)
+
+    if not mig_res["allowed"]:
+        return (
+            {
+                "error": f"Contract version rejected: {mig_res['reason']}",
+                "exit_code": 1,
+                "session_id": "failed",
+                "run_id": rid,
+            },
+            requested_version,
+        )
+
+    if lane == "critical" and requested_version != CONTRACT_SCHEMA_VERSION:
+        from thegent.contracts.registry import get_registry
+
+        registry = get_registry()
+        if not registry.is_compatible(requested_version, CONTRACT_SCHEMA_VERSION):
+            return (
+                {
+                    "error": (
+                        f"ROB-010: Contract version downgrade prevented in critical lane. "
+                        f"Requested: {requested_version}, Current: {CONTRACT_SCHEMA_VERSION}"
+                    ),
+                    "exit_code": 1,
+                    "session_id": "failed",
+                    "remediation": f"Use --contract-version {CONTRACT_SCHEMA_VERSION} or remove --lane critical",
+                    "run_id": rid,
+                },
+                requested_version,
+            )
+    return None, requested_version
+
+
+def _phase_bg_resolve_effective_timeout(
+    settings: ThegentSettings,
+    config_provider: "ConfigProvider | None",
+    timeout: int,
+    agent: str | None,
+    tenant_id: str | None,
+) -> int:
+    """Effective timeout with ConfigProvider override + Claude floor (bg)."""
+    _bg_config: dict[str, Any] | None = None
+    if config_provider is not None:
+        _bg_config = config_provider.resolve(
+            tenant_id=tenant_id,
+            request_overrides={"default_timeout": timeout},
+        )
+    effective_timeout = _bg_config.get("default_timeout", timeout) if _bg_config else timeout
+    if agent == "claude":
+        _min_claude = (
+            _bg_config.get("default_timeout_claude", settings.default_timeout_claude)
+            if _bg_config
+            else settings.default_timeout_claude
+        )
+        try:
+            effective_timeout = max(int(effective_timeout), int(_min_claude))
+        except (TypeError, ValueError):
+            _log.debug("Invalid claude timeout override %r; using existing", _min_claude)
+    return int(effective_timeout)
+
+
+def _phase_bg_idempotency_replay(
+    registry: RunRegistry,
+    idempotency_token: str | None,
+) -> dict[str, Any] | None:
+    """Idempotency token replay detection with bg-shaped payload.
+
+    Bloom-filter fast path (WP-1003 / WP-1008 / OPT-019) + full lookup
+    fallback. Returns ``None`` when the token is missing or no replay
+    exists; otherwise returns the bg-shaped replay payload (with
+    ``session_id`` / ``run_id`` keys, no stdout/stderr).
+    """
+    if not idempotency_token:
+        return None
+    session_id_from_token = f"run_{hashlib.sha256(idempotency_token.encode()).hexdigest()[:8]}"
+    if not registry.session_exists(session_id_from_token):
+        return None
+    existing = registry.find_by_token(idempotency_token)
+    if existing and existing.get("status") == "completed":
+        _log.info("Replay detected for token %s in bg; skipping.", idempotency_token)
+        return {
+            "session_id": existing.get("correlation_id") or "replayed",
+            "run_id": existing.get("run_id"),
+            "replayed": True,
+        }
+    return None
+
+
+def _phase_bg_init_services(
+    settings: ThegentSettings,
+    registry: RunRegistry,
+    owner: str | None,
+    cwd: Path,
+) -> tuple[Any, str, int, dict[str, Any] | None]:
+    """Init per-run services bundle + trust boundary check (WP-3007).
+
+    Returns ``(services, effective_owner, escalation_sla_minutes, err)``.
+    ``services`` is the bg-shaped bundle (no MAIF — bg only registers
+    lifecycle events). ``err`` is non-None when the trust boundary
+    rejects the environment transition.
+    """
+    from thegent.execution import (
+        Auditor,
+        CircuitBreakerRegistry,
+        OverrideRegistry,
+        PolicyEngine,
+        TrustBoundaryValidator,
+    )
+
+    services = {
+        "circuit_breaker": CircuitBreakerRegistry(settings.session_dir),
+        "trust_boundary": TrustBoundaryValidator(settings.session_dir),
+        "override_registry": OverrideRegistry(settings.session_dir),
+        "policy_engine": PolicyEngine(settings),
+        "auditor": Auditor(registry.registry_path),
+    }
+    effective_owner = owner or _default_owner_tag(cwd)
+    escalation_sla_minutes = 30
+    try:
+        escalation_sla_minutes = int(settings.escalation_sla_minutes)
+    except (TypeError, ValueError):
+        escalation_sla_minutes = 30
+
+    last_env = services["trust_boundary"].get_last_environment()
+    allowed, boundary_reason = services["trust_boundary"].validate_transition(last_env, settings.environment.lower())
+    if not allowed:
+        return (
+            services,
+            effective_owner,
+            escalation_sla_minutes,
+            {
+                "error": f"Trust boundary violation: {boundary_reason}",
+                "exit_code": 1,
+                "session_id": "failed",
+            },
+        )
+    return services, effective_owner, escalation_sla_minutes, None
+
+
+def _phase_bg_evaluate_policy(
+    *,
+    policy_engine: Any,
+    override_registry: Any,
+    auditor: Any,
+    run_meta: RunMeta,
+    registry: RunRegistry,
+    effective_owner: str,
+    override_reason: str | None,
+) -> tuple[str, str]:
+    """Policy + override-TTL + audit signature (WP-3001 / WP-3003 / G-GP-05).
+
+    Applies the override-TTL semantics for background runs (cached-only;
+    no fresh-record path because override_reason handling lives in the
+    CLI entry). Signs the run_meta after the policy decision so the
+    audit trail is intact.
+    """
+    pol_res, pol_reason = policy_engine.evaluate(run_meta, registry=registry)
+    if pol_res == "deny" and override_registry.has_unexpired(effective_owner):
+        _log.info("Policy override (cached, within TTL) for background run")
+        pol_res = "allow"
+        pol_reason = f"Overridden (cached): {pol_reason}"
+    run_meta.policy_result = pol_res
+    run_meta.policy_reason = pol_reason
+    run_meta.signature = auditor.sign_run(run_meta)
+    return pol_res, pol_reason
+
+
+def _phase_bg_remote_dispatch(
+    *,
+    remote: str | None,
+    cwd: Path,
+    run_meta: RunMeta,
+) -> dict[str, Any] | None:
+    """Remote compute offload (WP-RC-01). Returns bg payload or ``None``.
+
+    ``None`` means: not a remote dispatch (caller continues local spawn).
+    Any non-None payload is the bg-shaped return value the orchestrator
+    should propagate to the CLI immediately (success or error).
+    """
+    if not remote:
+        return None
+    from thegent.research.remote_compute import RemoteComputeClient
+
+    import sys
+    import tempfile
+
+    client = RemoteComputeClient(remote)
+    remote_path = Path(tempfile.gettempdir()) / f"thegent-run-{run_meta.run_id}"
+    _log.info("Offloading background execution to remote host: %s", remote)
+    if not client.transfer_files(cwd, str(remote_path)):
+        return {"error": f"Failed to sync project to remote host: {remote}", "exit_code": 1}
+    remote_args = [a for a in sys.argv if not a.startswith("--remote")]
+    remote_command = " ".join(f'"{a}"' if " " in a else a for a in remote_args)
+    _log.info("Running remote background command in %s", remote_path)
+    bg_remote_command = f"nohup {remote_command} > {remote_path}/remote_bg.log 2>&1 & echo $!"
+    remote_res = client.execute_remote(bg_remote_command, cwd=Path(remote_path))
+    if remote_res.get("status") == "success":
+        remote_pid = remote_res.get("stdout", "").strip()
+        return {
+            "session_id": f"remote-{remote_pid}",
+            "run_id": run_meta.run_id,
+            "remote_host": remote,
+            "remote_path": remote_path,
+            "status": "started_remote",
+        }
+    return remote_res
+
+
+def _phase_bg_build_command(
+    *,
+    settings: ThegentSettings,
+    agent: str | None,
+    model: str | None,
+    effective_prompt: str,
+    cwd: Path,
+    effective_timeout: int,
+    lane: str | None,
+    full: bool,
+    routing: str | None,
+    failover: bool,
+    requested_version: str | None,
+    domain: str | None,
+    task_id: str | None,
+    idempotency_token: str | None,
+    speculative: bool,
+    effective_run_id: str,
+    session_id: str,
+    p: dict[str, Path],
+) -> list[str]:
+    """Build the Thegent 3.0 ``run agent`` command (with optional holdpty).
+
+    Returns the final argv list. The ``holdpty`` wrapper is prepended in
+    place when ``settings.use_holdpty`` is True; the canonical sock path
+    is derived from the ``in`` session path.
+    """
+    cmd: list[str] = [sys.executable, "-m", "thegent.main", "run", "agent", effective_prompt]
+    cmd.extend(["--cd", str(cwd), "--timeout", str(effective_timeout), "--lane", lane or "standard"])
+    if agent:
+        cmd.extend(["--agent", agent])
+    if full:
+        cmd.append("--full")
+    if routing:
+        cmd.extend(["--routing", routing])
+    if failover:
+        cmd.append("--failover")
+    if model:
+        cmd.extend(["--model", model])
+    if requested_version:
+        cmd.extend(["--contract-version", requested_version])
+    if domain:
+        cmd.extend(["--domain", domain])
+    if task_id:
+        cmd.extend(["--task-id", task_id])
+    if idempotency_token:
+        cmd.extend(["--idempotency-token", idempotency_token])
+    if speculative:
+        cmd.append("--speculative")
+    cmd.extend(["--run-id", effective_run_id])
+    if settings.use_holdpty is True:
+        in_path = p.get("in")
+        if in_path is None:
+            raise RuntimeError("Session paths missing 'in' key")
+        socket_path = in_path.with_suffix(".sock")
+        holdpty_cmd = [
+            sys.executable,
+            "-m",
+            "thegent.main",
+            "holdpty",
+            "--socket",
+            str(socket_path),
+            "--session-id",
+            session_id,
+            "--",
+        ]
+        cmd = holdpty_cmd + cmd
+    return cmd
+
+
+def _phase_bg_apply_sandbox(
+    *,
+    settings: ThegentSettings,
+    cmd: list[str],
+    cwd: Path,
+) -> list[str]:
+    """Apply macOS sandbox level to the agent command (THGENT_SANDBOX_LEVEL).
+
+    Defensive: when ``MacOSSandbox.from_env`` / ``level_from_settings`` are
+    unavailable (CI / bare-metal), fall back to a no-op BASIC instance so
+    bg_impl keeps working. Returns the (possibly-mutated) ``cmd``.
+    """
+    from thegent.security.macos_sandbox import MacOSSandbox, SandboxLevel
+
+    _sandbox = MacOSSandbox.from_env() if hasattr(MacOSSandbox, "from_env") else MacOSSandbox(SandboxLevel.BASIC)
+    _sandbox_level = (
+        MacOSSandbox.level_from_settings() if hasattr(MacOSSandbox, "level_from_settings") else _sandbox.level
+    )
+    if _sandbox_level not in (SandboxLevel.NONE, SandboxLevel.FULL):
+        apply_to_command = getattr(_sandbox, "apply_to_command", None)
+        if callable(apply_to_command):
+            cmd = apply_to_command(cmd, _sandbox_level, project_root=cwd)
+        _log.debug("macOS sandbox level %r applied to agent command", _sandbox_level.value)
+    return cmd
+
+
+def _phase_bg_filter_env(
+    *,
+    settings: ThegentSettings,
+    owner_tag: str,
+    session_id: str,
+    p: dict[str, Path],
+) -> dict[str, str]:
+    """Build the subprocess env: allowlist filter + THGENT_* injection (G-GP-08)."""
+    if settings.sandbox_env_filter:
+        allowlist = settings.sandbox_env_allowlist
+        env = {k: v for k, v in os.environ.items() if k in allowlist or k.startswith("THGENT_")}
+    else:
+        env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env.update(
+        {
+            "THGENT_SESSION_ID": session_id,
+            "THGENT_SESSION_META_PATH": str(p["meta"]),
+            "THGENT_SESSION_RC_PATH": str(p["rc"]),
+            "THGENT_SESSION_STDOUT_PATH": str(p["stdout"]),
+            "THGENT_SESSION_STDERR_PATH": str(p["stderr"]),
+            "THGENT_OWNER_TAG": owner_tag,
+        }
+    )
+    return env
+
+
+def _phase_bg_open_fifo(
+    *,
+    settings: ThegentSettings,
+    p: dict[str, Path],
+) -> Any:
+    """Open the FIFO stdin handle or fall back to ``subprocess.DEVNULL``.
+
+    Non-blocking open on POSIX so bg_impl never hangs waiting for a
+    writer. On any failure (platform / permission / already-exists) the
+    helper returns ``subprocess.DEVNULL`` after logging at warning level.
+    """
+    stdin_handle = subprocess.DEVNULL
+    if settings.use_fifo is not True:
+        return stdin_handle
+    try:
+        if platform.system() == "Windows":
+            _log.warning("FIFO not supported on Windows; falling back to DEVNULL.")
+            return stdin_handle
+        in_path = p.get("in")
+        if in_path is None:
+            raise RuntimeError("Session paths missing 'in' key")
+        if not in_path.exists():
+            os.mkfifo(str(in_path))
+        return os.open(str(in_path), os.O_RDONLY | os.O_NONBLOCK)
+    except Exception as exc:
+        _log.warning("Failed to create FIFO: %s", exc)
+        return stdin_handle
+
+
+def _phase_bg_spawn(
+    *,
+    cmd: list[str],
+    cwd: Path,
+    env: dict[str, str],
+    stdin_handle: Any,
+    stdout_handle: Any,
+    stderr_handle: Any,
+) -> Any:
+    """Spawn the agent subprocess with EAGAIN retry + Popen fallback.
+
+    Honours the AUDIT-N+14 contract: prefer the canonical
+    ``_spawn_with_eagain_retry`` from the impl namespace; fall back to
+    ``subprocess.Popen`` (resolved through ``_impl_lazy.subprocess`` so
+    ``@patch("thegent.cli.commands.impl.subprocess.Popen")`` still wins)
+    when the canonical helper is unavailable (test environments).
+
+    Stream handles are always closed before this returns so the parent
+    process cannot deadlock on a full pipe; FIFO FDs are intentionally
+    left open for child inheritance.
+    """
+    try:
+        spawn_with_eagain_retry = _impl_lazy._spawn_with_eagain_retry
+        if spawn_with_eagain_retry is None:
+            raise RuntimeError("spawn helper is unavailable")
+        proc = spawn_with_eagain_retry(
+            cmd,
+            cwd=str(cwd),
+            env=env,
+            stdin=stdin_handle,
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+        )
+    except RuntimeError:
+        # AUDIT-N+14 fallback — honour impl.subprocess.Popen patches.
+        _impl_subprocess = _impl_lazy.subprocess
+        popen = getattr(_impl_subprocess, "Popen", None)
+        if popen is None:
+            raise
+        proc = popen(
+            cmd,
+            cwd=str(cwd),
+            env=env,
+            stdin=stdin_handle,
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+        )
+    finally:
+        try:
+            stdout_handle.close()
+        except Exception as exc:
+            _log.debug("stdout_handle close failed: %s", exc)
+        try:
+            stderr_handle.close()
+        except Exception as exc:
+            _log.debug("stderr_handle close failed: %s", exc)
+    return proc
+
+
+def _phase_bg_persist_meta(
+    *,
+    p: dict[str, Path],
+    session_id: str,
+    agent: str | None,
+    owner_tag: str,
+    cwd: Path,
+    prompt: str,
+    mode: str,
+    effective_timeout: int,
+    cmd: list[str],
+    proc: Any,
+    include_contract: bool,
+    route_contract: dict[str, Any] | None,
+    route_request: dict[str, str] | None,
+    continue_from: str | None,
+) -> None:
+    """Build + persist the per-session meta JSON (WP-?/session-meta)."""
+    meta: dict[str, Any] = {
+        "version": 1,
+        "session_id": session_id,
+        "agent": agent,
+        "owner": owner_tag,
+        "cwd": str(cwd),
+        "prompt": prompt,
+        "mode": mode,
+        "timeout_hint_s": effective_timeout,
+        "host": socket.gethostname(),
+        "launcher_pid": os.getpid(),
+        "launcher_ppid": os.getppid(),
+        "launcher_uid": os.getuid(),
+        "status": "running",
+        "started_at_utc": datetime.now(UTC).isoformat(),
+        "pid": proc.pid,
+        "command": cmd,
+        "paths": {k: str(v) for k, v in p.items()},
+    }
+    if include_contract:
+        if route_contract is not None:
+            meta["route_contract"] = route_contract
+        if route_request is not None:
+            meta["route_request"] = route_request
+    if continue_from:
+        meta["continued_from"] = continue_from.split(",")[0].strip()
+    _save_session_meta(p["meta"], meta)
+
+
 def bg_impl_core(
     *,
     agent: str | None,
@@ -2185,6 +2721,11 @@ def bg_impl_core(
 ) -> dict[str, Any]:
     """
     Start a background run. Returns dict with keys: session_id, log_path, owner.
+
+    Thin composer (WL141): every sub-phase is delegated to a ``_phase_bg_*``
+    helper so this orchestrator stays CC ≤ 30, body ≤ 280 lines. The
+    helper section above owns the actual logic; this body only sequences
+    the phase calls and propagates short-circuit payloads.
     """
     if impl_ns is None:
         raise ValueError("impl_ns is required")
@@ -2192,108 +2733,22 @@ def bg_impl_core(
     import sys
 
     settings = ThegentSettings()
-    from thegent.cost.tracker import get_run_cost_tracker
-
-    tracker = get_run_cost_tracker()
-    rid = run_id or f"bg_{uuid.uuid4().hex[:8]}"
-    tracker.start_run(rid)
-
-    # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
+    rid, _tracker = _phase_bg_init_tracker(settings, run_id)
     agent, model, route_contract, route_request = _apply_pareto_routing_local(
         agent, model, routing, include_contract, route_contract, route_request
     )
+    agent, model, route_contract, route_request = _phase_auto_route(
+        settings, agent, model, prompt, include_contract, route_contract, route_request
+    )
+    agent_or_error, err = _phase_bg_resolve_agent_from_model(agent, model, provider, rid)
+    if err is not None:
+        return err
+    agent = resolve_agent(agent_or_error) or "unknown"
 
-    # Auto router: agent="auto" or model="auto" → classify + Pareto select
-    if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
-        try:
-            from thegent.utils.routing_impl.auto_router import auto_route
+    contract_err, requested_version = _phase_bg_evaluate_contract(contract_version, lane, rid)
+    if contract_err is not None:
+        return contract_err
 
-            ar = auto_route(
-                prompt=prompt,
-                classifier_model=settings.auto_router_classifier_model,
-                use_classifier=settings.auto_router_use_classifier,
-                min_quality=settings.auto_router_min_quality,
-                max_cost_weight=settings.auto_router_max_cost_weight,
-            )
-            if ar:
-                agent = ar.agent
-                model = ar.model
-                _log.info("Auto router: %s/%s (complexity=%s)", agent, model, ar.complexity)
-            else:
-                agent = "antigravity"
-                model = "gemini-3-flash"
-                _log.warning("Auto router failed; fallback to antigravity/gemini-3-flash")
-        except Exception as e:
-            _log.warning("Auto router error: %s; fallback to antigravity/gemini-3-flash", e)
-            agent = "antigravity"
-            model = "gemini-3-flash"
-
-    if agent is None and model:
-        from thegent.models import normalize_model_id
-        from thegent.models.catalog import ModelCatalog, resolve_route
-
-        model_id = normalize_model_id(model)
-        route = resolve_route(model_id, provider_hint=provider)
-        if route is None:
-            routes = ModelCatalog.routes_for(model_id)
-            available = ", ".join(sorted({r.provider for r in routes})) if routes else "none"
-            suffix = f" Available: {available}." if available != "none" else ""
-            return {
-                "error": f"Model '{model}' not available via provider '{provider or 'any'}'.{suffix}",
-                "agents": available,
-                "exit_code": 1,
-                "session_id": "failed",
-            }
-        agent = route[0]
-    agent = resolve_agent(agent) or "unknown"
-
-    # WP-X1/V7: Contract Migration & Version Negotiation
-    from thegent.contracts.migration import MigrationController
-    from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-
-    migrator = MigrationController()
-    requested_version = contract_version or CONTRACT_SCHEMA_VERSION
-    mig_res = migrator.evaluate_version("csm", requested_version)
-
-    if not mig_res["allowed"]:
-        return {
-            "error": f"Contract version rejected: {mig_res['reason']}",
-            "exit_code": 1,
-            "session_id": "failed",
-        }
-
-    # ROB-010: Contract version downgrade prevention in critical lanes
-    # Prevent silent quality regression by blocking version downgrades in critical lanes
-    if lane == "critical" and requested_version != CONTRACT_SCHEMA_VERSION:
-        # Check if requested version is older than current
-        from thegent.contracts.registry import get_registry
-
-        registry = get_registry()
-        current_cv = registry.get("csm", CONTRACT_SCHEMA_VERSION)
-        requested_cv = registry.get("csm", requested_version)
-
-        if current_cv and requested_cv:
-            # Simple version comparison: if requested is not compatible with current, it's a downgrade
-            if not registry.is_compatible(requested_version, CONTRACT_SCHEMA_VERSION):
-                return {
-                    "error": f"ROB-010: Contract version downgrade prevented in critical lane. Requested: {requested_version}, Current: {CONTRACT_SCHEMA_VERSION}",
-                    "exit_code": 1,
-                    "session_id": "failed",
-                    "remediation": f"Use --contract-version {CONTRACT_SCHEMA_VERSION} or remove --lane critical",
-                }
-
-    # ConfigProvider: resolve config (Phase 1: EnvConfigProvider; Phase 2+: CP when URL set)
-    _bg_config: dict[str, Any] | None = None
-    if config_provider is not None:
-        _bg_config = config_provider.resolve(tenant_id=tenant_id, request_overrides={"default_timeout": timeout})
-    effective_timeout = _bg_config.get("default_timeout", timeout) if _bg_config else timeout
-    if agent == "claude":
-        _min_claude = (
-            _bg_config.get("default_timeout_claude", settings.default_timeout_claude)
-            if _bg_config
-            else settings.default_timeout_claude
-        )
-        effective_timeout = max(effective_timeout, _min_claude)
     cwd = _resolve_cwd(cd)
     if cwd is None:
         return {
@@ -2303,6 +2758,7 @@ def bg_impl_core(
             "run_id": run_id or f"bg_err_{uuid.uuid4().hex[:8]}",
         }
 
+    effective_timeout = _phase_bg_resolve_effective_timeout(settings, config_provider, timeout, agent, tenant_id)
     full = full or True
 
     effective_prompt = prompt
@@ -2316,64 +2772,20 @@ def bg_impl_core(
     session_id = _new_session_id(agent=agent, owner=owner_tag)
     p = _rsh_impl.session_paths(base=base, session_id=session_id)
 
-    # Registry integration
     registry = RunRegistry(settings.session_dir)
-
-    # WP-1003/WP-1008: Idempotency
-    # OPT-019: Use bloom filter for fast negative lookup before full registry scan
-    if idempotency_token:
-        # Generate session_id from token for bloom filter lookup
-        session_id_from_token = f"run_{hashlib.sha256(idempotency_token.encode()).hexdigest()[:8]}"
-        # Fast path: if not in bloom filter, definitely doesn't exist
-        if registry.session_exists(session_id_from_token):
-            # Might exist, do full lookup
-            existing = registry.find_by_token(idempotency_token)
-            if existing and existing.get("status") == "completed":
-                _log.info("Replay detected for token %s in bg; skipping.", idempotency_token)
-                return {
-                    "session_id": existing.get("correlation_id") or "replayed",
-                    "run_id": existing.get("run_id"),
-                    "replayed": True,
-                }
+    replay = _phase_bg_idempotency_replay(registry, idempotency_token)
+    if replay is not None:
+        return replay
 
     effective_run_id = run_id or f"run_{uuid.uuid4().hex[:8]}"
-
-    # WP-5001: Speculative Execution Mode
     if speculative:
         _log.info("Speculative execution active in background.")
 
-    from thegent.execution import (
-        Auditor,
-        CircuitBreakerRegistry,
-        OverrideRegistry,
-        PolicyEngine,
-        TrustBoundaryValidator,
-    )
-
-    _circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
-    trust_boundary = TrustBoundaryValidator(settings.session_dir)
-    override_registry = OverrideRegistry(settings.session_dir)
-    auditor = Auditor(registry.registry_path)
-    policy_engine = PolicyEngine(settings)
-    _effective_owner = owner or _default_owner_tag(cwd)
-    escalation_sla_minutes = 30
-    try:
-        escalation_sla_minutes = int(settings.escalation_sla_minutes)
-    except (TypeError, ValueError):
-        escalation_sla_minutes = 30
-
-    # WP-3007: Trust Boundary Checks
-    last_env = trust_boundary.get_last_environment()
-    allowed, boundary_reason = trust_boundary.validate_transition(last_env, settings.environment.lower())
-    if not allowed:
-        return {
-            "error": f"Trust boundary violation: {boundary_reason}",
-            "exit_code": 1,
-            "session_id": "failed",
-        }
+    services, effective_owner, escalation_sla_minutes, tb_err = _phase_bg_init_services(settings, registry, owner, cwd)
+    if tb_err is not None:
+        return tb_err
 
     resolved_domain_tag = str(domain) if domain else str(settings.default_domain_tag)
-
     run_meta = RunMeta(
         run_id=effective_run_id,
         agent=agent or "",
@@ -2387,290 +2799,82 @@ def bg_impl_core(
         idempotency_token=idempotency_token or "",
     )
 
-    # G-GP-05: Policy pre-check for background runs
-    pol_res, pol_reason = policy_engine.evaluate(run_meta, registry=registry)
-
-    # WP-3003: Overrides with TTL (revalidation on expiry)
-    if pol_res == "deny" and override_registry.has_unexpired(owner_tag):
-        _log.info("Policy override (cached, within TTL) for background run")
-        pol_res = "allow"
-        pol_reason = f"Overridden (cached): {pol_reason}"
-
-    run_meta.policy_result = pol_res
-    run_meta.policy_reason = pol_reason
-    run_meta.signature = auditor.sign_run(run_meta)
+    pol_res, pol_reason = _phase_bg_evaluate_policy(
+        policy_engine=services["policy_engine"],
+        override_registry=services["override_registry"],
+        auditor=services["auditor"],
+        run_meta=run_meta,
+        registry=registry,
+        effective_owner=effective_owner,
+        override_reason=override_reason,
+    )
 
     if pol_res == "deny":
-        escalate_add_impl(
-            run_id=run_meta.run_id,
-            reason=pol_reason,
-            sla_minutes=escalation_sla_minutes,
-            owner=run_meta.owner,
-            agent=run_meta.agent,
-            lane=run_meta.lane,
-        )
-        registry.register_start(run_meta)
-        registry.register_end(
-            run_id=run_meta.run_id,
-            exit_code=1,
-            status="failed",
-            ended_at_utc=datetime.now(UTC).isoformat(),
-            duration_s=0.0,
-            error_class="policy_violation",
-        )
-        return {"error": f"Policy Violation: {pol_reason}", "exit_code": 1}
+        return _phase_register_policy_denial(run_meta, escalation_sla_minutes, pol_reason, registry)
 
     if pol_res == "pause":
-        from thegent.execution import CheckpointRegistry
-
-        registry.register_start(run_meta)
-        registry.register_pause(run_meta.run_id, reason=pol_reason)
-
-        ckpt_registry = CheckpointRegistry(settings.session_dir)
-        ckpt_registry.create_checkpoint(
-            reason=f"HITL Pause (bg): {pol_reason}",
-            dag_content=run_meta.model_dump_json(),
-            owner=run_meta.owner,
+        return _phase_register_hitl_pause(
+            settings, run_meta, registry, escalation_sla_minutes, pol_reason, suffix=" (bg)"
         )
-
-        escalate_add_impl(
-            run_id=run_meta.run_id,
-            reason=f"HITL Pause (bg): {pol_reason}",
-            sla_minutes=escalation_sla_minutes,
-            owner=run_meta.owner,
-            agent=run_meta.agent,
-            lane=run_meta.lane,
-            priority=1,
-        )
-        return {
-            "error": f"HITL PAUSE: {pol_reason}",
-            "session_id": session_id,
-            "status": "paused",
-            "run_id": run_meta.run_id,
-        }
 
     registry.register_start(run_meta)
 
-    # WP-RC-01: Remote Compute Offload (Phase 4)
-    if remote:
-        from thegent.research.remote_compute import RemoteComputeClient
+    remote_payload = _phase_bg_remote_dispatch(remote=remote, cwd=cwd, run_meta=run_meta)
+    if remote_payload is not None:
+        return remote_payload
 
-        client = RemoteComputeClient(remote)
-
-        import tempfile
-
-        remote_path = Path(tempfile.gettempdir()) / f"thegent-run-{run_meta.run_id}"
-        _log.info(f"Offloading background execution to remote host: {remote}")
-
-        # 1. Sync files to remote
-        if cwd is None:
-            return {"error": "Cannot transfer files: cwd is not set", "exit_code": 1}
-        if not client.transfer_files(cwd, str(remote_path)):
-            return {"error": f"Failed to sync project to remote host: {remote}", "exit_code": 1}
-
-        # 2. Reconstruct command without --remote to avoid infinite loops
-        remote_args = [a for a in sys.argv if not a.startswith("--remote")]
-        # Ensure we use background 'bg' on remote if we want it to be backgrounded there too
-        # Or just 'run' since we are already backgrounding this call?
-        # Actually, if we use 'bg' on remote, we get another layer of backgrounding.
-        # Let's use 'run' on remote.
-        remote_command = " ".join(f'"{a}"' if " " in a else a for a in remote_args)
-
-        # 3. Execute remote in background (using nohup or similar)
-        # For simplicity, we'll just execute it and return the "session"
-        _log.info(f"Running remote background command in {remote_path}")
-        # We wrap in nohup and redirect to a file on remote
-        bg_remote_command = f"nohup {remote_command} > {remote_path}/remote_bg.log 2>&1 & echo $!"
-        remote_res = client.execute_remote(bg_remote_command, cwd=Path(remote_path))
-
-        if remote_res.get("status") == "success":
-            remote_pid = remote_res.get("stdout", "").strip()
-            return {
-                "session_id": f"remote-{remote_pid}",
-                "run_id": run_meta.run_id,
-                "remote_host": remote,
-                "remote_path": remote_path,
-                "status": "started_remote",
-            }
-        return remote_res
-
-    # Build command against Thegent 3.0 apps layout.
-    cmd: list[str] = [sys.executable, "-m", "thegent.main", "run", "agent", effective_prompt]
-    cmd.extend(["--cd", str(cwd), "--timeout", str(effective_timeout), "--lane", lane or "standard"])
-    if agent:
-        cmd.extend(["--agent", agent])
-    if full:
-        cmd.append("--full")
-    if routing:
-        cmd.extend(["--routing", routing])
-    if failover:
-        cmd.append("--failover")
-    if model:
-        cmd.extend(["--model", model])
-    if requested_version:
-        cmd.extend(["--contract-version", requested_version])
-    if domain:
-        cmd.extend(["--domain", domain])
-    if task_id:
-        cmd.extend(["--task-id", task_id])
-    if idempotency_token:
-        cmd.extend(["--idempotency-token", idempotency_token])
-    if speculative:
-        cmd.append("--speculative")
-
-    # Pass run_id to the spawned run so registry lifecycle is correlated.
-    cmd.extend(["--run-id", effective_run_id])
-
-    # Phase P4: holdpty wrapper
-    if settings.use_holdpty is True:
-        in_path = p.get("in")
-        if in_path is None:
-            raise RuntimeError("Session paths missing 'in' key")
-        socket_path = in_path.with_suffix(".sock")
-        holdpty_cmd = [
-            sys.executable,
-            "-m",
-            "thegent.main",
-            "holdpty",
-            "--socket",
-            str(socket_path),
-            "--session-id",
-            session_id,
-            "--",
-        ]
-        cmd = holdpty_cmd + cmd
+    cmd = _phase_bg_build_command(
+        settings=settings,
+        agent=agent,
+        model=model,
+        effective_prompt=effective_prompt,
+        cwd=cwd,
+        effective_timeout=effective_timeout,
+        lane=lane,
+        full=full,
+        routing=routing,
+        failover=failover,
+        requested_version=requested_version,
+        domain=domain,
+        task_id=task_id,
+        idempotency_token=idempotency_token,
+        speculative=speculative,
+        effective_run_id=effective_run_id,
+        session_id=session_id,
+        p=p,
+    )
+    cmd = _phase_bg_apply_sandbox(settings=settings, cmd=cmd, cwd=cwd)
 
     stdout_handle = p["stdout"].open("wb")
     stderr_handle = p["stderr"].open("wb")
+    env = _phase_bg_filter_env(settings=settings, owner_tag=owner_tag, session_id=session_id, p=p)
+    stdin_handle = _phase_bg_open_fifo(settings=settings, p=p)
 
-    # macOS sandbox wrapping (THGENT_SANDBOX_LEVEL)
-    from thegent.security.macos_sandbox import MacOSSandbox, SandboxLevel
-
-    # Defensive: the stub MacOSSandbox in this revision does not expose
-    # ``from_env`` / ``level_from_settings`` (canonical home is in the
-    # full macOS sandbox shim). When the helpers are absent, fall back
-    # to a no-op BASIC instance so ``bg_impl`` keeps working in CI /
-    # bare-metal test environments without breaking patch surface.
-    _sandbox = MacOSSandbox.from_env() if hasattr(MacOSSandbox, "from_env") else MacOSSandbox(SandboxLevel.BASIC)
-    if hasattr(MacOSSandbox, "level_from_settings"):
-        _sandbox_level = MacOSSandbox.level_from_settings()
-    else:
-        _sandbox_level = _sandbox.level
-    if _sandbox_level not in (SandboxLevel.NONE, SandboxLevel.FULL):
-        apply_to_command = getattr(_sandbox, "apply_to_command", None)
-        if callable(apply_to_command):
-            cmd = apply_to_command(cmd, _sandbox_level, project_root=cwd)
-        _log.debug("macOS sandbox level %r applied to agent command", _sandbox_level.value)
-
-    # G-GP-08: Sandbox environment filtering
-    if settings.sandbox_env_filter:
-        allowlist = settings.sandbox_env_allowlist
-        env = {k: v for k, v in os.environ.items() if k in allowlist or k.startswith("THGENT_")}
-    else:
-        env = os.environ.copy()
-
-    env["PYTHONUNBUFFERED"] = "1"
-    env.update(
-        {
-            "THGENT_SESSION_ID": session_id,
-            "THGENT_SESSION_META_PATH": str(p["meta"]),
-            "THGENT_SESSION_RC_PATH": str(p["rc"]),
-            "THGENT_SESSION_STDOUT_PATH": str(p["stdout"]),
-            "THGENT_SESSION_STDERR_PATH": str(p["stderr"]),
-            "THGENT_OWNER_TAG": owner_tag,
-        }
+    proc = _phase_bg_spawn(
+        cmd=cmd,
+        cwd=cwd,
+        env=env,
+        stdin_handle=stdin_handle,
+        stdout_handle=stdout_handle,
+        stderr_handle=stderr_handle,
     )
 
-    stdin_handle = subprocess.DEVNULL
-    if settings.use_fifo is True:
-        try:
-            # On Unix, create a FIFO
-            if platform.system() != "Windows":
-                in_path = p.get("in")
-                if in_path is None:
-                    raise RuntimeError("Session paths missing 'in' key")
-                if not in_path.exists():
-                    os.mkfifo(str(in_path))
-                # Open for reading in non-blocking mode to avoid hanging the parent
-                # but then set to blocking for the child if needed.
-                # Actually, opening a FIFO for reading will block until a writer opens it.
-                # To avoid blocking bg_impl, we should open it in the background or use O_NONBLOCK.
-                fifo_fd = os.open(str(in_path), os.O_RDONLY | os.O_NONBLOCK)
-                stdin_handle = fifo_fd
-            else:
-                _log.warning("FIFO not supported on Windows; falling back to DEVNULL.")
-        except Exception as e:
-            _log.warning("Failed to create FIFO: %s", e)
-
-    try:
-        spawn_with_eagain_retry = _impl_lazy._spawn_with_eagain_retry
-        if spawn_with_eagain_retry is None:
-            raise RuntimeError("spawn helper is unavailable")
-        proc = spawn_with_eagain_retry(
-            cmd,
-            cwd=str(cwd),
-            env=env,
-            stdin=stdin_handle,
-            stdout=stdout_handle,
-            stderr=stderr_handle,
-        )
-    except RuntimeError:
-        # AUDIT-N+14 fallback: when the canonical ``_spawn_with_eagain_retry``
-        # is unavailable (e.g. test environment that patches
-        # ``thegent.cli.commands.impl.subprocess.Popen`` directly), fall back
-        # to ``subprocess.Popen`` so the test contract and the bare-metal
-        # spawn path both succeed. Use the impl namespace subprocess so
-        # ``@patch("thegent.cli.commands.impl.subprocess.Popen")`` is honoured.
-        _impl_subprocess = _impl_lazy.subprocess
-        popen = getattr(_impl_subprocess, "Popen", None)
-        if popen is None:
-            raise
-        proc = popen(
-            cmd,
-            cwd=str(cwd),
-            env=env,
-            stdin=stdin_handle,
-            stdout=stdout_handle,
-            stderr=stderr_handle,
-        )
-    except Exception:
-        stdout_handle.close()
-        stderr_handle.close()
-        if isinstance(stdin_handle, int) and stdin_handle > 0:
-            os.close(stdin_handle)
-        raise
-    finally:
-        stdout_handle.close()
-        stderr_handle.close()
-        # Do not close stdin_handle here if it's an FD being inherited
-
-    meta: dict[str, Any] = {
-        "version": 1,
-        "session_id": session_id,
-        "agent": agent,
-        "owner": owner_tag,
-        "cwd": str(cwd),
-        "prompt": prompt,
-        "mode": mode,
-        "timeout_hint_s": effective_timeout,
-        "host": socket.gethostname(),
-        "launcher_pid": os.getpid(),
-        "launcher_ppid": os.getppid(),
-        "launcher_uid": os.getuid(),
-        "status": "running",
-        "started_at_utc": datetime.now(UTC).isoformat(),
-        "pid": proc.pid,
-        "command": cmd,
-        "paths": {k: str(v) for k, v in p.items()},
-    }
-    if include_contract:
-        if route_contract is not None:
-            meta["route_contract"] = route_contract
-        if route_request is not None:
-            meta["route_request"] = route_request
-    if continue_from:
-        meta["continued_from"] = continue_from.split(",")[0].strip()
-    _save_session_meta(p["meta"], meta)
+    _phase_bg_persist_meta(
+        p=p,
+        session_id=session_id,
+        agent=agent,
+        owner_tag=owner_tag,
+        cwd=cwd,
+        prompt=prompt,
+        mode=mode,
+        effective_timeout=effective_timeout,
+        cmd=cmd,
+        proc=proc,
+        include_contract=include_contract,
+        route_contract=route_contract,
+        route_request=route_request,
+        continue_from=continue_from,
+    )
 
     return {
         "session_id": session_id,

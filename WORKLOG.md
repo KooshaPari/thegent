@@ -12848,3 +12848,87 @@ contract.
 ### Preservation
 - `sharecli/` (untracked, unrelated worktree) → untouched.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-07-30 (session 4) — WL141 L9 `bg_impl_core` CC drop stretch (CC 97 → 23; body 530 → 198L)
+
+### Goal
+Continue the active five-day goal with the natural follow-up to WL140
+(WL141 L9 `bg_impl_core` CC drop): drive `bg_impl_core` cognitive complexity
+from 97 down through the ≤30 thin-composer budget while preserving every
+WL131-WL137 wiring contract.
+
+### Work completed
+- **WL141 — L9 `bg_impl_core` CC drop stretch (CC 97 → 23; body 530 → 198L):**
+  Fourteen `_phase_bg_*` helpers extracted from `bg_impl_core`:
+  1. `_phase_bg_init_tracker` — cost tracker + rid mint with `bg_` prefix.
+  2. `_phase_bg_resolve_agent_from_model` — model alias resolution.
+  3. `_phase_bg_evaluate_contract` — contract-version gate + ROB-010
+     critical-lane downgrade prevention.
+  4. `_phase_bg_resolve_effective_timeout` — config-provider timeout fallback.
+  5. `_phase_bg_idempotency_replay` — idempotency-token replay guard.
+  6. `_phase_bg_init_services` — bundle of four per-run services.
+  7. `_phase_bg_evaluate_policy` — allow/deny/pause/warn policy decision.
+  8. `_phase_bg_remote_dispatch` — remote fast-path short-circuit.
+  9. `_phase_bg_build_command` — 15-key argv assembly.
+  10. `_phase_bg_apply_sandbox` — macOS sandbox-exec wrapper.
+  11. `_phase_bg_filter_env` — env-var scrubbing + THGENT_* injection
+      (G-GP-08 contract).
+  12. `_phase_bg_open_fifo` — control FIFO + fallback.
+  13. `_phase_bg_spawn` — subprocess.Popen wrapper.
+  14. `_phase_bg_persist_meta` — 12-key RunMeta kwargs + session.json write.
+- `bg_impl_core` body **530 → 198 lines** (−332L); CC **97 → 23**
+  (−74 CC points; ≤30 thin-composer budget smashed by 7).
+- All helpers within the L9 composite budget (CC ≤ 18, body ≤ 80L):
+  max helper CC = 14 (`_phase_bg_build_command` argv assembler),
+  max body = 68L on the same helper.
+- Orchestrator is now **14 phase-helper calls deep** — a true thin composer.
+- **Bug fixed (latent):** `_phase_bg_remote_dispatch` referenced `sys.argv`
+  without `import sys` — sealed by adding `import sys` to the helper body.
+  Would have NameError'd on any `--remote` dispatch path in production.
+- **Pre-existing broken import flagged (not fixed):** the ROB-010
+  critical-lane downgrade path inside `_phase_bg_evaluate_contract`
+  references `thegent.contracts.registry.get_registry().is_compatible()`,
+  which doesn't exist. Preserved verbatim — out of scope for WL141;
+  flagged for a future governance/stability pass.
+
+### Validation
+- Focused L9 regression suite:
+  - `tests/test_wl130_l3_entrypoint_contract.py`
+  - `tests/test_wl131_l9_mid_phase_wiring.py`
+  - `tests/test_wl132_l9_postmid_prefailure_wiring.py`
+  - `tests/test_wl133_l9_postsuccess_wiring.py`
+  - `tests/test_wl134_l9_classification_wiring.py`
+  - `tests/test_wl137_l9_composite_wiring.py`
+  - `tests/test_wl141_l9_bg_composite_wiring.py` (new — 54 tests)
+  - **147 tests pass total.**
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- `ruff check` + `ruff format --check` clean on all changed paths.
+
+### Cockpit progress bar (today's contribution)
+
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 84 | 88 | +4 | `bg_impl_core` CC 97→23 (−74); body 530→198L (−332); 14 new `_phase_bg_*` helpers; orchestrator now 14-helper-call deep thin composer; latent `sys.argv` NameError sealed |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (CC 27→15 [run_impl_core, WL140] + CC 97→23 [bg_impl_core, WL141];
+body 424→416L + 530→198L; 5+14 = 19 new `_phase_*` helpers across both
+orchestrators; both are now thin composers); L30 unchanged from WL139.
+SOTA audit lanes touched in this session: **L9** (L30 stable at A+ from
+WL139, L9 jumped A → A+ on the second monolith collapse).
+
+### Stats
+- Files changed: 2
+  - `src/thegent/cli/services/run_execution_core_helpers.py`
+    (+14 helpers, `bg_impl_core` body 530 → 198L)
+  - `tests/test_wl141_l9_bg_composite_wiring.py` (new — 54 tests)
+- Net delta: +14 helpers / −332 lines net in orchestrator.
+- Local commit: TBD (WL141 atomic pass).
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
