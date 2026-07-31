@@ -1,7 +1,6 @@
 """Deterministic cross-runtime coordination contract fixture."""
 
 import json
-import sys
 
 from .adapters.dedup import InMemoryLockAdapter
 from .adapters.queue import InMemoryQueueAdapter
@@ -59,7 +58,7 @@ def run_contract() -> list[dict[str, object]]:
 def main() -> None:
     """Emit the stable contract as compact JSON Lines."""
     for record in run_contract():
-        sys.stdout.write(json.dumps(record, separators=(",", ":")) + "\n")
+        print(json.dumps(record, separators=(",", ":")))
 
 
 if __name__ == "__main__":
