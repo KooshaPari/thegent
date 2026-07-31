@@ -32,7 +32,8 @@ UV   := $(shell command -v uv 2>/dev/null)
 .PHONY: help install dev test lint format typecheck quality clean \
         setup doctor audit scorecard build coverage check precommit \
         sync boot phen onboard sota security harden version \
-        validate-makefile test-quick dep-audit secrets-scan pip-audit
+        validate-makefile test-quick dep-audit secrets-scan pip-audit \
+        init validate-init
 
 # ---------------------------------------------------------------------------
 # Help (default target)
@@ -172,16 +173,42 @@ version: ## Print the project version (from VERSION file or pyproject)
 	@if [ -f VERSION ]; then cat VERSION; \
 	else $(UV) run python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])"; fi
 
+# `init` runs the L30 first-run wizard against the current workspace. By
+# default it is non-interactive so CI / pre-commit hooks can call it
+# safely; pass `INTERACTIVE=1` to print the human banner. The wizard is
+# idempotent — re-running never corrupts prior writes; conflicting files
+# are reported in `skipped` (use `FORCE=1` to overwrite).
+init: ## Run the L30 first-run wizard (idempotent, non-interactive default)
+	@echo "[make init] Running L30 first-run wizard..."
+	@if [ -n "$(UV)" ]; then \
+		if [ "$${INTERACTIVE:-0}" = "1" ]; then \
+			$(UV) run thegent init --interactive --json; \
+		else \
+			$(UV) run thegent init --json; \
+		fi; \
+	else \
+		echo "uv not on PATH — install from https://astral.sh/uv" >&2; \
+		exit 1; \
+	fi
+
+# `validate-init` is the L30 onboarding self-test. Confirms the wizard
+# module + Typer sub-app surface + contract-test gate are healthy without
+# invoking the wizard against the live workspace. Safe for CI and
+# pre-commit hooks; runs in <100ms.
+validate-init: ## Self-test the L30 first-run wizard contract (WL139)
+	@bash scripts/check_init_invariants.sh
+
 # ---------------------------------------------------------------------------
 # Onboarding aggregate (L30 onboarding surface polish)
 # ---------------------------------------------------------------------------
 
 # `onboard` is the single command a brand-new contributor runs after `git
 # clone`. It exercises the full L30 onboarding surface: install deps,
-# boot the devcontainer contract, smoke-test the CLI, and print the
-# version. Failures abort at the first non-zero exit so the contributor
-# sees a clear error trail instead of a partial green run.
-onboard: install doctor version ## Aggregate onboarding: install + doctor + version + smoke
+# run the first-run wizard, boot the devcontainer contract, smoke-test
+# the CLI, and print the version. Failures abort at the first non-zero
+# exit so the contributor sees a clear error trail instead of a partial
+# green run.
+onboard: install init doctor version ## Aggregate onboarding: install + init + doctor + version + smoke
 	@echo
 	@echo "[make onboard] Running CLI smoke test..."
 	@if command -v thegent >/dev/null 2>&1; then \

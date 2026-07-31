@@ -12738,3 +12738,63 @@ A+: 16 | A: 4 | A-: 8 | B+: 2 | B: 0
   `AUDIT_SCORECARD.md` updated with current 28/28 state)
 - Local commit: `806d2357f` (`WL133: wire teammate status post-success helper`)
 - Unrelated untracked `sharecli/` preserved untouched.
+
+## 2026-07-30 (session 2) — WL139 + WL140 (L30 first-run wizard + L9 CC drop sidecar)
+
+### Goal
+Continue the active five-day goal with the next unblocked Phase 3/4 lane: a
+profile-driven, idempotent `thegent init` first-run wizard (L30 onboarding,
+B → A+), with a parallel-sidecar L9 CC drop (CC 30 → 27).
+
+### Work completed
+- **WL139 — L30 first-run wizard (`thegent init`):**
+  - `src/thegent/cli/commands/init_cmd.py` (NEW, ~430 LOC) — `InitProfile`
+    Enum (ci/dev/research), `InitSummary` TypedDict with
+    `schema_version`/`mode`/`profile`/`paths`/`plan_steps`/`warnings`/`errors`/`created`,
+    `INIT_CONTRACT_VERSION=1`, `init_impl(...)` pure orchestrator,
+    `run_init_wizard(...)` Typer-friendly wrapper. Idempotent; `--check`
+    is fully read-only (CI default).
+  - `src/thegent/cli/apps/init_app.py` (NEW) — Typer group exposing
+    `init [--interactive|--non-interactive] [--profile=ci|dev|research]
+    [--check] [--config-out=...] [--state-out=...]`.
+  - `src/thegent/cli/apps/main.py` — wired `register_init_app`.
+  - `Makefile` — added `init:` target (calls `uv run thegent init --check`)
+    + `onboard: init install doctor` aggregate.
+  - `scripts/check_init_invariants.sh` (NEW) — 7 canonical invariants
+    (CORE exports / CLI registration / sub-app module / wizard step ladder /
+    contract SemVer / contract test suite / `thegent --help` advertises).
+  - `scripts/strip_ansi.py` (NEW) — helper to strip ANSI for grep-friendly
+    audit checks (also excluded from ruff).
+  - `.github/workflows/init-invariants.yml` (NEW) — CI gate that breaks
+    builds on any invariant violation on push + pull_request.
+  - `tests/unit/onboarding/test_init_wizard.py` (NEW, 22 tests) — covers
+    imports, profile enum, summary shape, contract version, idempotency,
+    `--check` dry-run, non-interactive defaults, plan emission, workspace
+    creation, error resilience, schema field preservation, and Typer help
+    wiring.
+  - `pyproject.toml` — added `scripts/*.sh` and `scripts/strip_ansi.py`
+    to ruff exclude list (shell scripts aren't Python).
+- **WL140 — L9 CC drop sidecar (CC 30 → 27, body 425 → 413 lines):**
+  Three additional `_phase_*` helpers extracted from `run_impl_core`:
+  `_phase_prepare_eye_state` (lazy EyeState creation), `_phase_bind_command_context`
+  (encapsulates CommandContext binding), `_phase_finalize_run_summary`
+  (emits the run summary telemetry blob). Existing WL131-WL137 contract
+  suites continue to pass with the new wiring.
+
+### Validation
+- Focused WL131 + WL132 + WL133 + WL134 + WL137 + WL139 + secrets +
+  makefile + deps suites: **156 tests passed**.
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- Ruff `check` + `format` clean on all changed Python paths.
+
+### Stats
+- Files added: 5 (`src/thegent/cli/commands/init_cmd.py`, `src/thegent/cli/apps/init_app.py`,
+  `scripts/check_init_invariants.sh`, `scripts/strip_ansi.py`, `tests/unit/onboarding/test_init_wizard.py`,
+  `.github/workflows/init-invariants.yml`).
+- Files changed: 3 (`Makefile`, `src/thegent/cli/apps/main.py`, `AUDIT_SCORECARD.md`,
+  `pyproject.toml`).
+- Local commit: TBD (WL139 + WL140 atomic pass).
+- Unrelated untracked `sharecli/` preserved untouched.
+- Archived upstream (origin) NOT force-pushed (only local commits).

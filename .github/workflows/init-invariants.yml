@@ -1,0 +1,58 @@
+name: init-invariants
+
+# L30 Onboarding lane — first-run wizard self-test (WL139).
+#
+# Runs `make init` against every push + PR. The underlying script
+# (`scripts/check_init_invariants.sh`) verifies:
+#   * the `init_impl` core module imports with the canonical surface
+#   * the `init_app` Typer sub-app registers on the root CLI as ``init``
+#   * the wizard step ladder is canonical
+#     (preflight → probe → scaffold → contract → summary)
+#   * DEFAULT_CONTRACT_VERSION is SemVer-ish
+#   * the contract test suite pins the wizard surface
+#   * `thegent --help` advertises the ``init`` subcommand
+#
+# The gate runs in <30s on Linux because it does not need the wider
+# pytest matrix — only the Typer surface + the script's own checks.
+
+on:
+  push:
+    branches: [main, master, chore/**, feat/**, fix/**, refactor/**]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${ github.workflow }-${ github.ref }
+  cancel-in-progress: true
+
+jobs:
+  init-invariants:
+    name: L30 first-run wizard gate (WL139)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: false
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install uv
+        run: |
+          python -m pip install --upgrade pip "uv>=0.4.0"
+      - name: Sync project (editable)
+        run: uv sync --frozen --no-dev || uv sync --no-dev
+      - name: Run init invariants script
+        run: bash scripts/check_init_invariants.sh
+      - name: Run init contract tests
+        run: |
+          uv run pytest tests/unit/onboarding/test_init_wizard.py -q --no-header --tb=short
+      - name: Verify Makefile target
+        run: |
+          set -euo pipefail
+          make init

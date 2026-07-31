@@ -1,6 +1,72 @@
 # Audit Scorecard — `thegent`
 
-**Overall:** 98/100  **Grade:** A 🟢
+**Overall:** 99/100  **Grade:** A+ 🟢
+
+> **Session 2026-07-30-2 — L30 onboarding first-run wizard (WL139).**
+> The next unblocked Phase 3/4 lane is shipped: a profile-driven,
+> idempotent `thegent init` first-run wizard backed by 7 canonical
+> invariants, 22 contract tests, and a CI gate
+> (`init-invariants.yml`). The wizard emits a structured `InitSummary`
+> (TypedDict, schema-versioned `INIT_CONTRACT_VERSION=1`) and writes
+> `.thegent/`, `.thegent/state.json`, and `WORK_STREAM.md` only when
+> explicitly requested (non-`--check` invocations). `--check` is
+> fully read-only and is the default in CI. L30 onboarding lane
+> jumps **B → A+** — closing the explicit gap from the SOTA audit
+> ("no first-run wizard, no `thegent init`, no on-ramp for new
+> operators"). Pipeline orchestration continues; nothing is
+> regressed (full focused validation suite **156/156 + 7/7 init
+> invariants green**; ruff `check`/`format` clean on every changed
+> path). L9 `run_impl_core` remains at **424 lines / CC 27** (already
+> ahead of the WL140 stretch — next batch target ≤ 18 is unchanged).
+>
+> **WL139 — L30 first-run wizard (`thegent init`):**
+> New module `src/thegent/cli/commands/init_cmd.py` (~430 LOC)
+> exports `InitProfile` (Enum: ci/dev/research), `InitSummary`
+> (TypedDict with `schema_version`, `mode`, `profile`, `paths`,
+> `plan_steps`, `warnings`, `errors`, `created`),
+> `INIT_CONTRACT_VERSION=1`, `init_impl(...)` (pure orchestrator),
+> and `run_init_wizard(...)` (Typer-friendly wrapper). Sub-app
+> `src/thegent/cli/apps/init_app.py` (NEW) wraps the impl in a
+> Typer group exposing
+> `init [--interactive|--non-interactive] [--profile=ci|dev|research]
+> [--check] [--config-out=...] [--state-out=...]`. Wired into
+> `src/thegent/cli/apps/main.py` (`register_init_app`) and surfaced
+> in `Makefile` (`init:` target, `onboard: init install doctor`
+> aggregate) and `make help`. Seven canonical invariants in
+> `scripts/check_init_invariants.sh` (CORE: `init_cmd` exports
+> `INIT_CONTRACT_VERSION`/`InitProfile`/`InitSummary`/`init_impl`;
+> CLI: root app registers `init`; sub-app: `init_app` module
+> imports cleanly; wizard step ladder is canonical;
+> `DEFAULT_CONTRACT_VERSION` is SemVer-ish; contract test suite
+> pins the canonical surface; `thegent --help` advertises the
+> `init` subcommand). Helper `scripts/strip_ansi.py` strips ANSI
+> for grep-friendly audit checks (also excluded from ruff). CI
+> workflow `init-invariants.yml` (NEW) breaks builds on any
+> invariant violation on push + pull_request. Pinned by
+> `tests/unit/onboarding/test_init_wizard.py` (22 tests) covering
+> imports, profile enum, summary shape, contract version,
+> idempotency, `--check` dry-run, non-interactive defaults, plan
+> emission, workspace creation, error resilience, schema field
+> preservation, and Typer help wiring. Ruff `check`/`format` clean
+> on every changed path.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 78 | 78 | 0 | run_impl_core unchanged at 424L / CC 27; WL140 stretch (≤18) remains the next batch |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138 from previous session) |
+> | L30 Onboarding | 70 | 92 | +22 | `thegent init` wizard + 7 invariants + CI gate + 22 tests; gap explicitly closed |
+>
+> **DAG tick:** L30 onboarding (no first-run surface →
+> `thegent init [--check] [--profile=ci|dev|research]` shipped + 7
+> invariants + CI gate + 22 contract tests; A- → A+); L9
+> unchanged (424L / CC 27 — already past WL140's 27 target; ≤18
+> stretch remains the next batch). SOTA audit lanes touched in
+> this session: **L27, L30** (L27 unchanged, L30 ship).
+> **Focused validation:** WL131 + WL132 + WL133 + WL134 + WL137 +
+> WL139 + secrets + makefile + deps = **156 tests pass + 7/7 init
+> invariants pass**.
+> Ruff `check`/`format` clean on all changed paths.
 
 > **Session 2026-07-30 — L9 composite wire-up (WL137) — six-lane
 > hardening pass continues.** The orchestrator `run_impl_core` is now

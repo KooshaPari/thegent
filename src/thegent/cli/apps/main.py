@@ -212,6 +212,13 @@ from thegent.ux.cli_cockpit import app as cockpit_app  # noqa: E402
 # so CI pipelines can ingest replay diffs natively.
 from thegent.ux.cli_sota import app as sota_app  # noqa: E402
 
+# Phase 3/4 hardening lane: onboarding first-run wizard.
+# Adds `thegent init` (interactive + non-interactive + check + verify)
+# plus a flat `init` sub-app for the L30 onboarding surface. The
+# wizard is idempotent and contract-pinned by
+# ``tests/unit/onboarding/test_init_wizard.py``.
+from thegent.cli.apps.init_app import init_app  # noqa: E402
+
 
 @app.command("govern", help="Governance operations.")
 def govern_cmd() -> None:
@@ -238,6 +245,12 @@ app.add_typer(cockpit_app, name="cockpit")
 # Register the SOTA replay sub-app so `thegent sota replay --batch ... --compare ...`
 # flows through to its native Typer parser.
 app.add_typer(sota_app, name="sota")
+
+# Register the first-run wizard sub-app so `thegent init`,
+# `thegent init check`, and `thegent init verify` all flow through
+# to the native Typer parser. Top-level `thegent init` is also
+# reachable via the callback above (no_args_is_help=True).
+app.add_typer(init_app, name="init")
 
 
 if __name__ == "__main__":
