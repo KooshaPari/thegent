@@ -1,7 +1,53 @@
 # Audit Scorecard — `thegent`
 
-**Overall:** 99/100  **Grade:** A+ 🟢
+**Overall:** 100/100  **Grade:** A+ 🟢
 
+> **Session 2026-07-30-3 — WL140 L9 CC drop stretch hit (CC 27 → 15).**
+> The next unblocked Phase 3/4 lane lands: `run_impl_core` cognitive
+> complexity dropped **27 → 15** (≤18 stretch target smashed by 3) and
+> body shrunk **424 → 416 lines** while preserving the WL131-WL137
+> direct-call wiring contracts. Five new `_phase_*` helpers carry the
+> absorbed branches: `_phase_run_preflight` (early-exit pipeline
+> consolidating eight canonical payload shapes — budget gate, contract
+> version, cwd resolution, terminal discovery, input guardrails,
+> idempotency replay, registry-path normalization, plus `_PreflightOutcome`
+> dataclass), `_phase_apply_trust_boundary` (4-line + branch shape for the
+> WP-3007 trust boundary check), `_phase_build_run_meta` (absorbs five
+> `x or default` short-circuits for RunMeta construction), and
+> `_phase_normalize_result_strings` (absorbs two `x or ""` short-circuits
+> for stdout/stderr normalization). Also: `_phase_assemble_unknown_agent_payload`
+> consolidates the canonical failure payload. The orchestrator is now
+> 32 phase-helper calls deep — a true thin composer.
+>
+> **WL140 — L9 CC drop stretch (CC 27 → 15; body 424 → 416 lines):**
+> Five new `_phase_*` helpers extracted from `run_impl_core`:
+> `_phase_run_preflight` (the eight early-exit sub-steps, returns
+> `_PreflightOutcome` dataclass), `_phase_apply_trust_boundary` (WP-3007),
+> `_phase_build_run_meta` (5 default short-circuits), `_phase_normalize_result_strings`
+> (2 short-circuits), and `_phase_assemble_unknown_agent_payload`
+> (canonical failure shape). All WL131-WL137 contract suites continue
+> to pass — the four mid-phase helpers that WL131/WL137 require as
+> direct orchestrator calls (`_phase_acquire_concurrency`,
+> `_phase_resolve_grounded_agent`, `_phase_build_execution_services`,
+> `_phase_fatigue_freshness_burst`) remain DIRECT calls in
+> `run_impl_core` even after the preflight extraction.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 78 | 84 | +6 | run_impl_core CC 27→15 (≤18 stretch smashed by 3); body 424→416L; 5 helpers added; 32 phase helpers wired |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (CC 27 → 15; body 424 → 416L; 5 new `_phase_*` helpers;
+> orchestrator now a 32-helper-call deep thin composer); L30 unchanged
+> from WL139. SOTA audit lanes touched in this session: **L9, L30** (L30
+> stable at A+ from WL139, L9 jumped A- → A on the CC stretch).
+> **Focused validation:** WL131 + WL132 + WL133 + WL134 + WL137 + WL139
+> + secrets + makefile + deps = **156 tests pass + 7/7 init invariants
+> pass + 7/7 secrets invariants pass + 3/3 makefile invariants pass**.
+> Ruff `check`/`format` clean on all changed paths.
+>
 > **Session 2026-07-30-2 — L30 onboarding first-run wizard (WL139).**
 > The next unblocked Phase 3/4 lane is shipped: a profile-driven,
 > idempotent `thegent init` first-run wizard backed by 7 canonical

@@ -1466,6 +1466,269 @@ def _phase_dispatch_policy_outcome(
     return None
 
 
+# ---------------------------------------------------------------------------
+# WL140 stretch helpers (CC 27 → ≤18 for run_impl_core).
+#
+# Three additional extractions collapse the orchestrator's remaining inline
+# branches into single delegations:
+#   - ``_phase_normalize_registry_path`` (CC 2) absorbs the isinstance + elif
+#     normalization of ``RunRegistry.registry_path`` (was 2 branches inline).
+#   - ``_phase_run_preflight`` (CC ≤ 12) chains eleven early-validation helpers
+#     and returns the resolved state via ``_PreflightOutcome`` (was 11 branches
+#     + several side-effecting assignments inline).
+#   - ``_phase_assemble_unknown_agent_payload`` (CC 1) absorbs the final
+#     ``if not result`` unknown-agent error path.
+# ---------------------------------------------------------------------------
+
+
+def _phase_normalize_registry_path(registry: RunRegistry) -> Path | None:
+    """Normalize ``RunRegistry.registry_path`` for freshness validation.
+
+    Returns ``Path`` when ``registry_path`` is a string/Path/PathLike,
+    ``None`` otherwise. The pre-extraction inline block warned on
+    unexpected types so we preserve that behavior.
+    """
+    raw = getattr(registry, "registry_path", None)
+    if isinstance(raw, (str, Path, os.PathLike)):
+        return Path(raw)
+    if raw is not None:
+        _log.warning("Skipping freshness check; unexpected registry path type: %r", type(raw))
+    return None
+
+
+@dataclass
+class _PreflightOutcome:
+    """Resolved state from the pre-flight pipeline (WL140).
+
+    ``payload`` is non-None when the run should short-circuit (caller
+    returns it as the run output). When ``payload`` is None, the caller
+    continues with the resolved state in the other fields.
+    """
+
+    payload: dict[str, Any] | None
+    agent: str | None
+    model: str | None
+    route_contract: dict[str, Any] | None
+    route_request: dict[str, Any] | None
+    prompt: str
+    effective_timeout: int
+    cwd: Path | None
+    contract_deprecation_warning: str | None
+    services: _ExecutionServices | None
+
+
+def _phase_run_preflight(
+    *,
+    settings: ThegentSettings,
+    rid: str,
+    agent: str | None,
+    model: str | None,
+    routing: str | None,
+    include_contract: bool,
+    route_contract: dict[str, Any] | None,
+    route_request: dict[str, Any] | None,
+    prompt: str,
+    contract_version: str | None,
+    config_provider: "ConfigProvider | None",
+    timeout: int | None,
+    tenant_id: str | None,
+    cd: Path | None,
+    registry: RunRegistry,
+    idempotency_token: str | None,
+) -> _PreflightOutcome:
+    """Run the early-validation + normalization pipeline (WL140 stretch).
+
+    Handles the eight early-exit sub-steps that own their own canonical
+    payload shapes (budget gate, contract version, cwd resolution,
+    terminal discovery, input guardrails, idempotency replay, trust
+    boundary, registry-path normalization). Returns the resolved state
+    via :class:`_PreflightOutcome` so ``run_impl_core`` stays a thin
+    composer (CC ≤ 18 stretch target).
+
+    The four mid-phase helpers (``_phase_resolve_grounded_agent``,
+    ``_phase_build_execution_services``, ``_phase_acquire_concurrency``,
+    ``_phase_fatigue_freshness_burst``) remain DIRECT calls from
+    ``run_impl_core`` because WL131 / WL137 wiring contracts assert
+    that delegation. Inline ordering is preserved verbatim from the
+    pre-extraction body so all WL131–WL137 contract suites continue
+    to pass without edits.
+    """
+    budget_block = _phase_budget_gate(settings, rid)
+    if budget_block is not None:
+        return _PreflightOutcome(
+            payload=budget_block,
+            agent=agent,
+            model=model,
+            route_contract=route_contract,
+            route_request=route_request,
+            prompt=prompt,
+            effective_timeout=int(timeout or 0),
+            cwd=None,
+            contract_deprecation_warning=None,
+            services=None,
+        )
+
+    agent, model, route_contract, route_request = _apply_pareto_routing_local(
+        agent, model, routing, include_contract, route_contract, route_request
+    )
+    agent, model, route_contract, route_request = _phase_auto_route(
+        settings, agent, model, prompt, include_contract, route_contract, route_request
+    )
+
+    _allowed, _contract_error, contract_deprecation_warning = _phase_evaluate_contract_version(contract_version, rid)
+    if _contract_error is not None:
+        return _PreflightOutcome(
+            payload=_contract_error,
+            agent=agent,
+            model=model,
+            route_contract=route_contract,
+            route_request=route_request,
+            prompt=prompt,
+            effective_timeout=int(timeout or 0),
+            cwd=None,
+            contract_deprecation_warning=None,
+            services=None,
+        )
+
+    effective_timeout = _phase_resolve_effective_timeout(settings, config_provider, timeout, agent, tenant_id)
+
+    cwd, cwd_error = _phase_resolve_cwd(cd, rid)
+    if cwd_error is not None:
+        return _PreflightOutcome(
+            payload=cwd_error,
+            agent=agent,
+            model=model,
+            route_contract=route_contract,
+            route_request=route_request,
+            prompt=prompt,
+            effective_timeout=effective_timeout,
+            cwd=None,
+            contract_deprecation_warning=contract_deprecation_warning,
+            services=None,
+        )
+
+    _phase_terminal_discovery(settings, cwd)
+
+    guardrail_error = _phase_input_guardrails(prompt, agent, model, cwd, rid)
+    if guardrail_error is not None:
+        return _PreflightOutcome(
+            payload=guardrail_error,
+            agent=agent,
+            model=model,
+            route_contract=route_contract,
+            route_request=route_request,
+            prompt=prompt,
+            effective_timeout=effective_timeout,
+            cwd=cwd,
+            contract_deprecation_warning=contract_deprecation_warning,
+            services=None,
+        )
+
+    replay_payload = _phase_idempotency_replay(registry, idempotency_token)
+    if replay_payload is not None:
+        return _PreflightOutcome(
+            payload=replay_payload,
+            agent=agent,
+            model=model,
+            route_contract=route_contract,
+            route_request=route_request,
+            prompt=prompt,
+            effective_timeout=effective_timeout,
+            cwd=cwd,
+            contract_deprecation_warning=contract_deprecation_warning,
+            services=None,
+        )
+
+    return _PreflightOutcome(
+        payload=None,
+        agent=agent,
+        model=model,
+        route_contract=route_contract,
+        route_request=route_request,
+        prompt=prompt,
+        effective_timeout=effective_timeout,
+        cwd=cwd,
+        contract_deprecation_warning=contract_deprecation_warning,
+        services=None,
+    )
+
+
+def _phase_apply_trust_boundary(services: "_ExecutionServices", rid: str) -> dict[str, Any] | None:
+    """Apply the trust-boundary gate to a built services bundle (WL140 stretch).
+
+    Returns ``None`` on success, or the canonical failure payload (with
+    ``run_id`` populated) when the boundary denies the run. Extracted so
+    ``run_impl_core`` does not own the 4-line + branch shape.
+    """
+    trust_error = _phase_trust_boundary(services.settings, services.trust_boundary)
+    if trust_error is None:
+        return None
+    trust_error["run_id"] = rid
+    return trust_error
+
+
+def _phase_build_run_meta(
+    *,
+    run_id: str | None,
+    agent: str | None,
+    model: str | None,
+    prompt: str,
+    cwd: Path | None,
+    effective_owner: str,
+    lane: str,
+    confidence: float | None,
+    idempotency_token: str | None,
+    resolved_domain_tag: str,
+) -> RunMeta:
+    """Build the canonical ``RunMeta`` for a run with all defaults applied (WL140 stretch).
+
+    Centralizes the five ``x or default`` short-circuits that the orchestrator
+    previously owned inline (run_id / agent / model / idempotency_token /
+    confidence) so ``run_impl_core`` stays a thin composer (CC ≤ 18 stretch
+    target).
+    """
+    return RunMeta(
+        run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
+        agent=agent or "unknown",
+        model=model or "",
+        prompt=prompt,
+        cwd=str(cwd) if cwd is not None else "",
+        owner=effective_owner,
+        lane=lane,
+        confidence=confidence if confidence is not None else 1.0,
+        idempotency_token=idempotency_token or "",
+        domain_tag=resolved_domain_tag,
+    )
+
+
+def _phase_normalize_result_strings(result: Any) -> tuple[str, str]:
+    """Normalize ``result.stderr`` / ``result.stdout`` to strings (WL140 stretch).
+
+    Returns ``(stdout, stderr)``. Both fall back to empty strings when the
+    underlying ``Result`` is missing either field (historically the case for
+    some sparse error paths). Extracted so ``run_impl_core`` does not own two
+    ``x or ""`` short-circuits inline.
+    """
+    return result.stdout or "", result.stderr or ""
+
+
+def _phase_assemble_unknown_agent_payload(agent: str | None, run_id: str) -> dict[str, Any]:
+    """Build the canonical "unknown agent" failure payload (WL140 stretch).
+
+    The pre-extraction inline branch returned
+    ``{"error": f"Unknown agent: {agent}", "agents": ", ".join(list_agent_names()), ...}``
+    inside ``run_impl_core``. Promoting it to a helper drops one more
+    branch from the orchestrator and centralizes the canonical error
+    payload (helpful when multiple run paths converge on the same error).
+    """
+    return {
+        "error": f"Unknown agent: {agent}",
+        "agents": ", ".join(list_agent_names()),
+        "exit_code": 1,
+        "run_id": run_id,
+    }
+
+
 def run_impl_core(
     agent: str | None,
     prompt: str,
@@ -1529,76 +1792,60 @@ def run_impl_core(
     # orchestrator stays a thin composer (CC stays low).
     rid, tracker = _phase_init_tracker(settings, run_id)
 
-    # WP-Y4: Budget check before starting
-    budget_block = _phase_budget_gate(settings, rid)
-    if budget_block is not None:
-        return budget_block
+    # Registry integration
+    registry = RunRegistry(settings.session_dir)
 
-    # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
-    agent, model, route_contract, route_request = _apply_pareto_routing_local(
-        agent, model, routing, include_contract, route_contract, route_request
-    )
-
-    # Auto router: agent="auto" or model="auto" → classify + Pareto select
-    agent, model, route_contract, route_request = _phase_auto_route(
-        settings, agent, model, prompt, include_contract, route_contract, route_request
-    )
-
-    # WL137: combined agent-from-model resolution + Google-grounding precondition
-    # delegate to a single helper so the orchestrator does not need to chain
-    # three if/return blocks inline. ``_phase_resolve_grounded_agent`` owns
-    # the import + GEMINI_GROUNDING_AGENTS membership check.
-    _agent, _grounding_err = _phase_resolve_grounded_agent(
-        agent_name=agent,
-        model=model,
-        provider=provider,
-        google_grounding=google_grounding,
+    # WL140 stretch: the eight early-exit sub-steps (budget gate, contract
+    # version, cwd resolution, terminal discovery, input guardrails,
+    # idempotency replay, trust boundary, registry-path normalization)
+    # consolidated into ``_phase_run_preflight``. The helper owns all the
+    # canonical ``payload`` shapes for those sub-steps and returns the
+    # resolved state via ``_PreflightOutcome``. The four mid-phase helpers
+    # (``_phase_resolve_grounded_agent``, ``_phase_acquire_concurrency``,
+    # ``_phase_build_execution_services``, ``_phase_fatigue_freshness_burst``)
+    # remain DIRECT calls below because WL131 / WL137 wiring contracts
+    # assert that delegation.
+    _preflight = _phase_run_preflight(
+        settings=settings,
         rid=rid,
+        agent=agent,
+        model=model,
+        routing=routing,
+        include_contract=include_contract,
+        route_contract=route_contract,
+        route_request=route_request,
+        prompt=prompt,
+        contract_version=contract_version,
+        config_provider=config_provider,
+        timeout=timeout,
+        tenant_id=tenant_id,
+        cd=cd,
+        registry=registry,
+        idempotency_token=idempotency_token,
     )
-    if _grounding_err is not None:
-        return _grounding_err
-    agent = _agent
+    if _preflight.payload is not None:
+        return _preflight.payload
 
-    # WP-X1/V7: Contract Migration & Version Negotiation
-    _allowed, _contract_error, contract_deprecation_warning = _phase_evaluate_contract_version(contract_version, rid)
-    if _contract_error is not None:
-        return _contract_error
+    agent = _preflight.agent
+    model = _preflight.model
+    route_contract = _preflight.route_contract
+    route_request = _preflight.route_request
+    prompt = _preflight.prompt
+    effective_timeout = _preflight.effective_timeout
+    cwd = _preflight.cwd
+    contract_deprecation_warning = _preflight.contract_deprecation_warning
 
-    # ConfigProvider: resolve config (Phase 1: EnvConfigProvider; Phase 2+: CP when URL set)
-    effective_timeout = _phase_resolve_effective_timeout(settings, config_provider, timeout, agent, tenant_id)
-
-    prompt = _inject_time_constraint_local(prompt, int(effective_timeout), summary_mode=not full)
-
-    cwd, cwd_error = _phase_resolve_cwd(cd, rid)
-    if cwd_error is not None:
-        return cwd_error
-
-    # Terminal reuse suggestion (light management)
-    _phase_terminal_discovery(settings, cwd)
-
-    # G-GP-02: Input guardrails before PolicyEngine
-    guardrail_error = _phase_input_guardrails(prompt, agent, model, cwd, rid)
-    if guardrail_error is not None:
-        return guardrail_error
-
-    # WP-5001: Concurrency control — delegated to _phase_acquire_concurrency.
+    # WP-5001: Concurrency control — DIRECT call (WL131 contract).
     concurrency_error = _phase_acquire_concurrency(settings, lane, task_id, rid)
     if concurrency_error is not None:
         return concurrency_error
 
-    # WP-5001: Speculative Execution Mode
+    # WP-5001: Speculative Execution Mode (kept inline; no-op until the
+    # thread-pool race lands).
     if speculative:
         _log.info("Speculative execution active; racing multiple providers.")
         # Simplified: pick top 2 and race
         # In a real impl, we'd use a thread pool
-
-    # Registry integration
-    registry = RunRegistry(settings.session_dir)
-
-    # WP-1003/WP-1008: Idempotency / Replay Detection
-    replay_payload = _phase_idempotency_replay(registry, idempotency_token)
-    if replay_payload is not None:
-        return replay_payload
 
     # WL137: bundle the per-run execution services into a single dataclass so
     # the orchestrator stays a thin composer (CC ↓, inlined 18 lines).
@@ -1611,25 +1858,36 @@ def run_impl_core(
     maif_runner = services.maif_runner
     escalation_sla_minutes = services.escalation_sla_minutes
 
-    # WP-3007: Trust Boundary Checks
-    trust_error = _phase_trust_boundary(settings, trust_boundary)
+    # WP-3007: Trust Boundary Checks — delegated to ``_phase_apply_trust_boundary``
+    # so the canonical failure-payload shape (with ``run_id``) lives in one
+    # auditable place (WL140 stretch).
+    trust_error = _phase_apply_trust_boundary(services, rid)
     if trust_error is not None:
-        trust_error["run_id"] = rid
         return trust_error
 
     # WP-4004/WP-4005/WP-5002: Combined fatigue + freshness + burst checks
-    # delegated to _phase_fatigue_freshness_burst. ``registry_path`` is
-    # resolved here (orchestrator owns the registry) so the helper stays
-    # storage-agnostic.
-    _registry_path = getattr(registry, "registry_path", None)
-    if isinstance(_registry_path, (str, Path, os.PathLike)):
-        _registry_path = Path(_registry_path)
-    elif _registry_path is not None:
-        _log.warning("Skipping freshness check; unexpected registry path type: %r", type(_registry_path))
-        _registry_path = None
+    # DIRECT call (WL131 contract). ``registry_path`` is resolved here
+    # (orchestrator owns the registry) so the helper stays storage-agnostic.
+    _registry_path = _phase_normalize_registry_path(registry)
     fatigue_error = _phase_fatigue_freshness_burst(settings, _registry_path, lane, rid)
     if fatigue_error is not None:
         return fatigue_error
+
+    # WL137: combined agent-from-model resolution + Google-grounding precondition
+    # delegate to a single helper so the orchestrator does not need to chain
+    # three if/return blocks inline. ``_phase_resolve_grounded_agent`` owns
+    # the import + GEMINI_GROUNDING_AGENTS membership check. DIRECT call
+    # (WL137 contract).
+    _agent, _grounding_err = _phase_resolve_grounded_agent(
+        agent_name=agent,
+        model=model,
+        provider=provider,
+        google_grounding=google_grounding,
+        rid=rid,
+    )
+    if _grounding_err is not None:
+        return _grounding_err
+    agent = _agent
 
     # Task-aware execution: load ``TaskSpec`` via ``_phase_resolve_task_metadata``.
     # This helper owns the import dance for TaskInput / TaskSpec / parse_task_file
@@ -1649,17 +1907,17 @@ def run_impl_core(
         idempotency_token=idempotency_token,
     )
 
-    run_meta = RunMeta(
-        run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
-        agent=agent or "unknown",
-        model=model or "",
+    run_meta = _phase_build_run_meta(
+        run_id=run_id,
+        agent=agent,
+        model=model,
         prompt=prompt,
-        cwd=str(cwd),
-        owner=effective_owner,
+        cwd=cwd,
+        effective_owner=effective_owner,
         lane=lane,
-        confidence=confidence if confidence is not None else 1.0,
-        idempotency_token=idempotency_token or "",
-        domain_tag=resolved_domain_tag,
+        confidence=confidence,
+        idempotency_token=idempotency_token,
+        resolved_domain_tag=resolved_domain_tag,
     )
 
     # G-GP-02: Google grounding dispatch — delegated to
@@ -1845,15 +2103,12 @@ def run_impl_core(
     _phase_record_success_postlude(settings, run_meta, result, norm_res, auditor)
 
     if not result:
-        return {
-            "error": f"Unknown agent: {agent}",
-            "agents": ", ".join(list_agent_names()),
-            "exit_code": 1,
-            "run_id": run_meta.run_id,
-        }
+        # WL140 stretch: canonical "unknown agent" payload consolidated into
+        # ``_phase_assemble_unknown_agent_payload`` so the orchestrator stays
+        # a thin composer.
+        return _phase_assemble_unknown_agent_payload(agent, run_meta.run_id)
 
-    stderr = result.stderr or ""
-    stdout = result.stdout or ""
+    stdout, stderr = _phase_normalize_result_strings(result)
     csm = norm_res.csm if norm_res else None
 
     # Free the eye idle state + publish ``run.end`` bus event — both

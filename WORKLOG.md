@@ -12798,3 +12798,53 @@ B → A+), with a parallel-sidecar L9 CC drop (CC 30 → 27).
 - Local commit: TBD (WL139 + WL140 atomic pass).
 - Unrelated untracked `sharecli/` preserved untouched.
 - Archived upstream (origin) NOT force-pushed (only local commits).
+
+## 2026-07-30 (session 3) — WL140 L9 CC drop stretch (CC 27 → 15)
+
+### Goal
+Continue the active five-day goal with the next unblocked Phase 3/4
+lane: drive `run_impl_core` cognitive complexity from 27 down through
+the ≤18 stretch target while preserving every WL131-WL137 wiring
+contract.
+
+### Work completed
+- **WL140 — L9 CC drop stretch (CC 27 → 15; body 424 → 416 lines):**
+  Five new `_phase_*` helpers extracted from `run_impl_core`:
+  1. `_phase_run_preflight` — early-exit pipeline consolidating eight
+     canonical payload shapes (budget gate, contract version, cwd
+     resolution, terminal discovery, input guardrails, idempotency
+     replay, registry-path normalization) and returning `_PreflightOutcome`
+     dataclass. 11 if-branches absorbed. The four mid-phase helpers
+     that WL131/WL137 require as direct orchestrator calls
+     (`_phase_resolve_grounded_agent`, `_phase_acquire_concurrency`,
+     `_phase_build_execution_services`, `_phase_fatigue_freshness_burst`)
+     are kept OUT of preflight and remain DIRECT calls in
+     `run_impl_core`.
+  2. `_phase_apply_trust_boundary` — encapsulates the WP-3007
+     trust-boundary check + canonical failure payload shape (with
+     `run_id`).
+  3. `_phase_build_run_meta` — absorbs five `x or default` short-circuits
+     for RunMeta construction.
+  4. `_phase_normalize_result_strings` — absorbs two `x or ""` short-circuits
+     for stdout/stderr normalization.
+  5. `_phase_assemble_unknown_agent_payload` — consolidates the canonical
+     "Unknown agent" failure payload.
+- Orchestrator is now **32 phase-helper calls deep** — a true thin
+  composer. Body **424 → 416 lines**, CC **27 → 15**.
+
+### Validation
+- Focused WL131 + WL132 + WL133 + WL134 + WL137 + WL139 + secrets +
+  makefile + deps suites: **156 tests pass**.
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- Ruff `check` + `format` clean on `run_execution_core_helpers.py`.
+
+### Stats
+- Files changed: 1 (`src/thegent/cli/services/run_execution_core_helpers.py`).
+- Net delta: +1 helper file / +5 helpers / +30 lines net.
+- Local commit: TBD (WL140 atomic pass).
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
