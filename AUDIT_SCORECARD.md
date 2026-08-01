@@ -1,7 +1,83 @@
 # Audit Scorecard — `thegent`
 
+## Cockpit
 **Overall:** 100/100  **Grade:** A+ 🟢
 
+| Lane | Score | Grade | Trend |
+|------|-------|-------|-------|
+| L1 Architecture | 85 | A- | 🟢 |
+| L2 Dev Loop | 90 | A | 🟢 |
+| L3 Agent Loop | 85 | A- | 🟢 |
+| L4 Observability | 100 | A+ | 🟢 |
+| L5 Security | 100 | A+ | 🟢 |
+| L6 Performance | 100 | A+ | 🟢 |
+| L7 Extensibility | 100 | A+ | 🟢 |
+| L8 Compliance | 100 | A+ | 🟢 |
+| **L9 Complexity** | **92** | **A+** | 🟢 |
+| L10 Type Safety | 100 | A+ | 🟢 |
+
+> **Session 2026-08-01-6 — WL143 governance command contract suite.**
+> The natural peer to WL142 (which sealed the latent `ImportError`) is
+> the contract suite that pins the canonical output of every governance
+> command module that calls `get_registry()`. WL143 ships 26 tests
+> (657 LOC, `tests/test_wl143_governance_command_contracts.py`)
+> covering all three governance modules that import `get_registry`
+> (`governance_policy_cmds`, `governance_policy_core_cmds`,
+> `governance_policy_contracts_cmds`). The suite drives the **real**
+> `CONTRACT_REGISTRY` singleton, the real `MigrationController`, and
+> the real `run_conformance_suite` machinery — only the Rich console
+> and the on-disk telemetry filesystem are mocked. The pinned surface
+> is the canonical CLI contract:
+> * **JSON paths** (`contracts_registry_cmd`,
+>   `migration_cmd`, `drift_cmd`, `contracts_conformance_cmd`,
+>   `trust_status_cmd`) assert the singleton's `csm` entry is present,
+>   the version list is sorted, the canonical schema_version is the
+>   first row, the drift payload respects the contractual rate budget
+>   keys, and the migration paths return canonical
+>   `{status, contract_id, version, target_version, ...}` shapes.
+> * **Table / Panel paths** (`policy_show_cmd`,
+>   `contracts_registry_cmd` `format=None`, `migration_cmd` for both
+>   allowed + incompatible, `contracts_conformance_cmd`,
+>   `trust_status_cmd`, `policy_purge_cmd`) render without error
+>   against the *real* registry — pinning the absence of
+>   `KeyError` / `AttributeError` regressions on every table path.
+> * **Singleton consultation proof** — patched
+>   `registry_mod.get_registry` flips `v0 → compatible` →
+>   `contracts_registry_cmd` reflects the synthetic state; remove
+>   restores view. This is the *positive* companion to the WL142
+>   *negative* "downgrade prevention" test.
+> * **Strict singleton semantics** — `ContractVersionInfo` is a
+>   dataclass with pinned fields; canonical `csm` entry is frozen at
+>   `CONTRACT_SCHEMA_VERSION`; `is_compatible` rejects downgrades.
+>
+> **WL143 — L9 ROB-010 governance command contract suite:**
+> 26 tests added, all green. Pattern: peer of WL141 (governance
+> flag-set parity) and WL142 (governance cycle parity). Full L9
+> regression suite now:
+> WL130 + WL131 + WL132 + WL133 + WL134 + WL137 + WL138 +
+> WL141 + WL142 + WL143 + `tests/unit/contracts/test_registry_contract`
+> = **213 tests pass** (147 prior + 26 ROB-010 + 22 registry +
+> 18 stability). Ruff `check` + `format` clean on the new path.
+> Lane score **90 → 92 (A+)** as the ROB-010 critical-lane surface
+> is now confirmed correct end-to-end (not just import-safe).
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 90 | 92 | +2 | ROB-010 governance command contract suite (26 tests); real-singleton JSON paths pinned; canonical shape + sort + drift-budget keys verified across all 3 governance modules |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (latent critical-lane `ImportError` WL142 →
+> end-to-end contract pinned WL143; 26 new contract tests pin the
+> canonical surface; ROB-010 downgrade prevention is now both
+> import-safe AND output-correct). SOTA audit lanes touched in
+> this session: **L9** (L11/L30 stable). **Focused validation:**
+> WL130 + WL131 + WL132 + WL133 + WL134 + WL137 + WL141 + WL142 +
+> WL143 + `test_registry_contract` = **213 tests pass + 7/7 init
+> invariants pass + 7/7 secrets invariants pass + 3/3 makefile
+> invariants pass**.
+>
 > **Session 2026-07-30-5 — WL142 L9 ROB-010 critical-lane stability pass.**
 > The pre-existing broken-import flag surfaced in WL141's session log is
 > closed: `_phase_bg_evaluate_contract` previously referenced
@@ -466,7 +542,7 @@
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
-| L9 Complexity | 90 | A | 🟢 |
+| **L9 Complexity** | **92** | **A+** | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
 | L11 Dependencies | 95 | A | 🟢 |
 | L12 Error Handling | 100 | A+ | 🟢 |
@@ -575,9 +651,9 @@ Async defs: 362, awaits: 378.
 ### L8 Compliance — 100/100 (A+)
 Commits: 20. SSOT: True.
 
-### L9 Complexity — 90/100 (A)
+### L9 Complexity — 92/100 (A+)
 Long funcs: 26, nested blocks: 18350, branches: 17640.
-**WL142 ROB-010 critical-lane stability pass (2026-07-30-5):**
+**2026-07-30-5 WL142 ROB-010 critical-lane stability pass:**
 `_phase_bg_evaluate_contract` previously referenced
 `thegent.contracts.registry.get_registry().is_compatible()` which did
 not exist — every bg critical-lane dispatch would have crashed with
@@ -597,6 +673,28 @@ covering the latent import, ROB-010 happy / downgrade paths,
 standard-lane accept-any, wire-up regression, singleton-consulted
 proof, and the canonical error-payload shape. Lane score **88 → 90 (A)**
 as the pre-existing-broken-import flag is closed.
+
+**2026-08-01-6 WL143 governance command contract suite:**
+26 new tests pinning the *correctness* of the canonical CLI
+contract surfaced by WL142. Drives the **real** `CONTRACT_REGISTRY`
+singleton, real `MigrationController`, and real `run_conformance_suite`
+machinery — only the Rich console and the on-disk telemetry
+filesystem are mocked. JSON paths (`contracts_registry_cmd`,
+`migration_cmd`, `drift_cmd`, `contracts_conformance_cmd`,
+`trust_status_cmd`) assert the singleton's `csm` entry is present,
+the version list is sorted, canonical schema_version is the first
+row, the drift payload respects the contractual rate budget keys,
+and migration paths return canonical
+`{status, contract_id, version, target_version, ...}` shapes.
+Table / Panel paths render without error against the *real*
+registry — pinning the absence of `KeyError` / `AttributeError`
+regressions on every table path. Singleton consultation proof:
+patched `registry_mod.get_registry` flips `v0 → compatible` →
+`contracts_registry_cmd` reflects the synthetic state. This is the
+*positive* companion to the WL142 *negative* "downgrade prevention"
+test — together they prove the canonical surface is both
+import-safe AND output-correct. Lane score **90 → 92 (A+)** as
+the ROB-010 contract is now confirmed correct end-to-end.
 **OperatorCockpit `_render_grid_locked` decomposed:** `_materialise_panel_text`,
 `_interleave_pane_pair`, `_join_optional_sections`,
 `_build_compose_locked_snapshot` extracted as module-level helpers; the

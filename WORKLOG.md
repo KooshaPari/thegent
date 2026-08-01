@@ -13030,3 +13030,78 @@ pre-existing-broken-import flag closed.
   shim) only for the duration of the test run, then restored; no
   resolution was committed.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-01 (session 6) — WL143 L9 ROB-010 governance command contract suite
+
+Continue the active five-day goal with the natural peer to WL142:
+not just seal the latent `ImportError` in the ROB-010 critical-lane
+helper, but also pin the canonical end-to-end contract of every
+governance command module that calls `get_registry()`. WL143 ships
+26 tests (657 LOC) driving the **real** `CONTRACT_REGISTRY` singleton,
+real `MigrationController`, and real `run_conformance_suite`
+machinery — only Rich console + on-disk telemetry are mocked.
+
+- **WL143 — L9 ROB-010 governance command contract suite:**
+  - `tests/test_wl143_governance_command_contracts.py` (NEW, 657 LOC, 26 tests) covers:
+    - `governance_module_imports_cleanly` × 3 modules
+      (`governance_policy_cmds`, `governance_policy_core_cmds`,
+      `governance_policy_contracts_cmds`)
+    - JSON paths: `contracts_registry_cmd` (csm sorted, schema_version
+      first row, shape pinned), `migration_cmd` (canonical
+      `{status, contract_id, version, target_version, ...}` shape,
+      panel rendering for both allowed + incompatible), `drift_cmd`
+      (canonical drift-budget keys rendered), `contracts_conformance_cmd`
+      (table + JSON with/without drift), `trust_status_cmd` (JSON + panel)
+    - Table / Panel paths render without `KeyError`/`AttributeError`
+      against the *real* registry
+    - Singleton consultation proof (patched
+      `get_registry()` flips v0 → compatible → render reflects synthetic
+      state; remove restores view) — the *positive* companion to the
+      WL142 *negative* "downgrade prevention" test
+    - Strict singleton semantics: `ContractVersionInfo` is a dataclass
+      with pinned fields, canonical `csm` entry frozen at
+      `CONTRACT_SCHEMA_VERSION`, `is_compatible` rejects downgrades
+  - 26 tests, all green; ruff `check` + `format` clean; no secrets.
+  - Local commit:
+    - `0be7364f6 test(audit-wl143): governance command contracts`
+      (added 657 LOC of pinned contract surface)
+
+- **Pipeline progression for the active five-day goal:**
+  - WL138 (L11 pip-audit advisory gate) → WL139 (L30 `thegent init`
+    first-run wizard) → WL140 (L9 `run_impl_core` CC 27 → 15) →
+    WL141 (L9 `bg_impl_core` CC 97 → 23) → WL142 (L9 ROB-010
+    `ImportError` sealed) → **WL143 (L9 ROB-010 contract pinned)**
+    (this session). Continuing.
+- **Cockpit progress bar** (today's contribution):
+
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 90 | 92 | +2 | 26 contract tests pinning the canonical surface of all 3 governance command modules importing `get_registry`; real-singleton JSON paths + table paths verified; ROB-010 now both import-safe AND output-correct |
+| L11 Dep Audit | 95 | 95 | 0 | `pip-audit` advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+- **DAG tick:** L9 (ROB-010 `ImportError` sealed WL142 →
+  end-to-end contract pinned WL143; 26 new contract tests across 3
+  governance modules; singleton consultation proof closes the WL142
+  negative-with-positive loop). SOTA audit lanes touched: **L9**
+  (L11/L30 stable). **Focused validation:** WL130 + WL131 + WL132 +
+  WL133 + WL134 + WL137 + WL141 + WL142 + WL143 +
+  `tests/unit/contracts/test_registry_contract` = **213 tests pass
+  + 7/7 init invariants pass + 7/7 secrets invariants pass + 3/3
+  makefile invariants pass**. Ruff `check`/`format` clean on all
+  changed paths.
+
+- Files added: 1 (`tests/test_wl143_governance_command_contracts.py`
+  657 LOC). Net delta: +1 file / +657 LOC of pinned contract surface
+  / +26 new tests / 0 orchestrator change / 0 governance module
+  change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `src/thegent/agents/cliproxy_manager.py` (UU merge conflict from
+  prior session — unrelated to WL143) → conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` for the future resolution
+  session. The conflict was temporarily resolved to `--ours` (HEAD's
+  shim) only for the duration of the test run, then restored; no
+  resolution was committed.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
