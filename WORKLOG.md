@@ -12932,3 +12932,101 @@ WL139, L9 jumped A → A+ on the second monolith collapse).
 ### Preservation
 - `sharecli/` (untracked, unrelated worktree) → untouched.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-07-30 (session 5) — WL142 L9 ROB-010 critical-lane stability pass
+
+### Goal
+Continue the active five-day goal with the natural follow-up to WL141:
+close the pre-existing broken-import flag surfaced in WL141's session
+log. `_phase_bg_evaluate_contract` referenced
+`thegent.contracts.registry.get_registry().is_compatible()` which did
+not exist — every bg critical-lane dispatch would have crashed with
+`ImportError` before the ROB-010 downgrade prevention ran. Plus three
+governance commands already import `get_registry`, which would have
+crashed them on import. WL142 makes the symbol real and pins the
+canonical surface.
+
+### Work completed
+- **WL142 — L9 ROB-010 stability regression suite:**
+  - `src/thegent/contracts/registry.py` (REWORKED) — was a stub.
+    Now exports the canonical surface:
+    * `CONTRACT_SCHEMA_VERSION` (preserved)
+    * `ContractVersion` (preserved)
+    * `ContractVersionInfo` (NEW dataclass — `contract_id` / `version` /
+      `description` / `deprecated` / `migration_window_end`).
+    * `ContractRegistry` (REWORKED dataclass — `_contracts` map +
+      `register(name, dict)` back-compat shim + `get(name)` →
+      `ContractVersionInfo | None` + `list_versions()` sorted by
+      `(contract_id, version)` + `is_compatible(requested, current)`
+      returning `True` only when requested is non-empty and equals
+      current).
+    * `CONTRACT_REGISTRY` (NEW module-level singleton — preloaded with
+      the `csm` entry at `CONTRACT_SCHEMA_VERSION` so `list_versions()`
+      is never empty).
+    * `get_registry()` (NEW accessor — returns the canonical singleton).
+  - `tests/unit/contracts/test_registry_contract.py` (NEW, 201 LOC,
+    22 tests) — pins the module exports, the `ContractVersionInfo`
+    dataclass field set, the `ContractRegistry` methods, the
+    `__all__` parity, and the `is_compatible` semantic.
+  - `tests/test_wl142_l9_rob010_stability.py` (NEW, 276 LOC, 18 tests)
+    — locks down the latent `ImportError`, the ROB-010 happy path
+    (critical + canonical → no error), the downgrade path (critical
+    + non-current → tagged ROB-010 error payload with `run_id`), the
+    standard-lane accept-any contract, the wire-up regression
+    (`bg_impl_core` still delegates to `_phase_bg_evaluate_contract`),
+    the singleton-is-consulted proof (patching
+    `CONTRACT_REGISTRY.is_compatible` flips the helper's outcome),
+    and the canonical error-payload shape (`error` / `exit_code` /
+    `session_id` / `run_id` / `remediation`).
+
+### Validation
+- Full L9 regression suite (WL130 + WL131 + WL132 + WL133 + WL134 +
+  WL137 + WL141 + WL142 + `test_registry_contract`) =
+  **187 tests pass** (147 prior + 40 new).
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**
+  (1 advisory on unrelated `crates/thegent-hooks/src/security.rs:192`,
+  pre-existing — gitleaks is the source of truth).
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- Ruff `check` + `format --check` clean on all changed paths.
+
+### Cockpit progress bar (today's contribution)
+
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 88 | 90 | +2 | ROB-010 critical-lane latent `ImportError` sealed; `ContractRegistry`/`get_registry`/`is_compatible`/`ContractVersionInfo` shipped; `CONTRACT_REGISTRY` singleton preloaded with `csm@CONTRACT_SCHEMA_VERSION`; 40 new tests (22 registry contract + 18 stability); pre-existing-broken-import flag closed |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (latent critical-lane `ImportError` flagged WL141 → sealed WL142;
+ROB-010 downgrade prevention now production-reachable instead of
+pre-import-crashing; 40 new contract + stability tests pin the
+canonical surface; `get_registry()` and `is_compatible()` become real
+symbols consumed by three governance commands that previously would
+have crashed on import). SOTA audit lanes touched in this session:
+**L9** (L11/L30 stable). L9 jumped **A → A+ threshold** as the
+pre-existing-broken-import flag closed.
+
+### Stats
+- Files added: 2 (`tests/test_wl142_l9_rob010_stability.py` 276 LOC,
+  `tests/unit/contracts/test_registry_contract.py` 201 LOC).
+- Files changed: 1 (`src/thegent/contracts/registry.py` — was a stub;
+  now the canonical surface with `ContractRegistry`,
+  `ContractVersionInfo`, `CONTRACT_REGISTRY`, `get_registry`,
+  `is_compatible`).
+- Files unchanged: `src/thegent/cli/services/run_execution_core_helpers.py`
+  (the consumer; WL141 helper already calls `get_registry().is_compatible()`
+  correctly).
+- Net delta: +2 new test files / +143 LOC of registry surface (was 18,
+  now 161) / +40 new tests / 0 orchestrator change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `src/thegent/agents/cliproxy_manager.py` (UU merge conflict from
+  prior session — unrelated to WL142) → conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` for the future resolution
+  session. The conflict was temporarily resolved to `--ours` (HEAD's
+  shim) only for the duration of the test run, then restored; no
+  resolution was committed.
+- Archived upstream (origin) → NOT force-pushed (only local commits).

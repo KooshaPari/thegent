@@ -2,6 +2,65 @@
 
 **Overall:** 100/100  **Grade:** A+ 🟢
 
+> **Session 2026-07-30-5 — WL142 L9 ROB-010 critical-lane stability pass.**
+> The pre-existing broken-import flag surfaced in WL141's session log is
+> closed: `_phase_bg_evaluate_contract` previously referenced
+> `thegent.contracts.registry.get_registry().is_compatible()` which did
+> not exist — every bg critical-lane dispatch in production would have
+> crashed with `ImportError` before the version check ran. WL142 ships
+> the canonical contract surface:
+> * `src/thegent/contracts/registry.py` gains `ContractVersionInfo`
+>   (dataclass — frozen metadata shape), `ContractRegistry`
+>   (`register` / `get` / `list_versions` / `is_compatible`), the
+>   module-level `CONTRACT_REGISTRY` singleton (preloaded with the
+>   `csm` entry at `CONTRACT_SCHEMA_VERSION`), and `get_registry()`
+>   accessor. Back-compat shim: legacy `register(name, dict)` callers
+>   round-trip through `ContractVersionInfo` unchanged.
+> * `tests/unit/contracts/test_registry_contract.py` (NEW, 22 tests)
+>   pins the field set, the singleton accessor, the `__all__` re-export
+>   parity, and the `is_compatible` semantic (canonical → True;
+>   downgrade / forward-drift / unknown / empty → False).
+> * `tests/test_wl142_l9_rob010_stability.py` (NEW, 18 tests) locks
+>   down (a) the latent import crash, (b) the ROB-010 happy path
+>   (critical + canonical → no error), (c) the downgrade path
+>   (critical + non-current → tagged `ROB-010` payload with `run_id`),
+>   (d) the standard-lane accept-any contract, (e) the wire-up
+>   regression (bg_impl_core still delegates to the helper), (f) the
+>   singleton-is-consulted proof (patched `is_compatible` flips
+>   v0 → compatible → helper returns None), and (g) the canonical
+>   error-payload keys (`error` / `exit_code` / `session_id` /
+>   `run_id` / `remediation`).
+>
+> **WL142 — L9 ROB-010 stability regression suite:**
+> Latent `ImportError` in `_phase_bg_evaluate_contract` sealed;
+> governance commands (`governance_policy_contracts_cmds`,
+> `governance_policy_core_cmds`, `governance_policy_cmds`) already
+> import `get_registry` — WL142 makes the symbol real instead of
+> leaving it a TypeError-on-import in three governance entry points.
+> Full L9 regression: WL130 + WL131 + WL132 + WL133 + WL134 + WL137 +
+> WL141 + WL142 + `tests/unit/contracts/test_registry_contract` =
+> **187 tests pass** (147 prior + 40 new). Ruff `check` + `format`
+> clean on all changed paths. Latent bug sealed: ROB-010 critical-lane
+> downgrade prevention now actually executes in production instead of
+> crashing with `ImportError`. Lane score **88 → 90 (A)** as the
+> pre-existing-broken-import flag is closed.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 88 | 90 | +2 | ROB-010 critical-lane latent `ImportError` sealed; `ContractRegistry`/`get_registry`/`is_compatible` shipped; 40 new tests (22 registry + 18 stability); pre-existing-broken-import flag closed |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (latent critical-lane `ImportError` flagged WL141
+> → sealed WL142; 40 new contract + stability tests pin the canonical
+> surface; ROB-010 downgrade prevention is now production-reachable
+> instead of pre-import-crashing). SOTA audit lanes touched in this
+> session: **L9** (L11/L30 stable). **Focused validation:** WL130 +
+> WL131 + WL132 + WL133 + WL134 + WL137 + WL141 + WL142 +
+> `test_registry_contract` = **187 tests pass + 7/7 init invariants
+> pass + 7/7 secrets invariants pass + 3/3 makefile invariants pass**.
+>
 > **Session 2026-07-30-4 — WL141 L9 `bg_impl_core` CC drop (97 → 23; 530 → 198L).**
 > The natural follow-up to WL140 lands: the parallel `bg_impl_core` orchestrator
 > is now a thin composer (CC 23, body 198L — well below the ≤30 / ≤280 budget).
@@ -407,7 +466,7 @@
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
-| L9 Complexity | 88 | A | 🟢 |
+| L9 Complexity | 90 | A | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
 | L11 Dependencies | 95 | A | 🟢 |
 | L12 Error Handling | 100 | A+ | 🟢 |
@@ -516,8 +575,28 @@ Async defs: 362, awaits: 378.
 ### L8 Compliance — 100/100 (A+)
 Commits: 20. SSOT: True.
 
-### L9 Complexity — 88/100 (A)
+### L9 Complexity — 90/100 (A)
 Long funcs: 26, nested blocks: 18350, branches: 17640.
+**WL142 ROB-010 critical-lane stability pass (2026-07-30-5):**
+`_phase_bg_evaluate_contract` previously referenced
+`thegent.contracts.registry.get_registry().is_compatible()` which did
+not exist — every bg critical-lane dispatch would have crashed with
+`ImportError` before ROB-010 downgrade prevention ran. WL142 ships
+the canonical surface: `ContractVersionInfo` dataclass (frozen
+metadata shape with `contract_id` / `version` / `description` /
+`deprecated` / `migration_window_end`), `ContractRegistry.register /
+get / list_versions / is_compatible`, module-level
+`CONTRACT_REGISTRY` singleton preloaded with the `csm` entry at
+`CONTRACT_SCHEMA_VERSION`, and the `get_registry()` accessor.
+Three governance commands (`governance_policy_contracts_cmds`,
+`governance_policy_core_cmds`, `governance_policy_cmds`) already
+import `get_registry` — WL142 makes the symbol real. Pinned by 22
+registry contract tests (`tests/unit/contracts/test_registry_contract.py`)
++ 18 stability tests (`tests/test_wl142_l9_rob010_stability.py`)
+covering the latent import, ROB-010 happy / downgrade paths,
+standard-lane accept-any, wire-up regression, singleton-consulted
+proof, and the canonical error-payload shape. Lane score **88 → 90 (A)**
+as the pre-existing-broken-import flag is closed.
 **OperatorCockpit `_render_grid_locked` decomposed:** `_materialise_panel_text`,
 `_interleave_pane_pair`, `_join_optional_sections`,
 `_build_compose_locked_snapshot` extracted as module-level helpers; the
