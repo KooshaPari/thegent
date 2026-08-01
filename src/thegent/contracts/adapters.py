@@ -1,7 +1,7 @@
 """Contracts adapters module."""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
-
 
 
 class ContractAdapter:
@@ -76,8 +76,26 @@ class AdapterRegistry:
         return self._adapters.get(name)
 
     def list_adapters(self) -> list[str]:
-        """List all registered adapter names."""
+        """List all registered adapter names (canonical method)."""
         return list(self._adapters.keys())
+
+    def keys(self) -> list[str]:
+        """Alias for :meth:`list_adapters` — preserved for back-compat with the
+        auto-generated stub era (HEAD's stub exposed ``ADAPTER_REGISTRY.keys()``
+        as a classmethod returning the registered adapter names). New callers
+        should prefer :meth:`list_adapters`.
+        """
+        return self.list_adapters()
+
+    def __getitem__(self, name: str) -> Any:
+        """Subscript access — preserved for back-compat with the
+        ``ADAPTER_REGISTRY[provider]`` calling convention used by
+        ``tests/test_contract_conformance.py`` (HEAD stub supported this).
+        """
+        adapter = self._adapters.get(name)
+        if adapter is None:
+            raise KeyError(name)
+        return adapter
 
 
 ADAPTER_REGISTRY = AdapterRegistry()
@@ -93,6 +111,7 @@ class GenericOutputAdapter:
         """Adapt data to the specified format."""
         if self.format == "json":
             import json
+
             return json.dumps(data, default=str)
         elif self.format == "xml":
             return f"<data>{data}</data>"
@@ -147,5 +166,6 @@ class OutputAdapter:
         """Adapt data to output format."""
         if self.format == "json":
             import json
+
             return json.dumps(data, default=str)
         return str(data)

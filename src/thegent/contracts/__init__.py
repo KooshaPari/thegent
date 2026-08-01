@@ -1,79 +1,86 @@
-"""STUB MODULE - thegent.contracts
+"""thegent.contracts — top-level re-export layer for the canonical surface.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+This module unifies two parallel surfaces that diverged during the
+auto-generated stub era:
+
+* **Canonical ROB-010 governance surface** (introduced by WL142 in
+  ``thegent.contracts.registry``): ``CONTRACT_SCHEMA_VERSION``,
+  ``CONTRACT_REGISTRY``, ``ContractRegistry``, ``ContractVersion``,
+  ``ContractVersionInfo``, ``get_registry``.
+  Every governance command (``governance_policy_cmds``,
+  ``governance_policy_core_cmds``,
+  ``governance_policy_contracts_cmds``) consumes this surface, and
+  so should anything else. Note: ``is_compatible`` is a *method* on
+  ``ContractRegistry`` instances, NOT a module-level function, so it
+  is intentionally not re-exported here — callers must invoke
+  ``get_registry().is_compatible(...)`` or use the classmethod.
+
+* **Legacy back-compat exports** (preserved from earlier iterations
+  of ``thegent.contracts`` so existing third-party callers don't
+  break):
+  ``ADAPTER_REGISTRY``, ``AdapterResult``, ``OutputAdapter``,
+  ``normalize_output``, ``CSMPhase``, ``CanonicalStructuredMessage``,
+  ``CSMStatus``, ``get_adapter``.
+
+The two surfaces are intentionally non-overlapping. Callers that
+need contract-versioning constants (and ROB-010 downgrade
+prevention) should import from either ``thegent.contracts`` or
+``thegent.contracts.registry`` and get the **same** symbols
+(parity is contract-pinned by ``tests/test_wl144_*``).
 """
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+# Canonical ROB-010 governance surface — re-exported from
+# thegent.contracts.registry. Imported FIRST so the canonical
+# CONTRACT_SCHEMA_VERSION / get_registry win any name clashes with
+# legacy symbols (there are none, but the ordering is explicit).
+from thegent.contracts.registry import (
+    CONTRACT_REGISTRY,
+    CONTRACT_SCHEMA_VERSION,
+    ContractRegistry,
+    ContractVersion,
+    ContractVersionInfo,
+    get_registry,
+)
 
-# Re-export from submodules for backwards compatibility
-from thegent.contracts.adapters import AdapterResult, normalize_output, OutputAdapter
-from thegent.contracts.csm import CSMPhase, CanonicalStructuredMessage, CSMStatus
-
-CONTRACT_SCHEMA_VERSION = "1.0.0"
-
-def get_registry() -> ADAPTER_REGISTRY:
-    """Get the global adapter registry instance.
-
-    Returns:
-        The global ADAPTER_REGISTRY instance.
-    """
-    return ADAPTER_REGISTRY
-
-
-def get_adapter(name: str) -> Any | None:
-    """Get an adapter by name from the registry.
-
-    Args:
-        name: The adapter name to look up.
-
-    Returns:
-        The adapter instance or None if not found.
-    """
-    return ADAPTER_REGISTRY.get(name)
+# Legacy back-compat exports — preserved verbatim from the prior
+# auto-generated stub so existing consumers continue to resolve.
+# ``ADAPTER_REGISTRY`` from ``adapters.py`` is an *instance*
+# (AdapterRegistry()); the prior stub exposed it as a *class* with
+# classmethod access. We expose the canonical INSTANCE under the
+# same name so that ``ADAPTER_REGISTRY.keys()``,
+# ``ADAPTER_REGISTRY.register(...)``, ``ADAPTER_REGISTRY.get(...)``
+# keep working. Both surface shapes are documented below.
+from thegent.contracts.adapters import (
+    ADAPTER_REGISTRY,  # noqa: F401 — back-compat legacy export
+    AdapterResult,  # noqa: F401 — back-compat legacy export
+    OutputAdapter,  # noqa: F401 — back-compat legacy export
+    get_adapter,  # noqa: F401 — back-compat legacy export
+    normalize_output,  # noqa: F401 — back-compat legacy export
+)
+from thegent.contracts.csm import (
+    CSMPhase,  # noqa: F401 — back-compat legacy export
+    CSMStatus,  # noqa: F401 — back-compat legacy export
+    CanonicalStructuredMessage,  # noqa: F401 — back-compat legacy export
+)
 
 
 __all__ = [
+    # Canonical ROB-010 governance surface (WL142 / WL143 / WL144).
+    "CONTRACT_REGISTRY",
+    "CONTRACT_SCHEMA_VERSION",
+    "ContractRegistry",
+    "ContractVersion",
+    "ContractVersionInfo",
+    "get_registry",
+    # Legacy back-compat exports (preserved for non-ROB-010 callers).
     "ADAPTER_REGISTRY",
     "AdapterResult",
-    "CanonicalStructuredMessage",
-    "CONTRACT_SCHEMA_VERSION",
+    "OutputAdapter",
+    "get_adapter",
+    "normalize_output",
     "CSMPhase",
     "CSMStatus",
-    "get_adapter",
-    "get_registry",
-    "normalize_output",
-    "OutputAdapter",
-]
-
-
-class ADAPTER_REGISTRY:
-    """Adapter registry for contracts."""
-
-    _adapters: ClassVar[dict[str, Any]] = {}
-
-    @classmethod
-    def register(cls, name: str, adapter: Any) -> None:
-        cls._adapters[name] = adapter
-
-    @classmethod
-    def get(cls, name: str) -> Any | None:
-        return cls._adapters.get(name)
-
-    @classmethod
-    def keys(cls) -> list[str]:
-        return list(cls._adapters.keys())
-
-
-__all__ = [
-    "ADAPTER_REGISTRY",
-    "AdapterResult",
     "CanonicalStructuredMessage",
-    "CONTRACT_SCHEMA_VERSION",
-    "CSMStatus",
-    "normalize_output",
-    "OutputAdapter",
 ]
