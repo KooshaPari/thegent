@@ -12845,10 +12845,6 @@ contract.
 - Net delta: +1 helper file / +5 helpers / +30 lines net.
 - Local commit: TBD (WL140 atomic pass).
 
-### Preservation
-- `sharecli/` (untracked, unrelated worktree) → untouched.
-- Archived upstream (origin) → NOT force-pushed (only local commits).
-
 ## 2026-07-30 (session 4) — WL141 L9 `bg_impl_core` CC drop stretch (CC 97 → 23; body 530 → 198L)
 
 ### Goal
@@ -13100,6 +13096,131 @@ machinery — only Rich console + on-disk telemetry are mocked.
 - `sharecli/` (untracked, unrelated worktree) → untouched.
 - `src/thegent/agents/cliproxy_manager.py` (UU merge conflict from
   prior session — unrelated to WL143) → conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` for the future resolution
+  session. The conflict was temporarily resolved to `--ours` (HEAD's
+  shim) only for the duration of the test run, then restored; no
+  resolution was committed.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-01 (session 7) — WL144 contracts export parity + ADAPTER_REGISTRY shims
+
+Continue the active five-day goal with the natural follow-up to
+WL142/WL143: the ROB-010 contract surface is now both import-safe
+(WL142) and output-correct (WL143) — but a parallel investigation
+revealed a latent two-paths-different-answer bug. Package-path import
+(`from thegent.contracts import get_registry`) returned the
+HEAD-auto-generated stub `ADAPTER_REGISTRY` (a different class),
+while module-path import (`from thegent.contracts.registry import
+get_registry`) returned the canonical `ContractRegistry`. Any
+consumer using the package-path was silently calling the stub.
+WL144 closes the gap.
+
+### Goal
+Close the package-vs-module divergence in `thegent.contracts`. Promote
+the package `__init__.py` from a HEAD-auto-generated stub to a
+canonical re-export layer so that `import thegent.contracts.X` and
+`import thegent.contracts.registry.X` return the same object identity
+for every public ROB-010 symbol, while preserving every legacy
+back-compat export so `test_unit_contracts.py` and
+`test_contract_conformance.py` still collect against the canonical
+instance.
+
+### Work completed
+- **WL144 — L9 contracts export parity + ADAPTER_REGISTRY back-compat shims:**
+  - **Root cause:** `src/thegent/contracts/__init__.py` was an
+    auto-generated stub defining its own `ADAPTER_REGISTRY` (instance
+    of its own `AdapterRegistry` class) and re-exporting other legacy
+    symbols — but did NOT re-export the ROB-010 surface
+    (`get_registry`, `CONTRACT_SCHEMA_VERSION`, `ContractRegistry`,
+    `ContractVersion`, `ContractVersionInfo`, `CONTRACT_REGISTRY`) from
+    the canonical `registry.py` module. So `from thegent.contracts
+    import get_registry` resolved to a non-existent attribute, and
+    `from thegent.contracts import ADAPTER_REGISTRY` returned a stub
+    instance instead of the canonical one.
+  - **Fix:** Promote `src/thegent/contracts/__init__.py` to a
+    canonical re-export layer. ROB-010 symbols are now re-exported
+    from `thegent.contracts.registry`, AND every legacy back-compat
+    symbol (`ADAPTER_REGISTRY`, `AdapterResult`, `OutputAdapter`,
+    `get_adapter`, `normalize_output`, `CSMPhase`, `CSMStatus`,
+    `CanonicalStructuredMessage`) is preserved. The two together pin
+    "import-thegent.contracts.X" and "import-thegent.contracts.registry.X"
+    to return the same object.
+  - **Back-compat shims:** `AdapterRegistry` (the canonical instance
+    in `adapters.py`) gains `.keys()` (alias for `.list_adapters()`)
+    and `__getitem__` (subscript access). HEAD's auto-generated stub
+    exposed both classmethods; WL144 preserves them as instance methods
+    on the canonical `AdapterRegistry` so
+    `tests/test_contract_conformance.py` continues to collect and run
+    against the canonical instance.
+  - **Pinned by 26 new tests** (`tests/test_wl144_l9_contracts_export_parity.py`):
+    - Package == module parity for every ROB-010 symbol
+      (5 + 1 boolean assertions)
+    - `is_compatible` is method-only — NOT a free function
+    - Legacy back-compat exports all resolve + are correct types
+    - `ADAPTER_REGISTRY` retains duck-type surface (`register`, `get`,
+      `list_adapters`, `keys`, `__getitem__`)
+    - Governance command modules stay pinned to
+      `from thegent.contracts.registry import get_registry`
+    - Import-order independence: importing legacy module before
+      `thegent.contracts.registry` does NOT shadow the canonical
+      re-exports
+    - Module-level `__all__` contains every public name (no missing
+      re-exports)
+  - 26 tests, all green; ruff `check` + `format` clean; no secrets.
+  - Local commit: `feat(contracts-wl144): L9 export parity +
+    ADAPTER_REGISTRY back-compat shims`
+
+### Validation
+- WL144 focused: **26/26 pass**.
+- L9 regression (WL130 + WL131 + WL132 + WL133 + WL134 + WL137 +
+  WL141 + WL142 + WL143 + WL144 + `test_registry_contract`) =
+  **252 tests pass** (213 prior + 26 governance contracts + 26 parity
+  contracts).
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- Ruff `check` + `ruff format --check` clean on all changed paths.
+- No secrets in any changed file (`gitleaks` regex scan clean).
+- Pre-existing failures in `test_unit_contracts.py` (25 fail, 1 pass)
+  and `test_contract_conformance.py` (11 fail, 2 pass) are
+  **UNCHANGED from HEAD** — they predate WL144 — and are scoped for
+  WL145 (`normalize_output` provider raw signature drift).
+
+### Pipeline progression for the active five-day goal
+WL138 (L11) → WL139 (L30) → WL140 (L9 run_impl_core CC 27→15) →
+WL141 (L9 bg_impl_core CC 97→23) → WL142 (L9 ROB-010 `ImportError`
+sealed) → WL143 (L9 ROB-010 contract pinned) →
+**WL144 (L9 contracts export parity closed)** (this session).
+Continuing.
+
+### Cockpit progress bar (today's contribution)
+
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 92 | 92 | ±0 | Contracts export parity closed (package vs module divergence sealed); 26 new parity tests; back-compat shims on `AdapterRegistry` preserve `test_contract_conformance.py` collection |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export
+WL144). SOTA audit lanes touched: **L9** (L11/L30 stable). **Focused
+validation:** 252 tests pass + 7/7 init invariants + 7/7 secrets
+invariants + 3/3 makefile invariants + Ruff clean.
+
+### Stats
+- Files changed: 2 (`src/thegent/contracts/__init__.py` promoted from
+  stub to canonical re-export layer,
+  `src/thegent/contracts/adapters.py` gains `.keys()` + `__getitem__`
+  shims).
+- Files added: 1 (`tests/test_wl144_l9_contracts_export_parity.py`,
+  657 LOC of pinned parity surface).
+- Net delta: +1 file / +26 new tests / 0 orchestrator change / 0
+  governance module change / 0 governance command change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `src/thegent/agents/cliproxy_manager.py` (UU merge conflict from
+  prior session — unrelated to WL144) → conflict preserved in
   `/tmp/cliproxy_conflict_preserved.py` for the future resolution
   session. The conflict was temporarily resolved to `--ours` (HEAD's
   shim) only for the duration of the test run, then restored; no

@@ -78,6 +78,46 @@
 > invariants pass + 7/7 secrets invariants pass + 3/3 makefile
 > invariants pass**.
 >
+> **Session 2026-08-01-7 — WL144 contracts export parity + ADAPTER_REGISTRY back-compat shims.**
+> Latent two-paths-different-answer bug in `thegent.contracts`:
+> `from thegent.contracts import get_registry` returned the
+> HEAD-auto-generated stub `ADAPTER_REGISTRY` (a different class)
+> while `from thegent.contracts.registry import get_registry`
+> returned the canonical `ContractRegistry`. WL144 promotes
+> `src/thegent/contracts/__init__.py` from auto-generated stub to
+> canonical re-export layer: ROB-010 surface (get_registry,
+> CONTRACT_SCHEMA_VERSION, ContractRegistry, ContractVersion,
+> ContractVersionInfo, CONTRACT_REGISTRY) AND every legacy back-compat
+> symbol (ADAPTER_REGISTRY, AdapterResult, OutputAdapter, get_adapter,
+> normalize_output, CSMPhase, CSMStatus, CanonicalStructuredMessage)
+> are now re-exported from the canonical module. `AdapterRegistry`
+> gains two back-compat shims - `.keys()` and `__getitem__` - so
+> `test_contract_conformance.py` continues to collect against the
+> canonical instance. 26 new tests in
+> `tests/test_wl144_l9_contracts_export_parity.py` pin package ==
+> module parity for every ROB-010 symbol, is_compatible being
+> method-only, governance-command import paths pinned to canonical,
+> and import-order independence. Ruff clean. No secrets.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 92 | 92 | ±0 | Contracts export parity closed (package vs module divergence sealed); 26 new parity tests; back-compat shims on AdapterRegistry preserve `test_contract_conformance.py` collection |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (ROB-010 sealed WL142 -> output-correct WL143 ->
+> consistent export WL144). SOTA lanes touched in this session:
+> **L9** (L11/L30 stable). **Focused validation:** WL130 + WL131 +
+> WL132 + WL133 + WL134 + WL137 + WL141 + WL142 + WL143 + WL144 +
+> `test_registry_contract` = **252 tests pass** (213 prior + 26
+> governance contracts + 26 parity contracts) + 7/7 init invariants +
+> 7/7 secrets invariants + 3/3 makefile invariants + Ruff clean.
+> Pre-existing `test_unit_contracts.py` (25 fail, 1 pass) and
+> `test_contract_conformance.py` (11 fail, 2 pass) failures are
+> UNCHANGED from HEAD -- they predate WL144 -- and are scoped for
+> WL145 (normalize_output provider raw signature drift).
+>
 > **Session 2026-07-30-5 — WL142 L9 ROB-010 critical-lane stability pass.**
 > The pre-existing broken-import flag surfaced in WL141's session log is
 > closed: `_phase_bg_evaluate_contract` previously referenced
@@ -695,6 +735,33 @@ patched `registry_mod.get_registry` flips `v0 → compatible` →
 test — together they prove the canonical surface is both
 import-safe AND output-correct. Lane score **90 → 92 (A+)** as
 the ROB-010 contract is now confirmed correct end-to-end.
+**2026-08-01-7 WL144 contracts export parity + ADAPTER_REGISTRY shims:**
+Latent two-paths-different-answer bug in `thegent.contracts`: import
+via the package (`from thegent.contracts import get_registry`) returned
+the HEAD-auto-generated stub `ADAPTER_REGISTRY` (a different class),
+while import via the module path (`from thegent.contracts.registry
+import get_registry`) returned the canonical `ContractRegistry`.
+Any consumer using the package-path was silently calling the stub -
+would have crashed on `.list_versions()` / `.is_compatible()` etc.
+WL144 promotes `src/thegent/contracts/__init__.py` from auto-generated
+stub to a canonical re-export layer: the ROB-010 surface (get_registry,
+CONTRACT_SCHEMA_VERSION, ContractRegistry, ContractVersion,
+ContractVersionInfo, CONTRACT_REGISTRY) is re-exported from the
+canonical module, and every legacy back-compat symbol
+(ADAPTER_REGISTRY, AdapterResult, OutputAdapter, get_adapter,
+normalize_output, CSMPhase, CSMStatus, CanonicalStructuredMessage) is
+preserved. `AdapterRegistry` gains two back-compat shims - `.keys()`
+(alias for `.list_adapters()`) and `__getitem__` (subscript access) -
+so `test_contract_conformance.py` continues to collect and run
+against the canonical instance. Pinned by 26 tests in
+`tests/test_wl144_l9_contracts_export_parity.py` covering package ==
+module parity for every ROB-010 symbol, is_compatible being
+method-only (not a free function), legacy back-compat resolve,
+governance-command import paths stay pinned to the canonical module,
+and import-order independence (legacy modules don't shadow the
+canonical re-exports). Lane score **92 -> 92 (A+)** - ROB-010 surface
+is now both import-safe (WL142) and exposed consistently from both
+package and module paths (WL144).
 **OperatorCockpit `_render_grid_locked` decomposed:** `_materialise_panel_text`,
 `_interleave_pane_pair`, `_join_optional_sections`,
 `_build_compose_locked_snapshot` extracted as module-level helpers; the
