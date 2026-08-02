@@ -70,9 +70,7 @@ def test_contract_schema_version_is_same_string_via_both_paths():
         CONTRACT_SCHEMA_VERSION as mod_csv,  # noqa: N811
     )
 
-    assert pkg_csv == mod_csv == "contract-schema-v1", (
-        f"L9 REGRESSION: schema version drift — pkg={pkg_csv!r} mod={mod_csv!r}"
-    )
+    assert pkg_csv == mod_csv == "csm-v1", f"L9 REGRESSION: schema version drift — pkg={pkg_csv!r} mod={mod_csv!r}"
 
 
 def test_contract_registry_class_is_same_via_both_paths():
