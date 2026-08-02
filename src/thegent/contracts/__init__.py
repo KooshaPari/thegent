@@ -60,8 +60,15 @@ from thegent.contracts.registry import (
 # same name so that ``ADAPTER_REGISTRY.keys()``,
 # ``ADAPTER_REGISTRY.register(...)``, ``ADAPTER_REGISTRY.get(...)``
 # keep working. Both surface shapes are documented below.
+# Submodule back-compat exports — listed in ``__all__`` so
+# ``from thegent.contracts import registry`` / ``adapters`` / ``parser``
+# all resolve symmetrically. Without these, third-party callers that
+# do ``from thegent.contracts import registry`` only work because of
+# Python's package-import attribute machinery; ``__all__`` makes the
+# intent explicit and is pinned by WL145.
 from thegent.contracts import adapters as adapters  # noqa: F401 — back-compat legacy export
 from thegent.contracts import parser as parser  # noqa: F401 — back-compat legacy export
+from thegent.contracts import registry as registry  # noqa: F401 — back-compat legacy export
 from thegent.contracts.adapters import (
     ADAPTER_REGISTRY,  # noqa: F401 — back-compat legacy export
     AdapterResult,  # noqa: F401 — back-compat legacy export
@@ -104,6 +111,7 @@ __all__ = [
     "register_adapter",
     "adapters",
     "parser",
+    "registry",
     "CSMPhase",
     "CSMStatus",
     "CanonicalStructuredMessage",

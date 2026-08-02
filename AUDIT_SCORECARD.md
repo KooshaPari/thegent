@@ -78,6 +78,53 @@
 > invariants pass + 7/7 secrets invariants pass + 3/3 makefile
 > invariants pass**.
 >
+> **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
+> Follow-on to WL144 (export parity): the package `__init__.py` is
+> now a canonical re-export layer, but the **public-API surface** is
+> not yet pinned at the signature level. WL145 ships 25 tests in
+> `tests/test_wl145_l10_contracts_signature_parity.py` that lock the
+> ROB-010 canonical surface so any future drift is caught at CI:
+> * **Version pinning** (FR-CTR-002) — `CONTRACTS_VERSION` ==
+>   `"contracts-v1"`, `ADAPTER_REGISTRY_VERSION` == `"adapters-v1"`,
+>   `CONTRACTS_PARSER_VERSION` == `"parser-v1"`,
+>   `CONTRACTS_REGISTRY_VERSION` == `"registry-v1"`.
+> * **Public surface signatures** (FR-CTR-006) — `IncrementalXMLParser`
+>   constructor params frozen to `["self", "case_sensitive",
+>   "allowed_tags"]`; `OutputAdapter` subclasses include
+>   `XMLOutputAdapter`; `get_adapter("xml")` resolves and
+>   `get_adapter("nonexistent")` raises `KeyError`; `register_adapter`
+>   is callable; `extract_tags` accepts `text` + `tags`.
+> * **Semantic regression pins** (FR-CTR-002) —
+>   `XMLOutputAdapter.format({"TaskUpdate": {...}})` renders the
+>   nested summary; lowercase `<summary>` tags are supported; parser
+>   reports `is_truncated=True` for unclosed tags and reports the
+>   LAST open tag when nested (`<OUTER><INNER>...` → `open_tag ==
+>   "INNER"`).
+> * **Back-compat re-exports** (FR-CTR-006) — `thegent.contracts`
+>   exposes `parser`, `IncrementalXMLParser`, `extract_tags`,
+>   `adapters`, `OutputAdapter`, `XMLOutputAdapter`, `register_adapter`,
+>   `registry`, `CONTRACTS_REGISTRY_VERSION`. The new
+>   `test_submodule_exports_listed_in_all` test pins `__all__`
+>   symmetry so `adapters` / `parser` / `registry` all live in
+>   `__all__` (the `registry` entry was missing from HEAD; WL145
+>   closes that gap and locks the fix).
+> 25 tests added, all green. Ruff `check` + `format` clean on every
+> changed path. No secrets.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 92 | 92 | ±0 | Contracts signature parity pinned (25 new tests); 4 version constants + 8 signature assertions + 5 semantic pins + 4 back-compat re-exports frozen; `registry` now symmetric in `__all__` with `adapters` + `parser` |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (ROB-010 sealed WL142 → output-correct WL143 →
+> consistent export WL144 → signature-parity WL145). SOTA audit
+> lanes touched in this session: **L9** (L11/L30 stable). **Focused
+> validation:** WL145 + WL144 + unit_contracts + contract_conformance
+> + unit_contracts_adapters = **124 tests pass + 7/7 init invariants
+> + 7/7 secrets invariants + 3/3 makefile invariants + Ruff clean**.
+>
 > **Session 2026-08-01-7 — WL144 contracts export parity + ADAPTER_REGISTRY back-compat shims.**
 > Latent two-paths-different-answer bug in `thegent.contracts`:
 > `from thegent.contracts import get_registry` returned the

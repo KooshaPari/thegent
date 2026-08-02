@@ -196,3 +196,16 @@ class TestContractsBackcompat:
     def test_registry_module_re_exports(self) -> None:
         assert hasattr(contracts, "registry")
         assert hasattr(contracts, "CONTRACTS_REGISTRY_VERSION")
+
+    def test_submodule_exports_listed_in_all(self) -> None:
+        # @trace FR-CTR-006 — the canonical ROB-010 surface, the
+        # legacy back-compat adapters + parser, and the modulo-level
+        # registry submodule must all be declared in ``__all__`` so
+        # ``from thegent.contracts import registry`` works
+        # symmetrically with ``adapters`` and ``parser``. ``hasattr``
+        # alone is not enough; the package-import machinery exposes
+        # submodules as attributes regardless of ``__all__``, which
+        # would let the asymmetry drift back unnoticed.
+        assert "registry" in contracts.__all__
+        assert "adapters" in contracts.__all__
+        assert "parser" in contracts.__all__

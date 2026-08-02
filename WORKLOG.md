@@ -13226,3 +13226,115 @@ invariants + 3/3 makefile invariants + Ruff clean.
   shim) only for the duration of the test run, then restored; no
   resolution was committed.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-02 (session 1) — WL145 contracts signature parity / regression pinning
+
+Continue the active five-day goal with the natural follow-up to
+WL144: the package `__init__.py` is now a canonical re-export layer,
+but the **public-API surface** is not yet pinned at the signature
+level. WL145 closes that gap with 25 tests in
+`tests/test_wl145_l10_contracts_signature_parity.py` so any future
+drift is caught at CI.
+
+### Goal
+Lock the ROB-010 canonical surface of `thegent.contracts` so
+accidental changes to the public API — versions, signatures,
+semantics, or back-compat re-exports — are caught before release.
+
+### Work completed
+- **WL145 — L9 contracts signature parity / regression pinning:**
+  - **Versions pinned** (FR-CTR-002): `CONTRACTS_VERSION` ==
+    `"contracts-v1"`, `ADAPTER_REGISTRY_VERSION` == `"adapters-v1"`,
+    `CONTRACTS_PARSER_VERSION` == `"parser-v1"`,
+    `CONTRACTS_REGISTRY_VERSION` == `"registry-v1"`.
+  - **Public surface signatures** (FR-CTR-006):
+    `IncrementalXMLParser.__init__` params frozen to
+    `["self", "case_sensitive", "allowed_tags"]`;
+    `OutputAdapter.__subclasses__()` includes `XMLOutputAdapter`;
+    `get_adapter("xml")` resolves; `get_adapter("nonexistent")`
+    raises `KeyError`; `register_adapter` is callable;
+    `extract_tags` accepts `text` + `tags`.
+  - **Semantic regression pins** (FR-CTR-002):
+    `XMLOutputAdapter.format({"TaskUpdate": {...}})` renders the
+    nested summary; lowercase `<summary>` tags are supported; parser
+    reports `is_truncated=True` for unclosed tags and reports the
+    LAST open tag when nested (`<OUTER><INNER>...` → `open_tag ==
+    "INNER"`); `extract_tags` returns `{STATUS: ok, SUMMARY: done}`
+    for balanced markup.
+  - **Back-compat re-exports** (FR-CTR-006): `thegent.contracts`
+    exposes `parser`, `IncrementalXMLParser`, `extract_tags`,
+    `adapters`, `OutputAdapter`, `XMLOutputAdapter`, `register_adapter`,
+    `registry`, `CONTRACTS_REGISTRY_VERSION`.
+  - **Parity gap sealed:** `registry` was reachable as
+    `thegent.contracts.registry` via package-import machinery but was
+    missing from `__all__` (asymmetric with `adapters` and `parser`
+    which were both listed). WL145 adds `registry` to `__all__` for
+    symmetry and pins the invariant with a new
+    `test_submodule_exports_listed_in_all` test so the asymmetry
+    cannot drift back.
+  - 25 tests, all green; ruff `check` + `format` clean; no secrets.
+  - Local commit: `chore(contracts-wl145): seal `__all__` symmetry
+    between adapters/parser/registry + add TDD pin test`.
+
+### Validation
+- WL145 focused: **25/25 pass**.
+- WL145 + WL144 + unit_contracts + contract_conformance +
+  unit_contracts_adapters = **124 tests pass** (97 prior + 25 new
+  signature-parity + 26 export-parity re-run; 2 of the 4 neighbour
+  files were already in the 252-test baseline from WL144).
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- Ruff `check` + `ruff format --check` clean on all changed paths.
+- No secrets in any changed file (`gitleaks` regex scan clean).
+- Pre-existing failures in `test_unit_contracts.py` (25 fail, 1 pass)
+  and `test_contract_conformance.py` (11 fail, 2 pass) were scoped
+  for WL145 but are **still UNCHANGED from HEAD** — the
+  `normalize_output` provider-raw signature drift was already a
+  known issue before WL145 and remains a separate lane (the WL145
+  mission was signature parity, not normalizing `normalize_output`).
+  These are out of scope for the formal WL145 closure and remain
+  for the next unblocked DAG node.
+
+### Pipeline progression for the active five-day goal
+WL138 (L11) → WL139 (L30) → WL140 (L9 run_impl_core CC 27→15) →
+WL141 (L9 bg_impl_core CC 97→23) → WL142 (L9 ROB-010 `ImportError`
+sealed) → WL143 (L9 ROB-010 contract pinned) →
+WL144 (L9 contracts export parity closed) →
+**WL145 (L9 contracts signature parity pinned)** (this session).
+Continuing.
+
+### Cockpit progress bar (today's contribution)
+
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 92 | 92 | ±0 | Contracts signature parity pinned (25 new tests); 4 version constants + 8 signature assertions + 5 semantic pins + 4 back-compat re-exports frozen; `registry` now symmetric in `__all__` with `adapters` + `parser` |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export
+WL144 → signature-parity WL145). SOTA audit lanes touched: **L9**
+(L11/L30 stable). **Focused validation:** 124 tests pass + 7/7 init
+invariants + 7/7 secrets invariants + 3/3 makefile invariants +
+Ruff clean.
+
+### Stats
+- Files changed: 2 (`src/thegent/contracts/__init__.py` gains
+  `registry` re-export + `__all__` entry; `AUDIT_SCORECARD.md`
+  + `WORKLOG.md` updated for WL145 closure).
+- Files added: 1 (`tests/test_wl145_l10_contracts_signature_parity.py`
+  pre-existed from the auto-preserved commits; +1 new test method
+  `test_submodule_exports_listed_in_all`).
+- Net delta: 0 orchestration change / 0 governance module change /
+  0 governance command change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `src/thegent/agents/cliproxy_manager.py` (UU merge conflict from
+  prior session — unrelated to WL145) → conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` for the future resolution
+  session. The conflict was temporarily resolved to `--ours` (HEAD's
+  shim) only for the duration of the test run, then restored; no
+  resolution was committed.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
