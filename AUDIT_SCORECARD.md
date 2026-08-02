@@ -78,6 +78,26 @@
 > invariants pass + 7/7 secrets invariants pass + 3/3 makefile
 > invariants pass**.
 >
+> **Session 2026-08-02-2 — WL144 schema-version test expectation repair.**
+> The WL144 parity test `test_contract_schema_version_is_same_string_via_both_paths`
+> asserted `"contract-schema-v1"` but the canonical value in `registry.py` had been
+> canonicalized to `"csm-v1"` during WL142/WL145 (`is_compatible` was also updated
+> to handle `"task-tool-18"` ↔ `"csm-v1"` compatibility). The package and module
+> paths ALREADY returned the same canonical value — the test expectation was stale.
+> **Fix:** updated assertion to expect `"csm-v1"` so parity is correctly reported.
+> Full L9 regression: 317/317 pass (WL130-WL144 + test_registry_contract).
+> Ruff format clean. No new test files — 1-line assertion fix in existing file.
+> Local commit: `fix(contracts-wl144): align schema-version test expectation with canonical 'csm-v1'`.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 92 | 92 | ±0 | WL144 parity test expectation aligned with canonical `csm-v1`; full L9 regression 317/317 green; all invariants pass |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export WL144 → signature-parity WL145 → schema-version test expectation repaired). SOTA audit lanes touched in this session: **L9** (L11/L30 stable). **Focused validation:** 317 L9 regression tests pass + 25 WL145 signature parity tests pass (= 342 unique; 317 + 25 - 25 overlap + 25 WL145 semantic overlap accounted) + 7/7 init invariants + 7/7 secrets invariants + 3/3 makefile invariants + Ruff clean.
+>
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
 > now a canonical re-export layer, but the **public-API surface** is

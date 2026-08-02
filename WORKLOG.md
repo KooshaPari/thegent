@@ -13338,3 +13338,67 @@ Ruff clean.
   shim) only for the duration of the test run, then restored; no
   resolution was committed.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-02 (session 2) — WL144 schema-version test expectation repair
+
+### Work completed
+- **WL144 regression fix:** The parity test
+  `test_contract_schema_version_is_same_string_via_both_paths` in
+  `tests/test_wl144_l9_contracts_export_parity.py` asserted
+  `"contract-schema-v1"` but the canonical value in `registry.py` was
+  already canonicalized to `"csm-v1"` during WL142/WL145 (the
+  `is_compatible` method was also updated to handle `"task-tool-18"` ↔
+  `"csm-v1"` compatibility). Both package and module paths returned
+  `"csm-v1"` — the test expectation was stale, not the registry.
+  Updated assertion to `"csm-v1"`, applied `ruff format`.
+- Local commit: `fix(contracts-wl144): align schema-version test expectation with canonical 'csm-v1'`
+
+### Validation
+- WL144 focused: **26/26 pass**.
+- Full L9 regression (WL130-WL144 + test_registry_contract): **317/317 pass**.
+- WL145 signature parity: **25/25 pass**.
+- Ruff `check` + `format` clean on the changed file.
+- `bash scripts/check_init_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_secrets_invariants.sh` — **7/7 invariants PASS**.
+- `bash scripts/check_makefile_invariants.sh` — **3/3 invariants PASS**.
+- No secrets in the changed file (gitleaks regex scan clean).
+
+### Pipeline progression for the active five-day goal
+WL138 (L11) → WL139 (L30) → WL140 (L9 run_impl_core CC 27→15) →
+WL141 (L9 bg_impl_core CC 97→23) → WL142 (L9 ROB-010 `ImportError`
+sealed) → WL143 (L9 ROB-010 contract pinned) →
+WL144 (L9 contracts export parity closed) →
+WL145 (L9 contracts signature parity pinned) →
+**WL144 regression fix (this session).**
+Continuing.
+
+### Cockpit progress bar (today's contribution)
+
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 92 | 92 | ±0 | WL144 parity test expectation aligned with canonical `csm-v1`; full L9 regression 317/317 green; all invariants pass |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export
+WL144 → signature-parity WL145 → schema-version test expectation
+repaired). SOTA audit lanes touched: **L9** (L11/L30 stable).
+**Focused validation:** 317 L9 regression pass + 25 WL145 signature
+parity pass + 7/7 init invariants + 7/7 secrets invariants + 3/3
+makefile invariants + Ruff clean.
+
+### Stats
+- Files changed: 1 (`tests/test_wl144_l9_contracts_export_parity.py`
+  1-line assertion fix + ruff format reflow).
+- Net delta: 0 LOC added (1 insertion, 3 deletions).
+- 0 orchestration change / 0 governance module change /
+  0 governance command change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `src/thegent/agents/cliproxy_manager.py` (UU merge conflict from
+  prior session — unrelated to WL144) → conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` for the future resolution
+  session. No resolution was committed.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
