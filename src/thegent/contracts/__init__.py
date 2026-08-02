@@ -31,6 +31,13 @@ prevention) should import from either ``thegent.contracts`` or
 
 from __future__ import annotations
 
+#: Top-level contracts-package schema version. Bumped only when the
+#: ``thegent.contracts`` package surface (``CONTRACT_SCHEMA_VERSION``,
+#: ``CONTRACT_REGISTRY``, ``ADAPTER_REGISTRY``, etc.) changes in a
+#: breaking way.
+CONTRACTS_VERSION: str = "contracts-v1"
+
+
 # Canonical ROB-010 governance surface — re-exported from
 # thegent.contracts.registry. Imported FIRST so the canonical
 # CONTRACT_SCHEMA_VERSION / get_registry win any name clashes with
@@ -38,6 +45,7 @@ from __future__ import annotations
 from thegent.contracts.registry import (
     CONTRACT_REGISTRY,
     CONTRACT_SCHEMA_VERSION,
+    CONTRACTS_REGISTRY_VERSION,
     ContractRegistry,
     ContractVersion,
     ContractVersionInfo,
@@ -52,12 +60,20 @@ from thegent.contracts.registry import (
 # same name so that ``ADAPTER_REGISTRY.keys()``,
 # ``ADAPTER_REGISTRY.register(...)``, ``ADAPTER_REGISTRY.get(...)``
 # keep working. Both surface shapes are documented below.
+from thegent.contracts import adapters as adapters  # noqa: F401 — back-compat legacy export
+from thegent.contracts import parser as parser  # noqa: F401 — back-compat legacy export
 from thegent.contracts.adapters import (
     ADAPTER_REGISTRY,  # noqa: F401 — back-compat legacy export
     AdapterResult,  # noqa: F401 — back-compat legacy export
     OutputAdapter,  # noqa: F401 — back-compat legacy export
+    XMLOutputAdapter,  # noqa: F401 — back-compat legacy export
     get_adapter,  # noqa: F401 — back-compat legacy export
     normalize_output,  # noqa: F401 — back-compat legacy export
+    register_adapter,  # noqa: F401 — back-compat legacy export
+)
+from thegent.contracts.parser import (  # noqa: F401 — back-compat legacy export
+    IncrementalXMLParser,
+    extract_tags,
 )
 from thegent.contracts.csm import (
     CSMPhase,  # noqa: F401 — back-compat legacy export
@@ -67,9 +83,11 @@ from thegent.contracts.csm import (
 
 
 __all__ = [
+    "CONTRACTS_VERSION",
     # Canonical ROB-010 governance surface (WL142 / WL143 / WL144).
     "CONTRACT_REGISTRY",
     "CONTRACT_SCHEMA_VERSION",
+    "CONTRACTS_REGISTRY_VERSION",
     "ContractRegistry",
     "ContractVersion",
     "ContractVersionInfo",
@@ -78,8 +96,14 @@ __all__ = [
     "ADAPTER_REGISTRY",
     "AdapterResult",
     "OutputAdapter",
+    "XMLOutputAdapter",
+    "IncrementalXMLParser",
+    "extract_tags",
     "get_adapter",
     "normalize_output",
+    "register_adapter",
+    "adapters",
+    "parser",
     "CSMPhase",
     "CSMStatus",
     "CanonicalStructuredMessage",

@@ -20,7 +20,14 @@ from typing import Any
 #: ``get_server_meta_impl``. Defined here so the registries module remains the
 #: single import surface for contract-versioning constants; callers should
 #: treat this as the canonical contract schema version string.
-CONTRACT_SCHEMA_VERSION: str = "contract-schema-v1"
+CONTRACT_SCHEMA_VERSION: str = "csm-v1"
+
+
+#: Schema version of the registry module itself (separate from the
+#: contract schema version). Bumped only when the public surface of
+#: ``ContractRegistry`` / ``get_registry`` / ``ContractVersionInfo``
+#: changes in a breaking way.
+CONTRACTS_REGISTRY_VERSION: str = "registry-v1"
 
 
 @dataclass
@@ -83,14 +90,20 @@ class ContractRegistry:
         return sorted(self._contracts.values(), key=lambda v: (v.contract_id, v.version))
 
     def is_compatible(self, requested: str, current: str) -> bool:
-        """Return ``True`` only when ``requested == current``.
+        """Return ``True`` when ``requested`` is acceptable for ``current``.
 
-        ROB-010 contract-version downgrade prevention: in a critical
-        lane the only acceptable requested version is the canonical
-        current schema version. Forward or backward drift is rejected.
-        Unknown versions are treated as incompatible.
+        ROB-010 contract-version downgrade prevention. The canonical
+        schema (``"csm-v1"``) and the legacy ``"task-tool-18"`` schema
+        are mutually compatible because task-tool-18 predates the
+        csm-v1 wire format and the migration adapter handles the
+        translation. Any other unknown / empty / different version
+        combination is rejected.
         """
-        return bool(requested) and requested == current
+        if not requested:
+            return False
+        if requested == current:
+            return True
+        return {requested, current} == {"csm-v1", "task-tool-18"}
 
 
 #: Canonical single instance. Populated at import time with the
@@ -136,6 +149,7 @@ class ContractVersion:
 __all__ = [
     "CONTRACT_REGISTRY",
     "CONTRACT_SCHEMA_VERSION",
+    "CONTRACTS_REGISTRY_VERSION",
     "ContractRegistry",
     "ContractVersion",
     "ContractVersionInfo",

@@ -22,19 +22,12 @@ class Capability:
         self.trust_level = trust_level
 
     def __repr__(self) -> str:
-        return (
-            f"Capability(id={self.id!r}, version={self.version!r}, "
-            f"trust_level={self.trust_level!r})"
-        )
+        return f"Capability(id={self.id!r}, version={self.version!r}, trust_level={self.trust_level!r})"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Capability):
             return NotImplemented
-        return (
-            self.id == other.id
-            and self.version == other.version
-            and self.trust_level == other.trust_level
-        )
+        return self.id == other.id and self.version == other.version and self.trust_level == other.trust_level
 
     def __hash__(self) -> int:
         return hash((self.id, self.version, self.trust_level))
