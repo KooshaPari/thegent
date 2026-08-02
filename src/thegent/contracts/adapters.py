@@ -548,8 +548,9 @@ def normalize_output(
 
     Resolution order:
 
-    1. Look up the registered adapter for ``provider`` and delegate to
-       :meth:`OutputAdapter.normalize`.
+    1. Look up the registered adapter for ``provider`` via the
+       module-level :func:`get_adapter` (so tests can patch the
+       lookup) and delegate to :meth:`OutputAdapter.normalize`.
     2. If the adapter returns a "no XML tags" parse failure *and*
        ``allow_fallback`` is true, fall back to :func:`extract_condensed`
        and produce a ``source_contract="fallback-plain"`` CSM.
@@ -558,7 +559,10 @@ def normalize_output(
     4. On registry miss or adapter exception with ``allow_fallback=False``,
        raise :class:`SemanticValidationError`.
     """
-    adapter = ADAPTER_REGISTRY.get(provider)
+    try:
+        adapter = get_adapter(provider)
+    except KeyError:
+        adapter = None
     if adapter is not None:
         try:
             result = adapter.normalize(raw, context=context)
@@ -581,9 +585,7 @@ def normalize_output(
         # can react explicitly (matches the contract pinned by
         # ``tests/test_unit_contracts_adapters.py``).
         if not allow_fallback and result.parse_errors:
-            raise SemanticValidationError(
-                f"Adapter for {provider} failed validation: {', '.join(result.parse_errors)}"
-            )
+            raise SemanticValidationError(f"Adapter for {provider} failed validation: {', '.join(result.parse_errors)}")
         return result
 
     if not allow_fallback:
