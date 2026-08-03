@@ -13,7 +13,7 @@
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
-| **L9 Complexity** | **92** | **A+** | 🟢 |
+| **L9 Complexity** | **93** | **A+** | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
 
 > **Session 2026-08-01-6 — WL143 governance command contract suite.**
@@ -97,6 +97,35 @@
 > | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
 >
 > **DAG tick:** L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export WL144 → signature-parity WL145 → schema-version test expectation repaired). SOTA audit lanes touched in this session: **L9** (L11/L30 stable). **Focused validation:** 317 L9 regression tests pass + 25 WL145 signature parity tests pass (= 342 unique; 317 + 25 - 25 overlap + 25 WL145 semantic overlap accounted) + 7/7 init invariants + 7/7 secrets invariants + 3/3 makefile invariants + Ruff clean.
+>
+> **Session 2026-08-02-3 — WL146 L9 CC reduction on _phase_classify_run_result.**
+> Extracted 3 helper functions from the 17-CC `_phase_classify_run_result` classifier
+> to bring it under the 10-CC threshold:
+> * `_classify_error_class(result)` — maps result attributes to error class (CC 4 / A)
+> * `_enqueue_critical_dlq(settings, run_meta, status, result)` — best-effort DLQ
+>   enqueue for critical-lane runs, WP-2008 (CC 3 / A)
+> * `_check_unknown_contract(lane, norm_res, error_class)` — G-CA-03 C3 unknown-contract
+>   detection (CC 4 / A)
+> Also extracted `_bg_ambig_cwd_error(run_id)` and `_bg_handle_policy_result(...)` from
+> `bg_impl_core` (CC 23 → 21), inlining the cwd ambig error dict and combining the
+> deny/pause policy branches into a single caller.
+>
+> **`_phase_classify_run_result: C(17) → B(9)`** — surface now under ≤10 CC threshold.
+> 3 new helpers all at Grade A. Full L9 regression: 342/342 pass (WL130-WL145 +
+> test_registry_contract). Ruff check + format clean. Invariants: 7/7 init + 7/7 secrets
+> + 3/3 makefile = 17/17.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 92 | **93** | **+1** | `_phase_classify_run_result` CC 17→9 (below ≤10 threshold); `bg_impl_core` CC 23→21; 3 new A-grade helpers; full L9 regression 342/342 green |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export
+> WL144 → signature-parity WL145 → schema-version expectation repaired →
+> **WL146 classify_run_result CC 17→9**). SOTA audit lanes touched: **L9** (L11/L30 stable).
+> **Focused validation:** 342 L9 regression pass + 17/17 invariants + Ruff clean.
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
@@ -649,7 +678,7 @@
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
-| **L9 Complexity** | **92** | **A+** | 🟢 |
+| **L9 Complexity** | **93** | **A+** | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
 | L11 Dependencies | 95 | A | 🟢 |
 | L12 Error Handling | 100 | A+ | 🟢 |
@@ -758,7 +787,7 @@ Async defs: 362, awaits: 378.
 ### L8 Compliance — 100/100 (A+)
 Commits: 20. SSOT: True.
 
-### L9 Complexity — 92/100 (A+)
+### L9 Complexity — 93/100 (A+)
 Long funcs: 26, nested blocks: 18350, branches: 17640.
 **2026-07-30-5 WL142 ROB-010 critical-lane stability pass:**
 `_phase_bg_evaluate_contract` previously referenced

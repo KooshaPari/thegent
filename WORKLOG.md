@@ -13402,3 +13402,61 @@ makefile invariants + Ruff clean.
   `/tmp/cliproxy_conflict_preserved.py` for the future resolution
   session. No resolution was committed.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-02 (session 3) — WL146 L9 CC reduction: _phase_classify_run_result C(17)→B(9)
+
+### Work completed
+- **WL146 L9 CC ≤10 stretch:** Extracted 3 helper functions from the
+  `_phase_classify_run_result` classifier (CC 17 → 9):
+  - `_classify_error_class(result)` — maps timeout/usage_limit/api_error (CC 4 / A)
+  - `_enqueue_critical_dlq(settings, run_meta, status, result)` — WP-2008 DLQ
+    enqueue for critical-lane runs (CC 3 / A)
+  - `_check_unknown_contract(lane, norm_res, error_class)` — G-CA-03 C3
+    unknown-contract detection (CC 4 / A)
+- **Bg_impl_core guard extraction:** `_bg_ambig_cwd_error(run_id)` inlined the
+  cwd ambig error dict; `_bg_handle_policy_result(...)` combined deny/pause
+  branches into a single caller. CC 23 → 21.
+- Scorecard updated: L9 Complexity 92 → 93 (A+).
+
+### Validation
+- Full L9 regression (WL130-WL145 + test_registry_contract): **342/342 pass**.
+- Ruff check + format clean on changed file.
+- `bash scripts/check_init_invariants.sh` — 7/7 PASS.
+- `bash scripts/check_secrets_invariants.sh` — 7/7 PASS.
+- `bash scripts/check_makefile_invariants.sh` — 3/3 PASS.
+
+### Pipeline progression for the active five-day goal
+WL138 (L11) → WL139 (L30) → WL140 (L9 run_impl_core CC 27→15) →
+WL141 (L9 bg_impl_core CC 97→23) → WL142 (L9 ROB-010 ImportError sealed) →
+WL143 (L9 ROB-010 contract pinned) → WL144 (L9 contracts export parity closed) →
+WL145 (L9 contracts signature parity pinned) →
+WL144 regression fix (schema-version test expectation) →
+**WL146 L9 CC reduction (_phase_classify_run_result C(17)→B(9))**.
+Continuing.
+
+### Cockpit progress bar (today's contribution)
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 92 | 93 | +1 | `_phase_classify_run_result` CC 17→9 (≤10 threshold); `bg_impl_core` CC 23→21; 3 new A-grade helpers; full L9 regression 342/342 green |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export WL144 →
+signature-parity WL145 → schema-version expectation repaired →
+**WL146 classify_run_result CC 17→9**). SOTA audit lanes touched: **L9**
+(L11/L30 stable). **Focused validation:** 342 L9 regression pass + 17/17
+invariants + Ruff clean.
+
+### Stats
+- File changed: `src/thegent/cli/services/run_execution_core_helpers.py`
+  (+37 lines: 3 new helpers + 2 extracted guard helpers + modified bodies)
+  (-0 lines net removal; structural reorg)
+- 0 orchestration change / 0 governance module change /
+  0 governance command change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `cliproxy_manager.py` UU merge conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` → untouched.
+- Archived upstream (origin) → NOT force-pushed (only local commits).

@@ -1112,6 +1112,46 @@ def _phase_build_runner_factory(
     return runner_factory
 
 
+def _classify_error_class(result: Any) -> str | None:
+    """Map ``result`` attributes to an error-class: timeout / usage_limit / api_error / None."""
+    if result.timed_out:
+        return "timeout"
+    if is_usage_limit(result):
+        return "usage_limit"
+    if result.exit_code != 0:
+        return "api_error"
+    return None
+
+
+def _enqueue_critical_dlq(
+    settings: ThegentSettings,
+    run_meta: RunMeta,
+    status: str,
+    result: Any,
+) -> None:
+    """Best-effort DLQ enqueue for critical-lane runs (WP-2008)."""
+    try:
+        from thegent.execution import DLQManager
+
+        DLQManager(settings.session_dir).enqueue(
+            run_meta,
+            f"Run {status}: {result.stderr or 'No result'}",
+        )
+        _log.info("Critical run %s; enqueued to DLQ.", status)
+    except Exception as exc:  # pragma: no cover - DLQ best-effort
+        _log.debug("DLQ enqueue skipped: %s", exc)
+
+
+def _check_unknown_contract(lane: str, norm_res: Any, error_class: str | None) -> bool:
+    """Return True when a critical-lane run has an unrecognised source contract."""
+    if lane != "critical":
+        return False
+    if norm_res is None:
+        return False
+    _known = ("csm-v1", "task-tool-18", "zen-rich-v1", "xml-tags", "plain")
+    return norm_res.csm.source_contract == "fallback-plain" or norm_res.csm.source_contract not in _known
+
+
 def _phase_classify_run_result(
     *,
     result: Any,
@@ -1139,40 +1179,20 @@ def _phase_classify_run_result(
     """
     if result is None:
         return 1, "failed", None, "Unknown agent or no result"
-    if result.timed_out:
-        error_class: str | None = "timeout"
-    elif is_usage_limit(result):
-        error_class = "usage_limit"
-    elif result.exit_code != 0:
-        error_class = "api_error"
-    else:
-        error_class = None
 
+    error_class = _classify_error_class(result)
     status = fsm_status
     exit_code = result.exit_code
+
     if status == "success":
         exit_code = 0
         status = "completed"
     else:
         status = "timed_out" if result.timed_out else "failed"
         if lane == "critical":
-            try:
-                from thegent.execution import DLQManager
+            _enqueue_critical_dlq(settings, run_meta, status, result)
 
-                DLQManager(settings.session_dir).enqueue(
-                    run_meta,
-                    f"Run {status}: {result.stderr or 'No result'}",
-                )
-                _log.info("Critical run %s; enqueued to DLQ.", status)
-            except Exception as exc:  # pragma: no cover - DLQ best-effort
-                _log.debug("DLQ enqueue skipped: %s", exc)
-
-    _known_contracts = ("csm-v1", "task-tool-18", "zen-rich-v1", "xml-tags", "plain")
-    if (
-        lane == "critical"
-        and norm_res is not None
-        and (norm_res.csm.source_contract == "fallback-plain" or norm_res.csm.source_contract not in _known_contracts)
-    ):
+    if _check_unknown_contract(lane, norm_res, error_class):
         status = "failed"
         exit_code = 1
         error_class = error_class or "unknown_contract"
@@ -2384,6 +2404,34 @@ def _phase_bg_evaluate_policy(
     return pol_res, pol_reason
 
 
+def _bg_ambig_cwd_error(run_id: str | None) -> dict[str, Any]:
+    """Return canonical 'ambiguous cwd' error dict."""
+    return {
+        "error": "Ambiguous cwd detected. Run inside a project directory or pass --cd with a valid project path.",
+        "exit_code": 1,
+        "session_id": "failed",
+        "run_id": run_id or f"bg_err_{uuid.uuid4().hex[:8]}",
+    }
+
+
+def _bg_handle_policy_result(
+    pol_res: str,
+    run_meta: RunMeta,
+    escalation_sla_minutes: int,
+    pol_reason: str,
+    registry: RunRegistry,
+    settings: ThegentSettings,
+) -> dict[str, Any] | None:
+    """Handle deny/pause policy outcomes; return error payload or None to continue."""
+    if pol_res == "deny":
+        return _phase_register_policy_denial(run_meta, escalation_sla_minutes, pol_reason, registry)
+    if pol_res == "pause":
+        return _phase_register_hitl_pause(
+            settings, run_meta, registry, escalation_sla_minutes, pol_reason, suffix=" (bg)"
+        )
+    return None
+
+
 def _phase_bg_remote_dispatch(
     *,
     remote: str | None,
@@ -2751,12 +2799,7 @@ def bg_impl_core(
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
-        return {
-            "error": "Ambiguous cwd detected. Run inside a project directory or pass --cd with a valid project path.",
-            "exit_code": 1,
-            "session_id": "failed",
-            "run_id": run_id or f"bg_err_{uuid.uuid4().hex[:8]}",
-        }
+        return _bg_ambig_cwd_error(run_id)
 
     effective_timeout = _phase_bg_resolve_effective_timeout(settings, config_provider, timeout, agent, tenant_id)
     full = full or True
@@ -2809,13 +2852,9 @@ def bg_impl_core(
         override_reason=override_reason,
     )
 
-    if pol_res == "deny":
-        return _phase_register_policy_denial(run_meta, escalation_sla_minutes, pol_reason, registry)
-
-    if pol_res == "pause":
-        return _phase_register_hitl_pause(
-            settings, run_meta, registry, escalation_sla_minutes, pol_reason, suffix=" (bg)"
-        )
+    policy_payload = _bg_handle_policy_result(pol_res, run_meta, escalation_sla_minutes, pol_reason, registry, settings)
+    if policy_payload is not None:
+        return policy_payload
 
     registry.register_start(run_meta)
 
