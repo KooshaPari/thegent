@@ -633,14 +633,19 @@ def _phase_load_l3_memory_context(agent: str | None, prompt: str) -> tuple[str, 
 
 def _phase_setup_shadow_workspace(
     settings: ThegentSettings,
-    original_cwd: Path,
+    cwd: Path | None,
     run_id: str,
     requested_shadow: bool,
-) -> tuple[Path | None, dict[str, str] | None]:
-    """Optionally create a shadow workspace (MTSP-12)."""
+) -> tuple[Path | None, dict[str, str] | None, Any]:
+    """Optionally create a shadow workspace (MTSP-12).
+
+    Resolves ``cwd or Path.cwd()`` internally and returns
+    ``(agent_cwd, shadow_env, shadow_ws)``.
+    """
+    original_cwd = cwd or Path.cwd()
     use_shadow = bool(requested_shadow or getattr(settings, "shadow_workspaces_enabled", False))
     if not use_shadow:
-        return original_cwd, None
+        return original_cwd, None, None
     try:
         from thegent.orchestration.shadow import ShadowWorkspace
 
@@ -648,15 +653,15 @@ def _phase_setup_shadow_workspace(
         if shadow_ws.create():
             shadow_env = shadow_ws.get_env()
             _log.info("Running in shadow workspace: %s", shadow_ws.shadow_root)
-            return shadow_ws.shadow_root, shadow_env
+            return shadow_ws.shadow_root, shadow_env, shadow_ws
         _log.warning("Failed to create shadow workspace; falling back to main project.")
-        return original_cwd, None
+        return original_cwd, None, None
     except ImportError as _shadow_exc:
         _log.debug(
             "shadow workspace module unavailable in this revision (%s); running in main project",
             _shadow_exc,
         )
-        return original_cwd, None
+        return original_cwd, None, None
 
 
 def _phase_acquire_resource_leases(
@@ -745,6 +750,8 @@ def _phase_register_run_end(
     duration: float,
     error_class: str | None,
     cost_usd: float | None,
+    maif_runner: Any = None,
+    output_summary: str = "",
 ) -> None:
     """Register run end + final MAIF record_run_end."""
     registry.register_end(
@@ -756,6 +763,12 @@ def _phase_register_run_end(
         error_class=error_class,
         cost_usd=cost_usd,
     )
+    if maif_runner is not None:
+        maif_runner.record_run_end(
+            run_id=run_id,
+            status=status,
+            output_summary=output_summary,
+        )
 
 
 def _phase_record_success_postlude(
@@ -855,7 +868,7 @@ def _phase_assemble_payload(
     result: Any,
     norm_res: Any,
     use_stream: bool,
-    csm: Any,
+    csm: Any = None,
     stdout: str,
     stderr: str,
     run_meta: RunMeta,
@@ -864,7 +877,12 @@ def _phase_assemble_payload(
     route_contract: dict[str, Any] | None,
     route_request: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Build the final run payload from the result + normalized stream."""
+    """Build the final run payload from the result + normalized stream.
+
+    ``csm`` is derived from ``norm_res`` when not explicitly provided.
+    """
+    if csm is None:
+        csm = norm_res.csm if norm_res else None
     if use_stream:
         if csm:
             stdout = csm.summary
@@ -948,17 +966,25 @@ def _phase_dispatch_grounded_run(
     prompt: str,
     model: str | None,
     effective_timeout: int,
-    run_meta: RunMeta,
+    run_id: str,
+    google_grounding: bool,
 ) -> dict[str, Any] | None:
     """Run the Gemini grounding path (returns payload or ``None`` to skip).
 
-    Returns ``None`` when ``google_grounding`` is false or the agent is not
-    in ``GEMINI_GROUNDING_AGENTS``. Returns a complete success payload when
-    grounding succeeded, and an error payload when the upstream raised.
-    The orchestrator uses ``None`` to continue the non-grounded pipeline.
+    Accepts ``run_id`` and ``google_grounding`` directly; builds the
+    internal proxy internally. Returns ``None`` when ``google_grounding``
+    is false or the agent is not in ``GEMINI_GROUNDING_AGENTS``. Returns
+    a complete success payload when grounding succeeded, and an error
+    payload when the upstream raised.
     """
-    if not getattr(run_meta, "_google_grounding_requested", False):
+    if not google_grounding:
         return None
+    from types import SimpleNamespace
+
+    run_meta = SimpleNamespace(
+        run_id=run_id,
+        _google_grounding_requested=google_grounding,
+    )
     from thegent.agents.grounding import GEMINI_GROUNDING_AGENTS, run_gemini_with_grounding
 
     if agent not in GEMINI_GROUNDING_AGENTS:
@@ -1051,14 +1077,16 @@ def _phase_build_runner_factory(
     model: str | None,
     mode: str,
     settings: ThegentSettings,
+    run_id: str,
 ) -> Callable[[str], AgentRunner | None]:
     """Return the ``runner_factory`` closure that wraps ``Runner.run``.
 
-    Honors G-GP-04 (skip providers with an open circuit) and injects
-    ``agent_model`` so downstream runners can resolve the canonical
-    backend. The ``RunnerProxy`` dataclass itself stays inside the
-    closure to keep it private to this phase.
+    Stashes ``run_id`` on settings so ``_phase_build_fallback_plan``
+    can find it without a separate parameter. Honors G-GP-04 (skip
+    providers with an open circuit) and injects ``agent_model`` so
+    downstream runners can resolve the canonical backend.
     """
+    settings._current_run_id = run_id
 
     def runner_factory(agent_name: str) -> AgentRunner | None:
         if circuit_breaker.is_open(agent_name):
@@ -1945,16 +1973,13 @@ def run_impl_core(
     # when grounding succeeded or short-circuits with an error payload when
     # the agent is not Gemini-compatible. ``None`` means "continue the
     # non-grounded pipeline".
-    run_meta_dict_proxy = SimpleNamespace(
-        run_id=run_meta.run_id,
-        _google_grounding_requested=google_grounding,
-    )
     grounded_payload = _phase_dispatch_grounded_run(
         agent=agent,
         prompt=prompt,
         model=model,
         effective_timeout=int(effective_timeout),
-        run_meta=run_meta_dict_proxy,  # type: ignore[arg-type]
+        run_id=run_meta.run_id,
+        google_grounding=google_grounding,
     )
     if grounded_payload is not None:
         return grounded_payload
@@ -2025,23 +2050,20 @@ def run_impl_core(
         model=model,
         mode=mode,
         settings=settings,
+        run_id=run_meta.run_id,
     )
-
-    # Stash run_id on settings so ``_phase_build_fallback_plan`` can find it
-    # without a separate parameter (preserves the helper's signature budget).
-    settings._current_run_id = run_meta.run_id
 
     # MTSP-12: Shadow Workspace Integration — delegated to
     # ``_phase_setup_shadow_workspace`` so ShadowWorkspace.create() + env
     # export + ImportError fallback all live in one auditable place.
-    original_cwd = cwd or Path.cwd()
-    shadow_ws: Any = None
-    agent_cwd, shadow_env = _phase_setup_shadow_workspace(settings, original_cwd, run_meta.run_id, shadow)
+    agent_cwd, shadow_env, shadow_ws = _phase_setup_shadow_workspace(settings, cwd, run_meta.run_id, shadow)
 
     # MTSP-15: Resource Locking (Non-worktree coordination) — delegated to
     # ``_phase_acquire_resource_leases`` so the FileLeaseRegistry claim loop
     # + failure short-circuit live in one auditable place.
-    lease_result = _phase_acquire_resource_leases(settings, lock, original_cwd, run_meta.run_id, int(effective_timeout))
+    lease_result = _phase_acquire_resource_leases(
+        settings, lock, cwd or Path.cwd(), run_meta.run_id, int(effective_timeout)
+    )
     if isinstance(lease_result, dict):
         return lease_result
     locked_tokens: list[tuple[Path, Any]] = lease_result
@@ -2093,7 +2115,8 @@ def run_impl_core(
     # WP-Y4: cost estimate — delegated to ``_phase_estimate_run_cost``.
     cost_usd = _phase_estimate_run_cost(run_meta)
 
-    # WP-3xxx: register run end — delegated to ``_phase_register_run_end``.
+    # WP-3xxx: register run end + MAIF record_run_end — delegated to
+    # ``_phase_register_run_end``.
     _phase_register_run_end(
         registry,
         run_meta.run_id,
@@ -2102,11 +2125,7 @@ def run_impl_core(
         duration,
         error_class,
         cost_usd,
-    )
-
-    maif_runner.record_run_end(
-        run_id=run_meta.run_id,
-        status=status,
+        maif_runner=maif_runner,
         output_summary=output_summary,
     )
 
@@ -2129,7 +2148,6 @@ def run_impl_core(
         return _phase_assemble_unknown_agent_payload(agent, run_meta.run_id)
 
     stdout, stderr = _phase_normalize_result_strings(result)
-    csm = norm_res.csm if norm_res else None
 
     # Free the eye idle state + publish ``run.end`` bus event — both
     # best-effort. Delegated to ``_phase_release_idle_and_publish`` so the
@@ -2146,7 +2164,6 @@ def run_impl_core(
         result=result,
         norm_res=norm_res,
         use_stream=use_stream,
-        csm=csm,
         stdout=stdout,
         stderr=stderr,
         run_meta=run_meta,
