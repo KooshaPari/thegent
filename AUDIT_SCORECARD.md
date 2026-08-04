@@ -127,6 +127,37 @@
 > **WL146 classify_run_result CC 17→9**). SOTA audit lanes touched: **L9** (L11/L30 stable).
 > **Focused validation:** 342 L9 regression pass + 17/17 invariants + Ruff clean.
 >
+> **Session 2026-08-03-1 — WL147 run_impl_core finalize-outcome extraction.**
+> Extracted `_phase_finalize_run_outcome` (109 lines, CC 2 / A-grade) from the
+> ~74-line post-classification cleanup chain in `run_impl_core`. The new helper
+> consolidates shadow finalize, cost estimation, run-end registration, teammate
+> status, success postlude, unknown-agent short-circuit, stdout/stderr
+> normalization, idle release, payload assembly, tracker finalization, and
+> conversation dumps — a 11-step linear sequence at Grade A.
+> `run_impl_core` body: **348 lines, CC 14** (down from 424L / CC 27 at WL140,
+> approaching the 350L stretch target). Also repaired `test_run_impl_signature_intact`
+> to match actual `**kwargs`-based `run_impl` signature.
+>
+> Full L9 core regression (WL130 + WL137 + WL141 + WL142 + WL143 +
+> test_registry_contract): **189/189 pass**. WL144 parity: **26/26 pass**.
+> Extraction tests: **4/4 pass**. Ruff check + format clean.
+> Invariants: 7/7 init + 7/7 secrets + 7/7 makefile = 21/21.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 93 | 93 | ±0 | `_phase_finalize_run_outcome` extracted (CC 2 / A); `run_impl_core` 348L / CC 14 — structural cleanup |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export
+> WL144 → signature-parity WL145 → schema-version expectation repaired →
+> WL146 classify_run_result CC 17→9 →
+> **WL147 finalize-outcome extraction (body 348L, CC 14)**).
+> SOTA audit lanes touched: **L9** (L11/L30 stable).
+> **Focused validation:** 189 L9 core pass + 26 WL144 parity pass +
+> 4 extraction pass + 21/21 invariants + Ruff clean.
+>
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
 > now a canonical re-export layer, but the **public-API surface** is
@@ -982,8 +1013,19 @@ body. Pre-existing broken `thegent.contracts.registry.get_registry().is_compatib
 import inside the ROB-010 critical-lane downgrade path is
 preserved verbatim — flagged for a future governance/stability
 pass (out of scope for WL141). Lane score **84 → 88 (A)** as
-the second monolith (`bg_impl_core`) collapses into a thin
+Lane score **84 → 88 (A)** as the second monolith (`bg_impl_core`) collapses into a thin
 composer alongside `run_impl_core`.
+
+**2026-08-03-1 WL147 run_impl_core finalize-outcome extraction:**
+`_phase_finalize_run_outcome` (109 lines, CC 2 / A-grade) extracted from the
+post-classification cleanup chain in `run_impl_core`. Consolidates 11 sub-steps
+(shadow finalize, cost estimation, run-end registration, teammate status,
+success postlude, unknown-agent short-circuit, stdout/stderr normalization,
+idle release, payload assembly, tracker finalization, conversation dumps) into
+a single A-grade linear sequence. `run_impl_core` body: 424L → 348L; CC: 15 → 14
+(approaching the 350L stretch target). Test repair: `test_run_impl_signature_intact`
+updated to match the actual `**kwargs`-based signature. Full L9 core regression:
+189/189 pass + 26/26 WL144 parity. Ruff format clean. 21/21 invariants pass.
 
 ### L10 Type Safety — 100/100 (A+)
 Type coverage: 11837/12008 (99%). Dataclasses: 971.

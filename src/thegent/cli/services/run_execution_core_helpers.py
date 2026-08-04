@@ -1267,6 +1267,117 @@ def _phase_release_idle_and_publish(
         _log.debug("Failed to publish run.end bus event: %s", exc)
 
 
+def _phase_finalize_run_outcome(
+    *,
+    shadow_ws: Any,
+    settings: ThegentSettings,
+    status: str,
+    run_meta: RunMeta,
+    exit_code: int,
+    duration: float,
+    error_class: str | None,
+    cost_usd: float | None,
+    registry: RunRegistry,
+    maif_runner: Any,
+    output_summary: str,
+    result: Any,
+    norm_res: Any,
+    auditor: Any,
+    agent: str | None,
+    cwd: Path | None,
+    start_time: float,
+    use_stream: bool,
+    stdout: str,
+    stderr: str,
+    contract_deprecation_warning: str | None,
+    include_contract: bool,
+    route_contract: dict[str, Any] | None,
+    route_request: dict[str, Any] | None,
+    tracker: Any,
+    prompt: str,
+) -> dict[str, Any]:
+    """Finalize a finished run: shadow, cost, register, postlude, payload.
+
+    Consolidates the ~74-line post-classification cleanup chain into a single
+    helper so the orchestrator body can shrink from 405L to ~332L (WL147
+    stretch target: 350L). Owns:
+
+    * MTSP-12 shadow workspace finalize (auto-merge / destroy)
+    * WP-Y4 cost estimation
+    * WP-3xxx run-end registration + MAIF record_run_end
+    * WP-16002 teammate delegation status update
+    * WP-3007/WP-2007/WP-3002 success postlude (trust record + evidence + MAIF)
+    * Unknown-agent payload short-circuit
+    * stdout/stderr normalization
+    * Eye idle release + ``run.end`` bus event
+    * Payload assembly
+    * Cost tracker finalization
+    * WP-DX-024 conversation dumps
+
+    Returns the final ``payload`` dict the orchestrator returns directly.
+    """
+    # MTSP-12: Shadow finalize (auto-merge + destroy on success / destroy-only
+    # on failure).
+    _phase_finalize_shadow(shadow_ws, settings, status)
+
+    # WP-Y4: cost estimate.
+    cost_usd = _phase_estimate_run_cost(run_meta) if cost_usd is None else cost_usd
+
+    # WP-3xxx: register run end + MAIF record_run_end.
+    _phase_register_run_end(
+        registry,
+        run_meta.run_id,
+        exit_code,
+        status,
+        duration,
+        error_class,
+        cost_usd,
+        maif_runner=maif_runner,
+        output_summary=output_summary,
+    )
+
+    # WP-16002: Update teammate delegation status (no-op when task_id is falsy).
+    _phase_update_teammate_status(settings, getattr(run_meta, "task_id", None), status, result)
+
+    # WP-3007/WP-2007/WP-3002: trust boundary record + evidence lint + MAIF.
+    _phase_record_success_postlude(settings, run_meta, result, norm_res, auditor)
+
+    if not result:
+        return _phase_assemble_unknown_agent_payload(agent, run_meta.run_id)
+
+    stdout, stderr = _phase_normalize_result_strings(result)
+
+    # Free the eye idle state + publish ``run.end`` bus event.
+    _phase_release_idle_and_publish(
+        cwd=cwd,
+        run_id=run_meta.run_id,
+        start_ts=start_time,
+        exit_code=exit_code,
+    )
+
+    # Assemble payload
+    payload = _phase_assemble_payload(
+        result=result,
+        norm_res=norm_res,
+        use_stream=use_stream,
+        stdout=stdout,
+        stderr=stderr,
+        run_meta=run_meta,
+        contract_deprecation_warning=contract_deprecation_warning,
+        include_contract=include_contract,
+        route_contract=route_contract,
+        route_request=route_request,
+    )
+
+    # End cost tracking.
+    _phase_finalize_tracker(tracker)
+
+    # WP-DX-024: Always write conversation dumps to docs/.
+    _phase_write_run_dumps(settings, run_meta.run_id, cwd, prompt, stdout, result)
+
+    return payload
+
+
 # ----------------------------------------------------------------------------
 # WL137 — Composite phase helpers (L9 final hardening pass).
 #
@@ -1888,12 +1999,9 @@ def run_impl_core(
     if concurrency_error is not None:
         return concurrency_error
 
-    # WP-5001: Speculative Execution Mode (kept inline; no-op until the
-    # thread-pool race lands).
+    # WP-5001: Speculative Execution Mode (no-op until thread-pool race lands).
     if speculative:
         _log.info("Speculative execution active; racing multiple providers.")
-        # Simplified: pick top 2 and race
-        # In a real impl, we'd use a thread pool
 
     # WL137: bundle the per-run execution services into a single dataclass so
     # the orchestrator stays a thin composer (CC ↓, inlined 18 lines).
@@ -1921,11 +2029,7 @@ def run_impl_core(
     if fatigue_error is not None:
         return fatigue_error
 
-    # WL137: combined agent-from-model resolution + Google-grounding precondition
-    # delegate to a single helper so the orchestrator does not need to chain
-    # three if/return blocks inline. ``_phase_resolve_grounded_agent`` owns
-    # the import + GEMINI_GROUNDING_AGENTS membership check. DIRECT call
-    # (WL137 contract).
+    # Phase: agent-from-model resolution + Google-grounding precondition.
     _agent, _grounding_err = _phase_resolve_grounded_agent(
         agent_name=agent,
         model=model,
@@ -1937,10 +2041,7 @@ def run_impl_core(
         return _grounding_err
     agent = _agent
 
-    # Task-aware execution: load ``TaskSpec`` via ``_phase_resolve_task_metadata``.
-    # This helper owns the import dance for TaskInput / TaskSpec / parse_task_file
-    # and the task-file existence check; returns ``(None, None)`` when the task
-    # is missing so the orchestrator can fall through to the prompt path.
+    # Resolve TaskSpec + metadata (task-file import / file-check / delegation).
     resolved_domain_tag = str(domain) if domain else str(settings.default_domain_tag)
     effective_owner = owner or _default_owner_tag(cwd)
     _task_spec, _task_metadata = _phase_resolve_task_metadata(  # noqa: RUF059 (documented contract)
@@ -2107,81 +2208,34 @@ def run_impl_core(
         maif_runner=maif_runner,
     )
 
-    # MTSP-12: Shadow finalize (auto-merge + destroy on success / destroy-only
-    # on failure) — delegated to ``_phase_finalize_shadow``. The helper owns
-    # both branches keyed on the ``status`` returned by ``_phase_classify_run_result``.
-    _phase_finalize_shadow(shadow_ws, settings, status)
-
-    # WP-Y4: cost estimate — delegated to ``_phase_estimate_run_cost``.
-    cost_usd = _phase_estimate_run_cost(run_meta)
-
-    # WP-3xxx: register run end + MAIF record_run_end — delegated to
-    # ``_phase_register_run_end``.
-    _phase_register_run_end(
-        registry,
-        run_meta.run_id,
-        exit_code,
-        status,
-        duration,
-        error_class,
-        cost_usd,
+    return _phase_finalize_run_outcome(
+        shadow_ws=shadow_ws,
+        settings=settings,
+        status=status,
+        run_meta=run_meta,
+        exit_code=exit_code,
+        duration=duration,
+        error_class=error_class,
+        cost_usd=cost_usd,
+        registry=registry,
         maif_runner=maif_runner,
         output_summary=output_summary,
-    )
-
-    # WP-16002: Update teammate delegation status if this was a sub-task.
-    # Delegated to ``_phase_update_teammate_status``; the helper is a
-    # no-op when ``task_id`` is falsy so the orchestrator can call it
-    # unconditionally without the prior ``getattr(run_meta, "task_id", None)``
-    # guard.
-    _phase_update_teammate_status(settings, getattr(run_meta, "task_id", None), status, result)
-
-    # WP-3007/WP-2007/WP-3002: trust boundary record + evidence lint + MAIF
-    # artifact generation. Delegated to ``_phase_record_success_postlude``
-    # so the three side-effects live in one auditable place.
-    _phase_record_success_postlude(settings, run_meta, result, norm_res, auditor)
-
-    if not result:
-        # WL140 stretch: canonical "unknown agent" payload consolidated into
-        # ``_phase_assemble_unknown_agent_payload`` so the orchestrator stays
-        # a thin composer.
-        return _phase_assemble_unknown_agent_payload(agent, run_meta.run_id)
-
-    stdout, stderr = _phase_normalize_result_strings(result)
-
-    # Free the eye idle state + publish ``run.end`` bus event — both
-    # best-effort. Delegated to ``_phase_release_idle_and_publish`` so the
-    # UX + telemetry side-effects live in one auditable place.
-    _phase_release_idle_and_publish(
-        cwd=cwd,
-        run_id=run_meta.run_id,
-        start_ts=start_time,
-        exit_code=exit_code,
-    )
-
-    # Assemble payload
-    payload = _phase_assemble_payload(
         result=result,
         norm_res=norm_res,
+        auditor=auditor,
+        agent=agent,
+        cwd=cwd,
+        start_time=start_time,
         use_stream=use_stream,
         stdout=stdout,
         stderr=stderr,
-        run_meta=run_meta,
         contract_deprecation_warning=contract_deprecation_warning,
         include_contract=include_contract,
         route_contract=route_contract,
         route_request=route_request,
+        tracker=tracker,
+        prompt=prompt,
     )
-
-    # End cost tracking — delegated to ``_phase_finalize_tracker`` so the
-    # redundant re-import of ``thegent.cost.tracker`` stays out of the
-    # orchestrator body (WL137 cleanup).
-    _phase_finalize_tracker(tracker)
-
-    # WP-DX-024: Always write conversation dumps to docs/ (research-always-write-dumps)
-    _phase_write_run_dumps(settings, run_meta.run_id, cwd, prompt, stdout, result)
-
-    return payload
 
 
 # ----------------------------------------------------------------------------

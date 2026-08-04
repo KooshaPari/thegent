@@ -13460,3 +13460,79 @@ invariants + Ruff clean.
 - `cliproxy_manager.py` UU merge conflict preserved in
   `/tmp/cliproxy_conflict_preserved.py` → untouched.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-03 (session 1) — WL147 run_impl_core finalize-outcome extraction
+
+### Work completed
+- **WL147 L9 run_impl_core body shrink:** Extracted `_phase_finalize_run_outcome`
+  (109 lines, CC 2 / A-grade) from the ~74-line post-classification cleanup chain
+  in `run_impl_core`. The new helper owns:
+  - MTSP-12 shadow workspace finalize
+  - WP-Y4 cost estimation
+  - WP-3xxx run-end registration + MAIF `record_run_end`
+  - WP-16002 teammate delegation status update
+  - WP-3007/WP-2007/WP-3002 success postlude (trust record + evidence + MAIF)
+  - Unknown-agent payload short-circuit
+  - stdout/stderr normalization
+  - Eye idle release + `run.end` bus event
+  - Payload assembly
+  - Cost tracker finalization
+  - WP-DX-024 conversation dumps
+- `run_impl_core` body: **348 lines, CC 14** (down from 424L / CC 27 at WL140,
+  approaching the 350L stretch target).
+- **Test repair:** `test_run_impl_signature_intact` updated to match actual
+  `**kwargs`-based `run_impl` signature — pinned `prompt`, `audio_files`,
+  `google_grounding` as explicit params, all others through `**kwargs`.
+
+### Validation
+- Full L9 core regression (WL130 + WL137 + WL141 + WL142 + WL143 +
+  test_registry_contract): **189/189 pass**.
+- WL144 contract export parity: **26/26 pass**.
+- Extraction tests (`test_run_impl_signature_intact` etc): **4/4 pass**.
+- Ruff check + format clean on both changed files.
+- `bash scripts/check_init_invariants.sh` — 7/7 PASS.
+- `bash scripts/check_secrets_invariants.sh` — 7/7 PASS.
+- `bash scripts/check_makefile_invariants.sh` — 7/7 PASS.
+
+### Pipeline progression for the active five-day goal
+WL138 (L11) → WL139 (L30) → WL140 (L9 run_impl_core CC 27→15) →
+WL141 (L9 bg_impl_core CC 97→23) → WL142 (L9 ROB-010 ImportError sealed) →
+WL143 (L9 ROB-010 contract pinned) → WL144 (L9 contracts export parity closed) →
+WL145 (L9 contracts signature parity pinned) →
+WL144 regression fix (schema-version test expectation) →
+WL146 L9 CC reduction (_phase_classify_run_result C(17)→B(9)) →
+**WL147 run_impl_core finalize-outcome extraction (body 348L, CC 14)**.
+Continuing.
+
+### Cockpit progress bar (today's contribution)
+| Lane | Pre | Post | Δ | Notes |
+|------|-----|------|---|-------|
+| L9 Complexity | 93 | 93 | ±0 | `_phase_finalize_run_outcome` extracted (CC 2 / A); `run_impl_core` 348L / CC 14 — structural cleanup, no CC movement but approaches stretch target |
+| L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+| L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+
+### DAG tick
+L9 (ROB-010 sealed WL142 → output-correct WL143 → consistent export WL144 →
+signature-parity WL145 → schema-version expectation repaired →
+WL146 classify_run_result CC 17→9 →
+**WL147 finalize-outcome extraction**).
+SOTA audit lanes touched: **L9** (L11/L30 stable).
+**Focused validation:** 189 L9 core pass + 26 WL144 parity pass +
+4 extraction pass + 21/21 invariants + Ruff clean.
+
+### Stats
+- Files changed: 2
+  - `src/thegent/cli/services/run_execution_core_helpers.py` (+138/−79: new
+    `_phase_finalize_run_outcome` helper + simplified orchestrator)
+  - `tests/cli/test_impl_execution_extraction.py` (+11/−3: test signature
+    repaired to match actual `**kwargs` pattern)
+- Net delta: +59 lines (138 inserted, 79 deleted).
+- 0 orchestration change / 0 governance module change /
+  0 governance command change.
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `cliproxy_manager.py` UU merge conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` → untouched.
+- Other worktree branches → untouched.
+- Archived upstream (origin) → NOT force-pushed (only local commits).
