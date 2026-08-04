@@ -22,12 +22,22 @@ from thegent.forge_eval.runner import (
     OfflineRunError,
     OfflineRunRequest,
 )
+from thegent.forge_eval.profiler import (
+    ConcurrentProfiler,
+    ForgeEvalProfile,
+    ProfileLatencySummary,
+    ProfileStatus,
+    ProfiledTask,
+    nearest_rank_percentile,
+)
 from thegent.forge_eval.store import ForgeEvalResultStore, ResultStoreError
 
 __all__ = [
     "bundled_catalog_path",
     "CatalogError",
+    "ConcurrentProfiler",
     "ForgeEvalCatalog",
+    "ForgeEvalProfile",
     "ForgeEvalResult",
     "ForgeEvalResultStore",
     "ForgeEvalTask",
@@ -40,6 +50,10 @@ __all__ = [
     "OfflineRunError",
     "OfflineRunRequest",
     "OfflineTaskFixture",
+    "ProfileLatencySummary",
+    "ProfileStatus",
+    "ProfiledTask",
     "ResultStoreError",
     "TaskFamily",
+    "nearest_rank_percentile",
 ]

@@ -11,6 +11,7 @@
 | Catalog | `forgeeval.catalog.v1` | Declares local synthetic fixtures and their provenance. |
 | Fixture | `forgeeval.fixture.v1` | Requires an exact set of deterministic local checks. |
 | Offline request | `forgeeval.offline-run-request.v1` | Carries one validated observation packet. |
+| Profile | `forgeeval.profile.v1` | Records bounded, monotonic concurrent adapter execution. |
 
 ## Invariants
 
@@ -23,3 +24,7 @@
   Terminal-Bench or DeepSWE tasks.
 - The offline runner accepts only exact local check identifiers and emits no
   judge score, provider request, or inferred benchmark conclusion.
+- The profiler accepts an injected async adapter but performs no network/model
+  call itself. It bounds active tasks, preserves input order, records only
+  task IDs/status/error class/monotonic duration, and uses nearest-rank p50,
+  p90, and p99 summaries. Exception messages are deliberately excluded.
