@@ -15,8 +15,8 @@
                                   [optional judge integration]
 ```
 
-1. Complete the contract foundation and its tests. (this change)
-2. Add task-catalog fixtures with source/license provenance.
+1. Complete the contract foundation, synthetic catalog, offline runner, and tests. (this change)
+2. Source any real task-catalog fixtures with explicit upstream provenance and license metadata.
 3. Implement an isolated Forgecode adapter after a clean worktree and harness
    contract are confirmed.
 4. Add opt-in OpenRouter judge integration using environment-only credentials.

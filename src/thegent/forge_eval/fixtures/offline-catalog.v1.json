@@ -1,0 +1,69 @@
+{
+  "schema_version": "forgeeval.catalog.v1",
+  "catalog_id": "forgeeval-offline-fixtures-v1",
+  "fixtures": [
+    {
+      "schema_version": "forgeeval.fixture.v1",
+      "task": {
+        "schema_version": "forgeeval.task.v1",
+        "id": "tbench2-fixture-filesystem-contract",
+        "family": "terminal-bench-2",
+        "title": "Synthetic filesystem-contract observation",
+        "instruction": "Record the required local assertions; do not invoke an external benchmark.",
+        "timeout_seconds": 240,
+        "tags": ["fixture", "filesystem", "offline"],
+        "requires_network": false
+      },
+      "required_checks": ["workspace-layout", "expected-file-contents", "verification-recorded"],
+      "provenance": {
+        "schema_version": "forgeeval.fixture-provenance.v1",
+        "source_kind": "synthetic-fixture",
+        "source_reference": "forgeeval-offline-fixtures-v1/tbench2",
+        "license_spdx": "CC0-1.0",
+        "is_upstream_task": false
+      }
+    },
+    {
+      "schema_version": "forgeeval.fixture.v1",
+      "task": {
+        "schema_version": "forgeeval.task.v1",
+        "id": "deepswe-fixture-regression-contract",
+        "family": "deep-swe",
+        "title": "Synthetic regression-contract observation",
+        "instruction": "Record the required local assertions; do not invoke an external benchmark.",
+        "timeout_seconds": 240,
+        "tags": ["fixture", "regression", "offline"],
+        "requires_network": false
+      },
+      "required_checks": ["reproduction-recorded", "regression-check-recorded", "scope-check-recorded"],
+      "provenance": {
+        "schema_version": "forgeeval.fixture-provenance.v1",
+        "source_kind": "synthetic-fixture",
+        "source_reference": "forgeeval-offline-fixtures-v1/deepswe",
+        "license_spdx": "CC0-1.0",
+        "is_upstream_task": false
+      }
+    },
+    {
+      "schema_version": "forgeeval.fixture.v1",
+      "task": {
+        "schema_version": "forgeeval.task.v1",
+        "id": "custom-fixture-governance-contract",
+        "family": "custom",
+        "title": "Synthetic governance-contract observation",
+        "instruction": "Record the required local assertions; do not invoke an external benchmark.",
+        "timeout_seconds": 240,
+        "tags": ["fixture", "governance", "offline"],
+        "requires_network": false
+      },
+      "required_checks": ["contract-declared", "acceptance-check-recorded", "evidence-reference-recorded"],
+      "provenance": {
+        "schema_version": "forgeeval.fixture-provenance.v1",
+        "source_kind": "synthetic-fixture",
+        "source_reference": "forgeeval-offline-fixtures-v1/custom",
+        "license_spdx": "CC0-1.0",
+        "is_upstream_task": false
+      }
+    }
+  ]
+}
