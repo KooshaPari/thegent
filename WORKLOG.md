@@ -13536,3 +13536,66 @@ SOTA audit lanes touched: **L9** (L11/L30 stable).
   `/tmp/cliproxy_conflict_preserved.py` → untouched.
 - Other worktree branches → untouched.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+---
+
+## 2026-08-04 (session 1) — WL148
+
+**L15 API Surface hardening + SOTA ruff hygiene sweep.**
+
+### What
+
+Three focused fixes from the Phase 3/4 parallel audit sweep:
+
+1. **OpenAPI spec fix (CRITICAL):** `/thegent_stop` POST operation was missing
+   the required `responses` block, making the vendored `openapi.yaml` invalid
+   per OpenAPI 3.1.0 spec (§Operation Object). Added `200` (Session stopped)
+   and `422` (`$ref: ValidationError`) responses. Validated by all 27/27
+   contract tests.
+
+2. **CLI deprecation-style sweep:** Fix 12 `UP035`/`UP045` ruff violations in
+   `src/thegent/cli/` — deprecated `typing.List`→`list`,
+   `typing.Callable`→`collections.abc.Callable`, `Optional[X]`→`X | None`.
+   Includes the `run_app.py` manual fix, 2 `governance_health_helpers` + `run_health_helpers`
+   manual fixes, and 12 auto-fix files across `cli/apps/__init__.py` tree.
+
+3. **Governance module gap identification (research only, not fixed):**
+   Parallel agent identified 9 findings (3 HIGH, 4 MED, 2 LOW) in the
+   governance module — legacy stub monolith at
+   `src/thegent/cli/commands/governance_cmds.py` still imported in production,
+   `data_protection_cmd` not wired into facade, test suite wholly skipped.
+   Filed for WL149.
+
+### Validation
+
+- **27/27 OpenAPI contract tests** pass (surface + session endpoints).
+- **41/41 L9 core wiring tests** pass (WL137 + WL130).
+- **54/54 governance command contract tests** pass (WL143).
+- **21/21 invariants** pass (7 init + 7 secrets + 7 makefile).
+- **Ruff UP checks:** 0/0 violations in `src/thegent/cli/` (previously 12).
+- Architecture guardrails: 1 pre-existing failure
+  (`codex_proxy_runner.run` CC=40, `contracts/adapters.py normalize` CC=36)
+  — not a regression from this session.
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| L15 API Surface | 85 (A-) | 85 (A-) | +0 (spec fix improves robustness)
+| L9 Complexity | 93 (A+) | 93 (A+) | +0 (stable)
+
+### Stats
+
+- **Files changed: 16** (4 manual + 12 auto-fix by ruff)
+- **Manual fixes:** `run_app.py`, `governance_health_helpers.py`,
+  `run_health_helpers.py`, `openapi.yaml`
+- **Auto-fix files:** 12 `__init__.py` + `main.py` + `init_app.py`
+- **Net delta:** +22 lines (73 inserted, 51 deleted)
+- **New ruff violations introduced:** 0
+
+### Preservation
+- `sharecli/` (untracked, unrelated worktree) → untouched.
+- `cliproxy_manager.py` UU merge conflict preserved in
+  `/tmp/cliproxy_conflict_preserved.py` → untouched.
+- Other worktree branches → untouched.
+- Archived upstream (origin) → NOT force-pushed (only local commits).

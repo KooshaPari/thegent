@@ -158,6 +158,27 @@
 > **Focused validation:** 189 L9 core pass + 26 WL144 parity pass +
 > 4 extraction pass + 21/21 invariants + Ruff clean.
 >
+> **Session 2026-08-04-1 — WL148 L15 API Surface hardening + SOTA ruff hygiene.**
+> Three fixes from Phase 3/4 parallel audit:
+> * **OpenAPI CRITICAL fix:** `/thegent_stop` POST got required `responses` block
+>   (200 + 422 ref) — spec was invalid per OpenAPI 3.1.0 §Operation Object.
+> * **CLI ruff hygiene sweep:** Fixed 12 `UP035`/`UP045` violations across
+>   `src/thegent/cli/` — deprecated typing imports → modern equivalents.
+> * **Governance gap research:** Identified 9 findings (3 HIGH, 4 MED, 2 LOW)
+>   — legacy stub monolith still imported in production, `data_protection_cmd`
+>   not wired, test suite wholly skipped. Filed for WL149.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L15 API Surface | 85 | 85 | ±0 | Spec fix improves robustness (spec now valid per OpenAPI 3.1.0) |
+> | L9 Complexity | 93 | 93 | ±0 | Stable — WL147 extraction done |
+> | L11 Dep Audit | 95 | 95 | 0 | Stable (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | Stable (WL139) |
+>
+> **DAG tick:** WL147 finalize-outcome extraction → **WL148 L15 API spec fix + ruff hygiene** (governance gap research filed for WL149).
+> **Focused validation:** 27/27 OpenAPI contract pass + 41/41 L9 core wiring pass + 54/54 governance command contract pass + 21/21 invariants + 0/0 ruff UP violations.
+>
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
 > now a canonical re-export layer, but the **public-API surface** is
