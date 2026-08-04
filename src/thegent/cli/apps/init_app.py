@@ -69,7 +69,7 @@ def _render(payload: dict, *, json_only: bool) -> None:
 @init_app.callback(invoke_without_command=True)
 def init_callback(  # noqa: PLR0913 — Typer parses ~7 options; each one is a single bool / path
     ctx: typer.Context,
-    target: Optional[Path] = typer.Option(
+    target: Path | None = typer.Option(
         None,
         "--target",
         "-t",
@@ -131,7 +131,7 @@ def init_callback(  # noqa: PLR0913 — Typer parses ~7 options; each one is a s
 
 @init_app.command("check", help="Dry-run: preflight + probe + contract only; never writes.")
 def init_check(
-    target: Optional[Path] = typer.Option(
+    target: Path | None = typer.Option(
         None,
         "--target",
         "-t",
@@ -163,7 +163,7 @@ def init_check(
 
 @init_app.command("verify", help="Verify a workspace is still thegent-shaped (no writes).")
 def init_verify(
-    target: Optional[Path] = typer.Option(
+    target: Path | None = typer.Option(
         None,
         "--target",
         "-t",

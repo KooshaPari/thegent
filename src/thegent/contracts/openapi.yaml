@@ -168,6 +168,18 @@ paths:
               properties:
                 session_id: { type: string }
                 force: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Session stopped.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id: { type: string }
+                  stopped: { type: boolean }
+        "422":
+          $ref: "#/components/responses/ValidationError"
 
   /observe_summary:
     get:
