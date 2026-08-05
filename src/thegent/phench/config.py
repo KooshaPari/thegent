@@ -1,0 +1,24 @@
+from __future__ import annotations
+
+import re
+
+LOCK_FILE = "target.lock.json"
+RUNTIME_FILE = "runtime.json"
+ENV_FILE = "env.snapshot.json"
+RUNNER_FILE = "runner.catalog.json"
+PROFILE_FILE = "env.profile.json"
+SNAPSHOT_DIR = "snapshots"
+SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS = {1}
+DEFAULT_MODULE_REFRESH_CADENCE = "never"
+_REFRESH_CADENCE_RE = re.compile(r"^(never|manual|daily|weekly|monthly|yearly|hourly|every-\d+[smhdwy])$")
+DEFAULT_SHARED_MODULE_REPO_EXCLUDE = {"4sgm", "trace", "parpour", "civ"}
+DEFAULT_EXCLUDED_REPOS = frozenset(DEFAULT_SHARED_MODULE_REPO_EXCLUDE)
+SCAN_SHARED_REPOS_SCHEMA_VERSION = 1
+SCAN_SHARED_REPOS_ROOT_MODE_REPOS = "repos"
+SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES = "worktrees"
+SCAN_SHARED_REPOS_DEFAULT_MODULE_PREFIX = "shared-module"
+SCAN_SHARED_REPOS_MAX_NAME_LENGTH = 60
+SCAN_SHARED_REPOS_RECOMMENDED_MODULE_COUNT_LIMIT = 10
+SCAN_SHARED_REPOS_MANIFEST_INDEX_FILENAME = "index.json"
+SCAN_SHARED_REPOS_MANIFEST_INDEX_SUMMARY_FILENAME = "index-summary.json"
+SCAN_SHARED_REPOS_MANIFEST_AUDIT_FILENAME = "manifest-audit.jsonl"
