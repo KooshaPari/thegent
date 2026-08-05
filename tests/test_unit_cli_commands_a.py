@@ -656,7 +656,8 @@ class TestEscalateCmdImpl:
     """Tests for escalation command implementations."""
 
     @patch("thegent.cli.console")
-    def test_escalate_add(self, mock_console) -> None:
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
+    def test_escalate_add(self, mock_wrap_console, mock_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-229
         """escalate_add_cmd calls impl and prints confirmation."""
         from thegent.cli import escalate_add_cmd
@@ -676,12 +677,13 @@ class TestEscalateCmdImpl:
             agent=None,
             lane="standard",
         )
-        printed = [str(c) for c in mock_console.print.call_args_list]
+        printed = [str(c) for c in mock_wrap_console.print.call_args_list]
         assert any("r1" in p for p in printed)
         assert any("15" in p for p in printed)
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_list_empty(self, mock_console) -> None:
+    def test_escalate_list_empty(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-230
         """escalate_list_cmd prints dim message when empty."""
         from thegent.cli import escalate_list_cmd
@@ -696,11 +698,12 @@ class TestEscalateCmdImpl:
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             escalate_list_cmd()
-        printed = [str(c) for c in mock_console.print.call_args_list]
+        printed = [str(c) for c in mock_wrap_console.print.call_args_list]
         assert any("no escalation" in p.lower() for p in printed)
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_list_json(self, mock_console) -> None:
+    def test_escalate_list_json(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-231
         """escalate_list_cmd outputs JSON."""
         from thegent.cli import escalate_list_cmd
@@ -721,8 +724,9 @@ class TestEscalateCmdImpl:
         output = json.loads(buf.getvalue())
         assert output[0]["run_id"] == "r1"
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_list_rich(self, mock_console) -> None:
+    def test_escalate_list_rich(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-232
         """escalate_list_cmd renders rich table."""
         from thegent.cli import escalate_list_cmd
@@ -748,10 +752,11 @@ class TestEscalateCmdImpl:
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             escalate_list_cmd()
-        mock_console.print.assert_called_once()
+        mock_wrap_console.print.assert_called_once()
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_resolve_success(self, mock_console) -> None:
+    def test_escalate_resolve_success(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-233
         """escalate_resolve_cmd prints success on resolution."""
         from thegent.cli import escalate_resolve_cmd
@@ -763,10 +768,12 @@ class TestEscalateCmdImpl:
             return_value=True,
         ):
             escalate_resolve_cmd(run_id="r1")
-        printed = [str(c) for c in mock_console.print.call_args_list]
+        printed = [str(c) for c in mock_wrap_console.print.call_args_list]
         assert any("resolved" in p.lower() for p in printed)
 
-    def test_escalate_resolve_not_found(self) -> None:
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
+    @patch("thegent.cli.console")
+    def test_escalate_resolve_not_found(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-234
         """escalate_resolve_cmd prints error when not found."""
         from thegent.cli import escalate_resolve_cmd
