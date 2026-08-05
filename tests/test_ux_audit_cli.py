@@ -17,6 +17,10 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from io import StringIO
+<<<<<<< Updated upstream
+=======
+from pathlib import Path
+>>>>>>> Stashed changes
 from typing import ClassVar, Optional
 from unittest.mock import patch
 
@@ -26,7 +30,7 @@ from typer.testing import CliRunner
 from thegent.cli.apps.main import app
 
 
-runner = CliRunner()
+runner = CliRunner(mix_stderr=False)  # P0-gate audit: stderr must be captured separately for traceback detection
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +101,7 @@ class TestCLIHelpTextPresent:
     """
 
     # Top-level commands registered directly on the root app
+<<<<<<< Updated upstream
     TOP_LEVEL_COMMANDS: ClassVar[list[str]] = [
         "bg",
         "status",
@@ -107,6 +112,9 @@ class TestCLIHelpTextPresent:
         "govern",
         "phench",
     ]
+=======
+    TOP_LEVEL_COMMANDS: ClassVar[list[str]] = ["bg", "status", "stop", "logs", "ps", "resume", "govern", "phench"]
+>>>>>>> Stashed changes
 
     # Sub-apps mounted via add_typer
     SUB_APPS: ClassVar[list[str]] = ["run", "cockpit", "sota"]
@@ -239,6 +247,7 @@ class TestErrorMessagesActionable:
         )
 
     def test_safe_echo_no_rich_injection(self, capsys: pytest.CaptureFixture[str]) -> None:
+<<<<<<< Updated upstream
         """safe_echo must neutralise Rich markup before printing."""
         from thegent.ux.cli_errors import safe_echo
 
@@ -248,6 +257,20 @@ class TestErrorMessagesActionable:
         assert "[bold]" not in captured.out.replace("\\[bold]", "")
         # The escape bracket (``\[``) indicates the markup was neutralised.
         assert "\\[bold]" in captured.out
+=======
+        """safe_echo must not allow Rich markup injection into output."""
+        from thegent.ux.cli_errors import safe_echo
+
+        # Capture safe_echo's stdout directly. safe_echo pins color=False
+        # and routes through typer.echo (which writes to stdout), so the
+        # Rich-markup-escaped payload must appear in captured stdout with
+        # the brackets backslash-escaped (e.g. \\[bold]INJECT\\[/bold]).
+        safe_echo("[bold]INJECT[/bold]")
+        captured = capsys.readouterr()
+        assert "\\[bold]INJECT\\[/bold]" in captured.out, (
+            f"safe_echo failed to escape Rich markup: {captured.out!r}"
+        )
+>>>>>>> Stashed changes
 
 
 # ---------------------------------------------------------------------------
@@ -287,7 +310,12 @@ class TestOutputFormatting:
                 "cwd": "/tmp",
             }
             meta_path = Path(tmpdir) / f"{session_id}.json"
+<<<<<<< Updated upstream
             meta_path.write_text(json.dumps(meta))
+=======
+            with open(meta_path, "w") as f:
+                json.dump(meta, f)
+>>>>>>> Stashed changes
 
             with patch.dict("os.environ", {"THGENT_SESSION_DIR": tmpdir}):
                 result = runner.invoke(app, ["status", session_id])
