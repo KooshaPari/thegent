@@ -695,7 +695,10 @@ class TestEscalateCmdImpl:
                 "thegent.cli.governance.governance_impl.escalate_list_impl",
                 return_value=[],
             ),
-            patch("thegent.cli._normalize_output_format", return_value="rich"),
+            patch(
+                "thegent.cli.commands._cli_shared._normalize_output_format",
+                return_value="rich",
+            ),
         ):
             escalate_list_cmd()
         printed = [str(c) for c in mock_wrap_console.print.call_args_list]
@@ -717,7 +720,10 @@ class TestEscalateCmdImpl:
                 "thegent.cli.governance.governance_impl.escalate_list_impl",
                 return_value=items,
             ),
-            patch("thegent.cli._normalize_output_format", return_value="json"),
+            patch(
+                "thegent.cli.commands._cli_shared._normalize_output_format",
+                return_value="json",
+            ),
             patch("sys.stdout", buf),
         ):
             escalate_list_cmd(format="json")
@@ -749,7 +755,10 @@ class TestEscalateCmdImpl:
                 "thegent.cli.governance.governance_impl.escalate_list_impl",
                 return_value=items,
             ),
-            patch("thegent.cli._normalize_output_format", return_value="rich"),
+            patch(
+                "thegent.cli.commands._cli_shared._normalize_output_format",
+                return_value="rich",
+            ),
         ):
             escalate_list_cmd()
         mock_wrap_console.print.assert_called_once()
@@ -831,8 +840,8 @@ class TestPurgeCmdImpl:
 class TestPolicyShowCmdImpl:
     """Tests for the policy_show_cmd function body."""
 
-    @patch("thegent.cli.console")
-    @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
+    @patch("thegent.cli.governance.governance_policy_contracts_cmds.console")
+    @patch("thegent.cli.commands._cli_shared.ThegentSettings", return_value=_mock_settings())
     def test_policy_show_dev(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-237
         """policy_show_cmd prints policies in dev environment."""
@@ -843,8 +852,11 @@ class TestPolicyShowCmdImpl:
         assert any("development" in p.lower() for p in printed)
         assert any("governance" in p.lower() for p in printed)
 
-    @patch("thegent.cli.console")
-    @patch("thegent.cli.ThegentSettings", return_value=_mock_settings(environment="production"))
+    @patch("thegent.cli.governance.governance_policy_contracts_cmds.console")
+    @patch(
+        "thegent.cli.commands._cli_shared.ThegentSettings",
+        return_value=_mock_settings(environment="production"),
+    )
     def test_policy_show_prod(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-238
         """policy_show_cmd renders table for production environment."""

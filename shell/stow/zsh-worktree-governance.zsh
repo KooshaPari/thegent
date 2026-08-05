@@ -103,24 +103,27 @@ thg_airlock_register_on_cd() {
     local now
     now="$(date -u +%s)"
     local last_checked
-    last_checked="$(python3 -c "
-import json,sys,os
+    last_checked="$(REG_PATH="$reg" REPO_ROOT="$repo_root" python3 -c '
+import json
+import os
 try:
-    r=json.load(open('$reg'))
-    m=r.get('$repo_root', {})
-    print(m.get('last_check',''))
+    with open(os.environ["REG_PATH"]) as registry_file:
+        registry = json.load(registry_file)
+    metadata = registry.get(os.environ["REPO_ROOT"], {})
+    print(metadata.get("last_check", ""))
 except Exception:
     pass
-" 2>/dev/null)"
+' 2>/dev/null)"
     if [[ -n "$last_checked" ]]; then
       local last_ts
-      last_ts="$(python3 -c "
+      last_ts="$(LAST_CHECKED="$last_checked" python3 -c '
 from datetime import datetime
+import os
 try:
-    print(int(datetime.fromisoformat('$last_checked'.replace('Z','+00:00')).timestamp()))
+    print(int(datetime.fromisoformat(os.environ["LAST_CHECKED"].replace("Z", "+00:00")).timestamp()))
 except Exception:
     pass
-" 2>/dev/null)"
+' 2>/dev/null)"
       if [[ -n "$last_ts" ]] && (( now - last_ts < 300 )); then
         return 0  # fresh enough — skip the register call
       fi
