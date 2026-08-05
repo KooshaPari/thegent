@@ -696,7 +696,7 @@ class TestEscalateCmdImpl:
                 return_value=[],
             ),
             patch(
-                "thegent.cli.commands._cli_shared._normalize_output_format",
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
                 return_value="rich",
             ),
         ):
@@ -721,7 +721,7 @@ class TestEscalateCmdImpl:
                 return_value=items,
             ),
             patch(
-                "thegent.cli.commands._cli_shared._normalize_output_format",
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
                 return_value="json",
             ),
             patch("sys.stdout", buf),
@@ -756,7 +756,7 @@ class TestEscalateCmdImpl:
                 return_value=items,
             ),
             patch(
-                "thegent.cli.commands._cli_shared._normalize_output_format",
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
                 return_value="rich",
             ),
         ):
