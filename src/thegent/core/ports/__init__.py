@@ -7,7 +7,7 @@ No implementation; used for dependency injection.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+from typing import Any, Callable, Generic, Protocol, TypeVar, runtime_checkable
 
 T = TypeVar("T")
 
@@ -82,16 +82,46 @@ class LoggerInterface(Protocol):
         ...
 
 
+EventHandler = Callable[[Any], None]
+Unsubscribe = Callable[[], None]
+
+
 @runtime_checkable
 class EventBusInterface(Protocol):
-    """Protocol for event publishing/subscription."""
+    """Canonical protocol for event publishing and subscription (WL150).
 
-    def subscribe(self, event_type: str, handler: Any) -> None:
-        """Subscribe to event type."""
+    Unified surface used across ``thegent.execution.executor``,
+    ``thegent.ux.cockpit_bridge``, and the Phase 3/4 hardening lanes.
+
+    Notes:
+        * ``subscribe`` returns an idempotent *unsubscriber* callable.
+        * ``publish`` is the canonical name; ``emit`` is a deprecated alias
+          retained for back-compat with call sites that have already
+          adopted the legacy shape.
+        * ``publish`` MUST NOT raise on handler errors; implementations
+          should isolate handler exceptions so a single bad subscriber
+          cannot bring down the bus.  Strict variants may opt-in to
+          re-raising via a subclass/flag.
+    """
+
+    def subscribe(self, event_type: str, handler: EventHandler) -> Unsubscribe:
+        """Subscribe ``handler`` to ``event_type``.
+
+        Returns:
+            Idempotent callable that, when invoked, removes the subscription.
+        """
         ...
 
     def publish(self, event_type: str, data: Any) -> None:
-        """Publish event."""
+        """Publish ``event_type`` with ``data`` payload to all subscribers."""
+        ...
+
+    def emit(self, event_type: str, data: Any) -> None:
+        """Deprecated alias for :meth:`publish`.
+
+        Retained so that code which adopted the older ``emit`` naming
+        keeps working under the canonical protocol.
+        """
         ...
 
 
@@ -164,6 +194,8 @@ __all__ = [
     "RouterInterface",
     "LoggerInterface",
     "EventBusInterface",
+    "EventHandler",
+    "Unsubscribe",
     "ExecutorInterface",
     "PlannerInterface",
     "ExecutionPort",

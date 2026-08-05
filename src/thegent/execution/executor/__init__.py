@@ -4,11 +4,14 @@ Core executor providing dependency-injected orchestration
 with no direct CLI imports. Implements pure execution logic
 with abstract dependencies.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Protocol
 from pathlib import Path
+
+from thegent.core.ports import EventBusInterface  # noqa: F401  -- canonical (WL150)
 
 
 class LoggerInterface(Protocol):
@@ -27,21 +30,17 @@ class LoggerInterface(Protocol):
         ...
 
 
-class EventBusInterface(Protocol):
-    """Abstract event bus for execution events."""
-
-    def emit(self, event_type: str, data: dict[str, Any]) -> None:
-        """Emit an execution event."""
-        ...
-
-    def subscribe(self, event_type: str, handler: Callable) -> None:
-        """Subscribe to event type."""
-        ...
+# ``EventBusInterface`` is re-exported from ``thegent.core.ports`` for
+# canonical parity (WL150 Phase 3/4 hardening — L26 Event Driven).
+# ``InMemoryEventBus`` (shipped at WL150) exposes both ``publish`` (the
+# canonical name) and ``emit`` (legacy alias) so call sites and mocks
+# using either shape resolve cleanly.
 
 
 @dataclass
 class ExecutionResult:
     """Result of task execution."""
+
     success: bool
     output: Any = None
     error: Optional[str] = None
@@ -103,25 +102,31 @@ class Executor:
         """
         try:
             self.logger.info(f"Starting execution for task {task_id}")
-            self.event_bus.emit("execution:started", {"task_id": task_id})
+            self.event_bus.publish("execution:started", {"task_id": task_id})
 
             # Execute task using injected agents/models
             result = self._execute_task(task_id, task_spec, workspace_path)
 
-            self.event_bus.emit("execution:completed", {
-                "task_id": task_id,
-                "success": result.success,
-            })
+            self.event_bus.publish(
+                "execution:completed",
+                {
+                    "task_id": task_id,
+                    "success": result.success,
+                },
+            )
             self.logger.info(f"Task {task_id} completed: {result.success}")
 
             return result
 
         except Exception as e:
             self.logger.error(f"Execution failed for task {task_id}", exc=e)
-            self.event_bus.emit("execution:failed", {
-                "task_id": task_id,
-                "error": str(e),
-            })
+            self.event_bus.publish(
+                "execution:failed",
+                {
+                    "task_id": task_id,
+                    "error": str(e),
+                },
+            )
             return ExecutionResult(
                 success=False,
                 error=str(e),
@@ -144,18 +149,41 @@ class Executor:
     @staticmethod
     def _noop_logger() -> LoggerInterface:
         """Create a no-op logger for testing."""
+
         class NoOpLogger:
-            def info(self, message: str, **kwargs: Any) -> None: pass
-            def error(self, message: str, exc: Optional[Exception] = None, **kwargs: Any) -> None: pass
-            def debug(self, message: str, **kwargs: Any) -> None: pass
+            def info(self, message: str, **kwargs: Any) -> None:
+                pass
+
+            def error(self, message: str, exc: Optional[Exception] = None, **kwargs: Any) -> None:
+                pass
+
+            def debug(self, message: str, **kwargs: Any) -> None:
+                pass
+
         return NoOpLogger()
 
     @staticmethod
     def _noop_event_bus() -> EventBusInterface:
-        """Create a no-op event bus for testing."""
+        """Create a no-op event bus for testing.
+
+        Conforms to the canonical ``EventBusInterface`` (subscribe +
+        publish) shipped in WL150.  ``publish`` and ``emit`` are both
+        no-ops on this stub so any call shape resolves cleanly.
+        """
+
         class NoOpEventBus:
-            def emit(self, event_type: str, data: dict[str, Any]) -> None: pass
-            def subscribe(self, event_type: str, handler: Callable) -> None: pass
+            def publish(self, event_type: str, data: Any) -> None:
+                pass
+
+            def emit(self, event_type: str, data: Any) -> None:
+                pass
+
+            def subscribe(self, event_type: str, handler: Callable) -> Callable[[], None]:
+                def _noop_unsub() -> None:
+                    return None
+
+                return _noop_unsub
+
         return NoOpEventBus()
 
 

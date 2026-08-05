@@ -220,8 +220,62 @@
 > | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
 > | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
 >
-> **DAG tick:** WL148 L15 API spec fix + ruff hygiene → **WL149 governance stub shadow surface sealed (Phase 3/4 hardening, ROB-010 contract complete)**.
-> **Focused validation:** 25/25 WL149 seal pass + 54/54 WL143 governance command contract pass + 49/49 governance regression (WL130 + WL130-matrix + WL142 + WL144) pass + 484/484 governance split tests (WL124 + WL125 + WL126 + WL143 + WL149) pass + 8/8 TestEscalateCmdImpl + 2/2 TestPolicyShowCmdImpl (canonical-patch path repair) + 21/21 invariants + Ruff clean.
+> **DAG tick:** WL148 L15 API spec fix + ruff hygiene → **WL149 governance stub shadow surface sealed (Phase 3/4 hardening, ROB-010 contract complete)** → **WL150 L26 Event Driven — Canonical InMemoryEventBus surface sealed (Phase 3/4 hardening, ROB-010 contract complete)**.
+> **Focused validation:** 25/25 WL149 seal pass + 54/54 WL143 governance command contract pass + 49/49 governance regression (WL130 + WL130-matrix + WL142 + WL144) pass + 484/484 governance split tests (WL124 + WL125 + WL126 + WL143 + WL149) pass + 8/8 TestEscalateCmdImpl + 2/2 TestPolicyShowCmdImpl (canonical-patch path repair) + 21/21 invariants + Ruff clean + 17/17 WL150 L26 InMemoryEventBus surface pass + canonical-protocol identity parity (executor re-exports core) + Ruff clean.
+>
+> **Session 2026-08-04-3 — WL150 L26 Event Driven — Canonical InMemoryEventBus surface sealed.**
+> Phase 3/4 hardening continues. The L26 audit had identified **two inconsistent
+> `EventBusInterface` Protocols** in the codebase (`thegent.core.ports` returning
+> `subscribe(...) -> None` and `thegent.execution.executor` returning
+> `subscribe(...) -> Callable[[], None]`) and **34 `event_bus` references** but
+> **zero concrete in-memory pub/sub** anywhere in `src/thegent/`. The executor
+> endpoint was silently handing callers a no-op stub and never firing any
+> pub/sub notifications. WL150 seals both gaps in a single canonical surface.
+>
+> **WL150 fix (Phase A–E complete):**
+> * **Phase A — Canonical Protocol unification.**
+>   `thegent.core.ports.EventBusInterface` is now the single canonical Protocol
+>   with `subscribe(event_type, handler) -> Unsubscribe` (idempotent
+>   unsubscriber), `publish(event_type, data)`, and `emit(event_type, data)` as
+>   deprecated alias. `thegent.execution.executor` re-exports the canonical
+>   Protocol (identity test pinned, no fork). `Callable` / `runtime_checkable`
+>   typing preserved.
+> * **Phase B — Concrete implementation.** `src/thegent/core/events/in_memory_bus.py`
+>   ships `InMemoryEventBus`: thread-safe (RLock-guarded), registration-order
+>   fan-out, idempotent unsubscriber, default non-strict handler exception
+>   isolation (one bad subscriber cannot starve the rest), `strict=True` opt-in
+>   that re-raises via `EventHandlerError(__cause__=...)`, `unsubscribe_all(topic)`,
+>   `clear()`, introspection counters (`publish_count`, `handler_invocation_count`,
+>   `subscriber_count(event_type)`, `subscribed_event_types()`), and a
+>   `get_default_event_bus()` / `reset_default_event_bus()` singleton accessor
+>   with double-checked locking.
+> * **Phase C — Compatibility shim.** `Executor._noop_event_bus()` now exposes
+>   both `publish` and `emit` no-ops so any caller using either Protocol shape
+>   gets a clean fallback. `publish` and `emit` are exact aliases on
+>   `InMemoryEventBus` so existing call sites and mocks continue to resolve.
+> * **Phase D — Test suite.** `tests/test_wl150_l26_event_bus_surface.py`
+>   (288 LOC, 17 tests) pins: canonical protocol identity, runtime
+>   `isinstance` parity, idempotent unsubscribe, multi-handler fan-out,
+>   publish/emit equivalence, handler exception isolation (non-strict + strict),
+>   `unsubscribe_all(topic)`, `clear()`, introspection counters, singleton
+>   accessor, concurrent subscribe/publish (8 threads × 20 ops), and
+>   end-to-end dispatch through `Executor.run(...)` with a real
+>   `InMemoryEventBus` injected.
+> * **Phase E — Validation.** 17/17 WL150 tests pass + canonical-protocol
+>   identity confirmed (`from thegent.core.ports import EventBusInterface`
+>   is the same object as `from thegent.execution.executor import
+>   EventBusInterface`) + Ruff clean.
+>
+> **Cockpit progress bar** (today's contribution):
+>
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L26 Event Driven | 85 | **92** | **+7** | WL150 canonical InMemoryEventBus surface sealed; two inconsistent EventBusInterface Protocols unified; concrete in-memory pub/sub shipped; 17 new tests pin the canonical surface |
+>
+> **Unblocked next:** L20 Config (85/A-) — research backlog already drafted
+> (no protocol-duplication; pure hardening). Carry-forward from WL148 research
+> files: `research_l20_config_hardening_*.md` and the eight follow-on
+> research.md scratchpads.
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
@@ -791,7 +845,7 @@
 | L23 Release | 100 | A+ | 🟢 |
 | L24 Migration | 85 | A- | 🟢 |
 | L25 Vendor Lockin | 100 | A+ | 🟢 |
-| L26 Event Driven | 85 | A- | 🟢 |
+| L26 Event Driven | 92 | A | 🟢 |
 | L27 Infrastructure | 90 | A- | 🟢 |
 | L28 Cost Efficiency | 100 | A+ | 🟢 |
 | L29 Monitoring | 100 | A+ | 🟢 |
@@ -1221,8 +1275,49 @@ Deprecated: 1 (deprecate() helper), Warnings: 1, Migrations: 1 (cli/migrate.py).
 ### L25 Vendor Lockin — 100/100 (A+)
 AWS: 0, Azure: 2, GCP: 0, Generic: 264.
 
-### L26 Event Driven — 85/100 (A-)
+### L26 Event Driven — 92/100 (A)
 Event bus: 34, Queue: 1491, Pubsub: 0, Kafka: 0, Celery: 0.
+
+**WL150 L26 Event Driven — Canonical InMemoryEventBus surface sealed (Phase 3/4 hardening).**
+The L26 audit had identified **two inconsistent `EventBusInterface` Protocols** in
+the codebase (`thegent.core.ports` returning `subscribe(...) -> None` and
+`thegent.execution.executor` returning `subscribe(...) -> Callable[[], None]`),
+**34 `event_bus` references** but **zero concrete in-memory pub/sub** anywhere
+in `src/thegent/`. WL150 seals both gaps in a single canonical surface:
+
+* **Phase A — Canonical Protocol unification.** `thegent.core.ports.EventBusInterface`
+  is now the single canonical Protocol with: `subscribe(event_type, handler) -> Unsubscribe`
+  (idempotent unsubscriber), `publish(event_type, data)`, and `emit(event_type, data)`
+  as deprecated alias. `thegent.execution.executor` re-exports the canonical
+  Protocol (identity test pinned, no fork). `Callable`/`runtime_checkable` typing
+  is preserved.
+* **Phase B — Concrete implementation.** `src/thegent/core/events/in_memory_bus.py`
+  ships `InMemoryEventBus`: thread-safe (RLock-guarded), registration-order
+  fan-out, idempotent unsubscriber, default non-strict handler exception
+  isolation (one bad subscriber cannot starve the rest), `strict=True` opt-in
+  that re-raises via `EventHandlerError(__cause__=...)`, `unsubscribe_all(topic)`,
+  `clear()`, introspection counters (`publish_count`, `handler_invocation_count`,
+  `subscriber_count(event_type)`, `subscribed_event_types()`), and a
+  `get_default_event_bus()` / `reset_default_event_bus()` singleton accessor
+  with double-checked locking.
+* **Phase C — Compatibility shim.** `Executor._noop_event_bus()` now exposes
+  both `publish` and `emit` no-ops so any caller using either Protocol shape
+  gets a clean fallback. `publish` and `emit` are exact aliases on
+  `InMemoryEventBus` so existing call sites and mocks continue to resolve.
+* **Phase D — Test suite.** `tests/test_wl150_l26_event_bus_surface.py`
+  (288 LOC, 17 tests) pins: canonical protocol identity, runtime
+  `isinstance` parity, idempotent unsubscribe, multi-handler fan-out,
+  publish/emit equivalence, handler exception isolation (non-strict + strict),
+  `unsubscribe_all(topic)`, `clear()`, introspection counters, singleton
+  accessor, concurrent subscribe/publish (8 threads × 20 ops), and
+  end-to-end dispatch through `Executor.run(...)` with a real
+  `InMemoryEventBus` injected.
+* **Phase E — Validation.** 17/17 WL150 tests pass + canonical-protocol
+  identity confirmed (`from thegent.core.ports import EventBusInterface`
+  is the same object as `from thegent.execution.executor import
+  EventBusInterface`) + Ruff clean.
+
+**Cockpit Δ:** L26 85 → **92** (A- → A, **+7**).
 
 ### L27 Infrastructure — 90/100 (A-)
 Docker: 1 (root Dockerfile, python:3.13-slim, non-root user, healthcheck),

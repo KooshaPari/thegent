@@ -13665,3 +13665,102 @@ shadowing the real canonical implementations with zero-returning stubs.
   `8b194b3e5` (the canonical revision) — no rebase noise.
 * Other worktree branches → untouched.
 * Archived upstream (origin) → NOT force-pushed (only local commits).
+
+## 2026-08-04 (session 2) — WL150 L26 Event Driven — Canonical InMemoryEventBus surface sealed
+
+Phase 3/4 hardening continues. The L26 audit had identified **two inconsistent
+`EventBusInterface` Protocols** in the codebase (`thegent.core.ports` returning
+`subscribe(...) -> None` and `thegent.execution.executor` returning
+`subscribe(...) -> Callable[[], None]`) and **34 `event_bus` references** but
+**zero concrete in-memory pub/sub** anywhere in `src/thegent/`. The executor
+endpoint was silently handing callers a no-op stub and never firing any
+pub/sub notifications. WL150 seals both gaps in a single canonical surface.
+
+### Plan
+
+Phase A — Canonical Protocol unification. Make `thegent.core.ports.EventBusInterface`
+the single canonical Protocol with `subscribe(event_type, handler) -> Unsubscribe`
+(idempotent unsubscriber), `publish(event_type, data)`, and `emit(event_type, data)`
+as a deprecated alias. Re-export the canonical Protocol from
+`thegent.execution.executor` (identity test pinned, no fork).
+
+Phase B — Concrete implementation. Ship `src/thegent/core/events/in_memory_bus.py`
+with `InMemoryEventBus`: thread-safe (RLock-guarded), registration-order fan-out,
+idempotent unsubscriber, default non-strict handler exception isolation (one bad
+subscriber cannot starve the rest), `strict=True` opt-in that re-raises via
+`EventHandlerError(__cause__=...)`, `unsubscribe_all(topic)`, `clear()`,
+introspection counters, and a `get_default_event_bus()` /
+`reset_default_event_bus()` singleton accessor with double-checked locking.
+
+Phase C — Compatibility shim. Update `Executor._noop_event_bus()` to expose
+both `publish` and `emit` no-ops so any caller using either Protocol shape gets
+a clean fallback. `publish` and `emit` are exact aliases on `InMemoryEventBus`
+so existing call sites and mocks continue to resolve.
+
+Phase D — Test suite. Ship `tests/test_wl150_l26_event_bus_surface.py` (288 LOC,
+17 tests) pinning canonical protocol identity, runtime `isinstance` parity,
+idempotent unsubscribe, multi-handler fan-out, publish/emit equivalence, handler
+exception isolation (non-strict + strict), `unsubscribe_all(topic)`, `clear()`,
+introspection counters, singleton accessor, concurrent subscribe/publish
+(8 threads × 20 ops), and end-to-end dispatch through `Executor.run(...)` with
+a real `InMemoryEventBus` injected.
+
+Phase E — Validation. Run the new test file + ruff check + ruff format on the
+touched files. Confirm canonical-protocol identity parity.
+
+### Files changed
+
+* `src/thegent/core/ports/__init__.py` — canonical `EventBusInterface` Protocol
+  unified (`subscribe -> Unsubscribe`, `publish`, `emit`); `Callable` added to
+  imports; `EventHandler`/`Unsubscribe` type aliases exported.
+* `src/thegent/core/events/__init__.py` — NEW: package surface re-exporting
+  `InMemoryEventBus`, `EventHandlerError`, `get_default_event_bus`,
+  `reset_default_event_bus`, plus the canonical `EventBusInterface` re-export.
+* `src/thegent/core/events/in_memory_bus.py` — NEW: `InMemoryEventBus` concrete
+  implementation, `EventHandlerError` exception, singleton accessor.
+* `src/thegent/execution/executor/__init__.py` — re-export canonical
+  `EventBusInterface`; `_noop_event_bus()` now exposes both `publish` and `emit`
+  no-ops for back-compat.
+* `tests/test_wl150_l26_event_bus_surface.py` — NEW: 17 tests, 288 LOC.
+* `AUDIT_SCORECARD.md` — L26 row updated 85 → 92, L26 detail block expanded,
+  WL150 session block added, DAG tick extended.
+* `WORKLOG.md` — this entry.
+
+### Validation
+
+* **17/17 WL150 tests pass** (the new file).
+* **Canonical-protocol identity confirmed**:
+  `from thegent.core.ports import EventBusInterface` is the same object as
+  `from thegent.execution.executor import EventBusInterface`.
+* **End-to-end Executor ↔ InMemoryEventBus wiring confirmed** via smoke test:
+  subscriptions to `execution:started` / `execution:completed` fire
+  correctly when `Executor.run(...)` is called with a real `InMemoryEventBus`
+  injected.
+* **Ruff clean** on all touched files.
+
+### Stats
+
+* **Files changed: 7** (3 NEW + 4 modified).
+* **New tests added: 17** (WL150 L26 InMemoryEventBus surface).
+* **New ruff violations: 0**.
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| L26 Event Driven | 85 (A-) | **92 (A)** | **+7** (canonical InMemoryEventBus surface sealed) |
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (origin) → NOT force-pushed (only local commits).
+* `cli/__init__.py` governance re-routing from WL149 → untouched.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+
+### Unblocked next
+
+L20 Config (85/A-) — research backlog already drafted (no protocol-duplication;
+pure hardening). Carry-forward from WL148 research files:
+`research_l20_config_hardening_*.md` and the eight follow-on research.md
+scratchpads.
