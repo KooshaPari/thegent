@@ -38,6 +38,7 @@ def escalate_add_cmd(
         "reason": reason,
         "sla_minutes": sla_minutes,
         "owner": owner,
+        "agent": None,
         "lane": lane,
     }
     if priority:

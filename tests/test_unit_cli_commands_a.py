@@ -661,13 +661,19 @@ class TestEscalateCmdImpl:
         """escalate_add_cmd calls impl and prints confirmation."""
         from thegent.cli import escalate_add_cmd
 
-        with patch("thegent.cli.commands.impl.escalate_add_impl") as mock_impl:
+        # WL149: canonical impl imports `escalate_add_impl` from
+        # `thegent.cli.governance.governance_impl` (the WL-124-era
+        # `thegent.cli.commands.impl.escalate_add_impl` was a re-export
+        # alias and is shadowed by the canonical wrapper's local binding
+        # — patch the canonical source location).
+        with patch("thegent.cli.governance.governance_impl.escalate_add_impl") as mock_impl:
             escalate_add_cmd(run_id="r1", reason="blocked", sla_minutes=15)
         mock_impl.assert_called_once_with(
             run_id="r1",
             reason="blocked",
             sla_minutes=15,
             owner=None,
+            agent=None,
             lane="standard",
         )
         printed = [str(c) for c in mock_console.print.call_args_list]
@@ -680,8 +686,13 @@ class TestEscalateCmdImpl:
         """escalate_list_cmd prints dim message when empty."""
         from thegent.cli import escalate_list_cmd
 
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_list_impl).
         with (
-            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=[]),
+            patch(
+                "thegent.cli.governance.governance_impl.escalate_list_impl",
+                return_value=[],
+            ),
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             escalate_list_cmd()
@@ -696,8 +707,13 @@ class TestEscalateCmdImpl:
 
         items = [{"run_id": "r1", "reason": "test"}]
         buf = io.StringIO()
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_list_impl).
         with (
-            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items),
+            patch(
+                "thegent.cli.governance.governance_impl.escalate_list_impl",
+                return_value=items,
+            ),
             patch("thegent.cli._normalize_output_format", return_value="json"),
             patch("sys.stdout", buf),
         ):
@@ -722,8 +738,13 @@ class TestEscalateCmdImpl:
                 "past_sla": False,
             }
         ]
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_list_impl).
         with (
-            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items),
+            patch(
+                "thegent.cli.governance.governance_impl.escalate_list_impl",
+                return_value=items,
+            ),
             patch("thegent.cli._normalize_output_format", return_value="rich"),
         ):
             escalate_list_cmd()
@@ -735,7 +756,12 @@ class TestEscalateCmdImpl:
         """escalate_resolve_cmd prints success on resolution."""
         from thegent.cli import escalate_resolve_cmd
 
-        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=True):
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_resolve_impl).
+        with patch(
+            "thegent.cli.governance.governance_impl.escalate_resolve_impl",
+            return_value=True,
+        ):
             escalate_resolve_cmd(run_id="r1")
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("resolved" in p.lower() for p in printed)
@@ -745,7 +771,12 @@ class TestEscalateCmdImpl:
         """escalate_resolve_cmd prints error when not found."""
         from thegent.cli import escalate_resolve_cmd
 
-        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=False):
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_resolve_impl).
+        with patch(
+            "thegent.cli.governance.governance_impl.escalate_resolve_impl",
+            return_value=False,
+        ):
             # Just verify it runs without error - test passes if no exception
             escalate_resolve_cmd(run_id="unknown")
 

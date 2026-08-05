@@ -130,11 +130,13 @@ except Exception:
   python3 "$airlock_bin" register "$repo_root" >/dev/null 2>&1 || true
 }
 
-# Register precmd hook (interactive shells only) — registers the current repo
-# (if any) into the airlock-v2 registry so the daemons begin observing it.
+# Register once at shell startup and on each directory change. The registry
+# retains its five-minute freshness check, while ordinary prompts avoid Python
+# and Git work when the directory has not changed.
 if [[ -o interactive ]]; then
-  autoload -Uz add-zsh-hook 2>/dev/null
-  if (( ${+functions[add-zsh-hook]} )); then
-    add-zsh-hook precmd thg_airlock_register_on_cd
+  autoload -Uz add-zsh-hook 2>/dev/null || true
+  if whence -w add-zsh-hook > /dev/null 2>&1; then
+    add-zsh-hook chpwd thg_airlock_register_on_cd 2>/dev/null || true
   fi
+  thg_airlock_register_on_cd
 fi
