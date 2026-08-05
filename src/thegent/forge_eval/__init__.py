@@ -31,6 +31,15 @@ from thegent.forge_eval.profiler import (
     nearest_rank_percentile,
 )
 from thegent.forge_eval.store import ForgeEvalResultStore, ResultStoreError
+from thegent.forge_eval.tracera import (
+    TraceraBridgeStatus,
+    TraceraDeliveryReceipt,
+    TraceraEnvelope,
+    TraceraEnvelopeError,
+    TraceraTransport,
+    TraceraTransportConfig,
+    TraceraTransportError,
+)
 
 __all__ = [
     "bundled_catalog_path",
@@ -55,5 +64,12 @@ __all__ = [
     "ProfiledTask",
     "ResultStoreError",
     "TaskFamily",
+    "TraceraBridgeStatus",
+    "TraceraDeliveryReceipt",
+    "TraceraEnvelope",
+    "TraceraEnvelopeError",
+    "TraceraTransport",
+    "TraceraTransportConfig",
+    "TraceraTransportError",
     "nearest_rank_percentile",
 ]
