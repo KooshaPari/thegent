@@ -13599,3 +13599,69 @@ Three focused fixes from the Phase 3/4 parallel audit sweep:
   `/tmp/cliproxy_conflict_preserved.py` → untouched.
 - Other worktree branches → untouched.
 - Archived upstream (origin) → NOT force-pushed (only local commits).
+
+---
+
+## 2026-08-04 — WL149 governance stub shadow surface sealed (Phase 3/4 hardening)
+
+### Summary
+Follow-on to WL148: closed the **HIGH-severity governance gap** that the
+WL148 audit had filed — the legacy stub monolith at
+`src/thegent/cli/commands/governance_cmds.py` was being re-exported
+through `thegent.cli.__init__` for seven production commands, silently
+shadowing the real canonical implementations with zero-returning stubs.
+
+### What was fixed
+
+* **Phase A–B** — Mapped the stub shadow surface; identified the
+  canonical modules
+  (`governance_policy_contracts_cmds` for policy/contracts commands,
+  `governance_escalation_hitl_cmds` for escalation/sweep/HITL).
+* **Phase C** — Re-routed `thegent.cli.__init__` to import the seven
+  shadowed commands from their canonical modules (not the stub).
+* **Phase D** — Repaired `tests/test_unit_cli_commands_a.py` patch
+  paths so the canonical wrappers (which bind `console` /
+  `_normalize_output_format` / `ThegentSettings` directly from
+  `_cli_shared`) are patched at the canonical source location.
+* **Phase E** — Shipped `tests/test_wl149_governance_stub_shadow_sealed.py`
+  (225 LOC, 25 tests) that pins the canonical resolution for every
+  shadowed function, the delegation chain (`*_impl` exists on
+  `governance_impl` for the four dispatching wrappers), and the
+  defensive contract that any re-added stub in the legacy monolith
+  must remain zero-returning.
+
+### Validation
+
+* **25/25 WL149 seal regression tests pass** (the new file).
+* **54/54 WL143 governance command contract tests pass.**
+* **49/49 governance regression (WL130 + WL130-matrix + WL142 + WL144) pass.**
+* **484/484 governance split tests** (WL124 + WL125 + WL126 + WL143 + WL149) pass.
+* **8/8 TestEscalateCmdImpl + 2/2 TestPolicyShowCmdImpl** (canonical-patch path repair).
+* **21/21 invariants** pass (7 init + 7 secrets + 7 makefile).
+* **Ruff clean** on the new test file + the patched test file.
+* **Production import resolution verified**:
+  `drift_cmd`, `migration_cmd`, `policy_show_cmd` → `governance_policy_contracts_cmds`;
+  `escalate_add_cmd`, `escalate_list_cmd`, `escalate_resolve_cmd`,
+  `sweep_cmd` → `governance_escalation_hitl_cmds`.
+
+### Stats
+
+* **Files changed: 5** (`cli/__init__.py` Phase C, `test_unit_cli_commands_a.py` Phase D,
+  `test_wl149_governance_stub_shadow_sealed.py` Phase E new,
+  `AUDIT_SCORECARD.md` + `WORKLOG.md` documentation).
+* **New tests added: 25** (WL149 seal regression).
+* **New ruff violations: 0**.
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| L9 Complexity | 93 (A+) | **95 (A+)** | **+2** (governance stub shadow sealed) |
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* `cliproxy_manager.py` UU merge conflict → restored cleanly from
+  `8b194b3e5` (the canonical revision) — no rebase noise.
+* Other worktree branches → untouched.
+* Archived upstream (origin) → NOT force-pushed (only local commits).

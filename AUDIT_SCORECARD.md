@@ -13,7 +13,7 @@
 | L6 Performance | 100 | A+ | 🟢 |
 | L7 Extensibility | 100 | A+ | 🟢 |
 | L8 Compliance | 100 | A+ | 🟢 |
-| **L9 Complexity** | **93** | **A+** | 🟢 |
+| **L9 Complexity** | **95** | **A+** | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
 
 > **Session 2026-08-01-6 — WL143 governance command contract suite.**
@@ -178,6 +178,50 @@
 >
 > **DAG tick:** WL147 finalize-outcome extraction → **WL148 L15 API spec fix + ruff hygiene** (governance gap research filed for WL149).
 > **Focused validation:** 27/27 OpenAPI contract pass + 41/41 L9 core wiring pass + 54/54 governance command contract pass + 21/21 invariants + 0/0 ruff UP violations.
+>
+> **Session 2026-08-04-2 — WL149 governance stub shadow surface sealed.**
+> Phase 3/4 implementation continues. The WL148 audit had identified 9
+> governance gap findings (3 HIGH, 4 MED, 2 LOW), the most critical being
+> the legacy stub monolith at `src/thegent/cli/commands/governance_cmds.py`
+> being imported in production via `thegent.cli.__init__`. The seven
+> shadowed commands — `drift_cmd`, `escalate_add_cmd`,
+> `escalate_list_cmd`, `escalate_resolve_cmd`, `migration_cmd`,
+> `policy_show_cmd`, `sweep_cmd` — were resolving to zero-returning
+> stubs that silently swallowed real CLI invocations.
+>
+> **WL149 fix (Phase A–G complete):**
+> * **Phase A–B** — Mapped the stub shadow surface; identified the
+>   canonical modules (`governance_policy_contracts_cmds` for policy /
+>   contracts commands, `governance_escalation_hitl_cmds` for
+>   escalation / sweep / HITL).
+> * **Phase C** — Re-routed `thegent.cli.__init__` to import the seven
+>   shadowed commands from their canonical modules (not the stub
+>   monolith). No more shadow.
+> * **Phase D** — Repaired `tests/test_unit_cli_commands_a.py` patch
+>   paths: the canonical wrappers bind `console` /
+>   `_normalize_output_format` / `ThegentSettings` directly from
+>   `_cli_shared`, so the test patches now target
+>   `thegent.cli.governance.<canonical>.console` (and the matching
+>   `_normalize_output_format` / `ThegentSettings` canonical
+>   locations) instead of the re-exported `thegent.cli.*` aliases.
+> * **Phase E** — Shipped `tests/test_wl149_governance_stub_shadow_sealed.py`
+>   (225 LOC, 25 tests) that pins the canonical resolution for every
+>   shadowed function: production `from thegent.cli import <name>`
+>   must resolve to the canonical module, not the stub. The suite
+>   also pins the delegation chain (`*_impl` exists on
+>   `governance_impl` for the four dispatching wrappers) and the
+>   defensive contract that any re-added stub in the legacy monolith
+>   must remain zero-returning.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L9 Complexity | 93 | **95** | **+2** | WL149 governance stub shadow surface sealed; 7 shadowed commands now resolve to canonical modules (not zero-returning stubs); 25 new regression tests pin the resolution + delegation chain |
+> | L11 Dep Audit | 95 | 95 | 0 | pip-audit advisory gate unchanged (WL138) |
+> | L30 Onboarding | 92 | 92 | 0 | `thegent init` wizard from WL139 unchanged |
+>
+> **DAG tick:** WL148 L15 API spec fix + ruff hygiene → **WL149 governance stub shadow surface sealed (Phase 3/4 hardening, ROB-010 contract complete)**.
+> **Focused validation:** 25/25 WL149 seal pass + 54/54 WL143 governance command contract pass + 49/49 governance regression (WL130 + WL130-matrix + WL142 + WL144) pass + 484/484 governance split tests (WL124 + WL125 + WL126 + WL143 + WL149) pass + 8/8 TestEscalateCmdImpl + 2/2 TestPolicyShowCmdImpl (canonical-patch path repair) + 21/21 invariants + Ruff clean.
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is

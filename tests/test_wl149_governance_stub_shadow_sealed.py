@@ -59,7 +59,7 @@ STUB_MODULE = "thegent.cli.commands.governance_cmds"
 
 def _resolved_module(name: str) -> str:
     """Return ``__module__`` for the named attribute on ``thegent.cli``."""
-    import thegent.cli as cli
+    from thegent import cli
 
     attr = getattr(cli, name)
     return getattr(attr, "__module__", "<unknown>")
