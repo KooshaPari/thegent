@@ -152,7 +152,11 @@ class CursorApiRunner(AgentRunner):
     ) -> RunResult:
         model = agent_model or self._model
         base_url = self._settings.cursor_api_url.rstrip("/")
-        token = self._settings.cursor_api_token or ""
+        # WL153: cursor_api_token is now SecretStr — use the canonical
+        # secret_value() accessor to obtain the raw string for the
+        # downstream reachability check + cache key (which both expect
+        # ``str``).
+        token = self._settings.secret_value("cursor_api_token") or ""
 
         cache_key = _cursor_api_cache_key(base_url, token)
         if not _is_cursor_api_reachable(base_url, token):

@@ -419,7 +419,10 @@ def _inject_cursor_into_cliproxy(config: dict[str, Any], settings: ThegentSettin
     """Inject cursor block when ``THGENT_CURSOR_API_URL`` and token are set."""
     if config.get("cursor"):
         return
-    token = (settings.cursor_api_token or "").strip()
+    # WL153: cursor_api_token is now SecretStr — use the canonical
+    # secret_value() accessor to obtain the raw string for the
+    # cli-proxy config injection.
+    token = (settings.secret_value("cursor_api_token") or "").strip()
     entry = _build_cursor_entry(token, settings)
     if entry is None:
         return
