@@ -529,8 +529,31 @@
 > | L9 Complexity | 100 | 100 | ±0 | unchanged |
 > | L11 Dep Audit | 95 | 95 | 0 | unchanged |
 > | L30 Onboarding | 92 | 92 | 0 | unchanged |
+>
+> **Session 2026-08-05-6 — WL156 governance data_protection_cmd wiring (LOW finding seal).**
+> Follow-on to WL149: the LOW finding "test suite wholly skipped" was filed for `data_protection_cmd` because (a) it had no canonical re-export in `thegent.cli.__init__`, (b) the canonical implementation in `governance_data_protection_cmds.py` was isolated from the dispatch helper layer, and (c) `TestDataProtectionCmdImpl` carried a `@pytest.mark.skip(reason="WL-124 refactoring or not implemented")` mark. WL156 closes all three gaps in one pass.
 
-> **DAG tick:** L20 → L22 → L21 → L15 → **L24 migration sub-area sealed WL155 (canonical MigrationController + polymorphic register + back-compat _versions alias + ContractVersion alias identity)**. SOTA audit lanes touched in this session: **L15 + L20 + L21 + L22 + L24** (L9/L11/L30 stable). **Unblocked next:** L9 governance stub shadow (per WL149 backlog), L26 event-driven extension surface (per WL150 follow-on), L10 type-safety tightening for any remaining `Any` slots surfaced by WL155.
+> **Implementation plan executed (Phases A–F):**
+> * **Phase A — Re-export.** `data_protection_cmd` added to `thegent.cli.__init__.py` (alias of `thegent.cli.governance.governance_data_protection_cmds.data_protection_cmd`) and to `thegent.cli.__all__`. This is the canonical stable-import entry.
+> * **Phase B — Dispatch helper canonicalization.** `data_protection_cmd` now routes format dispatch through `thegent.cli._normalize_output_format(...)` so the canonical re-export surface drives the dispatcher (rich / json / csv / md / unknown). The legacy `format == "json"` fast-path is preserved as a fallback (idempotent — produces the same payload).
+> * **Phase C — Unskip.** `@pytest.mark.skip(reason="WL-124 refactoring or not implemented")` removed from `TestDataProtectionCmdImpl`. The `test_data_protection_json` method had a latent test bug (decorator order with missing `mock_console` parameter) — fixed in passing.
+> * **Phase D — Test surface.** `tests/test_wl156_l9_data_protection_wiring.py` with 13 hardening tests pinning: canonical module resolution (name → `thegent.cli.governance.governance_data_protection_cmds`), `cli` root `__all__` membership, callable signature, stub-module defensive pin (the WL-149 sealed-pin surface still reachable), `_normalize_output_format` dispatch helper usage via source-module patch path (rich / json / normalized-rich / normalized-csv fallback paths), defensive proximity to the WL-149 shadow surface (six shadowed functions still reachable), canonical module resolution distinct from `escalate_add`, top-level import purity (no `console`/`cli` imports at module top), and the unskip pin on `TestDataProtectionCmdImpl` (no skip mark remaining).
+> * **Phase E — Validation.** `uv run pytest tests/test_wl156_l9_data_protection_wiring.py tests/test_unit_cli_commands_a.py::TestDataProtectionCmdImpl tests/test_wl149_governance_stub_shadow_sealed.py tests/test_wl155_l24_migration_surface.py tests/test_wl154_adapter_ports.py tests/test_wl153_secrets_handling.py tests/test_wl152_config_logging.py` → **209/209 pass** (13 new L9 + 2 unskipped regression + 194 prior WL15x). `ruff check` + `ruff format` clean on all 4 touched files.
+> * **Phase F — Preservation.** `sharecli/` untracked tree preserved untouched; `tests/test_ux_audit_cli.py` merge conflict markers preserved untouched; secrets / `~/.config/forge/.secrets` env vars never read or written; archived upstream (`origin/chore/thegent-governance-integration-wave`) not force-pushed; daemon-introduced ruff W292 warnings in `src/thegent/adapters/driven/cliproxy_*.py` left alone (not in scope).
+
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | **L9 Governance** | 92 (A+) | **94 (A+)** | **+2** | `data_protection_cmd` wired into `thegent.cli.__init__` re-export surface (was the missing WL-124 stable-import entry); format dispatch routed through canonical `_normalize_output_format` helper; `TestDataProtectionCmdImpl` unskipped; 13 new hardening tests pin canonical resolution + dispatch helper parity + unskip; 2 previously-skipped tests now run; the "test suite wholly skipped" WL-149 LOW finding is sealed |
+> | L15 API Surface | 92 | 92 | ±0 | unchanged (WL154 sibling, stable) |
+> | L20 Config | 96 | 96 | ±0 | unchanged (WL151/152/153 sibling, stable) |
+> | L21 Secrets Handling | 92 | 92 | ±0 | unchanged (WL153 sibling, stable) |
+> | L22 Logging | 90 | 90 | ±0 | unchanged (WL152 sibling, stable) |
+> | L24 Migration | 92 | 92 | ±0 | unchanged (WL155 sibling, stable) |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+
+> **DAG tick:** L20 → L22 → L21 → L15 → L24 → **L9 governance LOW finding sealed WL156 (data_protection_cmd wiring + format dispatch canonicalization + WL-124 skip removal)**. SOTA audit lanes touched in this session: **L9 + L15 + L20 + L21 + L22 + L24** (L11/L30 stable). **Unblocked next:** L26 event-driven extension surface (per WL150 follow-on), L10 type-safety tightening for any remaining `Any` slots surfaced by WL155.
 
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is

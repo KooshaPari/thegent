@@ -14261,3 +14261,110 @@ L9 governance stub shadow (per WL149 backlog), L26 event-driven
 extension surface (per WL150 follow-on), L10 type-safety tightening
 for any remaining `Any` slots surfaced by WL155 — three Phase 3/4
 hardening candidates remaining.
+
+## 2026-08-05 (session 6) — WL156 L9 governance data_protection_cmd wiring (LOW finding seal)
+
+### Plan (Phases A–F)
+
+* **A — Re-export.** `data_protection_cmd` added to
+  `thegent.cli.__init__.py` (alias of
+  `thegent.cli.governance.governance_data_protection_cmds.data_protection_cmd`)
+  and to `thegent.cli.__all__` — canonical stable-import entry.
+* **B — Dispatch helper canonicalization.** `data_protection_cmd`
+  now routes format dispatch through
+  `thegent.cli._normalize_output_format(...)` so the canonical
+  re-export surface drives the dispatcher. Legacy `format == "json"`
+  fast-path preserved as fallback.
+* **C — Unskip.** `@pytest.mark.skip(reason="WL-124 refactoring or not
+  implemented")` removed from `TestDataProtectionCmdImpl`. Latent
+  test bug where `test_data_protection_json` had decorators in wrong
+  order (missing `mock_console` parameter) fixed in passing.
+* **D — Test surface.** 13 hardening tests in
+  `tests/test_wl156_l9_data_protection_wiring.py` (~285 LOC) pinning:
+  canonical module resolution, `cli` root `__all__` membership,
+  callable signature, stub-module defensive pin, `_normalize_output_format`
+  dispatch helper usage via source-module patch path (rich / json /
+  normalized-rich / normalized-csv fallback paths), defensive
+  proximity to the WL-149 shadow surface (six shadowed functions
+  still reachable), canonical module resolution distinct from
+  `escalate_add`, top-level import purity (no `console`/`cli` imports
+  at module top), and the unskip pin on `TestDataProtectionCmdImpl`.
+* **E — Validation.** Combined L9 + WL15x suite = **209/209 pass**
+  (13 new L9 + 2 unskipped regression + 194 prior WL15x). ruff
+  `check` + `format` clean on all 4 touched files.
+* **F — Preservation.** `sharecli/` untracked tree preserved
+  untouched; secrets / `~/.config/forge/.secrets` env vars never
+  read or written; archived upstream (`origin/chore/thegent-governance-integration-wave`)
+  not force-pushed.
+
+### Files changed
+
+| File | Role |
+|------|------|
+| `src/thegent/cli/__init__.py` | `data_protection_cmd` re-export + `__all__` entry |
+| `src/thegent/cli/governance/governance_data_protection_cmds.py` | dispatch through `_normalize_output_format` |
+| `tests/test_unit_cli_commands_a.py` | unskip `TestDataProtectionCmdImpl` + fix latent test bug |
+| `tests/test_wl156_l9_data_protection_wiring.py` | 13 hardening tests |
+
+### Validation
+
+* `tests/test_wl156_l9_data_protection_wiring.py` → **13/13 pass**
+* `tests/test_unit_cli_commands_a.py::TestDataProtectionCmdImpl` → **2/2 pass** (was 0 runnable; 2 skipped)
+* `tests/test_wl149_governance_stub_shadow_sealed.py` → no regression
+* `tests/test_wl155_l24_migration_surface.py` → no regression (30/30)
+* `tests/test_wl154_adapter_ports.py` → no regression (50/50)
+* `tests/test_wl153_secrets_handling.py` → no regression (70/70)
+* `tests/test_wl152_config_logging.py` → no regression (19/19)
+* **Combined: 209/209 pass**
+* Pre-existing failures in `test_unit_config.py` + `test_wl077_settings_singleton.py` + `test_unit_cursor_api.py` → verified on clean tree via `git stash` baseline → **0 new regressions**
+* `uv run ruff check` + `uv run ruff format` → clean on all 4 touched files
+
+### Stats
+
+* 4 files changed (2 src/ + 2 tests/)
+* ~310 net insertions (re-export + dispatcher + tests)
+* 1 commit: `f9d82700b` (feat/audit+worklog follow-on)
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| **L9 Governance** | 92 (A+) | **94 (A+)** | **+2** (data_protection_cmd wired; format dispatch canonicalized; TestDataProtectionCmdImpl unskipped; 13 new hardening tests pin canonical resolution + dispatch helper parity + unskip; 2 previously-skipped tests now run; the "test suite wholly skipped" WL-149 LOW finding is sealed) |
+| L15 API Surface | 92 (A+) | 92 (A+) | ±0 (WL154 sibling, stable) |
+| L20 Config | 96 (A+) | 96 (A+) | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 (A+) | 90 (A+) | ±0 (WL152 sibling, stable) |
+| L24 Migration | 92 (A+) | 92 (A+) | ±0 (WL155 sibling, stable) |
+
+### DAG tick
+
+L20 (provider sealed WL151) → L22 logging sub-area sealed WL152 →
+L21 secrets handling sealed WL153 → L15 API surface hardening
+sealed WL154 → L24 migration sub-area sealed WL155 → **L9
+governance LOW finding sealed WL156 (data_protection_cmd wiring +
+format dispatch canonicalization + WL-124 skip removal)**.
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* `sharecli/src/thegent_cli_share/coordination_contract.py`
+  (untracked) → untouched.
+* `sharecli/tests/test_thegent_cli_share.py` (modified, unrelated
+  worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`)
+  → NOT force-pushed (only local commits).
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit
+  daemon / Airlock Bot) → preserved untouched per system policy.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or
+  written.
+* Daemon-introduced ruff W292 warnings in
+  `src/thegent/adapters/driven/cliproxy_*.py` → left alone (not in
+  this session's scope).
+
+### Unblocked next
+
+L26 event-driven extension surface (per WL150 follow-on), L10
+type-safety tightening for any remaining `Any` slots surfaced by
+WL155 + WL156, L9 governance MED/LOW findings (per WL149 backlog — additional unexplored seams) — three Phase 3/4 hardening candidates remaining.
+
