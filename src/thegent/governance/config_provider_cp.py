@@ -31,6 +31,11 @@ class ControlPlaneConfigProvider:
     def __init__(self, url: str, timeout: float = 2.0) -> None:
         self.url = url.rstrip("/")
         self.timeout = timeout
+        self.provider_metadata: dict[str, Any] = {
+            "source": "control_plane",
+            "control_plane_configured": True,
+            "dependency_missing": False,
+        }
 
     def resolve(
         self,
