@@ -14488,3 +14488,135 @@ WL155 + WL156, L9 governance MED/LOW findings (per WL149 backlog —
 additional unexplored seams) — two Phase 3/4 hardening candidates
 remaining.
 
+---
+
+## WL702 — L9 governance skip-batch-three LOW finding seal (2026-08-06)
+
+**Goal.** Close two of the three L9 LOW findings left in
+`tests/test_unit_cli_commands_a.py` by WL149: `TestAuditVerifyCmdImpl`
+(stub-vs-impl shadow) and `TestSweepCmdImpl` (canonical-source patch
+repair). The third LOW finding (`TestCliproxyLoginCmdImpl`) is parked
+for a future WL703 pass because its test patches target a non-existent
+`thegent.cli.commands.model_cmds_rules` module.
+
+### What changed
+
+* **`src/thegent/cli/commands/cli_tooling.py:24`** — `audit_verify_cmd`
+  real implementation:
+  * Dynamically resolves `thegent.execution.RunRegistry` and
+    `thegent.execution.Auditor` so monkey-patches at
+    `thegent.execution.RunRegistry` / `thegent.execution.Auditor` and
+    `thegent.cli.ThegentSettings` take effect at call time.
+  * Three render branches: `status == "passed"` (green console.print +
+    exit 0), `status == "empty"` (yellow console.print + exit 0 — empty
+    registry is not a failure), `status == "failed"` (red per-issue
+    print + summary + exit 1).
+  * JSON format writes raw `verify_registry()` dict to stdout and
+    exits 0 with no `console.print` (CI-friendly).
+  * Format dispatch routed through canonical `_normalize_output_format`
+    helper (parity with WL149 / WL156 governance pattern).
+  * `format=None` coerced to safe default (regression pin).
+  * Docstring expanded to document the Auditor/RunRegistry dispatch
+    contract (≥4 lines mentioning both classes).
+* **`tests/test_unit_cli_commands_a.py:557`** — unskip
+  `TestAuditVerifyCmdImpl` (removed
+  `@pytest.mark.skip(reason="WL-124 refactoring or not implemented")`).
+  The four documented tests (`test_audit_passed`, `test_audit_empty`,
+  `test_audit_failed`, `test_audit_json`) now actually exercise the
+  real implementation.
+* **`tests/test_wl702_l9_skip_batch_three.py`** (NEW, 313 LOC,
+  **12 hardening tests**) pins:
+  * `audit_verify_cmd` resolves to canonical
+    `thegent.cli.commands.cli_tooling` (not a zero-returning stub).
+  * `audit_verify_cmd` calls `Auditor.verify_registry` under
+    monkey-patch.
+  * JSON format dispatches to stdout (raw JSON in buffer,
+    no `console.print`).
+  * Failed audit exits 1 with per-issue details printed.
+  * `format=None` is safe (coerced to default).
+  * `TestAuditVerifyCmdImpl` has no `skip` mark.
+  * `TestSweepCmdImpl` is collectable with all four methods.
+  * Canonical `sweep_cmd` source dispatches to
+    `thegent.cli.governance.governance_impl.sweep_impl` via local
+    import (no re-export alias — monkey-patch sites resolve cleanly).
+  * `audit_verify_cmd` and `sweep_cmd` live in different canonical
+    modules (WL-124 separation of concerns).
+  * `audit_verify_cmd` docstring is ≥4 lines and references both
+    `Auditor` and `RunRegistry`.
+  * Defensive AST pin: no `Auditor(` instantiation at module top-level
+    (lazy dispatch — importing the module does not trigger file I/O).
+* **TestSweepCmdImpl patch-path repair** (no source change in
+  `tests/test_unit_cli_commands_a.py` beyond prior session's
+  re-anchoring): the four `patch("thegent.cli.commands.impl.sweep_impl",
+  ...)` sites now target the canonical
+  `thegent.cli.governance.governance_impl.sweep_impl` source
+  location. `console` and `_normalize_output_format` patches target
+  the canonical `governance_escalation_hitl_cmds` module. All four
+  tests (`test_sweep_pass`, `test_sweep_fail_rich`,
+  `test_sweep_json_pass`, `test_sweep_json_fail`) now green.
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed
+WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening
+sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance
+LOW finding sealed WL156 → L26 event-driven extension surface sealed
+WL700 (wildcard subscription) → **L9 governance skip-batch-three
+LOW finding sealed WL702 (`audit_verify_cmd` real impl +
+`TestSweepCmdImpl` canonical patch repair + 12 hardening tests)**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L9 Governance | 94/A+ | **95/A+** | **+1** |
+
+### Validation
+
+* `uv run pytest tests/test_wl702_l9_skip_batch_three.py
+  tests/test_unit_cli_commands_a.py::TestSweepCmdImpl
+  tests/test_unit_cli_commands_a.py::TestAuditVerifyCmdImpl
+  tests/test_wl149_governance_stub_shadow_sealed.py
+  tests/test_wl156_l9_data_protection_wiring.py
+  tests/test_wl700_l26_extension_surface.py
+  tests/test_wl155_l24_migration_surface.py -q` → **120 passed,
+  0 failed** (12 new L9 + 4 unskipped regression + 104 prior
+  WL15x / WL149 / WL156 / WL700 surface).
+* `uv run ruff check src/thegent/cli/commands/cli_tooling.py
+  tests/test_wl702_l9_skip_batch_three.py
+  tests/test_unit_cli_commands_a.py` → **All checks passed**.
+* `uv run ruff format --check src/thegent/cli/commands/cli_tooling.py
+  tests/test_wl702_l9_skip_batch_three.py
+  tests/test_unit_cli_commands_a.py` → **clean** (after one reformat
+  pass).
+* Pre-existing failures baseline (`TestExportFormatHelpers`,
+  `TestListModelsCmdImpl`) verified on clean tree via `git stash` —
+  **unrelated to WL702** (the `_infer_export_format` / `_write_*_export`
+  helpers and `thegent.models.scrapers` module are separate WL-124
+  backlog items, not in scope).
+
+### Preservation
+
+* `tests/test_ux_audit_cli.py` merge conflict markers
+  (auto-commit daemon / Airlock Bot) → preserved untouched per system
+  policy.
+* `sharecli/` untracked tree → untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`)
+  → NOT force-pushed (only local commits).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or
+  written.
+* `docs/reference/connector_mapping_cache.json` (unrelated worktree
+  cache) → preserved as unstaged change (NOT included in the WL702
+  commit).
+
+### Unblocked next
+
+L10 type-safety tightening for any remaining `Any` slots surfaced by
+WL155 / WL156 / WL702 + **WL703 L9 cliproxy_login_cmd hardening**
+(`thegent.cli.commands.model_cmds_rules` module surface +
+`_run_cliproxyctl_machine_command` helper +
+`cliproxy_login_cmd` stub replacement +
+`TestCliproxyLoginCmdImpl` unskip — the third LOW finding from
+WL149 that WL702 deferred). Two Phase 3/4 hardening candidates
+remaining.
+

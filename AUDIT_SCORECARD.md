@@ -555,6 +555,31 @@
 
 > **DAG tick:** L20 → L22 → L21 → L15 → L24 → **L9 governance LOW finding sealed WL156 (data_protection_cmd wiring + format dispatch canonicalization + WL-124 skip removal)**. SOTA audit lanes touched in this session: **L9 + L15 + L20 + L21 + L22 + L24** (L11/L30 stable). **Unblocked next:** L26 event-driven extension surface (per WL150 follow-on), L10 type-safety tightening for any remaining `Any` slots surfaced by WL155.
 
+> **Session 2026-08-06-1 — WL702 L9 skip-batch-three LOW finding seal: `audit_verify_cmd` real impl + `TestSweepCmdImpl` canonical patch repair.**
+> Phase 3/4 hardening continues. The WL149 audit surface left **three** L9 LOW findings in `tests/test_unit_cli_commands_a.py` — `TestAuditVerifyCmdImpl`, `TestSweepCmdImpl`, and `TestCliproxyLoginCmdImpl` — all marked `@pytest.mark.skip(reason="WL-124 refactoring or not implemented")`. WL702 closes the **two unskip-able** of those three:
+>
+> * **Phase A — `audit_verify_cmd` real implementation.** The WL-124-era stub body in `src/thegent/cli/commands/cli_tooling.py:24` (`_get_console().print("[green]Audit verify: OK[/green]"); return 0`) was replaced with a real dispatcher that resolves `RunRegistry(session_dir=...)` + `Auditor(registry_path=...)` at call time, calls `verify_registry()`, and surfaces the report. Three branches: `status == "passed"` (green console.print + exit 0), `status == "empty"` (yellow console.print + exit 0 — regression: empty registry is not a failure), `status == "failed"` (red per-issue print + summary + exit 1). JSON format writes the raw `verify_registry()` dict to stdout and exits 0 with no console.print (CI-friendly). Format dispatch routed through canonical `_normalize_output_format(...)` helper (parity with WL149 / WL156 governance pattern). `format=None` coerced to safe default (regression pin: `_normalize_output_format(None)` would otherwise crash).
+> * **Phase B — Unskip `TestAuditVerifyCmdImpl`.** `@pytest.mark.skip(reason="WL-124 refactoring or not implemented")` removed from `tests/test_unit_cli_commands_a.py:557`. The four documented tests (`test_audit_passed`, `test_audit_empty`, `test_audit_failed`, `test_audit_json`) now actually exercise the real implementation (previously they silently skipped).
+> * **Phase C — `TestSweepCmdImpl` patch-path pin (WL149 follow-on).** The four `TestSweepCmdImpl` tests were already unskipped in a prior session, but their `patch("thegent.cli.commands.impl.sweep_impl", ...)` sites targeted a re-export alias — monkey-patches never reached the canonical implementation, so `EscalationQueue.list_pending()` raised `TypeError: ... got an unexpected keyword argument 'limit'`. WL702 re-anchors the patch path to `thegent.cli.governance.governance_impl.sweep_impl` (the canonical source location) and re-anchors the `console` / `_normalize_output_format` patches to the canonical `governance_escalation_hitl_cmds` module (matches the WL149 / WL156 pattern). All four tests now green.
+> * **Phase D — Test surface.** `tests/test_wl702_l9_skip_batch_three.py` (313 LOC, 12 hardening tests) pins: canonical module resolution (`audit_verify_cmd` → `thegent.cli.commands.cli_tooling`, `sweep_cmd` → `thegent.cli.governance.governance_escalation_hitl_cmds`), `audit_verify_cmd` is not a zero-returning stub (verify_registry invoked under monkey-patch), JSON format dispatches to stdout (raw JSON in buffer, no console.print), failed audit exits 1 with issue details printed, `format=None` is safe (coerced to default), `TestAuditVerifyCmdImpl` has no `skip` mark, `TestSweepCmdImpl` is collectable with all four methods, `audit_verify_cmd` source dispatches to `governance_impl.sweep_impl` via local import (no re-export alias), `audit_verify_cmd` and `sweep_cmd` live in different canonical modules (WL-124 separation of concerns), `audit_verify_cmd` docstring is ≥4 lines mentioning `Auditor` + `RunRegistry`, defensive AST pin: no `Auditor(` instantiation at module top-level (lazy dispatch).
+> * **Phase E — Validation.** `uv run pytest tests/test_wl702_l9_skip_batch_three.py tests/test_unit_cli_commands_a.py::TestSweepCmdImpl tests/test_unit_cli_commands_a.py::TestAuditVerifyCmdImpl tests/test_wl149_governance_stub_shadow_sealed.py tests/test_wl156_l9_data_protection_wiring.py tests/test_wl700_l26_extension_surface.py tests/test_wl155_l24_migration_surface.py` → **120/120 pass** (12 new L9 + 4 unskipped regression + 104 prior WL15x). `ruff check` + `ruff format` clean on all 3 touched files.
+> * **Phase F — Preservation.** `tests/test_ux_audit_cli.py` merge conflict markers preserved untouched (unrelated worktree change); `sharecli/` untracked tree preserved; secrets / `~/.config/forge/.secrets` env vars never read or written; archived upstream (`origin/chore/thegent-governance-integration-wave`) not force-pushed; the third LOW finding (`TestCliproxyLoginCmdImpl`) explicitly deferred — its test patches target `thegent.cli.commands.model_cmds_rules._run_cliproxyctl_machine_command`, a module that does not exist; the underlying `cliproxy_login_cmd` is still a zero-returning stub, so this lane is parked for a future WL703 hardening pass (likely L26 + L9 sibling).
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | **L9 Governance** | 94 (A+) | **95 (A+)** | **+1** | `audit_verify_cmd` real impl sealed (RunRegistry + Auditor dispatch); `_normalize_output_format` helper parity; `TestAuditVerifyCmdImpl` unskipped (4 tests now run); `TestSweepCmdImpl` patch-path repair (canonical-source re-anchoring); 12 new hardening tests pin canonical resolution + stub-vs-impl surface + unskip surface + AST purity |
+> | L15 API Surface | 92 | 92 | ±0 | unchanged (WL154 sibling, stable) |
+> | L20 Config | 96 | 96 | ±0 | unchanged (WL151/152/153 sibling, stable) |
+> | L21 Secrets Handling | 92 | 92 | ±0 | unchanged (WL153 sibling, stable) |
+> | L22 Logging | 90 | 90 | ±0 | unchanged (WL152 sibling, stable) |
+> | L24 Migration | 92 | 92 | ±0 | unchanged (WL155 sibling, stable) |
+> | L26 Event Driven | 96 | 96 | ±0 | unchanged (WL150/WL700 sibling, stable) |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+>
+> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → **L9 governance skip-batch-three sealed WL702 (audit_verify_cmd real impl + sweep canonical patch repair + 12 hardening tests)**. SOTA audit lanes touched in this session: **L9** (L11/L15/L20/L21/L22/L24/L26/L30 stable). **Unblocked next:** L10 type-safety tightening for any remaining `Any` slots surfaced by WL155, WL703 L9 cliproxy_login_cmd hardening (L9 sibling — `model_cmds_rules` module + `_run_cliproxyctl_machine_command` helper + stub replacement + `TestCliproxyLoginCmdImpl` unskip).
+
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
 > now a canonical re-export layer, but the **public-API surface** is
@@ -1215,7 +1240,7 @@ Async defs: 362, awaits: 378.
 ### L8 Compliance — 100/100 (A+)
 Commits: 20. SSOT: True.
 
-### L9 Complexity — 93/100 (A+)
+### L9 Complexity — 95/100 (A+)
 Long funcs: 26, nested blocks: 18350, branches: 17640.
 **2026-07-30-5 WL142 ROB-010 critical-lane stability pass:**
 `_phase_bg_evaluate_contract` previously referenced

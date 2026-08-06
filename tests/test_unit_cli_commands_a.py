@@ -554,7 +554,6 @@ class TestDataProtectionCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring or not implemented")
 class TestAuditVerifyCmdImpl:
     """Tests for the audit_verify_cmd function body."""
 
