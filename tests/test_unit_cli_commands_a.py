@@ -871,11 +871,10 @@ class TestPolicyShowCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring or not implemented")
 class TestSweepCmdImpl:
     """Tests for the sweep_cmd function body."""
 
-    @patch("thegent.cli.console")
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     def test_sweep_pass(self, mock_console) -> None:
         # @trace FR-CLI-239
         """sweep_cmd prints green pass when sweep is clean."""
@@ -883,20 +882,23 @@ class TestSweepCmdImpl:
 
         with (
             patch(
-                "thegent.cli.commands.impl.sweep_impl",
+                "thegent.cli.governance.governance_impl.sweep_impl",
                 return_value={
                     "pass": True,
                     "drift_issues": [],
                     "past_sla_count": 0,
                 },
             ),
-            patch("thegent.cli._normalize_output_format", return_value="rich"),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="rich",
+            ),
         ):
             sweep_cmd()
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("passed" in p.lower() for p in printed)
 
-    @patch("thegent.cli.console")
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     def test_sweep_fail_rich(self, mock_console) -> None:
         # @trace FR-CLI-240
         """sweep_cmd shows issues and exits 1 on failure."""
@@ -904,20 +906,23 @@ class TestSweepCmdImpl:
 
         with (
             patch(
-                "thegent.cli.commands.impl.sweep_impl",
+                "thegent.cli.governance.governance_impl.sweep_impl",
                 return_value={
                     "pass": False,
                     "drift_issues": ["drift issue 1"],
                     "past_sla_count": 2,
                 },
             ),
-            patch("thegent.cli._normalize_output_format", return_value="rich"),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="rich",
+            ),
         ):
             with pytest.raises(typer.Exit) as exc_info:
                 sweep_cmd()
             assert exc_info.value.exit_code == 1
 
-    @patch("thegent.cli.console")
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     def test_sweep_json_pass(self, mock_console) -> None:
         # @trace FR-CLI-241
         """sweep_cmd JSON pass does not raise exit."""
@@ -926,7 +931,7 @@ class TestSweepCmdImpl:
         buf = io.StringIO()
         with (
             patch(
-                "thegent.cli.commands.impl.sweep_impl",
+                "thegent.cli.governance.governance_impl.sweep_impl",
                 return_value={
                     "pass": True,
                     "drift_issues": [],
@@ -934,12 +939,15 @@ class TestSweepCmdImpl:
                     "audit": None,
                 },
             ),
-            patch("thegent.cli._normalize_output_format", return_value="json"),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="json",
+            ),
             patch("sys.stdout", buf),
         ):
             sweep_cmd(format="json")
 
-    @patch("thegent.cli.console")
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     def test_sweep_json_fail(self, mock_console) -> None:
         # @trace FR-CLI-242
         """sweep_cmd JSON fail raises exit 1."""
@@ -948,7 +956,7 @@ class TestSweepCmdImpl:
         buf = io.StringIO()
         with (
             patch(
-                "thegent.cli.commands.impl.sweep_impl",
+                "thegent.cli.governance.governance_impl.sweep_impl",
                 return_value={
                     "pass": False,
                     "drift_issues": [],
@@ -956,7 +964,10 @@ class TestSweepCmdImpl:
                     "audit": None,
                 },
             ),
-            patch("thegent.cli._normalize_output_format", return_value="json"),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="json",
+            ),
             patch("sys.stdout", buf),
         ):
             with pytest.raises(typer.Exit) as exc_info:

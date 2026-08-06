@@ -48,6 +48,7 @@ from thegent.cli.commands._cli_shared import (  # noqa: F401
     console,
 )
 from thegent.cli.commands.cli_dag import dag_checkpoints_cmd  # noqa: F401
+from thegent.cli.commands.cli_tooling import audit_verify_cmd  # noqa: F401
 from thegent.cli.commands.dag_run_cmd_impl import _resolve_cwd, dag_run_cmd  # noqa: F401
 from thegent.cli.commands.dag_recover_cmd_impl import dag_recover_cmd  # noqa: F401
 from thegent.cli.governance.governance_impl import escalate_resolve_impl  # noqa: F401
@@ -78,6 +79,7 @@ from thegent.cli.commands.model_cmds import (  # noqa: F401
     _list_gemini_models,
     _list_glm_models,
     _list_minimax_models,
+    cliproxy_login_cmd,
     list_agents_cmd,
     list_droids_cmd,
     list_models_cmd,
@@ -180,6 +182,8 @@ __all__ = [
     "migration_cmd",
     "drift_cmd",
     "data_protection_cmd",
+    "audit_verify_cmd",
+    "cliproxy_login_cmd",
     "observe_summary_cmd",
     "dag_list_cmd",
     "dag_status_cmd",
