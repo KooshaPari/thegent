@@ -18,6 +18,7 @@ from thegent.config_defaults import (
     default_sandbox_env_allowlist,
     expanded_path_factory,
 )
+from thegent.config.logging_config import LoggingConfig
 from thegent.config_parsers import (
     parse_retention_by_domain,
 )
@@ -999,10 +1000,42 @@ class ThegentSettings(BaseSettings):
         description="Switch sync engine to pull-only mode after write failures",
     )
 
+    # WL152: canonical structured logging configuration. Defaults to the
+    # LoggingConfig defaults (level=INFO, format=text, redact=True,
+    # sinks=["stderr"]). Reads THGENT_LOG_* env vars via the nested model.
+    log_config: LoggingConfig = Field(
+        default_factory=LoggingConfig,
+        description="Structured logging configuration (THGENT_LOG_*)",
+    )
+
     @field_validator("retention_by_domain", mode="before")
     @classmethod
     def _parse_retention_by_domain(cls, v: object) -> dict[str, int]:
         return parse_retention_by_domain(v)
+
+    # WL152: audit surface — names of fields that hold sensitive material.
+    # This is the canonical pin for downstream masking and secret-detection
+    # tooling. Field types remain ``str`` for back-compat with existing
+    # consumers; ``LoggingConfig.redact=True`` + ``register_secret_for_masking``
+    # is the runtime redaction path. A future WL can promote these to
+    # ``pydantic.SecretStr`` once every consumer is updated.
+    SECRET_FIELDS: tuple[str, ...] = (
+        "supermemory_api_key",
+        "redis_password",
+        "cursor_api_token",
+        "mcp_bearer_tokens",
+        "reddit_client_secret",
+        "linear_api_key",
+    )
+
+    def secret_fields(self) -> tuple[str, ...]:
+        """Return the names of fields that hold sensitive material.
+
+        Used by audit tooling and downstream redaction helpers. The
+        return value is a ``tuple`` (immutable) to discourage in-place
+        mutation; consumers should not modify it.
+        """
+        return self.SECRET_FIELDS
 
     def validate_setup(self) -> None:
         """ROB-013: Configuration validation on startup (fail-fast).
