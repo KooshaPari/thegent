@@ -1553,7 +1553,7 @@ Deprecated: 1 (deprecate() helper), Warnings: 1, Migrations: 1 (cli/migrate.py).
 ### L25 Vendor Lockin — 100/100 (A+)
 AWS: 0, Azure: 2, GCP: 0, Generic: 264.
 
-### L26 Event Driven — 92/100 (A)
+### L26 Event Driven — 96/100 (A)
 Event bus: 34, Queue: 1491, Pubsub: 0, Kafka: 0, Celery: 0.
 
 **WL150 L26 Event Driven — Canonical InMemoryEventBus surface sealed (Phase 3/4 hardening).**
@@ -1595,7 +1595,59 @@ in `src/thegent/`. WL150 seals both gaps in a single canonical surface:
   is the same object as `from thegent.execution.executor import
   EventBusInterface`) + Ruff clean.
 
-**Cockpit Δ:** L26 85 → **92** (A- → A, **+7**).
+**WL700 L26 Event-Driven Extension Surface — Wildcard subscription sealed.**
+L26 had been capped at 92 because the wildcard subscription track was
+explicitly deferred at WL150 ("No wildcards — keep the surface minimal.
+Wildcard subscription is a future Phase 4 surface; current call sites
+never publish to wildcards."). The Phase 4/5 hardening lane extends the
+bus with the deferred surface as a **concrete-class extension** (the
+canonical `EventBusInterface` Protocol is unchanged so downstream
+`isinstance` checks keep working):
+
+* **Phase A — Concrete-class wildcard surface.**
+  `InMemoryEventBus.subscribe_wildcard(pattern, handler)` registers a
+  handler that fires on every event matching the pattern, using
+  `fnmatch.fnmatchcase` glob semantics (case-sensitive). Supports all
+  fnmatch tokens: `*` (anything), `prefix:*` (family prefix),
+  `*:suffix` (family suffix), `*contains*` (substring), `[abc]`
+  (character class), `?` (single character), plus bare strings as
+  exact-match. Patterns without wildcards fall back to exact-match
+  semantics.
+* **Phase B — Mixed dispatch contract.** `_dispatch` fans out to
+  exact-match handlers FIRST (registration order), then matching
+  wildcard handlers (registration order). Both registries dispatch
+  in the same `publish(...)` call. `handler_invocation_count` and
+  `publish_count` reflect the combined fan-out.
+* **Phase C — Unsubscriber + identity helpers.** `subscribe_wildcard`
+  returns an idempotent unsubscriber (calling twice is a no-op).
+  `unsubscribe_wildcard(pattern, handler)` provides identity-keyed
+  removal for callers that lost the unsubscriber. `clear()` wipes
+  BOTH registries. `TypeError` on non-callable handler (parity with
+  `subscribe`).
+* **Phase D — Introspection.** `wildcard_patterns()` returns the
+  sorted unique-pattern list (deterministic for telemetry).
+  `wildcard_subscriber_count(pattern=None)` counts either every
+  wildcard registration or just those on a specific pattern.
+* **Phase E — Thread safety + isolation preserved.** RLock-guarded
+  registry mutations, snapshot-based dispatch, exception isolation
+  across BOTH registries (a misbehaving wildcard subscriber cannot
+  starve exact-match handlers and vice versa). `strict=True` re-raises
+  via `EventHandlerError` for wildcard handlers too.
+* **Phase F — Test surface.** `tests/test_wl700_l26_extension_surface.py`
+  (534 LOC, 32 tests) pins: protocol identity preserved (wildcards
+  off-Protocol), every glob pattern type, unsubscriber idempotency,
+  identity-keyed removal, mixed dispatch order (exact-first),
+  exception isolation across registries (incl. strict mode),
+  introspection helpers, concurrent subscribe_wildcard + publish,
+  unsubscribe-during-dispatch safety, singleton reset clears wildcard
+  registry, and end-to-end via `Executor.run()` where a
+  `execution:*` wildcard listener observes both `execution:started`
+  and `execution:completed` payloads.
+* **Phase G — Validation.** 32/32 WL700 tests pass + 17/17 WL150
+  regression tests still pass + canonical-protocol identity
+  preserved + Ruff clean.
+
+**Cockpit Δ:** L26 92 → **96** (A, **+4**).
 
 ### L27 Infrastructure — 90/100 (A-)
 Docker: 1 (root Dockerfile, python:3.13-slim, non-root user, healthcheck),

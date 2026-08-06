@@ -14368,3 +14368,123 @@ L26 event-driven extension surface (per WL150 follow-on), L10
 type-safety tightening for any remaining `Any` slots surfaced by
 WL155 + WL156, L9 governance MED/LOW findings (per WL149 backlog — additional unexplored seams) — three Phase 3/4 hardening candidates remaining.
 
+## 2026-08-06 (session 7) — WL700 L26 Event-Driven Extension Surface (wildcard subscription)
+
+### Context
+
+Resumed the active five-day goal with the next unblocked Phase 3/4
+hardening lane: the **L26 wildcard subscription surface** that was
+explicitly deferred at WL150 ("No wildcards — keep the surface minimal.
+Wildcard subscription is a future Phase 4 surface; current call sites
+never publish to wildcards."). L26 had been capped at 92/A awaiting
+this extension.
+
+### Implemented
+
+* `src/thegent/core/events/in_memory_bus.py` — extended `InMemoryEventBus`
+  with the deferred wildcard surface (concrete-class extension, the
+  canonical `EventBusInterface` Protocol is unchanged):
+  * `subscribe_wildcard(pattern, handler) -> Callable[[], None]`
+    with `fnmatch.fnmatchcase` semantics (case-sensitive glob:
+    `*`, `prefix:*`, `*:suffix`, `*contains*`, `[abc]`, `?`, bare
+    strings as exact-match).
+  * `unsubscribe_wildcard(pattern, handler) -> bool` (identity-keyed
+    removal for callers that lost the unsubscriber).
+  * `wildcard_subscriber_count(pattern=None) -> int` (telemetry /
+    test introspection).
+  * `wildcard_patterns() -> list[str]` (sorted unique-pattern list).
+  * `_dispatch` fans to **exact-match handlers FIRST** (registration
+    order), then matching wildcard handlers (registration order).
+    Both registries dispatch in the same `publish(...)` call.
+  * `clear()` wipes both registries. `subscribe_wildcard` rejects
+    non-callable handlers with `TypeError` (parity with `subscribe`).
+  * RLock preserved — concurrent subscribe/publish/unsubscribe during
+    dispatch remains safe; exception isolation is preserved across
+    both registries (a misbehaving wildcard subscriber cannot starve
+    exact-match handlers and vice versa).
+* `src/thegent/core/events/__init__.py` — updated module docstring
+  to record the WL700 extension; notes that wildcards are
+  concrete-class only so downstream Protocol checks keep working.
+* `tests/test_wl700_l26_extension_surface.py` (534 LOC, **32 tests**)
+  pins the full surface:
+  * Protocol identity preserved (wildcards off-Protocol).
+  * Every glob pattern type: `*`, `execution:*`, `*:failed`,
+    `*policy*`, `?`, `[123]`, no-wildcard exact, case-sensitivity.
+  * Unsubscriber idempotency + `unsubscribe_wildcard` identity removal
+    + first-registration-only removal.
+  * Mixed dispatch contract: exact handlers fire first, then wildcard.
+  * `handler_invocation_count` includes wildcard fan-outs.
+  * Introspection helpers (`wildcard_subscriber_count`,
+    `wildcard_patterns`, `clear`).
+  * Exception isolation across both registries (incl. `strict=True`
+    re-raising wildcard handler exceptions as `EventHandlerError`).
+  * Thread safety: concurrent `subscribe_wildcard` + `publish`,
+    unsubscribe during dispatch, singleton reset clears wildcard
+    registry.
+  * End-to-end via `Executor.run(...)` — an `execution:*` wildcard
+    listener observes both `execution:started` and
+    `execution:completed` payloads.
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed
+WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening
+sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance
+LOW finding sealed WL156 → **L26 event-driven extension surface
+sealed WL700 (wildcard subscription — concrete-class extension to
+`InMemoryEventBus`; canonical Protocol unchanged)**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L26 Event Driven | 92/A | **96/A** | **+4** |
+
+### Validation
+
+* `pytest tests/test_wl700_l26_extension_surface.py -q` → **32 passed**
+* `pytest tests/test_wl700_l26_extension_surface.py tests/test_wl150_l26_event_bus_surface.py tests/test_wl149_governance_stub_shadow_sealed.py -q` →
+  **129 passed, 0 failed** (regression-clean across L26 + adjacent
+  worklog WL surfaces).
+* `ruff check src/thegent/core/events/ tests/test_wl700_l26_extension_surface.py` →
+  **All checks passed**.
+* `ruff format --check src/thegent/core/events/ tests/test_wl700_l26_extension_surface.py` →
+  **clean** (after one reformat pass).
+* Canonical-protocol identity preserved: `from thegent.core.ports import
+  EventBusInterface` is the same object as `from thegent.execution.executor
+  import EventBusInterface`; `isinstance(InMemoryEventBus(), EventBusInterface)`
+  still `True` after the wildcard extension.
+
+### Commit
+
+* `ff4745c94 feat(l26-wl700): seal Event-Driven Extension Surface
+  (wildcard subscription)` — 3 files changed, 694 insertions(+),
+  16 deletions(-) — `src/thegent/core/events/__init__.py`,
+  `src/thegent/core/events/in_memory_bus.py`,
+  `tests/test_wl700_l26_extension_surface.py`.
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* `sharecli/src/thegent_cli_share/coordination_contract.py`
+  (untracked) → untouched.
+* `sharecli/tests/test_thegent_cli_share.py` (modified, unrelated
+  worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`)
+  → NOT force-pushed (only local commits).
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit
+  daemon / Airlock Bot) → preserved untouched per system policy.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or
+  written.
+* `docs/reference/connector_mapping_cache.json` (unrelated worktree
+  cache, populated by a runtime tool) → preserved as unstaged change
+  (NOT included in the WL700 commit).
+
+### Unblocked next
+
+L10 type-safety tightening for any remaining `Any` slots surfaced by
+WL155 + WL156, L9 governance MED/LOW findings (per WL149 backlog —
+additional unexplored seams) — two Phase 3/4 hardening candidates
+remaining.
+
