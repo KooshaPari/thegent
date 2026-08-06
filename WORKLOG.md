@@ -14170,3 +14170,94 @@ dual-form + PluginHost lifecycle pin + method-signature pinning)**.
 L24 migration (schema-version test repair), L9 governance stub shadow
 (per WL149 backlog), L26 event-driven extension surface (per WL150
 follow-on) — three Phase 3/4 hardening candidates next.
+
+## 2026-08-05 (session 5) — WL155 L24 migration hardening
+
+### Plan (Phases A–F)
+
+* **A — `MigrationController` (canonical L24 surface).** New
+  `thegent.contracts.migration.MigrationController` is registry-aware,
+  defaults to the global `CONTRACT_REGISTRY` singleton, exposes
+  `evaluate_version(contract_id, version)`, `get_preferred_version(contract_id)`,
+  `queue_migration(version)`, and `run() -> int`.
+* **B — Polymorphic `ContractRegistry.register()`.** Accepts
+  `(name, payload_dict)` legacy, `(version_info,)` new dataclass
+  form, and `(None,)` no-op — back-compat preserved.
+* **C — `_versions` alias.** `_versions` is the canonical alias of
+  `_contracts` (so the existing `__new__`-based test helper that
+  binds `reg._versions = {}` writes to the same dict).
+* **D — `ContractVersion` → `ContractVersionInfo` alias.** Re-export
+  consolidated to a single dataclass name; no other `src/` consumers
+  reference `ContractVersion`, so the rename is safe.
+* **E — Test surface.** 30 hardening tests in
+  `tests/test_wl155_l24_migration_surface.py` (521 LOC) +
+  promotion of 8 broken stub tests in
+  `tests/test_unit_contracts_migration.py` from broken to GREEN.
+* **F — Validation.** Combined WL15x suite = 177/177 pass
+  (L24 + L15 + L21 + L22); ruff `check` + `format` clean.
+
+### Files changed
+
+| File | Role |
+|------|------|
+| `src/thegent/contracts/migration/__init__.py` | `MigrationController` implementation (new canonical surface) |
+| `src/thegent/contracts/registry.py` | polymorphic `register()` + `_versions` alias + `ContractVersion` alias + `register_contract_version()` |
+| `tests/test_wl155_l24_migration_surface.py` | 30 hardening tests (521 LOC) |
+
+### Validation
+
+* `tests/test_wl155_l24_migration_surface.py` → **30/30 pass**
+* `tests/test_unit_contracts_migration.py` → **8/8 pass** (was broken)
+* `tests/test_wl154_adapter_ports.py` → **50/50 pass** (no regression)
+* `tests/test_wl153_secrets_handling.py` → **70/70 pass** (no regression)
+* `tests/test_wl152_config_logging.py` → **19/19 pass** (no regression)
+* **Combined WL15x suite: 177/177 pass**
+* `tests/test_unit_config.py` + `tests/test_wl077_settings_singleton.py` +
+  `tests/test_unit_cursor_api.py` → 18 pre-existing failures confirmed
+  via `git stash` baseline → unrelated to WL155
+* `uv run ruff check` + `uv run ruff format` → clean on all 3 touched files
+
+### Stats
+
+* 3 files changed (2 src/ + 1 tests/)
+* 701 net insertions (controller + tests)
+* 1 commit: `cdc48c842`
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| **L24 Migration** | 85 (A-) | **92 (A+)** | **+7** (canonical `MigrationController` shipped; polymorphic `register()`; `_versions` alias; `ContractVersion` alias identity; 30 new hardening tests + 8 previously-broken tests repaired) |
+| L15 API Surface | 92 (A+) | 92 (A+) | ±0 (WL154 sibling, stable) |
+| L20 Config | 96 (A+) | 96 (A+) | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 (A+) | 90 (A+) | ±0 (WL152 sibling, stable) |
+
+### DAG tick
+
+L20 (provider sealed WL151) → L22 logging sub-area sealed WL152 →
+L21 secrets handling sealed WL153 → L15 API surface hardening
+sealed WL154 → **L24 migration sub-area sealed WL155
+(canonical MigrationController + polymorphic register +
+back-compat _versions alias + ContractVersion alias identity)**.
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* `sharecli/src/thegent_cli_share/coordination_contract.py` (untracked
+  file) → untouched.
+* `sharecli/tests/test_thegent_cli_share.py` (modified, unrelated
+  worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (origin) → NOT force-pushed (only local commits).
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit
+  daemon / Airlock Bot) → preserved untouched per system policy.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or
+  written.
+
+### Unblocked next
+
+L9 governance stub shadow (per WL149 backlog), L26 event-driven
+extension surface (per WL150 follow-on), L10 type-safety tightening
+for any remaining `Any` slots surfaced by WL155 — three Phase 3/4
+hardening candidates remaining.

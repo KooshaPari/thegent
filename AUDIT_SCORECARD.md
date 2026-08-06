@@ -485,8 +485,53 @@
 > | L11 Dep Audit | 95 | 95 | 0 | unchanged |
 > | L30 Onboarding | 92 | 92 | 0 | unchanged |
 
-> **DAG tick:** L20 → L22 → L21 → **L15 API surface hardening sealed WL154 (runtime-checkable Protocols + decorator factory dual-form + PluginHost lifecycle pin + method-signature pinning)**. SOTA audit lanes touched in this session: **L15 + L20 + L21 + L22** (L9/L11/L30 stable). **Unblocked next:** L24 migration (schema-version test repair), L9 governance stub shadow (per WL149 backlog), L26 event-driven extension surface (per WL150 follow-on).
->
+> **DAG tick:** L20 → L22 → L21 → **L15 API surface hardening sealed WL154 (runtime-checkable Protocols + decorator factory dual-form + PluginHost lifecycle pin + method-signature pinning)** → **L24 migration sub-area sealed WL155 (canonical MigrationController + polymorphic register + back-compat _versions alias + 30 hardening tests)**. SOTA audit lanes touched in this session: **L15 + L20 + L21 + L22 + L24** (L9/L11/L30 stable). **Unblocked next:** L9 governance stub shadow (per WL149 backlog), L26 event-driven extension surface (per WL150 follow-on), L10 type-safety tightening for any remaining `Any` slots surfaced by WL155.
+
+> **Session 2026-08-05-5 — WL155 L24 migration sub-area hardening: canonical `MigrationController` + back-compat polymorphic register.**
+> Phase 3/4 hardening continues. The L24 audit had identified two concrete gaps: (a) `src/thegent/contracts/migration/__init__.py` was a 21-LOC stub that left `tests/test_unit_contracts_migration.py` (8 tests) pinned against an aspirational API and unable to run; (b) `ContractRegistry.register()` only accepted the legacy `(name, payload_dict)` shape and could not register the canonical `ContractVersionInfo` dataclass that governance callers wanted to pass through directly. WL155 seals both gaps in a single canonical migration surface.
+> * **Phase A — Canonical `MigrationController`.** New `thegent.contracts.migration.MigrationController` (registry-aware) is the canonical L24 surface:
+>   * `__init__(registry=None)` — defaults to the global `CONTRACT_REGISTRY` singleton (`get_registry()`); passing `registry=None` after construction is rejected explicitly (the controller must commit to a registry at init time).
+>   * `evaluate_version(contract_id, version) -> dict` — returns `{status, contract_id, version, description, migration_window_end, days_remaining, notes}`. Status ∈ `{"active", "deprecated", "expiring", "expired", "unknown"}` based on the registered `ContractVersionInfo` and the current UTC clock. Malformed `migration_window_end` strings fall back to `allowed=True` (fail-open) rather than raising.
+>   * `get_preferred_version(contract_id) -> dict` — returns the highest-priority ACTIVE version for the contract_id (or the highest with a `degraded` note if every version is deprecated). Unknown contract_ids return `{status: "unknown", ...}`.
+>   * `queue_migration(version)` / `run() -> int` — drain queued migrations. `run()` is read-only with respect to the registry (it never mutates `ContractRegistry`); it returns the count drained.
+> * **Phase B — Back-compat polymorphic register.** `ContractRegistry.register()` is now polymorphic:
+>   * `register(name, payload_dict)` — legacy form, preserved exactly.
+>   * `register(version_info)` — new dataclass form (single positional arg of type `ContractVersionInfo`).
+>   * `register(None)` — no-op (silent skip).
+> * **Phase C — `_versions` alias.** Added `ContractRegistry._versions` as an alias of `_contracts` so the existing `__new__`-based test helper that binds `reg._versions = {}` writes to the same dict as `_contracts` (no dict duplication, `get()`/`list_versions()` see all registrations). `register_contract_version(info)` is the explicit public API.
+> * **Phase D — `ContractVersion` → `ContractVersionInfo` back-compat re-export.** `ContractVersion` is now an alias for `ContractVersionInfo` (the dataclass with `contract_id`/`version`/`description`/`deprecated`/`migration_window_end`). No other `src/` consumers reference `ContractVersion` (audited via `grep -rn "ContractVersion\b" src/thegent/ --include="*.py"`), so the rename is safe and the canonical surface is consolidated to one dataclass name.
+> * **Phase E — Test surface.** `tests/test_wl155_l24_migration_surface.py` (35 tests... actually 30 tests, 521 LOC) pins:
+>   * **Evaluate-version shape** — `status`/`contract_id`/`version`/`description`/`migration_window_end`/`days_remaining`/`notes` keys present; active → `"active"`; deprecated with no window → `"deprecated"` + `"allowed_until_window"` note; deprecated within window → `"expiring"`; expired window → `"expired"`; unregistered → `"unknown"`; malformed window → fall-back `"active"`; naive datetime → treated as UTC.
+>   * **Get-preferred-version** — only-active picks the highest ACTIVE; unknown contract returns `status="unknown"`; all-deprecated returns highest with `degraded` note; contract_id scoping ignores other contracts' versions.
+>   * **Queue/run semantics** — empty queue; `queue_migration` appends; `run` returns count + empties queue; `run` on empty queue returns 0; `run` does not mutate the registry.
+>   * **Default registry wiring** — default registry attribute == `CONTRACT_REGISTRY`; `get_registry()` lookup matches singleton identity; explicit `None` after default is rejected.
+>   * **Back-compat register()** — `(name, dict)` form preserved; `(version_info,)` form accepted; `(None,)` form is silent skip; `register_contract_version(info)` is the explicit API; `_versions`/`_contracts` alias identity confirmed.
+>   * **`ContractVersion` alias identity** — `ContractVersion is ContractVersionInfo`; constructor accepts the canonical fields.
+> * **Phase F — Pre-existing failures migrated.** `tests/test_unit_contracts_migration.py` (8 tests) was broken against the stub; WL155 promotes those tests from "broken stub expectations" to GREEN. 8/8 now pass.
+> * **Focused validation:**
+>   * `tests/test_wl155_l24_migration_surface.py` — **30/30 pass**
+>   * `tests/test_unit_contracts_migration.py` — **8/8 pass** (repaired)
+>   * `tests/test_wl154_adapter_ports.py` — **50/50 pass** (no regression)
+>   * `tests/test_wl153_secrets_handling.py` — **70/70 pass** (no regression)
+>   * `tests/test_wl152_config_logging.py` — **19/19 pass** (no regression)
+>   * **Combined WL15x suite: 177 tests pass**
+>   * Pre-existing failures in `test_unit_config.py` (5) + `test_wl077_settings_singleton.py` (6) + `test_unit_cursor_api.py` (7) verified on clean tree via `git stash` baseline — unrelated to WL155
+>   * Ruff `check` + `format` clean on all 3 touched files
+
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | **L24 Migration** | 85 (A-) | **92 (A+)** | **+7** | Canonical `MigrationController` shipped (registry-aware with `evaluate_version`/`get_preferred_version`/`queue_migration`/`run`); `ContractRegistry.register()` polymorphic (legacy dict + dataclass + None); `_versions` ↔ `_contracts` alias identity; `ContractVersion` → `ContractVersionInfo` back-compat re-export; 30 new hardening tests + 8 previously-broken migration tests now GREEN; combined WL15x suite = 177/177 pass |
+> | L15 API Surface | 92 | 92 | ±0 | unchanged (WL154 sibling, stable) |
+> | L20 Config | 96 | 96 | ±0 | unchanged (WL151/152/153 sibling, stable) |
+> | L21 Secrets Handling | 92 | 92 | ±0 | unchanged (WL153 sibling, stable) |
+> | L22 Logging | 90 | 90 | ±0 | unchanged (WL152 sibling, stable) |
+> | L9 Complexity | 100 | 100 | ±0 | unchanged |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+
+> **DAG tick:** L20 → L22 → L21 → L15 → **L24 migration sub-area sealed WL155 (canonical MigrationController + polymorphic register + back-compat _versions alias + ContractVersion alias identity)**. SOTA audit lanes touched in this session: **L15 + L20 + L21 + L22 + L24** (L9/L11/L30 stable). **Unblocked next:** L9 governance stub shadow (per WL149 backlog), L26 event-driven extension surface (per WL150 follow-on), L10 type-safety tightening for any remaining `Any` slots surfaced by WL155.
+
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
 > now a canonical re-export layer, but the **public-API surface** is
