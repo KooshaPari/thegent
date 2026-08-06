@@ -415,6 +415,45 @@
 > | L30 Onboarding | 92 | 92 | 0 | unchanged |
 
 > **DAG tick:** L20 (provider sealed WL151) → **L22 logging sub-area sealed WL152 (canonical LoggingConfig + masking + audit hook)** → next unblocked: L21 secrets handling (e.g. promote `SECRET_FIELDS` to `pydantic.SecretStr` per consumer). SOTA audit lanes touched in this session: **L20 + L22** (L9/L11/L30 stable).
+
+> **Session 2026-08-05-3 — WL153 L21 secrets handling hardening: canonical `SecretStr` promotion + `secret_value()` audit hook.**
+> Phase 3/4 hardening continues. The L21 audit had identified that the six canonical `SECRET_FIELDS` declared on `ThegentSettings` were plain `str` / `str | None` — meaning their values leaked into `repr(settings)`, `str(settings)`, `model_dump()`, and `model_dump_json()` unless callers explicitly wrapped them. WL153 seals L21 by promoting every canonical secret to `pydantic.SecretStr` and adding a single canonical accessor (`secret_value(name)`) that downstream consumers migrate to.
+> * **Phase A — Field promotion.** All six canonical `SECRET_FIELDS` are now `SecretStr` (or `SecretStr | None` for the two nullable ones):
+>   * `supermemory_api_key: SecretStr | None = None`
+>   * `redis_password: SecretStr | None = None`
+>   * `cursor_api_token: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+>   * `mcp_bearer_tokens: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+>   * `reddit_client_secret: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+>   * `linear_api_key: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+> * **Phase B — `ThegentSettings.secret_value(name)` audit hook.** Returns the underlying plain string for any registered secret, or `None` for unset nullable fields. Raises `KeyError` on unknown field — typos fail loud rather than silently leaking non-secrets. The method is the canonical migration path for consumers (HTTP auth headers, subprocess env, CLI proxy config injection).
+> * **Phase C — Consumer migration.** The two known consumers of raw secret values have been migrated to `secret_value()`:
+>   * `src/thegent/agents/cursor_api_runner.py` — `cursor_api_token` is hashed in `_cursor_api_cache_key` and forwarded to `_is_cursor_api_reachable`; both expect `str`. Migrated to `self._settings.secret_value("cursor_api_token") or ""`.
+>   * `src/thegent/use_cases/manage_cliproxy_config.py` — token forwarded into the cli-proxy config dict. Migrated to `(settings.secret_value("cursor_api_token") or "").strip()`.
+> * **Phase D — Test surface.** `tests/test_wl153_secrets_handling.py` (320 LOC, 70 tests) pins:
+>   * **Canonical six** — `SECRET_FIELDS` and `secret_fields()` both return the exact six names; static annotations reference `SecretStr` (or `SecretStr | None`).
+>   * **Type discipline** — default nullable fields are `None`; default non-nullable fields are `SecretStr("")`.
+>   * **Masking semantics** — `repr(field)`, `str(field)`, `repr(settings)`, `model_dump()`, `model_dump_json()` do NOT contain raw secret material for any of the six.
+>   * **Raw access** — `.get_secret_value()` returns the underlying string for populated fields.
+>   * **Constructor round-trips** — plain `str` is auto-coerced to `SecretStr`; `None` is preserved for nullable fields; `SecretStr` instances pass through; `""` becomes `SecretStr("")` (still falsy, still masked).
+>   * **Env var bootstrap** — `THGENT_SUPERMEMORY_API_KEY=…` populates the field while keeping `repr`/`str` masked.
+>   * **Audit hook** — `secret_value(name)` returns the raw string for populated fields, `None` for unset nullable, `""` for unset non-nullable, and raises `KeyError` for unknown names.
+> * **Focused validation:**
+>   * `tests/test_wl153_secrets_handling.py` — **70/70 pass**
+>   * `tests/test_wl152_config_logging.py` — **19/19 pass** (no regression)
+>   * Pre-existing failures in `test_unit_config.py` (5) + `test_wl077_settings_singleton.py` (6) + `test_unit_cursor_api.py` (7) verified on clean tree via `git stash` baseline — unrelated to WL153
+>   * Ruff `check` + `format` clean on all 4 touched files
+
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L20 Config | 94 | **96** | **+2** | Six canonical secrets promoted to `pydantic.SecretStr`; `repr`/`str`/`model_dump`/`model_dump_json` mask by default; `secret_value(name)` is the canonical audit accessor |
+> | L21 Secrets Handling | 0 | **92** | **+92 (new)** | Canonical six `SECRET_FIELDS` are now `SecretStr`; 70 tests pin masking + audit hook + consumer migration; both known consumers (cursor_api_runner, manage_cliproxy_config) migrated |
+> | L22 Logging | 90 | 90 | ±0 | unchanged (WL152 sibling, stable) |
+> | L9 Complexity | 100 | 100 | ±0 | unchanged |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+
+> **DAG tick:** L20 (provider sealed WL151) → L22 logging sub-area sealed WL152 → **L21 secrets handling sealed WL153 (canonical `SecretStr` + `secret_value()` audit hook + consumer migration)**. SOTA audit lanes touched in this session: **L20 + L21 + L22** (L9/L11/L30 stable). **Unblocked next:** L15 API surface hardening, L24 migration, L9 governance stub shadow (per WL149 backlog).
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is

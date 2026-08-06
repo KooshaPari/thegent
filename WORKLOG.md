@@ -13987,3 +13987,93 @@ unrelated to WL152.
 
 L21 secrets handling (e.g. promote `SECRET_FIELDS` to `pydantic.SecretStr`
 per consumer) — natural peer to WL152's audit hook.
+
+---
+
+## 2026-08-05 (session 3) — WL153 L21 secrets handling hardening
+
+The L21 audit identified that the six canonical `SECRET_FIELDS` on
+`ThegentSettings` were plain `str` / `str | None` — their values leaked
+into `repr(settings)`, `str(settings)`, `model_dump()`, and
+`model_dump_json()` unless callers explicitly wrapped them. WL153 seals
+L21 by promoting every canonical secret to `pydantic.SecretStr` and
+adding a single canonical accessor (`secret_value(name)`) that downstream
+consumers migrate to.
+
+### Plan executed (Phases A–D)
+
+* **Phase A — Field promotion.** All six canonical `SECRET_FIELDS` are
+  now `SecretStr` (or `SecretStr | None` for the two nullable ones):
+  * `supermemory_api_key: SecretStr | None = None`
+  * `redis_password: SecretStr | None = None`
+  * `cursor_api_token: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+  * `mcp_bearer_tokens: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+  * `reddit_client_secret: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+  * `linear_api_key: SecretStr = Field(default_factory=lambda: SecretStr(""))`
+* **Phase B — `ThegentSettings.secret_value(name)` audit hook.**
+  Returns the underlying plain string for any registered secret, or
+  `None` for unset nullable fields. Raises `KeyError` on unknown field —
+  typos fail loud rather than silently leaking non-secrets. The method
+  is the canonical migration path for consumers (HTTP auth headers,
+  subprocess env, CLI proxy config injection).
+* **Phase C — Consumer migration.** The two known consumers of raw
+  secret values have been migrated to `secret_value()`:
+  * `src/thegent/agents/cursor_api_runner.py` — `cursor_api_token` is
+    hashed in `_cursor_api_cache_key` and forwarded to
+    `_is_cursor_api_reachable`; both expect `str`. Migrated to
+    `self._settings.secret_value("cursor_api_token") or ""`.
+  * `src/thegent/use_cases/manage_cliproxy_config.py` — token forwarded
+    into the cli-proxy config dict. Migrated to
+    `(settings.secret_value("cursor_api_token") or "").strip()`.
+* **Phase D — Test surface.** `tests/test_wl153_secrets_handling.py`
+  (320 LOC, 70 tests) pins canonical six, repr/str masking, raw access,
+  constructor round-trips, env var bootstrap, model serialization, and
+  the `secret_value()` audit hook.
+
+### Files changed
+
+* `src/thegent/config/settings.py` — `SecretStr` import + six field
+  promotions + `secret_value(name)` method (~ 65 net insertions).
+* `src/thegent/agents/cursor_api_runner.py` — `cursor_api_token`
+  access migrated to `secret_value("cursor_api_token")` (~ 4 net).
+* `src/thegent/use_cases/manage_cliproxy_config.py` — same migration
+  (~ 3 net).
+* `tests/test_wl153_secrets_handling.py` — new file, 320 LOC, 70 tests.
+
+### Validation
+
+* `tests/test_wl153_secrets_handling.py` → **70/70 pass**
+* `tests/test_wl152_config_logging.py` → **19/19 pass** (no regression)
+* `tests/test_unit_config.py` + `tests/test_wl077_settings_singleton.py` +
+  `tests/test_unit_cursor_api.py` → 18 pre-existing failures confirmed
+  via `git stash` baseline → unrelated to WL153
+* `uv run ruff check` + `uv run ruff format` → clean on all 4 touched
+  files
+
+### Stats
+
+* 4 files changed
+* ~368 net insertions (config + tests)
+* 1 commit: `52cb6d2e1`
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| L20 Config | 94 (A+) | **96 (A+)** | **+2** (six canonical secrets promoted to `pydantic.SecretStr`; `repr`/`str`/`model_dump`/`model_dump_json` mask by default; `secret_value(name)` is the canonical audit accessor) |
+| L21 Secrets Handling | 0 (—) | **92 (A+)** | **+92 (new lane)** (canonical six `SECRET_FIELDS` are now `SecretStr`; 70 tests pin masking + audit hook + consumer migration; both known consumers migrated) |
+| L22 Logging | 90 (A+) | 90 (A+) | ±0 (WL152 sibling, stable) |
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (origin) → NOT force-pushed (only local commits).
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit daemon /
+  Airlock Bot) → preserved untouched per system policy.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+
+### Unblocked next
+
+L15 API surface hardening, L24 migration, L9 governance stub shadow
+(per WL149 backlog) — three Phase 3/4 hardening candidates next.
