@@ -14620,3 +14620,72 @@ WL155 / WL156 / WL702 + **WL703 L9 cliproxy_login_cmd hardening**
 WL149 that WL702 deferred). Two Phase 3/4 hardening candidates
 remaining.
 
+---
+
+## WL703 — L9 cliproxy_login_cmd hardening (third WL-124 LOW finding seal, 2026-08-06)
+
+**Goal.** Close the third L9 LOW finding left in `tests/test_unit_cli_commands_a.py` by WL149: `TestCliproxyLoginCmdImpl` was skipped because its monkey-patch sites targeted a non-existent `thegent.cli.commands.model_cmds_rules` module. WL703 ships the canonical surface so the three tests run for real.
+
+### What changed
+
+* **`src/thegent/cli/commands/model_cmds_rules.py`** (NEW, 114 LOC). The canonical home for the rules-layer `console` (Rich `Console()`) and the canonical `_run_cliproxyctl_machine_command(provider, *, settings=None, prompt_func=None, force=False, login_timeout=None)` helper. The helper delegates to `thegent.use_cases.manage_cliproxy_login.run_login(...)` (the canonical use-case implementation) and returns `{"exit_code": <int>, "message": <str>}`. It raises `ValueError` for unknown provider (parity with the canonical `_normalise_provider`) and `FileNotFoundError` when the cliproxy binary is missing (parity with the canonical `_run_oauth_login`). Module-level `console` satisfies `patch("thegent.cli.commands.model_cmds_rules.console")`. `__all__ = ["console", "_run_cliproxyctl_machine_command"]`. Docstring ≥4 lines referencing both.
+* **`src/thegent/cli/commands/model_cmds.py:127`** — `cliproxy_login_cmd` real impl replaces the WL-124 stub (`return 0`). Local-imports `_run_cliproxyctl_machine_command` and `console` from `thegent.cli.commands.model_cmds_rules` at call time (parity with WL-702 sweep patch-pattern). Dispatcher contract: success → `[green]<message>[/green]` + `typer.Exit(0)`; `ValueError` → `[red]cliproxy login invalid or failed: <exc>[/red]` + `typer.Exit(1)`; `FileNotFoundError` → `[red]cliproxy login missing binary: <exc>[/red]` + `typer.Exit(1)`; non-zero exit_code from helper → `[red]<message>[/red]` + `typer.Exit(<exit_code>)`. Note subtlety: `result.get("exit_code", 0)` defaults to `0` (success) when the dict doesn't carry an exit_code field — matches pre-existing `test_login_success` patch (`return_value={"message": "Login successful"}`). Docstring ≥4 lines mentioning both helper and rules module.
+* **`tests/test_unit_cli_commands_a.py:1912`** — `@pytest.mark.skip(reason="WL-124 refactoring or not implemented")` removed from `TestCliproxyLoginCmdImpl`. The three tests (`test_login_success`, `test_login_value_error`, `test_login_file_not_found`) now exercise the real implementation.
+* **`tests/test_wl703_l9_cliproxy_login.py`** (NEW, 294 LOC, **17 hardening tests**) pins:
+  * Canonical module resolution: `model_cmds_rules` exists, distinct from `model_cmds`; `console` and `_run_cliproxyctl_machine_command` are reachable at the canonical path; `__all__` exposes both.
+  * `console` is a Rich `Console` instance.
+  * `cliproxy_login_cmd` is not a zero-returning stub (body_lines > 2, references `_run_cliproxyctl_machine_command`).
+  * `cliproxy_login_cmd` resolves to canonical `thegent.cli.commands.model_cmds.cliproxy_login_cmd`.
+  * Success → `typer.Exit(0)`.
+  * `ValueError` → `typer.Exit(1)` + console message contains "invalid"/"failed".
+  * `FileNotFoundError` → `typer.Exit(1)` + console message indicates "missing"/"binary".
+  * Helper delegates to `thegent.use_cases.manage_cliproxy_login.run_login` (not duplicated logic).
+  * Helper returns canonical `{exit_code, message}` shape.
+  * AST purity pin: no `run_login(` at module top-level of `model_cmds.py` (lazy dispatch).
+  * Module docstring of `model_cmds_rules` is ≥4 lines + references `console` and `_run_cliproxyctl_machine_command`.
+  * `cliproxy_login_cmd` docstring ≥4 lines + references helper and rules module.
+  * `TestCliproxyLoginCmdImpl` carries no `WL-124` skip mark.
+  * Dispatcher sources helper via local import (no re-export alias).
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance LOW finding sealed WL156 → L26 event-driven extension surface sealed WL700 → L9 governance skip-batch-three sealed WL702 → **L9 cliproxy_login_cmd hardening sealed WL703**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L9 Governance | 95/A+ | **96/A+** | **+1** |
+
+### Validation
+
+* `uv run pytest tests/test_wl703_l9_cliproxy_login.py
+  tests/test_unit_cli_commands_a.py::TestCliproxyLoginCmdImpl
+  tests/test_wl702_l9_skip_batch_three.py
+  tests/test_wl156_l9_data_protection_wiring.py
+  tests/test_wl149_governance_stub_shadow_sealed.py -q` →
+  **69 passed, 0 failed** (17 new L9 + 3 unskipped regression + 49 prior WL149 / WL156 / WL702 surface).
+* Combined L9 + WL15x regression (`tests/test_wl703_l9_cliproxy_login.py` + `test_wl702` + `test_wl156` + `test_wl155` + `test_wl700` + `test_wl154` + `test_wl153` + `test_wl152`) → **270 passed, 0 failed**.
+* `uv run ruff check src/thegent/cli/commands/model_cmds_rules.py
+  src/thegent/cli/commands/model_cmds.py
+  tests/test_wl703_l9_cliproxy_login.py
+  tests/test_unit_cli_commands_a.py` → **All checks passed**.
+* `uv run ruff format --check ...` → **clean** (after one reformat pass on `model_cmds.py`).
+
+### Commits
+
+* `a450fc8b0 feat(l9-wl703): seal L9 cliproxy_login_cmd hardening (model_cmds_rules + stub replacement + unskip)` — 4 files changed, 443 insertions(+), 4 deletions(-) — `src/thegent/cli/commands/model_cmds.py`, `src/thegent/cli/commands/model_cmds_rules.py` (NEW), `tests/test_unit_cli_commands_a.py`, `tests/test_wl703_l9_cliproxy_login.py` (NEW).
+
+### Preservation
+
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit daemon / Airlock Bot) → preserved untouched per system policy.
+* `sharecli/` untracked tree → untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed (1 local commit ahead at `a450fc8b0`).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* `docs/reference/connector_mapping_cache.json` (unrelated worktree cache) → preserved as unstaged change (NOT included in the WL703 commit).
+
+### Unblocked next
+
+L10 type-safety tightening for any remaining `Any` slots surfaced by
+WL155 / WL156 / WL702 / WL703 — final Phase 3/4 hardening candidate.
+
