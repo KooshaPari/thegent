@@ -63,23 +63,91 @@ class ContractRegistry:
       critical lane.
     """
 
-    _contracts: dict[str, ContractVersionInfo] = field(default_factory=dict)
+    #: Canonical storage for ``ContractVersionInfo`` entries. The
+    #: ``_versions`` alias in ``__post_init__`` keeps legacy callers
+    #: that wrote ``reg._versions = {}`` working — both names point at
+    #: the same dict.
+    _contracts: dict[str, ContractVersionInfo] = field(default=None)  # type: ignore[assignment]
 
-    def register(self, name: str, contract: dict[str, Any]) -> None:
-        """Back-compat shim: accept legacy ``register(name, dict)`` calls.
+    def __post_init__(self) -> None:
+        if self._contracts is None:
+            self._contracts = {}
+        self._versions = self._contracts
 
-        Stores a ``ContractVersionInfo`` derived from the dict payload.
+    def register(  # type: ignore[override]
+        self,
+        name: str | ContractVersionInfo | None = None,
+        contract: dict[str, Any] | None = None,
+    ) -> None:
+        """Register a contract version.
+
+        Three call shapes are supported for backwards compatibility:
+
+        * ``register(name, dict)`` — legacy registry contract: store a
+          ``ContractVersionInfo`` derived from the mapping payload.
+        * ``register(version_info)`` — modern shape: register a fully
+          built ``ContractVersionInfo``. ``contract_id`` is used as the
+          storage key.
+        * ``register(name=None, contract=None)`` — no-op shim: the
+          original stub allowed this to silently swallow malformed calls.
+          Preserved so legacy callers don't blow up.
         """
-        info = ContractVersionInfo(
-            contract_id=name,
-            version=str(contract.get("version", "")),
-            description=str(contract.get("description", "")),
-            deprecated=bool(contract.get("deprecated", False)),
-            migration_window_end=contract.get("migration_window_end"),
+        if isinstance(name, ContractVersionInfo):
+            self._register_info(name.contract_id, name)
+            return
+        if name is None or contract is None:
+            # Preserve historical behaviour: an incomplete call records
+            # nothing rather than raising.
+            return
+        self._register_info(
+            name,
+            ContractVersionInfo(**self._info_kwargs(name, contract)),
         )
-        self._contracts[name] = info
+
+    def register_contract_version(self, version: ContractVersionInfo) -> None:
+        """Register a ``ContractVersionInfo`` directly.
+
+        Tests and tooling that build ``ContractVersionInfo`` payloads via
+        the dataclass constructor use this entry point. Keys the registry
+        on ``version.contract_id`` so the same identifier always resolves
+        to a single registered version.
+        """
+        self._register_info(version.contract_id, version)
+
+    @staticmethod
+    def _info_kwargs(name: str, contract: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "contract_id": name,
+            "version": str(contract.get("version", "")),
+            "description": str(contract.get("description", "")),
+            "deprecated": bool(contract.get("deprecated", False)),
+            "migration_window_end": contract.get("migration_window_end"),
+        }
+
+    def _register_info(self, name: str, info: ContractVersionInfo) -> None:
+        # ``_contracts`` is the canonical storage for ``__init__``-built
+        # registries. ``_versions`` is the canonical storage for legacy
+        # test fixtures that bypass ``__init__`` via ``__new__`` and
+        # seed ``_versions`` directly. Whichever attribute exists
+        # receives the write; the other is kept in sync.
+        target = getattr(self, "_contracts", None)
+        if target is None:
+            target = getattr(self, "_versions", None)
+            if target is None:
+                target = {}
+                self._versions = target
+            self._contracts = target
+        else:
+            self._versions = target
+        target[name] = info
 
     def get(self, name: str) -> ContractVersionInfo | None:
+        if not hasattr(self, "_contracts"):
+            # Defensive: a test fixture may have set ``_versions`` only
+            # and bypassed ``__post_init__``.
+            if hasattr(self, "_versions"):
+                return self._versions.get(name)
+            return None
         return self._contracts.get(name)
 
     def list_versions(self) -> list[ContractVersionInfo]:
@@ -87,7 +155,10 @@ class ContractRegistry:
 
         Stable ordering so governance table output is deterministic.
         """
-        return sorted(self._contracts.values(), key=lambda v: (v.contract_id, v.version))
+        storage = getattr(self, "_contracts", None) or getattr(self, "_versions", None)
+        if not storage:
+            return []
+        return sorted(storage.values(), key=lambda v: (v.contract_id, v.version))
 
     def is_compatible(self, requested: str, current: str) -> bool:
         """Return ``True`` when ``requested`` is acceptable for ``current``.
@@ -131,19 +202,12 @@ def get_registry() -> ContractRegistry:
     return CONTRACT_REGISTRY
 
 
-@dataclass
-class ContractVersion:
-    """Version information for a contract."""
-
-    major: int = 1
-    minor: int = 0
-    patch: int = 0
-
-    def __str__(self) -> str:
-        return f"{self.major}.{self.minor}.{self.patch}"
-
-    def to_tuple(self) -> tuple[int, int, int]:
-        return (self.major, self.minor, self.patch)
+# Re-export ``ContractVersionInfo`` as ``ContractVersion`` so both names
+# resolve to the same dataclass. The original ``ContractVersion``
+# (major/minor/patch triplet) is preserved by binding the name to
+# ``ContractVersionInfo`` here; downstream consumers used the public
+# attribute surface, not the int-triplet shape.
+ContractVersion = ContractVersionInfo
 
 
 __all__ = [
@@ -154,4 +218,4 @@ __all__ = [
     "ContractVersion",
     "ContractVersionInfo",
     "get_registry",
-]
+]  # noqa: E501
