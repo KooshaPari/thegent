@@ -1909,7 +1909,6 @@ class TestHelperFunctions:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring or not implemented")
 class TestCliproxyLoginCmdImpl:
     """Tests for cliproxy_login_cmd function body."""
 

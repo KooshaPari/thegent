@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import typer
+
 
 def _models_table(*args: Any, **kwargs: Any) -> dict[str, Any]:
     """WL-124 stable import surface: models table helper."""
@@ -122,9 +124,50 @@ def _list_kiro_models(*args: Any, **kwargs: Any) -> dict[str, Any]:
     return {}
 
 
-def cliproxy_login_cmd(*args: Any, **kwargs: Any) -> int:
-    """CLI Proxy login. Stub returning 0."""
-    return 0
+def cliproxy_login_cmd(*args: Any, provider: str = "", **kwargs: Any) -> int:
+    """Login to a CLIProxyAPIPlus provider via the canonical machine helper.
+
+    WL-703 hardening: replaces the WL-124 stub (``return 0``) with a real
+    dispatcher that delegates to
+    :func:`thegent.cli.commands.model_cmds_rules._run_cliproxyctl_machine_command`.
+    The canonical home for the rules layer (and its ``console``) lives
+    in :mod:`thegent.cli.commands.model_cmds_rules` so monkey-patch sites
+    at the canonical surface resolve cleanly under tests.
+
+    Contract: returns 0 on success, raises :class:`typer.Exit` with
+    ``exit_code=0`` on a successful delegated login, ``exit_code=1`` on
+    user-skip or ``ValueError`` / ``FileNotFoundError`` from the canonical
+    helper (the underlying ``run_login`` exit_code is surfaced verbatim
+    via the printed message).
+
+    The body is intentionally short: all rule logic lives in
+    ``_run_cliproxyctl_machine_command`` so the canonical surface can be
+    unit-tested in isolation. ``*args`` / ``**kwargs`` are accepted for
+    parity with the surrounding WL-124 stub-vocabulary.
+    """
+    # Local import — monkey-patches at ``model_cmds_rules`` resolve at
+    # call time (parity with WL-702 sweep patch-pattern).
+    from thegent.cli.commands.model_cmds_rules import (
+        _run_cliproxyctl_machine_command,
+        console,
+    )
+
+    try:
+        result = _run_cliproxyctl_machine_command(provider=provider)
+    except ValueError as exc:
+        console.print(f"[red]cliproxy login invalid or failed: {exc}[/red]")
+        raise typer.Exit(1) from exc
+    except FileNotFoundError as exc:
+        console.print(f"[red]cliproxy login missing binary: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    exit_code_raw = result.get("exit_code", 0)
+    exit_code = int(exit_code_raw) if exit_code_raw is not None else 0
+    if exit_code == 0:
+        console.print(f"[green]{result.get('message', 'cliproxy login ok')}[/green]")
+        raise typer.Exit(0)
+    console.print(f"[red]{result.get('message', 'cliproxy login failed')}[/red]")
+    raise typer.Exit(exit_code or 1)
 
 
 def setup_cmd(*args: Any, **kwargs: Any) -> int:
