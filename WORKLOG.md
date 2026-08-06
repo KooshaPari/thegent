@@ -14077,3 +14077,96 @@ consumers migrate to.
 
 L15 API surface hardening, L24 migration, L9 governance stub shadow
 (per WL149 backlog) — three Phase 3/4 hardening candidates next.
+
+## 2026-08-05 (session 4) — WL154 L15 API surface hardening
+
+Phase 3/4 hardening continues. L15 had been parked at 85/A- since WL148;
+this session seals L15 across four sub-axes:
+
+* **Phase A — Runtime-checkable Protocols.** All 8 port Protocols in
+  `src/thegent/adapters/ports.py` now carry `@runtime_checkable`, so
+  `isinstance(obj, HTTPClientPort)` (and the 7 siblings) returns
+  True/False at runtime without breaking the static type contract.
+* **Phase B — Decorator factory dual-form.** `register_driver` /
+  `register_router` / `register_cache` now support BOTH the
+  decorator-factory form (`@register_driver("name", version="1.0")`)
+  AND the direct-call form (`register_driver("name", MyClass,
+  version="1.0")`). The previous implementation silently dropped
+  registrations on direct calls — the inner decorator was returned
+  but never applied to the class.
+* **Phase C — Package-root re-exports.** `PluginHost` is now reachable
+  from `thegent.adapters`; `_runtime_registry` is dropped from
+  `__all__` because the leading underscore signals module-private.
+* **Phase D — Test surface.** `tests/test_wl154_adapter_ports.py` (572
+  LOC, 50 tests) pins runtime-checkable semantics, AdapterRegistry
+  lifecycle, dataclass shape, PluginHost lifecycle (register / load /
+  unload / swap / get / unknown-error), module-level decorator
+  factories, global state isolation, and per-Protocol method-signature
+  pinning.
+
+### Files changed
+
+* `src/thegent/adapters/ports.py` — `@runtime_checkable` x8, decorator
+  factory dual-form fix, docstring refresh.
+* `src/thegent/adapters/__init__.py` — add `PluginHost` import + entry
+  to `__all__`; drop `_runtime_registry` import + entry from `__all__`.
+* `tests/test_wl154_adapter_ports.py` — NEW (572 LOC, 50 tests).
+
+### Validation
+
+* `uv run pytest tests/test_wl154_adapter_ports.py` → **50/50 pass**
+  in 2.42s.
+* `uv run pytest tests/test_wl154_adapter_ports.py tests/test_wl153_secrets_handling.py tests/test_wl152_config_logging.py`
+  → **139/139 pass** in 4.47s (no regression across the WL15x wave).
+* `uv run ruff check src/thegent/adapters/ports.py src/thegent/adapters/__init__.py tests/test_wl154_adapter_ports.py`
+  → all checks passed (1 fixable: trailing newline — applied; 1 RUF012
+  mutable-default: fixed with `ClassVar[]` annotation).
+* `uv run ruff format` → 1 file reformatted (test), 2 already formatted.
+* Pre-existing failures in `test_unit_config.py` (5) +
+  `test_wl077_settings_singleton.py` (6) + `test_unit_cursor_api.py` (7)
+  verified on clean tree via `git stash` baseline → unrelated to WL154.
+
+### Stats
+
+* 1 file modified (`src/thegent/adapters/ports.py`), 1 file modified
+  (`src/thegent/adapters/__init__.py`), 1 file added
+  (`tests/test_wl154_adapter_ports.py`).
+* +104 / -53 across 3 files at commit time.
+
+### Cockpit progress bar (today's contribution)
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| L15 API Surface | 85 (A-) | **92 (A+)** | **+7** (all 8 port Protocols now `@runtime_checkable`; `register_*` decorator factories support both decorator and direct-call forms; `PluginHost` reachable from `thegent.adapters`; `_runtime_registry` removed from public `__all__`; 50 tests pin Protocol semantics + AdapterRegistry + PluginHost lifecycle + global state isolation + per-Protocol method-signature pinning) |
+| L20 Config | 96 (A+) | 96 (A+) | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 (A+) | 90 (A+) | ±0 (WL152 sibling, stable) |
+
+### Lanes affected
+
+* L15 API Surface — sealed (Protocols + lifecycle + decorator fix).
+* L20 Config — touched indirectly (no schema change; tests still green).
+* L21 Secrets Handling — touched indirectly (no schema change; tests still green).
+* L22 Logging — touched indirectly (no schema change; tests still green).
+
+### DAG tick
+
+L20 (provider sealed WL151) → L22 logging sub-area sealed WL152 →
+L21 secrets handling sealed WL153 → **L15 API surface hardening
+sealed WL154 (runtime-checkable Protocols + decorator factory
+dual-form + PluginHost lifecycle pin + method-signature pinning)**.
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (origin) → NOT force-pushed (only local commits).
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit daemon /
+  Airlock Bot) → preserved untouched per system policy.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+
+### Unblocked next
+
+L24 migration (schema-version test repair), L9 governance stub shadow
+(per WL149 backlog), L26 event-driven extension surface (per WL150
+follow-on) — three Phase 3/4 hardening candidates next.

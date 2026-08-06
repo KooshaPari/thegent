@@ -454,6 +454,38 @@
 > | L30 Onboarding | 92 | 92 | 0 | unchanged |
 
 > **DAG tick:** L20 (provider sealed WL151) → L22 logging sub-area sealed WL152 → **L21 secrets handling sealed WL153 (canonical `SecretStr` + `secret_value()` audit hook + consumer migration)**. SOTA audit lanes touched in this session: **L20 + L21 + L22** (L9/L11/L30 stable). **Unblocked next:** L15 API surface hardening, L24 migration, L9 governance stub shadow (per WL149 backlog).
+
+> **Session 2026-08-05-4 — WL154 L15 API surface hardening: ports runtime-checkable + plugin host lifecycle + decorator factory fix.**
+> Phase 3/4 hardening continues. L15 had been parked at 85/A- since WL148; the audit had flagged that `src/thegent/adapters/ports.py` (304 lines) was untested at the unit level, that the `register_*` decorator factories silently dropped registrations when called directly (rather than as `@decorator`), and that `PluginHost` was unreachable from the package root while `_runtime_registry` was incorrectly exported as public surface. WL154 seals L15 on all four sub-axes:
+> * **Phase A — Runtime-checkable Protocols.** All 8 port Protocols (`HTTPClientPort`, `CachePort`, `MetricsPort`, `AuthPort`, `ProviderExecutionPort`, `RoutingPort`, `GovernancePort`, `PluginInterface`) now carry `@runtime_checkable`, enabling `isinstance()` checks at runtime without breaking the static type contract.
+> * **Phase B — Decorator factory dual-form.** `register_driver` / `register_router` / `register_cache` now support BOTH the decorator-factory form (`@register_driver("name", version="1.0")` applied to a class) AND the direct-call form (`register_driver("name", MyClass, version="1.0")`). Previously direct calls returned the inner decorator without ever registering the class — silent data loss at runtime.
+> * **Phase C — Package-root re-exports.** `PluginHost` (the plugin host lifecycle surface) is now reachable from `thegent.adapters.__init__`. Conversely, `_runtime_registry` is dropped from `__all__` because the leading underscore signals module-private — re-exporting it as public surface leaked a private symbol.
+> * **Phase D — Test surface.** `tests/test_wl154_adapter_ports.py` (572 LOC, 50 tests) pins:
+>   * **Runtime-checkable semantics** — `isinstance()` returns True for conforming implementations, False for non-conforming classes, on all 8 Protocols.
+>   * **AdapterRegistry lifecycle** — register / get / list / missing returns None / register_classmethod delegates to global registry.
+>   * **Dataclass shape** — `LoadedPlugin`, `DriverPlugin`, `RouterPlugin` remain dataclasses with the canonical field set (`{name, version, instance, config}` / `{name, driver_class, metadata}` / `{name, router_class, metadata}`).
+>   * **PluginHost lifecycle** — empty host; register_plugin; load_plugin (with/without config); load_plugin unknown raises `KeyError`; unload_plugin calls shutdown hook; unload_plugin unknown is silent; swap_plugin replaces existing and shuts down the old; swap_plugin when not loaded just loads; get_plugin returns loaded instance / None for registered-but-not-loaded.
+>   * **Module-level decorator factories** — `register_driver` / `register_router` / `register_cache` direct-call forms register into the global `_runtime_registry`.
+>   * **Global state isolation** — `PLUGIN_HOST` and `_runtime_registry` are module singletons; a freshly constructed `AdapterRegistry()` does NOT share state with the global.
+>   * **Protocol method-signature pinning** — the public method set of each port is frozen (`HTTPClientPort` == `{get, post, put, delete, patch}`, `CachePort` == `{get, set, delete, clear}`, etc.). Renaming or removing any method breaks CI immediately.
+> * **Focused validation:**
+>   * `tests/test_wl154_adapter_ports.py` — **50/50 pass**
+>   * `tests/test_wl153_secrets_handling.py` — **70/70 pass** (no regression)
+>   * `tests/test_wl152_config_logging.py` — **19/19 pass** (no regression)
+>   * Ruff `check` + `format` clean on all 3 touched files
+
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L15 API Surface | 85 (A-) | **92 (A+)** | **+7** | All 8 port Protocols now `@runtime_checkable`; `register_*` decorator factories support both decorator and direct-call forms; `PluginHost` reachable from `thegent.adapters`; `_runtime_registry` removed from public `__all__`; 50 tests pin Protocol semantics + AdapterRegistry + PluginHost lifecycle + global state isolation + per-Protocol method-signature pinning |
+> | L20 Config | 96 | 96 | ±0 | unchanged (WL151/152/153 sibling, stable) |
+> | L21 Secrets Handling | 92 | 92 | ±0 | unchanged (WL153 sibling, stable) |
+> | L22 Logging | 90 | 90 | ±0 | unchanged (WL152 sibling, stable) |
+> | L9 Complexity | 100 | 100 | ±0 | unchanged |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+
+> **DAG tick:** L20 → L22 → L21 → **L15 API surface hardening sealed WL154 (runtime-checkable Protocols + decorator factory dual-form + PluginHost lifecycle pin + method-signature pinning)**. SOTA audit lanes touched in this session: **L15 + L20 + L21 + L22** (L9/L11/L30 stable). **Unblocked next:** L24 migration (schema-version test repair), L9 governance stub shadow (per WL149 backlog), L26 event-driven extension surface (per WL150 follow-on).
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is
