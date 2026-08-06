@@ -500,7 +500,6 @@ class TestEventsCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring or not implemented")
 class TestDataProtectionCmdImpl:
     """Tests for the data_protection_cmd function body."""
 
@@ -524,7 +523,7 @@ class TestDataProtectionCmdImpl:
         mock_console.print.assert_called_once()
 
     @patch("thegent.cli.console")
-    def test_data_protection_json(self) -> None:
+    def test_data_protection_json(self, mock_console) -> None:
         # @trace FR-CLI-224
         """data_protection_cmd outputs JSON when format='json'."""
         from thegent.cli import data_protection_cmd
