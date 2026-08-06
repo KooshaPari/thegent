@@ -1,1 +1,16 @@
-{}
+{
+  "github:field:status": {
+    "connector": "github",
+    "field_id": "F_STATUS",
+    "field_name": "field:status",
+    "cached_at": 1786004974.515309,
+    "ttl_seconds": 3600
+  },
+  "github:field:priority": {
+    "connector": "github",
+    "field_id": "F_PRIORITY",
+    "field_name": "field:priority",
+    "cached_at": 1786004974.515535,
+    "ttl_seconds": 3600
+  }
+}
