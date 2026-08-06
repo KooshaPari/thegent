@@ -15,6 +15,7 @@
 | L8 Compliance | 100 | A+ | 🟢 |
 | **L9 Complexity** | **95** | **A+** | 🟢 |
 | L10 Type Safety | 100 | A+ | 🟢 |
+| **L22 Logging** | **90** | **A+** | 🟢 |
 
 > **Session 2026-08-01-6 — WL143 governance command contract suite.**
 > The natural peer to WL142 (which sealed the latent `ImportError`) is
@@ -337,6 +338,83 @@
 > | L30 Onboarding | 92 | 92 | 0 | unchanged |
 >
 > **DAG tick:** L20 (HW stub shadow → broken stub → intra-class duplicates → sealed; provider metadata contract shipped; CP re-export path established). SOTA audit lanes touched in this session: **L20** (L9/L11/L30 stable). **Unblocked next:** L21 secrets handling or L22 logging (TBD from research backlog).
+
+> **Session 2026-08-05-2 — WL152 L22 logging sub-area hardening: canonical `LoggingConfig` + `SecretMaskingFormatter` surface sealed.**
+> Phase 3/4 hardening continues. The L22 audit had identified three gaps: (a) no canonical pydantic-settings surface for logging knobs (level/format/redact/sinks), (b) no structured JSON output path that doesn't require a structlog runtime dep, (c) no in-process redaction of registered secret values before they hit stderr. WL152 seals all three in a single canonical surface.
+
+> **WL152 fix (Phase A–D complete):**
+> * **Phase A — Canonical `LoggingConfig` (pydantic-settings).** New
+>   `src/thegent/config/logging_config.py` ships `LoggingConfig`
+>   (BaseSettings, prefix `THGENT_LOG_*`) with canonical upper-case
+>   literal sets — `LogLevel ∈ {INFO, DEBUG, WARNING, ERROR, CRITICAL}`,
+>   `LogFormat ∈ {TEXT, JSON}`, `LogSink ∈ {STDERR, STDOUT, NULL}` —
+>   `redact` defaulting to `True`, `sinks` defaulting to `["STDERR"]`.
+>   Env vars (`THGENT_LOG_LEVEL`, `THGENT_LOG_FORMAT`, `THGENT_LOG_REDACT`,
+>   `THGENT_LOG_SINKS`) override defaults. `THGENT_LOG_SINKS` is
+>   parsed as a comma-separated list (annotated with `pydantic_settings.NoDecode`
+>   so pydantic-settings hands the raw string to the field validator
+>   instead of attempting JSON-decode).
+> * **Phase B — `SecretMaskingFormatter` + registry.**
+>   `SecretMaskingFormatter` is a `logging.Formatter` subclass that
+>   replaces any value registered via `register_secret_for_masking(value)`
+>   with the canonical placeholder `***SECRET***`. The sidecar
+>   `_SECRET_REGISTRY` is a process-wide singleton with idempotent
+>   registration; `register_secret_for_masking(value, _remove=True)`
+>   unregisters. `registered_secrets()` returns a snapshot copy.
+> * **Phase C — `configure_logging(cfg=None)`.** Single public
+>   entry point. With `format="JSON"` it emits one JSON object per log
+>   line via stdlib `logging` (no structlog runtime dep). With
+>   `format="TEXT"` it uses the conventional `%(levelname)s %(name)s
+>   %(message)s` template. Idempotent: existing root handlers are
+>   removed (and closed) before installing the new one. With
+>   `redact=True` the handler composes `SecretMaskingFormatter` over
+>   the base formatter; with `redact=False` the base formatter is
+>   passed through unmodified. Sinks routing currently honours
+>   `STDERR` only — `STDOUT` and `NULL` are accepted by the parser
+>   so downstream sinks ship without an API change.
+> * **Phase D — `ThegentSettings` wiring + audit hook.**
+>   `ThegentSettings.log_config: LoggingConfig` is now a nested field
+>   (default factory `LoggingConfig`), so every `ThegentSettings()`
+>   instance exposes `.log_config.{level,format,redact,sinks}`.
+>   `ThegentSettings.SECRET_FIELDS` is the canonical pin of the six
+>   documented sensitive field names (`supermemory_api_key`,
+>   `redis_password`, `cursor_api_token`, `mcp_bearer_tokens`,
+>   `reddit_client_secret`, `linear_api_key`); `secret_fields()`
+>   returns the tuple. Field types stay `str` (back-compat); the
+>   runtime redaction path is `LoggingConfig.redact=True` +
+>   `register_secret_for_masking`.
+> * **Phase E — Public re-export.** `LoggingConfig`,
+>   `SecretMaskingFormatter`, `configure_logging`,
+>   `register_secret_for_masking`, `registered_secrets` all importable
+>   from `thegent.config` (the canonical package surface).
+> * **Phase F — Test suite.** `tests/test_wl152_config_logging.py`
+>   (290 LOC, 19 tests) pins: defaults, env overrides (CSV via
+>   `NoDecode`), invalid level/format/sink rejection, stderr handler
+>   installation at configured level, text vs JSON emission,
+>   masking formatter behaviour (single + multiple + unregistered +
+>   empty-registry + `_remove=True`), redact-on integration,
+>   redact-off passthrough, `ThegentSettings.log_config` shape, and
+>   `secret_fields()` canonical six. All 19 green.
+
+> **Focused validation:**
+> * `tests/test_wl152_config_logging.py` — **19/19 pass**
+> * Pre-existing failures in `test_unit_config.py`,
+>   `test_wl077_settings_singleton.py`, and 9 others verified on
+>   clean tree via `git stash` — unrelated to WL152
+> * Ruff `check` + `format` clean on all 4 touched files
+> * `secret_fields()` audit hook frozen as a tuple (immutable),
+>   consumers cannot mutate the canonical surface
+
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L20 Config | 92 | **94** | **+2** | `log_config: LoggingConfig` nested field + `secret_fields()` audit hook added; canonical six sensitive field names pinned; runtime redaction path complete |
+> | L22 Logging | 0 | **90** | **+90 (new)** | `LoggingConfig` (pydantic-settings) + `SecretMaskingFormatter` + `configure_logging` shipped as the canonical L22 surface; 19 tests pin the surface; redaction of registered secrets is now first-class |
+> | L9 Complexity | 100 | 100 | ±0 | unchanged |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+
+> **DAG tick:** L20 (provider sealed WL151) → **L22 logging sub-area sealed WL152 (canonical LoggingConfig + masking + audit hook)** → next unblocked: L21 secrets handling (e.g. promote `SECRET_FIELDS` to `pydantic.SecretStr` per consumer). SOTA audit lanes touched in this session: **L20 + L22** (L9/L11/L30 stable).
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is

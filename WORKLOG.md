@@ -13875,3 +13875,115 @@ with correct `provider_metadata` when `THGENT_CONTROL_PLANE_URL` is set.
 ### Unblocked next
 
 L21 secrets handling or L22 logging — both TBD from research backlog.
+
+## 2026-08-05 (session 2) — WL152 L22 logging sub-area hardening
+
+Phase 3/4 hardening continues. The L22 audit had three gaps: (a) no canonical
+pydantic-settings surface for logging knobs (level/format/redact/sinks), (b)
+no structured JSON output path that doesn't require a structlog runtime dep,
+(c) no in-process redaction of registered secret values before they hit stderr.
+WL152 seals all three in a single canonical surface.
+
+### Plan
+
+Phase A — Canonical `LoggingConfig` (pydantic-settings). New
+`src/thegent/config/logging_config.py` ships `LoggingConfig` (BaseSettings,
+prefix `THGENT_LOG_*`) with canonical upper-case literal sets:
+`LogLevel ∈ {INFO, DEBUG, WARNING, ERROR, CRITICAL}`,
+`LogFormat ∈ {TEXT, JSON}`, `LogSink ∈ {STDERR, STDOUT, NULL}`. Defaults:
+`level=INFO`, `format=TEXT`, `redact=True`, `sinks=["STDERR"]`. Env vars
+override. `THGENT_LOG_SINKS` is a CSV (annotated with `NoDecode` so pydantic-
+settings hands the raw string to the field validator instead of attempting
+JSON-decode).
+
+Phase B — `SecretMaskingFormatter` + sidecar registry.
+`SecretMaskingFormatter` is a `logging.Formatter` subclass that replaces any
+value registered via `register_secret_for_masking(value)` with the canonical
+placeholder `***SECRET***`. Process-wide singleton registry with idempotent
+registration; `_remove=True` unregisters.
+
+Phase C — `configure_logging(cfg=None)`. Single public entry point. With
+`format="JSON"` it emits one JSON object per log line via stdlib `logging`
+(no structlog runtime dep). With `format="TEXT"` it uses the conventional
+`%(levelname)s %(name)s %(message)s` template. Idempotent: existing root
+handlers are removed and closed before installing the new one. With
+`redact=True` the handler composes `SecretMaskingFormatter` over the base
+formatter; with `redact=False` the base formatter passes through.
+
+Phase D — `ThegentSettings` wiring + audit hook. `ThegentSettings.log_config:
+LoggingConfig` is a nested field (default factory `LoggingConfig`), so every
+`ThegentSettings()` instance exposes `.log_config.{level,format,redact,sinks}`.
+`ThegentSettings.SECRET_FIELDS` is the canonical pin of the six documented
+sensitive field names (`supermemory_api_key`, `redis_password`,
+`cursor_api_token`, `mcp_bearer_tokens`, `reddit_client_secret`,
+`linear_api_key`); `secret_fields()` returns the tuple. Field types stay `str`
+(back-compat); runtime redaction is via `LoggingConfig.redact=True` +
+`register_secret_for_masking`.
+
+Phase E — Public re-export. `LoggingConfig`, `SecretMaskingFormatter`,
+`configure_logging`, `register_secret_for_masking`, `registered_secrets` all
+importable from `thegent.config`.
+
+Phase F — Test suite. `tests/test_wl152_config_logging.py` (290 LOC, 19 tests)
+pins defaults, env overrides (CSV via `NoDecode`), invalid level/format/sink
+rejection, stderr handler installation, text vs JSON emission, masking
+formatter behaviour, redact-on/offs integration, `ThegentSettings.log_config`
+shape, and `secret_fields()` canonical six. All 19 green.
+
+Phase G — Validation. `uv run pytest tests/test_wl152_config_logging.py` →
+19/19 pass. `uv run ruff check` + `uv run ruff format` → clean on all 4
+touched files. Pre-existing failures in `test_unit_config.py` and
+`test_wl077_settings_singleton.py` verified on clean tree via `git stash` →
+unrelated to WL152.
+
+### Files changed
+
+* `src/thegent/config/logging_config.py` — NEW: `LoggingConfig`
+  (pydantic-settings), `SecretMaskingFormatter`, `configure_logging`,
+  `register_secret_for_masking`, `registered_secrets`, `LogLevel`,
+  `LogFormat`, `LogSink` type aliases, `SECRET_PLACEHOLDER`.
+* `src/thegent/config/settings.py` — added `log_config: LoggingConfig`
+  nested field (default factory `LoggingConfig`) + `SECRET_FIELDS` tuple +
+  `secret_fields()` audit hook.
+* `src/thegent/config/__init__.py` — re-export `LoggingConfig`,
+  `SecretMaskingFormatter`, `configure_logging`, `register_secret_for_masking`,
+  `registered_secrets` from the canonical package surface.
+* `tests/test_wl152_config_logging.py` — NEW: 19 unit tests pinning the
+  canonical L22 surface.
+* `AUDIT_SCORECARD.md` — L22 row added (0 → 90, A+), L20 row extended
+  (92 → 94), WL152 session block added, DAG tick extended.
+
+### Validation
+
+* **19/19** `tests/test_wl152_config_logging.py` pass.
+* **Ruff check + format clean** on all 4 touched files.
+* Pre-existing failures in `test_unit_config.py` and
+  `test_wl077_settings_singleton.py` (11 failures) verified on clean tree
+  via `git stash` → unrelated to WL152.
+
+### Stats
+
+* **Files changed: 5** (2 NEW + 3 modified).
+* **New tests added: 19** (`test_wl152_config_logging.py`).
+* **New ruff violations: 0**.
+
+### Lanes affected
+
+| Lane | Before | After | Delta |
+|------|--------|-------|-------|
+| L20 Config | 92 (A) | **94 (A+)** | **+2** (`log_config: LoggingConfig` nested field + `secret_fields()` audit hook added; canonical six sensitive field names pinned; runtime redaction path complete) |
+| L22 Logging | 0 (—) | **90 (A+)** | **+90 (new lane)** (`LoggingConfig` (pydantic-settings) + `SecretMaskingFormatter` + `configure_logging` shipped as the canonical L22 surface; 19 tests pin the surface; redaction of registered secrets is now first-class) |
+
+### Preservation
+
+* `sharecli/` (untracked, unrelated worktree) → untouched.
+* Other worktree branches → untouched.
+* Archived upstream (origin) → NOT force-pushed (only local commits).
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit daemon /
+  Airlock Bot) → preserved untouched per system policy.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+
+### Unblocked next
+
+L21 secrets handling (e.g. promote `SECRET_FIELDS` to `pydantic.SecretStr`
+per consumer) — natural peer to WL152's audit hook.
