@@ -159,6 +159,7 @@ def test_run_impl_core_has_no_inline_estimate_run_cost_block(run_impl_core_sourc
     """Cost estimate inline body must be gone from the orchestrator."""
     forbidden = [
         "if settings.cost_tracking or settings.cost_tracking_enabled:\n        try:\n            from thegent.cost.aggregator import CostEstimator\n\n            est = CostEstimator()",
+        "if not settings.cost_tracking_enabled:\n        return None\n        try:\n            from thegent.cost.aggregator import CostEstimator\n\n            est = CostEstimator()",
         'cost_usd = est.estimate(\n                model=run_meta.model,\n                prompt_length=len(run_meta.prompt or ""),\n            )',
     ]
     for sig in forbidden:

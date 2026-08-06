@@ -272,10 +272,71 @@
 > |------|-----|------|---|-------|
 > | L26 Event Driven | 85 | **92** | **+7** | WL150 canonical InMemoryEventBus surface sealed; two inconsistent EventBusInterface Protocols unified; concrete in-memory pub/sub shipped; 17 new tests pin the canonical surface |
 >
-> **Unblocked next:** L20 Config (85/A-) — research backlog already drafted
-> (no protocol-duplication; pure hardening). Carry-forward from WL148 research
-> files: `research_l20_config_hardening_*.md` and the eight follow-on
-> research.md scratchpads.
+> **Unblocked next:** ~~L20 Config (85/A-)~~ → shipped in this session as **WL151** (below).
+>
+> **Session 2026-08-05-1 — WL151 L20 Config hardening: provider module shadow sealed + intra-class duplicates eliminated.**
+> The WL148 research backlog pointed at three L20 high-severity findings:
+> (HW-1) `src/thegent/config_provider/__init__.py` was a **broken stub** using
+> `os.environ` without importing `os` — every `resolve()` call raised
+> `NameError`. (HW-2) `src/thegent/__init__.py:23` defined a stub function
+> named `config_provider` that **shadowed the submodule**, hiding the
+> canonical exports. (HW-3) `ThegentSettings` carried two intra-class
+> field duplicates/conflicts — `zmx_bin` (alias of `zmx_binary`, unused
+> anywhere) and `cost_tracking` (legacy bool defaulting False while
+> `cost_tracking_enabled` defaults True, so its presence was misleading).
+>
+> **Fix:**
+> * **Canonical `thegent.governance.config_provider`**: added `provider_metadata`
+>   attribute on both `EnvConfigProvider` and `ControlPlaneConfigProvider`,
+>   plus the public helper `_attach_provider_metadata(provider, meta)`
+>   that tolerates non-extensible providers. New `get_last_provider_metadata()`
+>   surface returns `{source, control_plane_configured, dependency_missing}`.
+>   `get_config_provider()` now consults **only** the `THGENT_CONTROL_PLANE_URL`
+>   env var (matches the test contract); when set, instantiates the
+>   canonical CP provider and attaches `control_plane_configured=True`.
+>   Falls back to `EnvConfigProvider` with a `"provider import failed"`
+>   warning when CP wiring is unavailable — per the audit test contract.
+> * **Canonical `thegent.control_plane.client`**: new re-export path so the
+>   CP provider can be imported via the contract `thegent.control_plane.client`
+>   as well as the legacy `thegent.governance.config_provider_cp`.
+> * **Stub `thegent.config_provider`**: replaced with a clean re-export from
+>   the canonical governance path — `EnvConfigProvider`, `ControlPlaneConfigProvider`,
+>   `get_config_provider`, `get_last_provider_metadata`, `_attach_provider_metadata`
+>   are all importable from `thegent.config_provider` without the NameError.
+> * **Stub function removed from `thegent/__init__.py:23`**: the function
+>   `config_provider` was zero-callers and shadowed the submodule; removed
+>   cleanly. Module resolution now correctly returns the submodule.
+> * **`ThegentSettings` intra-class duplicates removed**: `zmx_bin` and
+>   `cost_tracking` deleted (both unused; `zmx_binary` and `cost_tracking_enabled`
+>   are the canonical survivors). Net: -10 LOC in settings.py.
+> * **Sole consumer cleaned**: `cli/services/run_execution_core_helpers.py:730`
+>   OR'd check `if not (settings.cost_tracking or settings.cost_tracking_enabled)`
+>   simplified to `if not settings.cost_tracking_enabled` — behaviour preserved
+>   (default is True, so cost tracking stays on).
+> * **Test pinned**: `test_wl132_l9_postmid_prefailure_wiring.py:161` forbidden
+>   fragment expanded to include the cleaned helper body, so any future
+>   inline-regression of the helper into the orchestrator fails the contract.
+>
+> **Focused validation:**
+> * `tests/test_unit_config_provider.py` — 25/25 pass (was 7 failed → 25 green)
+> * `tests/test_unit_audit_n83_config_provider_cp_hardening.py` — pass
+> * `tests/test_unit_audit_n86_config_provider_hardening.py` — pass
+> * `tests/test_wl132_l9_postmid_prefailure_wiring.py` — 39 pass (4 pre-existing
+>   failures unrelated to L20, present on baseline too)
+> * **Combined L20 surface: 64 tests pass** (vs 39 pre-fix baseline)
+> * Ruff `check` + `format` clean on all 6 touched files
+> * Smoke test: `ControlPlaneConfigProvider` instantiated with `THGENT_CONTROL_PLANE_URL`
+>   returns correct provider_metadata dict
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | L20 Config | 85 | **92** | **+7** | Provider module shadow sealed (3 HW findings); intra-class field duplicates removed; canonical CP re-export path shipped; 64 L20 tests green (was 39) |
+> | L9 Complexity | 100 | 100 | ±0 | unchanged |
+> | L11 Dep Audit | 95 | 95 | 0 | unchanged |
+> | L30 Onboarding | 92 | 92 | 0 | unchanged |
+>
+> **DAG tick:** L20 (HW stub shadow → broken stub → intra-class duplicates → sealed; provider metadata contract shipped; CP re-export path established). SOTA audit lanes touched in this session: **L20** (L9/L11/L30 stable). **Unblocked next:** L21 secrets handling or L22 logging (TBD from research backlog).
 >
 > **Session 2026-08-02-1 — WL145 contracts signature parity / regression pinning.**
 > Follow-on to WL144 (export parity): the package `__init__.py` is

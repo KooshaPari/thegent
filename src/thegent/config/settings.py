@@ -38,7 +38,11 @@ class ThegentSettings(BaseSettings):
         extra="ignore",
     )
 
-    # Model-related settings (from ModelConfig)
+    # Model-related settings (canonical public-API surface).
+    # These mirror ModelConfig in `model_config.py` — `ThegentSettings` is the
+    # composite entrypoint consumed throughout the CLI (see config_wizard,
+    # config_validator, run_routing, run_model_helpers, run_post_surface_helpers).
+    # Removing them here would break the public `settings.<field>` access pattern.
     default_cursor_model: str = Field(
         default="gemini-3-flash",
         description="Default model for cursor agent",
@@ -524,10 +528,6 @@ class ThegentSettings(BaseSettings):
         default="development",
         description="Execution environment name",
     )
-    zmx_bin: str = Field(
-        default="zmx",
-        description="Path or command name for the zmx binary",
-    )
     zmx_binary: str = Field(
         default="zmx",
         description="Path or command name for the zmx binary",
@@ -610,10 +610,6 @@ class ThegentSettings(BaseSettings):
     cost_tracking_enabled: bool = Field(
         default=True,
         description="Enable cost tracking per run",
-    )
-    cost_tracking: bool = Field(
-        default=False,
-        description="Legacy: enable cost tracking",
     )
     cost_budget_mtd: float = Field(
         default=100.0,

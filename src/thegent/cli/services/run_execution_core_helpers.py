@@ -727,7 +727,7 @@ def _phase_finalize_shadow(shadow_ws: Any, settings: ThegentSettings, status: st
 def _phase_estimate_run_cost(run_meta: RunMeta) -> float | None:
     """Estimate cost for the run (WP-Y4 cost tracking)."""
     settings = ThegentSettings()
-    if not (settings.cost_tracking or settings.cost_tracking_enabled):
+    if not settings.cost_tracking_enabled:
         return None
     try:
         from thegent.cost.aggregator import CostEstimator

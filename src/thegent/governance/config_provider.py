@@ -160,12 +160,12 @@ def get_config_provider() -> ConfigProvider:
 
             provider = ControlPlaneConfigProvider(cp_url)
         except ImportError as exc:
-            logger.warning("ControlPlaneConfigProvider unavailable: %s; falling back to env", exc)
+            logger.warning("control-plane provider import failed: %s; falling back to env", exc)
             metadata["source"] = "env"
             metadata["dependency_missing"] = True
             provider = EnvConfigProvider()
         _record_metadata(metadata)
-        _attach_provider_metadata(provider, metadata)
+        return _attach_provider_metadata(provider, metadata)
 
     metadata = {
         "source": "env",
