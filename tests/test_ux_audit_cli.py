@@ -18,6 +18,10 @@ import sys
 from dataclasses import dataclass, field
 from io import StringIO
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+from pathlib import Path
+>>>>>>> Stashed changes
 =======
 from pathlib import Path
 >>>>>>> Stashed changes
@@ -102,6 +106,7 @@ class TestCLIHelpTextPresent:
 
     # Top-level commands registered directly on the root app
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     TOP_LEVEL_COMMANDS: ClassVar[list[str]] = [
         "bg",
         "status",
@@ -112,6 +117,9 @@ class TestCLIHelpTextPresent:
         "govern",
         "phench",
     ]
+=======
+    TOP_LEVEL_COMMANDS: ClassVar[list[str]] = ["bg", "status", "stop", "logs", "ps", "resume", "govern", "phench"]
+>>>>>>> Stashed changes
 =======
     TOP_LEVEL_COMMANDS: ClassVar[list[str]] = ["bg", "status", "stop", "logs", "ps", "resume", "govern", "phench"]
 >>>>>>> Stashed changes
@@ -248,6 +256,7 @@ class TestErrorMessagesActionable:
 
     def test_safe_echo_no_rich_injection(self, capsys: pytest.CaptureFixture[str]) -> None:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         """safe_echo must neutralise Rich markup before printing."""
         from thegent.ux.cli_errors import safe_echo
 
@@ -258,6 +267,8 @@ class TestErrorMessagesActionable:
         # The escape bracket (``\[``) indicates the markup was neutralised.
         assert "\\[bold]" in captured.out
 =======
+=======
+>>>>>>> Stashed changes
         """safe_echo must not allow Rich markup injection into output."""
         from thegent.ux.cli_errors import safe_echo
 
@@ -270,6 +281,9 @@ class TestErrorMessagesActionable:
         assert "\\[bold]INJECT\\[/bold]" in captured.out, (
             f"safe_echo failed to escape Rich markup: {captured.out!r}"
         )
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 
@@ -311,8 +325,11 @@ class TestOutputFormatting:
             }
             meta_path = Path(tmpdir) / f"{session_id}.json"
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             meta_path.write_text(json.dumps(meta))
 =======
+=======
+>>>>>>> Stashed changes
             with open(meta_path, "w") as f:
                 json.dump(meta, f)
 >>>>>>> Stashed changes
