@@ -107,3 +107,20 @@ class TestCoordination:
             end_line=40,
         )
         assert not intent1.conflicts_with(intent2)
+
+    def test_coordination_lock_queue_v1_normalizes_shared_contract(self) -> None:
+        """Expose lock, queue, and inclusive edit-intent behavior as stable JSONL records."""
+        from thegent_cli_share.coordination_contract import run_contract
+
+        assert run_contract() == [
+            {"case": "lock_acquire", "outcome": "locked", "owner": 101},
+            {"case": "lock_contention", "outcome": "already_locked", "owner": 101},
+            {"case": "lock_release", "outcome": "unlocked"},
+            {"case": "lock_reacquire", "outcome": "locked", "owner": 202},
+            {
+                "case": "priority_dequeue",
+                "commands": ["critical", "high", "normal", "low"],
+            },
+            {"case": "edit_disjoint", "conflict": False},
+            {"case": "edit_overlap", "conflict": True},
+        ]
