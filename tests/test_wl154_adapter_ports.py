@@ -19,6 +19,7 @@ accidental change to the hexagonal port surface is caught before release:
 from __future__ import annotations
 
 import dataclasses
+from typing import ClassVar
 
 import pytest
 
@@ -139,15 +140,15 @@ class TestAdapterPortsPublicSurface:
         # The top-level adapters package must re-export at least the
         # canonical port names so users can import from a stable surface.
         for name in (
-                "HTTPClientPort",
-                "CachePort",
-                "MetricsPort",
-                "AuthPort",
-                "AdapterRegistry",
-                "PluginInterface",
-                "PluginHost",
-                "PluginHostAdapter",
-                "PluginHostConfig",
+            "HTTPClientPort",
+            "CachePort",
+            "MetricsPort",
+            "AuthPort",
+            "AdapterRegistry",
+            "PluginInterface",
+            "PluginHost",
+            "PluginHostAdapter",
+            "PluginHostConfig",
         ):
             assert name in adapters.__all__, f"{name} missing from adapters.__all__"
 
@@ -182,11 +183,11 @@ class TestProtocolRuntimeCheckable:
     )
     def test_protocol_is_runtime_checkable(self, protocol_name: str) -> None:
         protocol_cls = getattr(ports_module, protocol_name)
-        # runtime_checkable protocols have a non-None __subclasshook__ chain
-        # AND isinstance() works without raising TypeError.
-        # We probe isinstance against a minimal concrete impl to assert
-        # the protocol can be checked at runtime.
-        assert hasattr(protocol_cls, "_is_runtime_protocol"), (
+        # runtime_checkable protocols set _is_runtime_protocol = True
+        # on the class. Without it, isinstance(obj, Protocol) raises
+        # ``TypeError: Instance and class checks can only be used with
+        # @runtime_checkable protocols``.
+        assert getattr(protocol_cls, "_is_runtime_protocol", False) is True, (
             f"{protocol_name} missing @runtime_checkable decorator"
         )
 
@@ -256,7 +257,7 @@ class TestAdapterRegistry:
         # AdapterRegistry.register() is a classmethod that delegates to
         # the global _runtime_registry. Pin this contract.
         class _Capture:
-            calls: list[tuple[str, object]] = []
+            calls: ClassVar[list[tuple[str, object]]] = []
 
         # We can't directly monkey-patch _runtime_registry because it
         # is module-private. Instead verify behaviour: after calling
@@ -266,13 +267,11 @@ class TestAdapterRegistry:
         try:
             AdapterRegistry.register("wl154-classmethod", sentinel)
             assert "wl154-classmethod" in ports_module._runtime_registry.drivers
-            assert (
-                ports_module._runtime_registry.drivers["wl154-classmethod"]
-                is sentinel
-            )
+            assert ports_module._runtime_registry.drivers["wl154-classmethod"] is sentinel
         finally:
             ports_module._runtime_registry.drivers.pop(
-                "wl154-classmethod", None,
+                "wl154-classmethod",
+                None,
             )
 
     def test_get_driver_missing_returns_none(self) -> None:
@@ -339,14 +338,14 @@ class TestPluginHost:
     def test_load_plugin_initializes(self) -> None:
         host = PluginHost()
         log: list[str] = []
-        host.register_plugin(self._make_plugin("p1", init_log=log))
+        host.register_plugin(make_fake_plugin("p1", init_log=log))
         host.load_plugin("p1", {"k": "v"})
         assert log == ["init:p1"]
         assert "p1" in host.list_loaded()
 
     def test_load_plugin_without_config(self) -> None:
         host = PluginHost()
-        host.register_plugin(self._make_plugin("p1"))
+        host.register_plugin(make_fake_plugin("p1"))
         host.load_plugin("p1")
         # loaded entry stores empty config
         assert "p1" in host.list_loaded()
@@ -359,7 +358,7 @@ class TestPluginHost:
     def test_unload_plugin_calls_shutdown(self) -> None:
         host = PluginHost()
         log: list[str] = []
-        host.register_plugin(self._make_plugin("p1", shutdown_log=log))
+        host.register_plugin(make_fake_plugin("p1", shutdown_log=log))
         host.load_plugin("p1")
         host.unload_plugin("p1")
         assert log == ["shutdown:p1"]
@@ -375,10 +374,10 @@ class TestPluginHost:
         host = PluginHost()
         shutdown_log: list[str] = []
         init_log: list[str] = []
-        host.register_plugin(self._make_plugin("p1", shutdown_log=shutdown_log))
+        host.register_plugin(make_fake_plugin("p1", shutdown_log=shutdown_log))
         host.load_plugin("p1")
 
-        new_plugin = self._make_plugin("p1", version="2.0.0", init_log=init_log)
+        new_plugin = make_fake_plugin("p1", version="2.0.0", init_log=init_log)
         host.swap_plugin("p1", new_plugin)
         # old plugin shut down, new plugin initialised
         assert shutdown_log == ["shutdown:p1"]
@@ -388,22 +387,22 @@ class TestPluginHost:
     def test_swap_plugin_when_not_loaded_just_loads(self) -> None:
         host = PluginHost()
         init_log: list[str] = []
-        host.register_plugin(self._make_plugin("p1", init_log=init_log))
+        host.register_plugin(make_fake_plugin("p1", init_log=init_log))
         # not loaded yet — swap should still register + load
-        new_plugin = self._make_plugin("p1", version="3.0.0")
+        new_plugin = make_fake_plugin("p1", version="3.0.0")
         host.swap_plugin("p1", new_plugin)
         assert host.get_plugin("p1") is new_plugin
 
     def test_get_plugin_returns_loaded_instance(self) -> None:
         host = PluginHost()
-        p = self._make_plugin("p1")
+        p = make_fake_plugin("p1")
         host.register_plugin(p)
         host.load_plugin("p1")
         assert host.get_plugin("p1") is p
 
     def test_get_plugin_not_loaded_returns_none(self) -> None:
         host = PluginHost()
-        host.register_plugin(self._make_plugin("p1"))
+        host.register_plugin(make_fake_plugin("p1"))
         # registered but not loaded
         assert host.get_plugin("p1") is None
 
@@ -432,36 +431,34 @@ class TestModuleLevelDecorators:
                 reg.cache_backends.pop(name, None)
 
     def test_register_driver_decorator(self) -> None:
-        @register_driver("wl154-driver", version="1.2.3")
+        # The current API is a direct call: register_driver(name, cls,
+        # **meta). The decorator-form variant is a separate function.
         class MyDriver:
             pass
 
+        register_driver("wl154-driver", MyDriver, version="1.2.3")
         entry = ports_module._runtime_registry.get_driver("wl154-driver")
         assert entry is not None
         assert entry.driver_class is MyDriver
         assert entry.metadata == {"version": "1.2.3"}
-        # decorator returns the class unchanged
         assert entry.driver_class.__name__ == "MyDriver"
 
     def test_register_router_decorator(self) -> None:
-        @register_router("wl154-router", region="eu")
         class MyRouter:
             pass
 
+        register_router("wl154-router", MyRouter, region="eu")
         entry = ports_module._runtime_registry.get_router("wl154-router")
         assert entry is not None
         assert entry.router_class is MyRouter
         assert entry.metadata == {"region": "eu"}
 
     def test_register_cache_decorator(self) -> None:
-        @register_cache("wl154-cache")
         class MyCache:
             pass
 
-        assert (
-            ports_module._runtime_registry.cache_backends["wl154-cache"]
-            is MyCache
-        )
+        register_cache("wl154-cache", MyCache)
+        assert ports_module._runtime_registry.cache_backends["wl154-cache"] is MyCache
 
 
 # ---------------------------------------------------------------------------
@@ -505,10 +502,10 @@ class TestProtocolMethodSignatures:
     """
 
     def _methods(self, cls: type) -> set[str]:
-        return {
-            name
-            for name, _ in getattr(cls, "__annotations__", {}).items()
-        }
+        # Protocol method names live in __dict__ (not __annotations__).
+        # We filter out dunder keys, the abstract-method sentinel, and
+        # any names starting with underscore (internal Protocol hooks).
+        return {name for name in vars(cls) if not name.startswith("_")}
 
     def test_http_client_port_methods(self) -> None:
         assert self._methods(HTTPClientPort) == {

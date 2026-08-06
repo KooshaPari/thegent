@@ -6,7 +6,7 @@ driven (outbound) and driving (inbound) adapters.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, runtime_checkable
 from dataclasses import dataclass, field
 from typing_extensions import TypedDict
 
@@ -22,6 +22,7 @@ T = TypeVar("T")
 # =============================================================================
 
 
+@runtime_checkable
 class HTTPClientPort(Protocol):
     """Port interface for HTTP clients."""
 
@@ -32,6 +33,7 @@ class HTTPClientPort(Protocol):
     async def patch(self, url: str, **kwargs: Any) -> Any: ...
 
 
+@runtime_checkable
 class CachePort(Protocol):
     """Port interface for cache backends."""
 
@@ -41,6 +43,7 @@ class CachePort(Protocol):
     async def clear(self) -> None: ...
 
 
+@runtime_checkable
 class MetricsPort(Protocol):
     """Port interface for metrics collection."""
 
@@ -50,6 +53,7 @@ class MetricsPort(Protocol):
     def timing(self, metric: str, duration_ms: float, **tags: Any) -> None: ...
 
 
+@runtime_checkable
 class AuthPort(Protocol):
     """Port interface for authentication."""
 
@@ -63,6 +67,7 @@ class AuthPort(Protocol):
 # =============================================================================
 
 
+@runtime_checkable
 class ProviderExecutionPort(Protocol):
     """Port interface for provider execution."""
 
@@ -71,6 +76,7 @@ class ProviderExecutionPort(Protocol):
     async def get_status(self, task_id: str) -> dict[str, Any]: ...
 
 
+@runtime_checkable
 class RoutingPort(Protocol):
     """Port interface for LLM routing."""
 
@@ -78,6 +84,7 @@ class RoutingPort(Protocol):
     def get_available_providers(self) -> list[str]: ...
 
 
+@runtime_checkable
 class GovernancePort(Protocol):
     """Port interface for governance checks."""
 
@@ -90,6 +97,7 @@ class GovernancePort(Protocol):
 # =============================================================================
 
 
+@runtime_checkable
 class PluginInterface(Protocol):
     """Interface for plugin implementations."""
 
@@ -192,27 +200,75 @@ class AdapterRegistry:
 _runtime_registry: AdapterRegistry = AdapterRegistry()
 
 
-def register_driver(name: str, driver_class: type, **metadata: Any) -> Callable[[type], type]:
-    """Decorator to register a driver plugin."""
+def register_driver(
+    name: str,
+    driver_class: type | None = None,
+    **metadata: Any,
+) -> Any:
+    """Register a driver plugin.
+
+    Supports two call styles:
+
+    1. Decorator factory::
+
+        @register_driver("name", version="1.0")
+        class MyDriver: ...
+
+    2. Direct registration::
+
+        register_driver("name", MyDriver, version="1.0")
+
+    Returns the registered class (direct form) or a decorator that
+    registers the class when called (decorator form).
+    """
+    if driver_class is not None:
+        _runtime_registry.register_driver(name, driver_class, **metadata)
+        return driver_class
+
     def decorator(cls: type) -> type:
         _runtime_registry.register_driver(name, cls, **metadata)
         return cls
+
     return decorator
 
 
-def register_router(name: str, router_class: type, **metadata: Any) -> Callable[[type], type]:
-    """Decorator to register a router plugin."""
+def register_router(
+    name: str,
+    router_class: type | None = None,
+    **metadata: Any,
+) -> Any:
+    """Register a router plugin.
+
+    Supports both the decorator factory form
+    (``@register_router("name", region="eu")``) and the direct
+    registration form (``register_router("name", MyRouter, region="eu")``).
+    """
+    if router_class is not None:
+        _runtime_registry.register_router(name, router_class, **metadata)
+        return router_class
+
     def decorator(cls: type) -> type:
         _runtime_registry.register_router(name, cls, **metadata)
         return cls
+
     return decorator
 
 
-def register_cache(name: str) -> Callable[[type], type]:
-    """Decorator to register a cache backend."""
+def register_cache(name: str, cache_class: type | None = None) -> Any:
+    """Register a cache backend.
+
+    Supports both the decorator factory form
+    (``@register_cache("name")``) and the direct registration form
+    (``register_cache("name", MyCache)``).
+    """
+    if cache_class is not None:
+        _runtime_registry.register_cache_backend(name, cache_class)
+        return cache_class
+
     def decorator(cls: type) -> type:
         _runtime_registry.register_cache_backend(name, cls)
         return cls
+
     return decorator
 
 
@@ -289,7 +345,6 @@ __all__ = [
     "GovernancePort",
     # Registry
     "AdapterRegistry",
-    "_runtime_registry",
     # Plugin System
     "PluginInterface",
     "DriverPlugin",
