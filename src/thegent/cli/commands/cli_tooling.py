@@ -8,11 +8,55 @@ aliases for backward compatibility.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, TypedDict
 
 from rich.console import Console
 
 err_console = Console(stderr=True)
+
+
+class _VerifyReport(TypedDict, total=False):
+    """Canonical shape of the dict returned by ``Auditor.verify_registry``.
+
+    L10 type-safety tightening (WL-704): this TypedDict replaces the
+    loose ``dict[str, Any]`` annotation in :func:`audit_verify_cmd`. All
+    keys are optional (``total=False``) because upstream
+    :meth:`thegent.execution.Auditor.verify_registry` may omit any of
+    them, but :func:`_extract_verify_report` defaults each to a safe
+    sentinel (``"failed"``, ``0``, ``0``, ``[]``).
+    """
+
+    status: str
+    valid_count: int
+    corrupt_count: int
+    issues: list[str]
+
+
+def _extract_verify_report(
+    report: dict[str, object],
+) -> tuple[str, int, int, list[str]]:
+    """Coerce the loose ``verify_registry()`` payload into typed locals.
+
+    L10 type-safety tightening (WL-704): absorbs the ``str(...)`` /
+    ``int(...)`` / ``list(...)`` coercions so :func:`audit_verify_cmd`
+    operates on typed locals instead of ``Any``. Returns
+    ``(status, valid_count, corrupt_count, issues)``.
+    """
+    status = str(report.get("status") or "failed")
+    try:
+        valid_count = int(report.get("valid_count") or 0)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        valid_count = 0
+    try:
+        corrupt_count = int(report.get("corrupt_count") or 0)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        corrupt_count = 0
+    raw_issues = report.get("issues")
+    if isinstance(raw_issues, list):
+        issues: list[str] = [str(item) for item in raw_issues]
+    else:
+        issues = []
+    return status, valid_count, corrupt_count, issues
 
 
 def _get_console() -> Console:
@@ -30,6 +74,11 @@ def audit_verify_cmd(*args: Any, **kwargs: Any) -> int:
     both classes at ``thegent.execution`` and the ``_get_console`` helper
     at the canonical module location, so monkey-patch sites resolve
     cleanly.
+
+    WL-704 type-safety tightening: the ``report.get(...)`` Any slots are
+    absorbed into :func:`_extract_verify_report` so the body operates on
+    typed locals (``status: str``, ``valid_count: int``,
+    ``corrupt_count: int``, ``issues: list[str]``, ``fmt: str``).
 
     Contract: returns 0 on ``passed`` status, 1 on ``failed`` / ``empty``
     for shell-friendly exit codes. JSON format writes the raw audit dict
@@ -49,13 +98,14 @@ def audit_verify_cmd(*args: Any, **kwargs: Any) -> int:
 
     registry = _execution.RunRegistry(session_dir=session_dir)
     auditor = _execution.Auditor(registry_path=registry.registry_path)
-    report = auditor.verify_registry()
+    report: dict[str, object] = auditor.verify_registry()
 
-    status = str(report.get("status", "failed"))
-    valid_count = int(report.get("valid_count", 0))
-    corrupt_count = int(report.get("corrupt_count", 0))
-    issues = list(report.get("issues") or [])
-    fmt = _cli._normalize_output_format(kwargs.get("format") or "")
+    status: str
+    valid_count: int
+    corrupt_count: int
+    issues: list[str]
+    status, valid_count, corrupt_count, issues = _extract_verify_report(report)
+    fmt: str = _cli._normalize_output_format(kwargs.get("format") or "")
 
     if fmt == "json":
         sys.stdout.write(json.dumps(report) + "\n")
@@ -100,6 +150,8 @@ def roadmap_cmd(*args: Any, **kwargs: Any) -> int:
 
 
 __all__ = [
+    "_VerifyReport",
+    "_extract_verify_report",
     "audit_verify_cmd",
     "benchmark_cmd",
     "deep_research_cmd",

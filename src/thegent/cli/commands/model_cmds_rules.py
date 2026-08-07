@@ -29,21 +29,41 @@ monkey-patches at the canonical surface (here) take effect at call time.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Callable, TypedDict
 
 from rich.console import Console
 
+from thegent.config.settings import ThegentSettings
+
 console: Console = Console()
+
+
+class CliproxyLoginResult(TypedDict, total=True):
+    """Canonical return shape for :func:`_run_cliproxyctl_machine_command`.
+
+    The dispatcher in :mod:`thegent.cli.commands.model_cmds` consumes this
+    shape verbatim. ``exit_code == 0`` indicates success; non-zero exit
+    codes indicate user-skip (1), persist failure (2), or timeout (124).
+    ``message`` is a human-readable summary suitable for the CLI console.
+
+    L10 type-safety tightening (WL-704): this TypedDict replaces the prior
+    ``dict[str, Any]`` annotation so the canonical contract is expressible
+    in the type system instead of only at runtime. ``total=True`` enforces
+    both keys at construction time.
+    """
+
+    exit_code: int
+    message: str
 
 
 def _run_cliproxyctl_machine_command(
     provider: str,
     *,
-    settings: Any = None,
+    settings: ThegentSettings | None = None,
     prompt_func: Callable[[str], str] | None = None,
     force: bool = False,
     login_timeout: int | None = None,
-) -> dict[str, Any]:
+) -> CliproxyLoginResult:
     """Execute the canonical cliproxy ``-login`` machine path.
 
     WL-703 hardening: delegates to the use-case layer
@@ -80,7 +100,6 @@ def _run_cliproxyctl_machine_command(
     # Lazy import so test suites that monkey-patch
     # ``thegent.use_cases.manage_cliproxy_login.run_login`` resolve at
     # call time.
-    from thegent.config.settings import ThegentSettings
     from thegent.use_cases import manage_cliproxy_login
 
     if settings is None:
@@ -94,21 +113,25 @@ def _run_cliproxyctl_machine_command(
         login_timeout=login_timeout,
     )
     if exit_code == 0:
-        return {"exit_code": 0, "message": f"Login successful for provider={provider}"}
+        return CliproxyLoginResult(
+            exit_code=0,
+            message=f"Login successful for provider={provider}",
+        )
     if exit_code == 1:
-        return {
-            "exit_code": 1,
-            "message": f"Login skipped or failed for provider={provider}",
-        }
+        return CliproxyLoginResult(
+            exit_code=1,
+            message=f"Login skipped or failed for provider={provider}",
+        )
     # exit_code == 2 (persist failure) or 124 (timeout) — surface as
     # failure for the caller to convert into a non-zero CLI exit.
-    return {
-        "exit_code": int(exit_code),
-        "message": f"Login failed for provider={provider} (exit_code={exit_code})",
-    }
+    return CliproxyLoginResult(
+        exit_code=int(exit_code),
+        message=f"Login failed for provider={provider} (exit_code={exit_code})",
+    )
 
 
 __all__ = [
+    "CliproxyLoginResult",
     "console",
     "_run_cliproxyctl_machine_command",
 ]

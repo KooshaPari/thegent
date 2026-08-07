@@ -30,6 +30,7 @@ from typing import Any
 import structlog
 from rich.console import Console
 
+from thegent.config.settings import ThegentSettings
 from thegent.ux.cli_errors import print_exc  # re-exported for AUDIT-N+2 contract
 
 _log = structlog.get_logger(__name__)
@@ -45,7 +46,7 @@ __all__ = [
 
 
 def _load_prior_session_output(
-    settings: Any,
+    settings: ThegentSettings,
     session_id: str,
 ) -> str:
     """Load the prior session's stdout (``stdout.log`` under ``session_id``).
@@ -71,7 +72,7 @@ def _load_prior_session_output(
 
 
 def _build_continuation_prompt(
-    settings: Any,
+    settings: ThegentSettings,
     continue_from: str,
     prompt: str,
     *,
