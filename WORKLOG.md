@@ -14689,3 +14689,73 @@ L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 
 L10 type-safety tightening for any remaining `Any` slots surfaced by
 WL155 / WL156 / WL702 / WL703 — final Phase 3/4 hardening candidate.
 
+
+
+## WL704 — L10 type-safety tightening (final Phase 3/4 hardening candidate, 2026-08-06)
+
+**Goal.** Close the L10 follow-on `Any`-drift opportunities surfaced by WL155 and re-surfaced by WL156, WL702, and WL703. The WL155 audit flagged that four canonical CLI-command surfaces still ship loose `dict[str, Any]` and `settings: Any` annotations whose canonical types were already known. WL704 absorbs them into TypedDicts and the canonical `ThegentSettings` type, and pins the contract with **24 hardening tests** in `tests/test_wl704_l10_type_safety_tightening.py`.
+
+### What changed
+
+* **`src/thegent/cli/commands/model_cmds_rules.py`** — NEW `CliproxyLoginResult(TypedDict, total=True)` with `exit_code: int` + `message: str`. The helper signature changes from `-> dict[str, Any]` to `-> CliproxyLoginResult`. `__required_keys__` is pinned to `{exit_code, message}` at runtime, `total=True` is enforced statically. `__all__` now exports `["CliproxyLoginResult", "console", "_run_cliproxyctl_machine_command"]`. The `settings: Any` slot in `_run_cliproxyctl_machine_command` becomes `settings: ThegentSettings | None`.
+* **`src/thegent/cli/commands/cli_tooling.py`** — NEW `_VerifyReport(TypedDict, total=False)` documenting the canonical `Auditor.verify_registry()` payload shape (all keys optional because upstream may omit any). NEW `_extract_verify_report(report: dict[str, object]) -> tuple[str, int, int, list[str]]` helper absorbs the `str(...)` / `int(...)` / `list(...)` coercions so `audit_verify_cmd` operates on typed locals (`status: str`, `valid_count: int`, `corrupt_count: int`, `issues: list[str]`, `fmt: str`) instead of `Any`. Defensive defaults: missing keys → `("failed", 0, 0, [])`. Non-int counts coerced via `try/except (TypeError, ValueError)`. Non-list `issues` coerced to `[]`. `__all__` now exports `["_VerifyReport", "_extract_verify_report", ...]`. The `*args: Any, **kwargs: Any` signatures on the surrounding stub commands (`benchmark_cmd`, `deep_research_cmd`, `drift_monitor_cmd`, `roadmap_cmd`, `audit_verify_cmd`) are **kept** for WL-124 vocabulary parity.
+* **`src/thegent/cli/commands/session_meta_impl.py`** — `_load_prior_session_output(settings: ThegentSettings, session_id: str)` and `_build_continuation_prompt(settings: ThegentSettings, ...)` are tightened from `settings: Any` to the canonical `ThegentSettings` type. `_save_session_meta(meta: dict[str, Any])` is **kept** as `dict[str, Any]` because it is the explicit serialise-everything-meta surface and tightening it would lose flexibility.
+* **`tests/test_wl704_l10_type_safety_tightening.py`** (NEW, **24 hardening tests**) pins:
+  * TypedDict existence + `__total__ is True`.
+  * `__required_keys__` is the canonical full key set `{exit_code, message}`.
+  * Field annotations `exit_code: int` and `message: str`.
+  * `__all__` exports `CliproxyLoginResult`.
+  * `_run_cliproxyctl_machine_command` settings annotation is `ThegentSettings | None` (not `Any`).
+  * Return annotation resolves to `CliproxyLoginResult` via `get_type_hints()` (bypasses `from __future__ import annotations`).
+  * Default `settings=None` path works (no constructor invocation).
+  * `ThegentSettings()` instance accepted.
+  * Runtime return shape is dict-compatible with `exit_code` / `message` keys.
+  * Delegate pin: helper still routes through `manage_cliproxy_login.run_login` (regression).
+  * `_extract_verify_report` exported via `__all__`.
+  * Signature `report: dict[str, object] → tuple[str, int, int, list[str]]` resolved via `get_type_hints()`.
+  * Canonical 4-tuple coercion with all four fields populated.
+  * Missing-key defaults to safe sentinels `("failed", 0, 0, [])`.
+  * Defensive coercion for non-int counts (string `"5"` → `int(5)`).
+  * Non-list `issues` → `[]`.
+  * AST pin: `audit_verify_cmd` body declares typed local annotations for `status`, `valid_count`, `corrupt_count`, `issues`, `fmt`.
+  * AST pin: `audit_verify_cmd` body invokes `_extract_verify_report` (delegate pin).
+  * Regression pin: `audit_verify_cmd` dispatch chain still routes via `thegent.cli.ThegentSettings`, `thegent.execution.RunRegistry`, `thegent.execution.Auditor` (matches the canonical `TestAuditVerifyCmdImpl` patch sites).
+  * `_load_prior_session_output` and `_build_continuation_prompt` accept real `ThegentSettings` instances (`session_dir` pre-set per-instance since Pydantic Field descriptors are per-instance, not patchable on the class).
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance LOW finding sealed WL156 → L26 event-driven extension surface sealed WL700 → L9 governance skip-batch-three sealed WL702 → L9 cliproxy_login_cmd hardening sealed WL703 → **L10 type-safety tightening sealed WL704 — Phase 3/4 hardening surface now closed**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L9 Governance | 96/A+ | 96/A+ | ±0 (reaffirms WL-703 typed return contract) |
+| L10 Type Safety | 100/A+ | 100/A+ | ±0 (already at SOTA ceiling; surface now **pinned** by TypedDict + helper + canonical `ThegentSettings`) |
+
+### Validation
+
+* `uv run pytest tests/test_wl704_l10_type_safety_tightening.py -q` → **24 passed, 0 failed**.
+* Combined focused validation: `tests/test_wl704_l10_type_safety_tightening.py` + `test_wl703_l9_cliproxy_login.py` + `test_wl702_l9_skip_batch_three.py` + `test_unit_audit_n5_execution_io_parity.py` + `test_unit_cli_commands_a.py::TestAuditVerifyCmdImpl` + `test_unit_cli_impl_dag.py::TestBuildContinuationPrompt` → **91 passed, 0 failed** (24 new WL-704 + 17 WL-703 + 12 WL-702 + 7 L9 dag continuation + 4 audit_verify unskipped + 27 audit parity).
+* `uv run ruff check src/thegent/cli/commands/cli_tooling.py src/thegent/cli/commands/model_cmds_rules.py src/thegent/cli/commands/session_meta_impl.py tests/test_wl704_l10_type_safety_tightening.py` → **All checks passed**.
+* `uv run ruff format --check ...` → **clean** (after one reformat pass on the test file for RUF059 unused-variable warnings).
+
+### Commits
+
+* (this session) `feat(l10-wl704): seal L10 type-safety tightening (TypedDict CliproxyLoginResult + _VerifyReport + ThegentSettings slot tightening)` — 4 files changed (3 modified + 1 new test).
+* (this session) `docs(audit+worklog): WL704 session block, L10 Type Safety lane (pinned), DAG tick` — 2 files changed.
+
+### Preservation
+
+* `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit daemon / Airlock Bot) → preserved untouched per system policy.
+* `sharecli/` untracked tree → untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed (will be 1+ local commits ahead after this session's commits).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* No unrelated worktree changes touched (worktree is otherwise clean: only the 4 WL-704 files are modified/added).
+
+### Unblocked next
+
+None — Phase 3/4 hardening surface is now closed. Remaining work is follow-on surface:
+
+* SOTA audit-lane refresh (re-baseline the 12-lane scores after the recent wave of WL15x + WL7xx hardening).
+* Governance drift monitoring on the next session (refresh `AUDIT_SCORECARD` + `WORKLOG` against the new SOTA baseline).
