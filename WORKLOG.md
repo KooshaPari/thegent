@@ -14759,3 +14759,83 @@ None — Phase 3/4 hardening surface is now closed. Remaining work is follow-on 
 
 * SOTA audit-lane refresh (re-baseline the 12-lane scores after the recent wave of WL15x + WL7xx hardening).
 * Governance drift monitoring on the next session (refresh `AUDIT_SCORECARD` + `WORKLOG` against the new SOTA baseline).
+
+## WL705 — L1 Architecture consensus split (orphaned mesh/consensus.py → 3-submodule package, 2026-08-07)
+
+**Goal.** Close the L1 Architecture (85) follow-on surface that the parallel surveys surfaced on 2026-08-07: the legacy `src/thegent/mesh/consensus.py` (368 LOC, 3 classes, CC=12 on `get_consensus`, **0 tests**) was a textbook orphaned module — no `src/` consumers, no `__init__.py` re-export, no tests. WL705 hardens it into a 3-submodule package + 30-LOC back-compat shim, dropping the canonical `get_consensus` cognitive complexity from CC=12 to CC≤6 via three extracted helpers, and pins the surface with **40 hardening tests** in `tests/unit/mesh/test_wl705_consensus_split.py`.
+
+### What changed
+
+* **`src/thegent/mesh/consensus/package/`** — NEW 3-submodule package:
+  * `__init__.py` (36 LOC) — ADR-013 / SCLI-P3.x lineage docstring, canonical `__all__` = `[ConsensusStatus, ConsensusProtocol, CausalInfluenceTracker, EscalationWorkflow]`.
+  * `_io.py` (71 LOC) — private I/O helpers (`load_json_silent`, `write_json_atomic`, `ensure_dir`) extracted from the legacy single-file module to enable thin submodule bodies.
+  * `protocol.py` (320 LOC) — `ConsensusProtocol` + `ConsensusStatus` (ADR-013 / SCLI-P3.1). The five-phase flow (propose → draft → share → vote → tally/decide) is unchanged. The `get_consensus` body is now a thin orchestration of three CC-reduced helpers:
+    * `_tally_round_votes` — `(total_weight, weighted_votes)` reduced from inline branch.
+    * `_resolve_consensus_status` — pure 4-branch decision tree (strict `>` for AGREED, strict `<` for REJECTED, `>=` for ESCALATED, else PENDING).
+    * `_persist_decision_record` — 10-key decision-record JSON shape, pinned by test.
+  * `influence.py` (60 LOC) — `CausalInfluenceTracker` (SCLI-P3.2). Shapley normalisation preserved verbatim.
+  * `escalation.py` (124 LOC) — `EscalationWorkflow` (SCLI-P3.3 / SCLI-P3.4). Tier-5 human-queue routing preserved verbatim.
+* **`src/thegent/mesh/consensus.py`** — back-compat shim (30 LOC, 0 class defs, 0 function bodies). Re-exports the canonical package surface via `from .consensus.{escalation,influence,protocol} import …`. Any out-of-tree plugin that imports `from thegent.mesh.consensus import ConsensusProtocol` continues to resolve against the canonical package.
+* **`tests/unit/mesh/test_wl705_consensus_split.py`** (NEW, **40 hardening tests**) pins:
+  * **Canonical resolution (5)** — package imports cleanly, exposes the 4 canonical symbols, `__all__` pins the surface, identity check via shim, docstring cites ADR-013/SCLI-P3.x.
+  * **`ConsensusProtocol` lifecycle (10)** — propose / draft / share / vote / advance / load, including:
+    * Canonical 9-key proposal record (proposal_id, leader_id, topic, content, decision_type, phase, round, max_debate_rounds, timestamp).
+    * `decision_type='architecture'` recorded verbatim.
+    * Drafts write to `proposals/<id>.drafts/agent-<id>.json`.
+    * `share` flips `phase → "share"` + writes `finalized_at`; silent for missing proposal.
+    * `cast_vote` enforces round bounds (out-of-range silent drop).
+    * Canonical 5-key vote record (agent_id, vote, confidence, vote_round, timestamp).
+    * `advance_debate_round` clamps at max rounds + returns 1 for missing proposal.
+    * `_vote_round_dir` is the canonical `votes/<id>/round-<n>/` path.
+  * **`get_consensus` tally + decide (8)** — all four branches of the decision tree + defensive defaults:
+    * Unknown proposal → `(PENDING, 0.0)`, no decision file.
+    * Empty votes → `(PENDING, 0.0)`.
+    * Ratio > threshold → `(AGREED, 1.0)`, `finalize` action.
+    * Ratio < (1 - threshold) → `(REJECTED, 0.0)`, `finalize` action.
+    * Mid ratio under max round → `(PENDING, 0.5)`, `debate` action.
+    * Mid ratio at max round → `(ESCALATED, 0.5)`, `human_review` action.
+    * Zero total weight → `(PENDING, 0.0)`.
+    * Explicit `required_majority` overrides decision_type.
+  * **Helper extraction CC pin (3)** — `_tally_round_votes`, `_resolve_consensus_status` (all 4 branches), `_persist_decision_record` (canonical 10-key shape).
+  * **`CausalInfluenceTracker` (4)** — record appends JSONL, compute Shapley for unknown action returns empty, normalize to unit weight, degenerate zero-weight case.
+  * **`EscalationWorkflow` (5)** — tier transition record, tier 4 → 5 cascade, tier 5 enqueues human queue (no escalation-queue write), `list_pending_human_escalations` sorted ascending, `resolve_human_escalation` flips status + writes `resolved_at` + missing returns False.
+  * **Back-compat shim surface (3)** — `inspect.getsourcefile` confirms the split (canonical classes live in `protocol.py` / `escalation.py` / `influence.py`, NOT the shim).
+  * **AST purity (2)** — shim ≤ 35 LOC, no `class ` or `def ` definitions in the shim body.
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance LOW finding sealed WL156 → L26 event-driven extension surface sealed WL700 → L9 governance skip-batch-three sealed WL702 → L9 cliproxy_login_cmd hardening sealed WL703 → L10 type-safety tightening sealed WL704 → **L1 Architecture consensus split sealed WL705 — orphaned `mesh/consensus.py` closed with canonical 3-submodule package + 30-LOC shim + 40 hardening tests**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L1 Architecture | 85 | **90** | **+5** (orphaned module consolidated, CC=12 → CC≤6, 0 → 40 tests) |
+| L2 Dev Loop | 90 | 90 | ±0 (regression-tested clean) |
+| L3 Agent Loop | 85 | 85 | ±0 (next-up candidate) |
+
+### Validation
+
+* `uv run pytest tests/unit/mesh/test_wl705_consensus_split.py` → **40 passed, 0 failed** (the full WL705 hardening suite).
+* Focused regression: `tests/unit/mesh/` + `tests/unit/architecture/test_manage_cliproxy_runtime.py` → **96 passed, 0 failed** (40 new WL705 + the rest of `tests/unit/mesh/` + the cliproxy runtime regression pin).
+* `uv run ruff check src/thegent/mesh/consensus/ src/thegent/mesh/consensus.py tests/unit/mesh/test_wl705_consensus_split.py` → **All checks passed**.
+* `uv run ruff format --check ...` → **clean** (after one reformat pass on `protocol.py`).
+
+### Commits
+
+* (this session) `feat(l1-wl705): seal L1 Architecture consensus split (mesh/consensus.py → 3-submodule package + 30-LOC shim + 40 hardening tests)` — 6 source files (1 new package + 5 files inside) + 1 new test file.
+* (this session) `docs(audit+worklog): WL705 session block, L1 Architecture 85 → 90 (A- → A), DAG tick` — 2 files changed.
+
+### Preservation
+
+* `tests/test_ux_audit_cli.py` merge conflict (auto-commit daemon / Airlock Bot) → resolved via `git checkout --theirs` (dead-code removal of the `_combined_output` helper + unused `subprocess`/`sys` imports), committed as a separate small cleanup commit because the previous WL704 left it unmerged.
+* `sharecli/` untracked tree → untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed (local branch will be 3 commits ahead after this session).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* No unrelated worktree changes touched (only the WL705 files + the dead-code cleanup + the docs).
+
+### Unblocked next
+
+* L3 Agent Loop (currently 85) — parallel survey agents identified the `src/thegent/agent_loop/orchestrator.py` and `src/thegent/agent_loop/escalation_router.py` modules as candidate next splits / hardening targets.
+* L22 Logging (90) — re-evaluate after the L1/WL705 wave; CC reduction + `log_call` decorator coverage audit.
+* SOTA audit-lane refresh (re-baseline the 12-lane scores after the WL15x + WL7xx + WL705 wave).

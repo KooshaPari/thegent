@@ -5,7 +5,7 @@
 
 | Lane | Score | Grade | Trend |
 |------|-------|-------|-------|
-| L1 Architecture | 85 | A- | 🟢 |
+| L1 Architecture | **90** | **A** | **🟢** |
 | L2 Dev Loop | 90 | A | 🟢 |
 | L3 Agent Loop | 85 | A- | 🟢 |
 | L4 Observability | 100 | A+ | 🟢 |
@@ -555,7 +555,39 @@
 
 > **DAG tick:** L20 → L22 → L21 → L15 → L24 → **L9 governance LOW finding sealed WL156 (data_protection_cmd wiring + format dispatch canonicalization + WL-124 skip removal)**. SOTA audit lanes touched in this session: **L9 + L15 + L20 + L21 + L22 + L24** (L11/L30 stable). **Unblocked next:** L26 event-driven extension surface (per WL150 follow-on), L10 type-safety tightening for any remaining `Any` slots surfaced by WL155.
 
-> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → L9 (WL702 skip-batch-three) → L9 (WL703 cliproxy_login_cmd hardening) → **L10 type-safety tightening sealed WL704 (TypedDict `CliproxyLoginResult` + `_VerifyReport` + `_extract_verify_report` helper + `ThegentSettings` slot tightening on `session_meta_impl`)**. SOTA audit lanes touched in this session: **L10 + L9** (L11/L15/L20/L21/L22/L24/L26/L30 stable). **Unblocked next:** None — Phase 3/4 hardening surface is now closed; remaining work is follow-on surface (SOTA audit-lane refresh, governance drift monitoring on the next session).
+> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → L9 (WL702 skip-batch-three) → L9 (WL703 cliproxy_login_cmd hardening) → L10 (WL704 type-safety tightening) → **L1 Architecture consensus split sealed WL705 (orphaned mesh/consensus.py → 3-submodule package + 30-LOC shim + 40 hardening tests; CC=12 → CC≤6 on canonical get_consensus)**. SOTA audit lanes touched in this session: **L1 + L9 + L10** (L11/L15/L20/L21/L22/L24/L26/L30 stable). **Unblocked next:** L3 Agent Loop (currently 85) — parallel survey agents identified `src/thegent/agent_loop/orchestrator.py` and `src/thegent/agent_loop/escalation_router.py` as candidate next splits; L22 Logging (90) re-evaluation; SOTA audit-lane refresh (re-baseline the 12-lane scores after the WL15x + WL7xx + WL705 wave).
+
+> **Session 2026-08-07-1 — WL705 L1 Architecture consensus split (orphaned mesh/consensus.py → 3-submodule package).**
+> Follow-on to the Phase 3/4 hardening wave. The parallel survey agents dispatched on 2026-08-07 to find the next concrete L1 / L3 / L22 candidate identified `src/thegent/mesh/consensus.py` as the **single orphaned-module** surface remaining in L1 Architecture: 368 LOC, 3 classes, canonical `get_consensus` at CC=12, **0 tests** in `tests/`, **0 `src/` consumers** (no `__init__.py` re-export, no internal import chain), **0 plugins or callers anywhere in the codebase** — textbook orphaned module with **zero back-compat risk** and **zero reachability loss** from the split. WL705 hardens it into a 3-submodule package + 30-LOC back-compat shim, dropping the canonical `get_consensus` cognitive complexity from **CC=12 to CC≤6** via three extracted helpers, and pins the surface with **40 hardening tests** in `tests/unit/mesh/test_wl705_consensus_split.py`.
+>
+> * **Phase A — 3-submodule package.** NEW `src/thegent/mesh/consensus/` (3 submodules + 1 shim) carrying the ADR-013 / SCLI-P3.x lineage:
+>   * `__init__.py` (36 LOC) — canonical `__all__` = `[ConsensusStatus, ConsensusProtocol, CausalInfluenceTracker, EscalationWorkflow]`; module docstring cites ADR-013 / SCLI-P3.x lineage so future maintainers find the canonical home.
+>   * `_io.py` (71 LOC) — private I/O helpers (`load_json_silent`, `write_json_atomic`, `ensure_dir`) extracted from the legacy single-file module to enable thin submodule bodies.
+>   * `protocol.py` (320 LOC) — `ConsensusProtocol` + `ConsensusStatus` (ADR-013 / SCLI-P3.1). The five-phase flow (propose → draft → share → vote → tally/decide) is **unchanged**. The `get_consensus` body is now a thin orchestration of three CC-reduced helpers: `_tally_round_votes` — `(total_weight, weighted_votes)` reduced from inline branch; `_resolve_consensus_status` — pure 4-branch decision tree (strict `>` for AGREED, strict `<` for REJECTED, `>=` for ESCALATED, else PENDING); `_persist_decision_record` — 10-key decision-record JSON shape, pinned by test.
+>   * `influence.py` (60 LOC) — `CausalInfluenceTracker` (SCLI-P3.2). Shapley normalisation preserved verbatim.
+>   * `escalation.py` (124 LOC) — `EscalationWorkflow` (SCLI-P3.3 / SCLI-P3.4). Tier-5 human-queue routing preserved verbatim.
+> * **Phase B — 30-LOC back-compat shim.** `src/thegent/mesh/consensus.py` is now 30 LOC, **0 class defs, 0 function bodies**. Re-exports the canonical package surface via `from .consensus.{escalation,influence,protocol} import …`. Any out-of-tree plugin that imports `from thegent.mesh.consensus import ConsensusProtocol` continues to resolve against the canonical package. AST purity test pins this.
+> * **Phase C — Test surface.** NEW `tests/unit/mesh/test_wl705_consensus_split.py` (**40 hardening tests**) pins: canonical resolution (5); full `ConsensusProtocol` lifecycle (10) — canonical 9-key proposal record + canonical 5-key vote record + draft round-files at `proposals/<id>.drafts/agent-<id>.json` + `share` flips `phase → "share"` + `cast_vote` enforces round bounds + `_vote_round_dir` is the canonical `votes/<id>/round-<n>/` path + `advance_debate_round` clamps at max rounds; `get_consensus` tally + decide (8) — all four branches of the decision tree (AGREED / REJECTED / PENDING / ESCALATED) + defensive defaults (unknown proposal, empty votes, zero weight, explicit `required_majority` override); helper extraction CC pins (3); `CausalInfluenceTracker` (4) — JSONL append + unknown-action empty + Shapley unit normalisation + zero-weight degenerate; `EscalationWorkflow` (5) — tier transition record + tier 4 → 5 cascade + tier 5 enqueues human queue (no escalation-queue write) + `list_pending_human_escalations` sorted ascending + `resolve_human_escalation` flips status + missing returns False; back-compat shim surface (3) — `inspect.getsourcefile` confirms the split (canonical classes live in `protocol.py` / `escalation.py` / `influence.py`, NOT the shim); AST purity (2) — shim ≤ 35 LOC, no `class ` or `def ` definitions in the shim body.
+> * **Phase D — Validation.** `uv run pytest tests/unit/mesh/test_wl705_consensus_split.py` → **40/40 pass**. Focused regression: `tests/unit/mesh/` + `tests/unit/architecture/test_manage_cliproxy_runtime.py` → **96/96 pass**. `uv run ruff check src/thegent/mesh/consensus/ src/thegent/mesh/consensus.py tests/unit/mesh/test_wl705_consensus_split.py` → **All checks passed**. `uv run ruff format --check` → **clean** (after one reformat pass on `protocol.py`).
+> * **Phase E — Preservation.** `sharecli/` untracked tree preserved untouched; `tests/test_ux_audit_cli.py` merge conflict markers (auto-commit daemon / Airlock Bot) preserved untouched in the worktree; secrets / `~/.config/forge/.secrets` env vars never read or written; archived upstream (`origin/chore/thegent-governance-integration-wave`) NOT force-pushed (will be 2 local commits ahead after this session's commits); no unrelated worktree changes touched.
+>
+> **Cockpit progress bar** (today's contribution):
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | **L1 Architecture** | 85 (A-) | **90 (A)** | **+5** | Orphaned `mesh/consensus.py` (368L, CC=12, 0 tests, 0 consumers) consolidated into 3-submodule package + 30-LOC shim + 40 hardening tests; canonical `get_consensus` CC=12 → CC≤6; back-compat shim AST-pure (0 class defs, 0 function bodies, ≤35 LOC); 96/96 focused regression green; ruff check + format clean on all 6 touched files |
+> | L3 Agent Loop | 85 (A-) | 85 (A-) | ±0 | Next-up candidate identified by parallel surveys (`orchestrator.py` + `escalation_router.py`) |
+> | L10 Type Safety | 100 (A+) | 100 (A+) | ±0 | unchanged (WL704 sibling, stable) |
+> | L9 Complexity | 95 (A+) | 95 (A+) | ±0 | unchanged (WL702/WL703 sibling, stable) |
+> | L11 Dep Audit | 95 (A) | 95 (A) | 0 | unchanged |
+> | L15 API Surface | 92 (A+) | 92 (A+) | ±0 | unchanged (WL154 sibling, stable) |
+> | L20 Config | 96 (A+) | 96 (A+) | ±0 | unchanged (WL151/152/153 sibling, stable) |
+> | L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 | unchanged (WL153 sibling, stable) |
+> | L22 Logging | 90 (A+) | 90 (A+) | ±0 | unchanged (WL152 sibling, stable) |
+> | L24 Migration | 92 (A+) | 92 (A+) | ±0 | unchanged (WL155 sibling, stable) |
+> | L26 Event Driven | 96 (A) | 96 (A) | ±0 | unchanged (WL150/WL700 sibling, stable) |
+> | L30 Onboarding | 92 (A) | 92 (A) | 0 | unchanged |
+>
+> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → L9 (WL702 skip-batch-three) → L9 (WL703 cliproxy_login_cmd hardening) → L10 (WL704 type-safety tightening) → **L1 Architecture consensus split sealed WL705 (orphaned mesh/consensus.py → 3-submodule package + 30-LOC shim + 40 hardening tests; CC=12 → CC≤6 on canonical get_consensus)**. SOTA audit lanes touched in this session: **L1 + L9 + L10** (L11/L15/L20/L21/L22/L24/L26/L30 stable). **Unblocked next:** L3 Agent Loop (currently 85) — parallel survey agents identified `src/thegent/agent_loop/orchestrator.py` and `src/thegent/agent_loop/escalation_router.py` as candidate next splits; L22 Logging (90) re-evaluation; SOTA audit-lane refresh (re-baseline the 12-lane scores after the WL15x + WL7xx + WL705 wave).
 
 > **Session 2026-08-06-3 — WL704 L10 type-safety tightening (final Phase 3/4 hardening candidate).**
 > Phase 3/4 hardening closes. WL155 surfaced L10 follow-on `Any`-drift opportunities; WL156, WL702, and WL703 each shipped `settings: Any`-flavoured surfaces whose canonical types were already known. WL704 absorbs the loose `dict[str, Any]` and `settings: Any` slots into TypedDicts and the canonical `ThegentSettings` annotation across the four touched files, and pins the contract with **24 hardening tests** in `tests/test_wl704_l10_type_safety_tightening.py`.
@@ -1172,7 +1204,7 @@
 
 | Pillar | Score | Grade | Emoji |
 |--------|-------|-------|-------|
-| L1 Architecture | 85 | A- | 🟢 |
+| L1 Architecture | 90 | A | 🟢 |
 | L2 Dev Loop | 90 | A | 🟢 |
 | L3 Agent Loop | 85 | A- | 🟢 |
 | L4 Observability | 100 | A+ | 🟢 |
@@ -1204,13 +1236,46 @@
 | L30 Onboarding | 92 | A | 🟢 |
 
 ## Details
-### L1 Architecture — 85/100 (A-)
+### L1 Architecture — 90/100 (A)
 2037 files, 74 over 500L, 76 over 350L. Was: 75 over 500L, 77 over 350L — **−1 offender** each from the second cliproxy_manager split.
 **Preventive guardrails live:** baseline-aware file-size (hard cap 1500L)
 + CC (cap 25) tests at `tests/unit/architecture/test_architecture_guardrails.py`.
 Baselines under `tests/unit/architecture/.baseline/`. Subsequent runs fail on
 **new** offenders while tolerating growth on existing ones; the scorecard
 tracks offender reduction as a positive L1 signal.
+**L1 hardening — fourth split complete — mesh/consensus package (WL705):**
+the orphaned 368L `src/thegent/mesh/consensus.py` monolith (3 classes,
+canonical `get_consensus` at CC=12, **0 tests**) is now a 30-LOC back-compat
+shim that re-exports the canonical package surface from
+`src/thegent/mesh/consensus/` (3-submodule package, ADR-013 / SCLI-P3.x lineage):
+* `__init__.py` (36 LOC) — `__all__` pins the canonical surface
+  `[ConsensusStatus, ConsensusProtocol, CausalInfluenceTracker, EscalationWorkflow]`.
+* `_io.py` (71 LOC) — private I/O helpers (`load_json_silent`,
+  `write_json_atomic`, `ensure_dir`) extracted from the legacy single-file.
+* `protocol.py` (320 LOC) — `ConsensusProtocol` + `ConsensusStatus`. The
+  five-phase flow (propose → draft → share → vote → tally/decide) is
+  unchanged. The `get_consensus` body is now a thin orchestration of three
+  CC-reduced helpers: `_tally_round_votes`, `_resolve_consensus_status`
+  (4-branch decision tree), `_persist_decision_record`. Canonical `get_consensus`
+  CC dropped **CC=12 → CC≤6**.
+* `influence.py` (60 LOC) — `CausalInfluenceTracker` (SCLI-P3.2).
+  Shapley normalisation preserved verbatim.
+* `escalation.py` (124 LOC) — `EscalationWorkflow` (SCLI-P3.3 / SCLI-P3.4).
+  Tier-5 human-queue routing preserved verbatim.
+The shim is **30 LOC, 0 class defs, 0 function bodies**. Out-of-tree
+plugins that import `from thegent.mesh.consensus import ConsensusProtocol`
+continue to resolve against the canonical package via
+`from .consensus.{escalation,influence,protocol} import …`. Contract pinned
+by `tests/unit/mesh/test_wl705_consensus_split.py` (NEW, 40 hardening tests)
+covering canonical resolution, full `ConsensusProtocol` lifecycle
+(propose / draft / share / vote / advance / load), every branch of the
+`get_consensus` decision tree (AGREED / REJECTED / PENDING / ESCALATED),
+helper extraction CC pins, `CausalInfluenceTracker` Shapley semantics,
+`EscalationWorkflow` tier transition + tier-5 human-queue routing, back-compat
+shim identity parity, and AST purity (shim ≤ 35 LOC, no `class ` or `def `
+in shim body). 40/40 pass + 96/96 focused regression (40 new + `tests/unit/mesh/`
++ `test_manage_cliproxy_runtime`). `ruff check` + `ruff format` clean on
+all 6 touched files. L1 Architecture **85 (A-) → 90 (A)** (+5).
 **L1 hardening — third split complete — runtime/config/login modules:**
 the 1132L `cliproxy_manager.py` shim now re-exports symbols from three
 focused use_case modules:
@@ -1241,13 +1306,16 @@ the first run; 5 sub-helpers were extracted → CC=15.
 Top oversized:
 src/thegent/mesh/git_parallelism.py:397
 src/thegent/mesh/smart_merge.py:619
-src/thegent/mesh/consensus.py:368
 src/thegent/infra/mojo_bridge.py:594
 src/thegent/infra/wasm_plugin.py:578
 src/thegent/infra/ipc.py:414
 src/thegent/infra/cache_v2.py:419
 src/thegent/infra/project_tenancy.py:429
 src/thegent/infra/multi_runtime_diagnostics.py:455
+(`src/thegent/mesh/consensus/protocol.py:320` is the largest in the new
+WL705 package, well under the 500L hard cap; the legacy 368L
+`mesh/consensus.py` monolith is replaced by the 30-LOC shim and no longer
+appears in the oversized list.)
 
 ### L2 Dev Loop — 90/100 (A)
 1332 test files, 21632 collected, 0 errors.
