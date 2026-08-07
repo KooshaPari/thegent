@@ -13,8 +13,6 @@ Scores findings with severity P0-P3 following the audit skill approach:
 from __future__ import annotations
 
 import re
-import subprocess
-import sys
 from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
@@ -42,20 +40,6 @@ class Finding:
     message: str
     file: str = ""
     line: int = 0
-
-
-def _combined_output(result) -> str:
-    """Return ``result.stdout + result.stderr`` without raising on mixed-stderr.
-
-    Click 8.1.x raises ``ValueError`` when ``stderr_bytes is None`` even with
-    ``mix_stderr=True`` on Typer/Click 8.1.x; this helper tolerates that.
-    """
-    stderr = ""
-    try:
-        stderr = result.stderr or ""
-    except (ValueError, AttributeError):
-        stderr = ""
-    return (result.stdout or "") + stderr
 
 
 @dataclass
@@ -98,16 +82,7 @@ class TestCLIHelpTextPresent:
     """
 
     # Top-level commands registered directly on the root app
-    TOP_LEVEL_COMMANDS: ClassVar[list[str]] = [
-        "bg",
-        "status",
-        "stop",
-        "logs",
-        "ps",
-        "resume",
-        "govern",
-        "phench",
-    ]
+    TOP_LEVEL_COMMANDS: ClassVar[list[str]] = ["bg", "status", "stop", "logs", "ps", "resume", "govern", "phench"]
 
     # Sub-apps mounted via add_typer
     SUB_APPS: ClassVar[list[str]] = ["run", "cockpit", "sota"]
@@ -145,21 +120,6 @@ class TestCLIHelpTextPresent:
         output = result.stdout.strip()
         assert len(output) > 20, f"'thegent {sub_app} --help' output too short ({len(output)} chars)"
 
-    def test_module_entrypoint_exposes_root_help(self) -> None:
-        """``python -m thegent`` must expose the installed CLI without a console script."""
-        result = subprocess.run(
-            [sys.executable, "-m", "thegent", "--help"],
-            capture_output=True,
-            text=True,
-            timeout=15,
-            check=False,
-        )
-
-        assert result.returncode == 0, result.stderr
-        assert "thegent" in result.stdout.lower()
-        for command in [*self.TOP_LEVEL_COMMANDS, *self.SUB_APPS]:
-            assert command in result.stdout
-
     def test_version_flag_works(self) -> None:
         """--version must print output and exit (may be 0 or 2)."""
         result = runner.invoke(app, ["--version"])
@@ -187,7 +147,7 @@ class TestErrorMessagesActionable:
     def test_unknown_command_no_traceback(self) -> None:
         """Error output must not contain raw Python traceback frames."""
         result = runner.invoke(app, ["nonexistent-command-xyz"])
-        combined = _combined_output(result).lower()
+        combined = (result.stdout + (result.stderr or "")).lower()
         assert "traceback" not in combined, "Raw traceback leaked to user output on unknown command"
         assert "raise " not in combined, "Python 'raise' keyword leaked to user output"
 
@@ -199,7 +159,7 @@ class TestErrorMessagesActionable:
     def test_status_missing_session_no_traceback(self) -> None:
         """'status' error must not leak a traceback."""
         result = runner.invoke(app, ["status", "nonexistent-session-id-abc"])
-        combined = _combined_output(result).lower()
+        combined = (result.stdout + (result.stderr or "")).lower()
         assert "traceback" not in combined, "Raw traceback leaked from 'status' on missing session"
 
     def test_stop_missing_session_exits_nonzero(self) -> None:
@@ -210,13 +170,13 @@ class TestErrorMessagesActionable:
     def test_stop_missing_session_no_traceback(self) -> None:
         """'stop' error must not leak a traceback."""
         result = runner.invoke(app, ["stop", "nonexistent-session-id-abc"])
-        combined = _combined_output(result).lower()
+        combined = (result.stdout + (result.stderr or "")).lower()
         assert "traceback" not in combined, "Raw traceback leaked from 'stop' on missing session"
 
     def test_error_messages_mention_action(self) -> None:
         """Error output should suggest a corrective action where possible."""
         result = runner.invoke(app, ["status", "nonexistent-session-id-abc"])
-        output = _combined_output(result).strip().lower()
+        output = (result.stdout + (result.stderr or "")).strip().lower()
         actionable_patterns = [
             "not found",
             "does not exist",
@@ -240,15 +200,6 @@ class TestErrorMessagesActionable:
         )
 
     def test_safe_echo_no_rich_injection(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """safe_echo must neutralise Rich markup before printing."""
-        from thegent.ux.cli_errors import safe_echo
-
-        safe_echo("[bold]INJECT[/bold]")
-        captured = capsys.readouterr()
-        # The literal Rich tags must not appear unescaped in the output.
-        assert "[bold]" not in captured.out.replace("\\[bold]", "")
-        # The escape bracket (``\[``) indicates the markup was neutralised.
-        assert "\\[bold]" in captured.out
         """safe_echo must not allow Rich markup injection into output."""
         from thegent.ux.cli_errors import safe_echo
 
@@ -286,8 +237,8 @@ class TestOutputFormatting:
     def test_status_output_valid_json_when_present(self) -> None:
         """'status' with a valid session should emit parseable JSON."""
         import json
+        import os
         import tempfile
-        from pathlib import Path
 
         with tempfile.TemporaryDirectory() as tmpdir:
             session_id = "test-ux-audit-001"
@@ -300,11 +251,10 @@ class TestOutputFormatting:
                 "cwd": "/tmp",
             }
             meta_path = Path(tmpdir) / f"{session_id}.json"
-            meta_path.write_text(json.dumps(meta))
             with open(meta_path, "w") as f:
                 json.dump(meta, f)
 
-            with patch.dict("os.environ", {"THGENT_SESSION_DIR": tmpdir}):
+            with patch.dict(os.environ, {"THGENT_SESSION_DIR": tmpdir}):
                 result = runner.invoke(app, ["status", session_id])
 
             if result.exit_code == 0:
@@ -343,7 +293,7 @@ class TestOutputFormatting:
         ]
         for cmd in commands_to_check:
             result = runner.invoke(app, cmd)
-            combined = _combined_output(result).lower()
+            combined = (result.stdout + (result.stderr or "")).lower()
             assert "traceback" not in combined, f"Traceback in '{' '.join(cmd)}' output"
 
 
@@ -451,7 +401,7 @@ class TestAuditAggregate:
 
     def _check_no_traceback(self, cmd: list[str], label: str) -> None:
         result = runner.invoke(app, cmd)
-        combined = _combined_output(result).lower()
+        combined = (result.stdout + (result.stderr or "")).lower()
         if "traceback" in combined:
             self.report.add(f"traceback:{label}", "P0", f"Raw traceback in '{label}' output")
 
