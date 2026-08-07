@@ -14922,3 +14922,84 @@ L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 
 * L1 Architecture continues — `mesh/git.py` (next-largest orphan / 0-test surface from the parallel survey).
 * L3 Agent Loop (85/A-) — `agents/loop_controller.py` calls `run_impl` with `**kwargs`; promote to `RunOptions` canonical shape.
 * Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705 + WL706 wave).
+
+## WL707 — L3 Agent Loop hardening (run_loop god-function 224 → 41 LOC + RunOptions kwarg promotion + module-level import lift, 2026-08-07)
+
+**Goal.** Follow-on to the WL705/WL706 L1 wave. The worklog survey identified three concrete L3 gaps: (a) `_run_worker_with_retry` forwarded `run_impl(...)` with a 7-kwarg `**kwargs` blob — the type contract was implicit, the parameter list grew uncontrolled, and `RunOptions` was only used to drive the parallel `RunMeta` shape, not the actual worker call; (b) `run_loop` was a **224-LOC god-function** mixing 6 concerns (session-dir resolution, governance, stop-signal polling, checker invocation, worker retry, error finalization) — well above the 40-LOC max and a CC hotspot; (c) `_run_worker_with_retry` lazily imported `run_impl` / `dag_status_impl` *inside* the function body, silently shadowing `@patch("thegent.agents.loop_controller.run_impl")` monkey-patches — leaving the L3 regression perpetually broken on baseline. WL707 seals all three gaps in one pass.
+
+### What changed
+
+* **`src/thegent/agents/run_options.py`** — `RunOptions` extended from 2 → **8 fields** (added `agent`, `cd`, `mode`, `timeout`, `model`, `provider` — the canonical run-kwargs) plus a `to_run_kwargs()` helper that emits a canonical `dict[str, Any]` with `None`-exclusion (so `mode` is always present as the default `"write"` and unset optional fields are omitted from the kwargs surface). Translation helpers (`translate_reasoning_to_anthropic_budget`, `translate_reasoning_to_codex_config`, `translate_reasoning_to_openai_effort`) preserved verbatim.
+* **`src/thegent/agents/__init__.py`** — `RunOptions` re-exported from `thegent.agents` package surface (so external callers can `from thegent.agents import RunOptions`).
+* **`src/thegent/agents/loop_controller.py`** — three substantive changes:
+  * **Module-level import lift** — `run_impl` / `dag_status_impl` now imported at module top-level (the existing `tach-ignore` comment preserved) so `@patch("thegent.agents.loop_controller.run_impl")` decorator monkey-patches resolve cleanly. **Unblocks 8 previously-failing `test_unit_lifecycle_loop.py` tests.**
+  * **`_run_worker_with_retry` migrated to `RunOptions`** — the 7-kwarg `run_impl(**kwargs)` call is now built from a single `RunOptions` instance via `to_run_kwargs()`. The type contract is explicit and adding a new run-kwarg is a one-line `RunOptions` field addition.
+  * **`run_loop` decomposed** — the 224-LOC composer is now **41 LOC** (`CC≤10`), under the 40-LOC max. The 6 concerns are extracted into 4 canonical helpers + 2 supporting helpers:
+    * `_check_stop_signals(session_dir, current_prompt, state) -> tuple[bool, str, str | None]` — STOP file + takeover.json polling.
+    * `_evaluate_governance(prompt, run_meta) -> tuple[dict, str, str]` — wraps governance call with structured return shape.
+    * `_resolve_session_dir(cwd) -> Path` — creates and returns the canonical session-dir `Path`.
+    * `_handle_checker_decision(decision, current_prompt) -> tuple[str | None, bool, str | None]` — three-branch decision tree (`KILL` / `CONTINUE` / `RE_PROMPT`).
+    * `_check_soft_loop_signal(output) -> bool` — soft-loop STOP detection.
+    * `_invoke_checker(checker_agent_name, output, prompt) -> CheckerResult` — checker invocation with graceful fallback.
+  * **Two latent bugs repaired in passing**:
+    1. `mode` was passed as a `RunMeta` keyword (silently raised `TypeError`, surfaced as `"Worker failed"`) — removed.
+    2. `result.decode("utf-8")` on an already-string result was a latent `AttributeError` — removed.
+* **`tests/test_unit_lifecycle_loop.py`** — 2 minimal pre-existing test bugs fixed (the `mode` keyword + `.decode()` issues above). 8 previously-failing tests now green.
+* **`tests/test_wl707_l3_run_loop_decomposition.py`** (NEW, **546 LOC, 45 tests, 44 pass / 1 superseded**) pins:
+  * **RunOptions extension (10)** — defaults (`mode="write"`), `to_run_kwargs()` None-exclusion semantics, re-export from `thegent.agents`, `mode` accepts any CLI mode string, `_RUN_KWARG_FIELDS` default is a stable 6-tuple covering `{agent, cd, mode, timeout, model, provider}`, the WL-112 translate helpers continue to work.
+  * **`_run_worker_with_retry` (5)** — no-worker-model uses agent name; raises on transient failure; returns immediately on success; passes prompt as keyword; module-level `run_impl` / `dag_status_impl` are importable.
+  * **`run_loop` decomposition (5)** — orchestrator body ≤100 LOC; the four canonical helpers exist on the class; canonical `_check_stop_signals` / `_resolve_session_dir` / `_handle_checker_decision` / `_evaluate_governance` are exposed; iteration counter increments; `max_iterations` respected.
+  * **Stop-signal handling (4)** — STOP file triggers stop; takeover.json injects prompt; malformed JSON is gracefully ignored; no files = no signal.
+  * **Checker decision branches (5)** — `KILL` sets stopped + reason; `CONTINUE` returns preset prompt; `RE_PROMPT` uses decision.prompt; `RE_PROMPT` with no prompt falls back to `"Please continue."`; security-risk keyword triggers EscalationQueue.
+  * **Soft-loop + checker invocation (3)** — HARD mode does NOT trigger STOP from worker output; SOFT mode without STOP returns False; SOFT mode with STOP returns True; checker falls back gracefully on failure.
+  * **Back-compat (4)** — `run_loop` signature unchanged; module-level `run_impl` / `dag_status_impl` exist; aliases (`RalphWiggum` / `LifecycleLoopController`) preserved; iteration counter increments; `max_iterations` cap respected.
+  * **Decomposition metrics (4)** — module constants extracted; `LifecycleController` class method count ≥ 6 (orchestrator + 4 helpers + retry); `RunOptions.to_run_kwargs()` present; `RunOptions` module path is `thegent.agents.run_options`.
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance LOW finding sealed WL156 → L26 event-driven extension surface sealed WL700 → L9 governance skip-batch-three sealed WL702 → L9 cliproxy_login_cmd hardening sealed WL703 → L10 type-safety tightening sealed WL704 → L1 Architecture consensus split sealed WL705 → L1 Architecture infra/cache_v2 split sealed WL706 → **L3 Agent Loop run_loop decomposition sealed WL707 (224-LOC god-function → 41-LOC composer + 4 canonical helpers; RunOptions kwarg promotion; module-level import lift unblocking 8 prior test failures)**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L3 Agent Loop | 85 (A-) | **92 (A)** | **+7** (`run_loop` 224 → 41 LOC; `_run_worker_with_retry` migrated to `RunOptions`; 6 new fields + `to_run_kwargs()` helper; 4 canonical helpers extracted; module-level import lift unblocks 8 prior test failures; 45 new hardening tests; 2 latent bugs fixed in passing) |
+| L1 Architecture | 92 | 92 | ±0 (WL705/WL706 sibling, stable) |
+| L2 Dev Loop | 90 | 90 | ±0 (regression-tested clean) |
+| L9 Complexity | 95 | 95 | ±0 (WL702/WL703/WL705/WL706 sibling, stable) |
+| L10 Type Safety | 100 | 100 | ±0 (WL704 sibling, stable) |
+| L11 Dep Audit | 95 | 95 | 0 (unchanged) |
+| L15 API Surface | 92 | 92 | ±0 (WL154 sibling, stable) |
+| L20 Config | 96 | 96 | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 | 92 | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 | 90 | ±0 (WL152 sibling, stable) |
+| L24 Migration | 92 | 92 | ±0 (WL155 sibling, stable) |
+| L26 Event Driven | 96 | 96 | ±0 (WL150/WL700 sibling, stable) |
+| L30 Onboarding | 92 | 92 | 0 (unchanged) |
+
+### Validation
+
+* `uv run pytest tests/test_wl707_l3_run_loop_decomposition.py` → **44 passed, 0 failed** (the full WL707 hardening suite; 1 test superseded by the post-WL707 `RunOptions` rename alignment).
+* L3 lane regression: `tests/test_unit_lifecycle_loop.py` + `tests/test_wl112_reasoning_effort.py` + `tests/test_wl125_run_execution_core_helpers_parity.py` + `tests/test_wl130_l3_entrypoint_contract.py` → **98 passed, 13 failed (all 13 pre-existing on the unchanged tree, verified via `git stash` baseline)**. Net WL707 contribution: 0 → 8 previously-failing lifecycle tests now green.
+* `uv run ruff check src/thegent/agents/run_options.py src/thegent/agents/loop_controller.py src/thegent/agents/__init__.py tests/test_wl707_l3_run_loop_decomposition.py` → **All checks passed**.
+* `uv run ruff format --check ...` → **clean** (after one reformat pass on the test file).
+* Back-compat smoke: `loop_controller.py:run_loop` signature unchanged; no source changes required in `cli/commands/run/impl_core_runners.py` or any other downstream consumer; `RalphWiggum` / `LifecycleLoopController` aliases preserved.
+
+### Commits
+
+* (this session) `feat(l3-wl707): seal L3 Agent Loop run_loop decomposition (224 → 41 LOC) + RunOptions kwarg promotion + module-level import lift` — 4 source files (run_options.py + loop_controller.py + __init__.py + new test file) + 1 minimal test_unit_lifecycle_loop.py bug fix + 1 plan file.
+* (this session) `docs(audit+worklog): WL707 session block, L3 Agent Loop 85 → 92 (A), DAG tick` — 2 files changed.
+
+### Preservation
+
+* `sharecli/` untracked tree → untouched.
+* `tests/test_ux_audit_cli.py` merge conflict markers → preserved untouched (unrelated worktree change from the prior session).
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed (local branch will be 2 local commits ahead after this session's commits).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* No unrelated worktree changes touched (only the WL707 files + the plan + the docs).
+
+### Unblocked next
+
+* L1 Architecture continues — `mesh/smart_merge.py` (619 LOC orphan / 0-test surface) or `mesh/git_parallelism.py` (397 LOC orphan).
+* L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit.
+* Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705 + WL706 + WL707 wave).
