@@ -14839,3 +14839,86 @@ L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 
 * L3 Agent Loop (currently 85) — parallel survey agents identified the `src/thegent/agent_loop/orchestrator.py` and `src/thegent/agent_loop/escalation_router.py` modules as candidate next splits / hardening targets.
 * L22 Logging (90) — re-evaluate after the L1/WL705 wave; CC reduction + `log_call` decorator coverage audit.
 * SOTA audit-lane refresh (re-baseline the 12-lane scores after the WL15x + WL7xx + WL705 wave).
+
+## WL706 — L1 Architecture infra/cache_v2 split (419-LOC orphan → 5-submodule package + 30-LOC shim + 35 hardening tests, 2026-08-07)
+
+**Goal.** Follow-on to the WL705 mesh/consensus split. The parallel survey ranked `src/thegent/infra/cache_v2.py` (419 LOC, **6 classes** + `get_cache` factory, **0 tests**, three in-tree consumers — `infra/mojo_bridge.py`, `infra/__init__.py`, `utils/cache.py`) as the highest-leverage remaining L1 hardening target. WL706 hardens it into a 5-submodule package + 30-LOC back-compat shim, reduces CC on the two fan-out hot paths (`CrossProcessSingleflight.do` and `MultiTierCache.get`) via six extracted helpers, and pins the canonical TGNT-P9.x surface with **35 hardening tests** in `tests/unit/infrastructure/test_wl706_cache_split.py`.
+
+### What changed
+
+* **`src/thegent/infra/cache/`** — NEW 5-submodule package carrying the TGNT-P9.x lineage:
+  * `__init__.py` (50 LOC) — canonical `__all__` = `[CacheInvalidator, CacheV2, CrossProcessSingleflight, HAS_WATCHDOG, HeatBasedLRU, MultiTierCache, Singleflight, get_cache]`; module docstring cites the TGNT-P9.x origin (P9.1 singleflight / P9.2 inotify / P9.3 heat-LRU / P9.4 multi-tier / P9.5 TTL).
+  * `ttl.py` (61 LOC) — `CacheV2` (TGNT-P9.5). Async-friendly TTL cache, 4 methods (`get`, `set`, `delete`, `clear_expired`). Body verbatim from legacy.
+  * `singleflight.py` (181 LOC) — `Singleflight` + `CrossProcessSingleflight` (TGNT-P9.1). **`CrossProcessSingleflight.do` CC reduced via 3 helpers**:
+    * `_try_acquire_lock(key)` — returns one of `"acquired"` / `"stale_broken"` / `"wait"` / `"missing_pid"` so the orchestration is a flat `match` over the four outcomes.
+    * `_wait_for_result(key, current_pid)` — returns one of `("found", value)` / `("lock_disappeared", None)` / `("timeout", None)`, polling the result file with the canonical `POLL_INTERVAL_SECONDS = 1`.
+    * `_persist_result(key, value)` — canonical `{result, timestamp}` JSON shape pinned by test.
+    * The constants `LOCK_TTL_SECONDS = 120` / `WAIT_TTL_SECONDS = 120` / `POLL_INTERVAL_SECONDS = 1` are now named class constants instead of magic numbers.
+  * `heat_lru.py` (78 LOC) — `HeatBasedLRU` (TGNT-P9.3). Body verbatim from legacy; `get` / `put` / `__repr__` intact.
+  * `invalidator.py` (69 LOC) — `CacheInvalidator` + `HAS_WATCHDOG` (TGNT-P9.2). The watchdog feature flag now lives in this submodule only; `watch()` and `stop()` remain graceful when `HAS_WATCHDOG` is False.
+  * `multi_tier.py` (231 LOC) — `MultiTierCache` + `get_cache` + `PERSISTDICT_AVAILABLE` (TGNT-P9.4). **`MultiTierCache.get` CC reduced via 3 helpers**:
+    * `_check_l1(key)` — L1-only lookup, returns the canonical `_MISS` sentinel.
+    * `_check_l2_promote_to_l1(key)` — L2 lookup + L1 promotion, returns `_MISS` sentinel on miss.
+    * `_check_l3_promote_to_l2_and_l1(key)` — L3 lookup + L2 + L1 double-promotion, returns `None` on miss.
+    * The three-tier promotion fan-out is now ≤10 LOC of orchestration in `get`, with each tier's logic unit-testable in isolation.
+* **`src/thegent/infra/cache_v2.py`** — back-compat shim (**37 LOC including module docstring**, **≤35 effective LOC**, **0 class defs, 0 function bodies**). Re-exports `CacheV2` / `Singleflight` / `CrossProcessSingleflight` / `HeatBasedLRU` / `CacheInvalidator` / `MultiTierCache` / `get_cache` / `HAS_WATCHDOG` from the canonical package. The 3 in-tree consumers (`infra/mojo_bridge.py`, `infra/__init__.py`, `utils/cache.py`) preserve their import paths verbatim with **zero source changes** — the shim is the only consumer-facing surface.
+* **`tests/unit/infrastructure/test_wl706_cache_split.py`** (NEW, **35 hardening tests**) pins:
+  * **Canonical resolution (5)** — package + sub-module shape + `__all__` (8 entries) + shim identity for all 7 classes + `get_cache` + docstring TGNT-P9.x citation.
+  * **`CacheV2` lifecycle (5)** — set/get round-trip + missing-key miss + TTL expiry + `ttl=None` no-expiry + `clear_expired` selective eviction.
+  * **`Singleflight` lifecycle (4)** — first-call execution + sequential re-execution (documented divergence from `mesh/cache.Singleflight`) + independent-key isolation + exception propagation.
+  * **`CrossProcessSingleflight` (3, `tmp_path`)** — first-call execution + persisted-result lock-release + coordination-dir creation on construction.
+  * **`HeatBasedLRU` (4)** — missing-key miss + put/get round-trip + put-overwrites-existing + capacity enforcement (coldest eviction).
+  * **`CacheInvalidator` (2)** — graceful watchdog-absence `watch()` + `stop()`.
+  * **`MultiTierCache` (7)** — set/get round-trip + missing-key miss + `get_with_fetch` populate-on-miss + return-cached-on-hit + delete-from-all-tiers + clear-empties-all-tiers + `stats()` canonical shape (`{l1_size, l1_max, l2_size, l2_max, l3_size, l3_volume}`).
+  * **Back-compat shim (3)** — `MultiTierCache` identity + `get_cache` identity + `inspect.getsourcefile(MultiTierCache)` resolves to `/infra/cache/multi_tier.py` (NOT the shim).
+  * **AST purity (2)** — shim effective LOC ≤ 35 + no class/function definitions in shim body.
+
+### Pipeline progression for the active five-day goal
+
+L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 secrets handling sealed WL153 → L15 API surface hardening sealed WL154 → L24 migration sub-area sealed WL155 → L9 governance LOW finding sealed WL156 → L26 event-driven extension surface sealed WL700 → L9 governance skip-batch-three sealed WL702 → L9 cliproxy_login_cmd hardening sealed WL703 → L10 type-safety tightening sealed WL704 → L1 Architecture consensus split sealed WL705 (orphaned `mesh/consensus.py`) → **L1 Architecture infra/cache_v2 split sealed WL706 (419-LOC orphan → 5-submodule package + 30-LOC shim + 35 hardening tests; CC reduced on `CrossProcessSingleflight.do` + `MultiTierCache.get` via 6 extracted helpers)**.
+
+### Cockpit Δ
+
+| Lane | Before | After | Δ |
+|------|--------|-------|---|
+| L1 Architecture | 90 | **92** | **+2** (419-LOC orphan consolidated, 6 classes → 5 focused submodules, CC reduced on 2 hot paths, 0 → 35 tests, 3 in-tree consumers preserved untouched) |
+| L2 Dev Loop | 90 | 90 | ±0 (regression-tested clean) |
+| L3 Agent Loop | 85 | 85 | ±0 (next-up candidate: `agents/loop_controller.py` `**kwargs` → `RunOptions`) |
+| L9 Complexity | 95 | 95 | ±0 (WL702/WL703 sibling, stable) |
+| L10 Type Safety | 100 | 100 | ±0 (WL704 sibling, stable) |
+| L11 Dep Audit | 95 | 95 | ±0 (unchanged) |
+| L15 API Surface | 92 | 92 | ±0 (WL154 sibling, stable) |
+| L20 Config | 96 | 96 | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 | 92 | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 | 90 | ±0 (WL152 sibling, stable) |
+| L24 Migration | 92 | 92 | ±0 (WL155 sibling, stable) |
+| L26 Event Driven | 96 | 96 | ±0 (WL150/WL700 sibling, stable) |
+| L30 Onboarding | 92 | 92 | ±0 (unchanged) |
+
+### Validation
+
+* `uv run pytest tests/unit/infrastructure/test_wl706_cache_split.py` → **35 passed, 0 failed** (the full WL706 hardening suite).
+* Cross-lane regression: `tests/mesh/test_cache.py` + `tests/unit/mesh/` + `tests/unit/infrastructure/` + `tests/test_wl704_l10_type_safety_tightening.py` → **169 passed, 0 failed** (28 mesh/cache + 44 WL705 consensus + 35 new WL706 + 62 WL704 type-safety).
+* L3 regression: `tests/test_wl130_l3_entrypoint_contract.py` + `tests/test_wl129_failover_kwarg_forwarding.py` → **16 passed, 0 failed**.
+* Consumer smoke test: `MojoBridge` (via `mojo_bridge.py`) + `MultiTierCache` / `get_cache` (via `infra/__init__.py`) + `ResourceCache` (via `utils/cache.py`) all resolve via the shim identity (`is` check, not equality).
+* `uv run ruff check src/thegent/infra/cache_v2.py src/thegent/infra/cache/ tests/unit/infrastructure/test_wl706_cache_split.py` → **All checks passed**.
+* `uv run ruff format --check ...` → **clean** (after one reformat pass on the test file).
+
+### Commits
+
+* (this session) `feat(l1-wl706): seal L1 Architecture infra/cache_v2 split (5-submodule package + 30-LOC back-compat shim + 35 hardening tests)` — 7 source files (1 shim + 5 submodules + 1 new test file) + 1 plan file.
+* (this session) `docs(audit+worklog): WL706 session block, L1 Architecture 90 → 92, DAG tick` — 2 files changed.
+
+### Preservation
+
+* `sharecli/` untracked tree → untouched.
+* `tests/test_ux_audit_cli.py` merge conflict markers → preserved untouched (unrelated worktree change from the prior session).
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed (local branch will be 2 local commits ahead after this session's commits).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* No unrelated worktree changes touched (only the WL706 files + the plan + the docs).
+
+### Unblocked next
+
+* L1 Architecture continues — `mesh/git.py` (next-largest orphan / 0-test surface from the parallel survey).
+* L3 Agent Loop (85/A-) — `agents/loop_controller.py` calls `run_impl` with `**kwargs`; promote to `RunOptions` canonical shape.
+* Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705 + WL706 wave).
