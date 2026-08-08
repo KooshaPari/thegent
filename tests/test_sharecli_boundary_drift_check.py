@@ -73,6 +73,14 @@ def test_enforced_lane_unallowlisted_violation_fails_in_strict_mode(tmp_path: Pa
     assert findings[0].allowlisted is False
 
 
+def test_legacy_cli_share_import_is_rejected(tmp_path: Path) -> None:
+    config_path = _write_config(tmp_path, "[sharecli_boundary]\nenforced_lanes = [\"queue\"]")
+    _write_python(tmp_path, "src/thegent/mesh/cli.py", "import thegent_cli_share\n")
+    findings = MODULE.collect_findings(tmp_path, config_path)
+    assert len(findings) == 1
+    assert findings[0].severity == "fail"
+
+
 def test_json_payload_contains_required_finding_fields(tmp_path: Path, capsys) -> None:
     config_path = _write_config(
         tmp_path,
