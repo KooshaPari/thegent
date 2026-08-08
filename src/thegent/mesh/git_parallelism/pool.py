@@ -1,194 +1,69 @@
-"""Compatibility wrapper for worktree parallelism domain module.
+"""WorktreePool — pool for managing git worktrees in shared-directory parallelism.
 
-This module mirrors the public API expected by `tests/mesh/test_git_parallelism.py`
-and the smart-merge compatibility tests, while remaining intentionally lightweight.
+The :class:`WorktreePool` is the orchestration entry point for
+``thegent.mesh.git_parallelism``.  It owns:
 
-It is intentionally compatible with the `thegent_gitops.worktree` implementation.
+* the per-project pool directory under ``_WORKTREE_BASE``;
+* the flock-backed state file mapping ``agent_id -> worktree_path``;
+* the acquire / release / cleanup state machine; and
+* the optional AST-aware merge via :class:`thegent.mesh.smart_merger.SmartMerger`.
+
+This is the only orchestration class in the package; helpers and data
+types live in their own submodules (:mod:`.helpers`,
+:mod:`.pool_state`, :mod:`.worktree_context`).  Internal-mode methods
+(``_create_worktree``, ``_merge_and_remove``, ...) are kept private but
+are ≤ 30 LOC each so the class reads top-to-bottom as a single narrative.
+
+Extracted from ``thegent.mesh.git_parallelism`` as part of the WL709 L1
+architecture split.
+
+@trace FR-MESH-006, FR-MESH-007
 """
 
 from __future__ import annotations
 
-try:
-    import fcntl
-except ImportError:  # pragma: no cover - Windows compatibility path
-    fcntl = None  # type: ignore[assignment]
-
-import hashlib
 import logging
-import os
 import shutil
 import subprocess
 from contextlib import contextmanager, suppress
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent.mesh.git_parallelism.helpers import (
+    _STATE_FILENAME,
+    _WORKTREE_BASE,
+    _atomic_write,
+    _git_available,
+    _project_hash,
+    _run,
+    _worktrees_supported,
+)
+from thegent.mesh.git_parallelism.pool_state import _PoolStateLock
+from thegent.mesh.git_parallelism.worktree_context import WorktreeContext
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
-    from thegent.mesh.smart_merge import SmartMerger
+    from thegent.mesh.smart_merger import SmartMerger
 
 _log = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-_WORKTREE_BASE = Path.home() / ".thegent" / "worktrees"
-_STATE_FILENAME = "pool_state.txt"
-
-
-def _project_hash(project_root: Path) -> str:
-    """Stable 12-char hex hash of the canonical project root path."""
-    return hashlib.sha256(str(project_root.resolve()).encode()).hexdigest()[:12]
-
-
-def _atomic_write(path: Path, content: str) -> None:
-    """Write *content* to *path* atomically via sibling temp + rename."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile_mkstemp(dir=path.parent)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            fh.write(content)
-        os.replace(tmp, path)
-    except Exception:
-        with suppress(OSError):
-            os.unlink(tmp)
-        raise
-
-
-def tempfile_mkstemp(**kwargs: object) -> tuple[int, str]:
-    import tempfile
-
-    return tempfile.mkstemp(**kwargs)
-
-
-def _run(cmd: list[str], cwd: Path | str, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a subprocess command and return `CompletedProcess`."""
-    return shim_run([*cmd], cwd=str(cwd), check=check, capture_output=True, text=True)
-
-
-def _git_available(path: Path | str = ".") -> bool:
-    """Return True if git is available and this path is a git repo."""
-    try:
-        _run(["git", "rev-parse", "--git-dir"], path)
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-
-
-def _worktrees_supported(path: Path | str = ".") -> bool:
-    """Return True if git worktrees are supported for this repository."""
-    try:
-        result = _run(["git", "worktree", "list"], path)
-        return result.returncode == 0
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-
-
-# ---------------------------------------------------------------------------
-# Data types
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class WorktreeContext:
-    """Snapshot of an acquired worktree."""
-
-    agent_id: str
-    path: Path
-    branch: str
-    project_root: Path
-    _pool_ref: "WorktreePool | None" = field(compare=False, repr=False, default=None)
-
-    def commit_all(self, message: str) -> str | None:
-        """Stage all changes in the worktree and create a commit.
-
-        Returns the commit hash on success, None on failure.
-        """
-        try:
-            _run(["git", "add", "-A"], self.path)
-            proc = _run(
-                ["git", "commit", "--allow-empty", "-m", message],
-                self.path,
-                check=False,
-            )
-            if proc.returncode not in (0, 1):
-                _log.warning("commit failed in worktree %s: %s", self.path, proc.stderr)
-                return None
-            result = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(self.path), text=True).strip()
-            return result
-        except Exception as exc:
-            _log.warning("commit_all failed for agent %s: %s", self.agent_id, exc)
-            return None
-
-    def release(self) -> bool:
-        """Convenience: release this worktree back to its pool."""
-        if self._pool_ref is not None:
-            return self._pool_ref.release_worktree(self.agent_id)
-        return False
-
-
-# ---------------------------------------------------------------------------
-# Pool state file
-# ---------------------------------------------------------------------------
-
-
-class _PoolStateLock:
-    """Simple flock-backed state file lock helper."""
-
-    def __init__(self, state_path: Path) -> None:
-        self._path = state_path
-        self._fh = None
-
-    def __enter__(self) -> "_PoolStateLock":
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        if not self._path.exists():
-            self._path.touch()
-        self._fh = open(self._path, "r+", encoding="utf-8")
-        if fcntl is not None:
-            fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX)
-        return self
-
-    def __exit__(self, *args: object) -> None:
-        try:
-            if self._fh is not None:
-                if fcntl is not None:
-                    fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
-                self._fh.close()
-        finally:
-            self._fh = None
-
-    def read(self) -> dict[str, str]:
-        """Parse state file lines as ``key=value`` pairs."""
-        assert self._fh is not None
-        self._fh.seek(0)
-        state: dict[str, str] = {}
-        for line in self._fh:
-            line = line.strip()
-            if "=" in line:
-                key, _, value = line.partition("=")
-                state[key] = value
-        return state
-
-    def write(self, state: dict[str, str]) -> None:
-        """Overwrite state file from *state*."""
-        assert self._fh is not None
-        self._fh.seek(0)
-        self._fh.truncate()
-        for key in sorted(state):
-            self._fh.write(f"{key}={state[key]}\n")
-        self._fh.flush()
-
-
-# ---------------------------------------------------------------------------
-# WorktreePool
-# ---------------------------------------------------------------------------
-
 
 class WorktreePool:
-    """Pool for managing worktrees in shared-directory parallel execution mode."""
+    """Pool for managing worktrees in shared-directory parallel execution mode.
+
+    The pool has two operating modes:
+
+    * **worktree mode** — when git is available and the repository supports
+      worktrees, each agent gets a real ``git worktree`` on a per-agent
+      branch ``agent/<agent_id>``.
+    * **fallback mode** — when git is unavailable or worktrees are not
+      supported, every agent shares the ``project_root`` and a small
+      per-agent ``<agent_id>.fallback.lock`` file is used as a soft
+      reservation marker.
+
+    Each pool instance is scoped to a single ``project_root``; the pool
+    directory is keyed by a stable 12-char hash of the resolved path so
+    two pools for the same project share the same on-disk state.
+    """
 
     def __init__(
         self,
@@ -209,10 +84,12 @@ class WorktreePool:
         self._worktrees_ok = self._git_ok and _worktrees_supported(self.project_root)
         self.worktrees: list[WorktreeContext] = []
 
+    # ------------------------------------------------------------------
     # Public API
+    # ------------------------------------------------------------------
 
     def acquire_worktree(self, agent_id: str) -> WorktreeContext:
-        """Acquire (or reuse) a worktree context for `agent_id`."""
+        """Acquire (or reuse) a worktree context for *agent_id*."""
         with _PoolStateLock(self._state_path) as lock:
             state = lock.read()
             if agent_id in state:
@@ -251,6 +128,7 @@ class WorktreePool:
 
     @contextmanager
     def worktree(self, agent_id: str):
+        """Context manager wrapping :meth:`acquire_worktree` + :meth:`release_worktree`."""
         ctx = self.acquire_worktree(agent_id)
         try:
             yield ctx
@@ -258,12 +136,17 @@ class WorktreePool:
             self.release_worktree(agent_id)
 
     def active_agents(self) -> list[str]:
-        """Return the set of currently tracked agent IDs."""
+        """Return the list of agent IDs currently held in the pool state."""
         with _PoolStateLock(self._state_path) as lock:
             return list(lock.read().keys())
 
     def cleanup_stale(self) -> int:
-        """Remove stale entries from state and return removal count."""
+        """Remove stale entries whose worktree path no longer exists on disk.
+
+        Returns the number of entries removed.  Also attempts a best-effort
+        ``git worktree remove`` and ``git branch -D`` for the stale entries
+        when operating in worktree mode so the repository stays tidy.
+        """
         removed = 0
         with _PoolStateLock(self._state_path) as lock:
             state = lock.read()
@@ -280,9 +163,12 @@ class WorktreePool:
             lock.write(kept)
             return removed
 
+    # ------------------------------------------------------------------
     # Internal: worktree mode
+    # ------------------------------------------------------------------
 
     def _create_worktree(self, agent_id: str) -> WorktreeContext:
+        """Create (or recreate) a fresh ``git worktree`` for *agent_id*."""
         branch = f"agent/{agent_id}"
         worktree_path = self._pool_dir / agent_id
 
@@ -306,7 +192,11 @@ class WorktreePool:
         )
 
     def _merge_and_remove(self, agent_id: str, worktree_path: Path, branch: str) -> bool:
-        """Merge branch into target and remove worktree."""
+        """Merge *branch* into the resolved target and remove the worktree.
+
+        Uses the configured :class:`SmartMerger` if one was supplied;
+        otherwise falls back to a plain ``git merge --no-ff``.
+        """
         target = self._resolve_target_branch()
 
         merged = False
@@ -315,14 +205,17 @@ class WorktreePool:
             merged = merge_result.success
         else:
             try:
-                _run([
-                    "git",
-                    "merge",
-                    "--no-ff",
-                    "-m",
-                    f"Merge agent/{agent_id} into {target}",
-                    branch,
-                ], self.project_root)
+                _run(
+                    [
+                        "git",
+                        "merge",
+                        "--no-ff",
+                        "-m",
+                        f"Merge agent/{agent_id} into {target}",
+                        branch,
+                    ],
+                    self.project_root,
+                )
                 merged = True
             except subprocess.CalledProcessError:
                 merged = False
@@ -335,6 +228,7 @@ class WorktreePool:
         return bool(merged and removed)
 
     def _git_worktree_remove(self, path_str: str) -> bool:
+        """Best-effort ``git worktree remove --force`` for *path_str*."""
         try:
             _run(["git", "worktree", "remove", "--force", path_str], self.project_root)
             return True
@@ -342,6 +236,7 @@ class WorktreePool:
             return False
 
     def _branch_exists(self, branch: str) -> bool:
+        """Return True if the local branch *branch* exists in ``project_root``."""
         try:
             result = _run(["git", "branch", "--list", branch], self.project_root)
             return branch in result.stdout
@@ -349,24 +244,38 @@ class WorktreePool:
             return False
 
     def _resolve_target_branch(self) -> str:
+        """Resolve the configured ``target_branch`` to a concrete branch name.
+
+        Returns the configured branch when it is not the sentinel ``"HEAD"``;
+        otherwise falls back to the current branch via ``git rev-parse``,
+        or ``"main"`` if git fails.
+        """
         if self.target_branch != "HEAD":
             return self.target_branch
         try:
-            result = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], self.project_root)
+            result = _run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                self.project_root,
+            )
             return result.stdout.strip() or "main"
         except subprocess.CalledProcessError:
             return "main"
 
     def _try_delete_branch(self, branch: str) -> None:
+        """Best-effort ``git branch -D``; failures are silenced."""
         with suppress(subprocess.CalledProcessError):
             _run(["git", "branch", "-D", branch], self.project_root)
 
+    # ------------------------------------------------------------------
     # Internal: fallback shared-tree mode
+    # ------------------------------------------------------------------
 
     def _fallback_lock_path(self, agent_id: str) -> Path:
+        """Return the per-agent fallback lock file path inside ``_pool_dir``."""
         return self._pool_dir / f"{agent_id}.fallback.lock"
 
     def _acquire_shared_fallback(self, agent_id: str) -> WorktreeContext:
+        """Acquire a shared-tree fallback context (no real worktree)."""
         lock_path = self._fallback_lock_path(agent_id)
         _atomic_write(lock_path, f"agent={agent_id}\n")
         return WorktreeContext(
@@ -378,6 +287,7 @@ class WorktreePool:
         )
 
     def _release_shared_fallback(self, agent_id: str, _worktree_path: Path) -> bool:
+        """Remove the per-agent fallback lock file.  Returns True on success."""
         lock_path = self._fallback_lock_path(agent_id)
         with suppress(OSError):
             lock_path.unlink(missing_ok=True)
@@ -385,13 +295,4 @@ class WorktreePool:
         return False
 
 
-__all__ = [
-    "WorktreeContext",
-    "WorktreePool",
-    "_project_hash",
-    "_atomic_write",
-    "_git_available",
-    "_worktrees_supported",
-    "_PoolStateLock",
-    "_run",
-]
+__all__ = ["WorktreePool"]
