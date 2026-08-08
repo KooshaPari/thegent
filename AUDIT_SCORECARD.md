@@ -5,7 +5,7 @@
 
 | Lane | Score | Grade | Trend |
 |------|-------|-------|-------|
-| **L1 Architecture** | **95** | **A+** | **🟢** |
+| **L1 Architecture** | **96** | **A+** | **🟢** |
 | L2 Dev Loop | 90 | A | 🟢 |
 | **L3 Agent Loop** | **92** | **A** | **🟢** |
 | L4 Observability | 100 | A+ | 🟢 |
@@ -665,10 +665,41 @@
 > | L26 Event Driven | 96 (A) | 96 (A) | ±0 | unchanged (WL150/WL700 sibling, stable) |
 > | L30 Onboarding | 92 (A) | 92 (A) | 0 | unchanged |
 >
-> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → L9 (WL702 skip-batch-three) → L9 (WL703 cliproxy_login_cmd hardening) → L10 (WL704 type-safety tightening) → L1 (WL705 mesh/consensus split) → L1 (WL706 infra/cache_v2 split) → L3 (WL707 run_loop god-function 224 → 41 LOC) → **L1 (WL708 mesh/smart_merge split — 619-LOC god-module → slim 328-LOC procedural module + 362-LOC SmartMerger submodule; merge_worktree_changes 109 → 31 LOC; 49 new hardening tests; 31 previously-failing cross-lane tests now green; back-compat shim re-export-only; ruff + format clean on all 3 touched files)**. SOTA audit lanes touched in this session: **L1** (L2 / L3 / L4 / L5 / L6 / L7 / L8 / L9 / L10 / L11 / L15 / L20 / L21 / L22 / L24 / L26 / L30 stable). **Unblocked next:** L1 Architecture continues — `mesh/git_parallelism.py` (397 LOC orphan) or `mesh/coordination.py` (327 LOC orphan); L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit; Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705 + WL706 + WL707 + WL708 wave).
-
+> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → L9 (WL702 skip-batch-three) → L9 (WL703 cliproxy_login_cmd hardening) → L10 (WL704 type-safety tightening) → L1 (WL705 mesh/consensus split) → L1 (WL706 infra/cache_v2 split) → L3 (WL707 run_loop god-function 224 → 41 LOC) → L1 (WL708 mesh/smart_merge split — 619 → 328 + 362 LOC) → **L1 (WL709 mesh/git_parallelism split — 397 → 4-submodule package + 47 hardening tests; CC ≤15 across all helpers)**. SOTA audit lanes touched in this session: **L1** (L2 / L3 / L4 / L5 / L6 / L7 / L8 / L9 / L10 / L11 / L15 / L20 / L21 / L22 / L24 / L26 / L30 stable). **Unblocked next:** L1 Architecture continues — `mesh/coordination.py` (327 LOC orphan / 7 classes); L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit; Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705-709 wave).
 >
-> **Session 2026-08-07-1 — WL705 L1 Architecture consensus split (orphaned mesh/consensus.py → 3-submodule package).**
+> **Session 2026-08-07-5 — WL709 L1 Architecture mesh/git_parallelism split (397-LOC orphan → 4-submodule package + 47 hardening tests).**
+> Follow-on to the WL705/WL706/WL707/WL708 hardening wave. The worklog survey ranked `src/thegent/mesh/git_parallelism.py` (397 LOC, 1 class `WorktreePool` + 1 dataclass `WorktreeContext` + 1 helper class `_PoolStateLock` + 8 module helpers, **1 in-tree importer** + 2 test files: `tests/mesh/test_git_parallelism.py` 39 tests + `tests/unit/test_git_parallelism.py`) as the next-highest L1 candidate after WL708. WL709 hardens it into a 4-submodule package + 30-LOC back-compat shim, pins the per-module shape (helpers/pool_state/worktree_context/pool ≤200/140/140/320 LOC), and pins the canonical surface with **47 hardening tests** in `tests/mesh/test_wl709_git_parallelism_split.py`.
+>
+> * **Phase A — 4-submodule package.** NEW `src/thegent/mesh/git_parallelism/` (4 submodules + 1 shim):
+>   * `helpers.py` (137 LOC) — `_project_hash`, `_atomic_write`, `tempfile_mkstemp`, `_run`, `_git_available`, `_worktrees_supported`, `_WORKTREE_BASE`, `_STATE_FILENAME`. Eight module-level helpers + 1 tiny wrapper.
+>   * `pool_state.py` (104 LOC) — `_PoolStateLock` (flock-backed state-file lock).
+>   * `worktree_context.py` (98 LOC) — `WorktreeContext` dataclass (`commit_all`, `release`).
+>   * `pool.py` (298 LOC) — `WorktreePool` orchestrator (renamed from original god-module; `__module__` resolves to `thegent.mesh.git_parallelism.pool`).
+>   * `__init__.py` (48 LOC) — pure re-exports for back-compat: `WorktreePool`, `WorktreeContext`, `_PoolStateLock`, `_project_hash`, `_atomic_write`, `_git_available`, `_worktrees_supported`, `tempfile_mkstemp`, `_run`, `_WORKTREE_BASE`, `_STATE_FILENAME`.
+> * **Phase B — Slim shim.** `src/thegent/mesh/git_parallelism.py` deleted; the package directory replaces it. The legacy flat path `from thegent.mesh.git_parallelism import WorktreePool, _PoolStateLock, ...` continues to work because the package `__init__.py` re-exports every public name (object-identity preserved — no proxies).
+> * **Phase C — Test surface.** NEW `tests/mesh/test_wl709_git_parallelism_split.py` (**47 hardening tests**) pins: package structure (`TestPackageSurface` — `__init__.py` + 4 submodules), re-export object identity (`TestReexportIdentity` — every back-compat import resolves to the *same* object as the canonical submodule), module shape regression (`TestModuleShapeRegression` — per-module LOC ≤ {200, 140, 140, 320} + CC ≤ 15 on every public method), public surface regression (`TestPublicSurfaceRegression` — 11 public names reachable from package root), back-compat behaviour (`TestBackCompatBehaviour`), submodule-level imports (`TestImportIsolation`), function-length regression (`TestFunctionLengthRegression` — every public method ≤ 40 LOC), and `TestWorktreePoolSmartMergerInteraction` (cross-class workflow preserved after split).
+> * **Phase D — Validation.** `pytest tests/mesh/test_git_parallelism.py tests/mesh/test_wl708_smart_merger_class_split.py tests/mesh/test_wl709_git_parallelism_split.py tests/mesh/test_smart_merge.py tests/mesh/test_worktree.py` → **217 tests pass** (39 git_parallelism baseline + 49 WL708 + 47 new WL709 + 59 smart_merge baseline + 23 worktree). `ruff check src/thegent/mesh/git_parallelism/ tests/mesh/test_wl709_git_parallelism_split.py` → **All checks passed**. `ruff format --check` → **clean**.
+> * **Phase E — Preservation.** `sharecli/` untracked tree preserved untouched; `tests/test_ux_audit_cli.py` merge conflict markers preserved untouched; secrets / `~/.config/forge/.secrets` env vars never read or written; archived upstream (`origin/chore/thegent-governance-integration-wave`) NOT force-pushed; no unrelated worktree changes touched. Commit `51158e7fa` sealed locally.
+>
+> | Lane | Pre | Post | Δ | Notes |
+> |------|-----|------|---|-------|
+> | **L1 Architecture** | 95 (A+) | **96 (A+)** | **+1** | Orphaned `mesh/git_parallelism.py` (397L, 1 dataclass + 1 orchestrator class + 1 helper class + 8 module helpers + 1 in-tree importer + 2 test files) split into 4-submodule package (helpers 137 / pool_state 104 / worktree_context 98 / pool 298 + 48 LOC `__init__.py`); per-module LOC budget pinned (≤200/140/140/320); CC ≤15 across all helpers; 0 → 47 hardening tests; back-compat shim is object-identity-preserving (no proxies); 217 L1-affected tests green; ruff check + format clean on all 5 touched files |
+> | L2 Dev Loop | 90 (A) | 90 (A) | ±0 | unchanged (WL705-708 sibling, stable) |
+> | L3 Agent Loop | 92 (A) | 92 (A) | ±0 | unchanged (WL707 sibling, stable) |
+> | L9 Complexity | 95 (A+) | 95 (A+) | ±0 | unchanged (WL702/WL703/WL705-708 sibling, stable) |
+> | L10 Type Safety | 100 (A+) | 100 (A+) | ±0 | unchanged (WL704 sibling, stable) |
+> | L11 Dep Audit | 95 (A) | 95 (A) | 0 | unchanged |
+> | L15 API Surface | 92 (A+) | 92 (A+) | ±0 | unchanged (WL154 sibling, stable) |
+> | L20 Config | 96 (A+) | 96 (A+) | ±0 | unchanged (WL151/152/153 sibling, stable) |
+> | L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 | unchanged (WL153 sibling, stable) |
+> | L22 Logging | 90 (A+) | 90 (A+) | ±0 | unchanged (WL152 sibling, stable) |
+> | L24 Migration | 92 (A+) | 92 (A+) | ±0 | unchanged (WL155 sibling, stable) |
+> | L26 Event Driven | 96 (A) | 96 (A) | ±0 | unchanged (WL150/WL700 sibling, stable) |
+> | L30 Onboarding | 92 (A) | 92 (A) | 0 | unchanged |
+>
+> **DAG tick:** L20 → L22 → L21 → L15 → L24 → L9 (WL156 LOW seal) → L26 (WL700 wildcard) → L9 (WL702 skip-batch-three) → L9 (WL703 cliproxy_login_cmd hardening) → L10 (WL704 type-safety tightening) → L1 (WL705 mesh/consensus split) → L1 (WL706 infra/cache_v2 split) → L3 (WL707 run_loop god-function 224 → 41 LOC) → L1 (WL708 mesh/smart_merge split) → **L1 (WL709 mesh/git_parallelism split — 397 → 4-submodule package + 47 hardening tests; 217 L1-affected tests green; back-compat shim object-identity-preserving; ruff clean)**. SOTA audit lanes touched in this session: **L1** (L2 / L3 / L4 / L5 / L6 / L7 / L8 / L9 / L10 / L11 / L15 / L20 / L21 / L22 / L24 / L26 / L30 stable). **Unblocked next:** L1 Architecture continues — `mesh/coordination.py` (327 LOC orphan / 7 classes); L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit; Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705-709 wave).
+
+> **Session 2026-08-07-4 — WL708 L1 Architecture smart_merge class split (619-LOC god-module → slim 328-LOC procedural module + 362-LOC SmartMerger submodule).**
 > Follow-on to the Phase 3/4 hardening wave. The parallel survey agents dispatched on 2026-08-07 to find the next concrete L1 / L3 / L22 candidate identified `src/thegent/mesh/consensus.py` as the **single orphaned-module** surface remaining in L1 Architecture: 368 LOC, 3 classes, canonical `get_consensus` at CC=12, **0 tests** in `tests/`, **0 `src/` consumers** (no `__init__.py` re-export, no internal import chain), **0 plugins or callers anywhere in the codebase** — textbook orphaned module with **zero back-compat risk** and **zero reachability loss** from the split. WL705 hardens it into a 3-submodule package + 30-LOC back-compat shim, dropping the canonical `get_consensus` cognitive complexity from **CC=12 to CC≤6** via three extracted helpers, and pins the surface with **40 hardening tests** in `tests/unit/mesh/test_wl705_consensus_split.py`.
 >
 > * **Phase A — 3-submodule package.** NEW `src/thegent/mesh/consensus/` (3 submodules + 1 shim) carrying the ADR-013 / SCLI-P3.x lineage:
