@@ -15126,3 +15126,70 @@ L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 
 * L1 Architecture continues — `mesh/coordination.py` (327 LOC orphan / 7 classes).
 * L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit.
 * Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705-709 wave).
+
+## WL710 — L1 Architecture mesh/coordination split (327-LOC orphan → 5-submodule package + 58 hardening tests, 2026-08-07)
+
+### What changed
+
+* **NEW** `src/thegent/mesh/coordination/` (5 submodules + `__init__.py`):
+  * `hlc.py` (55 LOC) — `HLCTimestamp` (SCLI-P6.2). HLC monotonicity, `update`/`parse` round-trip preserved verbatim.
+  * `occ.py` (68 LOC) — `OptimisticConcurrencyControl` (SCLI-P6.1). sha256 version tracking + claim/verify flow unchanged.
+  * `leases.py` (95 LOC) — `FileClaimsRegistry` (SCLI-P6.3–P6.4). Lease acquire / renew / release / expired-cleanup unchanged.
+  * `intent.py` (118 LOC) — `EditIntent` dataclass + `ConflictPrediction` dataclass + `IntentRegistry` (TGNT-P7.2). Auto-timestamp via `HLCTimestamp().update()` in `__post_init__` preserved.
+  * `predict.py` (114 LOC) — `predict_merge_conflicts` orchestrator (≤40 LOC body) + `_line_ranges_overlap` helper + three extracted case-handlers (`_create_conflict`, `_delete_conflict`, `_modify_conflict`) to enforce the 40-LOC per-function budget while preserving the 6-branch decision tree.
+  * `__init__.py` (35 LOC) — pure re-exports for back-compat: `ConflictPrediction`, `EditIntent`, `FileClaimsRegistry`, `HLCTimestamp`, `IntentRegistry`, `OptimisticConcurrencyControl`, `_line_ranges_overlap`, `predict_merge_conflicts`.
+* **DELETED** `src/thegent/mesh/coordination.py` — the package directory replaces it. The legacy flat path `from thegent.mesh.coordination import HLCTimestamp, ...` continues to work because the package `__init__.py` re-exports every public name (object-identity preserved — no proxies).
+* **NEW** `tests/mesh/test_wl710_coordination_split.py` (58 tests) — pins package structure (4), re-export object identity (8), module shape regression (per-module LOC ≤ {80, 100, 140, 160, 120} + CC ≤ 15 on every public method), public surface regression (8 names), back-compat behaviour (7), submodule-level imports (5), function-length regression (13 methods ≤ 40 LOC body), and `TestCoordinationInteractions` (cross-class workflows).
+* **Internal refactor in `predict.py`** — extracted `_create_conflict`, `_delete_conflict`, `_modify_conflict` helpers to keep the `predict_merge_conflicts` orchestrator under the 40-LOC body budget (was 52 LOC, now ≤20 LOC body).
+
+### Pipeline progression for the active five-day goal
+
+* **Pre-WL710 state** — L1 Architecture sealed at 96/A+ after the WL705/WL706/WL708/WL709 wave. The worklog survey ranked `mesh/coordination.py` (327 LOC, 7 public classes/functions, 1 in-tree test importer, 36 baseline tests) as the next-highest L1 candidate after WL709.
+* **WL710 lane picked: L1 Architecture (96 → 97/A+, +1).**
+* **Post-WL710 state** — L1 Architecture sealed at **97 (A+)**, the fifth split in the L1 wave (WL705, WL706, WL708, WL709, WL710). L3 Agent Loop holds at 92 (WL707 sibling, stable).
+
+### Cockpit Δ
+
+| Lane | Pre | Post | Δ |
+|------|-----|------|---|
+| **L1 Architecture** | **96 (A+)** | **97 (A+)** | **+1** |
+| L2 Dev Loop | 90 (A) | 90 (A) | ±0 (WL705-709 sibling, stable) |
+| L3 Agent Loop | 92 (A) | 92 (A) | ±0 (WL707 sibling, stable) |
+| L4 UX | 85 (A-) | 85 (A-) | ±0 (next candidate is `ux/cli_cockpit.py` 2347 LOC split) |
+| L9 Complexity | 95 (A+) | 95 (A+) | ±0 (WL702/WL703/WL705-709 sibling, stable) |
+| L10 Type Safety | 100 (A+) | 100 (A+) | ±0 (WL704 sibling, stable) |
+| L11 Dep Audit | 95 (A) | 95 (A) | 0 (unchanged) |
+| L15 API Surface | 92 (A+) | 92 (A+) | ±0 (WL154 sibling, stable) |
+| L20 Config | 96 (A+) | 96 (A+) | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 (A+) | 90 (A+) | ±0 (WL152 sibling, stable) |
+| L24 Migration | 92 (A+) | 92 (A+) | ±0 (WL155 sibling, stable) |
+| L26 Event Driven | 96 (A) | 96 (A) | ±0 (WL150/WL700 sibling, stable) |
+| L30 Onboarding | 92 (A) | 92 (A) | 0 (unchanged) |
+
+### Validation
+
+* `pytest tests/mesh/test_wl710_coordination_split.py tests/mesh/test_coordination.py tests/mesh/test_git_parallelism.py tests/mesh/test_wl708_smart_merger_class_split.py tests/mesh/test_wl709_git_parallelism_split.py` → **229 tests pass** (58 new WL710 + 36 coordination baseline + 39 git_parallelism baseline + 49 WL708 + 47 WL709).
+* `ruff check src/thegent/mesh/coordination/ tests/mesh/test_wl710_coordination_split.py` → **All checks passed** (after auto-fix of 6 trailing-newline warnings).
+* `ruff format --check` → **clean** (after one reformat pass on `intent.py` + the test file).
+* Back-compat smoke: `from thegent.mesh.coordination import (ConflictPrediction, EditIntent, FileClaimsRegistry, HLCTimestamp, IntentRegistry, OptimisticConcurrencyControl, _line_ranges_overlap, predict_merge_conflicts)` works; all 8 names are the *same* objects as in their canonical submodules (object-identity preserved).
+* Pre-existing failures in `tests/mesh/test_file_coordination.py` (legacy `thegent.coordination.file_coordination` top-level package, not affected by WL710) confirmed unrelated via stash test.
+
+### Commits
+
+* (sealed) `c2909c12d` — `feat(l1-wl710): seal L1 Architecture mesh/coordination split (327 -> 5-submodule package + 58 hardening tests)` — 6 source files + 1 new test file.
+* (pending) `docs(audit+worklog): WL710 session block, L1 Architecture 96 → 97 (A+), DAG tick` — 2 files changed.
+
+### Preservation
+
+* `sharecli/` untracked tree → untouched.
+* `tests/test_ux_audit_cli.py` merge conflict markers → preserved untouched.
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed.
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* No unrelated worktree changes touched.
+
+### Unblocked next
+
+* L1 Architecture exhaustion sweep — `cli/services/run_execution_core_helpers.py` (2993 LOC, L2 Dev Loop), `ux/cli_cockpit.py` (2347 LOC, L2/L4 UX overlap), `govern/vetter/checks.py` (890 LOC, L21/L26).
+* L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit.
+* Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705-710 wave).
