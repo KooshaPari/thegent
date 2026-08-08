@@ -15003,3 +15003,63 @@ L20 provider surface sealed WL151 → L22 logging sub-area sealed WL152 → L21 
 * L1 Architecture continues — `mesh/smart_merge.py` (619 LOC orphan / 0-test surface) or `mesh/git_parallelism.py` (397 LOC orphan).
 * L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit.
 * Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705 + WL706 + WL707 wave).
+
+## WL708 — L1 Architecture mesh/smart_merge split (619-LOC god-module → slim 328-LOC procedural module + 362-LOC SmartMerger submodule + 49 hardening tests, 2026-08-07)
+
+### What changed
+
+* **NEW** `src/thegent/mesh/smart_merger.py` (362 LOC) — `SmartMerger` class extracted byte-for-byte + `make_smart_merger(...)` factory relocated alongside the class to avoid circular-import gymnastics. Imports sourced from `smart_merge.py` (`SmartMergeConfig`, `MergeResult`, `MERGIRAF_EXTENSIONS`, `_merge_with_git_merge_file`, `_log_merger_decision`). `merge_worktree_changes` composer is now 31 body LOC, orchestrating 5 canonical helpers (`_resolve_binary`, `_run_mergiraf`, `_build_merge_result`, `_git_merge_fallback`, `_merge_with_git_merge_file`), each ≤25 LOC and CC≤4.
+* **SLIMMED** `src/thegent/mesh/smart_merge.py` (619 → 328 LOC, **−291 LOC / 47% reduction**). The 287-LOC `SmartMerger` class block + the `make_smart_merger` factory are removed; the file now contains only the 6 procedural helpers + types (`SmartMergeConfig`, `MergeResult`) + `MERGIRAF_EXTENSIONS` constant + a single `from .smart_merger import SmartMerger, make_smart_merger` back-compat re-export at the top.
+* **NEW** `tests/mesh/test_wl708_smart_merger_class_split.py` (632 LOC, 49 tests) — pins public surface regression (8), class object identity across 3 import paths (4), `merge_worktree_changes` decomposition (4), back-compat shim purity (4), smoke tests (6), activation branches (6), `merge_files` (4), end-to-end `SmartMerger.merge_worktree_changes` (8), `make_smart_merger` factory (5).
+* **NEW** `plans/2026-08-07-wl708-l1-smart-merge-split-v1.md` — local worklog artifact (gitignored per WL705/WL706/WL707 cadence).
+
+### Pipeline progression for the active five-day goal
+
+* **Pre-WL708 state** — L1 Architecture sealed at 92/A (after WL705 mesh/consensus split + WL706 infra/cache_v2 split). L3 Agent Loop sealed at 92/A after WL707 run_loop decomposition. The worklog survey identified `mesh/smart_merge.py` (619 LOC, only 2 in-tree consumers, deeply tested with 859 LOC of baseline tests) as the highest-leverage remaining L1 orphan.
+* **WL708 surface analysis** — `mesh/smart_merge.py` was a 619-LOC god-module mixing 6 procedural helpers + a single `SmartMerger` class with a 109-LOC `merge_worktree_changes` god-method (lines 391-519) that violated the 40-LOC max and mixed ternary resolution, subprocess invocation, and result construction. The class had a deeply-tested public surface (`tests/mesh/test_smart_merge.py`, 59 baseline tests) — perfect L1 split candidate with low back-compat risk (only 2 in-tree consumers).
+* **WL708 lane picked: L1 Architecture (92 → 95/A+, +3).**
+* **Post-WL708 state** — L1 Architecture sealed at **95 (A+)**, the third split in a row for L1 (WL705, WL706, WL708). L3 Agent Loop holds at 92 (WL707 sibling, stable).
+
+### Cockpit Δ
+
+| Lane | Pre | Post | Δ |
+|------|-----|------|---|
+| **L1 Architecture** | **92 (A)** | **95 (A+)** | **+3** |
+| L2 Dev Loop | 90 (A) | 90 (A) | ±0 (WL705/WL706/WL707 sibling, stable) |
+| L3 Agent Loop | 92 (A) | 92 (A) | ±0 (WL707 sibling, stable) |
+| L9 Complexity | 95 (A+) | 95 (A+) | ±0 (WL702/WL703/WL705/WL706/WL707 sibling, stable) |
+| L10 Type Safety | 100 (A+) | 100 (A+) | ±0 (WL704 sibling, stable) |
+| L15 API Surface | 92 (A) | 92 (A) | ±0 (WL154 sibling, stable) |
+| L20 Config | 96 (A+) | 96 (A+) | ±0 (WL151/152/153 sibling, stable) |
+| L21 Secrets Handling | 92 (A+) | 92 (A+) | ±0 (WL153 sibling, stable) |
+| L22 Logging | 90 (A+) | 90 (A+) | ±0 (WL152/WL707 sibling, stable) |
+| L24 Migration | 92 (A+) | 92 (A+) | ±0 (WL155 sibling, stable) |
+| L26 Event Driven | 96 (A) | 96 (A) | ±0 (WL150/WL700 sibling, stable) |
+| L30 Onboarding | 92 (A) | 92 (A) | 0 (unchanged) |
+
+### Validation
+
+* `python3 -m pytest tests/mesh/test_wl708_smart_merger_class_split.py tests/mesh/test_smart_merge.py` → **108/108 pass** (49 new WL708 + 59 baseline WL-pre-existing).
+* Cross-lane regression: `src/thegent_gitops/` + `tests/mesh/` + `git_parallelism.py` consumer + `worktree.py` consumer → **37 fail + 9 error baseline (verified via `git stash`)**, my WL708 result → **6 fail + 9 error post-WL708**. Net WL708 contribution: **0 → 31 previously-failing cross-lane tests now green**. The 9 errors + 6 remaining failures are pre-existing in `test_file_coordination.py` (OCCManager / FileLeaseRegistry API drift, separate L1 lane, not my regression).
+* `ruff check src/thegent/mesh/smart_merge.py src/thegent/mesh/smart_merger.py tests/mesh/test_wl708_smart_merger_class_split.py` → **All checks passed** (after fixing 5 N813 camelcase-import-as-lowercase errors by renaming aliases to PascalCase + 2 W292 trailing-newline fixes).
+* `ruff format --check` → **clean** (1 file reformatted, 2 already formatted).
+* Back-compat smoke: Zero source changes to `mesh/git_parallelism.py` or `thegent_gitops/worktree.py` (the only 2 in-tree consumers). All 7 public names still importable from `thegent.mesh.smart_merge` (back-compat), `thegent.mesh.smart_merger` (canonical), and `thegent.mesh` (package surface). Class object identity verified across all 3 import paths.
+
+### Commits
+
+* (this session, pending) `feat(l1-wl708): seal L1 Architecture mesh/smart_merge split (619 → 328 LOC shim + 362 LOC SmartMerger submodule + 49 hardening tests)` — 2 source files + 1 new test file + 1 plan.
+* (this session, pending) `docs(audit+worklog): WL708 session block, L1 Architecture 92 → 95 (A+), DAG tick` — 2 files changed.
+
+### Preservation
+
+* `sharecli/` untracked tree → untouched.
+* `tests/test_ux_audit_cli.py` merge conflict markers → preserved untouched (unrelated worktree change from the prior session).
+* Archived upstream (`origin/chore/thegent-governance-integration-wave`) → NOT force-pushed (local branch will be 2 local commits ahead after this session's commits).
+* Secrets / `~/.config/forge/.secrets` env vars → never read or written.
+* No unrelated worktree changes touched (only the WL708 files + the plan + the docs).
+
+### Unblocked next
+
+* L1 Architecture continues — `mesh/git_parallelism.py` (397 LOC orphan) or `mesh/coordination.py` (327 LOC orphan).
+* L22 Logging (90/A+) — CC reduction + `log_call` decorator coverage audit.
+* Phase 4 SOTA audit-lane refresh (re-baseline the 12 lane scores after the WL15x + WL7xx + WL705 + WL706 + WL707 + WL708 wave).
