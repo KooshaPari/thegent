@@ -1,0 +1,14 @@
+name: cargo-semver-checks
+
+on:
+  pull_request:
+    paths: ['**/Cargo.toml']
+  workflow_dispatch:
+
+jobs:
+  semver-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
+      - uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # pin@v2
