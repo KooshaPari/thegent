@@ -1001,16 +1001,23 @@ class OperatorCockpit:
         panes also get their own labels so downstream tooling
         (screen readers, TUI inspectors) can identify the region
         without scraping free-form text.
-
-        The body composition is delegated to :meth:`_assemble_grid_body`,
-        :meth:`_interleave_pane_pair`, and :meth:`_join_optional_sections`
-        so this orchestrator stays focused on dispatch.
         """
-        labels = self._resolve_pane_labels()
+        cfg = self.config
+        # Resolve labels defensively; older configs (pre-AUDIT-N+15 / +18 / +22)
+        # may not have every key, so the grid reflects only the configured
+        # subset. ``pane_labels.get(...)`` returns the default and is
+        # never missing.
+        runs_label = cfg.pane_labels.get(CockpitPane.RUNS, "Live Runs")
+        lanes_label = cfg.pane_labels.get(CockpitPane.LANES, "Lane Distribution")
+        confidence_label = cfg.pane_labels.get(CockpitPane.CONFIDENCE, "Confidence (P50/P95)")
+        overrides_label = cfg.pane_labels.get(CockpitPane.OVERRIDES, "Active Overrides")
+        traffic_label = cfg.pane_labels.get(CockpitPane.TRAFFIC, "Traffic")
+        dormant_label = cfg.pane_labels.get(CockpitPane.DORMANT_CORE, "Dormant Core")
+        decisions_label = "Decision History"
 
         # 1. Header — title + progress bar (P-081). The header lands
         #    in a ``region`` so screen readers flag it as a landmark.
-        header = self._render_header(aria_label=self.config.title)
+        header = self._render_header(aria_label=cfg.title)
 
         # 2. Optional override-expiry banner (WP-3003 -> WP-4001 bridge).
         #    Surfaces the most recent governance.override.expired events
@@ -1019,123 +1026,53 @@ class OperatorCockpit:
         banner = self._render_override_banner()
 
         # 3. The four panes (ARIA-annotated on the closing border).
-        runs_lines = self._render_runs_pane(aria_label=labels["runs"])
-        lanes_lines = self._render_lanes_pane(aria_label=labels["lanes"])
-        conf_lines = self._render_confidence_pane(aria_label=labels["confidence"])
-        ovr_lines = self._render_overrides_pane(aria_label=labels["overrides"])
+        runs_lines = self._render_runs_pane(aria_label=runs_label)
+        lanes_lines = self._render_lanes_pane(aria_label=lanes_label)
+        conf_lines = self._render_confidence_pane(aria_label=confidence_label)
+        ovr_lines = self._render_overrides_pane(aria_label=overrides_label)
 
-        # 4-7. Body rows: 2x2 grid + decisions + optional traffic/dormant-core.
-        body = self._assemble_grid_body(
-            runs_lines=runs_lines,
-            lanes_lines=lanes_lines,
-            conf_lines=conf_lines,
-            ovr_lines=ovr_lines,
-            decisions_lines=self._render_decisions_pane(aria_label=labels["decisions"]),
-            traffic_lines=self._render_traffic_pane_lines(aria_label=labels["traffic"]),
-            dormant_lines=self._render_dormant_core_pane_lines(aria_label=labels["dormant"]),
+        # 4. Compose into 2x2 grid
+        body_lines: list[str] = []
+        for i in range(max(len(runs_lines), len(lanes_lines))):
+            left = runs_lines[i] if i < len(runs_lines) else ""
+            right = lanes_lines[i] if i < len(lanes_lines) else ""
+            body_lines.append(f"{left:<46}│ {right}")
+        for i in range(max(len(conf_lines), len(ovr_lines))):
+            left = conf_lines[i] if i < len(conf_lines) else ""
+            right = ovr_lines[i] if i < len(ovr_lines) else ""
+            body_lines.append(f"{left:<46}│ {right}")
+        # 5. Third row: decision-history pane (full-width). Mirrors the
+        #    existing override-history UX (different stream): every
+        #    recorded ``DecisionNotice`` shows up with verdict glyph +
+        #    age so operators can trace governance denies without
+        #    tailing the JSONL. Uses ``role="log"`` per ARIA conventions.
+        decisions_lines = self._render_decisions_pane(aria_label=decisions_label)
+        # 6. AUDIT-N+15: fourth row — traffic pane (full-width). When a
+        #    ``TrafficDashboard`` is attached via ``attach_traffic``, this
+        #    surfaces live count/rps/error_rate/p50/p95 so operators see
+        #    traffic without tailing a separate dashboard. Without a
+        #    dashboard attached the pane is omitted entirely so the
+        #    layout reflects only attached subsystems.
+        traffic_lines = self._render_traffic_pane_lines(aria_label=traffic_label)
+        # 7. AUDIT-N+18: fifth row — dormant-core pane (full-width). When a
+        #    dormant-core source is attached via ``attach_dormant_core`,
+        #    this surfaces live escalation count, past-SLA count,
+        #    freshness bucket, and the AUDIT-N+13 ``wl120_dormant_round_trip``
+        #    side-channel flag so operators see the dormant-core
+        #    reconciliation inline alongside the traffic pane. Without a
+        #    source attached the pane is omitted entirely.
+        dormant_lines = self._render_dormant_core_pane_lines(aria_label=dormant_label)
+        body = (
+            "\n".join(body_lines)
+            + "\n"
+            + "\n".join(decisions_lines)
+            + ("\n" + "\n".join(traffic_lines) if traffic_lines else "")
+            + ("\n" + "\n".join(dormant_lines) if dormant_lines else "")
         )
 
         if banner:
             return f"{header}\n{banner}\n{body}"
         return f"{header}\n{body}"
-
-    def _resolve_pane_labels(self) -> dict[str, str]:
-        """Resolve ARIA pane labels defensively from :attr:`CockpitConfig.pane_labels`.
-
-        Older configs (pre-AUDIT-N+15 / +18 / +22) may not have every key,
-        so this returns the configured subset with safe defaults. ``dict.get``
-        never raises so a missing config key yields the default literal.
-
-        Returns a mapping of ``{pane_key: label}`` keyed by short mnemonic
-        (``runs``, ``lanes``, ``confidence``, ``overrides``, ``traffic``,
-        ``dormant``, ``decisions``).
-        """
-        cfg = self.config
-        return {
-            "runs": cfg.pane_labels.get(CockpitPane.RUNS, "Live Runs"),
-            "lanes": cfg.pane_labels.get(CockpitPane.LANES, "Lane Distribution"),
-            "confidence": cfg.pane_labels.get(CockpitPane.CONFIDENCE, "Confidence (P50/P95)"),
-            "overrides": cfg.pane_labels.get(CockpitPane.OVERRIDES, "Active Overrides"),
-            "traffic": cfg.pane_labels.get(CockpitPane.TRAFFIC, "Traffic"),
-            "dormant": cfg.pane_labels.get(CockpitPane.DORMANT_CORE, "Dormant Core"),
-            "decisions": "Decision History",
-        }
-
-    def _assemble_grid_body(
-        self,
-        *,
-        runs_lines: list[str],
-        lanes_lines: list[str],
-        conf_lines: list[str],
-        ovr_lines: list[str],
-        decisions_lines: list[str],
-        traffic_lines: list[str],
-        dormant_lines: list[str],
-    ) -> str:
-        """Compose the cockpit body from rendered panes.
-
-        Layout::
-
-            ┌─ runs pane ─┬─ lanes pane ─┐
-            │ conf pane   │ ovr pane     │
-            ├─────────────┴──────────────┤
-            │ decisions pane (full)      │
-            │ traffic pane    (optional) │
-            │ dormant pane    (optional) │
-
-        Optional rows (traffic, dormant) are omitted entirely when their
-        source is not attached, keeping the layout minimal when those
-        subsystems are absent.
-        """
-        rows_top = self._interleave_pane_pair(runs_lines, lanes_lines)
-        rows_bot = self._interleave_pane_pair(conf_lines, ovr_lines)
-        grid = "\n".join(rows_top + rows_bot)
-        return self._join_optional_sections([grid, "\n".join(decisions_lines), traffic_lines, dormant_lines])
-
-    @staticmethod
-    def _interleave_pane_pair(
-        left_lines: list[str],
-        right_lines: list[str],
-        *,
-        gap: int = 3,
-    ) -> list[str]:
-        """Interleave ``left_lines`` and ``right_lines`` side-by-side.
-
-        Produces ``max(len(left), len(right))`` rows, each formatted as
-        ``"{left:<46}{gap_spaces}│ {right}"``. Missing rows on either
-        side render as empty strings, preserving visual alignment when
-        the panes have different heights.
-
-        The ``│`` divider uses a fixed-width left column of 46 chars so
-        panes that render a 44-char-wide box land with the divider in
-        the same horizontal position regardless of content.
-        """
-        rows: list[str] = []
-        gap_spaces = " " * gap
-        for i in range(max(len(left_lines), len(right_lines))):
-            left = left_lines[i] if i < len(left_lines) else ""
-            right = right_lines[i] if i < len(right_lines) else ""
-            rows.append(f"{left:<46}{gap_spaces}│ {right}")
-        return rows
-
-    @staticmethod
-    def _join_optional_sections(sections: Sequence[Sequence[str] | str]) -> str:
-        """Join optional body sections, omitting empty sequences entirely.
-
-        Each entry may be a ``str`` (already-rendered section) or a
-        sequence of lines. Empty sections are dropped silently so the
-        final body keeps a tight layout when traffic/dormant panes are
-        absent.
-        """
-        rendered: list[str] = []
-        for section in sections:
-            if isinstance(section, str):
-                text = section
-            else:
-                text = "\n".join(section)
-            if text:
-                rendered.append(text)
-        return "\n".join(rendered)
 
     def _render_override_banner(self) -> str:
         """Render an inline banner for the freshest operationally-relevant event.
