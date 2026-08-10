@@ -1,101 +1,36 @@
-"""STUB MODULE - thegent.config_provider
+"""Legacy import path for ``thegent.config_provider``.
 
-WARNING: This is an auto-generated stub module.
-The actual implementation was moved/deleted during repository restructuring.
-This stub exists for backwards compatibility with existing tests.
+The canonical implementation lives at
+``thegent.governance.config_provider`` (and ``thegent.governance.config_provider_cp``).
+This module re-exports the public surface so older imports — e.g.
+``from thegent.config_provider import get_config_provider`` — continue to work
+while pointing at the canonical, fully-tested implementation.
+
+The previous stub here was incomplete (missing ``import os``, lacked
+``provider_metadata`` contract, missing ``_attach_provider_metadata`` helper)
+and caused ``NameError`` on every ``resolve()`` call. See
+``tests/test_unit_config_provider.py`` for the contract this module now
+satisfies.
+
+# @trace AUDIT-N+86
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from thegent.governance.config_provider import (
+    ConfigProvider,
+    EnvConfigProvider,
+    _attach_provider_metadata,
+    get_config_provider,
+    get_last_provider_metadata,
+)
+from thegent.governance.config_provider_cp import ControlPlaneConfigProvider
 
-
-# Global provider instance
-_provider_instance: "EnvConfigProvider | None" = None
-_last_provider_metadata: dict[str, Any] = {}
-
-
-class EnvConfigProvider:
-    """Environment-based configuration provider."""
-
-    def __init__(self) -> None:
-        """Initialize the environment config provider."""
-        self._base_config: dict[str, Any] = {
-            "default_timeout": 300,
-            "default_timeout_claude": 180,
-            "session_dir": Path("~/.thegent/sessions").expanduser(),
-            "log_level": "INFO",
-            "max_retries": 3,
-        }
-
-    def resolve(
-        self,
-        keys: list[str] | None = None,
-        request_overrides: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        """Resolve configuration values.
-
-        Args:
-            keys: Optional list of specific keys to resolve.
-            request_overrides: Optional overrides for the request.
-
-        Returns:
-            Dictionary of resolved configuration values.
-        """
-        config = self._base_config.copy()
-
-        # Apply environment variable overrides
-        for key, env_var in [
-            ("default_timeout", "THGENT_TIMEOUT"),
-            ("session_dir", "THGENT_SESSION_DIR"),
-            ("log_level", "THGENT_LOG_LEVEL"),
-        ]:
-            if env_var in os.environ:
-                config[key] = os.environ[env_var]
-
-        # Apply request overrides
-        if request_overrides:
-            config.update(request_overrides)
-
-        # Filter by keys if specified
-        if keys:
-            config = {k: v for k, v in config.items() if k in keys}
-
-        return config
-
-    def get_tenant_config(self, tenant_id: str) -> dict[str, Any] | None:
-        """Get tenant-specific configuration.
-
-        Args:
-            tenant_id: The tenant identifier.
-
-        Returns:
-            Tenant configuration dict or None if not found.
-        """
-        return None
-
-
-def get_config_provider() -> EnvConfigProvider:
-    """Get the global configuration provider instance.
-
-    Returns:
-        The global EnvConfigProvider instance.
-    """
-    global _provider_instance
-    if _provider_instance is None:
-        _provider_instance = EnvConfigProvider()
-    return _provider_instance
-
-
-def get_last_provider_metadata() -> dict[str, Any]:
-    """Get metadata about the last provider operation.
-
-    Returns:
-        Dictionary containing metadata about the last operation.
-    """
-    return _last_provider_metadata.copy()
-
-
-# Re-export the module for convenience
-__all__ = ["EnvConfigProvider", "get_config_provider", "get_last_provider_metadata"]
+__all__ = [
+    "ConfigProvider",
+    "ControlPlaneConfigProvider",
+    "EnvConfigProvider",
+    "get_config_provider",
+    "get_last_provider_metadata",
+    "_attach_provider_metadata",
+]

@@ -1,0 +1,172 @@
+[
+  {
+    "cc": 208,
+    "function": "run_impl_core",
+    "path": "src/thegent/cli/services/run_execution_core_helpers.py"
+  },
+  {
+    "cc": 97,
+    "function": "bg_impl_core",
+    "path": "src/thegent/cli/services/run_execution_core_helpers.py"
+  },
+  {
+    "cc": 56,
+    "function": "build_project_execution_matrix",
+    "path": "src/thegent/phench/service.py"
+  },
+  {
+    "cc": 43,
+    "function": "parse_work_stream_md",
+    "path": "src/thegent/cli/services/run_workstream_helpers.py"
+  },
+  {
+    "cc": 43,
+    "function": "_deserialize_value",
+    "path": "src/thegent/integrations/base.py"
+  },
+  {
+    "cc": 43,
+    "function": "sync_to_github",
+    "path": "src/thegent/integrations/gh_project_sync.py"
+  },
+  {
+    "cc": 42,
+    "function": "route",
+    "path": "src/thegent/utils/routing_impl/litellm_router.py"
+  },
+  {
+    "cc": 41,
+    "function": "run_loop",
+    "path": "src/thegent/agents/loop_controller.py"
+  },
+  {
+    "cc": 40,
+    "function": "run",
+    "path": "src/thegent/agents/codex_proxy.py"
+  },
+  {
+    "cc": 40,
+    "function": "validate_task",
+    "path": "src/thegent/task/validator.py"
+  },
+  {
+    "cc": 38,
+    "function": "_eval_node",
+    "path": "src/thegent/utils/routing_impl/cel_router.py"
+  },
+  {
+    "cc": 36,
+    "function": "import_from_csv",
+    "path": "src/thegent/integrations/gh_project_sync.py"
+  },
+  {
+    "cc": 35,
+    "function": "session_contract_health_trend_impl",
+    "path": "src/thegent/cli/commands/session_health_trend_impl.py"
+  },
+  {
+    "cc": 35,
+    "function": "_tokenize",
+    "path": "src/thegent/utils/routing_impl/cel_router.py"
+  },
+  {
+    "cc": 34,
+    "function": "_ensure_config",
+    "path": "src/thegent/agents/cliproxy_manager.py"
+  },
+  {
+    "cc": 34,
+    "function": "audit_shared_modules_across_repos",
+    "path": "src/thegent/phench/service.py"
+  },
+  {
+    "cc": 33,
+    "function": "evaluate",
+    "path": "src/thegent/execution/__init__.py"
+  },
+  {
+    "cc": 33,
+    "function": "sync_project_modules_from_repos",
+    "path": "src/thegent/phench/service.py"
+  },
+  {
+    "cc": 32,
+    "function": "websocket_responses_handler",
+    "path": "src/thegent/cliproxy_adapter.py"
+  },
+  {
+    "cc": 32,
+    "function": "_get_parent_terminal_info",
+    "path": "src/thegent/infra/terminal_keepalive.py"
+  },
+  {
+    "cc": 31,
+    "function": "cockpit_replay",
+    "path": "src/thegent/ux/cli_cockpit.py"
+  },
+  {
+    "cc": 30,
+    "function": "_build_cmd",
+    "path": "src/thegent/agents/direct_agents.py"
+  },
+  {
+    "cc": 30,
+    "function": "resolve_route",
+    "path": "src/thegent/models/catalog.py"
+  },
+  {
+    "cc": 30,
+    "function": "sota_replay",
+    "path": "src/thegent/ux/cli_sota.py"
+  },
+  {
+    "cc": 29,
+    "function": "dag_sync_cmd",
+    "path": "src/thegent/cli/commands/plan_cmds.py"
+  },
+  {
+    "cc": 28,
+    "function": "run",
+    "path": "src/thegent/agents/state_machine.py"
+  },
+  {
+    "cc": 28,
+    "function": "sync_configs",
+    "path": "src/thegent/integration/unified_config/__init__.py"
+  },
+  {
+    "cc": 28,
+    "function": "cockpit_audit_mcp_tail",
+    "path": "src/thegent/ux/cli_cockpit.py"
+  },
+  {
+    "cc": 27,
+    "function": "handle_jsonrpc",
+    "path": "src/thegent/adapters/acp_server.py"
+  },
+  {
+    "cc": 27,
+    "function": "materialize_scan_candidate_manifest",
+    "path": "src/thegent/phench/service.py"
+  },
+  {
+    "cc": 26,
+    "function": "inbox_list_impl",
+    "path": "src/thegent/cli/services/run_post_surface_helpers.py"
+  },
+  {
+    "cc": 26,
+    "function": "collect_queued_items",
+    "path": "src/thegent/cli/services/run_workstream_helpers.py"
+  },
+  {
+    "cc": 26,
+    "function": "_health_trend_meta",
+    "path": "src/thegent/mcp/server/__init__.py"
+  },
+  {
+    "cc": 26,
+    "function": "process_jsonrpc_line_full",
+    "path": "src/thegent/protocols/jsonrpc_agent_server.py"
+  }
+]

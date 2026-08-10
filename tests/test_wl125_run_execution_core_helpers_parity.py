@@ -1,7 +1,10 @@
 import importlib
+import inspect
 import sys
 import types
 from pathlib import Path
+
+import pytest
 
 
 def _noop(*args: object, **kwargs: object) -> object:
@@ -152,3 +155,58 @@ def test_bg_impl_wrapper_delegates_with_argument_passthrough(monkeypatch, tmp_pa
     assert captured["continuation_include_stderr"] is True
     assert captured["image_paths"] == ["/tmp/bg.png"]
     assert captured["impl_ns"] is impl
+
+
+@pytest.mark.parametrize(
+    "phase_name",
+    [
+        "_phase_auto_route",
+        "_phase_resolve_agent_from_model",
+        "_phase_evaluate_contract_version",
+        "_phase_resolve_effective_timeout",
+        "_phase_resolve_cwd",
+        "_phase_terminal_discovery",
+        "_phase_input_guardrails",
+        "_phase_idempotency_replay",
+        "_phase_trust_boundary",
+    ],
+)
+def test_run_impl_core_delegates_early_phases_to_extracted_helpers(phase_name: str) -> None:
+    helpers = importlib.import_module("thegent.cli.services.run_execution_core_helpers")
+    source = inspect.getsource(helpers.run_impl_core)
+
+    assert f"{phase_name}(" in source, (
+        f"Expected run_impl_core to delegate to {phase_name} helper for "
+        f"early-phase parity with the pre-extraction monolith."
+    )
+
+
+def test_run_impl_core_has_no_inline_early_phase_bodies() -> None:
+    """Regression guard: every early-phase phase must be a one-line delegation.
+
+    Detects accidental re-inlining of helpers that were extracted in the L9
+    run-execution-core refactor (commit 48e0f5acd + L9 budget_gate wire-up).
+    """
+    helpers = importlib.import_module("thegent.cli.services.run_execution_core_helpers")
+    source = inspect.getsource(helpers.run_impl_core)
+
+    forbidden_inline_signatures = [
+        # Auto-router inline body (28-line block historically): any nested
+        # `ar = auto_route(` call inside run_impl_core would mean the
+        # helper was re-inlined instead of delegated.
+        "ar = auto_route(",
+        # Idempotency replay inline body historically called
+        # `registry.session_exists(session_id_from_token)` directly.
+        'session_id_from_token = f"run_{hashlib.sha256(idempotency_token.encode()).hexdigest()[:8]}"',
+        # Trust boundary inline body historically called
+        # `trust_boundary.get_last_environment()` then validated.
+        "last_env = trust_boundary.get_last_environment()",
+        # Contract migration inline body historically constructed a
+        # `MigrationController()` directly inside run_impl_core.
+        "migrator = MigrationController()",
+    ]
+    for signature in forbidden_inline_signatures:
+        assert signature not in source, (
+            f"Found inline phase body fragment {signature!r} in run_impl_core; "
+            f"phase should be delegated to an extracted helper."
+        )

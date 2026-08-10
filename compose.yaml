@@ -1,0 +1,75 @@
+# thegent — local development compose stack.
+#
+# Brings up:
+#   * thegent  — the main CLI/MCP HTTP server (port 8765).
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f thegent
+#   docker compose exec thegent thegent --help
+#
+# A `make` or `task` target can wrap this for onboarding (L30 lane).
+
+name: thegent
+
+services:
+  thegent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: thegent:dev
+    container_name: thegent
+    restart: unless-stopped
+
+    # Run the MCP HTTP server by default; override `command` to launch a
+    # one-shot CLI invocation (e.g. `thegent discover`).
+    command: ["thegent", "mcp-http", "--host", "0.0.0.0", "--port", "8765"]
+
+    ports:
+      - "127.0.0.1:8765:8765"
+
+    # Bind-mount the host ~/.thegent/ for cross-container state persistence
+    # (audit logs, session state, override events). Read-write so the
+    # container can flush audit JSONL.
+    volumes:
+      - thegent-home:/home/thegent/.thegent
+
+    environment:
+      THEGENT_HOME: /home/thegent/.thegent
+      THEGENT_LOG_LEVEL: info
+      PYTHONUNBUFFERED: "1"
+      # Operator-supplied env (override via .env or `docker compose --env-file`):
+      # THEGENT_OPENAI_API_KEY
+      # THEGENT_ANTHROPIC_API_KEY
+      # THEGENT_BIFROST_API_KEY
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8765/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # Drop unnecessary Linux capabilities; the MCP server only needs outbound
+    # HTTP. NET_BIND_SERVICE is required when --port < 1024 (we use 8765 so
+    # it's optional).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+    # Resource guards so a runaway agent loop can't OOM the host.
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  thegent-home:
+    name: thegent-home

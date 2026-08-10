@@ -70,12 +70,17 @@ def test_impl_execution_functions_are_same_objects_as_impl() -> None:
 
 
 def test_run_impl_signature_intact() -> None:
-    """run_impl must have expected key parameters (agent, prompt, cd, model)."""
+    """run_impl must accept prompt, audio_files, google_grounding and pass rest through **kwargs."""
     import thegent.cli.commands.impl_execution as exec_mod
 
     sig = inspect.signature(exec_mod.run_impl)
-    for param in ("agent", "prompt", "cd", "model"):
-        assert param in sig.parameters, f"run_impl missing param: {param}"
+    # Explicit named params (pinned by tests/test_wl116_audio_inputs.py).
+    for param in ("prompt", "audio_files", "google_grounding"):
+        assert param in sig.parameters, f"run_impl missing explicit param: {param}"
+    # agent, cd, model arrive through **kwargs.
+    assert any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()), (
+        "run_impl must accept **kwargs for agent/cd/model forwarding"
+    )
 
 
 def test_bg_impl_signature_intact() -> None:

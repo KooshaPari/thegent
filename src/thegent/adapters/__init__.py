@@ -25,12 +25,11 @@ from thegent.adapters.ports import (
     PluginInterface,
     DriverPlugin,
     RouterPlugin,
+    PluginHost,
     # Registration Decorators
     register_driver,
     register_router,
     register_cache,
-    # Runtime
-    _runtime_registry,
 )
 
 # Plugin Host Adapter - WASM/Extism integration
@@ -63,11 +62,11 @@ __all__ = [
     "GovernancePort",
     # Registry
     "AdapterRegistry",
-    "_runtime_registry",
     # Plugins
     "PluginInterface",
     "DriverPlugin",
     "RouterPlugin",
+    "PluginHost",
     # Plugin Host
     "PluginHostAdapter",
     "PluginHostConfig",

@@ -1,0 +1,474 @@
+openapi: 3.1.0
+info:
+  title: thegent public API surface
+  version: "1.6.84"
+  summary: HTTP surface of thegent's MCP server and its CLI command vocabulary.
+  description: |
+    thegent exposes two primary surfaces:
+
+    1. **MCP HTTP server** (`/health`, `/mcp`, tool + resource paths) — used by
+       FastMCP clients (Codex, Claude Desktop, etc.) when running the server in
+       HTTP mode (`uvicorn thegent.mcp.server:http_app`).
+    2. **CLI command vocabulary** — exposed via Typer under the entry points
+       `thegent`, `clode`, `roid`, `droid`, `dex`, `anen`, `fanta`, `antigma`.
+       Each command is documented under `x-cli-command` for tooling that wants
+       to introspect the CLI programmatically.
+
+    This file is a vendored machine-readable inventory. It is **not** generated
+    from code (yet) — keep it in sync with the FastMCP tool decorators in
+    `src/thegent/mcp/server/` and the Typer commands in
+    `src/thegent/cli/apps/`.
+
+  contact:
+    name: Koosha Paridehpour
+    email: kooshapari@gmail.com
+  license:
+    name: MIT
+    identifier: MIT
+  x-cli-entry-points:
+    - thegent
+    - clode
+    - roid
+    - droid
+    - dex
+    - anen
+    - fanta
+    - antigma
+
+servers:
+  - url: http://localhost:8765
+    description: Local development (default MCP HTTP port)
+  - url: https://thegent.local
+    description: Self-hosted operator node
+
+tags:
+  - name: health
+    description: Liveness and readiness probes for the MCP HTTP server.
+  - name: mcp
+    description: FastMCP tool + resource surface (model-context protocol).
+  - name: governance
+    description: Audit, vetter, retention, and override-event surfaces.
+  - name: agents
+    description: Agent discovery, registration, and lifecycle.
+  - name: sessions
+    description: Run, background-task, and session inspection surfaces.
+  - name: cli
+    description: CLI command surface (Typer) cross-referenced under x-cli-command.
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Liveness probe.
+      operationId: health
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    uptime_s: 12.4
+                    version: 1.6.84
+
+  /mcp/tools/list:
+    get:
+      tags: [mcp]
+      summary: List FastMCP-registered tools.
+      operationId: listTools
+      responses:
+        "200":
+          description: Tool catalogue.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items: { $ref: "#/components/schemas/McpTool" }
+
+  /thegent_run_agent:
+    post:
+      tags: [mcp, agents]
+      summary: Run an agent turn synchronously.
+      operationId: thegentRunAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunAgentRequest"
+      responses:
+        "200":
+          description: Agent result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunAgentResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /thegent_bg_task:
+    post:
+      tags: [mcp, sessions]
+      summary: Schedule a background agent run.
+      operationId: thegentBgTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BgTaskRequest"
+      responses:
+        "202":
+          description: Background task accepted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BgTaskResponse"
+
+  /thegent_status:
+    get:
+      tags: [mcp, sessions]
+      summary: Read session status.
+      operationId: thegentStatus
+      parameters:
+        - in: query
+          name: session_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: include_contract
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Session state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionStatus"
+
+  /thegent_stop:
+    post:
+      tags: [mcp, sessions]
+      summary: Stop a running session.
+      operationId: thegentStop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_id]
+              properties:
+                session_id: { type: string }
+                force: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Session stopped.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id: { type: string }
+                  stopped: { type: boolean }
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /observe_summary:
+    get:
+      tags: [mcp, governance]
+      summary: Aggregate observability snapshot.
+      operationId: observeSummary
+      responses:
+        "200":
+          description: Observability summary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObserveSummary"
+
+  /session_contract_health_trend:
+    get:
+      tags: [mcp, governance]
+      summary: Per-session contract-health trend.
+      operationId: sessionContractHealthTrend
+      responses:
+        "200":
+          description: Trend series.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /thegent_logs:
+    get:
+      tags: [mcp, sessions]
+      summary: Fetch session logs.
+      operationId: thegentLogs
+      parameters:
+        - in: query
+          name: session_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: follow
+          schema: { type: boolean, default: false }
+        - in: query
+          name: tail
+          schema: { type: integer, default: 20, minimum: 1 }
+      responses:
+        "200":
+          description: Log lines.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogsResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /thegent_ps:
+    get:
+      tags: [mcp, sessions]
+      summary: List sessions.
+      operationId: thegentPs
+      parameters:
+        - in: query
+          name: all
+          schema: { type: boolean, default: false }
+        - in: query
+          name: owner
+          schema: { type: string }
+        - in: query
+          name: format
+          schema: { type: string, enum: [text, json, yaml] }
+        - in: query
+          name: include_contract
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Session inventory.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionListResponse"
+
+  /thegent_resume:
+    post:
+      tags: [mcp, sessions]
+      summary: Resume a paused session.
+      operationId: thegentResume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeRequest"
+      responses:
+        "200":
+          description: Resume outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+components:
+  responses:
+    ValidationError:
+      description: Request validation failure.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        uptime_s: { type: number, format: float }
+        version: { type: string }
+
+    McpTool:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        input_schema: { type: object, additionalProperties: true }
+
+    RunAgentRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt: { type: string, minLength: 1 }
+        agent: { type: string, description: "Agent name (e.g. 'codex', 'claude')." }
+        mode: { type: string, enum: [standard, fast, deep, swarm, adaptive] }
+        execution_mode: { type: string, enum: [sync, async, fire_and_forget] }
+        pareto_mode: { type: boolean, default: false }
+
+    RunAgentResponse:
+      type: object
+      required: [result, run_id]
+      properties:
+        result: { type: string }
+        run_id: { type: string }
+        model_used: { type: string }
+        cost_usd: { type: number, format: float }
+        elapsed_ms: { type: number, format: float }
+
+    BgTaskRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt: { type: string }
+        agent: { type: string }
+        session_id: { type: string }
+
+    BgTaskResponse:
+      type: object
+      required: [session_id, accepted]
+      properties:
+        session_id: { type: string }
+        accepted: { type: boolean, enum: [true] }
+        queued_at: { type: string, format: date-time }
+
+    SessionStatus:
+      type: object
+      required: [session_id, status]
+      properties:
+        session_id: { type: string }
+        status: { type: string, enum: [pending, running, completed, failed, cancelled] }
+        include_contract: { type: boolean }
+        contract: { type: object, additionalProperties: true }
+
+    ObserveSummary:
+      type: object
+      properties:
+        ts: { type: string, format: date-time }
+        counters: { type: object, additionalProperties: { type: integer } }
+        latency_ms:
+          type: object
+          properties:
+            p50: { type: number }
+            p95: { type: number }
+            p99: { type: number }
+        health_score: { type: number, minimum: 0, maximum: 100 }
+
+    LogsResponse:
+      type: object
+      required: [session_id, lines]
+      properties:
+        session_id: { type: string }
+        follow: { type: boolean }
+        tail: { type: integer }
+        lines:
+          type: array
+          items: { type: string }
+        truncated: { type: boolean, default: false }
+
+    SessionListEntry:
+      type: object
+      required: [session_id, status]
+      properties:
+        session_id: { type: string }
+        status: { type: string, enum: [pending, running, paused, completed, failed, cancelled] }
+        owner: { type: string }
+        started_at: { type: string, format: date-time }
+        contract_version: { type: string }
+        include_contract: { type: boolean }
+
+    SessionListResponse:
+      type: object
+      required: [sessions]
+      properties:
+        sessions:
+          type: array
+          items: { $ref: "#/components/schemas/SessionListEntry" }
+        total: { type: integer }
+        format: { type: string, enum: [text, json, yaml] }
+
+    ResumeRequest:
+      type: object
+      required: [session_id]
+      properties:
+        session_id: { type: string }
+        contract_version: { type: string }
+
+    ResumeResponse:
+      type: object
+      required: [session_id, accepted]
+      properties:
+        session_id: { type: string }
+        accepted: { type: boolean }
+        resumed_at: { type: string, format: date-time }
+        message: { type: string }
+
+    ValidationError:
+      type: object
+      required: [error, fields]
+      properties:
+        error: { type: string }
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+x-cli-command:
+  - name: thegent
+    description: Primary CLI entrypoint. Typer app at thegent.cli.apps.main:app.
+    subcommands:
+      - run
+      - discover
+      - inspect
+      - dag
+      - phench
+      - govern
+      - cockpit
+      - migrate
+      - registry
+
+  - name: clode
+    description: Sandbox harness wrapper. thegent.rust_wrappers:clode.
+    subcommands: [exec, install, doctor]
+
+  - name: roid
+    description: Android automation wrapper. thegent.rust_wrappers:roid.
+
+  - name: droid
+    description: Device-farm wrapper. thegent.rust_wrappers:droid.
+
+  - name: dex
+    description: Desktop executor wrapper. thegent.rust_wrappers:dex.
+
+  - name: anen
+    description: Anonymous-orchestration wrapper. thegent.rust_wrappers:anen.
+
+  - name: fanta
+    description: Feature-flag wrapper. thegent.rust_wrappers:fanta.
+
+  - name: antigma
+    description: Anti-pattern linter wrapper. thegent.rust_wrappers:antigma.
+
+x-audit-lane: L15
+x-audit-score-before: 50
+x-audit-score-target: 75
+x-audit-notes: |
+  L15 hardening pass — vendored OpenAPI 3.1 spec for the MCP HTTP surface
+  plus an `x-cli-command` cross-reference for the Typer CLI vocabulary.
+  Subsequent passes should (a) add FastAPI decorators to the MCP server
+  endpoints so the spec can be auto-generated, and (b) add request/response
+  JSON schemas for the remaining 30+ tools.

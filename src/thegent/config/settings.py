@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from thegent.config_defaults import (
@@ -18,6 +18,7 @@ from thegent.config_defaults import (
     default_sandbox_env_allowlist,
     expanded_path_factory,
 )
+from thegent.config.logging_config import LoggingConfig
 from thegent.config_parsers import (
     parse_retention_by_domain,
 )
@@ -38,7 +39,11 @@ class ThegentSettings(BaseSettings):
         extra="ignore",
     )
 
-    # Model-related settings (from ModelConfig)
+    # Model-related settings (canonical public-API surface).
+    # These mirror ModelConfig in `model_config.py` — `ThegentSettings` is the
+    # composite entrypoint consumed throughout the CLI (see config_wizard,
+    # config_validator, run_routing, run_model_helpers, run_post_surface_helpers).
+    # Removing them here would break the public `settings.<field>` access pattern.
     default_cursor_model: str = Field(
         default="gemini-3-flash",
         description="Default model for cursor agent",
@@ -274,7 +279,7 @@ class ThegentSettings(BaseSettings):
         default=True,
         description="Enable sitback harness status probing",
     )
-    supermemory_api_key: str | None = Field(
+    supermemory_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Supermemory-backed memory storage",
     )
@@ -297,7 +302,7 @@ class ThegentSettings(BaseSettings):
         ge=0,
         description="Redis database index for orchestration coordination primitives",
     )
-    redis_password: str | None = Field(
+    redis_password: SecretStr | None = Field(
         default=None,
         description="Optional Redis password for orchestration coordination primitives",
     )
@@ -524,10 +529,6 @@ class ThegentSettings(BaseSettings):
         default="development",
         description="Execution environment name",
     )
-    zmx_bin: str = Field(
-        default="zmx",
-        description="Path or command name for the zmx binary",
-    )
     zmx_binary: str = Field(
         default="zmx",
         description="Path or command name for the zmx binary",
@@ -611,10 +612,6 @@ class ThegentSettings(BaseSettings):
         default=True,
         description="Enable cost tracking per run",
     )
-    cost_tracking: bool = Field(
-        default=False,
-        description="Legacy: enable cost tracking",
-    )
     cost_budget_mtd: float = Field(
         default=100.0,
         ge=0.0,
@@ -674,8 +671,8 @@ class ThegentSettings(BaseSettings):
         default="http://127.0.0.1:3000",
         description="Cursor API base URL",
     )
-    cursor_api_token: str = Field(
-        default="",
+    cursor_api_token: SecretStr = Field(
+        default_factory=lambda: SecretStr(""),
         description="Cursor API bearer token",
     )
     models_cache_ttl_sec: int = Field(
@@ -851,16 +848,16 @@ class ThegentSettings(BaseSettings):
         default="none",
         description="MCP authentication mode",
     )
-    mcp_bearer_tokens: str = Field(
-        default="",
+    mcp_bearer_tokens: SecretStr = Field(
+        default_factory=lambda: SecretStr(""),
         description="Comma-separated MCP bearer tokens",
     )
     reddit_client_id: str = Field(
         default="",
         description="Reddit API client ID",
     )
-    reddit_client_secret: str = Field(
-        default="",
+    reddit_client_secret: SecretStr = Field(
+        default_factory=lambda: SecretStr(""),
         description="Reddit API client secret",
     )
     reddit_user_agent: str = Field(
@@ -946,8 +943,8 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Enable Linear sync for workstream autosync",
     )
-    linear_api_key: str = Field(
-        default="",
+    linear_api_key: SecretStr = Field(
+        default_factory=lambda: SecretStr(""),
         description="Linear API key for workstream autosync",
     )
     linear_team_key: str = Field(
@@ -1003,10 +1000,77 @@ class ThegentSettings(BaseSettings):
         description="Switch sync engine to pull-only mode after write failures",
     )
 
+    # WL152: canonical structured logging configuration. Defaults to the
+    # LoggingConfig defaults (level=INFO, format=text, redact=True,
+    # sinks=["stderr"]). Reads THGENT_LOG_* env vars via the nested model.
+    log_config: LoggingConfig = Field(
+        default_factory=LoggingConfig,
+        description="Structured logging configuration (THGENT_LOG_*)",
+    )
+
     @field_validator("retention_by_domain", mode="before")
     @classmethod
     def _parse_retention_by_domain(cls, v: object) -> dict[str, int]:
         return parse_retention_by_domain(v)
+
+    # WL152: audit surface — names of fields that hold sensitive material.
+    # This is the canonical pin for downstream masking and secret-detection
+    # tooling. The fields themselves are ``pydantic.SecretStr`` so their
+    # values are masked in ``repr`` / ``str`` / ``model_dump`` /
+    # ``model_dump_json`` by default. ``secret_value(name)`` is the canonical
+    # accessor for downstream consumers that need the raw string (e.g.
+    # outbound HTTP auth headers, subprocess env). ``LoggingConfig.redact=True``
+    # + ``register_secret_for_masking`` is the runtime redaction path.
+    SECRET_FIELDS: tuple[str, ...] = (
+        "supermemory_api_key",
+        "redis_password",
+        "cursor_api_token",
+        "mcp_bearer_tokens",
+        "reddit_client_secret",
+        "linear_api_key",
+    )
+
+    def secret_fields(self) -> tuple[str, ...]:
+        """Return the names of fields that hold sensitive material.
+
+        Used by audit tooling and downstream redaction helpers. The
+        return value is a ``tuple`` (immutable) to discourage in-place
+        mutation; consumers should not modify it.
+        """
+        return self.SECRET_FIELDS
+
+    def secret_value(self, name: str) -> str | None:
+        """Canonical accessor for a SECRET_FIELDS value.
+
+        Returns the underlying plain string for the named secret, or
+        ``None`` if the field is unset and declared nullable. For
+        non-nullable empty defaults this returns the empty string.
+
+        Raises ``KeyError`` if ``name`` is not a registered secret field
+        — this is intentional: typos in consumer code should fail loud
+        rather than silently leak a non-secret value or a misnamed
+        attribute.
+
+        Example::
+
+            token = settings.secret_value("cursor_api_token")
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        """
+        if name not in self.SECRET_FIELDS:
+            raise KeyError(
+                f"{name!r} is not a registered SECRET_FIELDS entry; canonical secrets are {self.SECRET_FIELDS!r}",
+            )
+        value = getattr(self, name)
+        if value is None:
+            return None
+        if isinstance(value, SecretStr):
+            return value.get_secret_value()
+        # Defensive fallback — fields declared as SecretStr in this class
+        # are always SecretStr | None; this branch only fires for downstream
+        # subclasses that override the type. Returning the raw str is the
+        # least surprising behaviour for that case.
+        return str(value) if value else ""
 
     def validate_setup(self) -> None:
         """ROB-013: Configuration validation on startup (fail-fast).

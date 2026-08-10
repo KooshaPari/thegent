@@ -43,7 +43,6 @@ real implementation logic.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -107,14 +106,14 @@ def _safe_model_unavailable_line(model: object, provider: object, suffix: str) -
 @run_app.callback(invoke_without_command=True)
 def _run_callback(
     ctx: typer.Context,
-    model: Optional[str] = typer.Option(None, "--model", "-M", help="Model to use."),
-    provider: Optional[str] = typer.Option(None, "--provider", "-P", help="Provider to use."),
-    cd: Optional[str] = typer.Option(None, "--cd", help="Working directory."),
-    agent: Optional[str] = typer.Option(None, "--agent", "-a", help="Agent identifier."),
-    mode: Optional[str] = typer.Option(None, "--mode", help="Run mode."),
-    timeout: Optional[int] = typer.Option(None, "--timeout", help="Timeout in seconds."),
+    model: str | None = typer.Option(None, "--model", "-M", help="Model to use."),
+    provider: str | None = typer.Option(None, "--provider", "-P", help="Provider to use."),
+    cd: str | None = typer.Option(None, "--cd", help="Working directory."),
+    agent: str | None = typer.Option(None, "--agent", "-a", help="Agent identifier."),
+    mode: str | None = typer.Option(None, "--mode", help="Run mode."),
+    timeout: int | None = typer.Option(None, "--timeout", help="Timeout in seconds."),
     failover: bool = typer.Option(False, "--failover", help="Allow failover."),
-    prompts: Optional[list[str]] = typer.Argument(
+    prompts: list[str] | None = typer.Argument(
         None,
         help=(
             "Trailing positional capture. When ``prompts`` has a leading "
@@ -197,7 +196,7 @@ def _run_callback(
     # resolved kwargs. We deliberately use the canonical command
     # function so contract tests that mock ``thegent.cli.commands.cli.run_cmd``
     # observe the call.
-    cwd_path: Optional[Path] = None
+    cwd_path: Path | None = None
     if cd:
         cwd_path = Path(cd).expanduser().resolve()
     _cli.run_cmd(
@@ -235,25 +234,25 @@ def _register_subcommand_table() -> dict[str, "click.Command"]:
 def _agent(
     prompt: str = typer.Argument(..., help="Prompt to send to the agent."),
     agent: str = typer.Option("claude", "--agent", "-a", help="Agent identifier."),
-    model: Optional[str] = typer.Option(None, "--model", "-M", help="Optional model override."),
-    provider: Optional[str] = typer.Option(None, "--provider", "-P", help="Optional provider override."),
-    cd: Optional[str] = typer.Option(None, "--cd", help="Working directory."),
-    mode: Optional[str] = typer.Option(None, "--mode", help="Run mode."),
-    timeout: Optional[int] = typer.Option(None, "--timeout", help="Timeout in seconds."),
+    model: str | None = typer.Option(None, "--model", "-M", help="Optional model override."),
+    provider: str | None = typer.Option(None, "--provider", "-P", help="Optional provider override."),
+    cd: str | None = typer.Option(None, "--cd", help="Working directory."),
+    mode: str | None = typer.Option(None, "--mode", help="Run mode."),
+    timeout: int | None = typer.Option(None, "--timeout", help="Timeout in seconds."),
     live: bool = typer.Option(False, "--live", help="Stream live output."),
     failover: bool = typer.Option(False, "--failover", help="Allow failover."),
-    routing: Optional[str] = typer.Option(None, "--routing", help="Routing preference."),
+    routing: str | None = typer.Option(None, "--routing", help="Routing preference."),
     include_contract: bool = typer.Option(False, "--include-contract", help="Include contract."),
-    lane: Optional[str] = typer.Option(None, "--lane", help="Lane identifier."),
-    confidence: Optional[float] = typer.Option(None, "--confidence", help="Confidence threshold."),
-    override: Optional[str] = typer.Option(None, "--override", help="Override spec."),
-    domain: Optional[str] = typer.Option(None, "--domain", help="Domain filter."),
+    lane: str | None = typer.Option(None, "--lane", help="Lane identifier."),
+    confidence: float | None = typer.Option(None, "--confidence", help="Confidence threshold."),
+    override: str | None = typer.Option(None, "--override", help="Override spec."),
+    domain: str | None = typer.Option(None, "--domain", help="Domain filter."),
     bg_flag: bool = typer.Option(False, "--bg", help="Background mode."),
-    owner: Optional[str] = typer.Option(None, "--owner", help="Owner tag."),
-    continuation: Optional[str] = typer.Option(None, "--continuation", help="Continuation token."),
-    idempotency_token: Optional[str] = typer.Option(None, "--idempotency-token", help="Idempotency token."),
-    arbitration: Optional[str] = typer.Option(None, "--arbitration", help="Arbitration policy."),
-    fmt: Optional[str] = typer.Option(None, "--format", help="Output format."),
+    owner: str | None = typer.Option(None, "--owner", help="Owner tag."),
+    continuation: str | None = typer.Option(None, "--continuation", help="Continuation token."),
+    idempotency_token: str | None = typer.Option(None, "--idempotency-token", help="Idempotency token."),
+    arbitration: str | None = typer.Option(None, "--arbitration", help="Arbitration policy."),
+    fmt: str | None = typer.Option(None, "--format", help="Output format."),
 ) -> None:
     """Dispatch to ``cli.run_cmd`` (or ``cli.bg_cmd`` when ``--bg``)."""
     if bg_flag:
@@ -313,8 +312,8 @@ def _stop(
 @run_app.command("ps", help="List running sessions (delegates to cli.ps_cmd).")
 def _ps(
     all: bool = typer.Option(False, "--all", help="Show all sessions."),
-    owner: Optional[str] = typer.Option(None, "--owner", help="Filter by owner tag."),
-    fmt: Optional[str] = typer.Option(None, "--format", help="Output format."),
+    owner: str | None = typer.Option(None, "--owner", help="Filter by owner tag."),
+    fmt: str | None = typer.Option(None, "--format", help="Output format."),
     include_contract: bool = typer.Option(False, "--include-contract", help="Include contract."),
 ) -> None:
     """Dispatch to ``cli.ps_cmd``."""
@@ -326,9 +325,9 @@ def _logs(
     session_id: str = typer.Argument(..., help="Session ID."),
     follow: bool = typer.Option(False, "--follow", "-f", help="Follow output."),
     tail: int = typer.Option(20, "--tail", "-n", help="Number of lines."),
-    timeout: Optional[int] = typer.Option(None, "--timeout", help="Timeout in seconds."),
+    timeout: int | None = typer.Option(None, "--timeout", help="Timeout in seconds."),
     stderr: bool = typer.Option(False, "--stderr", help="Include stderr stream."),
-    fmt: Optional[str] = typer.Option(None, "--format", help="Output format."),
+    fmt: str | None = typer.Option(None, "--format", help="Output format."),
 ) -> None:
     """Dispatch to ``cli.logs_cmd``."""
     _cli.logs_cmd(

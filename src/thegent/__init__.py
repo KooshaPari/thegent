@@ -20,11 +20,6 @@ def dex_cli_helpers() -> dict[str, Any]:
     return {"helpers": []}
 
 
-def config_provider() -> dict[str, Any]:
-    """Get configuration provider."""
-    return {"provider": "default"}
-
-
 def clode_config_isolation() -> bool:
     """Get clode config isolation setting."""
     return True
@@ -44,13 +39,17 @@ __version__ = "0.1.0"
 # Import CLI module to expose it in thegent namespace
 from thegent import cli
 
+# Expose the config_provider submodule so ``from thegent import config_provider``
+# resolves to the canonical module rather than any local stub. (L20 hardening.)
+from thegent import config_provider as _config_provider_module  # noqa: F401
+
 __all__ = [
     "__version__",
     "cli",
+    "config_provider",
     "doctor_shell_nix",
     "doctor_setup_checks",
     "dex_cli_helpers",
-    "config_provider",
     "clode_config_isolation",
     "git_lock_manage",
     "rust_wrappers",
@@ -84,10 +83,10 @@ shared_mcp_manager = _SharedMCPManager()
 __all__ = [
     "__version__",
     "cli",
+    "config_provider",
     "doctor_shell_nix",
     "doctor_setup_checks",
     "dex_cli_helpers",
-    "config_provider",
     "clode_config_isolation",
     "git_lock_manage",
     "rust_wrappers",

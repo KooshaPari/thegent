@@ -656,57 +656,83 @@ class TestEscalateCmdImpl:
     """Tests for escalation command implementations."""
 
     @patch("thegent.cli.console")
-    def test_escalate_add(self, mock_console) -> None:
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
+    def test_escalate_add(self, mock_wrap_console, mock_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-229
         """escalate_add_cmd calls impl and prints confirmation."""
         from thegent.cli import escalate_add_cmd
 
-        with patch("thegent.cli.commands.impl.escalate_add_impl") as mock_impl:
+        # WL149: canonical impl imports `escalate_add_impl` from
+        # `thegent.cli.governance.governance_impl` (the WL-124-era
+        # `thegent.cli.commands.impl.escalate_add_impl` was a re-export
+        # alias and is shadowed by the canonical wrapper's local binding
+        # — patch the canonical source location).
+        with patch("thegent.cli.governance.governance_impl.escalate_add_impl") as mock_impl:
             escalate_add_cmd(run_id="r1", reason="blocked", sla_minutes=15)
         mock_impl.assert_called_once_with(
             run_id="r1",
             reason="blocked",
             sla_minutes=15,
             owner=None,
+            agent=None,
             lane="standard",
         )
-        printed = [str(c) for c in mock_console.print.call_args_list]
+        printed = [str(c) for c in mock_wrap_console.print.call_args_list]
         assert any("r1" in p for p in printed)
         assert any("15" in p for p in printed)
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_list_empty(self, mock_console) -> None:
+    def test_escalate_list_empty(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-230
         """escalate_list_cmd prints dim message when empty."""
         from thegent.cli import escalate_list_cmd
 
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_list_impl).
         with (
-            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=[]),
-            patch("thegent.cli._normalize_output_format", return_value="rich"),
+            patch(
+                "thegent.cli.governance.governance_impl.escalate_list_impl",
+                return_value=[],
+            ),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="rich",
+            ),
         ):
             escalate_list_cmd()
-        printed = [str(c) for c in mock_console.print.call_args_list]
+        printed = [str(c) for c in mock_wrap_console.print.call_args_list]
         assert any("no escalation" in p.lower() for p in printed)
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_list_json(self, mock_console) -> None:
+    def test_escalate_list_json(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-231
         """escalate_list_cmd outputs JSON."""
         from thegent.cli import escalate_list_cmd
 
         items = [{"run_id": "r1", "reason": "test"}]
         buf = io.StringIO()
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_list_impl).
         with (
-            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items),
-            patch("thegent.cli._normalize_output_format", return_value="json"),
+            patch(
+                "thegent.cli.governance.governance_impl.escalate_list_impl",
+                return_value=items,
+            ),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="json",
+            ),
             patch("sys.stdout", buf),
         ):
             escalate_list_cmd(format="json")
         output = json.loads(buf.getvalue())
         assert output[0]["run_id"] == "r1"
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_list_rich(self, mock_console) -> None:
+    def test_escalate_list_rich(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-232
         """escalate_list_cmd renders rich table."""
         from thegent.cli import escalate_list_cmd
@@ -722,30 +748,51 @@ class TestEscalateCmdImpl:
                 "past_sla": False,
             }
         ]
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_list_impl).
         with (
-            patch("thegent.cli.commands.impl.escalate_list_impl", return_value=items),
-            patch("thegent.cli._normalize_output_format", return_value="rich"),
+            patch(
+                "thegent.cli.governance.governance_impl.escalate_list_impl",
+                return_value=items,
+            ),
+            patch(
+                "thegent.cli.governance.governance_escalation_hitl_cmds._normalize_output_format",
+                return_value="rich",
+            ),
         ):
             escalate_list_cmd()
-        mock_console.print.assert_called_once()
+        mock_wrap_console.print.assert_called_once()
 
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
     @patch("thegent.cli.console")
-    def test_escalate_resolve_success(self, mock_console) -> None:
+    def test_escalate_resolve_success(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-233
         """escalate_resolve_cmd prints success on resolution."""
         from thegent.cli import escalate_resolve_cmd
 
-        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=True):
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_resolve_impl).
+        with patch(
+            "thegent.cli.governance.governance_impl.escalate_resolve_impl",
+            return_value=True,
+        ):
             escalate_resolve_cmd(run_id="r1")
-        printed = [str(c) for c in mock_console.print.call_args_list]
+        printed = [str(c) for c in mock_wrap_console.print.call_args_list]
         assert any("resolved" in p.lower() for p in printed)
 
-    def test_escalate_resolve_not_found(self) -> None:
+    @patch("thegent.cli.governance.governance_escalation_hitl_cmds.console")
+    @patch("thegent.cli.console")
+    def test_escalate_resolve_not_found(self, mock_console, mock_wrap_console) -> None:  # noqa: ARG001
         # @trace FR-CLI-234
         """escalate_resolve_cmd prints error when not found."""
         from thegent.cli import escalate_resolve_cmd
 
-        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=False):
+        # WL149: patch the canonical source location
+        # (thegent.cli.governance.governance_impl.escalate_resolve_impl).
+        with patch(
+            "thegent.cli.governance.governance_impl.escalate_resolve_impl",
+            return_value=False,
+        ):
             # Just verify it runs without error - test passes if no exception
             escalate_resolve_cmd(run_id="unknown")
 
@@ -793,8 +840,8 @@ class TestPurgeCmdImpl:
 class TestPolicyShowCmdImpl:
     """Tests for the policy_show_cmd function body."""
 
-    @patch("thegent.cli.console")
-    @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
+    @patch("thegent.cli.governance.governance_policy_contracts_cmds.console")
+    @patch("thegent.cli.commands._cli_shared.ThegentSettings", return_value=_mock_settings())
     def test_policy_show_dev(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-237
         """policy_show_cmd prints policies in dev environment."""
@@ -805,8 +852,11 @@ class TestPolicyShowCmdImpl:
         assert any("development" in p.lower() for p in printed)
         assert any("governance" in p.lower() for p in printed)
 
-    @patch("thegent.cli.console")
-    @patch("thegent.cli.ThegentSettings", return_value=_mock_settings(environment="production"))
+    @patch("thegent.cli.governance.governance_policy_contracts_cmds.console")
+    @patch(
+        "thegent.cli.commands._cli_shared.ThegentSettings",
+        return_value=_mock_settings(environment="production"),
+    )
     def test_policy_show_prod(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-238
         """policy_show_cmd renders table for production environment."""

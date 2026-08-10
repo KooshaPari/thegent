@@ -1,4 +1,5 @@
 """Stub module."""
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -6,6 +7,7 @@ from typing import Any
 @dataclass
 class PluginContract:
     """Contract for a plugin in the marketplace."""
+
     id: str
     name: str
     version: str = "1.0.0"

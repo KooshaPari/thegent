@@ -221,10 +221,14 @@ class TestAdapterRegistry:
         assert adapter is not None
         assert adapter.provider == "copilot"
 
-    def test_get_adapter_unknown_returns_none(self) -> None:
+    def test_get_adapter_unknown_raises(self) -> None:
         # @trace FR-CTR-005
-        result = get_adapter("nonexistent-provider-xyz")
-        assert result is None
+        # Contract pinned by WL145 — unknown providers raise
+        # ``KeyError`` so callers are forced to handle the
+        # missing-adapter case explicitly. ``ADAPTER_REGISTRY.get``
+        # is the None-returning variant for soft lookups.
+        with pytest.raises(KeyError):
+            get_adapter("nonexistent-provider-xyz")
 
     def test_register_custom_adapter(self) -> None:
         # @trace FR-CTR-005

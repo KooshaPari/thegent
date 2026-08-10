@@ -51,14 +51,16 @@ from thegent.cli.commands.cli_dag import dag_checkpoints_cmd  # noqa: F401
 from thegent.cli.commands.dag_run_cmd_impl import _resolve_cwd, dag_run_cmd  # noqa: F401
 from thegent.cli.commands.dag_recover_cmd_impl import dag_recover_cmd  # noqa: F401
 from thegent.cli.governance.governance_impl import escalate_resolve_impl  # noqa: F401
-from thegent.cli.commands.governance_cmds import (  # noqa: F401
-    drift_cmd,
+from thegent.cli.governance.governance_escalation_hitl_cmds import (  # noqa: F401
     escalate_add_cmd,
     escalate_list_cmd,
     escalate_resolve_cmd,
+    sweep_cmd,
+)
+from thegent.cli.governance.governance_policy_contracts_cmds import (  # noqa: F401
+    drift_cmd,
     migration_cmd,
     policy_show_cmd,
-    sweep_cmd,
 )
 from thegent.cli.commands.infra_cmds import (  # noqa: F401
     archive_cmd,
