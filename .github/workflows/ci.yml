@@ -158,8 +158,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      # Some language-detected checkouts contain package.json but no npm
+      # lockfile. setup-node's npm cache requires a lockfile and otherwise
+      # fails before the advisory TS/JS checks can run.
+      - name: Install JavaScript dependencies
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-package-lock --no-audit --no-fund
+          fi
       - name: lint
         run: |
           if [ -f package.json ] && grep -q '"lint"' package.json; then
