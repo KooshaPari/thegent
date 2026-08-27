@@ -60,8 +60,9 @@ jobs:
             echo "has_go=true" >> $GITHUB_OUTPUT
           fi
 
-          # TypeScript / JS: needs package.json (with type=module or tsconfig or js files)
-          if [ -f "package.json" ]; then
+          # TypeScript / JS: require a supported lockfile so npm caching and
+          # deterministic installation cannot fail on incidental package.json files.
+          if [ -f "package.json" ] && { [ -f "package-lock.json" ] || [ -f "npm-shrinkwrap.json" ] || [ -f "yarn.lock" ] || [ -f "pnpm-lock.yaml" ] || [ -f "bun.lock" ] || [ -f "bun.lockb" ]; }; then
             echo "has_typescript=true" >> $GITHUB_OUTPUT
           fi
 
